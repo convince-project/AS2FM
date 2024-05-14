@@ -1,0 +1,15 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <time_resolution value="100" unit="ms" />
+        <max_time value="2" unit="s" />
+    </mc_parameters>
+
+    <node_models>
+        <input type="ros-scxml" src="./battery_drainer.scxml" />
+        <input type="ros-scxml" src="./battery_manager.scxml" />
+    </node_models>
+
+    <properties>
+        <input type="jani" src="./battery_depleted.jani" />
+    </properties>
+</convince_mc_tc>
