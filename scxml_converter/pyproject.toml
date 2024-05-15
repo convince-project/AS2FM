@@ -24,8 +24,5 @@ requires-python = ">=3.7"
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
 
-[project.scripts]
-scxml_converter = "scxml_converter.main:main"
-
 [isort]
 profile = "google"
