@@ -212,8 +212,8 @@ class TestConversion(unittest.TestCase):
             ground_truth = json.load(f)
         self.maxDiff = None
         self.assertEqual(jani_dict, ground_truth)
-        # if os.path.exists(ouput_path):
-        #     os.remove(ouput_path)
+        if os.path.exists(ouput_path):
+            os.remove(ouput_path)
 
 
 if __name__ == '__main__':

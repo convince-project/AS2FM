@@ -17,42 +17,15 @@
       "type": "bool",
       "transient": false,
       "initial-value": false
-    },
-    {
-      "name": "ros_time_rate.my_timer.valid",
-      "type": "bool",
-      "transient": false,
-      "initial-value": false
-    },
-    {
-      "name": "global_ros_time.data_ns",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
-      "name": "global_ros_time.valid",
-      "type": "bool",
-      "transient": false,
-      "initial-value": false
     }
   ],
   "constants": [],
   "actions": [
     {
-      "name": "global_ros_time_on_receive"
-    },
-    {
-      "name": "global_ros_time_on_send"
-    },
-    {
-      "name": "global_time_action_0"
+      "name": "global_timer_action_0"
     },
     {
       "name": "ros_time_rate.my_timer_on_receive"
-    },
-    {
-      "name": "ros_time_rate.my_timer_on_send"
     },
     {
       "name": "ros_topic.level_on_receive"
@@ -94,7 +67,14 @@
               ]
             }
           ],
-          "action": "ros_time_rate.my_timer_on_receive"
+          "action": "ros_time_rate.my_timer_on_receive",
+          "guard": {
+            "exp": {
+              "op": ">",
+              "left": "battery_percent",
+              "right": 0
+            }
+          }
         },
         {
           "location": "use_battery_on_entry",
@@ -127,76 +107,6 @@
           "type": "int",
           "transient": false,
           "initial-value": 100
-        }
-      ]
-    },
-    {
-      "name": "timer_my_timer",
-      "locations": [
-        {
-          "name": "my_state_0"
-        },
-        {
-          "name": "my_state_0_on_entry"
-        }
-      ],
-      "initial-locations": [
-        "my_state_0_on_entry"
-      ],
-      "edges": [
-        {
-          "location": "my_state_0",
-          "destinations": [
-            {
-              "location": "my_state_0_on_entry",
-              "assignments": [
-                {
-                  "ref": "last_execution_time",
-                  "value": "global_ros_time.data_ns",
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "global_ros_time_on_receive",
-          "guard": {
-            "exp": {
-              "op": "\u2265",
-              "left": {
-                "op": "-",
-                "left": "global_ros_time.data_ns",
-                "right": "last_execution_time"
-              },
-              "right": 1000000000
-            }
-          }
-        },
-        {
-          "location": "my_state_0_on_entry",
-          "destinations": [
-            {
-              "location": "my_state_0",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": [
-                {
-                  "ref": "ros_time_rate.my_timer.valid",
-                  "value": true,
-                  "index": 1
-                }
-              ]
-            }
-          ],
-          "action": "ros_time_rate.my_timer_on_send"
-        }
-      ],
-      "variables": [
-        {
-          "name": "last_execution_time",
-          "type": "int",
-          "transient": false,
-          "initial-value": 0
         }
       ]
     },
@@ -242,77 +152,95 @@
       ]
     },
     {
-      "name": "global_time",
+      "name": "global_timer",
       "locations": [
         {
-          "name": "global_time_0"
-        },
-        {
-          "name": "global_time_0_on_entry"
+          "name": "loc"
         }
       ],
       "initial-locations": [
-        "global_time_0_on_entry"
+        "loc"
       ],
       "edges": [
         {
-          "location": "global_time_0",
+          "location": "loc",
           "destinations": [
             {
-              "location": "global_time_0_on_entry",
+              "location": "loc",
               "assignments": [
                 {
-                  "ref": "current_time",
+                  "ref": "t",
                   "value": {
                     "op": "+",
-                    "left": "current_time",
-                    "right": 100000000
+                    "left": "t",
+                    "right": 1
                   },
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "global_time_action_0",
-          "guard": {
-            "exp": {
-              "op": "<",
-              "left": "current_time",
-              "right": 2000000000
-            }
-          }
-        },
-        {
-          "location": "global_time_0_on_entry",
-          "destinations": [
-            {
-              "location": "global_time_0",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": [
-                {
-                  "ref": "global_ros_time.data_ns",
-                  "value": "current_time",
                   "index": 0
                 },
                 {
-                  "ref": "global_ros_time.valid",
-                  "value": true,
+                  "ref": "my_timer_needed",
+                  "value": {
+                    "op": "=",
+                    "left": {
+                      "op": "%",
+                      "left": "t",
+                      "right": 1
+                    },
+                    "right": 0
+                  },
                   "index": 1
                 }
               ]
             }
           ],
-          "action": "global_ros_time_on_send"
+          "action": "global_timer_action_0",
+          "guard": {
+            "exp": {
+              "op": "∧",
+              "left": {
+                "op": "<",
+                "left": "t",
+                "right": 100
+              },
+              "right": {
+                "op": "¬",
+                "exp": "my_timer_needed"
+              }
+            }
+          }
+        },
+        {
+          "location": "loc",
+          "destinations": [
+            {
+              "location": "loc",
+              "assignments": [
+                {
+                  "ref": "my_timer_needed",
+                  "value": false,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "ros_time_rate.my_timer_on_receive",
+          "guard": {
+            "exp": "my_timer_needed"
+          }
         }
       ],
       "variables": [
         {
-          "name": "current_time",
+          "name": "t",
           "type": "int",
           "transient": false,
           "initial-value": 0
+        },
+        {
+          "name": "my_timer_needed",
+          "type": "bool",
+          "transient": false,
+          "initial-value": true
         }
       ]
     },
@@ -370,116 +298,6 @@
           "action": "ros_topic.level_on_receive"
         }
       ]
-    },
-    {
-      "name": "ros_time_rate.my_timer",
-      "locations": [
-        {
-          "name": "received"
-        },
-        {
-          "name": "waiting"
-        }
-      ],
-      "initial-locations": [
-        "waiting"
-      ],
-      "edges": [
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "ros_time_rate.my_timer_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "ros_time_rate.my_timer_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "ros_time_rate.my_timer_on_receive"
-        }
-      ]
-    },
-    {
-      "name": "global_ros_time",
-      "locations": [
-        {
-          "name": "received"
-        },
-        {
-          "name": "waiting"
-        }
-      ],
-      "initial-locations": [
-        "waiting"
-      ],
-      "edges": [
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "global_ros_time_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "global_ros_time_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "global_ros_time_on_receive"
-        }
-      ]
     }
   ],
   "system": {
@@ -488,22 +306,13 @@
         "automaton": "BatteryDrainer"
       },
       {
-        "automaton": "timer_my_timer"
-      },
-      {
         "automaton": "BatteryManager"
       },
       {
-        "automaton": "global_time"
+        "automaton": "global_timer"
       },
       {
         "automaton": "ros_topic.level"
-      },
-      {
-        "automaton": "ros_time_rate.my_timer"
-      },
-      {
-        "automaton": "global_ros_time"
       }
     ],
     "syncs": [
@@ -513,34 +322,16 @@
           "ros_topic.level_on_send",
           null,
           null,
-          null,
-          "ros_topic.level_on_send",
-          null,
-          null
+          "ros_topic.level_on_send"
         ]
       },
       {
         "result": "ros_topic.level_on_receive",
         "synchronise": [
           null,
-          null,
           "ros_topic.level_on_receive",
           null,
-          "ros_topic.level_on_receive",
-          null,
-          null
-        ]
-      },
-      {
-        "result": "ros_time_rate.my_timer_on_send",
-        "synchronise": [
-          null,
-          "ros_time_rate.my_timer_on_send",
-          null,
-          null,
-          null,
-          "ros_time_rate.my_timer_on_send",
-          null
+          "ros_topic.level_on_receive"
         ]
       },
       {
@@ -548,46 +339,16 @@
         "synchronise": [
           "ros_time_rate.my_timer_on_receive",
           null,
-          null,
-          null,
-          null,
           "ros_time_rate.my_timer_on_receive",
           null
         ]
       },
       {
-        "result": "global_ros_time_on_send",
+        "result": "global_timer_action_0",
         "synchronise": [
           null,
           null,
-          null,
-          "global_ros_time_on_send",
-          null,
-          null,
-          "global_ros_time_on_send"
-        ]
-      },
-      {
-        "result": "global_ros_time_on_receive",
-        "synchronise": [
-          null,
-          "global_ros_time_on_receive",
-          null,
-          null,
-          null,
-          null,
-          "global_ros_time_on_receive"
-        ]
-      },
-      {
-        "result": "global_time_action_0",
-        "synchronise": [
-          null,
-          null,
-          null,
-          "global_time_action_0",
-          null,
-          null,
+          "global_timer_action_0",
           null
         ]
       }
@@ -606,11 +367,11 @@
             "op": "U",
             "right": {
               "left": {
-                "op": "\u2264",
+                "op": "≤",
                 "left": "ros_topic.level.data",
                 "right": 0
               },
-              "op": "\u2227",
+              "op": "∧",
               "right": "ros_topic.level.valid"
             }
           }
