@@ -1,33 +1,37 @@
 Tutorials
 =========
 
-The scripts have been tested with Python 3.8.10 and pip version 24.0. 
+The scripts have been tested with Python 3.10 and pip version 24.0. 
+
+Installation
+--------------
+To run the Python script install the required dependencies with the following commands:
+
+.. code-block:: bash
+
+    python3 -m pip install mc_toolchain_jani_common/
+    python3 -m pip install jani_generator/
+    python3 -m pip install scxml_converter/
 
 How to convert from CONVINCE robotic JANI to plain JANI?
 -----------------------------------------------------------
 
 We provide a Python script to convert models describing the system and its environment together, given in the CONVINCE robotics JANI flavor as specified in the `data model repository <https://github.com/convince-project/data-model>`_, into `plain JANI <https://jani-spec.org>`_ accepted as input by model checkers.
 
-1. Installation using pip
-
-To run the Python script install the required dependencies with the following command:
-
-```bash
-cd <path-to-convince_toolchain>/jani_generator
-python3 -m pip install -e .
-```
-
-2. Running the script
+Running the script
+```````````````````
 
 After it has been installed, the script can be run on a CONVINCE robotics JANI model. It outputs a plain JANI conversion.
 
-```bash
-convince_to_plain_jani --convince_jani path_to_convince_file.jani --output output_plain_file.jani
-```
+.. code-block:: bash
 
-3. Example
+    convince_to_plain_jani --convince_jani path_to_convince_robotic_file.jani --output output_plain_file.jani
 
-Let's convert a first simple robotic JANI model. An example can be found in `jani_generator/test/_test_data/first-model-mc-version.jani`. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
+
+Example
+`````````
+
+Let's convert a first simple robotic JANI model. An example can be found in `here <https://github.com/convince-project/mc-toolchain-jani/blob/main/jani_generator/test/_test_data/convince_jani/first-model-mc-version.jani>`_. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
 
 .. image:: graphics/room.PNG
     :width: 200
@@ -40,35 +44,56 @@ The behavior describing how the robot drives around in the room is modeled as a 
 
 The property given in the JANI file checks for the minimal probability that eventually within 10 000 steps the position (1.0, 1.0) is reached with an error range of 0.05 m.
 
-How to convert from (Sc)XML to plain JANI?
+How to convert from (SC)XML to plain JANI?
 --------------------------------------------
 A full system model can be converted into a model-checkable JANI file as follows.
 
-1. Installation using pip
+The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_. With the following content:
 
-```bash
-cd <path-to-convince_toolchain>
-python3 -m pip install -e mc_toolchain_jani_common
-python3 -m pip install -e scxml_converter
-```
+* one or multiple ROS nodes in SCXML:
 
-The `main.py` script takes 
+    .. code-block:: xml
 
-* the property to check in temporal logic, currently given in JANI, later support for SCXML will be added, 
-* the behavior tree in XML, 
-* one or multiple nodes in SCXML,
-* the plugins of the nodes in SCXML, and
-* the environment model in SCXML
+        <input type="ros-scxml" src="./battery_manager.scxml" />
 
-and converts all of those components into one JANI DTMC model.
+* the environment model in SCXML:
+
+    .. code-block:: xml
+
+        <input type="ros-scxml" src="./battery_drainer.scxml" />
+
+* the behavior tree in XML (to be implemented), 
+* the plugins of the behavior tree leaf nodes in SCXML (to be implemented),
+* the property to check in temporal logic, currently given in JANI, later support for XML will be added:
+
+    .. code-block:: xml
+
+        <properties>
+            <input type="jani" src="./battery_depleted.jani" />
+        </properties>
+
+* additionally, commonly shared variables for synchronization between the components are specified in the main file:
+  
+    .. code-block:: xml
+
+        <mc_parameters>
+            <max_time value="2" unit="s" />
+        </mc_parameters>
+
+All of those components are converted into one JANI DTMC model by the ``scxml_to_jani`` tool.
 
 We demonstrate the usage of this conversion for a full model based on an example of a battery which is continuously drained. 
-In `jani_generator/test/_test_data/ros_example` all input files can be found. The core functionality of the battery drainer is implemented in `battery_drainer.scxml`. The percentage level of the battery is stored in `battery_percent`. The current `level` of the battery is published on a ROS topic. The battery can be used, which sends the `level`` of the battery on that topic and reduces `battery_percent` by one.
-All of that happens with a frequency of 1 Hz given by the ros time rate `my_timer`.
-In addition, there is the `battery_manager.scxml` file. The manager subscribed to the `level` topic of the battery drainer to check its level and sends a `battery_alarm` as soon as the `level` is less or equal 30%. 
+All input files can be found in this `folder <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example>`_. The core functionality of the battery drainer is implemented in `battery_drainer.scxml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_drainer.scxml>`_. 
+The battery is drained by 1% at a frequency of 1 Hz given by the ros time rate ``my_timer``.
+The percentage level of the battery is stored in ``battery_percent``. The current state of the battery is published on a ROS topic ``level``.
+
+In addition, there is the `battery_manager.scxml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_manager.scxml>`_ file. The manager subscribes to the ``level`` topic of the battery drainer to check its level and sets the ``battery_alarm`` to true as soon as the ``level`` is less than 30%. 
 This means there is a communication between the two processes described by the drainer and the manager.
-In `main.xml` the two processes are put together, the time resolution is specified and the property to use is indicated. 
-The JANI property given in `battery_depleted.jani` checks the minimal probability that the battery level is below or equal to zero eventually.
+
+The JANI property given in `battery_depleted.jani <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
+
+In the `main.xml file <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property is fulfilled with probability 1, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
+In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
 
 
 How to model check the robotic system?

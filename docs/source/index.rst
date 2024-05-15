@@ -9,11 +9,11 @@ As a first toolchain component, we provide a Python script to convert models des
 The second part of the provided toolchain components centers around system specifications given in SCXML and how to convert them into a plain JANI file for model checking. 
 We expect that a full robotic system and the information needed for model checking consist of: 
 
-* the property to check in temporal logic, currently given in JANI, later support for SCXML will be added, 
-* the behavior tree in XML, 
-* one or multiple nodes in SCXML,
-* the plugins of the nodes in SCXML, and
-* the environment model in SCXML.
+* one or multiple ROS nodes in SCXML,
+* the environment model in SCXML, 
+* the behavior tree in XML (to be implemented), 
+* the plugins of the behavior tree leaf nodes in SCXML (to be implemented),
+* the property to check in temporal logic, currently given in JANI, later support for XML will be added.
 
 We offer a push-button solution for the full bundle conversion of all of those input files into one model-checkable plain JANI model.
 A tutorial on how to use the conversion script can be found in the :doc:`tutorial section <../tutorials>`. 
