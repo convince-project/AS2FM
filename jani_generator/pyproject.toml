@@ -27,8 +27,8 @@ requires-python = ">=3.7"
 dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
 
 [project.scripts]
-convince_to_plain_jani = "jani_generator.main:main"
-scxml_to_jani = "jani_generator.scxml_helpers.scxml_to_jani:main"
+convince_to_plain_jani = "jani_generator.main:main_convince_to_plain_jani"
+scxml_to_jani = "jani_generator.main:main_scxml_to_jani"
 
 [isort]
 profile = "google"

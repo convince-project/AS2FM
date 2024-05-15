@@ -17,6 +17,8 @@
 Module to convert convince-flavored robotic, specific jani into plain jani.
 """
 
+from typing import List
+
 from os import path
 import json
 from jani_generator.jani_entries import JaniModel, JaniAutomaton, JaniComposition, JaniProperty
@@ -111,7 +113,7 @@ def convince_jani_parser(base_model: JaniModel, convince_jani_path: str):
     # Check if the convince_jani_path is a file
     assert path.isfile(convince_jani_path), "The convince_jani_path should be a file"
     # Read the convince-jani file
-    with open(convince_jani_path, "r") as file:
+    with open(convince_jani_path, "r", encoding='utf-8') as file:
         convince_jani_json = json.load(file)
     # ---- Metadata ----
     base_model.set_name(convince_jani_json["name"])

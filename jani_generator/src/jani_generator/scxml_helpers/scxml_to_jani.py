@@ -165,18 +165,3 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     output_path = os.path.join(folder_of_xml, "main.jani")
     with open(output_path, "w", encoding='utf-8') as f:
         json.dump(jani_dict, f, indent=2, ensure_ascii=False)
-
-
-def main() -> None:
-    """
-    Main function for the SCXML to Jani conversion.
-
-    :return: None
-    """
-    import argparse
-    ap = argparse.ArgumentParser(
-        description="Convert SCXML robot system models to Jani model.")
-    ap.add_argument("main_xml", type=str,
-                    help="The path to the main XML file to interpret.")
-
-    interpret_top_level_xml(ap.parse_args().main_xml)
