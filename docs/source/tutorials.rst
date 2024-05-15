@@ -77,7 +77,7 @@ The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/c
     .. code-block:: xml
 
         <mc_parameters>
-            <max_time value="2" unit="s" />
+            <max_time value="100" unit="s" />
         </mc_parameters>
 
 All of those components are converted into one JANI DTMC model by the ``scxml_to_jani`` tool.
