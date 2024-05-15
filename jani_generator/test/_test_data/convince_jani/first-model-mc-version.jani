@@ -257,7 +257,8 @@
                                 "ref": "robots.r2d2.pose.theta",
                                 "value": {
                                     "op": "to_rad",
-                                    https://github.com/convince-project/mc-toolchain-jani.git }
+                                    "exp": "robots.r2d2.pose.theta_deg"
+                                }
                             },
                             {
                                 "index": 1,
