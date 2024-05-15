@@ -40,11 +40,13 @@ def _convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
     assert from_unit in TIME_UNITS, f"Unit {from_unit} not supported."
     assert to_unit in TIME_UNITS, f"Unit {to_unit} not supported."
     assert time >= 0, "Time must be positive."
-    assert TIME_UNITS[from_unit] >= TIME_UNITS[to_unit], \
-        "Conversions must be from larger to smaller units."
     if from_unit == to_unit:
         return time
-    return time * TIME_UNITS[from_unit] / TIME_UNITS[to_unit]
+    new_time = time * TIME_UNITS[from_unit] / TIME_UNITS[to_unit]
+    # make sure we do not lose precision
+    assert int(new_time) == new_time, \
+        f"Conversion from {from_unit} to {to_unit} is not exact."
+    return int(new_time)
 
 
 def _to_best_int_period(period: float) -> Tuple[int, str, float]:
@@ -66,7 +68,8 @@ class RosTimer(object):
             self.period)
 
 
-def make_global_timer_automaton(timers: List[RosTimer]) -> Optional[JaniAutomaton]:
+def make_global_timer_automaton(timers: List[RosTimer],
+                                max_time_ns: int) -> Optional[JaniAutomaton]:
     """
     Create a global timer automaton from a list of ROS timers.
 
@@ -87,6 +90,16 @@ def make_global_timer_automaton(timers: List[RosTimer]) -> Optional[JaniAutomato
     }
     global_timer_period = min(timer_periods_in_smallest_unit.values())
     global_timer_period_unit = smallest_unit
+
+    try:
+        max_time = _convert_time_between_units(
+            max_time_ns, "ns", global_timer_period_unit)
+    except AssertionError as exc:
+        # TODO what to do with exc?
+        raise ValueError(
+            f"Max time {max_time_ns} cannot be converted to " +\
+            f"{global_timer_period_unit}. The max_time must have a unit " +\
+            "that is the same or larger than the smallest timer period.")
 
     # Automaton
     LOC_NAME = "loc"
@@ -122,18 +135,19 @@ def make_global_timer_automaton(timers: List[RosTimer]) -> Optional[JaniAutomato
             }),
             "index": i+1}))  # 1, because t is at index 0
     # guard for main edge
-    assert len(variable_names) > 0, "At least one timer is required."
     guard_exp = JaniExpression({
-        "op": "¬",
-        "exp": JaniExpression(variable_names.pop())
+        "op": "<",
+        "left": JaniExpression("t"),
+        "right": JaniExpression(max_time)
     })
+    assert len(variable_names) > 0, "At least one timer is required."
     for variable_name in variable_names:
         singular_exp = JaniExpression({
             "op": "¬",
             "exp": JaniExpression(variable_name)
         })
         guard_exp = JaniExpression({
-            "op": "and",
+            "op": "∧",
             "left": guard_exp,
             "right": singular_exp
         })  # TODO: write test case for this

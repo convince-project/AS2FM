@@ -51,7 +51,8 @@ def convert_scxml_element_to_jani_automaton(
 
 def convert_multiple_scxmls_to_jani(
         scxmls: List[str],
-        timers: List[RosTimer]
+        timers: List[RosTimer],
+        max_time_ns: int
         ) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
@@ -73,7 +74,7 @@ def convert_multiple_scxmls_to_jani(
             scxml, [], (automaton, events_holder)
         ).write_model()
         base_model.add_jani_automaton(automaton)
-    timer_automaton = make_global_timer_automaton(timers)
+    timer_automaton = make_global_timer_automaton(timers, max_time_ns)
     if timer_automaton is not None:
         base_model.add_jani_automaton(timer_automaton)
     implement_scxml_events_as_jani_syncs(events_holder, timers, base_model)
@@ -118,7 +119,7 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
                 # if remove_namespace(mc_parameter.tag) == "time_resolution":
                 #     time_resolution = _parse_time_element(mc_parameter)
                 if remove_namespace(mc_parameter.tag) == "max_time":
-                    max_time = _parse_time_element(mc_parameter)
+                    max_time_ns = _parse_time_element(mc_parameter)
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -154,7 +155,7 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
         plain_scxml_models.append(model)
 
     jani_model = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, all_timers)
+        plain_scxml_models, all_timers, max_time_ns)
 
     jani_dict = jani_model.as_dict()
     assert len(properties) == 1, "Only one property is supported right now."

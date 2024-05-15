@@ -1,6 +1,6 @@
 <convince_mc_tc>
     <mc_parameters>
-        <max_time value="2" unit="s" />
+        <max_time value="100" unit="s" />
     </mc_parameters>
 
     <node_models>
