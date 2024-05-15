@@ -22,7 +22,7 @@ import os
 import xml.etree.ElementTree as ET
 from typing import List
 
-from convince_mc_tc_common.common import remove_namespace
+from mc_toolchain_jani_common.common import remove_namespace
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_model import JaniModel
 from jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_automaton

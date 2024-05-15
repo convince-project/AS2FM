@@ -24,9 +24,9 @@ import xml.etree.ElementTree as ET
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
-from convince_mc_tc_common.common import (ValidTypes, remove_namespace,
+from mc_toolchain_jani_common.common import (ValidTypes, remove_namespace,
                                           ros_type_name_to_python_type)
-from convince_mc_tc_common.ecmascript_interpretation import \
+from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 
 BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']

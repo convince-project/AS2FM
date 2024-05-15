@@ -48,7 +48,7 @@ A full system model can be converted into a model-checkable JANI file as follows
 
 ```bash
 cd <path-to-convince_toolchain>
-python3 -m pip install -e convince_mt_tc_common
+python3 -m pip install -e mc_toolchain_jani_common
 python3 -m pip install -e scxml_converter
 ```
 
