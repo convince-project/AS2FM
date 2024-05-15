@@ -21,8 +21,8 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from convince_mc_tc_common.common import remove_namespace
-from convince_mc_tc_common.ecmascript_interpretation import interpret_ecma_script_expr
+from mc_toolchain_jani_common.common import remove_namespace
+from mc_toolchain_jani_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_assignment import JaniAssignment
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton

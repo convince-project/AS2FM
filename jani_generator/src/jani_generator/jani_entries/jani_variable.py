@@ -20,7 +20,7 @@ Variables in Jani
 from typing import Optional, Union, get_args
 from jani_generator.jani_entries import JaniExpression
 
-from convince_mc_tc_common.common import ValidTypes
+from mc_toolchain_jani_common.common import ValidTypes
 
 
 class JaniVariable:

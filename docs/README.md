@@ -4,7 +4,7 @@ Before you can build the documentation, you need to install the required package
 
 ```
 cd <path-to-convince_toolchain>/docs
-pip install -e convince_mt_tc_common
+pip install -e mc_toolchain_jani_common
 pip install -e scxml_converter
 pip install -r requirements.txt
 make html
