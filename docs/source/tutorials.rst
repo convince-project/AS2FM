@@ -35,18 +35,41 @@ Let's convert a first simple robotic JANI model. An example can be found in `her
 
 .. image:: graphics/room.PNG
     :width: 200
-    :alt: An image illustrating the room's shape
+    :alt: An image illustrating the room's shape.
 
 Lengths are given in meters. 
 The robot is placed at coordinates (0.5, 0.5) initially, and has a round shape with a radius of 0.3 m and a height of 0.2 m. In the small and simple example there are no further obstacles and the robot drives with a linear and angular velocity of 0.5 m/s and 0.5 rad/s, respectively.
 
-The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC). In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there.
+The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and and the conversion to and from floats to integers. The latter is only necessary to make the example run in Storm because the tool currently does not support transient floats.
+
+.. image:: graphics/dtmc.PNG
+    :width: 800
+    :alt: An image of the DTMC representing the robot's behavior.
 
 The property given in the JANI file checks for the minimal probability that eventually within 10 000 steps the position (1.0, 1.0) is reached with an error range of 0.05 m.
 
+
+
+
+
+
 How to convert from (SC)XML to plain JANI?
 --------------------------------------------
+
+But writing a JANI model by hand is quite difficult. Therefore we also developed an approach to directly extract a JANI model from the robotic system specified in (SC)XML files, e.g., for the ROS nodes, the environment, the behavior tree, and the interaction of those components. 
+
+Running the script
+`````````````````````
+
 A full system model can be converted into a model-checkable JANI file as follows.
+
+.. code-block:: bash
+
+    scxml_to_jani path_to_main.xml
+
+
+Structure of input
+`````````````````````
 
 The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_. With the following content:
 
@@ -82,6 +105,10 @@ The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/c
 
 All of those components are converted into one JANI DTMC model by the ``scxml_to_jani`` tool.
 
+
+Example
+`````````
+
 We demonstrate the usage of this conversion for a full model based on an example of a battery which is continuously drained. 
 All input files can be found in this `folder <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example>`_. The core functionality of the battery drainer is implemented in `battery_drainer.scxml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_drainer.scxml>`_. 
 The battery is drained by 1% at a frequency of 1 Hz given by the ros time rate ``my_timer``.
@@ -100,3 +127,4 @@ How to model check the robotic system?
 ----------------------------------------
 
 The resulting JANI model from one of the approaches above can then be given to any model checker accepting JANI as an input format and being able to handle DTMC models. This could for example be the `Storm SMC extension smc-storm <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC Storm for further details.
+It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
