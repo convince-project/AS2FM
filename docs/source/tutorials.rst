@@ -5,13 +5,18 @@ The scripts have been tested with Python 3.10 and pip version 24.0.
 
 Installation
 --------------
-To run the Python script install the required dependencies with the following commands:
+To run the Python scripts install the required dependencies with the following commands:
 
 .. code-block:: bash
 
     python3 -m pip install mc_toolchain_jani_common/
     python3 -m pip install jani_generator/
     python3 -m pip install scxml_converter/
+
+
+To run the ``scxml_converter`` also ROS has to be installed, for example `ROS Humble <https://docs.ros.org/en/humble/index.html>`_.
+
+
 
 How to convert from CONVINCE robotic JANI to plain JANI?
 -----------------------------------------------------------
