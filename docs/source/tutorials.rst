@@ -14,7 +14,7 @@ To run the Python scripts install the required dependencies with the following c
     python3 -m pip install scxml_converter/
 
 
-To run the ``scxml_converter`` also ROS has to be installed, for example `ROS Humble <https://docs.ros.org/en/humble/index.html>`_.
+To run the ``scxml_converter`` also ROS has to be installed, for example `ROS Humble <https://docs.ros.org/en/humble/index.html>`_. Make sure to source ROS before running the ``scxml_converter`` by executing ``source /opt/ros/humble/setup.bash``.
 
 
 
