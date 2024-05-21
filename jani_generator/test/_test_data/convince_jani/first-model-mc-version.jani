@@ -65,8 +65,8 @@
                     "boundaries": {},
                     "obstacles": {},
                     "pose": {
-                        "x_coord": 0.5,
-                        "y_coord": 0.5,
+                        "x": 0.5,
+                        "y": 0.5,
                         "theta": 3
                     }
                 },
@@ -337,7 +337,7 @@
 
     "properties": [
         {
-            "comment": "What is the maximal probability that the robot will eventually reach position (3,5). The correct result is 1, because it moves randomly and in this model can always free itself by rotating to move around obstacles it bumped in",
+            "comment": "What is the maximal probability that the robot will eventually reach position (1.0,1.0) with an error of 0.05. The correct result is 1, because it moves randomly and in this model can always free itself by rotating to move around obstacles it bumped in",
             "name": "go-to-position",
             "expression": {
                 "op": "filter",
