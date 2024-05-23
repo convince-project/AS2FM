@@ -42,10 +42,10 @@ Let's convert a first simple robotic JANI model. An example can be found in `her
     :width: 200
     :alt: An image illustrating the room's shape.
 
-Lengths are given in meters. 
+The lower left corner is at coordinates (0,0) and the upper right corner at coordinates (3,5). Lengths are given in meters, which means that the room has a dimension of 3x5 m with a corner of 0.5m at the top left. 
 The robot is placed at coordinates (0.5, 0.5) initially, and has a round shape with a radius of 0.3 m and a height of 0.2 m. In the small and simple example there are no further obstacles and the robot drives with a linear and angular velocity of 0.5 m/s and 0.5 rad/s, respectively.
 
-The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and and the conversion to and from floats to integers. The latter is only necessary to make the example run in Storm because the tool currently does not support transient floats.
+The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and the conversion to and from floats to integers. The latter is only necessary to make the example run in Storm because the tool currently does not support transient floats.
 
 .. image:: graphics/dtmc.PNG
     :width: 800
