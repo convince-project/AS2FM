@@ -19,7 +19,7 @@ from typing import Dict
 from jani_generator.jani_entries.jani_expression_generator import minus_operator, plus_operator, \
     equal_operator, max_operator, min_operator, greater_equal_operator, lower_operator, \
     and_operator, or_operator, if_operator, multiply_operator, divide_operator, pow_operator, \
-    abs_operator, floor_operator
+    abs_operator, floor_operator, modulo_operator
 from jani_generator.jani_entries import JaniExpression, JaniConstant
 from math import pi
 
@@ -123,6 +123,16 @@ def dot2d_operator(x1=None, y1=None, x2=None, y2=None, *, exp=None) -> JaniExpre
     return plus_operator(multiply_operator(exp_x1, exp_x2), multiply_operator(exp_y1, exp_y2))
 
 
+def round_operator(value=None, *, exp=None) -> JaniExpression:
+    if exp is not None:
+        assert exp.op == "round"
+        exp_value = exp.operands["exp"]
+    else:
+        exp_value = value
+    assert exp_value is not None, "The value to round must be provided"
+    return floor_operator(plus_operator(exp_value, 0.5))
+
+
 def to_cm_operator(value=None, *, exp=None) -> JaniExpression:
     if exp is not None:
         assert exp.op == "to_cm"
@@ -130,7 +140,7 @@ def to_cm_operator(value=None, *, exp=None) -> JaniExpression:
     else:
         exp_value = value
     assert exp_value is not None, "The value to convert in cm must be provided"
-    return floor_operator(multiply_operator(exp_value, 100.0))
+    return round_operator(multiply_operator(exp_value, 100.0))
 
 
 def to_m_operator(value=None, *, exp=None) -> JaniExpression:
@@ -150,7 +160,9 @@ def to_deg_operator(value=None, *, exp=None) -> JaniExpression:
     else:
         exp_value = value
     assert exp_value is not None, "The value to convert in degrees must be provided"
-    return floor_operator(multiply_operator(exp_value, 180.0 / pi))
+    # TODO: Use jani constants instead of the numeric PI value
+    deg_val = round_operator(multiply_operator(exp_value, 180.0 / pi))
+    return modulo_operator(deg_val, 360)
 
 
 def to_rad_operator(value=None, *, exp=None) -> JaniExpression:
@@ -318,13 +330,11 @@ def __expression_distance_to_point(jani_expression: JaniExpression, jani_constan
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "distance_to_point"
     robot_name = jani_expression.operands["robot"].identifier
-    target_x = expand_expression(jani_expression.operands["x"], jani_constants)
-    target_y = expand_expression(jani_expression.operands["y"], jani_constants)
+    target_x_cm = to_cm_operator(expand_expression(jani_expression.operands["x"], jani_constants))
+    target_y_cm = to_cm_operator(expand_expression(jani_expression.operands["y"], jani_constants))
     robot_x_cm = f"robots.{robot_name}.pose.x_cm"
     robot_y_cm = f"robots.{robot_name}.pose.y_cm"
-    robot_x = to_m_operator(value=robot_x_cm)
-    robot_y = to_m_operator(value=robot_y_cm)
-    return norm2d_operator(minus_operator(robot_x, target_x), minus_operator(robot_y, target_y))
+    return to_m_operator(norm2d_operator(minus_operator(robot_x_cm, target_x_cm), minus_operator(robot_y_cm, target_y_cm)))
 
 
 def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
