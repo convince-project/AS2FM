@@ -274,40 +274,8 @@
                                 }
                             },
                             {
-                                "index": 2,
-                                "ref": "robots.r2d2.pose.theta",
-                                "value": {
-                                    "op": "-",
-                                    "left": "robots.r2d2.pose.theta",
-                                    "right": {
-                                        "op": "*",
-                                        "left": {
-                                            "op": "*",
-                                            "left": 2,
-                                            "right": {
-                                                "constant": "π"
-                                            }
-                                        },
-                                        "right": {
-                                            "op": "floor",
-                                            "exp": {
-                                                "op": "/",
-                                                "left": "robots.r2d2.pose.theta",
-                                                "right": {
-                                                    "op": "*",
-                                                    "left": 2,
-                                                    "right": {
-                                                        "constant": "π"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            {
                                 "comment": "convert pose.theta to degrees",
-                                "index": 3,
+                                "index": 2,
                                 "ref": "robots.r2d2.pose.theta_deg",
                                 "value": {
                                     "op": "to_deg",
