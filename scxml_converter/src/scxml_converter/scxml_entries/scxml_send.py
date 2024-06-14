@@ -17,10 +17,13 @@
 Container for the SCXML send action, used to send events and data. In XML, it has the tag `send`.
 """
 
+from typing import List, Optional
+from scxml_converter.scxml_entries import ScxmlParam
+
 
 class ScxmlSend:
     """This class represents a send action."""
-    def __init__(self):
+    def __init__(self, event: str, target: str, params: Optional[List[ScxmlParam]] = None):
         pass
 
     def check_validity(self) -> bool:
