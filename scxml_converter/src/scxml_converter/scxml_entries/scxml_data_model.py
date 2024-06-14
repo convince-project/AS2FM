@@ -14,24 +14,14 @@
 # limitations under the License.
 
 """
-A single transition in SCXML. In XML, it has the tag `transition`.
+Container for the variables defined in the SCXML model. In XML, it has the tag `datamodel`.
 """
 
-from typing import List, Optional, Union
 
-ScxmlExecutableEntries = Union[ScxmlSend, ScxmlIf]
-
-
-class ScxmlTransition:
-    """This class represents a single scxml state."""
-    def __init__(self,
-                 target: str, events: Optional[List[str]] = None,
-                 condition: Optional[str] = None,
-                 body: Optional[List[ScxmlExecutableEntries]] = None):
-        self._target = target
-        self._body = body
-        self._events = events
-        self._condition = condition
+class ScxmlDataModel:
+    """This class represents the variables defined in the model."""
+    def __init__(self):
+        pass
 
     def check_validity(self) -> bool:
         pass

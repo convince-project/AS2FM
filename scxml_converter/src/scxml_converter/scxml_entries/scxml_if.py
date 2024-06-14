@@ -14,28 +14,17 @@
 # limitations under the License.
 
 """
-The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
+Container for conditional execution in a SCXML model. In XML, it has the tag `if`.
 """
 
 
-class ScxmlRoot:
-    """This class represents a whole scxml model, that is used to define specific skills."""
-    def __init__(self, name, initial_state):
-        self._name = name
-        self._version = "1.0"  # This is the only version mentioned in the official documentation
-        self._initial_state = initial_state
-        self._states = []
-        self._data_model = None
+class ScxmlIf:
+    """This class represents SCXML conditionals."""
+    def __init__(self):
+        pass
 
     def check_validity(self) -> bool:
         pass
-
-    def add_state(self, state):
-        self._states.append(state)
-
-    def set_data_model(self, data_model):
-        assert self._data_model is None, "Data model already set"
-        self._data_model = data_model
 
     def as_xml(self):
         pass

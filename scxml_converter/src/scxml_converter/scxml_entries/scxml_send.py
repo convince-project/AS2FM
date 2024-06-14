@@ -14,23 +14,14 @@
 # limitations under the License.
 
 """
-A single state in SCXML. In XML, it has the tag `state`.
+Container for the SCXML send action, used to send events and data. In XML, it has the tag `send`.
 """
 
-from typing import List, Optional, Union
 
-ScxmlExecutableEntries = Union[ScxmlTransition, ScxmlSend, ScxmlIf]
-
-
-class ScxmlState:
-    """This class represents a single scxml state."""
-    def __init__(self, *,
-                 on_entry: Optional[List[ScxmlExecutableEntries]] = None,
-                 on_exit: Optional[List[ScxmlExecutableEntries]] = None,
-                 body: Optional[List[ScxmlTransition]] = None):
-        self._on_entry = on_entry
-        self._on_exit = on_exit
-        self._body = body
+class ScxmlSend:
+    """This class represents a send action."""
+    def __init__(self):
+        pass
 
     def check_validity(self) -> bool:
         pass
