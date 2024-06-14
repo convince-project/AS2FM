@@ -14,18 +14,17 @@
 # limitations under the License.
 
 """
-Facilitation conversion between ScXML flavors.
+Facilitation conversion between SCXML flavors.
 
 This module provides functionalities to convert the ROS-specific macros
-into generic ScXML code.
+into generic SCXML code.
 """
 
 import xml.etree.ElementTree as ET
-from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
-from mc_toolchain_jani_common.common import (ValidTypes, remove_namespace,
-                                          ros_type_name_to_python_type)
+from mc_toolchain_jani_common.common import (remove_namespace,
+                                             ros_type_name_to_python_type)
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 
@@ -110,9 +109,9 @@ def convert_elem(elem: ET.Element,
                  timers: Dict[str, float],
                  timer_count: Dict[str, int]
                  ) -> bool:
-    """Convert an element from the ScXML file.
+    """Convert an element from the SCXML file.
 
-    This takes ROS-specific elements and converts them into generic ScXML
+    This takes ROS-specific elements and converts them into generic SCXML
     elements.
 
     :param elem: The element to convert.
@@ -208,10 +207,10 @@ def convert_elem(elem: ET.Element,
 
 
 def scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
-    """Convert one ScXML file that contains ROS-specific tags.
+    """Convert one SCXML file that contains ROS-specific tags.
 
-    :param input_file: The input ScXML file.
-    :return: The converted ScXML and the timers as a list of tuples.
+    :param input_file: The input SCXML file.
+    :return: The converted SCXML and the timers as a list of tuples.
              Each tuple contains the timer name and the rate in Hz.
     """
     ET.register_namespace('', 'http://www.w3.org/2005/07/scxml')
@@ -221,7 +220,7 @@ def scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
         print(">>>>")
         print(input_xml)
         print(">>>>")
-        raise ValueError(f"Error parsing XML: {e}")    
+        raise ValueError(f"Error parsing XML: {e}")
     type_per_topic = {}
     subscribed_topics = []
     published_topics = []
