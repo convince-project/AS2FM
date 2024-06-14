@@ -18,16 +18,16 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
+from scxml_converter.scxml_entries import ScxmlExecutionBody, valid_execution_body
 
-from scxml_converter.scxml_entries import ScxmlExecutableEntries
+from xml.etree import ElementTree as ET
 
 
 class ScxmlTransition:
     """This class represents a single scxml state."""
     def __init__(self,
-                 target: str, events: Optional[List[str]] = None,
-                 condition: Optional[str] = None,
-                 body: Optional[List[ScxmlExecutableEntries]] = None):
+                 target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
+                 body: Optional[ScxmlExecutionBody] = None):
         """
         Generate a new transition. Currently, transitions must have a target.
 
@@ -42,7 +42,29 @@ class ScxmlTransition:
         self._condition = condition
 
     def check_validity(self) -> bool:
-        pass
+        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_events = self._events is None or \
+            (isinstance(self._events, list) and all(isinstance(event, str) for event in self._events))
+        valid_condition = self._condition is None or (isinstance(self._condition, str) and len(self._condition) > 0)
+        valid_body = self._body is None or valid_execution_body(self._body)
+        if not valid_target:
+            print("Error: SCXML transition: target is not valid.")
+        if not valid_events:
+            print("Error: SCXML transition: events are not valid.")
+        if not valid_condition:
+            print("Error: SCXML transition: condition is not valid.")
+        if not valid_body:
+            print("Error: SCXML transition: executable content is not valid.")
+        return valid_target and valid_events and valid_condition and valid_body
 
-    def as_xml(self):
-        pass
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "SCXML: found invalid transition."
+        transition_xml = ET.Element('transition', {"target": self._target})
+        if self._events is not None:
+            transition_xml.set("event", " ".join(self._events))
+        if self._condition is not None:
+            transition_xml.set("cond", self._condition)
+        if self._body is not None:
+            for executable_entry in self._body:
+                transition_xml.append(executable_entry.as_xml())
+        return transition_xml

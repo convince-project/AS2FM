@@ -17,14 +17,25 @@
 Container for a single SCXML variable assignment. In XML, it has the tag `assign`.
 """
 
+from xml.etree import ElementTree as ET
+
 
 class ScxmlAssign:
     """This class represents a variable assignment."""
-    def __init__(self):
-        pass
+    def __init__(self, name: str, expr: str):
+        self.name = name
+        self.expr = expr
 
     def check_validity(self) -> bool:
-        pass
+        # TODO: Check that the location to assign exists in the datamodel
+        valid_name = isinstance(self.name, str) and len(self.name) > 0
+        valid_expr = isinstance(self.expr, str) and len(self.expr) > 0
+        if not valid_name:
+            print("Error: SCXML assign: name is not valid.")
+        if not valid_expr:
+            print("Error: SCXML assign: expr is not valid.")
+        return valid_name and valid_expr
 
-    def as_xml(self):
-        pass
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "SCXML: found invalid assign object."
+        return ET.Element('assign', {"location": self.name, "expr": self.expr})

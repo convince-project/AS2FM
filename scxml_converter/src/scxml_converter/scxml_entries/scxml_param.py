@@ -32,25 +32,25 @@ class ScxmlParam:
     def check_validity(self) -> bool:
         valid_name = len(self._name) > 0
         if not valid_name:
-            print("Error: SCXML Param's name is not valid")
+            print("Error: SCXML param: name is not valid")
         valid_expr = isinstance(self._expr, str) and len(self._expr) > 0 and self._location is None
         valid_location = isinstance(self._location, str) and len(self._location) > 0 and self._expr is None
         # Print possible errors
         if self._expr is not None:
             if not isinstance(self._expr, str) or len(self._expr) == 0:
-                print("Error: SCXML Param's expr is not valid")
+                print("Error: SCXML param: expr is not valid")
         if self._location is not None:
             if not isinstance(self._location, str) or len(self._location) == 0:
-                print("Error: SCXML Param's location is not valid")
+                print("Error: SCXML param: location is not valid")
         if self._expr is not None and self._location is not None:
-            print("Error: SCXML Param's expr and location are both set")
+            print("Error: SCXML param: expr and location are both set")
         if self._expr is None and self._location is None:
-            print("Error: SCXML Param's expr and location are both unset")
+            print("Error: SCXML param: expr and location are both unset")
 
         return valid_name and (valid_expr or valid_location)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"SCXML Param named {self._name} is not valid"
+        assert self.check_validity(), "SCXML: found invalid param."
         xml_param = ET.Element('param', {"name": self._name})
         if self._expr is not None:
             xml_param.set("expr", self._expr)

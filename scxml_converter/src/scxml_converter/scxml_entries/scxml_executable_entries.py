@@ -17,8 +17,31 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import Union
+from typing import List, Union
 
 from scxml_converter.scxml_entries import ScxmlAssign, ScxmlSend, ScxmlIf
 
 ScxmlExecutableEntries = Union[ScxmlAssign, ScxmlIf, ScxmlSend]
+ScxmlExecutionBody = List[ScxmlExecutableEntries]
+
+
+def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
+    """
+    Check if an execution body is valid.
+
+    :param execution_body: The execution body to check
+    :return: True if the execution body is valid, False otherwise
+    """
+    valid = isinstance(execution_body, list)
+    if not valid:
+        print("Error: SCXML execution body: invalid type found: expected a list.")
+    for entry in execution_body:
+        if not isinstance(entry, ScxmlExecutableEntries):
+            valid = False
+            print("Error: SCXML execution body: invalid entry type found.")
+            break
+        if not entry.check_validity():
+            valid = False
+            print("Error: SCXML execution body: invalid entry content found.")
+            break
+    return valid
