@@ -100,6 +100,7 @@ def _parse_time_element(time_element: ET.Element) -> int:
     return int(time_element.attrib["value"]) * TIME_MULTIPLIERS[time_unit]
 
 
+#  TODO: Move this - this is XML (not SCXML) 
 def interpret_top_level_xml(xml_path: str) -> JaniModel:
     """
     Interpret the top-level XML file as a Jani model.
