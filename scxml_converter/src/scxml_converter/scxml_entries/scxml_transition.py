@@ -59,12 +59,12 @@ class ScxmlTransition:
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
-        transition_xml = ET.Element('transition', {"target": self._target})
+        xml_transition = ET.Element('transition', {"target": self._target})
         if self._events is not None:
-            transition_xml.set("event", " ".join(self._events))
+            xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:
-            transition_xml.set("cond", self._condition)
+            xml_transition.set("cond", self._condition)
         if self._body is not None:
             for executable_entry in self._body:
-                transition_xml.append(executable_entry.as_xml())
-        return transition_xml
+                xml_transition.append(executable_entry.as_xml())
+        return xml_transition
