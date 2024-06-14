@@ -14,6 +14,8 @@
     <state id="initial">
         <transition event="bt_tick" target="initial">
             <send event="ros_topic.charge" />
+            <!-- Let's assume this is always successful. -->
+            <send event="bt_success" />
         </transition>
     </state>
 
