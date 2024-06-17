@@ -19,6 +19,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 
 """
 
+from enum import Enum, auto
 from typing import List
 import os
 import xml.etree.ElementTree as ET
@@ -28,6 +29,24 @@ import networkx as nx
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
+
+class BT_EVENT_TYPE(Enum):
+    """Event types for Behavior Tree."""
+    TICK = auto()
+    SUCCESS = auto()
+    FAILURE = auto()
+    RUNNING = auto()
+
+    def from_str(event_name: str) -> 'BT_EVENT_TYPE':
+        event_name = event_name.replace('event=', '')
+        event_name = event_name.replace('"', '')
+        event_name = event_name.replace('bt_', '')
+        return BT_EVENT_TYPE[event_name.upper()]
+
+
+def bt_event_name(node_id: str, event_type: BT_EVENT_TYPE) -> str:
+    """Return the event name for the given node and event type."""
+    return f'bt_{node_id}_{event_type.name.lower()}'
 
 
 def bt_converter(
@@ -64,13 +83,28 @@ def bt_converter(
         if bt_graph.nodes[node]['category'] == NODE_CAT.LEAF:
             assert 'NAME' in bt_graph.nodes[node], 'Leaf node must have a type.'
             node_type = bt_graph.nodes[node]['NAME']
+            node_id = node
             assert node_type in bt_plugins_scxml, \
                 f'Leaf node must have a plugin. {node_type} not found.'
-            instance_name = f'{node}_{node_type}'
+            instance_name = f'{node_id}_{node_type}'
             output_fname = os.path.join(output_path, f'{instance_name}.scxml')
+            this_plugin_content = bt_plugins_scxml[node_type]
+            event_names_to_replace = [
+                f'bt_{t}' for t in [
+                    'tick', 'success', 'failure', 'running']]
+            for event_name in event_names_to_replace:
+                declaration_old = f'event="{event_name}"'
+                new_event_name = bt_event_name(
+                    node_id, BT_EVENT_TYPE.from_str(event_name))
+                declaration_new = f'event="{new_event_name}"'
+                this_plugin_content = this_plugin_content.replace(
+                    declaration_old, declaration_new)
             # TODO: Replace arguments from the BT xml file.
             with open(output_fname, 'w', encoding='utf-8') as f:
                 f.write(bt_plugins_scxml[node_type])
 
     fsm_graph = Bt2FSM(bt_graph).convert()
+    output_file_bt = os.path.join(output_path, 'bt.scxml')
+    with open(output_file_bt, 'w', encoding='utf-8') as f:
+        f.write("<!-- TODO -->")
     print(nx.info(fsm_graph))

@@ -43,12 +43,28 @@ def test_scxml_w_ros_to_plain_jani():
 def test_bt_to_scxml():
     input_file = os.path.join(os.path.dirname(__file__),
                               '_test_data', 'battery_drainer_charge', 'bt.xml')
-    output_file = os.path.join(os.path.dirname(__file__),
-                               '_test_data', 'expected_output', 'bt.scxml')
+    output_folder = os.path.join(os.path.dirname(__file__),
+                                 'output')
+    output_file_bt = os.path.join(output_folder, 'bt.scxml')
     plugins = [os.path.join(os.path.dirname(__file__),
                             '_test_data', 'battery_drainer_charge', f)
                 for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
-    bt_converter(input_file, plugins)
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    else:
+        for f in os.listdir(output_folder):
+            os.remove(os.path.join(output_folder, f))
+
+    bt_converter(input_file, plugins, output_folder)
+
+    files = os.listdir(output_folder)
+    assert len(files) == 3, \
+        f"Expected 3 files, found {len(files)}"
+        # 1 for the main BT and 2 for the plugins
+
+    for f in os.listdir(output_folder):
+        os.remove(os.path.join(output_folder, f))
 
 
 if __name__ == '__main__':
