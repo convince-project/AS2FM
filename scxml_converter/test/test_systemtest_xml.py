@@ -16,6 +16,7 @@
 import os
 from test_utils import canonicalize_xml
 
+from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import scxml_converter
 
 
@@ -39,5 +40,16 @@ def test_scxml_w_ros_to_plain_jani():
         #     assert len(sms) == 1, "Must only have the battery state machine."
 
 
+def test_bt_to_scxml():
+    input_file = os.path.join(os.path.dirname(__file__),
+                              '_test_data', 'battery_drainer_charge', 'bt.xml')
+    output_file = os.path.join(os.path.dirname(__file__),
+                               '_test_data', 'expected_output', 'bt.scxml')
+    plugins = [os.path.join(os.path.dirname(__file__),
+                            '_test_data', 'battery_drainer_charge', f)
+                for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
+    bt_converter(input_file, plugins)
+
+
 if __name__ == '__main__':
-    test_scxml_w_ros_to_plain_jani()
+    test_bt_to_scxml()

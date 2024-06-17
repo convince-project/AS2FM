@@ -17,7 +17,8 @@ classifiers = [
 ]
 keywords = []
 dependencies = [
-    
+    "networkx",
+    "btlib",
 ]
 requires-python = ">=3.7"
 
