@@ -36,7 +36,7 @@ class JaniConstant:
     def value(self) -> JaniValue:
         assert self._value is not None, "Value not set"
         jani_value = self._value.value
-        assert jani_value is not None and jani_value.is_valid(), "The expression cannot be evaluated to a constant value"
+        assert jani_value is not None and jani_value.is_valid(), "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
     def jani_type_from_string(str_type: str) -> ValidTypes:
