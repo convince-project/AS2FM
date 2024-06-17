@@ -85,6 +85,7 @@ class ScxmlIf:
 class ScxmlSend:
     """This class represents a send action."""
     def __init__(self, event: str, target: str, params: Optional[List[ScxmlParam]] = None):
+        # TODO: Right now, it seems only a single target is allowed in the SCXML standard. Needs clarification
         self._event = event
         self._target = target
         self._params = params
