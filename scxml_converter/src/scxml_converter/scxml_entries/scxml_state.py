@@ -36,6 +36,9 @@ class ScxmlState:
         self._on_exit = on_exit
         self._body = body
 
+    def get_id(self) -> str:
+        return self._id
+
     def check_validity(self) -> bool:
         valid_id = isinstance(self._id, str) and len(self._id) > 0
         valid_on_entry = self._on_entry is None or valid_execution_body(self._on_entry)

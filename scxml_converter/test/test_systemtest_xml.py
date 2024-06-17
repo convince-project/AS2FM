@@ -14,18 +14,9 @@
 # limitations under the License.
 
 import os
-import xml.etree.ElementTree as ET
+from test_utils import canonicalize_xml
 
 from scxml_converter.scxml_converter import scxml_converter
-
-
-def _canonicalize_xml(xml: str) -> str:
-    """Helper function to make XML comparable."""
-    # sort attributes
-    et = ET.fromstring(xml)
-    for elem in et.iter():
-        elem.attrib = {k: elem.attrib[k] for k in sorted(elem.attrib.keys())}
-    return ET.tostring(et, encoding='unicode')
 
 
 def test_scxml_w_ros_to_plain_jani():
@@ -40,12 +31,13 @@ def test_scxml_w_ros_to_plain_jani():
         out = sms[0]
         with open(output_file, 'r', encoding='utf-8') as f_o:
             expected_output = f_o.read()
-        assert _canonicalize_xml(out) == _canonicalize_xml(expected_output)
+        assert canonicalize_xml(out) == canonicalize_xml(expected_output)
 
         # if fname == 'battery_drainer.scxml':
         #     assert len(sms) == 2, "Must also have the time state machine."
         # elif fname == 'battery_manager.scxml':
         #     assert len(sms) == 1, "Must only have the battery state machine."
+
 
 if __name__ == '__main__':
     test_scxml_w_ros_to_plain_jani()
