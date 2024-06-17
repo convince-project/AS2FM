@@ -36,6 +36,13 @@ class ScxmlTransition:
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
+        assert isinstance(target, str) and len(target) > 0, "Error SCXML transition: target must be a non-empty string."
+        assert events is None or (isinstance(events, list) and
+                                  all((isinstance(event, str) and len(event) > 0) for event in events)), \
+            "Error SCXML transition: events must be a list of non-empty strings."
+        assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
+            "Error SCXML transition: condition must be a non-empty string."
+        assert body is None or valid_execution_body(body), "Error SCXML transition: invalid body provided."
         self._target = target
         self._body = body
         self._events = events
@@ -50,7 +57,9 @@ class ScxmlTransition:
         if not valid_target:
             print("Error: SCXML transition: target is not valid.")
         if not valid_events:
-            print("Error: SCXML transition: events are not valid.")
+            print("Error: SCXML transition: events are not valid.\nList of events:")
+            for event in self._events:
+                print(f"\t-'{event}'.")
         if not valid_condition:
             print("Error: SCXML transition: condition is not valid.")
         if not valid_body:

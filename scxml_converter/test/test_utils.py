@@ -19,7 +19,14 @@ from xml.etree import ElementTree as ET
 def canonicalize_xml(xml: str) -> str:
     """Helper function to make XML comparable."""
     # sort attributes
+    assert isinstance(xml, str), f"Error: invalid input: expected str, found {type(xml)}"
     et = ET.fromstring(xml)
     for elem in et.iter():
         elem.attrib = {k: elem.attrib[k] for k in sorted(elem.attrib.keys())}
     return ET.tostring(et, encoding='unicode')
+
+
+def remove_empty_lines(text: str) -> str:
+    """Remove empty lines from a string."""
+    assert isinstance(text, str), f"Error: invalid input: expected str, found {type(text)}"
+    return "\n".join([line for line in text.split("\n") if line.strip()])

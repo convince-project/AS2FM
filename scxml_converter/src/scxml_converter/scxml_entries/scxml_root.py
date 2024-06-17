@@ -76,4 +76,5 @@ class ScxmlRoot:
             xml_root.append(self._data_model.as_xml())
         for state in self._states:
             xml_root.append(state.as_xml())
+        ET.indent(xml_root, "    ")
         return xml_root
