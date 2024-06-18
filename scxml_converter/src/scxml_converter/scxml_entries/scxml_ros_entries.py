@@ -51,6 +51,11 @@ class RosTimeRate:
         return xml_time_rate
 
 
+class RosTopicPublisher:
+    def __init__(self) -> None:
+        pass
+
+
 class RosRateCallback(ScxmlTransition):
     """Callback that triggers each time the associated timer ticks."""
 
@@ -107,4 +112,4 @@ class RosField(ScxmlParam):
     pass
 
 
-ScxmlRosDeclarations = Union[RosTimeRate]
+ScxmlRosDeclarations = Union[RosTimeRate, RosTopicPublisher]
