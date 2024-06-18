@@ -27,3 +27,6 @@ dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpve
 
 [isort]
 profile = "google"
+
+[flake8]
+max_line_length = 100
