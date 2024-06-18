@@ -28,10 +28,9 @@ import networkx as nx
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlDataModel,
-                                           ScxmlParam, ScxmlRoot, ScxmlSend,
-                                           ScxmlState, ScxmlTransition)
-from scxml_converter.scxml_entries.scxml_transition import RosRateCallback
+from scxml_converter.scxml_entries import (RosRateCallback, ScxmlRoot,
+                                           ScxmlSend, ScxmlState,
+                                           ScxmlTransition)
 
 
 class BT_EVENT_TYPE(Enum):
