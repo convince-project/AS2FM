@@ -38,7 +38,7 @@ class ScxmlState:
 
     def get_id(self) -> str:
         return self._id
-    
+
     def add_transition(self, transition: ScxmlTransition):
         if self._body is None:
             self._body = []

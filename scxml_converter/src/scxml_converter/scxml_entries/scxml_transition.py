@@ -18,7 +18,8 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from scxml_converter.scxml_entries import ScxmlExecutionBody, valid_execution_body
+from scxml_converter.scxml_entries import (ScxmlExecutionBody, ScxmlExecutableEntries,
+                                           valid_execution_body)
 
 from xml.etree import ElementTree as ET
 
@@ -27,7 +28,7 @@ class ScxmlTransition:
     """This class represents a single scxml state."""
     def __init__(self,
                  target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
-                 body: Optional[ScxmlExecutionBody] = None):
+                 body: Optional[ScxmlExecutableEntries] = None):
         """
         Generate a new transition. Currently, transitions must have a target.
 
@@ -53,9 +54,12 @@ class ScxmlTransition:
             self._events = []
         self._events.append(event)
 
-    def set_execution_body(self, body: ScxmlExecutionBody):
-        assert valid_execution_body(body), "Error SCXML transition: invalid body provided."
-        self._body = body
+    def add_body_executable_entry(self, exec_entry: ScxmlExecutionBody):
+        if self._body is None:
+            self._body = []
+        self._body.append(exec_entry)
+        assert valid_execution_body(self._body), \
+            "Error SCXML transition: invalid body after extension."
 
     def check_validity(self) -> bool:
         valid_target = isinstance(self._target, str) and len(self._target) > 0
