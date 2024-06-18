@@ -60,8 +60,10 @@ def test_bt_to_scxml():
 
     files = os.listdir(output_folder)
     assert len(files) == 3, \
-        f"Expected 3 files, found {len(files)}"
+        f"Expecting 3 files, found {len(files)}"
         # 1 for the main BT and 2 for the plugins
+    assert os.path.exists(output_file_bt), \
+        f"Expecting {output_file_bt} to exist, but it does not."
 
     for f in os.listdir(output_folder):
         os.remove(os.path.join(output_folder, f))
