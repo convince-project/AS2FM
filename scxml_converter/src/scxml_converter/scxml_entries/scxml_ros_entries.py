@@ -15,7 +15,7 @@
 
 """Declaration of ROS-Specific SCXML tags extensions."""
 
-from typing import Optional
+from typing import Optional, Union
 from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, valid_execution_body)
 from xml.etree import ElementTree as ET
@@ -83,7 +83,13 @@ class RosRateCallback(ScxmlTransition):
         return valid_timer and valid_target and valid_body
 
     def as_xml(self) -> ET.Element:
-        pass
+        assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
+        xml_rate_callback = ET.Element(
+            "ros_rate_callback", {"name": self._timer_name, "target": self._target})
+        if self._body is not None:
+            for entry in self._body:
+                xml_rate_callback.append(entry.as_xml())
+        return xml_rate_callback
 
 
 class RosTopicCallback(ScxmlTransition):
@@ -91,11 +97,14 @@ class RosTopicCallback(ScxmlTransition):
     pass
 
 
-class ScxmlRosTopicPublish(ScxmlSend):
+class RosTopicPublish(ScxmlSend):
     # TODO
     pass
 
 
-class ScxmlRosField(ScxmlParam):
+class RosField(ScxmlParam):
     # TODO
     pass
+
+
+ScxmlRosDeclarations = Union[RosTimeRate]

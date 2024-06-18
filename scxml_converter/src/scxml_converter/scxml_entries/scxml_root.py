@@ -18,7 +18,7 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
 from typing import List
-from scxml_converter.scxml_entries import ScxmlState, ScxmlDataModel
+from scxml_converter.scxml_entries import ScxmlState, ScxmlDataModel, ScxmlRosDeclarations
 
 from xml.etree import ElementTree as ET
 
@@ -42,6 +42,9 @@ class ScxmlRoot:
     def set_data_model(self, data_model: ScxmlDataModel):
         assert self._data_model is None, "Data model already set"
         self._data_model = data_model
+
+    def add_ros_declaration(self, ros_declaration: ScxmlRosDeclarations):
+        pass
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0

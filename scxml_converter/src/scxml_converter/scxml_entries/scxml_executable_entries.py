@@ -30,13 +30,14 @@ ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 class ScxmlIf:
     """This class represents SCXML conditionals."""
+
     def __init__(self,
                  conditional_executions: List[ConditionalExecutionBody],
                  else_execution: Optional[ScxmlExecutionBody] = None):
         """
         Class representing a conditional execution in SCXML.
 
-        :param conditional_executions: List of pairs of condition and related execution. At least one pair is required.
+        :param conditional_executions: List of (condition - exec. body) pairs. Min n. pairs is one.
         :param else_execution: Execution to be done if no condition is met.
         """
         self._conditional_executions = conditional_executions
@@ -52,7 +53,8 @@ class ScxmlIf:
                 print("Error: SCXML if: invalid conditional execution found.")
             condition, execution = condition_execution
             valid_condition = isinstance(condition, str) and len(condition) > 0
-            valid_execution = isinstance(execution, ScxmlExecutionBody) and execution.check_validity()
+            valid_execution = isinstance(
+                execution, ScxmlExecutionBody) and execution.check_validity()
             if not valid_condition:
                 print("Error: SCXML if: invalid condition found.")
             if not valid_execution:
@@ -62,7 +64,8 @@ class ScxmlIf:
                 break
         valid_else_execution = \
             self._else_execution is None or \
-            (isinstance(self._else_execution, ScxmlExecutionBody) and self._else_execution.check_validity())
+            (isinstance(self._else_execution, ScxmlExecutionBody)
+             and self._else_execution.check_validity())
         if not valid_else_execution:
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
@@ -84,6 +87,7 @@ class ScxmlIf:
 
 class ScxmlSend:
     """This class represents a send action."""
+
     def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
         self._event = event
         self._params = params
@@ -112,6 +116,7 @@ class ScxmlSend:
 
 class ScxmlAssign:
     """This class represents a variable assignment."""
+
     def __init__(self, name: str, expr: str):
         self.name = name
         self.expr = expr
@@ -133,7 +138,8 @@ class ScxmlAssign:
 
 # Get the resolved types from the forward references in ScxmlExecutableEntries
 _ResolvedScxmlExecutableEntries = \
-    tuple(entry._evaluate(globals(), locals(), frozenset()) for entry in get_args(ScxmlExecutableEntries))
+    tuple(entry._evaluate(globals(), locals(), frozenset())
+          for entry in get_args(ScxmlExecutableEntries))
 
 
 print(_ResolvedScxmlExecutableEntries)
