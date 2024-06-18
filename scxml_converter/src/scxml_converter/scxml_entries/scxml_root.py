@@ -17,7 +17,7 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from typing import List
+from typing import List, get_args
 from scxml_converter.scxml_entries import ScxmlState, ScxmlDataModel, ScxmlRosDeclarations
 
 from xml.etree import ElementTree as ET
@@ -31,6 +31,7 @@ class ScxmlRoot:
         self._initial_state: str = None
         self._states: List[ScxmlState] = []
         self._data_model: ScxmlDataModel = None
+        self._ros_declations: List[ScxmlRosDeclarations] = None
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""
@@ -44,7 +45,12 @@ class ScxmlRoot:
         self._data_model = data_model
 
     def add_ros_declaration(self, ros_declaration: ScxmlRosDeclarations):
-        pass
+        assert isinstance(ros_declaration, get_args(ScxmlRosDeclarations)), \
+            "Error: SCXML root: invalid ROS declaration type."
+        assert ros_declaration.check_validity(), "Error: SCXML root: invalid ROS declaration."
+        if self._ros_declations is None:
+            self._ros_declations = []
+        self._ros_declations.append(ros_declaration)
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0
@@ -77,6 +83,9 @@ class ScxmlRoot:
         })
         if self._data_model is not None:
             xml_root.append(self._data_model.as_xml())
+        if self._ros_declations is not None:
+            for ros_declaration in self._ros_declations:
+                xml_root.append(ros_declaration.as_xml())
         for state in self._states:
             xml_root.append(state.as_xml())
         ET.indent(xml_root, "    ")
