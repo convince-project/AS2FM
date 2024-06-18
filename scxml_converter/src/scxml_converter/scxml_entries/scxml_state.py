@@ -38,6 +38,11 @@ class ScxmlState:
 
     def get_id(self) -> str:
         return self._id
+    
+    def add_transition(self, transition: ScxmlTransition):
+        if self._body is None:
+            self._body = []
+        self._body.append(transition)
 
     def check_validity(self) -> bool:
         valid_id = isinstance(self._id, str) and len(self._id) > 0

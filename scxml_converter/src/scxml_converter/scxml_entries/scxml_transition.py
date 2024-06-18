@@ -77,3 +77,8 @@ class ScxmlTransition:
             for executable_entry in self._body:
                 xml_transition.append(executable_entry.as_xml())
         return xml_transition
+
+
+class RosRateCallback(ScxmlTransition):
+    # TODO
+    pass

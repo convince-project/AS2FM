@@ -19,16 +19,20 @@ Convert Behavior Trees (BT xml) to SCXML.
 
 """
 
-from enum import Enum, auto
-from typing import List
 import os
 import xml.etree.ElementTree as ET
+from enum import Enum, auto
+from typing import List
 
 import networkx as nx
-
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlDataModel,
+                                           ScxmlParam, ScxmlRoot, ScxmlSend,
+                                           ScxmlState, ScxmlTransition)
+from scxml_converter.scxml_entries.scxml_transition import RosRateCallback
+
 
 class BT_EVENT_TYPE(Enum):
     """Event types for Behavior Tree."""
@@ -50,16 +54,17 @@ def bt_event_name(node_id: str, event_type: BT_EVENT_TYPE) -> str:
 
 
 def bt_converter(
-        bt_xml_path: str,
-        bt_plugins_scxml_paths: List[str],
-        output_path: str
-    ):
+    bt_xml_path: str,
+    bt_plugins_scxml_paths: List[str],
+    output_folder: str
+):
     """
     Convert a Behavior Tree (BT) in XML format to SCXML.
 
     Args:
         bt_xml_path: The path to the Behavior Tree in XML format.
         bt_plugins_scxml_paths: The paths to the SCXML files of BT plugins.
+        output_folder: The folder where the SCXML files will be saved.
 
     Returns:
         The SCXML representation of the Behavior Tree.
@@ -75,7 +80,7 @@ def bt_converter(
             xml = ET.fromstring(content)
             name = xml.attrib['name']
             assert name not in bt_plugins_scxml, \
-                 f'Plugin name must be unique. {name} already exists.'
+                f'Plugin name must be unique. {name} already exists.'
             bt_plugins_scxml[name] = content
 
     for node in bt_graph.nodes:
@@ -87,7 +92,8 @@ def bt_converter(
             assert node_type in bt_plugins_scxml, \
                 f'Leaf node must have a plugin. {node_type} not found.'
             instance_name = f'{node_id}_{node_type}'
-            output_fname = os.path.join(output_path, f'{instance_name}.scxml')
+            output_fname = os.path.join(
+                output_folder, f'{instance_name}.scxml')
             this_plugin_content = bt_plugins_scxml[node_type]
             event_names_to_replace = [
                 f'bt_{t}' for t in [
@@ -101,10 +107,28 @@ def bt_converter(
                     declaration_old, declaration_new)
             # TODO: Replace arguments from the BT xml file.
             with open(output_fname, 'w', encoding='utf-8') as f:
-                f.write(bt_plugins_scxml[node_type])
+                f.write(this_plugin_content)
 
     fsm_graph = Bt2FSM(bt_graph).convert()
-    output_file_bt = os.path.join(output_path, 'bt.scxml')
+    output_file_bt = os.path.join(output_folder, 'bt.scxml')
+
+    root_tag = ScxmlRoot("bt")
+    for node in fsm_graph.nodes:
+        state = ScxmlState(node)
+        for edge in fsm_graph.edges(node):
+            target = edge[1]
+            transition = ScxmlTransition(target)
+            state.add_transition(transition)
+        if node in ['success', 'failure', 'running']:
+            state.add_transition(
+                ScxmlTransition("wait_for_tick"))
+        root_tag.add_state(state)
+
+    wait_for_tick = ScxmlState("wait_for_tick")
+    wait_for_tick.add_transition(
+        RosRateCallback("tick"))
+    root_tag.add_state(wait_for_tick, initial=True)
+
+
     with open(output_file_bt, 'w', encoding='utf-8') as f:
-        f.write("<!-- TODO -->")
-    print(nx.info(fsm_graph))
+        f.write(ET.tostring(root_tag.as_xml(), encoding='unicode'))
