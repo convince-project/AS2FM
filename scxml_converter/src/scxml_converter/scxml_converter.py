@@ -140,7 +140,7 @@ def convert_elem(elem: ET.Element,
         return True
 
     # Publish #################################################################
-    if tag_wo_ns == 'ros_publish':
+    if tag_wo_ns == 'ros_topic_publish':
         topic = elem.attrib['topic']
         assert topic in type_per_topic
         assert topic in published_topics
@@ -170,7 +170,7 @@ def convert_elem(elem: ET.Element,
         return False
 
     # Callback ################################################################
-    if tag_wo_ns == 'ros_callback':
+    if tag_wo_ns == 'ros_topic_callback':
         topic = elem.attrib['topic']
         assert elem.attrib['topic'] in type_per_topic
         assert elem.attrib['topic'] in subscribed_topics
