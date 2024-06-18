@@ -27,6 +27,7 @@ from scxml_converter.scxml_entries import (ScxmlExecutableEntries,
 
 class ScxmlState:
     """This class represents a single scxml state."""
+
     def __init__(self, id: str, *,
                  on_entry: Optional[ScxmlExecutionBody] = None,
                  on_exit: Optional[ScxmlExecutionBody] = None,
@@ -63,7 +64,8 @@ class ScxmlState:
             valid_body = isinstance(self._body, list)
             if valid_body:
                 for transition in self._body:
-                    valid_transition = isinstance(transition, ScxmlTransition) and transition.check_validity()
+                    valid_transition = isinstance(
+                        transition, ScxmlTransition) and transition.check_validity()
                     if not valid_transition:
                         valid_body = False
                         break

@@ -38,7 +38,7 @@ class RosTimeRate:
 
     def __init__(self, name: str, rate_hz: float):
         self._name = name
-        self._rate_hz = rate_hz
+        self._rate_hz = float(rate_hz)
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
 
     def check_validity(self) -> bool:

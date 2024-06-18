@@ -16,9 +16,11 @@
 import os
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlDataModel,
-                                           ScxmlParam, ScxmlRoot, ScxmlSend,
-                                           ScxmlState, ScxmlTransition)
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot,
+                                           ScxmlSend, ScxmlState, ScxmlTransition,
+                                           RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
+                                           RosRateCallback, RosTopicPublish, RosTopicCallback,
+                                           RosField)
 from test_utils import canonicalize_xml, remove_empty_lines
 
 
@@ -67,5 +69,62 @@ def test_battery_drainer_from_code():
     assert test_xml_string == ref_xml_string
 
 
+def test_battery_drainer_ros_from_code():
+    """
+    Test for scxml_entries generation and conversion to xml (including ROS specific SCXML extension)
+
+    It should support the following xml tree:
+    - scxml
+        - state
+            - onentry
+                - {executable content}
+            - onexit
+                - {executable content}
+            - transition / ros_rate_callback / ros_topic_callback
+                - {executable content}
+        - datamodel
+            - data
+
+        Executable content consists of the following entries:
+        - send
+            - param
+        - ros_topic_publish
+            - field
+        - if / elseif / else
+        - assign
+"""
+    battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
+    battery_drainer_scxml.set_data_model(ScxmlDataModel([("battery_percent", "100")]))
+    ros_topic_sub = RosTopicSubscriber("charge", "std_msgs/Empty")
+    ros_topic_pub = RosTopicPublisher("level", "std_msgs/Int32")
+    ros_timer = RosTimeRate("my_timer", 1)
+    battery_drainer_scxml.add_ros_declaration(ros_topic_sub)
+    battery_drainer_scxml.add_ros_declaration(ros_topic_pub)
+    battery_drainer_scxml.add_ros_declaration(ros_timer)
+
+    use_battery_state = ScxmlState("use_battery")
+    use_battery_state.append_on_entry(
+        RosTopicPublish(ros_topic_pub, [RosField("data", "battery_percent")]))
+    use_battery_state.add_transition(
+        RosRateCallback(ros_timer, "use_battery",
+                        [ScxmlAssign("battery_percent", "battery_percent - 1")]))
+    use_battery_state.add_transition(
+        RosTopicCallback(ros_topic_sub, "use_battery",
+                         [ScxmlAssign("battery_percent", "100")]))
+    battery_drainer_scxml.add_state(use_battery_state, initial=True)
+
+    # Check output xml
+    ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
+                            'input_files', 'battery_drainer.scxml')
+    assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
+    with open(ref_file, 'r', encoding='utf-8') as f_o:
+        expected_output = f_o.read()
+    test_output = ET.tostring(battery_drainer_scxml.as_xml(), encoding='unicode')
+    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+    ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
+    assert test_xml_string == ref_xml_string
+
+
 if __name__ == '__main__':
     test_battery_drainer_from_code()
+    test_battery_drainer_ros_from_code()
