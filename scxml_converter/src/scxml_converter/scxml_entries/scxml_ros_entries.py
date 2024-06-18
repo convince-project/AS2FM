@@ -15,7 +15,7 @@
 
 """Declaration of ROS-Specific SCXML tags extensions."""
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, valid_execution_body)
 from xml.etree import ElementTree as ET
@@ -65,12 +65,34 @@ class RosTimeRate:
 
 class RosTopicPublisher:
     """Object used in SCXML root to declare a new topic publisher."""
+
     def __init__(self, topic_name: str, topic_type: str) -> None:
-        pass
+        self._topic_name = topic_name
+        self._topic_type = topic_type
+        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+
+    def check_validity(self) -> bool:
+        valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
+        valid_type = _check_topic_type_known(self._topic_type)
+        if not valid_name:
+            print("Error: SCXML topic subscriber: topic name is not valid.")
+        if not valid_type:
+            print("Error: SCXML topic subscriber: topic type is not valid.")
+        return valid_name and valid_type
+
+    def get_topic_name(self) -> str:
+        return self._topic_name
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+        xml_topic_publisher = ET.Element(
+            "ros_topic_publisher", {"topic": self._topic_name, "type": self._topic_type})
+        return xml_topic_publisher
 
 
 class RosTopicSubscriber:
     """Object used in SCXML root to declare a new topic subscriber."""
+
     def __init__(self, topic_name: str, topic_type: str) -> None:
         self._topic_name = topic_name
         self._topic_type = topic_type
@@ -137,6 +159,8 @@ class RosRateCallback(ScxmlTransition):
 
 
 class RosTopicCallback(ScxmlTransition):
+    """Object representing a transition to perform when a new ROS msg is received."""
+
     def __init__(
             self, topic: RosTopicSubscriber, target: str,
             body: Optional[ScxmlExecutionBody] = None):
@@ -167,14 +191,64 @@ class RosTopicCallback(ScxmlTransition):
         return xml_topic_callback
 
 
-class RosTopicPublish(ScxmlSend):
-    # TODO
-    pass
-
-
 class RosField(ScxmlParam):
-    # TODO
-    pass
+    """Field of a ROS msg published in a topic."""
+
+    def __init__(self, name: str, expr: str):
+        self._name = name
+        self._expr = expr
+        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
+
+    def check_validity(self) -> bool:
+        valid_name = isinstance(self._name, str) and len(self._name) > 0
+        valid_expr = isinstance(self._expr, str) and len(self._expr) > 0
+        if not valid_name:
+            print("Error: SCXML topic publish field: name is not valid.")
+        if not valid_expr:
+            print("Error: SCXML topic publish field: expr is not valid.")
+        return valid_name and valid_expr
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
+        xml_field = ET.Element("field", {"name": self._name, "expr": self._expr})
+        return xml_field
+
+
+class RosTopicPublish(ScxmlSend):
+    """Object representing the shipping of a ROS msg through a topic."""
+
+    def __init__(self, topic: RosTopicPublisher, fields: Optional[List[RosField]] = None):
+        self._topic = topic.get_topic_name()
+        self._fields = fields
+        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
+
+    def check_validity(self) -> bool:
+        valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
+        valid_fields = self._fields is None or \
+            all([isinstance(field, RosField) for field in self._fields])
+        if not valid_topic:
+            print("Error: SCXML topic publish: topic name is not valid.")
+        if not valid_fields:
+            print("Error: SCXML topic publish: fields are not valid.")
+        return valid_topic and valid_fields
+
+    def append_param(self, param: ScxmlParam) -> None:
+        raise NotImplementedError(
+            "Error: SCXML topic publish: cannot append scxml params, use append_field instead.")
+
+    def append_field(self, field: RosField) -> None:
+        assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
+        if self._fields is None:
+            self._fields = []
+        self._fields.append(field)
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
+        xml_topic_publish = ET.Element("ros_topic_publish", {"topic": self._topic})
+        if self._fields is not None:
+            for field in self._fields:
+                xml_topic_publish.append(field.as_xml())
+        return xml_topic_publish
 
 
 ScxmlRosDeclarations = Union[RosTimeRate, RosTopicPublisher, RosTopicSubscriber]

@@ -105,6 +105,12 @@ class ScxmlSend:
             print("Error: SCXML send: one or more param entries are not valid.")
         return valid_event and valid_params
 
+    def append_param(self, param: ScxmlParam) -> None:
+        assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
+        if self._params is None:
+            self._params = []
+        self._params.append(param)
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element('send', {"event": self._event})
