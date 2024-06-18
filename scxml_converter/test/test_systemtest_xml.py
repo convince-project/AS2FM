@@ -22,10 +22,10 @@ from scxml_converter.scxml_converter import scxml_converter
 
 def test_scxml_w_ros_to_plain_jani():
     for fname in ['battery_manager.scxml', 'battery_drainer.scxml']:
-        input_file = os.path.join(os.path.dirname(__file__),
-                                  '_test_data', 'battery_drainer_charge', fname)
-        output_file = os.path.join(os.path.dirname(__file__),
-                                   '_test_data', 'expected_output', fname)
+        input_file = os.path.join(
+            os.path.dirname(__file__), '_test_data', 'battery_drainer_charge', fname)
+        output_file = os.path.join(
+            os.path.dirname(__file__), '_test_data', 'expected_output', fname)
         with open(input_file, 'r', encoding='utf-8') as f_i:
             input_data = f_i.read()
         sms = scxml_converter(input_data)
@@ -41,15 +41,15 @@ def test_scxml_w_ros_to_plain_jani():
 
 
 def test_bt_to_scxml():
-    input_file = os.path.join(os.path.dirname(__file__),
-                              '_test_data', 'battery_drainer_charge', 'bt.xml')
-    output_folder = os.path.join(os.path.dirname(__file__),
-                                 'output')
+    input_file = os.path.join(
+        os.path.dirname(__file__), '_test_data', 'battery_drainer_charge', 'bt.xml')
+    output_folder = os.path.join(
+        os.path.dirname(__file__), 'output')
     output_file_bt = os.path.join(output_folder, 'bt.scxml')
     plugins = [os.path.join(os.path.dirname(__file__),
                             '_test_data', 'battery_drainer_charge', f)
-                for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
-    
+               for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
+
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     else:
@@ -61,7 +61,7 @@ def test_bt_to_scxml():
     files = os.listdir(output_folder)
     assert len(files) == 3, \
         f"Expecting 3 files, found {len(files)}"
-        # 1 for the main BT and 2 for the plugins
+    # 1 for the main BT and 2 for the plugins
     assert os.path.exists(output_file_bt), \
         f"Expecting {output_file_bt} to exist, but it does not."
 
