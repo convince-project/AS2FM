@@ -28,7 +28,7 @@ class ScxmlTransition:
     """This class represents a single scxml state."""
     def __init__(self,
                  target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
-                 body: Optional[ScxmlExecutableEntries] = None):
+                 body: Optional[ScxmlExecutionBody] = None):
         """
         Generate a new transition. Currently, transitions must have a target.
 
@@ -54,7 +54,7 @@ class ScxmlTransition:
             self._events = []
         self._events.append(event)
 
-    def add_body_executable_entry(self, exec_entry: ScxmlExecutionBody):
+    def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntries):
         if self._body is None:
             self._body = []
         self._body.append(exec_entry)

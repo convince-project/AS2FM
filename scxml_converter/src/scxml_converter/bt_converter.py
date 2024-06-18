@@ -139,7 +139,7 @@ def bt_converter(
                 if target_id in leaf_node_ids:
                     event_name = bt_event_name(
                         target_id, BT_EVENT_TYPE.TICK)
-                    transition.add_body_executable_entry(ScxmlSend(event_name))
+                    transition.append_body_executable_entry(ScxmlSend(event_name))
             state.add_transition(transition)
         if node in ['success', 'failure', 'running']:
             state.add_transition(
