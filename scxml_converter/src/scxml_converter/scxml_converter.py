@@ -105,7 +105,6 @@ def _check_topic_type(
 def convert_elem(elem: ET.Element,
                  parent_map: Dict[ET.Element, ET.Element],
                  type_per_topic: Dict[str, dict],
-                 targets_per_topic: Dict[str, List[str]],
                  subscribed_topics: list,
                  published_topics: list,
                  timers: Dict[str, float],
@@ -131,11 +130,6 @@ def convert_elem(elem: ET.Element,
         imported_type = _ros_type_fields(elem.attrib['type'])
         type_per_topic[elem.attrib['topic']] = imported_type
         published_topics.append(elem.attrib['topic'])
-        topic_target = elem.attrib.get('target', None)
-        if topic_target is not None:
-            assert isinstance(topic_target, str) and len(topic_target) > 0, \
-                "Publisher target must be a non-empty string."
-            targets_per_topic[elem.attrib['topic']].append(topic_target)
         # TODO
         return True
     if tag_wo_ns == 'ros_topic_subscriber':
@@ -154,8 +148,6 @@ def convert_elem(elem: ET.Element,
         event_name = f"ros_topic.{topic}"
         elem.attrib.pop('topic')
         elem.attrib['event'] = event_name
-        if topic in targets_per_topic:
-            elem.attrib['target'] = ",".join(targets_per_topic[topic])
         return False
     if tag_wo_ns == 'field':
         topic = parent_map[elem].attrib['event'].replace('ros_topic.', '')
@@ -186,8 +178,6 @@ def convert_elem(elem: ET.Element,
         event_name = f"ros_topic.{elem.attrib['topic']}"
         elem.attrib.pop('topic')
         elem.attrib['event'] = event_name
-        if topic in targets_per_topic:
-            elem.attrib['target'] = ",".join(targets_per_topic[topic])
         # check children for assignments that may need to change _msg to _event
         for child in elem:
             if remove_namespace(child.tag) == 'assign':
@@ -235,7 +225,6 @@ def scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
         print(">>>>")
         raise ValueError(f"Error parsing XML: {e}")
     type_per_topic = {}
-    targets_per_topic = defaultdict(lambda: [])
     subscribed_topics = []
     published_topics = []
     timers = {}
@@ -247,7 +236,6 @@ def scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
             elem,
             parent_map,
             type_per_topic,
-            targets_per_topic,
             subscribed_topics,
             published_topics,
             timers,

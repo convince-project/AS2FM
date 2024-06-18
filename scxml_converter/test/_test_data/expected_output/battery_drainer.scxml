@@ -12,7 +12,7 @@
 
     <state id="use_battery">
         <onentry>
-            <send event="ros_topic.level" target="BatteryManager">
+            <send event="ros_topic.level">
                 <param name="data" expr="battery_percent" />
             </send>
         </onentry>
