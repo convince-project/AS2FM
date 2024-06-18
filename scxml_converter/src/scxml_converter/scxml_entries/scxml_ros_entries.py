@@ -21,8 +21,20 @@ from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransitio
 from xml.etree import ElementTree as ET
 
 
+def _check_topic_type_known(topic_definition: str) -> bool:
+    """Check if python can import the provided topic definition."""
+    # Check the input type has the expected structure
+    if not (isinstance(topic_definition, str) and topic_definition.count("/") == 1):
+        return False
+    topic_ns, topic_type = topic_definition.split("/")
+    if len(topic_ns) == 0 or len(topic_type) == 0:
+        return False
+    # TODO: Check we can import the requested msg
+    return True
+
+
 class RosTimeRate:
-    """Declarative object used to define a new timer with its related tick rate."""
+    """Object used in the SCXML root to declare a new timer with its related tick rate."""
 
     def __init__(self, name: str, rate_hz: float):
         self._name = name
@@ -52,13 +64,35 @@ class RosTimeRate:
 
 
 class RosTopicPublisher:
-    def __init__(self) -> None:
+    """Object used in SCXML root to declare a new topic publisher."""
+    def __init__(self, topic_name: str, topic_type: str) -> None:
         pass
 
 
 class RosTopicSubscriber:
-    def __init__(self) -> None:
-        pass
+    """Object used in SCXML root to declare a new topic subscriber."""
+    def __init__(self, topic_name: str, topic_type: str) -> None:
+        self._topic_name = topic_name
+        self._topic_type = topic_type
+        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+
+    def check_validity(self) -> bool:
+        valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
+        valid_type = _check_topic_type_known(self._topic_type)
+        if not valid_name:
+            print("Error: SCXML topic subscriber: topic name is not valid.")
+        if not valid_type:
+            print("Error: SCXML topic subscriber: topic type is not valid.")
+        return valid_name and valid_type
+
+    def get_topic_name(self) -> str:
+        return self._topic_name
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+        xml_topic_subscriber = ET.Element(
+            "ros_topic_subscriber", {"topic": self._topic_name, "type": self._topic_type})
+        return xml_topic_subscriber
 
 
 class RosRateCallback(ScxmlTransition):
@@ -103,8 +137,34 @@ class RosRateCallback(ScxmlTransition):
 
 
 class RosTopicCallback(ScxmlTransition):
-    # TODO
-    pass
+    def __init__(
+            self, topic: RosTopicSubscriber, target: str,
+            body: Optional[ScxmlExecutionBody] = None):
+        self._topic = topic.get_topic_name()
+        self._target = target
+        self._body = body
+        assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
+
+    def check_validity(self) -> bool:
+        valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
+        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_body = self._body is None or valid_execution_body(self._body)
+        if not valid_topic:
+            print("Error: SCXML topic callback: topic name is not valid.")
+        if not valid_target:
+            print("Error: SCXML topic callback: target is not valid.")
+        if not valid_body:
+            print("Error: SCXML topic callback: body is not valid.")
+        return valid_topic and valid_target and valid_body
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
+        xml_topic_callback = ET.Element(
+            "ros_topic_callback", {"topic": self._topic, "target": self._target})
+        if self._body is not None:
+            for entry in self._body:
+                xml_topic_callback.append(entry.as_xml())
+        return xml_topic_callback
 
 
 class RosTopicPublish(ScxmlSend):
