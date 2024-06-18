@@ -20,16 +20,18 @@ Module handling the conversion from SCXML to Jani.
 import json
 import os
 import xml.etree.ElementTree as ET
-from typing import List
+from typing import List, Optional
 
-from mc_toolchain_jani_common.common import remove_namespace
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_model import JaniModel
-from jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_automaton
+from jani_generator.ros_helpers.ros_timer import (RosTimer,
+                                                  make_global_timer_automaton)
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
 from jani_generator.scxml_helpers.scxml_tags import BaseTag
+from mc_toolchain_jani_common.common import remove_namespace
+from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import scxml_converter
 
 
@@ -53,7 +55,7 @@ def convert_multiple_scxmls_to_jani(
         scxmls: List[str],
         timers: List[RosTimer],
         max_time_ns: int
-        ) -> JaniModel:
+) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
 
@@ -100,7 +102,7 @@ def _parse_time_element(time_element: ET.Element) -> int:
     return int(time_element.attrib["value"]) * TIME_MULTIPLIERS[time_unit]
 
 
-#  TODO: Move this - this is XML (not SCXML) 
+#  TODO: Move this - this is XML (not SCXML)
 def interpret_top_level_xml(xml_path: str) -> JaniModel:
     """
     Interpret the top-level XML file as a Jani model.
@@ -114,9 +116,12 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", \
         "The top-level XML element must be convince_mc_tc."
 
-    for main_point in xml.getroot():
-        if remove_namespace(main_point.tag) == "mc_parameters":
-            for mc_parameter in main_point:
+    scxml_files_to_convert = []
+    bt: Optional[str] = None  # The path to the Behavior Tree definition
+
+    for first_level in xml.getroot():
+        if remove_namespace(first_level.tag) == "mc_parameters":
+            for mc_parameter in first_level:
                 # if remove_namespace(mc_parameter.tag) == "time_resolution":
                 #     time_resolution = _parse_time_element(mc_parameter)
                 if remove_namespace(mc_parameter.tag) == "max_time":
@@ -124,29 +129,54 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
-        elif remove_namespace(main_point.tag) == "node_models":
-            node_model_fnames = []
-            for node_model in main_point:
+        elif remove_namespace(first_level.tag) == "behavior_tree":
+            plugins = []
+            for child in first_level:
+                if remove_namespace(child.tag) == "input":
+                    if child.attrib["type"] == "bt.cpp-xml":
+                        assert bt is None, "Only one BT is supported."
+                        bt = child.attrib["src"]
+                    elif child.attrib["type"] == "bt-plugin-ros-scxml":
+                        plugins.append(child.attrib["src"])
+                    else:
+                        raise ValueError(
+                            f"Invalid input tag type: {child.attrib['type']}")
+                else:
+                    raise ValueError(
+                        f"Invalid behavior_tree tag: {child.tag}")
+            assert bt is not None, "There must be a Behavior Tree defined."
+        elif remove_namespace(first_level.tag) == "node_models":
+            for node_model in first_level:
                 assert remove_namespace(node_model.tag) == "input", \
                     "Only input tags are supported."
                 assert node_model.attrib['type'] == "ros-scxml", \
                     "Only ROS-SCXML node models are supported."
-                node_model_fnames.append(node_model.attrib["src"])
-        elif remove_namespace(main_point.tag) == "properties":
+                scxml_files_to_convert.append(
+                    os.path.join(folder_of_xml, node_model.attrib["src"]))
+        elif remove_namespace(first_level.tag) == "properties":
             properties = []
-            for property in main_point:
+            for property in first_level:
                 assert remove_namespace(property.tag) == "input", \
                     "Only input tags are supported."
                 assert property.attrib['type'] == "jani", \
                     "Only Jani properties are supported."
                 properties.append(property.attrib["src"])
         else:
-            raise ValueError(f"Invalid main point tag: {main_point.tag}")
+            raise ValueError(f"Invalid main point tag: {first_level.tag}")
+
+    # Preprocess behavior tree and plugins
+    if bt is not None:
+        bt_path = os.path.join(folder_of_xml, bt)
+        plugin_paths = []
+        for plugin in plugins:
+            plugin_paths.append(os.path.join(folder_of_xml, plugin))
+        output_folder = folder_of_xml  # TODO: Think about better folder structure
+        scxml_files = bt_converter(bt_path, plugin_paths, output_folder)
+        scxml_files_to_convert.extend(scxml_files)
 
     plain_scxml_models = []
     all_timers = []  # type: List[RosTimer]
-    for node_model_fname in node_model_fnames:
-        fname = os.path.join(folder_of_xml, node_model_fname)
+    for fname in scxml_files_to_convert:
         with open(fname, 'r', encoding='utf-8') as f:
             model, timers = scxml_converter(f.read())
         for timer_name, timer_rate in timers:

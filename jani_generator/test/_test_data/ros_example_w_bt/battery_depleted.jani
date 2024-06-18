@@ -1,0 +1,30 @@
+{
+    "properties": [
+        {
+            "name": "battery_depleted",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "left": {
+                                "op": "≤",
+                                "left": "ros_topic.level.data",
+                                "right": 0
+                            },
+                            "op": "∧",
+                            "right": "ros_topic.level.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

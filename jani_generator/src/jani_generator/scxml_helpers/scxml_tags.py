@@ -93,7 +93,7 @@ class BaseTag:
         """
         tag = remove_namespace(element.tag)
         if tag not in CLASS_BY_TAG:
-            raise NotImplementedError(f"Tag {tag} not implemented.")
+            raise NotImplementedError(f"Tag >{tag}< not implemented.")
         return CLASS_BY_TAG[tag](element, call_trace, model)
 
     def __init__(self, element: ET.Element,

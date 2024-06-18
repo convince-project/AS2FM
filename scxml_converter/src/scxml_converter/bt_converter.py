@@ -66,9 +66,10 @@ def bt_converter(
         output_folder: The folder where the SCXML files will be saved.
 
     Returns:
-        The SCXML representation of the Behavior Tree.
+        A list of the generated SCXML files.
     """
     bt_graph, xpi = xml_to_networkx(bt_xml_path)
+    generated_files = []
 
     bt_plugins_scxml = {}
     for path in bt_plugins_scxml_paths:
@@ -94,6 +95,7 @@ def bt_converter(
             instance_name = f'{node_id}_{node_type}'
             output_fname = os.path.join(
                 output_folder, f'{instance_name}.scxml')
+            generated_files.append(output_fname)
             this_plugin_content = bt_plugins_scxml[node_type]
             event_names_to_replace = [
                 f'bt_{t}' for t in [
@@ -111,35 +113,35 @@ def bt_converter(
 
     fsm_graph = Bt2FSM(bt_graph).convert()
     output_file_bt = os.path.join(output_folder, 'bt.scxml')
+    generated_files.append(output_file_bt)
 
     root_tag = ScxmlRoot("bt")
     for node in fsm_graph.nodes:
         state = ScxmlState(node)
+        if '_' in node:
+            node_id = int(node.split('_')[0])
+        else:
+            node_id = None
+        if node_id and node_id in leaf_node_ids:
+            state.append_on_entry(ScxmlSend(
+                bt_event_name(node_id, BT_EVENT_TYPE.TICK)))
         for edge in fsm_graph.edges(node):
             target = edge[1]
             transition = ScxmlTransition(target)
-            if '_' in node:
-                node_id = int(node.split('_')[0])
-                if node_id in leaf_node_ids:
-                    if 'label' not in fsm_graph.edges[edge]:
-                        continue
-                    label = fsm_graph.edges[edge]['label']
-                    if label == 'on_success':
-                        event_type = BT_EVENT_TYPE.SUCCESS
-                    elif label == 'on_failure':
-                        event_type = BT_EVENT_TYPE.FAILURE
-                    elif label == 'on_running':
-                        event_type = BT_EVENT_TYPE.RUNNING
-                    else:
-                        raise ValueError(f'Invalid label: {label}')
-                    event_name = bt_event_name(node_id, event_type)
-                    transition.add_event(event_name)
-            if '_' in target:
-                target_id = int(target.split('_')[0])
-                if target_id in leaf_node_ids:
-                    event_name = bt_event_name(
-                        target_id, BT_EVENT_TYPE.TICK)
-                    transition.append_body_executable_entry(ScxmlSend(event_name))
+            if node_id and node_id in leaf_node_ids:
+                if 'label' not in fsm_graph.edges[edge]:
+                    continue
+                label = fsm_graph.edges[edge]['label']
+                if label == 'on_success':
+                    event_type = BT_EVENT_TYPE.SUCCESS
+                elif label == 'on_failure':
+                    event_type = BT_EVENT_TYPE.FAILURE
+                elif label == 'on_running':
+                    event_type = BT_EVENT_TYPE.RUNNING
+                else:
+                    raise ValueError(f'Invalid label: {label}')
+                event_name = bt_event_name(node_id, event_type)
+                transition.add_event(event_name)
             state.add_transition(transition)
         if node in ['success', 'failure', 'running']:
             state.add_transition(
@@ -156,3 +158,5 @@ def bt_converter(
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
         f.write(ET.tostring(root_tag.as_xml(), encoding='unicode'))
+
+    return generated_files

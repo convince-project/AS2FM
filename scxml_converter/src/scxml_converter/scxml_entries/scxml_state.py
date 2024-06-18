@@ -18,11 +18,11 @@ A single state in SCXML. In XML, it has the tag `state`.
 """
 
 from typing import List, Optional
-
-from scxml_converter.scxml_entries import ScxmlExecutionBody, ScxmlTransition
-from scxml_converter.scxml_entries import valid_execution_body
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (ScxmlExecutableEntries,
+                                           ScxmlExecutionBody, ScxmlTransition,
+                                           valid_execution_body)
 
 
 class ScxmlState:
@@ -43,6 +43,16 @@ class ScxmlState:
         if self._body is None:
             self._body = []
         self._body.append(transition)
+
+    def append_on_entry(self, executable_entry: ScxmlExecutableEntries):
+        if self._on_entry is None:
+            self._on_entry = []
+        self._on_entry.append(executable_entry)
+
+    def append_on_exit(self, executable_entry: ScxmlExecutableEntries):
+        if self._on_exit is None:
+            self._on_exit = []
+        self._on_exit.append(executable_entry)
 
     def check_validity(self) -> bool:
         valid_id = isinstance(self._id, str) and len(self._id) > 0
