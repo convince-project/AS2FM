@@ -1,0 +1,29 @@
+<scxml name="bt" version="1.0" model_src="" initial="wait_for_tick" xmlns="http://www.w3.org/2005/07/scxml">
+    <state id="tick">
+        <transition target="10000_TopicCondition">
+            <send event="bt_10000_tick" />
+        </transition>
+    </state>
+    <state id="success">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="failure">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="running">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="10000_TopicCondition">
+        <transition target="failure" event="bt_10000_success" />
+        <transition target="running" event="bt_10000_running" />
+        <transition target="1001_TopicAction" event="bt_10000_failure">
+            <send event="bt_1001_tick" />
+        </transition>
+    </state>
+    <state id="1001_TopicAction">
+        <transition target="success" event="bt_1001_success" />
+        <transition target="failure" event="bt_1001_failure" />
+        <transition target="running" event="bt_1001_running" />
+    </state>
+    <state id="wait_for_tick" />
+</scxml>
