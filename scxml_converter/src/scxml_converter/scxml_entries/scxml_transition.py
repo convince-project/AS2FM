@@ -48,6 +48,15 @@ class ScxmlTransition:
         self._events = events
         self._condition = condition
 
+    def add_event(self, event: str):
+        if self._events is None:
+            self._events = []
+        self._events.append(event)
+
+    def set_execution_body(self, body: ScxmlExecutionBody):
+        assert valid_execution_body(body), "Error SCXML transition: invalid body provided."
+        self._body = body
+
     def check_validity(self) -> bool:
         valid_target = isinstance(self._target, str) and len(self._target) > 0
         valid_events = self._events is None or \

@@ -68,7 +68,6 @@ def bt_converter(
 
     Returns:
         The SCXML representation of the Behavior Tree.
-
     """
     bt_graph, xpi = xml_to_networkx(bt_xml_path)
 
@@ -83,9 +82,11 @@ def bt_converter(
                 f'Plugin name must be unique. {name} already exists.'
             bt_plugins_scxml[name] = content
 
+    leaf_node_ids = []
     for node in bt_graph.nodes:
         assert 'category' in bt_graph.nodes[node], 'Node must have a category.'
         if bt_graph.nodes[node]['category'] == NODE_CAT.LEAF:
+            leaf_node_ids.append(node)
             assert 'NAME' in bt_graph.nodes[node], 'Leaf node must have a type.'
             node_type = bt_graph.nodes[node]['NAME']
             node_id = node
@@ -118,6 +119,30 @@ def bt_converter(
         for edge in fsm_graph.edges(node):
             target = edge[1]
             transition = ScxmlTransition(target)
+            if '_' in node:
+                node_id = int(node.split('_')[0])
+                if node_id in leaf_node_ids:
+                    if 'label' not in fsm_graph.edges[edge]:
+                        continue
+                    label = fsm_graph.edges[edge]['label']
+                    if label == 'on_success':
+                        event_type = BT_EVENT_TYPE.SUCCESS
+                    elif label == 'on_failure':
+                        event_type = BT_EVENT_TYPE.FAILURE
+                    elif label == 'on_running':
+                        event_type = BT_EVENT_TYPE.RUNNING
+                    else:
+                        raise ValueError(f'Invalid label: {label}')
+                    event_name = bt_event_name(node_id, event_type)
+                    transition.add_event(event_name)
+            if '_' in target:
+                target_id = int(target.split('_')[0])
+                if target_id in leaf_node_ids:
+                    event_name = bt_event_name(
+                        target_id, BT_EVENT_TYPE.TICK)
+                    transition.set_execution_body(
+                        [ScxmlSend(event_name)]
+                    )
             state.add_transition(transition)
         if node in ['success', 'failure', 'running']:
             state.add_transition(
@@ -128,7 +153,6 @@ def bt_converter(
     wait_for_tick.add_transition(
         RosRateCallback("tick"))
     root_tag.add_state(wait_for_tick, initial=True)
-
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
         f.write(ET.tostring(root_tag.as_xml(), encoding='unicode'))
