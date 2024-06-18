@@ -28,8 +28,8 @@ import networkx as nx
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
-from scxml_converter.scxml_entries import (RosRateCallback, ScxmlRoot,
-                                           ScxmlSend, ScxmlState,
+from scxml_converter.scxml_entries import (RosRateCallback, RosTimeRate,
+                                           ScxmlRoot, ScxmlSend, ScxmlState,
                                            ScxmlTransition)
 
 
@@ -146,9 +146,12 @@ def bt_converter(
                 ScxmlTransition("wait_for_tick"))
         root_tag.add_state(state)
 
+    # rtr = RosTimeRate("bt_tick", 1.0)
+    # root_tag.add(rtr)
+
     wait_for_tick = ScxmlState("wait_for_tick")
-    wait_for_tick.add_transition(
-        RosRateCallback("tick"))
+    # wait_for_tick.add_transition(
+    #     RosRateCallback(rtr, "tick"))
     root_tag.add_state(wait_for_tick, initial=True)
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
