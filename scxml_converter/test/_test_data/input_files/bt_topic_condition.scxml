@@ -22,10 +22,9 @@
         <transition event="bt_tick" target="initial">
             <if cond="last_msg">
                 <send event="bt_success" />
-            </if>
-            <else>
+            <else />
                 <send event="bt_failure" />
-            </else>
+            </if>
         </transition>
     </state>
 
