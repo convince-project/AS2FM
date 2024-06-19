@@ -62,13 +62,13 @@ class EventReceiver:
 
 
 class Event:
-    def __init__(self, 
-                 name: str, 
+    def __init__(self,
+                 name: str,
                  data_struct: Optional[Dict[str, str]] = None):
         self.name = name
         self.is_timer_event = False
         if self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
-            self.is_timer_event = True  
+            self.is_timer_event = True
             # If the event is a timer event, there is only a receiver
             # It is the edge that the user declared with the
             # `ros_rate_callback` tag. It will be handled in the

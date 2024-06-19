@@ -304,9 +304,9 @@ class TransitionTag(BaseTag):
                 else:
                     raise NotImplementedError(
                         f'Element {remove_namespace(child.tag)} not implemented')
-            else: # send tag
+            else:  # send tag
                 assert action_name is None, \
-                    "Transistions can only either send or receive events, not both."
+                    "Transitions can only either send or receive events, not both."
                 action_name = child.attrib['event'] + "_on_send"
             self.automaton.add_edge(JaniEdge({
                 "location": parent_name,

@@ -84,6 +84,8 @@ def implement_scxml_events_as_jani_syncs(
                 # one of the original outgoing edges is taken
                 # Especially if the original edge fires on an event
                 # then, where do we consume that?
+                # Marco: An alternative way would be to keep the on_exit body
+                # aside and append it to all transition bodies,when evaluated
                 additional_loc_name = f"{sender.location_name}_on_exit"
                 automaton.add_location(additional_loc_name)
                 for edge in automaton.get_edges():
@@ -106,7 +108,8 @@ def implement_scxml_events_as_jani_syncs(
                 event_name_on_send = sender.edge_action_name
         for receivers in event.get_receivers():
             action_name = receivers.edge_action_name
-            assert action_name == event_name_on_receive, f"Action name {action_name} must be {event_name_on_receive}."
+            assert action_name == event_name_on_receive, \
+                f"Action name {action_name} must be {event_name_on_receive}."
         # Collect the event action names
         event_action_names.append(event_name_on_send)
         event_action_names.append(event_name_on_receive)
