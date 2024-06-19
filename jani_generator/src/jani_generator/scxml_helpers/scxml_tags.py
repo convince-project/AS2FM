@@ -294,7 +294,15 @@ class TransitionTag(BaseTag):
         else:
             guard = None
         assignments = []
+        children = list(self.element)
+        is_send = [remove_namespace(child.tag) == 'send' for child in children]
+        
+
         for child in self.element:
+
+
+
+
             if remove_namespace(child.tag) != 'send':
                 child = _interpret_scxml_executable_content(child)
                 if isinstance(child, JaniAssignment):
@@ -308,15 +316,15 @@ class TransitionTag(BaseTag):
                 assert action_name is None, \
                     "Transitions can only either send or receive events, not both."
                 action_name = child.attrib['event'] + "_on_send"
-            self.automaton.add_edge(JaniEdge({
-                "location": parent_name,
-                "action": action_name,
-                "guard": guard,
-                "destinations": [{
-                    "location": target,
-                    "assignments": assignments
-                }]
-            }))
+        self.automaton.add_edge(JaniEdge({
+            "location": parent_name,
+            "action": action_name,
+            "guard": guard,
+            "destinations": [{
+                "location": target,
+                "assignments": assignments
+            }]
+        }))
         super().write_model()
 
 
