@@ -26,24 +26,27 @@ from xml.etree import ElementTree as ET
 
 class ScxmlTransition:
     """This class represents a single scxml state."""
+
     def __init__(self,
                  target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
                  body: Optional[ScxmlExecutionBody] = None):
         """
         Generate a new transition. Currently, transitions must have a target.
 
-        :param target: The target state of the transition. Unlike in SCXML specifications, this is required
+        :param target: The state transition goes to. Required (unlike in SCXML specifications)
         :param events: The events that trigger this transition.
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
-        assert isinstance(target, str) and len(target) > 0, "Error SCXML transition: target must be a non-empty string."
+        assert isinstance(target, str) and len(
+            target) > 0, "Error SCXML transition: target must be a non-empty string."
         assert events is None or (isinstance(events, list) and
-                                  all((isinstance(event, str) and len(event) > 0) for event in events)), \
+                                  all((isinstance(ev, str) and len(ev) > 0) for ev in events)), \
             "Error SCXML transition: events must be a list of non-empty strings."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
-        assert body is None or valid_execution_body(body), "Error SCXML transition: invalid body provided."
+        assert body is None or valid_execution_body(
+            body), "Error SCXML transition: invalid body provided."
         self._target = target
         self._body = body
         self._events = events
@@ -64,8 +67,9 @@ class ScxmlTransition:
     def check_validity(self) -> bool:
         valid_target = isinstance(self._target, str) and len(self._target) > 0
         valid_events = self._events is None or \
-            (isinstance(self._events, list) and all(isinstance(event, str) for event in self._events))
-        valid_condition = self._condition is None or (isinstance(self._condition, str) and len(self._condition) > 0)
+            (isinstance(self._events, list) and all(isinstance(ev, str) for ev in self._events))
+        valid_condition = self._condition is None or (
+            isinstance(self._condition, str) and len(self._condition) > 0)
         valid_body = self._body is None or valid_execution_body(self._body)
         if not valid_target:
             print("Error: SCXML transition: target is not valid.")
