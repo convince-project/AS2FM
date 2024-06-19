@@ -215,7 +215,6 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
 
-    @pytest.mark.skip(reason="WIP")
     def test_with_entrypoint_main_ros_w_bt(self):
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', 'ros_example_w_bt')

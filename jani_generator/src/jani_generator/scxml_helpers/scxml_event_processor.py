@@ -46,7 +46,7 @@ def implement_scxml_events_as_jani_syncs(
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
-        if event.is_timer_event:
+        if event.must_be_skipped():
             continue
         event.is_valid()
         event_name_on_send = f"{event_name}_on_send"

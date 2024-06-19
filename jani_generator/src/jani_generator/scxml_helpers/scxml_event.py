@@ -66,13 +66,6 @@ class Event:
                  name: str,
                  data_struct: Optional[Dict[str, str]] = None):
         self.name = name
-        self.is_timer_event = False
-        if self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
-            self.is_timer_event = True
-            # If the event is a timer event, there is only a receiver
-            # It is the edge that the user declared with the
-            # `ros_rate_callback` tag. It will be handled in the
-            # `scxml_event_processor` module differently.
         self.data_struct = data_struct
         self.senders: List[EventSender] = []
         self.receivers: List[EventReceiver] = []
@@ -117,8 +110,29 @@ class Event:
         self.data_struct = data_struct
 
     def is_valid(self):
-        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender." 
+        """Check if the event is valid."""
+        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender."
         assert len(self.receivers) > 0, f"Event {self.name} must have at least one receiver."
+
+    def must_be_skipped(self):
+        """Indicate whether this must be considered in the conversion."""
+        return (
+            self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
+            # If the event is a timer event, there is only a receiver
+            # It is the edge that the user declared with the
+            # `ros_rate_callback` tag. It will be handled in the
+            # `scxml_event_processor` module differently.
+            or
+            self._is_bt_event() and len(self.senders) == 0
+        )
+
+    def _is_bt_event(self):
+        """Check if the event is a behavior tree event.
+        They may have no sender if the plugin does not implement it."""
+        return self.name.startswith("bt_") and (
+            self.name.endswith("_running") or
+            self.name.endswith("_success") or
+            self.name.endswith("_failure"))
 
 
 class EventsHolder:

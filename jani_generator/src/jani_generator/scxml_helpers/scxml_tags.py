@@ -293,38 +293,60 @@ class TransitionTag(BaseTag):
             )
         else:
             guard = None
-        assignments = []
         children = list(self.element)
-        is_send = [remove_namespace(child.tag) == 'send' for child in children]
-        
+        blocks = []
+        current_block = []
+        for child in children:
+            if remove_namespace(child.tag) == 'send':
+                blocks.append(current_block)
+                current_block = []
+            current_block.append(child)
+        if len(current_block) > 0:
+            blocks.append(current_block)
 
-        for child in self.element:
-
-
-
-
-            if remove_namespace(child.tag) != 'send':
-                child = _interpret_scxml_executable_content(child)
-                if isinstance(child, JaniAssignment):
-                    if 'event' in self.element.attrib:
-                        child._value.replace_event(event_name)
-                    assignments.append(child)
-                else:
-                    raise NotImplementedError(
-                        f'Element {remove_namespace(child.tag)} not implemented')
-            else:  # send tag
-                assert action_name is None, \
-                    "Transitions can only either send or receive events, not both."
-                action_name = child.attrib['event'] + "_on_send"
-        self.automaton.add_edge(JaniEdge({
-            "location": parent_name,
-            "action": action_name,
-            "guard": guard,
-            "destinations": [{
-                "location": target,
-                "assignments": assignments
-            }]
-        }))
+        # define additionally needed states
+        interm_state_prefix = f"{parent_name}_{_hash_element(self.element)}"
+        for i, block in enumerate(blocks):
+            edge_action_name = None
+            edge_guard = None
+            if i == 0:
+                edge_parent = parent_name
+                # used to receive the event that triggers this transition:
+                edge_action_name = action_name
+                edge_guard = guard
+            else:
+                edge_parent = f"{interm_state_prefix}_{i}"
+                self.automaton.add_location(edge_parent)
+            if i == len(blocks) - 1:
+                edge_target = target
+            else:
+                edge_target = f"{interm_state_prefix}_{i+1}"
+            edge_assignments = []
+            for ec in block:
+                if remove_namespace(ec.tag) != 'send':
+                    ec_jani = _interpret_scxml_executable_content(ec)
+                    if isinstance(ec_jani, JaniAssignment):
+                        if 'event' in self.element.attrib:
+                            ec_jani._value.replace_event(event_name)
+                        edge_assignments.append(ec_jani)
+                    else:
+                        raise NotImplementedError(
+                            f'Element {remove_namespace(ec.tag)} not implemented')
+                else:  # send tag
+                    assert edge_action_name is None, \
+                        "This can not have and action already. We expect only one send per block."
+                    edge_action_name = ec.attrib['event'] + "_on_send"
+            edge = JaniEdge({
+                "location": edge_parent,
+                "action": edge_action_name,
+                "guard": edge_guard,
+                "destinations": [{
+                    "location": edge_target,
+                    "assignments": edge_assignments
+                }]
+            })
+            self.automaton.add_edge(edge)
+            
         super().write_model()
 
 

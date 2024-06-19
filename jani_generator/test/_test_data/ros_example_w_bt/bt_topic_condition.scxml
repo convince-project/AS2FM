@@ -20,12 +20,11 @@
             <assign location="last_msg" expr="_msg.data" />
         </ros_topic_callback>
         <transition event="bt_tick" target="initial">
-            <if cond="last_msg">
+            <!-- <if cond="last_msg"> --> <!-- TODO -->
                 <send event="bt_success" />
-            </if>
-            <else>
+            <!-- <else />
                 <send event="bt_failure" />
-            </else>
+            </if> -->
         </transition>
     </state>
 
