@@ -218,13 +218,15 @@ class TestConversion(unittest.TestCase):
     def test_with_entrypoint_main_ros_w_bt(self):
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', 'ros_example_w_bt')
-        xml_main_path = os.path.join(test_data_dir, 'main.xml')
         ouput_path = os.path.join(test_data_dir, 'main.jani')
+        if os.path.exists(ouput_path):
+            os.remove(ouput_path)
+        xml_main_path = os.path.join(test_data_dir, 'main.xml')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
         interpret_top_level_xml(xml_main_path)
         self.assertTrue(os.path.exists(ouput_path))
-
+        os.remove(ouput_path)
 
 
 if __name__ == '__main__':
