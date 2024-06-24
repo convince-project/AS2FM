@@ -17,9 +17,11 @@ jobs:
             # install the packages
             - name: Install packages
               run: | 
-                pip install jani_generator/
-                pip install mc_toolchain_jani_common/
-                pip install scxml_converter/
+                pip install jani_generator/.[dev]
+                pip install mc_toolchain_jani_common/.[dev]
+                pip install scxml_converter/.[dev]
+            # lint packages
+            # TODO: add linting    
             # run the tests
             - name: Run tests
               run: pytest
