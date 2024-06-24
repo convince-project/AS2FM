@@ -27,8 +27,9 @@ jobs:
               run: |
                 wget https://github.com/convince-project/smc_storm/releases/download/0.0.1/smc_storm_executable.tar.gz
                 tar -xzf smc_storm_executable.tar.gz
-                ./install.sh
+                ./install.sh --install-dependencies
                 export PATH=$PATH:$PWD/bin/
+                echo $PATH
                 smc_storm -v
             # Update pip
             - name: Update pip
