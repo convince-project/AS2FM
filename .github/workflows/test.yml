@@ -1,0 +1,25 @@
+name: Test
+# Test the python packages that are part of the toolchain
+
+on:
+    push:
+        branches: [ "main" ]
+    pull_request:
+        branches: [ "main" ]
+    
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            # Checkout the repository
+            - name: Checkout repository
+              uses: actions/checkout@v2
+            # install the packages
+            - name: Install packages
+              run: | 
+                pip install jani_generator/
+                pip install mc_toolchain_jani_common/
+                pip install scxml_converter/
+            # run the tests
+            - name: Run tests
+              run: pytest
