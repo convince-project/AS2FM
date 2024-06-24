@@ -22,6 +22,14 @@ jobs:
               uses: ros-tooling/setup-ros@v0.7
               with:
                 required-ros-distributions: ${{ matrix.ros-distro }}
+            # Get smc_storm for testing
+            - name: Get smc_storm
+              run: |
+                wget https://github.com/convince-project/smc_storm/releases/download/0.0.1/smc_storm_executable.tar.gz
+                tar -xzf smc_storm_executable.tar.gz
+                ./install.sh
+                export PATH=$PATH:$PWD/bin/
+                smc_storm -v
             # Update pip
             - name: Update pip
               run: python -m pip install --upgrade pip
