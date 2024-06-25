@@ -207,7 +207,7 @@ def convert_elem(elem: ET.Element,
     return False
 
 
-def scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
+def ros_to_scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
     """Convert one ScXML file that contains ROS-specific tags.
 
     :param input_file: The input ScXML file.

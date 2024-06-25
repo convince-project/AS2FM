@@ -30,7 +30,7 @@ from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
 from jani_generator.scxml_helpers.scxml_tags import BaseTag
-from scxml_converter.scxml_converter import scxml_converter
+from scxml_converter.scxml_converter import ros_to_scxml_converter
 
 
 def convert_scxml_element_to_jani_automaton(
@@ -147,7 +147,7 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     for node_model_fname in node_model_fnames:
         fname = os.path.join(folder_of_xml, node_model_fname)
         with open(fname, 'r', encoding='utf-8') as f:
-            model, timers = scxml_converter(f.read())
+            model, timers = ros_to_scxml_converter(f.read())
         for timer_name, timer_rate in timers:
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."

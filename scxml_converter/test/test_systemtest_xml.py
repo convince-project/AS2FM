@@ -16,7 +16,7 @@
 import os
 import xml.etree.ElementTree as ET
 
-from scxml_converter.scxml_converter import scxml_converter
+from scxml_converter.scxml_converter import ros_to_scxml_converter
 
 
 def _canonicalize_xml(xml: str) -> str:
@@ -28,7 +28,8 @@ def _canonicalize_xml(xml: str) -> str:
     return ET.tostring(et, encoding='unicode')
 
 
-def test_scxml_w_ros_to_plain_jani():
+def test_ros_scxml_to_plain_scxml():
+    """Test the conversion of SCXML with ROS-specific macros to plain SCXML."""
     for fname in ['battery_manager.scxml', 'battery_drainer.scxml']:
         input_file = os.path.join(os.path.dirname(__file__),
                                   '_test_data', 'battery_drainer_charge', fname)
@@ -36,7 +37,7 @@ def test_scxml_w_ros_to_plain_jani():
                                    '_test_data', 'expected_output', fname)
         with open(input_file, 'r', encoding='utf-8') as f_i:
             input_data = f_i.read()
-        sms = scxml_converter(input_data)
+        sms = ros_to_scxml_converter(input_data)
         out = sms[0]
         with open(output_file, 'r', encoding='utf-8') as f_o:
             expected_output = f_o.read()
@@ -48,4 +49,4 @@ def test_scxml_w_ros_to_plain_jani():
         #     assert len(sms) == 1, "Must only have the battery state machine."
 
 if __name__ == '__main__':
-    test_scxml_w_ros_to_plain_jani()
+    test_ros_scxml_to_plain_scxml()
