@@ -47,4 +47,4 @@ jobs:
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 source /opt/ros/${{ matrix.ros-distro }}/setup.bash                
-                pytest-3 -vss
+                pytest-3 -vs  
