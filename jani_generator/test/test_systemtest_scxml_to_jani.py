@@ -190,6 +190,7 @@ class TestConversion(unittest.TestCase):
             ground_truth = json.load(f)
         self.maxDiff = None
         self.assertEqual(jani_dict, ground_truth)
+        # TODO: Can't test this in storm right now, because it has no properties.
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
