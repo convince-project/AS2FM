@@ -17,20 +17,18 @@
 
 import json
 import os
-from pprint import pprint
-import pytest
 import unittest
 import xml.etree.ElementTree as ET
+from pprint import pprint
 
-
+import pytest
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from jani_generator.scxml_helpers.scxml_to_jani import \
-    convert_multiple_scxmls_to_jani, \
-    convert_scxml_element_to_jani_automaton, \
-    interpret_top_level_xml
-
+from jani_generator.scxml_helpers.scxml_to_jani import (
+    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
+    interpret_top_level_xml)
+from .test_utilities_smc_strom import run_smc_storm_with_output
 
 class TestConversion(unittest.TestCase):
     def test_basic_example(self):
@@ -134,7 +132,7 @@ class TestConversion(unittest.TestCase):
             scxml_battery_drainer,
             scxml_battery_manager],
             []
-            )
+        )
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -211,7 +209,16 @@ class TestConversion(unittest.TestCase):
         with open(ground_truth, "r", encoding='utf-8') as f:
             ground_truth = json.load(f)
         self.maxDiff = None
-        self.assertEqual(jani_dict, ground_truth)
+        # self.assertEqual(jani_dict, ground_truth)
+
+        property_name = "battery_depleted"
+        run_smc_storm_with_output(
+            f"--model {ouput_path} --property-name {property_name}",
+            [property_name,
+             ouput_path,
+             "Result: 1"],
+            ["Result: 0"])
+        
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
 
