@@ -50,6 +50,7 @@ jobs:
             # install the packages
             - name: Install packages
               run: | 
+                source /colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pip install jani_generator/.[dev]
                 pip install mc_toolchain_jani_common/.[dev]
                 pip install scxml_converter/.[dev]
