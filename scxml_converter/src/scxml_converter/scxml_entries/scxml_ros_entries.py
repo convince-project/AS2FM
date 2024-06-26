@@ -41,6 +41,9 @@ class RosTimeRate:
         self._rate_hz = float(rate_hz)
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
 
+    def get_tag_name() -> str:
+        return "ros_time_rate"
+
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0
         valid_rate = isinstance(self._rate_hz, float) and self._rate_hz > 0
@@ -59,7 +62,7 @@ class RosTimeRate:
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
         xml_time_rate = ET.Element(
-            "ros_time_rate", {"rate_hz": str(self._rate_hz), "name": self._name})
+            RosTimeRate.get_tag_name(), {"rate_hz": str(self._rate_hz), "name": self._name})
         return xml_time_rate
 
 
@@ -70,6 +73,9 @@ class RosTopicPublisher:
         self._topic_name = topic_name
         self._topic_type = topic_type
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+
+    def get_tag_name() -> str:
+        return "ros_topic_publisher"
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -86,7 +92,7 @@ class RosTopicPublisher:
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_publisher = ET.Element(
-            "ros_topic_publisher", {"topic": self._topic_name, "type": self._topic_type})
+            RosTopicPublisher.get_tag_name(), {"topic": self._topic_name, "type": self._topic_type})
         return xml_topic_publisher
 
 
@@ -97,6 +103,9 @@ class RosTopicSubscriber:
         self._topic_name = topic_name
         self._topic_type = topic_type
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+
+    def get_tag_name() -> str:
+        return "ros_topic_subscriber"
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -113,7 +122,8 @@ class RosTopicSubscriber:
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_subscriber = ET.Element(
-            "ros_topic_subscriber", {"topic": self._topic_name, "type": self._topic_type})
+            RosTopicSubscriber.get_tag_name(),
+            {"topic": self._topic_name, "type": self._topic_type})
         return xml_topic_subscriber
 
 

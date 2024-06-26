@@ -37,6 +37,9 @@ class ScxmlState:
         self._on_exit = on_exit
         self._body = body
 
+    def get_tag_name() -> str:
+        return "state"
+
     def get_id(self) -> str:
         return self._id
 
@@ -81,7 +84,7 @@ class ScxmlState:
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."
-        xml_state = ET.Element('state', {"id": self._id})
+        xml_state = ET.Element(ScxmlState.get_tag_name(), {"id": self._id})
         if self._on_entry is not None:
             xml_on_entry = ET.Element('onentry')
             for executable_entry in self._on_entry:

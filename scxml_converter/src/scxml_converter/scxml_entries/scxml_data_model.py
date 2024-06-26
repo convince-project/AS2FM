@@ -29,6 +29,9 @@ class ScxmlDataModel:
     def __init__(self, data_entries: List[ScxmlData] = None):
         self._data_entries = data_entries
 
+    def get_tag_name() -> str:
+        return "datamodel"
+
     def check_validity(self) -> bool:
         valid_data_entries = True
         if self._data_entries is not None:
@@ -53,7 +56,7 @@ class ScxmlDataModel:
         assert self.check_validity(), "SCXML: found invalid datamodel object."
         if self._data_entries is None or len(self._data_entries) == 0:
             return None
-        xml_datamodel = ET.Element("datamodel")
+        xml_datamodel = ET.Element(ScxmlDataModel.get_tag_name())
         for data_entry in self._data_entries:
             name, expr = data_entry
             xml_data = ET.Element("data", {"id": name})
