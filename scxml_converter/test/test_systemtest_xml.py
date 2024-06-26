@@ -17,7 +17,7 @@ import os
 from test_utils import canonicalize_xml
 
 from scxml_converter.bt_converter import bt_converter
-from scxml_converter.scxml_converter import scxml_converter
+from scxml_converter.scxml_converter import ros_to_scxml_converter
 
 def get_output_folder():
     return os.path.join(os.path.dirname(__file__), 'output')
@@ -31,22 +31,21 @@ def clear_output_folder():
         os.makedirs(output_folder)
 
 
-def test_ros_to_scxml():
+def test_ros_scxml_to_plain_scxml():
+    """Test the conversion of SCXML with ROS-specific macros to plain SCXML."""
     clear_output_folder()
     scxml_files = [file for file in os.listdir(
         os.path.join(os.path.dirname(__file__), '_test_data', 'input_files')
     ) if file.endswith('.scxml')]
     for fname in scxml_files:
-        input_file = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'input_files', fname)
-        expected_output_path = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'expected_output_ros_to_scxml', fname)
+        input_file = os.path.join(os.path.dirname(__file__),
+                                  '_test_data', 'input_files', fname)
+        output_file = os.path.join(os.path.dirname(__file__),
+                                   '_test_data', 'expected_output_ros_to_scxml', fname)
         with open(input_file, 'r', encoding='utf-8') as f_i:
             input_data = f_i.read()
-        scxml, timers = scxml_converter(input_data)
-        with open(os.path.join(get_output_folder(), fname), 'w', encoding='utf-8') as f_o:
-            f_o.write(scxml)
-        with open(expected_output_path, 'r', encoding='utf-8') as f_o:
+        scxml, _ = ros_to_scxml_converter(input_data)
+        with open(output_file, 'r', encoding='utf-8') as f_o:
             expected_output = f_o.read()
         assert canonicalize_xml(scxml) == canonicalize_xml(expected_output)
     clear_output_folder()
@@ -78,5 +77,4 @@ def test_bt_to_scxml():
     clear_output_folder()
 
 if __name__ == '__main__':
-    test_ros_to_scxml()
-    test_bt_to_scxml()
+    test_ros_scxml_to_plain_scxml()

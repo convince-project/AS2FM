@@ -32,7 +32,7 @@ from jani_generator.scxml_helpers.scxml_event_processor import \
 from jani_generator.scxml_helpers.scxml_tags import BaseTag
 from mc_toolchain_jani_common.common import remove_namespace
 from scxml_converter.bt_converter import bt_converter
-from scxml_converter.scxml_converter import scxml_converter
+from scxml_converter.scxml_converter import ros_to_scxml_converter
 
 
 def convert_scxml_element_to_jani_automaton(
@@ -178,7 +178,7 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     all_timers = []  # type: List[RosTimer]
     for fname in scxml_files_to_convert:
         with open(fname, 'r', encoding='utf-8') as f:
-            model, timers = scxml_converter(f.read())
+            model, timers = ros_to_scxml_converter(f.read())
         for timer_name, timer_rate in timers:
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."
