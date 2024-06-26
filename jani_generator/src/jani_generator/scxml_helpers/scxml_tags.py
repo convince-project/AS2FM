@@ -303,6 +303,8 @@ class TransitionTag(BaseTag):
             current_block.append(child)
         if len(current_block) > 0:
             blocks.append(current_block)
+        if len(blocks) == 0:
+            blocks.append([])
 
         # define additionally needed states
         interm_state_prefix = f"{parent_name}_{_hash_element(self.element)}"
