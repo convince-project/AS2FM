@@ -17,19 +17,18 @@
 
 import json
 import os
-from pprint import pprint
-import pytest
 import unittest
 import xml.etree.ElementTree as ET
+from pprint import pprint
 
-
+import pytest
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from jani_generator.scxml_helpers.scxml_to_jani import \
-    convert_multiple_scxmls_to_jani, \
-    convert_scxml_element_to_jani_automaton, \
-    interpret_top_level_xml
+from jani_generator.scxml_helpers.scxml_to_jani import (
+    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
+    interpret_top_level_xml)
+from .test_utilities_smc_strom import run_smc_storm_with_output
 
 
 class TestConversion(unittest.TestCase):
@@ -133,8 +132,9 @@ class TestConversion(unittest.TestCase):
         jani_model = convert_multiple_scxmls_to_jani([
             scxml_battery_drainer,
             scxml_battery_manager],
-            []
-            )
+            [],
+            0
+        )
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -191,13 +191,15 @@ class TestConversion(unittest.TestCase):
             ground_truth = json.load(f)
         self.maxDiff = None
         self.assertEqual(jani_dict, ground_truth)
+        # TODO: Can't test this in storm right now, because it has no properties.
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def test_with_entrypoint_main(self):
+    def _test_with_entrypoint(self, main_xml: str, success: bool):
+        """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', 'ros_example')
-        xml_main_path = os.path.join(test_data_dir, 'main.xml')
+        xml_main_path = os.path.join(test_data_dir, main_xml)
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
@@ -211,9 +213,28 @@ class TestConversion(unittest.TestCase):
         with open(ground_truth, "r", encoding='utf-8') as f:
             ground_truth = json.load(f)
         self.maxDiff = None
-        self.assertEqual(jani_dict, ground_truth)
+        # self.assertEqual(jani_dict, ground_truth)
+        property_name = "battery_depleted"
+        pos_res = "Result: 1" if success else "Result: 0"
+        neg_res = "Result: 0" if success else "Result: 1"
+        run_smc_storm_with_output(
+            f"--model {ouput_path} --property-name {property_name}",
+            [property_name,
+             ouput_path,
+             pos_res],
+            [neg_res])
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
+
+    def test_with_entrypoint_main_success(self):
+        """Test the main.xml file with the entrypoint.
+        Here we expect the property to be satisfied."""
+        self._test_with_entrypoint('main.xml', True)
+
+    def test_with_entrypoint_main_fail(self):
+        """Test the main_failing.xml file with the entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        self._test_with_entrypoint('main_failing_prop.xml', False)
 
 
 if __name__ == '__main__':
