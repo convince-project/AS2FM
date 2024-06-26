@@ -132,7 +132,8 @@ class TestConversion(unittest.TestCase):
         jani_model = convert_multiple_scxmls_to_jani([
             scxml_battery_drainer,
             scxml_battery_manager],
-            []
+            [],
+            0
         )
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
