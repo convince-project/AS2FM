@@ -17,7 +17,7 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlParam
@@ -45,6 +45,30 @@ class ScxmlIf:
 
     def get_tag_name() -> str:
         return "if"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
+        """Create a ScxmlIf object from an XML tree."""
+        assert xml_tree.tag == ScxmlIf.get_tag_name(), \
+            f"Error: SCXML if: XML tag name is not {ScxmlIf.get_tag_name()}."
+        conditions: List[str] = []
+        exec_bodies: List[ScxmlExecutionBody] = []
+        conditions.append(xml_tree.attrib["cond"])
+        current_body: ScxmlExecutionBody = []
+        for child in xml_tree:
+            if child.tag == "elseif":
+                conditions.append(child.attrib["cond"])
+                exec_bodies.append(current_body)
+                current_body = []
+            elif child.tag == "else":
+                exec_bodies.append(current_body)
+                current_body = []
+            else:
+                current_body.append(execution_entry_from_xml(child))
+        assert len(conditions) == len(exec_bodies), \
+            "Error: SCXML if: number of conditions and bodies do not match."
+        if len(current_body) == 0:
+            current_body = None
+        return ScxmlIf(list(zip(conditions, exec_bodies)), current_body)
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -149,3 +173,68 @@ class ScxmlAssign:
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
         return ET.Element(ScxmlAssign.get_tag_name(), {"location": self.name, "expr": self.expr})
+
+
+# Get the resolved types from the forward references in ScxmlExecutableEntry
+_ResolvedScxmlExecutableEntry = \
+    tuple(entry._evaluate(globals(), locals(), frozenset())
+          for entry in get_args(ScxmlExecutableEntry))
+
+
+def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
+    """
+    Check if an execution body is valid.
+
+    :param execution_body: The execution body to check
+    :return: True if the execution body is valid, False otherwise
+    """
+    valid = isinstance(execution_body, list)
+    if not valid:
+        print("Error: SCXML execution body: invalid type found: expected a list.")
+    for entry in execution_body:
+        if not isinstance(entry, _ResolvedScxmlExecutableEntry):
+            valid = False
+            print(f"Error: SCXML execution body: entry type {type(entry)} not in valid set "
+                  f" {_ResolvedScxmlExecutableEntry}.")
+            break
+        if not entry.check_validity():
+            valid = False
+            print("Error: SCXML execution body: invalid entry content found.")
+            break
+    return valid
+
+
+def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
+    """
+    Create an execution entry from an XML tree.
+
+    :param xml_tree: The XML tree to create the execution entry from
+    :return: The execution entry
+    """
+    # TODO: This is pretty bad, need to re-check how to break the circle
+    from .scxml_ros_entries import RosTopicPublish
+    # Switch based on the tag name
+    exec_tag = xml_tree.tag
+    if exec_tag == ScxmlIf.get_tag_name():
+        return ScxmlIf.from_xml_tree(xml_tree)
+    elif exec_tag == ScxmlAssign.get_tag_name():
+        return ScxmlAssign.from_xml_tree(xml_tree)
+    elif exec_tag == ScxmlSend.get_tag_name():
+        return ScxmlSend.from_xml_tree(xml_tree)
+    elif exec_tag == RosTopicPublish.get_tag_name():
+        return RosTopicPublish.from_xml_tree(xml_tree)
+    else:
+        raise ValueError(f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry.")
+
+
+def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
+    """
+    Create an execution body from an XML tree.
+
+    :param xml_tree: The XML tree to create the execution body from
+    :return: The execution body
+    """
+    exec_body: ScxmlExecutionBody = []
+    for exec_elem_xml in xml_tree:
+        exec_body.append(execution_entry_from_xml(exec_elem_xml))
+    return exec_body
