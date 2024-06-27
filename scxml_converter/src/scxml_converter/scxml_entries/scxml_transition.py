@@ -52,6 +52,12 @@ class ScxmlTransition:
         self._events = events
         self._condition = condition
 
+    def get_tag_name() -> str:
+        return "transition"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
+        raise NotImplementedError("Not implemented yet.")
+
     def add_event(self, event: str):
         if self._events is None:
             self._events = []
@@ -85,7 +91,7 @@ class ScxmlTransition:
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
-        xml_transition = ET.Element('transition', {"target": self._target})
+        xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})
         if self._events is not None:
             xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:

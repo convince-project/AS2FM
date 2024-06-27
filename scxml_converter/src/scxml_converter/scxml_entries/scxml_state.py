@@ -20,8 +20,8 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlExecutableEntry,
-                                           ScxmlExecutionBody, ScxmlTransition,
+from scxml_converter.scxml_entries import (ScxmlExecutableEntry, ScxmlExecutionBody,
+                                           ScxmlTransition, execution_body_from_xml,
                                            valid_execution_body)
 
 
@@ -44,7 +44,28 @@ class ScxmlState:
         """Create a ScxmlState object from an XML tree."""
         assert xml_tree.tag == ScxmlState.get_tag_name(), \
             f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
-        # TODO
+        id = xml_tree.attrib.get("id")
+        assert id is not None and len(id) > 0, "Error: SCXML state: id is not valid."
+        scxml_state = ScxmlState(id)
+        # Get the onentry and onexit execution bodies
+        on_entry = xml_tree.findall("onentry")
+        assert on_entry is None or len(on_entry) == 1, \
+            "Error: SCXML state: multiple onentry tags found, up to 1 allowed."
+        on_exit = xml_tree.findall("onexit")
+        assert on_exit is None or len(on_exit) == 1, \
+            "Error: SCXML state: multiple onexit tags found, up to 1 allowed."
+        if on_entry is not None:
+            for exec_entry in execution_body_from_xml(on_entry[0]):
+                scxml_state.append_on_entry(exec_entry)
+        if on_exit is not None:
+            for exec_entry in execution_body_from_xml(on_exit[0]):
+                scxml_state.append_on_exit(exec_entry)
+        # Get the transitions in the state body
+        transitions_xml = xml_tree.findall(ScxmlTransition.get_tag_name())
+        if transitions_xml is not None:
+            for transition_xml in transitions_xml:
+                scxml_state.add_transition(ScxmlTransition.from_xml_tree(transition_xml))
+        return scxml_state
 
     def get_id(self) -> str:
         return self._id

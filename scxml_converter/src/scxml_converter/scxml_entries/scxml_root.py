@@ -50,7 +50,7 @@ class ScxmlRoot:
         # Data Model
         datamodel_elements = xml_tree.findall(ScxmlDataModel.get_tag_name())
         assert datamodel_elements is None or len(datamodel_elements) == 1, \
-            "Error: SCXML root: multiple datamodels found in input xml."
+            "Error: SCXML root: multiple datamodels found in input xml, up to 1 are allowed."
         # ROS Declaration
         ros_time_rates = xml_tree.findall(RosTimeRate.get_tag_name())
         ros_topic_subs = xml_tree.findall(RosTopicSubscriber.get_tag_name())
