@@ -44,6 +44,20 @@ class RosTimeRate:
     def get_tag_name() -> str:
         return "ros_time_rate"
 
+    def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
+        """Create a RosTimeRate object from an XML tree."""
+        assert xml_tree.tag == RosTimeRate.get_tag_name(), \
+            "Error: SCXML rate timer: Unexpected XML element found."
+        timer_name = xml_tree.attrib.get("name")
+        timer_rate = xml_tree.attrib.get("rate_hz")
+        assert timer_name is not None and timer_rate is not None, \
+            "Error: SCXML rate timer: 'name' or 'rate_hz' attribute not found in input xml."
+        try:
+            timer_rate = float(timer_rate)
+        except ValueError:
+            raise ValueError("Error: SCXML rate timer: rate is not a number.")
+        return RosTimeRate(timer_name, timer_rate)
+
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0
         valid_rate = isinstance(self._rate_hz, float) and self._rate_hz > 0
@@ -77,6 +91,16 @@ class RosTopicPublisher:
     def get_tag_name() -> str:
         return "ros_topic_publisher"
 
+    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
+        """Create a RosTopicPublisher object from an XML tree."""
+        assert xml_tree.tag == RosTopicPublisher.get_tag_name(), \
+            "Error: SCXML topic publisher: Unexpected XML element found."
+        topic_name = xml_tree.attrib.get("topic")
+        topic_type = xml_tree.attrib.get("type")
+        assert topic_name is not None and topic_type is not None, \
+            "Error: SCXML topic publisher: 'topic' or 'type' attribute not found in input xml."
+        return RosTopicPublisher(topic_name, topic_type)
+
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
         valid_type = _check_topic_type_known(self._topic_type)
@@ -106,6 +130,16 @@ class RosTopicSubscriber:
 
     def get_tag_name() -> str:
         return "ros_topic_subscriber"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicSubscriber":
+        """Create a RosTopicSubscriber object from an XML tree."""
+        assert xml_tree.tag == RosTopicSubscriber.get_tag_name(), \
+            "Error: SCXML topic subscriber: Unexpected XML element found."
+        topic_name = xml_tree.attrib.get("topic")
+        topic_type = xml_tree.attrib.get("type")
+        assert topic_name is not None and topic_type is not None, \
+            "Error: SCXML topic subscriber: 'topic' or 'type' attribute not found in input xml."
+        return RosTopicSubscriber(topic_name, topic_type)
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
