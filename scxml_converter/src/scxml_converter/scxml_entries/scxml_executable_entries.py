@@ -17,7 +17,7 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import List, Optional, Union, Tuple, get_args
+from typing import List, Optional, Union, Tuple
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlParam
@@ -42,6 +42,9 @@ class ScxmlIf:
         """
         self._conditional_executions = conditional_executions
         self._else_execution = else_execution
+
+    def get_tag_name() -> str:
+        return "if"
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -74,7 +77,7 @@ class ScxmlIf:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
         first_conditional_execution = self._conditional_executions[0]
-        xml_if = ET.Element('if', {"cond": first_conditional_execution[0]})
+        xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
         xml_if.append(first_conditional_execution[1].as_xml())
         for condition, execution in self._conditional_executions[1:]:
             xml_if.append = ET.Element('elseif', {"cond": condition})
@@ -91,6 +94,9 @@ class ScxmlSend:
     def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
         self._event = event
         self._params = params
+
+    def get_tag_name() -> str:
+        return "send"
 
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
@@ -113,7 +119,7 @@ class ScxmlSend:
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
-        xml_send = ET.Element('send', {"event": self._event})
+        xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
         if self._params is not None:
             for param in self._params:
                 xml_send.append(param.as_xml())
@@ -127,6 +133,9 @@ class ScxmlAssign:
         self.name = name
         self.expr = expr
 
+    def get_tag_name() -> str:
+        return "assign"
+
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
         valid_name = isinstance(self.name, str) and len(self.name) > 0
@@ -139,4 +148,4 @@ class ScxmlAssign:
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
-        return ET.Element('assign', {"location": self.name, "expr": self.expr})
+        return ET.Element(ScxmlAssign.get_tag_name(), {"location": self.name, "expr": self.expr})

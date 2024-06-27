@@ -86,7 +86,13 @@ class ScxmlRoot:
 
     def from_scxml_file(xml_path) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
-        return ScxmlRoot.from_xml_tree(ET.parse(xml_path))
+        xml_file = ET.parse(xml_path)
+        # Remove the namespace from all tags in the XML file
+        for child in xml_file:
+            if "{" in child.tag:
+                child.tag = child.tag.split("}")[1]
+        # Do the conversion
+        return ScxmlRoot.from_xml_tree(xml_file.getroot())
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""

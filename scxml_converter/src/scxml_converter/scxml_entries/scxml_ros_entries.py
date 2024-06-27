@@ -266,6 +266,9 @@ class RosTopicPublish(ScxmlSend):
         self._fields = fields
         assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
 
+    def get_tag_name() -> str:
+        return "ros_topic_publish"
+
     def check_validity(self) -> bool:
         valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
         valid_fields = self._fields is None or \
@@ -288,7 +291,7 @@ class RosTopicPublish(ScxmlSend):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
-        xml_topic_publish = ET.Element("ros_topic_publish", {"topic": self._topic})
+        xml_topic_publish = ET.Element(RosTopicPublish.get_tag_name(), {"topic": self._topic})
         if self._fields is not None:
             for field in self._fields:
                 xml_topic_publish.append(field.as_xml())

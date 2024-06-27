@@ -1,3 +1,9 @@
+from typing import get_args
+from scxml_converter.scxml_entries import (ScxmlExecutableEntry, ScxmlExecutionBody,
+                                           ScxmlAssign, ScxmlIf, ScxmlSend, RosTopicPublish)
+
+from xml.etree import ElementTree as ET
+
 # Get the resolved types from the forward references in ScxmlExecutableEntry
 _ResolvedScxmlExecutableEntry = \
     tuple(entry._evaluate(globals(), locals(), frozenset())
@@ -27,11 +33,25 @@ def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     return valid
 
 
-def execution_body_from_xml(xml_tree: ET.ElementTree) -> ScxmlExecutionBody:
+def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
     :param xml_tree: The XML tree to create the execution body from
     :return: The execution body
     """
-    raise NotImplementedError("Not implemented yet.")
+    exec_body = []
+    for exec_elem_xml in xml_tree:
+        # Switch based on the tag name
+        exec_tag = exec_elem_xml.tag
+        if exec_tag == ScxmlIf.get_tag_name():
+            raise NotImplementedError("Not implemented yet.")
+        elif exec_tag == ScxmlAssign.get_tag_name():
+            raise NotImplementedError("Not implemented yet.")
+        elif exec_tag == ScxmlSend.get_tag_name():
+            raise NotImplementedError("Not implemented yet.")
+        elif exec_tag == RosTopicPublish.get_tag_name():
+            raise NotImplementedError("Not implemented yet.")
+        else:
+            raise ValueError(f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry.")
+    return exec_body
