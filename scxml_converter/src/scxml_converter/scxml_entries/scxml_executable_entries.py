@@ -23,8 +23,8 @@ from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import ScxmlParam
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
-ScxmlExecutableEntries = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
-ScxmlExecutionBody = List[ScxmlExecutableEntries]
+ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
+ScxmlExecutionBody = List[ScxmlExecutableEntry]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
@@ -142,13 +142,13 @@ class ScxmlAssign:
         return ET.Element('assign', {"location": self.name, "expr": self.expr})
 
 
-# Get the resolved types from the forward references in ScxmlExecutableEntries
-_ResolvedScxmlExecutableEntries = \
+# Get the resolved types from the forward references in ScxmlExecutableEntry
+_ResolvedScxmlExecutableEntry = \
     tuple(entry._evaluate(globals(), locals(), frozenset())
-          for entry in get_args(ScxmlExecutableEntries))
+          for entry in get_args(ScxmlExecutableEntry))
 
 
-print(_ResolvedScxmlExecutableEntries)
+print(_ResolvedScxmlExecutableEntry)
 
 
 def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
@@ -162,10 +162,10 @@ def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     if not valid:
         print("Error: SCXML execution body: invalid type found: expected a list.")
     for entry in execution_body:
-        if not isinstance(entry, _ResolvedScxmlExecutableEntries):
+        if not isinstance(entry, _ResolvedScxmlExecutableEntry):
             valid = False
             print(f"Error: SCXML execution body: entry type {type(entry)} not in valid set "
-                  f" {_ResolvedScxmlExecutableEntries}.")
+                  f" {_ResolvedScxmlExecutableEntry}.")
             break
         if not entry.check_validity():
             valid = False

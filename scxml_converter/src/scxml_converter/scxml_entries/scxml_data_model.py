@@ -35,7 +35,7 @@ class ScxmlDataModel:
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert xml_tree.tag == ScxmlDataModel.get_tag_name(), \
-            "Error: SCXML datamodel: Unexpected XML element found."
+            f"Error: SCXML datamodel: XML tag name is not {ScxmlDataModel.get_tag_name()}."
         data_entries_xml = xml_tree.findall("data")
         assert data_entries_xml is not None, "Error: SCXML datamodel: No data entries found."
         data_entries = []

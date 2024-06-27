@@ -47,7 +47,7 @@ class RosTimeRate:
     def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert xml_tree.tag == RosTimeRate.get_tag_name(), \
-            "Error: SCXML rate timer: Unexpected XML element found."
+            f"Error: SCXML rate timer: XML tag name is not {RosTimeRate.get_tag_name()}"
         timer_name = xml_tree.attrib.get("name")
         timer_rate = xml_tree.attrib.get("rate_hz")
         assert timer_name is not None and timer_rate is not None, \
@@ -86,7 +86,7 @@ class RosTopicPublisher:
     def __init__(self, topic_name: str, topic_type: str) -> None:
         self._topic_name = topic_name
         self._topic_type = topic_type
-        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+        assert self.check_validity(), "Error: SCXML topic publisher: invalid parameters."
 
     def get_tag_name() -> str:
         return "ros_topic_publisher"
@@ -94,7 +94,7 @@ class RosTopicPublisher:
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
         """Create a RosTopicPublisher object from an XML tree."""
         assert xml_tree.tag == RosTopicPublisher.get_tag_name(), \
-            "Error: SCXML topic publisher: Unexpected XML element found."
+            f"Error: SCXML topic publisher: XML tag name is not {RosTopicPublisher.get_tag_name()}"
         topic_name = xml_tree.attrib.get("topic")
         topic_type = xml_tree.attrib.get("type")
         assert topic_name is not None and topic_type is not None, \
@@ -134,7 +134,7 @@ class RosTopicSubscriber:
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicSubscriber":
         """Create a RosTopicSubscriber object from an XML tree."""
         assert xml_tree.tag == RosTopicSubscriber.get_tag_name(), \
-            "Error: SCXML topic subscriber: Unexpected XML element found."
+            f"Error: SCXML topic subscribe: XML tag name is not {RosTopicSubscriber.get_tag_name()}"
         topic_name = xml_tree.attrib.get("topic")
         topic_type = xml_tree.attrib.get("type")
         assert topic_name is not None and topic_type is not None, \

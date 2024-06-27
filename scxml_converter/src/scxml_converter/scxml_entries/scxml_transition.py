@@ -18,7 +18,7 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from scxml_converter.scxml_entries import (ScxmlExecutionBody, ScxmlExecutableEntries,
+from scxml_converter.scxml_entries import (ScxmlExecutionBody, ScxmlExecutableEntry,
                                            valid_execution_body)
 
 from xml.etree import ElementTree as ET
@@ -57,7 +57,7 @@ class ScxmlTransition:
             self._events = []
         self._events.append(event)
 
-    def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntries):
+    def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
         if self._body is None:
             self._body = []
         self._body.append(exec_entry)

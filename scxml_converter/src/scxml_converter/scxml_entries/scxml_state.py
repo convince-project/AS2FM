@@ -20,7 +20,7 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlExecutableEntries,
+from scxml_converter.scxml_entries import (ScxmlExecutableEntry,
                                            ScxmlExecutionBody, ScxmlTransition,
                                            valid_execution_body)
 
@@ -40,6 +40,12 @@ class ScxmlState:
     def get_tag_name() -> str:
         return "state"
 
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
+        """Create a ScxmlState object from an XML tree."""
+        assert xml_tree.tag == ScxmlState.get_tag_name(), \
+            f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
+        # TODO
+
     def get_id(self) -> str:
         return self._id
 
@@ -48,12 +54,12 @@ class ScxmlState:
             self._body = []
         self._body.append(transition)
 
-    def append_on_entry(self, executable_entry: ScxmlExecutableEntries):
+    def append_on_entry(self, executable_entry: ScxmlExecutableEntry):
         if self._on_entry is None:
             self._on_entry = []
         self._on_entry.append(executable_entry)
 
-    def append_on_exit(self, executable_entry: ScxmlExecutableEntries):
+    def append_on_exit(self, executable_entry: ScxmlExecutableEntry):
         if self._on_exit is None:
             self._on_exit = []
         self._on_exit.append(executable_entry)
