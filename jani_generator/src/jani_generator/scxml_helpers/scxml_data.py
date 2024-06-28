@@ -109,7 +109,7 @@ class ScxmlData:
         :return: The type of the data
         """
         my_type = type(interpret_ecma_script_expr(expr))
-        if not my_type in get_args(ValidTypes):
+        if my_type not in get_args(ValidTypes):
             raise ValueError(
                 f"Type {my_type} must be supported by Jani.")
         return my_type

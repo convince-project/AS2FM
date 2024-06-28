@@ -65,4 +65,4 @@ jobs:
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 # source /opt/ros/${{ matrix.ros-distro }}/setup.bash
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
-                pytest-3 -vs  
+                pytest-3 -vs mc_toolchain_jani_common jani_generator scxml_converter
