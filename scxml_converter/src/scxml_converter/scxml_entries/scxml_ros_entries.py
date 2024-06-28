@@ -17,7 +17,8 @@
 
 from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransition,
-                                           ScxmlExecutionBody, valid_execution_body)
+                                           ScxmlExecutionBody, valid_execution_body,
+                                           execution_body_from_xml)
 from xml.etree import ElementTree as ET
 
 
@@ -164,18 +165,22 @@ class RosTopicSubscriber:
 class RosRateCallback(ScxmlTransition):
     """Callback that triggers each time the associated timer ticks."""
 
-    def __init__(self, timer: RosTimeRate, target: str, body: Optional[ScxmlExecutionBody] = None):
+    def __init__(self, timer: Union[RosTimeRate, str], target: str,
+                 body: Optional[ScxmlExecutionBody] = None):
         """
         Generate a new rate timer and callback.
 
         Multiple rate callbacks can share the same timer name, but the rate must match.
 
-        :param timer_name: The name of the timer to use
-        :param rate_hz: The rate in Hz associated to the timer
-        :param target: The target state of the callback
+        :param timer: The RosTimeRate instance triggering the callback, or its name
         :param body: The body of the callback
         """
-        self._timer_name = timer.get_name()
+        if isinstance(timer, RosTimeRate):
+            self._timer_name = timer.get_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(timer, str), "Error: SCXML rate callback: invalid timer type."
+            self._timer_name = timer
         self._target = target
         self._body = body
         assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
@@ -184,7 +189,16 @@ class RosRateCallback(ScxmlTransition):
         return "ros_rate_callback"
 
     def from_xml_tree(xml_tree: ET.Element) -> ScxmlTransition:
-        raise NotImplementedError("Not implemented yet.")
+        """Create a RosRateCallback object from an XML tree."""
+        assert xml_tree.tag == RosRateCallback.get_tag_name(), \
+            f"Error: SCXML rate callback: XML tag name is not {RosRateCallback.get_tag_name()}"
+        timer_name = xml_tree.attrib.get("name")
+        target = xml_tree.attrib.get("target")
+        assert timer_name is not None and target is not None, \
+            "Error: SCXML rate callback: 'name' or 'target' attribute not found in input xml."
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return RosRateCallback(timer_name, target, exec_body)
 
     def check_validity(self) -> bool:
         valid_timer = isinstance(self._timer_name, str) and len(self._timer_name) > 0
@@ -212,9 +226,21 @@ class RosTopicCallback(ScxmlTransition):
     """Object representing a transition to perform when a new ROS msg is received."""
 
     def __init__(
-            self, topic: RosTopicSubscriber, target: str,
+            self, topic: Union[RosTopicSubscriber, str], target: str,
             body: Optional[ScxmlExecutionBody] = None):
-        self._topic = topic.get_topic_name()
+        """
+        Create a new ros_topic_callback object  instance.
+
+        :param topic: The RosTopicSubscriber instance triggering the callback, or its name
+        :param target: The target state of the transition
+        :param body: Execution body executed at the time the received message gets processed
+        """
+        if isinstance(topic, RosTopicSubscriber):
+            self._topic = topic.get_topic_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(topic, str), "Error: SCXML topic callback: invalid topic type."
+            self._topic = topic
         self._target = target
         self._body = body
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
@@ -223,7 +249,16 @@ class RosTopicCallback(ScxmlTransition):
         return "ros_topic_callback"
 
     def from_xml_tree(xml_tree: ET.Element) -> ScxmlTransition:
-        raise NotImplementedError("Not implemented yet.")
+        """Create a RosTopicCallback object from an XML tree."""
+        assert xml_tree.tag == RosTopicCallback.get_tag_name(), \
+            f"Error: SCXML topic callback: XML tag name is not {RosTopicCallback.get_tag_name()}"
+        topic_name = xml_tree.attrib.get("topic")
+        target = xml_tree.attrib.get("target")
+        assert topic_name is not None and target is not None, \
+            "Error: SCXML topic callback: 'topic' or 'target' attribute not found in input xml."
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return RosTopicCallback(topic_name, target, exec_body)
 
     def check_validity(self) -> bool:
         valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
@@ -325,7 +360,7 @@ class RosTopicPublish(ScxmlSend):
         return valid_topic and valid_fields
 
     def append_param(self, param: ScxmlParam) -> None:
-        raise NotImplementedError(
+        raise RuntimeError(
             "Error: SCXML topic publish: cannot append scxml params, use append_field instead.")
 
     def append_field(self, field: RosField) -> None:

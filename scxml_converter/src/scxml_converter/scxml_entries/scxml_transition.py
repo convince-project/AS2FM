@@ -19,7 +19,7 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 
 from typing import List, Optional
 from scxml_converter.scxml_entries import (ScxmlExecutionBody, ScxmlExecutableEntry,
-                                           valid_execution_body)
+                                           valid_execution_body, execution_body_from_xml)
 
 from xml.etree import ElementTree as ET
 
@@ -56,7 +56,17 @@ class ScxmlTransition:
         return "transition"
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
-        raise NotImplementedError("Not implemented yet.")
+        """Create a ScxmlTransition object from an XML tree."""
+        assert xml_tree.tag == ScxmlTransition.get_tag_name(), \
+            f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
+        target = xml_tree.get("target")
+        assert target is not None, "Error: SCXML transition: target attribute not found."
+        events = xml_tree.get("event")
+        events = events.split(" ") if events is not None else None
+        condition = xml_tree.get("cond")
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return ScxmlTransition(target, events, condition, exec_body)
 
     def add_event(self, event: str):
         if self._events is None:
