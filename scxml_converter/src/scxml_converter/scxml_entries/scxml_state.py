@@ -65,11 +65,22 @@ class ScxmlState:
             for exec_entry in execution_body_from_xml(on_exit[0]):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
-        transitions_xml = xml_tree.findall(ScxmlTransition.get_tag_name())
-        if transitions_xml is not None:
-            for transition_xml in transitions_xml:
-                scxml_state.add_transition(ScxmlTransition.from_xml_tree(transition_xml))
+        for body_entry in ScxmlState._transitions_from_xml(xml_tree):
+            scxml_state.add_transition(body_entry)
         return scxml_state
+
+    def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
+        # import ros callbacks inheriting from ScxmlTransition
+        from .scxml_ros_entries import RosRateCallback, RosTopicCallback
+        transitions: List[ScxmlTransition] = []
+        for child in xml_tree:
+            if child.tag == ScxmlTransition.get_tag_name():
+                transitions.append(ScxmlTransition.from_xml_tree(child))
+            elif child.tag == RosRateCallback.get_tag_name():
+                transitions.append(RosRateCallback.from_xml_tree(child))
+            elif child.tag == RosTopicCallback.get_tag_name():
+                transitions.append(RosTopicCallback.from_xml_tree(child))
+        return transitions
 
     def get_id(self) -> str:
         return self._id
