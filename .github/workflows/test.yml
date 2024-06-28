@@ -33,8 +33,11 @@ jobs:
             - name: Compile bt_tools
               run: |
                 source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                # Install dependencies
                 cd colcon_ws
-                colcon build --symlink-install    
+                rosdep update && rosdep install --from-paths src --ignore-src -y
+                # Build and install bt_tools
+                colcon build --symlink-install
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
