@@ -22,7 +22,7 @@
         <transition event="bt_10000_tick" target="initial">
             <if cond="last_msg">
                 <send event="bt_10000_success" />
-            <else/>
+                <else/>
                 <send event="bt_10000_failure" />
             </if>
         </transition>

@@ -80,8 +80,7 @@ class ScxmlIf:
                 print("Error: SCXML if: invalid conditional execution found.")
             condition, execution = condition_execution
             valid_condition = isinstance(condition, str) and len(condition) > 0
-            valid_execution = isinstance(
-                execution, ScxmlExecutionBody) and execution.check_validity()
+            valid_execution = valid_execution_body(execution)
             if not valid_condition:
                 print("Error: SCXML if: invalid condition found.")
             if not valid_execution:
@@ -90,9 +89,7 @@ class ScxmlIf:
             if not valid_conditional_executions:
                 break
         valid_else_execution = \
-            self._else_execution is None or \
-            (isinstance(self._else_execution, ScxmlExecutionBody)
-             and self._else_execution.check_validity())
+            self._else_execution is None or valid_execution_body(self._else_execution)
         if not valid_else_execution:
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
@@ -102,13 +99,13 @@ class ScxmlIf:
         assert self.check_validity(), "SCXML: found invalid if object."
         first_conditional_execution = self._conditional_executions[0]
         xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
-        xml_if.append(first_conditional_execution[1].as_xml())
+        append_execution_body_to_xml(xml_if, first_conditional_execution[1])
         for condition, execution in self._conditional_executions[1:]:
             xml_if.append = ET.Element('elseif', {"cond": condition})
-            xml_if.append(execution.as_xml())
+            append_execution_body_to_xml(xml_if, execution)
         if self._else_execution is not None:
             xml_if.append(ET.Element('else'))
-            xml_if.append(self._else_execution.as_xml())
+            append_execution_body_to_xml(xml_if, self._else_execution)
         return xml_if
 
 
@@ -260,3 +257,14 @@ def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
     for exec_elem_xml in xml_tree:
         exec_body.append(execution_entry_from_xml(exec_elem_xml))
     return exec_body
+
+
+def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecutionBody) -> None:
+    """
+    Append an execution body to an existing XML element.
+
+    :param xml_parent: The parent XML element to append the executable entries to
+    :param exec_body: The execution body to append
+    """
+    for exec_entry in exec_body:
+        xml_parent.append(exec_entry.as_xml())
