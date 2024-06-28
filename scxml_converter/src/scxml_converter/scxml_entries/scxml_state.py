@@ -49,11 +49,15 @@ class ScxmlState:
         scxml_state = ScxmlState(id)
         # Get the onentry and onexit execution bodies
         on_entry = xml_tree.findall("onentry")
+        if on_entry is not None and len(on_entry) == 0:
+            on_entry = None
         assert on_entry is None or len(on_entry) == 1, \
-            "Error: SCXML state: multiple onentry tags found, up to 1 allowed."
+            f"Error: SCXML state: {len(on_entry)} onentry tags found, expected 0 or 1."
         on_exit = xml_tree.findall("onexit")
+        if on_exit is not None and len(on_exit) == 0:
+            on_exit = None
         assert on_exit is None or len(on_exit) == 1, \
-            "Error: SCXML state: multiple onexit tags found, up to 1 allowed."
+            f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if on_entry is not None:
             for exec_entry in execution_body_from_xml(on_entry[0]):
                 scxml_state.append_on_entry(exec_entry)

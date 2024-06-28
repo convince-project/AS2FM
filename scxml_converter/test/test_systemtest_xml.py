@@ -19,8 +19,10 @@ from test_utils import canonicalize_xml
 from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import ros_to_scxml_converter
 
+
 def get_output_folder():
     return os.path.join(os.path.dirname(__file__), 'output')
+
 
 def clear_output_folder():
     output_folder = get_output_folder()
@@ -75,6 +77,7 @@ def test_bt_to_scxml():
             expected_output = f_o.read()
         assert canonicalize_xml(output) == canonicalize_xml(expected_output)
     clear_output_folder()
+
 
 if __name__ == '__main__':
     test_ros_scxml_to_plain_scxml()

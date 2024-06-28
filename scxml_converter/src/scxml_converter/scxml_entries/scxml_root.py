@@ -42,7 +42,7 @@ class ScxmlRoot:
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert xml_tree.tag == ScxmlRoot.get_tag_name(), \
-            f"Error: SCXML root: XML root tag name is not {ScxmlRoot.get_tag_name()}."
+            f"Error: SCXML root: XML root tag {xml_tree.tag} is not {ScxmlRoot.get_tag_name()}."
         assert "name" in xml_tree.attrib, \
             "Error: SCXML root: 'name' attribute not found in input xml."
         assert "version" in xml_tree.attrib and xml_tree.attrib["version"] == "1.0", \
@@ -88,7 +88,7 @@ class ScxmlRoot:
         """Create a ScxmlRoot object from an SCXML file."""
         xml_file = ET.parse(xml_path)
         # Remove the namespace from all tags in the XML file
-        for child in xml_file:
+        for child in xml_file.iter():
             if "{" in child.tag:
                 child.tag = child.tag.split("}")[1]
         # Do the conversion

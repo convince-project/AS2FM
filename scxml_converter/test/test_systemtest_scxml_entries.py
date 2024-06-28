@@ -125,6 +125,20 @@ def test_battery_drainer_ros_from_code():
     assert test_xml_string == ref_xml_string
 
 
+def test_xml_parsing():
+    # TODO: Input path to scxml file fro args
+    ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
+                            'input_files', 'battery_drainer.scxml')
+    scxml_root = ScxmlRoot.from_scxml_file(ref_file)
+    # Check output xml
+    test_output = ET.tostring(scxml_root.as_xml(), encoding='unicode')
+    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+    with open(ref_file, 'r', encoding='utf-8') as f_o:
+        ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
+    assert test_xml_string == ref_xml_string
+
+
 if __name__ == '__main__':
     test_battery_drainer_from_code()
     test_battery_drainer_ros_from_code()
+    test_xml_parsing()
