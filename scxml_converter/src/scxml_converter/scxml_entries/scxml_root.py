@@ -51,10 +51,15 @@ class ScxmlRoot:
         datamodel_elements = xml_tree.findall(ScxmlDataModel.get_tag_name())
         assert datamodel_elements is None or len(datamodel_elements) == 1, \
             "Error: SCXML root: multiple datamodels found in input xml, up to 1 are allowed."
-        # ROS Declaration
-        ros_time_rates = xml_tree.findall(RosTimeRate.get_tag_name())
-        ros_topic_subs = xml_tree.findall(RosTopicSubscriber.get_tag_name())
-        ros_topic_pubs = xml_tree.findall(RosTopicPublisher.get_tag_name())
+        # ROS Declarations
+        ros_declarations = []
+        for child in xml_tree:
+            if child.tag == RosTimeRate.get_tag_name():
+                ros_declarations.append(RosTimeRate.from_xml_tree(child))
+            elif child.tag == RosTopicSubscriber.get_tag_name():
+                ros_declarations.append(RosTopicSubscriber.from_xml_tree(child))
+            elif child.tag == RosTopicPublisher.get_tag_name():
+                ros_declarations.append(RosTopicPublisher.from_xml_tree(child))
         # States
         assert "initial" in xml_tree.attrib, \
             "Error: SCXML root: 'initial' attribute not found in input xml."
@@ -68,15 +73,7 @@ class ScxmlRoot:
         if datamodel_elements is not None:
             scxml_root.set_data_model(ScxmlDataModel.from_xml_tree(datamodel_elements[0]))
         # ROS Declarations
-        if ros_time_rates is not None:
-            for ros_time_rate in ros_time_rates:
-                scxml_root.add_ros_declaration(RosTimeRate.from_xml_tree(ros_time_rate))
-        if ros_topic_subs is not None:
-            for ros_topic_sub in ros_topic_subs:
-                scxml_root.add_ros_declaration(RosTopicSubscriber.from_xml_tree(ros_topic_sub))
-        if ros_topic_pubs is not None:
-            for ros_topic_pub in ros_topic_pubs:
-                scxml_root.add_ros_declaration(RosTopicPublisher.from_xml_tree(ros_topic_pub))
+        scxml_root._ros_declations = ros_declarations
         # States
         for state_element in state_elements:
             scxml_state = ScxmlState.from_xml_tree(state_element)
