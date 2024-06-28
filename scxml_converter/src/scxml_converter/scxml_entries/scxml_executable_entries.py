@@ -122,6 +122,18 @@ class ScxmlSend:
     def get_tag_name() -> str:
         return "send"
 
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
+        """Create a ScxmlSend object from an XML tree."""
+        assert xml_tree.tag == ScxmlSend.get_tag_name(), \
+            f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
+        event = xml_tree.attrib["event"]
+        params = []
+        for param_xml in xml_tree:
+            params.append(ScxmlParam.from_xml_tree(param_xml))
+        if len(params) == 0:
+            params = None
+        return ScxmlSend(event, params)
+
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
         valid_params = True
@@ -159,6 +171,16 @@ class ScxmlAssign:
 
     def get_tag_name() -> str:
         return "assign"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
+        """Create a ScxmlAssign object from an XML tree."""
+        assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
+            f"Error: SCXML assign: XML tag name is not {ScxmlAssign.get_tag_name()}."
+        name = xml_tree.attrib.get("location")
+        assert name is not None and len(name) > 0, "Error: SCXML assign: name is not valid."
+        expr = xml_tree.attrib.get("expr")
+        assert expr is not None and len(expr) > 0, "Error: SCXML assign: expr is not valid."
+        return ScxmlAssign(name, expr)
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
