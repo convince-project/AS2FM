@@ -28,12 +28,12 @@ jobs:
               with:
                 repository: boschresearch/bt_tools
                 ref: feature/fsm_conversion
-                path: /colcon_ws/src/bt_tools
+                path: colcon_ws/src/bt_tools
             # Compile bt_tools TODO: remove after the release of bt_tools
             - name: Compile bt_tools
               run: |
                 source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-                cd /colcon_ws
+                cd colcon_ws
                 colcon build --symlink-install    
             # Get smc_storm for testing
             - name: Get smc_storm
@@ -50,7 +50,7 @@ jobs:
             # install the packages
             - name: Install packages
               run: | 
-                source /colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
+                source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pip install jani_generator/.[dev]
                 pip install mc_toolchain_jani_common/.[dev]
                 pip install scxml_converter/.[dev]
@@ -61,5 +61,5 @@ jobs:
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 # source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-                source /colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
+                source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pytest-3 -vs  
