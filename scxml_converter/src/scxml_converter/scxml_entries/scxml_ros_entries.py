@@ -15,7 +15,7 @@
 
 """Declaration of ROS-Specific SCXML tags extensions."""
 
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, valid_execution_body,
                                            execution_body_from_xml)
@@ -35,6 +35,45 @@ def _check_topic_type_known(topic_definition: str) -> bool:
     except ImportError:
         return False
     return True
+
+
+class HelperRosDeclarations:
+    """Object that contains a description of the ROS declarations in the SCXML root."""
+
+    def __init__(self):
+        # Dict of publishers and subscribers: topic name -> type
+        self._publishers: Dict[str, str] = {}
+        self._subscribers: Dict[str, str] = {}
+        self._timers: List[str] = []
+
+    def append_publisher(self, topic_name: str, topic_type: str) -> None:
+        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
+            "Error: ROS declarations: topic name and type must be strings."
+        assert topic_name not in self._publishers, \
+            f"Error: ROS declarations: topic publisher {topic_name} already declared."
+        self._publishers[topic_name] = topic_type
+
+    def append_subscriber(self, topic_name: str, topic_type: str) -> None:
+        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
+            "Error: ROS declarations: topic name and type must be strings."
+        assert topic_name not in self._subscribers, \
+            f"Error: ROS declarations: topic subscriber {topic_name} already declared."
+        self._subscribers[topic_name] = topic_type
+
+    def append_timer(self, timer_name: str) -> None:
+        assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
+        assert timer_name not in self._timers, \
+            f"Error: ROS declarations: timer {timer_name} already declared."
+        self._timers.append(timer_name)
+
+    def is_publisher_defined(self, topic_name: str) -> bool:
+        return topic_name in self._publishers
+
+    def is_subscriber_defined(self, topic_name: str) -> bool:
+        return topic_name in self._subscribers
+
+    def is_timer_defined(self, timer_name: str) -> bool:
+        return timer_name in self._timers
 
 
 class RosTimeRate:
@@ -117,6 +156,9 @@ class RosTopicPublisher:
     def get_topic_name(self) -> str:
         return self._topic_name
 
+    def get_topic_type(self) -> str:
+        return self._topic_type
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_publisher = ET.Element(
@@ -157,6 +199,9 @@ class RosTopicSubscriber:
     def get_topic_name(self) -> str:
         return self._topic_name
 
+    def get_topic_type(self) -> str:
+        return self._topic_type
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_subscriber = ET.Element(
@@ -191,7 +236,7 @@ class RosRateCallback(ScxmlTransition):
     def get_tag_name() -> str:
         return "ros_rate_callback"
 
-    def from_xml_tree(xml_tree: ET.Element) -> ScxmlTransition:
+    def from_xml_tree(xml_tree: ET.Element) -> "RosRateCallback":
         """Create a RosRateCallback object from an XML tree."""
         assert xml_tree.tag == RosRateCallback.get_tag_name(), \
             f"Error: SCXML rate callback: XML tag name is not {RosRateCallback.get_tag_name()}"
@@ -214,6 +259,19 @@ class RosRateCallback(ScxmlTransition):
         if not valid_body:
             print("Error: SCXML rate callback: body is not valid.")
         return valid_timer and valid_target and valid_body
+
+    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+        """Check if the ros instantiations have been declared."""
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML rate callback: invalid ROS declarations container."
+        timer_cb_declared = ros_declarations.is_timer_defined(self._timer_name)
+        if not timer_cb_declared:
+            print(f"Error: SCXML rate callback: timer {self._timer_name} not declared.")
+            return False
+        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
+        if not valid_body:
+            print("Error: SCXML rate callback: body has invalid ROS instantiations.")
+        return valid_body
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
@@ -251,7 +309,7 @@ class RosTopicCallback(ScxmlTransition):
     def get_tag_name() -> str:
         return "ros_topic_callback"
 
-    def from_xml_tree(xml_tree: ET.Element) -> ScxmlTransition:
+    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicCallback":
         """Create a RosTopicCallback object from an XML tree."""
         assert xml_tree.tag == RosTopicCallback.get_tag_name(), \
             f"Error: SCXML topic callback: XML tag name is not {RosTopicCallback.get_tag_name()}"
@@ -274,6 +332,19 @@ class RosTopicCallback(ScxmlTransition):
         if not valid_body:
             print("Error: SCXML topic callback: body is not valid.")
         return valid_topic and valid_target and valid_body
+
+    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+        """Check if the ros instantiations have been declared."""
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML topic callback: invalid ROS declarations container."
+        topic_cb_declared = ros_declarations.is_subscriber_defined(self._topic)
+        if not topic_cb_declared:
+            print(f"Error: SCXML topic callback: topic subscriber {self._topic} not declared.")
+            return False
+        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
+        if not valid_body:
+            print("Error: SCXML topic callback: body has invalid ROS instantiations.")
+        return valid_body
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
@@ -361,6 +432,16 @@ class RosTopicPublish(ScxmlSend):
         if not valid_fields:
             print("Error: SCXML topic publish: fields are not valid.")
         return valid_topic and valid_fields
+
+    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+        """Check if the ros instantiations have been declared."""
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML topic publish: invalid ROS declarations container."
+        topic_pub_declared = ros_declarations.is_publisher_defined(self._topic)
+        if not topic_pub_declared:
+            print(f"Error: SCXML topic publish: topic {self._topic} not declared.")
+        # TODO: Check for valid fields can be done here
+        return topic_pub_declared
 
     def append_param(self, param: ScxmlParam) -> None:
         raise RuntimeError(

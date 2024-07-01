@@ -94,6 +94,22 @@ class ScxmlIf:
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
+    def check_valid_ros_instantiations(self, ros_declarations) -> bool:
+        """Check if the ros instantiations have been declared."""
+        from .scxml_ros_entries import HelperRosDeclarations
+        # Check the executable content
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML if: invalid ROS declarations type provided."
+        for _, exec_body in self._conditional_executions:
+            for exec_entry in exec_body:
+                if not exec_entry.check_valid_ros_instantiations(ros_declarations):
+                    return False
+        if self._else_execution is not None:
+            for exec_entry in self._else_execution:
+                if not exec_entry.check_valid_ros_instantiations(ros_declarations):
+                    return False
+        return True
+
     def as_xml(self) -> ET.Element:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
@@ -144,6 +160,11 @@ class ScxmlSend:
             print("Error: SCXML send: one or more param entries are not valid.")
         return valid_event and valid_params
 
+    def check_valid_ros_instantiations(self, _) -> bool:
+        """Check if the ros instantiations have been declared."""
+        # This has nothing to do with ROS. Return always True
+        return True
+
     def append_param(self, param: ScxmlParam) -> None:
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         if self._params is None:
@@ -188,6 +209,11 @@ class ScxmlAssign:
         if not valid_expr:
             print("Error: SCXML assign: expr is not valid.")
         return valid_name and valid_expr
+
+    def check_valid_ros_instantiations(self, _) -> bool:
+        """Check if the ros instantiations have been declared."""
+        # This has nothing to do with ROS. Return always True
+        return True
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."

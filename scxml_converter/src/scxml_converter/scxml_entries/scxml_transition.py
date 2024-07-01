@@ -99,6 +99,26 @@ class ScxmlTransition:
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body
 
+    def check_valid_ros_instantiations(self, ros_declarations) -> bool:
+        """Check if the ros instantiations have been declared."""
+        # Check the executable content
+        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
+        if not valid_body:
+            print("Error: SCXML transition: executable content has invalid ROS instantiations.")
+        return valid_body
+
+    def _check_valid_ros_instantiations_exec_body(self, ros_declarations) -> bool:
+        """Check if the ros instantiations have been declared in the executable body."""
+        from .scxml_ros_entries import HelperRosDeclarations
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML transition: invalid ROS declarations container."
+        if self._body is None:
+            return True
+        for entry in self._body:
+            if not entry.check_valid_ros_instantiations(ros_declarations):
+                return False
+        return True
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})

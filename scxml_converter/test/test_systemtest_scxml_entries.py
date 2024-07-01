@@ -125,15 +125,18 @@ def test_battery_drainer_ros_from_code():
     assert test_xml_string == ref_xml_string
 
 
-def _test_xml_parsing(xml_file_path: str):
+def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
     # TODO: Input path to scxml file fro args
     scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
     # Check output xml
-    test_output = ET.tostring(scxml_root.as_xml(), encoding='unicode')
-    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-    with open(xml_file_path, 'r', encoding='utf-8') as f_o:
-        ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
-    assert test_xml_string == ref_xml_string
+    if valid_xml:
+        test_output = ET.tostring(scxml_root.as_xml(), encoding='unicode')
+        test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+        with open(xml_file_path, 'r', encoding='utf-8') as f_o:
+            ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
+        assert test_xml_string == ref_xml_string
+    else:
+        assert not scxml_root.check_validity()
 
 
 def test_xml_parsing_battery_drainer():
@@ -144,6 +147,16 @@ def test_xml_parsing_battery_drainer():
 def test_xml_parsing_bt_topic_condition():
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'input_files', 'bt_topic_condition.scxml'))
+
+
+def test_xml_parsing_invalid_battery_drainer_xml():
+    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data', 'input_files',
+                                   'invalid_xmls', 'battery_drainer.scxml'), valid_xml=False)
+
+
+def test_xml_parsing_invalid_bt_topic_action_xml():
+    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data', 'input_files',
+                                   'invalid_xmls', 'bt_topic_action.scxml'), valid_xml=False)
 
 
 if __name__ == '__main__':

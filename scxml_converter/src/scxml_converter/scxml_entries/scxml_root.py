@@ -19,7 +19,8 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 
 from typing import List, get_args
 from scxml_converter.scxml_entries import (ScxmlState, ScxmlDataModel, ScxmlRosDeclarations,
-                                           RosTimeRate, RosTopicSubscriber, RosTopicPublisher)
+                                           RosTimeRate, RosTopicSubscriber, RosTopicPublisher,
+                                           HelperRosDeclarations)
 
 from xml.etree import ElementTree as ET
 
@@ -49,8 +50,8 @@ class ScxmlRoot:
             "Error: SCXML root: 'version' attribute not found or invalid in input xml."
         # Data Model
         datamodel_elements = xml_tree.findall(ScxmlDataModel.get_tag_name())
-        assert datamodel_elements is None or len(datamodel_elements) == 1, \
-            "Error: SCXML root: multiple datamodels found in input xml, up to 1 are allowed."
+        assert datamodel_elements is None or len(datamodel_elements) <= 1, \
+            f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
         ros_declarations = []
         for child in xml_tree:
@@ -70,7 +71,7 @@ class ScxmlRoot:
         # Fill Data in the ScxmlRoot object
         scxml_root = ScxmlRoot(xml_tree.attrib["name"])
         # Data Model
-        if datamodel_elements is not None:
+        if datamodel_elements is not None and len(datamodel_elements) > 0:
             scxml_root.set_data_model(ScxmlDataModel.from_xml_tree(datamodel_elements[0]))
         # ROS Declarations
         scxml_root._ros_declarations = ros_declarations
@@ -128,7 +129,33 @@ class ScxmlRoot:
             print("Error: SCXML root: states are not valid.")
         if not valid_data_model:
             print("Error: SCXML root: datamodel is not valid.")
-        return valid_name and valid_initial_state and valid_states and valid_data_model
+        valid_ros = self._check_valid_ros_declarations()
+        if not valid_ros:
+            print("Error: SCXML root: ROS declarations are not valid.")
+        return valid_name and valid_initial_state and valid_states and valid_data_model and \
+            valid_ros
+
+    def _check_valid_ros_declarations(self) -> bool:
+        """Check if the ros declarations and instantiations are valid."""
+        # Prepare the ROS declarations, to check no undefined ros instances exist
+        ros_decl_container = HelperRosDeclarations()
+        if self._ros_declarations is not None:
+            for ros_declaration in self._ros_declarations:
+                if isinstance(ros_declaration, RosTimeRate):
+                    ros_decl_container.append_timer(ros_declaration.get_name())
+                elif isinstance(ros_declaration, RosTopicSubscriber):
+                    ros_decl_container.append_subscriber(ros_declaration.get_topic_name(),
+                                                         ros_declaration.get_topic_type())
+                elif isinstance(ros_declaration, RosTopicPublisher):
+                    ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
+                                                        ros_declaration.get_topic_type())
+                else:
+                    raise ValueError("Error: SCXML root: invalid ROS declaration type.")
+        # Check the ROS instantiations
+        for state in self._states:
+            if not state.check_valid_ros_instantiations(ros_decl_container):
+                return False
+        return True
 
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS specific features or all entries are plain SCXML."""
