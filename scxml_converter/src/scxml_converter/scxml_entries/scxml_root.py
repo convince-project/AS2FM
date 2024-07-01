@@ -141,6 +141,8 @@ class ScxmlRoot:
         ros_decl_container = HelperRosDeclarations()
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
+                if not ros_declaration.check_validity():
+                    return False
                 if isinstance(ros_declaration, RosTimeRate):
                     ros_decl_container.append_timer(ros_declaration.get_name())
                 elif isinstance(ros_declaration, RosTopicSubscriber):

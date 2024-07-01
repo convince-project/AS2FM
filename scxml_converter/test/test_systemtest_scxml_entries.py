@@ -164,3 +164,5 @@ if __name__ == '__main__':
     test_battery_drainer_ros_from_code()
     test_xml_parsing_battery_drainer()
     test_xml_parsing_bt_topic_condition()
+    test_xml_parsing_invalid_battery_drainer_xml()
+    test_xml_parsing_invalid_bt_topic_action_xml()

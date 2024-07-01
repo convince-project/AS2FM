@@ -31,8 +31,10 @@ def _check_topic_type_known(topic_definition: str) -> bool:
     if len(topic_ns) == 0 or len(topic_type) == 0:
         return False
     try:
-        _ = __import__(topic_ns + '.msg', fromlist=[topic_type])
-    except ImportError:
+        msg_importer = __import__(topic_ns + '.msg', fromlist=[''])
+        _ = getattr(msg_importer, topic_type)
+    except (ImportError, AttributeError):
+        print(f"Error: SCXML ROS declarations: topic type {topic_definition} not found.")
         return False
     return True
 
@@ -82,7 +84,6 @@ class RosTimeRate:
     def __init__(self, name: str, rate_hz: float):
         self._name = name
         self._rate_hz = float(rate_hz)
-        assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
 
     def get_tag_name() -> str:
         return "ros_time_rate"
@@ -129,7 +130,6 @@ class RosTopicPublisher:
     def __init__(self, topic_name: str, topic_type: str) -> None:
         self._topic_name = topic_name
         self._topic_type = topic_type
-        assert self.check_validity(), "Error: SCXML topic publisher: invalid parameters."
 
     def get_tag_name() -> str:
         return "ros_topic_publisher"
@@ -172,7 +172,6 @@ class RosTopicSubscriber:
     def __init__(self, topic_name: str, topic_type: str) -> None:
         self._topic_name = topic_name
         self._topic_type = topic_type
-        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
 
     def get_tag_name() -> str:
         return "ros_topic_subscriber"
