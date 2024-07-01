@@ -30,7 +30,10 @@ def _check_topic_type_known(topic_definition: str) -> bool:
     topic_ns, topic_type = topic_definition.split("/")
     if len(topic_ns) == 0 or len(topic_type) == 0:
         return False
-    # TODO: Check we can import the requested msg
+    try:
+        _ = __import__(topic_ns + '.msg', fromlist=[topic_type])
+    except ImportError:
+        return False
     return True
 
 

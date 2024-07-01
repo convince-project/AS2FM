@@ -33,7 +33,7 @@ class ScxmlRoot:
         self._initial_state: str = None
         self._states: List[ScxmlState] = []
         self._data_model: ScxmlDataModel = None
-        self._ros_declations: List[ScxmlRosDeclarations] = None
+        self._ros_declarations: List[ScxmlRosDeclarations] = None
 
     def get_tag_name() -> str:
         return "scxml"
@@ -73,7 +73,7 @@ class ScxmlRoot:
         if datamodel_elements is not None:
             scxml_root.set_data_model(ScxmlDataModel.from_xml_tree(datamodel_elements[0]))
         # ROS Declarations
-        scxml_root._ros_declations = ros_declarations
+        scxml_root._ros_declarations = ros_declarations
         # States
         for state_element in state_elements:
             scxml_state = ScxmlState.from_xml_tree(state_element)
@@ -106,9 +106,9 @@ class ScxmlRoot:
         assert isinstance(ros_declaration, get_args(ScxmlRosDeclarations)), \
             "Error: SCXML root: invalid ROS declaration type."
         assert ros_declaration.check_validity(), "Error: SCXML root: invalid ROS declaration."
-        if self._ros_declations is None:
-            self._ros_declations = []
-        self._ros_declations.append(ros_declaration)
+        if self._ros_declarations is None:
+            self._ros_declarations = []
+        self._ros_declarations.append(ros_declaration)
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0
@@ -130,6 +130,11 @@ class ScxmlRoot:
             print("Error: SCXML root: datamodel is not valid.")
         return valid_name and valid_initial_state and valid_states and valid_data_model
 
+    def is_plain_scxml(self) -> bool:
+        """Check whether there are ROS specific features or all entries are plain SCXML."""
+        # TODO: Might make sense to check for non-declared ROS entries in the executable bodies
+        return self._ros_declarations is None
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
         xml_root = ET.Element("scxml", {
@@ -141,8 +146,8 @@ class ScxmlRoot:
         })
         if self._data_model is not None:
             xml_root.append(self._data_model.as_xml())
-        if self._ros_declations is not None:
-            for ros_declaration in self._ros_declations:
+        if self._ros_declarations is not None:
+            for ros_declaration in self._ros_declarations:
                 xml_root.append(ros_declaration.as_xml())
         for state in self._states:
             xml_root.append(state.as_xml())

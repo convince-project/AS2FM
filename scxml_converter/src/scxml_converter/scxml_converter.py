@@ -22,7 +22,6 @@ into generic SCXML code.
 
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Tuple, Union
-from collections import defaultdict
 
 from mc_toolchain_jani_common.common import (remove_namespace,
                                              ros_type_name_to_python_type)
