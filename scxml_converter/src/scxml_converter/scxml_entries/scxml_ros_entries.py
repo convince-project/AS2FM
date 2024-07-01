@@ -274,6 +274,9 @@ class RosRateCallback(ScxmlTransition):
             print("Error: SCXML rate callback: body has invalid ROS instantiations.")
         return valid_body
 
+    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
+        raise NotImplementedError
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
         xml_rate_callback = ET.Element(
@@ -347,6 +350,9 @@ class RosTopicCallback(ScxmlTransition):
             print("Error: SCXML topic callback: body has invalid ROS instantiations.")
         return valid_body
 
+    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
+        raise NotImplementedError
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
         xml_topic_callback = ET.Element(
@@ -386,6 +392,9 @@ class RosField(ScxmlParam):
         if not valid_expr:
             print("Error: SCXML topic publish field: expr is not valid.")
         return valid_name and valid_expr
+
+    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlParam:
+        raise NotImplementedError
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
@@ -453,6 +462,9 @@ class RosTopicPublish(ScxmlSend):
         if self._fields is None:
             self._fields = []
         self._fields.append(field)
+
+    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlSend:
+        raise NotImplementedError
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."

@@ -22,6 +22,8 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel
                                            ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
                                            RosTopicPublisher, HelperRosDeclarations)
 
+from copy import deepcopy
+
 from xml.etree import ElementTree as ET
 
 
@@ -173,21 +175,23 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None
 
-    def to_plain_scxml(self):
+    def as_plain_scxml(self) -> "ScxmlRoot":
         """
         Convert all internal ROS specific entries to plain SCXML.
 
-        :return: Additional entries to represent timers and custom structures
+        :return: A new ScxmlRoot object with all ROS specific entries converted to plain SCXML.
         """
         if self.is_plain_scxml():
             return self
+        # Convert the ROS specific entries to plain SCXML
+        plain_root = ScxmlRoot(self._name)
+        plain_root._data_model = deepcopy(self._data_model)
+        plain_root._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
-        # TODO: the datamodel is assumed to have only basic types for now
-        for state in self._states:
-            state.to_plain_scxml(ros_declarations)
-        self._ros_declarations = None
-        assert self.check_validity(), "SCXML: found invalid root object after conversion."
+        plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
+        assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
         # TODO: return the additional entries
+        return plain_root
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."

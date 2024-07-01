@@ -110,6 +110,9 @@ class ScxmlIf(ScxmlBase):
                     return False
         return True
 
+    def as_plain_scxml(self, ros_declarations) -> "ScxmlIf":
+        raise NotImplementedError
+
     def as_xml(self) -> ET.Element:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
@@ -171,6 +174,9 @@ class ScxmlSend(ScxmlBase):
             self._params = []
         self._params.append(param)
 
+    def as_plain_scxml(self, _) -> "ScxmlSend":
+        return self
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
@@ -214,6 +220,9 @@ class ScxmlAssign(ScxmlBase):
         """Check if the ros instantiations have been declared."""
         # This has nothing to do with ROS. Return always True
         return True
+
+    def as_plain_scxml(self, _) -> "ScxmlAssign":
+        return self
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."

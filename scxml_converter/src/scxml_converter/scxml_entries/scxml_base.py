@@ -33,7 +33,7 @@ class ScxmlBase:
         """Check if the object is valid."""
         raise NotImplementedError
 
-    def to_plain_scxml(self, ros_declarations):
+    def as_plain_scxml(self, ros_declarations) -> "ScxmlBase":
         """Convert the object to its plain SCXML  version."""
         raise NotImplementedError
 

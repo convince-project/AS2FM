@@ -119,6 +119,15 @@ class ScxmlTransition(ScxmlBase):
                 return False
         return True
 
+    def as_plain_scxml(self, ros_declarations) -> "ScxmlTransition":
+        from .scxml_ros_entries import HelperRosDeclarations
+        assert isinstance(ros_declarations, HelperRosDeclarations), \
+            "Error: SCXML transition: invalid ROS declarations container."
+        new_body = None
+        if self._body is not None:
+            new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
+        return ScxmlTransition(self._target, self._events, self._condition, new_body)
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})
