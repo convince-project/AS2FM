@@ -17,7 +17,7 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from typing import List, get_args
+from typing import List, Optional, get_args
 from scxml_converter.scxml_entries import (ScxmlState, ScxmlDataModel, ScxmlRosDeclarations,
                                            RosTimeRate, RosTopicSubscriber, RosTopicPublisher,
                                            HelperRosDeclarations)
@@ -111,6 +111,26 @@ class ScxmlRoot:
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
+    def _generate_ros_declarations_helper(self) -> Optional[HelperRosDeclarations]:
+        """Generate a HelperRosDeclarations object from the existing ROS declarations."""
+        ros_decl_container = HelperRosDeclarations()
+        if self._ros_declarations is not None:
+            for ros_declaration in self._ros_declarations:
+                if not ros_declaration.check_validity():
+                    return None
+                if isinstance(ros_declaration, RosTimeRate):
+                    ros_decl_container.append_timer(ros_declaration.get_name(),
+                                                    ros_declaration.get_rate())
+                elif isinstance(ros_declaration, RosTopicSubscriber):
+                    ros_decl_container.append_subscriber(ros_declaration.get_topic_name(),
+                                                         ros_declaration.get_topic_type())
+                elif isinstance(ros_declaration, RosTopicPublisher):
+                    ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
+                                                        ros_declaration.get_topic_type())
+                else:
+                    raise ValueError("Error: SCXML root: invalid ROS declaration type.")
+        return ros_decl_container
+
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0
         valid_initial_state = self._initial_state is not None
@@ -138,21 +158,9 @@ class ScxmlRoot:
     def _check_valid_ros_declarations(self) -> bool:
         """Check if the ros declarations and instantiations are valid."""
         # Prepare the ROS declarations, to check no undefined ros instances exist
-        ros_decl_container = HelperRosDeclarations()
-        if self._ros_declarations is not None:
-            for ros_declaration in self._ros_declarations:
-                if not ros_declaration.check_validity():
-                    return False
-                if isinstance(ros_declaration, RosTimeRate):
-                    ros_decl_container.append_timer(ros_declaration.get_name())
-                elif isinstance(ros_declaration, RosTopicSubscriber):
-                    ros_decl_container.append_subscriber(ros_declaration.get_topic_name(),
-                                                         ros_declaration.get_topic_type())
-                elif isinstance(ros_declaration, RosTopicPublisher):
-                    ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
-                                                        ros_declaration.get_topic_type())
-                else:
-                    raise ValueError("Error: SCXML root: invalid ROS declaration type.")
+        ros_decl_container = self._generate_ros_declarations_helper()
+        if ros_decl_container is None:
+            return False
         # Check the ROS instantiations
         for state in self._states:
             if not state.check_valid_ros_instantiations(ros_decl_container):
@@ -161,8 +169,13 @@ class ScxmlRoot:
 
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS specific features or all entries are plain SCXML."""
-        # TODO: Might make sense to check for non-declared ROS entries in the executable bodies
+        assert self.check_validity(), "SCXML: found invalid root object."
+        # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None
+
+    def to_plain_scxml(self) -> "ScxmlRoot":
+        """Create a new ScxmlRoot object, converting all ROS specific entries to plain SCXML."""
+        raise NotImplementedError("Not implemented yet.")
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."

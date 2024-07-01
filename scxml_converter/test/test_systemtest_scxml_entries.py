@@ -67,6 +67,7 @@ def test_battery_drainer_from_code():
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
+    assert battery_drainer_scxml.is_plain_scxml()
 
 
 def test_battery_drainer_ros_from_code():
@@ -123,6 +124,7 @@ def test_battery_drainer_ros_from_code():
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
+    assert not battery_drainer_scxml.is_plain_scxml()
 
 
 def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
@@ -135,6 +137,8 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
         with open(xml_file_path, 'r', encoding='utf-8') as f_o:
             ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
         assert test_xml_string == ref_xml_string
+        # All the test scxml files we are using contain ROS declarations
+        assert not scxml_root.is_plain_scxml()
     else:
         assert not scxml_root.check_validity()
 

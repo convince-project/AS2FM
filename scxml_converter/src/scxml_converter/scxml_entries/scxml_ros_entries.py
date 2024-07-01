@@ -46,7 +46,7 @@ class HelperRosDeclarations:
         # Dict of publishers and subscribers: topic name -> type
         self._publishers: Dict[str, str] = {}
         self._subscribers: Dict[str, str] = {}
-        self._timers: List[str] = []
+        self._timers: Dict[str, float] = {}
 
     def append_publisher(self, topic_name: str, topic_type: str) -> None:
         assert isinstance(topic_name, str) and isinstance(topic_type, str), \
@@ -62,11 +62,13 @@ class HelperRosDeclarations:
             f"Error: ROS declarations: topic subscriber {topic_name} already declared."
         self._subscribers[topic_name] = topic_type
 
-    def append_timer(self, timer_name: str) -> None:
+    def append_timer(self, timer_name: str, timer_rate: float) -> None:
         assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
+        assert isinstance(timer_rate, float) and timer_rate > 0, \
+            "Error: ROS declarations: timer rate must be a positive number."
         assert timer_name not in self._timers, \
             f"Error: ROS declarations: timer {timer_name} already declared."
-        self._timers.append(timer_name)
+        self._timers[timer_name] = timer_rate
 
     def is_publisher_defined(self, topic_name: str) -> bool:
         return topic_name in self._publishers
