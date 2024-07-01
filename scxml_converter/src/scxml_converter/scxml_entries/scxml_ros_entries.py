@@ -16,7 +16,7 @@
 """Declaration of ROS-Specific SCXML tags extensions."""
 
 from typing import Dict, List, Optional, Union
-from scxml_converter.scxml_entries import (ScxmlSend, ScxmlParam, ScxmlTransition,
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, valid_execution_body,
                                            execution_body_from_xml)
 from xml.etree import ElementTree as ET
@@ -80,7 +80,7 @@ class HelperRosDeclarations:
         return timer_name in self._timers
 
 
-class RosTimeRate:
+class RosTimeRate(ScxmlBase):
     """Object used in the SCXML root to declare a new timer with its related tick rate."""
 
     def __init__(self, name: str, rate_hz: float):
@@ -126,7 +126,7 @@ class RosTimeRate:
         return xml_time_rate
 
 
-class RosTopicPublisher:
+class RosTopicPublisher(ScxmlBase):
     """Object used in SCXML root to declare a new topic publisher."""
 
     def __init__(self, topic_name: str, topic_type: str) -> None:
@@ -168,7 +168,7 @@ class RosTopicPublisher:
         return xml_topic_publisher
 
 
-class RosTopicSubscriber:
+class RosTopicSubscriber(ScxmlBase):
     """Object used in SCXML root to declare a new topic subscriber."""
 
     def __init__(self, topic_name: str, topic_type: str) -> None:

@@ -20,12 +20,12 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlExecutableEntry, ScxmlExecutionBody,
-                                           ScxmlTransition, execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody,
+                                           ScxmlTransition, HelperRosDeclarations,
+                                           execution_body_from_xml, valid_execution_body)
 
 
-class ScxmlState:
+class ScxmlState(ScxmlBase):
     """This class represents a single scxml state."""
 
     def __init__(self, id: str, *,
@@ -124,7 +124,7 @@ class ScxmlState:
             print("Error: SCXML state: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check onentry and onexit
         valid_entry = ScxmlState._check_valid_ros_instantiations_list(self._on_entry,
@@ -141,7 +141,7 @@ class ScxmlState:
             print("Error: SCXML state: found invalid transition in state body.")
         return valid_entry and valid_exit and valid_body
 
-    def _check_valid_ros_instantiations_list(body, ros_declarations) -> bool:
+    def _check_valid_ros_instantiations_list(body, ros_declarations: HelperRosDeclarations) -> bool:
         """Check if the ros instantiations have been declared in the body."""
         if body is None:
             return True
@@ -151,6 +151,10 @@ class ScxmlState:
             if not entry.check_valid_ros_instantiations(ros_declarations):
                 return False
         return True
+
+    def to_plain_scxml(self, ros_declarations: HelperRosDeclarations):
+        """Convert the ROS-specific entries to be plain SCXML"""
+        raise NotImplementedError("Error: SCXML state: to_plain_scxml not implemented.")
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."

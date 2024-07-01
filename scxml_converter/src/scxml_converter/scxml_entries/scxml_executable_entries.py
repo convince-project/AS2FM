@@ -20,7 +20,7 @@ Definition of SCXML Tags that can be part of executable content
 from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlParam
+from scxml_converter.scxml_entries import ScxmlBase, ScxmlParam
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -28,7 +28,7 @@ ScxmlExecutionBody = List[ScxmlExecutableEntry]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
-class ScxmlIf:
+class ScxmlIf(ScxmlBase):
     """This class represents SCXML conditionals."""
 
     def __init__(self,
@@ -125,7 +125,7 @@ class ScxmlIf:
         return xml_if
 
 
-class ScxmlSend:
+class ScxmlSend(ScxmlBase):
     """This class represents a send action."""
 
     def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
@@ -180,7 +180,7 @@ class ScxmlSend:
         return xml_send
 
 
-class ScxmlAssign:
+class ScxmlAssign(ScxmlBase):
     """This class represents a variable assignment."""
 
     def __init__(self, name: str, expr: str):

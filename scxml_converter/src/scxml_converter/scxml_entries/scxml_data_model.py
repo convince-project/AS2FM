@@ -17,6 +17,8 @@
 Container for the variables defined in the SCXML model. In XML, it has the tag `datamodel`.
 """
 
+from scxml_converter.scxml_entries import ScxmlBase
+
 from typing import List, Optional, Tuple
 
 from xml.etree import ElementTree as ET
@@ -24,7 +26,7 @@ from xml.etree import ElementTree as ET
 ScxmlData = Tuple[str, Optional[str]]
 
 
-class ScxmlDataModel:
+class ScxmlDataModel(ScxmlBase):
     """This class represents the variables defined in the model."""
     def __init__(self, data_entries: List[ScxmlData] = None):
         self._data_entries = data_entries

@@ -18,14 +18,14 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
 from typing import List, Optional, get_args
-from scxml_converter.scxml_entries import (ScxmlState, ScxmlDataModel, ScxmlRosDeclarations,
-                                           RosTimeRate, RosTopicSubscriber, RosTopicPublisher,
-                                           HelperRosDeclarations)
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
+                                           ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
+                                           RosTopicPublisher, HelperRosDeclarations)
 
 from xml.etree import ElementTree as ET
 
 
-class ScxmlRoot:
+class ScxmlRoot(ScxmlBase):
     """This class represents a whole scxml model, that is used to define specific skills."""
 
     def __init__(self, name: str):
@@ -173,9 +173,21 @@ class ScxmlRoot:
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None
 
-    def to_plain_scxml(self) -> "ScxmlRoot":
-        """Create a new ScxmlRoot object, converting all ROS specific entries to plain SCXML."""
-        raise NotImplementedError("Not implemented yet.")
+    def to_plain_scxml(self):
+        """
+        Convert all internal ROS specific entries to plain SCXML.
+
+        :return: Additional entries to represent timers and custom structures
+        """
+        if self.is_plain_scxml():
+            return self
+        ros_declarations = self._generate_ros_declarations_helper()
+        # TODO: the datamodel is assumed to have only basic types for now
+        for state in self._states:
+            state.to_plain_scxml(ros_declarations)
+        self._ros_declarations = None
+        assert self.check_validity(), "SCXML: found invalid root object after conversion."
+        # TODO: return the additional entries
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
