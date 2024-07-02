@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import os
-from test_utils import canonicalize_xml
+from test_utils import canonicalize_xml,  remove_empty_lines
 
 from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import ros_to_scxml_converter
@@ -44,12 +44,18 @@ def test_ros_scxml_to_plain_scxml():
                                   '_test_data', 'input_files', fname)
         output_file = os.path.join(os.path.dirname(__file__),
                                    '_test_data', 'expected_output_ros_to_scxml', fname)
-        with open(input_file, 'r', encoding='utf-8') as f_i:
-            input_data = f_i.read()
-        scxml, _ = ros_to_scxml_converter(input_data)
-        with open(output_file, 'r', encoding='utf-8') as f_o:
-            expected_output = f_o.read()
-        assert canonicalize_xml(scxml) == canonicalize_xml(expected_output)
+        try:
+            with open(input_file, 'r', encoding='utf-8') as f_i:
+                input_data = f_i.read()
+            scxml, _ = ros_to_scxml_converter(input_data)
+            with open(output_file, 'r', encoding='utf-8') as f_o:
+                expected_output = f_o.read()
+            assert remove_empty_lines(canonicalize_xml(scxml)) == \
+                remove_empty_lines(canonicalize_xml(expected_output))
+        except Exception as e:
+            clear_output_folder()
+            print(f"Error in file {fname}:")
+            raise e
     clear_output_folder()
 
 
@@ -75,7 +81,8 @@ def test_bt_to_scxml():
             os.path.dirname(__file__), '_test_data', 'expected_output_bt_and_plugins', fname
         ), 'r', encoding='utf-8') as f_o:
             expected_output = f_o.read()
-        assert canonicalize_xml(output) == canonicalize_xml(expected_output)
+        assert remove_empty_lines(canonicalize_xml(output)) == \
+            remove_empty_lines(canonicalize_xml(expected_output))
     clear_output_folder()
 
 

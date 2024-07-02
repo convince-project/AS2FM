@@ -18,7 +18,8 @@
 from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, HelperRosDeclarations,
-                                           valid_execution_body, execution_body_from_xml)
+                                           valid_execution_body, execution_body_from_xml,
+                                           as_plain_execution_body, as_plain_scxml_msg_expression)
 from xml.etree import ElementTree as ET
 
 
@@ -78,6 +79,9 @@ class RosTimeRate(ScxmlBase):
     def get_rate(self) -> float:
         return self._rate_hz
 
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
         xml_time_rate = ET.Element(
@@ -120,6 +124,9 @@ class RosTopicPublisher(ScxmlBase):
     def get_topic_type(self) -> str:
         return self._topic_type
 
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_publisher = ET.Element(
@@ -161,6 +168,9 @@ class RosTopicSubscriber(ScxmlBase):
 
     def get_topic_type(self) -> str:
         return self._topic_type
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
@@ -234,7 +244,10 @@ class RosRateCallback(ScxmlTransition):
         return valid_body
 
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
-        raise NotImplementedError
+        event_name = "ros_time_rate." + self._timer_name
+        target = self._target
+        body = as_plain_execution_body(self._body, ros_declarations)
+        return ScxmlTransition(target, [event_name], None, body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
@@ -310,7 +323,10 @@ class RosTopicCallback(ScxmlTransition):
         return valid_body
 
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
-        raise NotImplementedError
+        event_name = "ros_topic." + self._topic
+        target = self._target
+        body = as_plain_execution_body(self._body, ros_declarations)
+        return ScxmlTransition(target, [event_name], None, body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
@@ -352,8 +368,8 @@ class RosField(ScxmlParam):
             print("Error: SCXML topic publish field: expr is not valid.")
         return valid_name and valid_expr
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlParam:
-        raise NotImplementedError
+    def as_plain_scxml(self) -> ScxmlParam:
+        return ScxmlParam(self._name, expr=as_plain_scxml_msg_expression(self._expr))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
@@ -422,8 +438,11 @@ class RosTopicPublish(ScxmlSend):
             self._fields = []
         self._fields.append(field)
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlSend:
-        raise NotImplementedError
+    def as_plain_scxml(self, _) -> ScxmlSend:
+        event_name = "ros_topic." + self._topic
+        params = None if self._fields is None else \
+            [field.as_plain_scxml() for field in self._fields]
+        return ScxmlSend(event_name, params)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."

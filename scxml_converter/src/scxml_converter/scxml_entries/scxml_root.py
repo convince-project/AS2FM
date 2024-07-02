@@ -17,12 +17,13 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from typing import List, Optional, get_args
+from typing import List, Optional, Tuple, get_args
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
                                            ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
                                            RosTopicPublisher, HelperRosDeclarations)
 
 from copy import deepcopy
+from os.path import isfile
 
 from xml.etree import ElementTree as ET
 
@@ -84,15 +85,20 @@ class ScxmlRoot(ScxmlBase):
             scxml_root.add_state(scxml_state, initial=is_initial)
         return scxml_root
 
-    def from_scxml_file(xml_path) -> "ScxmlRoot":
+    def from_scxml_file(xml_file: str) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
-        xml_file = ET.parse(xml_path)
+        if isfile(xml_file):
+            xml_element = ET.parse(xml_file).getroot()
+        elif xml_file.startswith("<?xml"):
+            xml_element = ET.fromstring(xml_file)
+        else:
+            raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' isn't a file / xml string.")
         # Remove the namespace from all tags in the XML file
-        for child in xml_file.iter():
+        for child in xml_element.iter():
             if "{" in child.tag:
                 child.tag = child.tag.split("}")[1]
         # Do the conversion
-        return ScxmlRoot.from_xml_tree(xml_file.getroot())
+        return ScxmlRoot.from_xml_tree(xml_element)
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""
@@ -175,11 +181,13 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None
 
-    def as_plain_scxml(self) -> "ScxmlRoot":
+    def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[Tuple[str, float]]]:
         """
         Convert all internal ROS specific entries to plain SCXML.
 
-        :return: A new ScxmlRoot object with all ROS specific entries converted to plain SCXML.
+        :return: A tuple with:
+            - a new ScxmlRoot object with all ROS specific entries converted to plain SCXML
+            - A list of timers with related rate in Hz
         """
         if self.is_plain_scxml():
             return self
@@ -190,8 +198,7 @@ class ScxmlRoot(ScxmlBase):
         ros_declarations = self._generate_ros_declarations_helper()
         plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
-        # TODO: return the additional entries
-        return plain_root
+        return (plain_root, list(ros_declarations.get_timers().items()))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."

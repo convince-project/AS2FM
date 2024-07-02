@@ -113,11 +113,9 @@ class ScxmlIf(ScxmlBase):
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
-            condional_executions.append(
-                (as_plain_scxml_msg_expression(condition), as_plain_execution_body(execution)))
-        else_execution = None
-        if self._else_execution is not None:
-            else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
+            condional_executions.append((as_plain_scxml_msg_expression(condition),
+                                         as_plain_execution_body(execution, ros_declarations)))
+        else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(condional_executions, else_execution)
 
     def as_xml(self) -> ET.Element:
@@ -314,8 +312,9 @@ def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecuti
         xml_parent.append(exec_entry.as_xml())
 
 
-def as_plain_execution_body(exec_body: ScxmlExecutionBody,
-                            ros_declarations: HelperRosDeclarations) -> ScxmlExecutionBody:
+def as_plain_execution_body(
+        exec_body: Optional[ScxmlExecutionBody],
+        ros_declarations: HelperRosDeclarations) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 
@@ -323,4 +322,6 @@ def as_plain_execution_body(exec_body: ScxmlExecutionBody,
     :param ros_declarations: The ROS declarations
     :return: The converted execution body
     """
+    if exec_body is None:
+        return None
     return [entry.as_plain_scxml(ros_declarations) for entry in exec_body]

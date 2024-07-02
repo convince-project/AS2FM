@@ -63,3 +63,6 @@ class HelperRosDeclarations:
 
     def is_timer_defined(self, timer_name: str) -> bool:
         return timer_name in self._timers
+
+    def get_timers(self) -> Dict[str, float]:
+        return self._timers

@@ -22,7 +22,8 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody,
                                            ScxmlTransition, HelperRosDeclarations,
-                                           execution_body_from_xml, valid_execution_body)
+                                           as_plain_execution_body, execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class ScxmlState(ScxmlBase):
@@ -151,23 +152,11 @@ class ScxmlState(ScxmlBase):
                 return False
         return True
 
-    def _convert_ros_instantiations_to_plain_scxml(
-            body: List[ScxmlBase], ros_declarations: HelperRosDeclarations) -> List[ScxmlBase]:
-        """Convert the ROS-specific entries to be plain SCXML"""
-        if body is None:
-            return
-        converted_body = []
-        for entry in body:
-            converted_body.append(entry.as_plain_scxml(ros_declarations))
-
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
-        plain_entry = ScxmlState._convert_ros_instantiations_to_plain_scxml(
-            self._on_entry, ros_declarations)
-        plain_exit = ScxmlState._convert_ros_instantiations_to_plain_scxml(
-            self._on_exit, ros_declarations)
-        plain_body = ScxmlState._convert_ros_instantiations_to_plain_scxml(
-            self._body, ros_declarations)
+        plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
+        plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
+        plain_body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
     def as_xml(self) -> ET.Element:
