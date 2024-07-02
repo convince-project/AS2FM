@@ -15,10 +15,10 @@
 
 """Declaration of ROS-Specific SCXML tags extensions."""
 
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
-                                           ScxmlExecutionBody, valid_execution_body,
-                                           execution_body_from_xml)
+                                           ScxmlExecutionBody, HelperRosDeclarations,
+                                           valid_execution_body, execution_body_from_xml)
 from xml.etree import ElementTree as ET
 
 
@@ -37,47 +37,6 @@ def _check_topic_type_known(topic_definition: str) -> bool:
         print(f"Error: SCXML ROS declarations: topic type {topic_definition} not found.")
         return False
     return True
-
-
-class HelperRosDeclarations:
-    """Object that contains a description of the ROS declarations in the SCXML root."""
-
-    def __init__(self):
-        # Dict of publishers and subscribers: topic name -> type
-        self._publishers: Dict[str, str] = {}
-        self._subscribers: Dict[str, str] = {}
-        self._timers: Dict[str, float] = {}
-
-    def append_publisher(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._publishers, \
-            f"Error: ROS declarations: topic publisher {topic_name} already declared."
-        self._publishers[topic_name] = topic_type
-
-    def append_subscriber(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._subscribers, \
-            f"Error: ROS declarations: topic subscriber {topic_name} already declared."
-        self._subscribers[topic_name] = topic_type
-
-    def append_timer(self, timer_name: str, timer_rate: float) -> None:
-        assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
-        assert isinstance(timer_rate, float) and timer_rate > 0, \
-            "Error: ROS declarations: timer rate must be a positive number."
-        assert timer_name not in self._timers, \
-            f"Error: ROS declarations: timer {timer_name} already declared."
-        self._timers[timer_name] = timer_rate
-
-    def is_publisher_defined(self, topic_name: str) -> bool:
-        return topic_name in self._publishers
-
-    def is_subscriber_defined(self, topic_name: str) -> bool:
-        return topic_name in self._subscribers
-
-    def is_timer_defined(self, timer_name: str) -> bool:
-        return timer_name in self._timers
 
 
 class RosTimeRate(ScxmlBase):

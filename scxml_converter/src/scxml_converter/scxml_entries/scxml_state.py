@@ -162,9 +162,13 @@ class ScxmlState(ScxmlBase):
 
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
-        ScxmlState._convert_ros_instantiations_to_plain_scxml(self._on_entry, ros_declarations)
-        ScxmlState._convert_ros_instantiations_to_plain_scxml(self._on_exit, ros_declarations)
-        ScxmlState._convert_ros_instantiations_to_plain_scxml(self._body, ros_declarations)
+        plain_entry = ScxmlState._convert_ros_instantiations_to_plain_scxml(
+            self._on_entry, ros_declarations)
+        plain_exit = ScxmlState._convert_ros_instantiations_to_plain_scxml(
+            self._on_exit, ros_declarations)
+        plain_body = ScxmlState._convert_ros_instantiations_to_plain_scxml(
+            self._body, ros_declarations)
+        return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."

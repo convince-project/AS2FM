@@ -20,7 +20,8 @@ Definition of SCXML Tags that can be part of executable content
 from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlBase, ScxmlParam
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, HelperRosDeclarations,
+                                           as_plain_scxml_msg_expression)
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -94,9 +95,8 @@ class ScxmlIf(ScxmlBase):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(self, ros_declarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
         """Check if the ros instantiations have been declared."""
-        from .scxml_ros_entries import HelperRosDeclarations
         # Check the executable content
         assert isinstance(ros_declarations, HelperRosDeclarations), \
             "Error: SCXML if: invalid ROS declarations type provided."
@@ -110,8 +110,15 @@ class ScxmlIf(ScxmlBase):
                     return False
         return True
 
-    def as_plain_scxml(self, ros_declarations) -> "ScxmlIf":
-        raise NotImplementedError
+    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlIf":
+        condional_executions = []
+        for condition, execution in self._conditional_executions:
+            condional_executions.append(
+                (as_plain_scxml_msg_expression(condition), as_plain_execution_body(execution)))
+        else_execution = None
+        if self._else_execution is not None:
+            else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
+        return ScxmlIf(condional_executions, else_execution)
 
     def as_xml(self) -> ET.Element:
         # Based on example in https://www.w3.org/TR/scxml/#if
@@ -190,8 +197,8 @@ class ScxmlAssign(ScxmlBase):
     """This class represents a variable assignment."""
 
     def __init__(self, name: str, expr: str):
-        self.name = name
-        self.expr = expr
+        self._name = name
+        self._expr = expr
 
     def get_tag_name() -> str:
         return "assign"
@@ -208,8 +215,8 @@ class ScxmlAssign(ScxmlBase):
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
-        valid_name = isinstance(self.name, str) and len(self.name) > 0
-        valid_expr = isinstance(self.expr, str) and len(self.expr) > 0
+        valid_name = isinstance(self._name, str) and len(self._name) > 0
+        valid_expr = isinstance(self._expr, str) and len(self._expr) > 0
         if not valid_name:
             print("Error: SCXML assign: name is not valid.")
         if not valid_expr:
@@ -222,11 +229,13 @@ class ScxmlAssign(ScxmlBase):
         return True
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
-        return self
+        # TODO: Might make sense to check if the assignment happens in a topic callback
+        expr = as_plain_scxml_msg_expression(self._expr)
+        return ScxmlAssign(self._name, expr)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
-        return ET.Element(ScxmlAssign.get_tag_name(), {"location": self.name, "expr": self.expr})
+        return ET.Element(ScxmlAssign.get_tag_name(), {"location": self._name, "expr": self._expr})
 
 
 # Get the resolved types from the forward references in ScxmlExecutableEntry
@@ -303,3 +312,15 @@ def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecuti
     """
     for exec_entry in exec_body:
         xml_parent.append(exec_entry.as_xml())
+
+
+def as_plain_execution_body(exec_body: ScxmlExecutionBody,
+                            ros_declarations: HelperRosDeclarations) -> ScxmlExecutionBody:
+    """
+    Convert the execution body to plain SCXML.
+
+    :param exec_body: The execution body to convert
+    :param ros_declarations: The ROS declarations
+    :return: The converted execution body
+    """
+    return [entry.as_plain_scxml(ros_declarations) for entry in exec_body]
