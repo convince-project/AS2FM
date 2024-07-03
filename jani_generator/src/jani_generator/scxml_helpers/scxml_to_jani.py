@@ -47,6 +47,8 @@ def convert_scxml_element_to_jani_automaton(
     """
     assert remove_namespace(element.tag) == "scxml", \
         "The element must be the root scxml tag of the file."
+    for child in element.iter():
+        child.tag = remove_namespace(child.tag)
     BaseTag.from_element(element, [], (jani_automaton,
                          events_holder)).write_model()
 

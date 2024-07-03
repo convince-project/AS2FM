@@ -42,6 +42,15 @@ class ScxmlRoot(ScxmlBase):
     def get_tag_name() -> str:
         return "scxml"
 
+    def get_states(self) -> List[ScxmlState]:
+        return self._states
+
+    def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
+        for state in self._states:
+            if state.get_id() == state_id:
+                return state
+        return None
+
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects

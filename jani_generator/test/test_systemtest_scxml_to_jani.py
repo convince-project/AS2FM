@@ -42,7 +42,7 @@ class TestConversion(unittest.TestCase):
           initial="Initial">
             <state id="Initial">
                 <onentry>
-                    <log expr="Hello, world!" label="INFO"/>
+                    <assign location="x" expr="42" />
                 </onentry>
             </state>
         </scxml>"""
@@ -73,12 +73,12 @@ class TestConversion(unittest.TestCase):
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
-        self.assertEqual(len(automaton["locations"]), 1)
+        self.assertEqual(len(automaton["locations"]), 2)
         self.assertEqual(len(automaton["initial-locations"]), 1)
         init_location = automaton["locations"][0]
         self.assertEqual(init_location['name'],
                          automaton.get("initial-locations")[0])
-        self.assertEqual(len(automaton["edges"]), 1)
+        self.assertEqual(len(automaton["edges"]), 2)
 
         # Variables
         self.assertEqual(len(automaton["variables"]), 1)

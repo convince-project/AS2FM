@@ -40,6 +40,12 @@ class ScxmlState(ScxmlBase):
 
     def get_tag_name() -> str:
         return "state"
+    
+    def get_onentry(self) -> Optional[ScxmlExecutionBody]:
+        return self._on_entry
+    
+    def get_onexit(self) -> Optional[ScxmlExecutionBody]:
+        return self._on_exit
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""

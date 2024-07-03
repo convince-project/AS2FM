@@ -46,6 +46,14 @@ class ScxmlIf(ScxmlBase):
 
     def get_tag_name() -> str:
         return "if"
+    
+    def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
+        """Get the conditional executions."""
+        return self._conditional_executions
+    
+    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
+        """Get the else execution."""
+        return self._else_execution
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
         """Create a ScxmlIf object from an XML tree."""
@@ -142,6 +150,14 @@ class ScxmlSend(ScxmlBase):
 
     def get_tag_name() -> str:
         return "send"
+    
+    def get_event(self) -> str:
+        """Get the event to send."""
+        return self._event
+    
+    def get_params(self) -> Optional[List[ScxmlParam]]:
+        """Get the parameters to send."""
+        return self._params
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
         """Create a ScxmlSend object from an XML tree."""
@@ -200,11 +216,19 @@ class ScxmlAssign(ScxmlBase):
 
     def get_tag_name() -> str:
         return "assign"
+    
+    def get_location(self) -> str:
+        """Get the location to assign."""
+        return self._location
+    
+    def get_expr(self) -> str:
+        """Get the expression to assign."""
+        return self._expr
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
         """Create a ScxmlAssign object from an XML tree."""
         assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
-            f"Error: SCXML assign: XML tag name is not {ScxmlAssign.get_tag_name()}."
+            f"Error: SCXML assign: XML tag name is {xml_tree.tag} != {ScxmlAssign.get_tag_name()}."
         location = xml_tree.attrib.get("location")
         assert location is not None and len(location) > 0, \
             "Error: SCXML assign: location is not valid."
