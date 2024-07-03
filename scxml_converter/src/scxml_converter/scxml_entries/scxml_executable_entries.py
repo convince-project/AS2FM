@@ -194,8 +194,8 @@ class ScxmlSend(ScxmlBase):
 class ScxmlAssign(ScxmlBase):
     """This class represents a variable assignment."""
 
-    def __init__(self, name: str, expr: str):
-        self._name = name
+    def __init__(self, location: str, expr: str):
+        self._location = location
         self._expr = expr
 
     def get_tag_name() -> str:
@@ -205,21 +205,23 @@ class ScxmlAssign(ScxmlBase):
         """Create a ScxmlAssign object from an XML tree."""
         assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
             f"Error: SCXML assign: XML tag name is not {ScxmlAssign.get_tag_name()}."
-        name = xml_tree.attrib.get("location")
-        assert name is not None and len(name) > 0, "Error: SCXML assign: name is not valid."
+        location = xml_tree.attrib.get("location")
+        assert location is not None and len(location) > 0, \
+            "Error: SCXML assign: location is not valid."
         expr = xml_tree.attrib.get("expr")
-        assert expr is not None and len(expr) > 0, "Error: SCXML assign: expr is not valid."
-        return ScxmlAssign(name, expr)
+        assert expr is not None and len(expr) > 0, \
+            "Error: SCXML assign: expr is not valid."
+        return ScxmlAssign(location, expr)
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
-        valid_name = isinstance(self._name, str) and len(self._name) > 0
+        valid_location = isinstance(self._location, str) and len(self._location) > 0
         valid_expr = isinstance(self._expr, str) and len(self._expr) > 0
-        if not valid_name:
-            print("Error: SCXML assign: name is not valid.")
+        if not valid_location:
+            print("Error: SCXML assign: location is not valid.")
         if not valid_expr:
             print("Error: SCXML assign: expr is not valid.")
-        return valid_name and valid_expr
+        return valid_location and valid_expr
 
     def check_valid_ros_instantiations(self, _) -> bool:
         """Check if the ros instantiations have been declared."""
@@ -229,11 +231,12 @@ class ScxmlAssign(ScxmlBase):
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
         expr = as_plain_scxml_msg_expression(self._expr)
-        return ScxmlAssign(self._name, expr)
+        return ScxmlAssign(self._location, expr)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
-        return ET.Element(ScxmlAssign.get_tag_name(), {"location": self._name, "expr": self._expr})
+        return ET.Element(ScxmlAssign.get_tag_name(), {
+            "location": self._location, "expr": self._expr})
 
 
 # Get the resolved types from the forward references in ScxmlExecutableEntry
