@@ -12,7 +12,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                ros-distro: [ "humble" ]
+                ros-distro: [ "humble", "jazzy" ]
         steps:
             # Checkout the repository
             - name: Checkout repository
