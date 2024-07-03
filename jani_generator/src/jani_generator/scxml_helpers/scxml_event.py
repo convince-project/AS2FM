@@ -17,37 +17,25 @@
 Module to hold scxml even information to convert to jani syncs later.
 """
 
-from enum import Enum, auto
 from typing import Dict, List, Optional
 
 from jani_generator.jani_entries.jani_assignment import JaniAssignment
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
-class EventSenderType(Enum):
-    """Enum to differentiate between the different options that events can be sent from."""
-    ON_ENTRY = auto()
-    ON_EXIT = auto()
-    EDGE = auto()
-
-
 class EventSender:
-    def __init__(self, automaton_name: str, type: EventSenderType,
-                 entity_name: str, assignments: List[JaniAssignment]):
+    def __init__(self, automaton_name: str,
+                 edge_action_name: str, 
+                 assignments: List[JaniAssignment]):
         """
         Initialize the event sender.
 
         :param automaton_name: The name of the automaton sending the event.
-        :param type: The type of the sender.
-        :param entity_name: The name of the entity sending the event.
+        :param edge_action_name: The name of the entity sending the event.
             (location_name for ON_ENTRY and ON_EXIT, edge_action_name for EDGE)
         """
         self.automaton_name = automaton_name
-        self.type = type
-        if type == EventSenderType.EDGE:
-            self.edge_action_name = entity_name
-        else:
-            self.location_name = entity_name
+        self.edge_action_name = edge_action_name
         self._assignments = assignments
 
     def get_assignments(self) -> List[JaniAssignment]:
@@ -70,23 +58,10 @@ class Event:
         self.senders: List[EventSender] = []
         self.receivers: List[EventReceiver] = []
 
-    def add_sender_on_entry(self, automaton_name: str, location_name: str,
-                            assignments: List[JaniAssignment]):
-        """Add information about the location sending the event on entry."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.ON_ENTRY, location_name, assignments))
-
-    def add_sender_on_exit(self, automaton_name: str, location_name: str,
-                           assignments: List[JaniAssignment]):
-        """Add information about the location sending the event on exit."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.ON_EXIT, location_name, assignments))
-
     def add_sender_edge(self, automaton_name: str, edge_action_name: str,
                         assignments: List[JaniAssignment]):
         """Add information about the edge sending the event."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.EDGE, edge_action_name, assignments))
+        self.senders.append(EventSender(automaton_name, edge_action_name, assignments))
 
     def add_receiver(self, automaton_name: str, location_name: str, edge_action_name: str):
         """Add information about the edges triggered by the event."""

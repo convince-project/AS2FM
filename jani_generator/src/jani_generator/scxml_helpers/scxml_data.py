@@ -145,6 +145,13 @@ class ScxmlData:
         if len(types) > 1:
             raise ValueError(
                 f"Multiple types found for data {self.id}: {types}")
+        
+    def get_type(self) -> type:
+        """Get the type of the data.
+
+        :return: The type of the data
+        """
+        return self.type
 
     def to_jani_variable(self) -> JaniVariable:
         """Convert the ScxmlData object to a JaniVariable object.

@@ -33,6 +33,7 @@ from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
 from mc_toolchain_jani_common.common import remove_namespace
+from mc_toolchain_jani_common.ecmascript_interpretation import interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend)
 
@@ -93,93 +94,6 @@ def _merge_conditions(
         negated_pc = not_operator(pc)
         joint_condition = and_operator(joint_condition, negated_pc)
     return joint_condition
-
-
-def _interpret_scxml_executable_content_body(
-        body: ScxmlExecutionBody,
-        source: str,
-        target: str,
-        hash_str: str,
-        guard: Optional[JaniGuard] = None,
-        trigger_event_action: Optional[str] = None
-) -> List[JaniEdge]:
-    """Interpret a body of executable content of an SCXML element.
-
-    :param body: The body of the SCXML element to interpret.
-    :return: The edges that contain the actions and expressions to be executed.
-    """
-    edge_action_name = f"{source}-{target}-{hash_str}"
-    new_edges = []
-    new_locations = []
-    # First edge. Has to evaluate guard and trigger event of original transition.
-    new_edges.append(JaniEdge({
-        "location": source,
-        "action": trigger_event_action if trigger_event_action is not None else edge_action_name,
-        "guard": guard.expression if guard is not None else None,
-        "destinations": [{
-            "location": None,
-            "assignments": []
-        }]
-    }))
-    for i, ec in enumerate(body):
-        if isinstance(ec, ScxmlAssign):
-            jani_assignment = _interpret_scxml_assign(ec)
-            new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
-        elif isinstance(ec, ScxmlSend):
-            interm_loc = f'{source}_{i}'
-            new_edges[-1].destinations[0]['location'] = interm_loc
-            new_edge = JaniEdge({
-                "location": interm_loc,
-                "action": ec.get_event() + "_on_send",
-                "guard": None,
-                "destinations": [{
-                    "location": None,
-                    "assignments": []
-                }]
-            })
-            for param in ec.get_params():
-                expr = param.get_expr() if param.get_expr() is not None else param.get_location()
-                new_edge.destinations[0]['assignments'].append(JaniAssignment({
-                    "ref": f'{ec.get_event()}.{param.get_name()}',
-                    "value": parse_ecmascript_to_jani_expression(expr)
-                }))
-            new_edges.append(new_edge)
-            new_locations.append(interm_loc)
-        elif isinstance(ec, ScxmlIf):
-            interm_loc_before = f"{source}_{i}_before_if"
-            interm_loc_after = f"{source}_{i}_after_if"
-            new_edges[-1].destinations[0]['location'] = interm_loc_before
-            previous_conditions = []
-            for cond_str, conditional_body in ec.get_conditional_executions():
-                current_cond = parse_ecmascript_to_jani_expression(cond_str)
-                jani_cond = _merge_conditions(previous_conditions, current_cond)
-                sub_edges, sub_locs = _interpret_scxml_executable_content_body(
-                    conditional_body, interm_loc_before, interm_loc_after,
-                    hash_str, jani_cond, None)
-                new_edges.extend(sub_edges)
-                new_locations.extend(sub_locs)
-                previous_conditions.append(current_cond)
-            # Add else branch:
-            if ec.get_else_execution() is not None:
-                jani_cond = _merge_conditions(previous_conditions)
-                sub_edges, sub_locs = _interpret_scxml_executable_content_body(
-                    ec.get_else_execution(), interm_loc_before, interm_loc_after,
-                    hash_str, jani_cond, None)
-                new_edges.extend(sub_edges)
-                new_locations.extend(sub_locs)
-            new_edges.append(JaniEdge({
-                "location": interm_loc_after,
-                "action": edge_action_name,
-                "guard": None,
-                "destinations": [{
-                    "location": None,
-                    "assignments": []
-                }]
-            }))
-            new_locations.append(interm_loc_before)
-            new_locations.append(interm_loc_after)
-    new_edges[-1].destinations[0]['location'] = target
-    return new_edges, new_locations
 
 
 class BaseTag:
@@ -309,6 +223,110 @@ class TransitionTag(BaseTag):
     See https://www.w3.org/TR/scxml/#transition
     """
 
+
+    def interpret_scxml_executable_content_body(
+            self,
+            body: ScxmlExecutionBody,
+            source: str,
+            target: str,
+            hash_str: str,
+            guard: Optional[JaniGuard] = None,
+            trigger_event_action: Optional[str] = None
+    ) -> List[JaniEdge]:
+        """Interpret a body of executable content of an SCXML element.
+
+        :param body: The body of the SCXML element to interpret.
+        :return: The edges that contain the actions and expressions to be executed.
+        """
+        edge_action_name = f"{source}-{target}-{hash_str}"
+        new_edges = []
+        new_locations = []
+        # First edge. Has to evaluate guard and trigger event of original transition.
+        new_edges.append(JaniEdge({
+            "location": source,
+            "action": trigger_event_action if trigger_event_action is not None else edge_action_name,
+            "guard": guard.expression if guard is not None else None,
+            "destinations": [{
+                "location": None,
+                "assignments": []
+            }]
+        }))
+        for i, ec in enumerate(body):
+            if isinstance(ec, ScxmlAssign):
+                jani_assignment = _interpret_scxml_assign(ec)
+                new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
+            elif isinstance(ec, ScxmlSend):
+                event_name = ec.get_event()
+                interm_loc = f'{source}_{i}'
+                new_edges[-1].destinations[0]['location'] = interm_loc
+                new_edge = JaniEdge({
+                    "location": interm_loc,
+                    "action": event_name + "_on_send",
+                    "guard": None,
+                    "destinations": [{
+                        "location": None,
+                        "assignments": []
+                    }]
+                })
+                data_structure_for_event = {}
+                for param in ec.get_params():
+                    expr = param.get_expr() if param.get_expr() is not None else param.get_location()
+                    new_edge.destinations[0]['assignments'].append(JaniAssignment({
+                        "ref": f'{ec.get_event()}.{param.get_name()}',
+                        "value": parse_ecmascript_to_jani_expression(expr)
+                    }))
+                    data_structure_for_event[param.get_name()
+                                             ] = str(type(interpret_ecma_script_expr(expr)))
+
+                if not self.events_holder.has_event(event_name):
+                    new_event = Event(
+                        event_name,
+                        data_structure_for_event
+                    )
+                    self.events_holder.add_event(new_event)
+                existing_event = self.events_holder.get_event(event_name)
+                existing_event.add_sender_edge(
+                    self.automaton.get_name(), edge_action_name, [])
+                
+                new_edges.append(new_edge)
+                new_locations.append(interm_loc)
+            elif isinstance(ec, ScxmlIf):
+                interm_loc_before = f"{source}_{i}_before_if"
+                interm_loc_after = f"{source}_{i}_after_if"
+                new_edges[-1].destinations[0]['location'] = interm_loc_before
+                previous_conditions = []
+                for cond_str, conditional_body in ec.get_conditional_executions():
+                    current_cond = parse_ecmascript_to_jani_expression(cond_str)
+                    jani_cond = _merge_conditions(previous_conditions, current_cond)
+                    sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
+                        conditional_body, interm_loc_before, interm_loc_after,
+                        hash_str, jani_cond, None)
+                    new_edges.extend(sub_edges)
+                    new_locations.extend(sub_locs)
+                    previous_conditions.append(current_cond)
+                # Add else branch:
+                if ec.get_else_execution() is not None:
+                    jani_cond = _merge_conditions(previous_conditions)
+                    sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
+                        ec.get_else_execution(), interm_loc_before, interm_loc_after,
+                        hash_str, jani_cond, None)
+                    new_edges.extend(sub_edges)
+                    new_locations.extend(sub_locs)
+                new_edges.append(JaniEdge({
+                    "location": interm_loc_after,
+                    "action": edge_action_name,
+                    "guard": None,
+                    "destinations": [{
+                        "location": None,
+                        "assignments": []
+                    }]
+                }))
+                new_locations.append(interm_loc_before)
+                new_locations.append(interm_loc_after)
+        new_edges[-1].destinations[0]['location'] = target
+        return new_edges, new_locations
+
+
     def write_model(self):
         parent_name = _get_state_name(self.call_trace[-1])
         action_name = None
@@ -339,6 +357,11 @@ class TransitionTag(BaseTag):
         else:
             guard = None
         original_transition_body = []
+
+        root = self.call_trace[0]
+        for child in root.iter():
+            child.tag = remove_namespace(child.tag)
+
         for child in self.element:
             if remove_namespace(child.tag) == 'send':
                 original_transition_body.append(ScxmlSend.from_xml_tree(child))
@@ -352,10 +375,10 @@ class TransitionTag(BaseTag):
 
         # TODO, the children should also contain onexit of the source state
         # and onentry of the target state
-        root = ScxmlRoot.from_xml_tree(self.call_trace[0])
-        source_state = root.get_state_by_id(parent_name)
+        root_scxml = ScxmlRoot.from_xml_tree(root)
+        source_state = root_scxml.get_state_by_id(parent_name)
         assert source_state is not None, f"Source state {parent_name} not found."
-        target_state = root.get_state_by_id(target)
+        target_state = root_scxml.get_state_by_id(target)
         assert target_state is not None, f"Target state {target} not found."
 
         transition_body = []
@@ -366,7 +389,7 @@ class TransitionTag(BaseTag):
             transition_body.extend(target_state.get_onentry())
 
         hash_str = _hash_element(self.element)
-        new_edges, new_locations = _interpret_scxml_executable_content_body(
+        new_edges, new_locations = self.interpret_scxml_executable_content_body(
             transition_body, parent_name, target, hash_str, guard, action_name)
         for edge in new_edges:
             self.automaton.add_edge(edge)
