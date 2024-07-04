@@ -22,13 +22,13 @@
     "constants": [],
     "actions": [
         {
-            "name": "BatteryDrainer_action_0"
-        },
-        {
             "name": "level_on_receive"
         },
         {
             "name": "level_on_send"
+        },
+        {
+            "name": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13"
         }
     ],
     "automata": [
@@ -39,18 +39,18 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery_on_entry"
+                    "name": "use_battery_1"
                 }
             ],
             "initial-locations": [
-                "use_battery_on_entry"
+                "use_battery"
             ],
             "edges": [
                 {
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery_on_entry",
+                            "location": "use_battery_1",
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -64,16 +64,13 @@
                             ]
                         }
                     ],
-                    "action": "BatteryDrainer_action_0"
+                    "action": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13"
                 },
                 {
-                    "location": "use_battery_on_entry",
+                    "location": "use_battery_1",
                     "destinations": [
                         {
                             "location": "use_battery",
-                            "probability": {
-                                "exp": 1.0
-                            },
                             "assignments": [
                                 {
                                     "ref": "level.data",
@@ -83,7 +80,7 @@
                                 {
                                     "ref": "level.valid",
                                     "value": true,
-                                    "index": 1
+                                    "index": 0
                                 }
                             ]
                         }
@@ -227,9 +224,9 @@
                 ]
             },
             {
-                "result": "BatteryDrainer_action_0",
+                "result": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13",
                 "synchronise": [
-                    "BatteryDrainer_action_0",
+                    "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13",
                     null,
                     null
                 ]

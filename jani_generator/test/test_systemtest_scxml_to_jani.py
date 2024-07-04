@@ -117,17 +117,20 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(variable["type"], "bool")
         self.assertEqual(variable["initial-value"], False)
 
-    @pytest.mark.skip(reason="WIP")
     def test_example_with_sync(self):
         """
         Testing the conversion of two SCXML files with a sync.
         """
-        scxml_battery_drainer = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'battery_example',
-            'battery_drainer.scxml')
-        scxml_battery_manager = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'battery_example',
-            'battery_manager.scxml')
+        TEST_DATA_FOLDER = os.path.join(
+            os.path.dirname(__file__), '_test_data', 'battery_example')
+        scxml_battery_drainer_path = os.path.join(
+            TEST_DATA_FOLDER, 'battery_drainer.scxml')
+        scxml_battery_manager_path = os.path.join(
+            TEST_DATA_FOLDER, 'battery_manager.scxml')
+        with open(scxml_battery_drainer_path, 'r', encoding='utf-8') as f:
+            scxml_battery_drainer = f.read()
+        with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
+            scxml_battery_manager = f.read()
 
         jani_model = convert_multiple_scxmls_to_jani([
             scxml_battery_drainer,
@@ -138,6 +141,7 @@ class TestConversion(unittest.TestCase):
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
+        # Check automata
         self.assertEqual(len(jani_dict["automata"]), 3)
         names = [a["name"] for a in jani_dict["automata"]]
         self.assertIn("BatteryDrainer", names)
@@ -160,10 +164,6 @@ class TestConversion(unittest.TestCase):
                        'synchronise': [
                            None, 'level_on_receive', 'level_on_receive']},
                       syncs)
-        self.assertIn({'result': 'BatteryDrainer_action_0',
-                       'synchronise': [
-                           'BatteryDrainer_action_0', None, None]},
-                      syncs)
 
         # Check global variables for event
         variables = jani_dict["variables"]
@@ -178,10 +178,10 @@ class TestConversion(unittest.TestCase):
                        "transient": False}, variables)
 
         # Check full jani file
-        TEST_FILE = 'test_output.jani'
+        TEST_FILE = os.path.join(
+            TEST_DATA_FOLDER, 'output.jani')
         GROUND_TRUTH_FILE = os.path.join(
-            os.path.dirname(__file__), '_test_data',
-            'battery_example', 'output.jani')
+            TEST_DATA_FOLDER, 'output_GROUND_TRUTH.jani')
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
         with open(TEST_FILE, "w", encoding='utf-8') as output_file:

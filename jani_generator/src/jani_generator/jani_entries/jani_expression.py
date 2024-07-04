@@ -130,7 +130,8 @@ class JaniExpression:
             "op": self.op,
         }
         for op_key, op_value in self.operands.items():
-            assert isinstance(op_value, JaniExpression), f"Expected an expression, found {type(op_value)} for {op_key}"
+            assert isinstance(op_value, JaniExpression), \
+                f"Expected an expression, found {type(op_value)} for {op_key}"
             assert hasattr(op_value, "identifier"), f"Identifier not set for {op_key}"
             op_dict.update({op_key: op_value.as_dict()})
         return op_dict
