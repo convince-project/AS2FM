@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 # TODO: Improve imports
 from jani_generator.jani_entries.jani_assignment import JaniAssignment
@@ -34,22 +34,29 @@ from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
 from mc_toolchain_jani_common.common import remove_namespace
-from mc_toolchain_jani_common.ecmascript_interpretation import interpret_ecma_script_expr
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlExecutionBody,
-                                           ScxmlIf, ScxmlRoot, ScxmlSend)
+from mc_toolchain_jani_common.ecmascript_interpretation import \
+    interpret_ecma_script_expr
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
+                                           ScxmlExecutionBody, ScxmlIf,
+                                           ScxmlRoot, ScxmlSend)
 
 # The type to be exctended by parsing the scxml file
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
 
-def _hash_element(element: ET.Element) -> str:
+def _hash_element(element: Union[ET.Element, ScxmlBase]) -> str:
     """
     Hash an ElementTree element.
     :param element: The element to hash.
     :return: The hash of the element.
     """
-    s = ET.tostring(element, encoding='unicode', method='xml')
-    return sha256(s.encode()).hexdigest()[:32]
+    if isinstance(element, ET.Element):
+        s = ET.tostring(element, encoding='unicode', method='xml')
+    elif isinstance(element, ScxmlBase):
+        s = ET.tostring(element.as_xml(), encoding='unicode', method='xml')
+    else:
+        raise ValueError(f"Element type {type(element)} not supported.")
+    return sha256(s.encode()).hexdigest()[:8]
 
 
 def _get_state_name(element: ET.Element) -> str:
@@ -286,7 +293,7 @@ class TransitionTag(BaseTag):
             elif isinstance(ec, ScxmlSend):
                 event_name = ec.get_event()
                 event_send_action_name = event_name + "_on_send"
-                interm_loc = f'{source}_{i}'
+                interm_loc = f'{source}-{i}-{hash_str}'
                 new_edges[-1].destinations[0]['location'] = interm_loc
                 new_edge = JaniEdge({
                     "location": interm_loc,
@@ -337,22 +344,27 @@ class TransitionTag(BaseTag):
                 new_edges[-1].destinations[0]['location'] = interm_loc_before
                 previous_conditions = []
                 for cond_str, conditional_body in ec.get_conditional_executions():
+                    print(f"Condition: {cond_str}")
+                    print(f"Body: {conditional_body}")
                     current_cond = parse_ecmascript_to_jani_expression(cond_str)
                     jani_cond = _merge_conditions(
                         previous_conditions, current_cond).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         conditional_body, interm_loc_before, interm_loc_after,
-                        hash_str, JaniGuard(jani_cond), None)
+                        '-'.join([hash_str, _hash_element(ec), cond_str]),
+                        JaniGuard(jani_cond), None)
                     new_edges.extend(sub_edges)
                     new_locations.extend(sub_locs)
                     previous_conditions.append(current_cond)
                 # Add else branch:
                 if ec.get_else_execution() is not None:
+                    print(f"Else: {ec.get_else_execution()}")
                     jani_cond = _merge_conditions(
                         previous_conditions).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         ec.get_else_execution(), interm_loc_before, interm_loc_after,
-                        hash_str, JaniGuard(jani_cond), None)
+                        '-'.join([hash_str, _hash_element(ec), 'else']),
+                        JaniGuard(jani_cond), None)
                     new_edges.extend(sub_edges)
                     new_locations.extend(sub_locs)
                 new_edges.append(JaniEdge({
