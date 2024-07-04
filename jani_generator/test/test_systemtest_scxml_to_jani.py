@@ -28,7 +28,7 @@ from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
     interpret_top_level_xml)
-from .test_utilities_smc_strom import run_smc_storm_with_output
+from .test_utilities_smc_storm import run_smc_storm_with_output
 
 
 class TestConversion(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestConversion(unittest.TestCase):
         Very basic example of a SCXML file.
         """
         basic_scxml = """
-        <scxml 
+        <scxml
           version="1.0"
           initial="Initial">
             <state id="Initial">

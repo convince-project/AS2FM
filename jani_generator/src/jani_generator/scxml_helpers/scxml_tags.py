@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Any, Dict, List, Optional, Tuple
 
+# TODO: Improve imports
 from jani_generator.jani_entries.jani_assignment import JaniAssignment
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_edge import JaniEdge
@@ -61,7 +62,8 @@ def _get_state_name(element: ET.Element) -> str:
         raise NotImplementedError('Only states with an id are supported.')
 
 
-def _interpret_scxml_assign(elem: ScxmlAssign) -> JaniAssignment:
+def _interpret_scxml_assign(
+        elem: ScxmlAssign, event_substitution: Optional[str] = None) -> JaniAssignment:
     """Interpret SCXML assign element.
 
     :param element: The SCXML element to interpret.
@@ -71,7 +73,8 @@ def _interpret_scxml_assign(elem: ScxmlAssign) -> JaniAssignment:
         f"Expected ScxmlAssign, got {type(elem)}"
     return JaniAssignment({
         "ref": elem.get_location(),
-        "value": parse_ecmascript_to_jani_expression(elem.get_expr()),
+        "value": parse_ecmascript_to_jani_expression(
+            elem.get_expr()).replace_event(event_substitution)
     })
 
 
@@ -223,7 +226,6 @@ class TransitionTag(BaseTag):
     See https://www.w3.org/TR/scxml/#transition
     """
 
-
     def interpret_scxml_executable_content_body(
             self,
             body: ScxmlExecutionBody,
@@ -244,7 +246,8 @@ class TransitionTag(BaseTag):
         # First edge. Has to evaluate guard and trigger event of original transition.
         new_edges.append(JaniEdge({
             "location": source,
-            "action": trigger_event_action if trigger_event_action is not None else edge_action_name,
+            "action": (trigger_event_action
+                       if trigger_event_action is not None else edge_action_name),
             "guard": guard.expression if guard is not None else None,
             "destinations": [{
                 "location": None,
@@ -253,15 +256,16 @@ class TransitionTag(BaseTag):
         }))
         for i, ec in enumerate(body):
             if isinstance(ec, ScxmlAssign):
-                jani_assignment = _interpret_scxml_assign(ec)
+                jani_assignment = _interpret_scxml_assign(ec, self._trans_event_name)
                 new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
             elif isinstance(ec, ScxmlSend):
                 event_name = ec.get_event()
+                event_send_action_name = event_name + "_on_send"
                 interm_loc = f'{source}_{i}'
                 new_edges[-1].destinations[0]['location'] = interm_loc
                 new_edge = JaniEdge({
                     "location": interm_loc,
-                    "action": event_name + "_on_send",
+                    "action": event_send_action_name,
                     "guard": None,
                     "destinations": [{
                         "location": None,
@@ -273,21 +277,33 @@ class TransitionTag(BaseTag):
                     expr = param.get_expr() if param.get_expr() is not None else param.get_location()
                     new_edge.destinations[0]['assignments'].append(JaniAssignment({
                         "ref": f'{ec.get_event()}.{param.get_name()}',
-                        "value": parse_ecmascript_to_jani_expression(expr)
+                        "value": parse_ecmascript_to_jani_expression(
+                            expr).replace_event(self._trans_event_name)
                     }))
-                    data_structure_for_event[param.get_name()
-                                             ] = str(type(interpret_ecma_script_expr(expr)))
+                    variables = {}
+                    for n, v in self.automaton.get_variables().items():
+                        variables[n] = v.get_type()()
+                    data_structure_for_event[param.get_name()] = \
+                        type(interpret_ecma_script_expr(expr, variables))
+                new_edge.destinations[0]['assignments'].append(JaniAssignment({
+                    "ref": f'{ec.get_event()}.valid',
+                    "value": True
+                }))
 
                 if not self.events_holder.has_event(event_name):
-                    new_event = Event(
+                    send_event = Event(
                         event_name,
                         data_structure_for_event
                     )
-                    self.events_holder.add_event(new_event)
-                existing_event = self.events_holder.get_event(event_name)
-                existing_event.add_sender_edge(
-                    self.automaton.get_name(), edge_action_name, [])
-                
+                    self.events_holder.add_event(send_event)
+                else:
+                    send_event = self.events_holder.get_event(event_name)
+                    send_event.set_data_structure(
+                        data_structure_for_event
+                    )
+                send_event.add_sender_edge(
+                    self.automaton.get_name(), event_send_action_name, [])
+
                 new_edges.append(new_edge)
                 new_locations.append(interm_loc)
             elif isinstance(ec, ScxmlIf):
@@ -297,7 +313,8 @@ class TransitionTag(BaseTag):
                 previous_conditions = []
                 for cond_str, conditional_body in ec.get_conditional_executions():
                     current_cond = parse_ecmascript_to_jani_expression(cond_str)
-                    jani_cond = _merge_conditions(previous_conditions, current_cond)
+                    jani_cond = _merge_conditions(
+                        previous_conditions, current_cond).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         conditional_body, interm_loc_before, interm_loc_after,
                         hash_str, jani_cond, None)
@@ -306,7 +323,8 @@ class TransitionTag(BaseTag):
                     previous_conditions.append(current_cond)
                 # Add else branch:
                 if ec.get_else_execution() is not None:
-                    jani_cond = _merge_conditions(previous_conditions)
+                    jani_cond = _merge_conditions(
+                        previous_conditions).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         ec.get_else_execution(), interm_loc_before, interm_loc_after,
                         hash_str, jani_cond, None)
@@ -326,20 +344,22 @@ class TransitionTag(BaseTag):
         new_edges[-1].destinations[0]['location'] = target
         return new_edges, new_locations
 
-
     def write_model(self):
         parent_name = _get_state_name(self.call_trace[-1])
         action_name = None
+        self._trans_event_name = None
         if 'event' in self.element.attrib:
-            event_name = self.element.attrib['event']
-            action_name = event_name + "_on_receive"
-            if not self.events_holder.has_event(event_name):
+            self._trans_event_name = self.element.attrib['event']
+            assert len(self._trans_event_name) > 0, "Empty event name not supported."
+            assert " " not in self._trans_event_name, "Multiple events not supported."
+            action_name = self._trans_event_name + "_on_receive"
+            if not self.events_holder.has_event(self._trans_event_name):
                 new_event = Event(
-                    event_name
+                    self._trans_event_name
                     # we can't know the data structure here
                 )
                 self.events_holder.add_event(new_event)
-            existing_event = self.events_holder.get_event(event_name)
+            existing_event = self.events_holder.get_event(self._trans_event_name)
             existing_event.add_receiver(
                 self.automaton.get_name(), parent_name, action_name)
         if 'target' in self.element.attrib:
@@ -350,7 +370,7 @@ class TransitionTag(BaseTag):
             expression = parse_ecmascript_to_jani_expression(
                 self.element.attrib['cond'])
             if 'event' in self.element.attrib:
-                expression.replace_event(event_name)
+                expression.replace_event(self._trans_event_name)
             guard = JaniGuard(
                 expression
             )

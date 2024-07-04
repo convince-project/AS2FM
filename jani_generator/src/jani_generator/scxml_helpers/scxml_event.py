@@ -25,7 +25,7 @@ from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 class EventSender:
     def __init__(self, automaton_name: str,
-                 edge_action_name: str, 
+                 edge_action_name: str,
                  assignments: List[JaniAssignment]):
         """
         Initialize the event sender.
@@ -52,7 +52,7 @@ class EventReceiver:
 class Event:
     def __init__(self,
                  name: str,
-                 data_struct: Optional[Dict[str, str]] = None):
+                 data_struct: Optional[Dict[str, type]] = None):
         self.name = name
         self.data_struct = data_struct
         self.senders: List[EventSender] = []
@@ -76,11 +76,11 @@ class Event:
         """Get the receivers of the event."""
         return self.receivers
 
-    def get_data_structure(self):
+    def get_data_structure(self) -> Dict[str, type]:
         """Get the data structure of the event."""
         return self.data_struct
 
-    def set_data_structure(self, data_struct: Dict[str, str]):
+    def set_data_structure(self, data_struct: Dict[str, type]):
         """Set the data structure of the event."""
         self.data_struct = data_struct
 

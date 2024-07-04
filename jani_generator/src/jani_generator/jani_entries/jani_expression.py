@@ -96,13 +96,26 @@ class JaniExpression:
         assert False, f"Unknown operator \"{self.op}\" found."
 
     def replace_event(self, replacement):
+        """Replace `_event` with `replacement`.
+
+        Within a transitions, scxml can access data of events from the `_event` variable. We
+        have to replace this by the global variable where we stored the data from the received
+        event.
+
+        :param replacement: The string to replace `_event` with.
+        :return self: for the convenience of chain-ability
+        """
+        if replacement is None:
+            # No replacement needed!
+            return self
         if self.identifier is not None:
             self.identifier = self.identifier.replace("_event", replacement)
-            return
+            return self
         if self.value is not None:
-            return
+            return self
         for operand in self.operands.values():
             operand.replace_event(replacement)
+        return self
 
     def is_valid(self) -> bool:
         return self.identifier is not None or self.value is not None or self.op is not None

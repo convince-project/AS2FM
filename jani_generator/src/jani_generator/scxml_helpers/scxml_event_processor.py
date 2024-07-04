@@ -51,10 +51,11 @@ def implement_scxml_events_as_jani_syncs(
         event.is_valid()
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
-        # Expand states if needed
+        # Check correct action names
         for sender in event.get_senders():
-            automaton = jani_model.get_automaton(sender.automaton_name)
-            event_name_on_send = sender.edge_action_name
+            action_name = sender.edge_action_name
+            assert action_name == event_name_on_send, \
+                f"Action name {action_name} must be {event_name_on_send}."
         for receivers in event.get_receivers():
             action_name = receivers.edge_action_name
             assert action_name == event_name_on_receive, \
