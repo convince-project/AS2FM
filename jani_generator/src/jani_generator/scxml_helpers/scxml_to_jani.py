@@ -17,8 +17,10 @@
 Module handling the conversion from SCXML to Jani.
 """
 
-import xml.etree.ElementTree as ET
+import os
 from typing import List
+
+from scxml_converter.scxml_entries import ScxmlRoot
 
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_model import JaniModel
@@ -28,11 +30,10 @@ from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
 from jani_generator.scxml_helpers.scxml_tags import BaseTag
-from mc_toolchain_jani_common.common import remove_namespace
 
 
-def convert_scxml_element_to_jani_automaton(
-        element: ET.Element, jani_automaton: JaniAutomaton, events_holder: EventsHolder
+def convert_scxml_root_to_jani_automaton(
+        scxml_root: ScxmlRoot, jani_automaton: JaniAutomaton, events_holder: EventsHolder
 ) -> None:
     """
     Convert an SCXML element to a Jani automaton.
@@ -41,11 +42,7 @@ def convert_scxml_element_to_jani_automaton(
     :param jani_automaton: The Jani automaton to write the converted element to.
     :param events_holder: The holder for the events to be implemented as Jani syncs.
     """
-    assert remove_namespace(element.tag) == "scxml", \
-        "The element must be the root scxml tag of the file."
-    for child in element.iter():
-        child.tag = remove_namespace(child.tag)
-    BaseTag.from_element(element, [], (jani_automaton,
+    BaseTag.from_element(scxml_root, [], (jani_automaton,
                          events_holder)).write_model()
 
 
@@ -64,15 +61,15 @@ def convert_multiple_scxmls_to_jani(
     events_holder = EventsHolder()
     for scxml_str in scxmls:
         try:
-            scxml = ET.fromstring(scxml_str)
-        except ET.ParseError as e:
+            assert os.path.exists(scxml_str), f"{scxml_str} is not a path or does not exist."
+            scxml_root = ScxmlRoot.from_scxml_file(scxml_str)
+            assert scxml_root.is_plain_scxml(), f"{scxml_str} does not contain a plain SCXML model."
+        except Exception as e:
             print(">>>")
             print(scxml_str)
             raise e
         automaton = JaniAutomaton()
-        BaseTag.from_element(
-            scxml, [], (automaton, events_holder)
-        ).write_model()
+        convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder)
         base_model.add_jani_automaton(automaton)
     timer_automaton = make_global_timer_automaton(timers, max_time_ns)
     if timer_automaton is not None:

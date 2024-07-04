@@ -21,14 +21,12 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import List, Optional, Tuple, Union
 
-# TODO: Improve imports
-from jani_generator.jani_entries.jani_assignment import JaniAssignment
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
-from jani_generator.jani_entries.jani_edge import JaniEdge
-from jani_generator.jani_entries.jani_expression import JaniExpression
+from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
+                                         JaniEdge, JaniExpression, JaniGuard,
+                                         JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
-from jani_generator.jani_entries.jani_guard import JaniGuard
+
 from jani_generator.scxml_helpers.scxml_data import ScxmlData
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
@@ -37,8 +35,9 @@ from mc_toolchain_jani_common.common import remove_namespace
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
-                                           ScxmlExecutionBody, ScxmlIf,
-                                           ScxmlRoot, ScxmlSend)
+                                           ScxmlDataModel, ScxmlExecutionBody,
+                                           ScxmlIf, ScxmlRoot, ScxmlSend,
+                                           ScxmlState)
 
 # The type to be exctended by parsing the scxml file
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
@@ -113,43 +112,43 @@ class BaseTag:
     """Base class for all SCXML tags."""
     # class function to initialize the correct tag object
     @staticmethod
-    def from_element(element: ET.Element,
-                     call_trace: List[ET.Element],
-                     model: ModelTupleType) -> 'ScxmlTag':
+    def from_element(element: ScxmlBase,
+                     call_trace: List[ScxmlBase],
+                     model: ModelTupleType) -> 'BaseTag':
         """Return the correct tag object based on the xml element.
 
         :param element: The xml element representing the tag.
         :return: The corresponding tag object.
         """
-        tag = remove_namespace(element.tag)
-        if tag not in CLASS_BY_TAG:
-            raise NotImplementedError(f"Tag >{tag}< not implemented.")
-        return CLASS_BY_TAG[tag](element, call_trace, model)
+        if type(element) not in CLASS_BY_TYPE:
+            raise NotImplementedError(f"Support for SCXML type >{type(element)}< not implemented.")
+        return CLASS_BY_TYPE[type(element)](element, call_trace, model)
 
-    def __init__(self, element: ET.Element,
-                 call_trace: List[ET.Element],
+    def __init__(self, element: ScxmlBase,
+                 call_trace: List[ScxmlBase],
                  model: ModelTupleType) -> None:
         """Initialize the ScxmlTag object from an xml element.
 
         :param element: The xml element representing the tag.
         """
         self.element = element
-        self.call_trace = call_trace
         self.model = model
         self.automaton, self.events_holder = model
+        self.call_trace = call_trace
+        scxml_children = self.get_children()
         self.children = [
             BaseTag.from_element(child, call_trace + [element], model)
-            for child in element]
+            for child in scxml_children]
+
+    def get_children(self) -> List[ScxmlBase]:
+        """Method extracting all children from a specific Scxml Tag.
+        """
+        raise NotImplementedError("Method get_children not implemented.")
 
     def get_tag_name(self) -> str:
         """Return the tag name to match against.
-
-        :return: For example, 'datamodel' for a DatamodelTag.
         """
-        if type(self).__name__ == 'ScxmlTag':
-            raise NotImplementedError(
-                "This method must be implemented in a subclass.")
-        return type(self).__name__.replace("Tag", "").lower()
+        return self.element.get_tag_name()
 
     def write_model(self):
         """Return the model of the tag.
@@ -160,7 +159,7 @@ class BaseTag:
             child.write_model()
 
 
-class Assign(BaseTag):
+class AssignTag(BaseTag):
     """Object representing an assign tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#assign
@@ -173,19 +172,18 @@ class DatamodelTag(BaseTag):
     See https://www.w3.org/TR/scxml/#datamodel
     """
 
-
-class DataTag(BaseTag):
-    """Object representing a data tag from a SCXML file.
-
-    See https://www.w3.org/TR/scxml/#data
-    """
+    def get_children(self) -> List[ScxmlBase]:
+        return []
 
     def write_model(self):
-        sd = ScxmlData(self.element)
-        self.automaton.add_variable(sd.to_jani_variable())
-        if len(self.children) > 0:
-            raise NotImplementedError(
-                "Children of the data tag are currently not supported.")
+        for name, expr in self.element.get_data_entries():
+            assert expr is not None, f"No init value for {name}."
+            # TODO: ScxmlData from scxml_helpers provide many more options.
+            # It should be ported to scxml_entries.ScxmlDataModel
+            init_value = interpret_ecma_script_expr(expr)
+            expr_type = type(init_value)
+            self.automaton.add_variable(
+                JaniVariable(name, expr_type, init_value))
 
 
 class ElseTag(BaseTag):
@@ -233,16 +231,21 @@ class ParamTag(BaseTag):
 class ScxmlTag(BaseTag):
     """Object representing the root SCXML tag."""
 
+    def get_children(self) -> List[ScxmlBase]:
+        root_children = []
+        data_model = self.element.get_data_model()
+        if data_model is not None:
+            root_children.append(data_model)
+        root_children.extend(self.element.get_states())
+        return []
+
     def write_model(self):
-        if 'name' in self.element.attrib:
-            p_name = self.element.attrib['name']
-        else:
-            p_name = _hash_element(self.element)
-        self.automaton.set_name(p_name)
+        assert isinstance(self.element, ScxmlRoot), \
+            f"Expected ScxmlRoot, got {type(self.element)}."
+        self.automaton.set_name(self.element.get_name())
         super().write_model()
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
-        if 'initial' in self.element.attrib:
-            self.automaton.make_initial(self.element.attrib['initial'])
+        self.automaton.make_initial(self.element.get_initial_state_id())
 
 
 class SendTag(BaseTag):
@@ -467,8 +470,14 @@ class StateTag(BaseTag):
         super().write_model()
 
 
+CLASS_BY_TYPE = {
+    ScxmlDataModel: DatamodelTag,
+    ScxmlRoot: ScxmlTag,
+    # ScxmlState: StateTag TODO
+}
+
 CLASS_BY_TAG = {
-    'assign': Assign,
+    'assign': AssignTag,
     'data': DataTag,
     'datamodel': DatamodelTag,
     'else': ElseTag,
