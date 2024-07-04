@@ -9,10 +9,14 @@ on:
     
 jobs:
     test:
-        runs-on: ubuntu-latest
         strategy:
             matrix:
-                ros-distro: [ "humble", "jazzy" ]
+                include:
+                  - ros-distro: jazzy
+                    os: ubuntu-24.04
+                  - distro: humble
+                    os: ubuntu-22.04
+        runs-on: ${{ matrix.os }}
         steps:
             # Checkout the repository
             - name: Checkout repository
