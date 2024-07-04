@@ -34,7 +34,7 @@ def _interpret_output(
 
 
 def _run_smc_storm(args: str) -> Tuple[str, str, int]:
-    command = f"smc_storm {args}"
+    command = f"smc_storm {args} --max-trace-length 10000 --max-n-traces 10000"
     print("Running command: ", command)
     process = subprocess.Popen(
         command,
