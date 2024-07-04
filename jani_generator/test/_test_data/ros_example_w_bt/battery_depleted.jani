@@ -25,6 +25,54 @@
                     "op": "initial"
                 }
             }
+        },
+        {
+            "name": "battery_below_20",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "left": {
+                                "op": "<",
+                                "left": "ros_topic.level.data",
+                                "right": 20
+                            },
+                            "op": "∧",
+                            "right": "ros_topic.level.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "battery_alarm_on",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "op": "∧",
+                            "left": "ros_topic.alarm.data",
+                            "right": "ros_topic.charge.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
         }
     ]
 }

@@ -195,7 +195,7 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def _test_with_entrypoint(self, main_xml: str, folder: str, success: bool):
+    def _test_with_entrypoint(self, main_xml: str, folder: str, property_name: str, success: bool):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
@@ -214,7 +214,6 @@ class TestConversion(unittest.TestCase):
         #     ground_truth = json.load(f)
         # self.maxDiff = None
         # self.assertEqual(jani_dict, ground_truth)
-        property_name = "battery_depleted"
         pos_res = "Result: 1" if success else "Result: 0"
         neg_res = "Result: 0" if success else "Result: 1"
         run_smc_storm_with_output(
@@ -229,23 +228,30 @@ class TestConversion(unittest.TestCase):
     def test_with_entrypoint_main_success(self):
         """Test the main.xml file with the entrypoint.
         Here we expect the property to be satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example', True)
+        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_depleted', True)
 
     def test_with_entrypoint_main_fail(self):
         """Test the main_failing.xml file with the entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main_failing_prop.xml', 'ros_example', False)
+        self._test_with_entrypoint(
+            'main_failing_prop.xml', 'ros_example', 'battery_depleted', False)
 
-    def test_with_entrypoint_w_bt_main_success(self):
+    def test_with_entrypoint_w_bt_main_battery_depleted(self):
         """Test the main.xml file with the entrypoint.
         Here we expect the property to be satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', False)
+        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
 
-    def test_with_entrypoint_w_bt_main_fail(self):
+    def test_with_entrypoint_w_bt_main_battery_under_twenty(self):
+        """Test the main.xml file with the entrypoint.
+        Here we expect the property to be satisfied."""
+        # TODO: Improve properties under evaluation!
+        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
+
+    def test_with_entrypoint_w_bt_main_alarm_and_charge(self):
         """Test the main_failing.xml file with the entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main_failing_prop.xml', 'ros_example_w_bt', False)
+        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
 
 
 if __name__ == '__main__':
