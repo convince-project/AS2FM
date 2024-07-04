@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <scxml name="bt" version="1.0" model_src="" initial="wait_for_tick" xmlns="http://www.w3.org/2005/07/scxml">
     <state id="tick">
         <transition target="10000_TopicCondition" />

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Module handling ScXML data tags.
+Module handling SCXML data tags.
 """
 
 import re
@@ -29,7 +29,7 @@ from jani_generator.jani_entries.jani_variable import JaniVariable, ValidTypes
 
 
 class ScxmlData:
-    """Object representing a data tag from a ScXML file.
+    """Object representing a data tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#data
     """

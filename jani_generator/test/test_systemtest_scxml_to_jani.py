@@ -195,24 +195,24 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def _test_with_entrypoint(self, main_xml: str, success: bool):
+    def _test_with_entrypoint(self, main_xml: str, folder: str, success: bool):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'ros_example')
+            os.path.dirname(__file__), '_test_data', folder)
         xml_main_path = os.path.join(test_data_dir, main_xml)
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
         interpret_top_level_xml(xml_main_path)
         self.assertTrue(os.path.exists(ouput_path))
-        ground_truth = os.path.join(
-            test_data_dir,
-            'jani_model_GROUND_TRUTH.jani')
-        with open(ouput_path, "r", encoding='utf-8') as f:
-            jani_dict = json.load(f)
-        with open(ground_truth, "r", encoding='utf-8') as f:
-            ground_truth = json.load(f)
-        self.maxDiff = None
+        # ground_truth = os.path.join(
+        #     test_data_dir,
+        #     'jani_model_GROUND_TRUTH.jani')
+        # with open(ouput_path, "r", encoding='utf-8') as f:
+        #     jani_dict = json.load(f)
+        # with open(ground_truth, "r", encoding='utf-8') as f:
+        #     ground_truth = json.load(f)
+        # self.maxDiff = None
         # self.assertEqual(jani_dict, ground_truth)
         property_name = "battery_depleted"
         pos_res = "Result: 1" if success else "Result: 0"
@@ -223,18 +223,28 @@ class TestConversion(unittest.TestCase):
              ouput_path,
              pos_res],
             [neg_res])
-        if os.path.exists(ouput_path):
-            os.remove(ouput_path)
+        # if os.path.exists(ouput_path):
+        #     os.remove(ouput_path)
 
     def test_with_entrypoint_main_success(self):
         """Test the main.xml file with the entrypoint.
         Here we expect the property to be satisfied."""
-        self._test_with_entrypoint('main.xml', True)
+        self._test_with_entrypoint('main.xml', 'ros_example', True)
 
     def test_with_entrypoint_main_fail(self):
         """Test the main_failing.xml file with the entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main_failing_prop.xml', False)
+        self._test_with_entrypoint('main_failing_prop.xml', 'ros_example', False)
+
+    def test_with_entrypoint_w_bt_main_success(self):
+        """Test the main.xml file with the entrypoint.
+        Here we expect the property to be satisfied."""
+        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', True)
+
+    def test_with_entrypoint_w_bt_main_fail(self):
+        """Test the main_failing.xml file with the entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        self._test_with_entrypoint('main_failing_prop.xml', 'ros_example_w_bt', False)
 
 
 if __name__ == '__main__':

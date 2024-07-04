@@ -17,18 +17,18 @@
 Expressions in Jani
 """
 
-from typing import Union
+from typing import Dict, Union
 from jani_generator.jani_entries import JaniValue
 
 SupportedExp = Union[str, int, float, bool, dict]
 
 
 class JaniExpression:
-    def __init__(self, expression):
+    def __init__(self, expression: Union[SupportedExp, 'JaniExpression', JaniValue]):
         self.identifier: str = None
         self.value: JaniValue = None
         self.op = None
-        self.operands = None
+        self.operands: Dict[str, Union[JaniExpression, JaniValue]] = None
         if isinstance(expression, JaniExpression):
             self.identifier = expression.identifier
             self.value = expression.value
@@ -46,7 +46,8 @@ class JaniExpression:
                 # If it is a value, then we don't need to expand further
                 self.value = JaniValue(expression)
             else:
-                # If it isn't a value or an identifier, it must be a dictionary providing op and related operands
+                # If it isn't a value or an identifier, it must be a dictionary providing op and
+                # related operands
                 # Operands need to be expanded further, until we encounter a value expression
                 assert isinstance(expression, dict), "Expected a dictionary"
                 assert "op" in expression, "Expected either a value or an operator"
@@ -55,9 +56,11 @@ class JaniExpression:
 
     def _get_operands(self, expression_dict: dict):
         if (self.op in ("intersect", "distance")):
-            # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory the intersection occurs.
-            #            0.0 means no intersection occurs (destination reached), 1.0 means the intersection occurs at the start
-            # distance: returns the distance between the robot and the barrier
+            # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory
+            # the intersection occurs.
+            #            0.0 means no intersection occurs (destination reached), 1.0 means the
+            # intersection occurs at the start distance: returns the distance between the robot and
+            # the barrier.
             return {
                 "robot": JaniExpression(expression_dict["robot"]),
                 "barrier": JaniExpression(expression_dict["barrier"])}
@@ -75,7 +78,8 @@ class JaniExpression:
             return {
                 "left": JaniExpression(expression_dict["left"]),
                 "right": JaniExpression(expression_dict["right"])}
-        if (self.op in ("!", "¬", "sin", "cos", "floor", "ceil", "abs", "to_cm", "to_m", "to_deg", "to_rad")):
+        if (self.op in ("!", "¬", "sin", "cos", "floor", "ceil",
+                        "abs", "to_cm", "to_m", "to_deg", "to_rad")):
             return {
                 "exp": JaniExpression(expression_dict["exp"])}
         if (self.op in ("ite")):
@@ -114,7 +118,8 @@ class JaniExpression:
         if self.value is not None:
             return self
         for operand in self.operands.values():
-            operand.replace_event(replacement)
+            if isinstance(operand, JaniExpression):
+                operand.replace_event(replacement)
         return self
 
     def is_valid(self) -> bool:

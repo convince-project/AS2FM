@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Module defining ScXML tags to match against.
+Module defining SCXML tags to match against.
 """
 
 import xml.etree.ElementTree as ET
@@ -71,10 +71,13 @@ def _interpret_scxml_assign(
     """
     assert isinstance(elem, ScxmlAssign), \
         f"Expected ScxmlAssign, got {type(elem)}"
+    assignment_value = parse_ecmascript_to_jani_expression(
+            elem.get_expr())
+    if isinstance(assignment_value, JaniExpression):
+        assignment_value.replace_event(event_substitution)
     return JaniAssignment({
         "ref": elem.get_location(),
-        "value": parse_ecmascript_to_jani_expression(
-            elem.get_expr()).replace_event(event_substitution)
+        "value": assignment_value
     })
 
 
@@ -100,7 +103,7 @@ def _merge_conditions(
 
 
 class BaseTag:
-    """Base class for all ScXML tags."""
+    """Base class for all SCXML tags."""
     # class function to initialize the correct tag object
     @staticmethod
     def from_element(element: ET.Element,
@@ -151,21 +154,21 @@ class BaseTag:
 
 
 class Assign(BaseTag):
-    """Object representing an assign tag from a ScXML file.
+    """Object representing an assign tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#assign
     """
 
 
 class DatamodelTag(BaseTag):
-    """Object representing a datamodel tag from a ScXML file.
+    """Object representing a datamodel tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#datamodel
     """
 
 
 class DataTag(BaseTag):
-    """Object representing a data tag from a ScXML file.
+    """Object representing a data tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#data
     """
@@ -178,29 +181,50 @@ class DataTag(BaseTag):
                 "Children of the data tag are currently not supported.")
 
 
+class ElseTag(BaseTag):
+    """Object representing an else tag from a SCXML file.
+
+    No implementation needed, because the children are already processed.
+    """
+
+
+class ElseIfTag(BaseTag):
+    """Object representing an elseif tag from a SCXML file.
+
+    No implementation needed, because the children are already processed.
+    """
+
+
+class IfTag(BaseTag):
+    """Object representing an if tag from a SCXML file.
+
+    No implementation needed, because the children are already processed.
+    """
+
+
 class OnEntryTag(BaseTag):
-    """Object representing an onentry tag from a ScXML file.
+    """Object representing an onentry tag from a SCXML file.
 
     No implementation needed, because the children are already processed.
     """
 
 
 class OnExitTag(BaseTag):
-    """Object representing an onexid tag from a ScXML file.
+    """Object representing an onexid tag from a SCXML file.
 
     No implementation needed, because the children are already processed.
     """
 
 
 class ParamTag(BaseTag):
-    """Object representing a param tag from a ScXML file.
+    """Object representing a param tag from a SCXML file.
 
     No implementation needed, because the children are already processed.
     """
 
 
 class ScxmlTag(BaseTag):
-    """Object representing a generic ScXML tag."""
+    """Object representing the root SCXML tag."""
 
     def write_model(self):
         if 'name' in self.element.attrib:
@@ -209,19 +233,20 @@ class ScxmlTag(BaseTag):
             p_name = _hash_element(self.element)
         self.automaton.set_name(p_name)
         super().write_model()
+        # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
         if 'initial' in self.element.attrib:
             self.automaton.make_initial(self.element.attrib['initial'])
 
 
 class SendTag(BaseTag):
-    """Object representing a send tag from a ScXML file.
+    """Object representing a send tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#send
     """
 
 
 class TransitionTag(BaseTag):
-    """Object representing a transition tag from a ScXML file.
+    """Object representing a transition tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#transition
     """
@@ -317,7 +342,7 @@ class TransitionTag(BaseTag):
                         previous_conditions, current_cond).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         conditional_body, interm_loc_before, interm_loc_after,
-                        hash_str, jani_cond, None)
+                        hash_str, JaniGuard(jani_cond), None)
                     new_edges.extend(sub_edges)
                     new_locations.extend(sub_locs)
                     previous_conditions.append(current_cond)
@@ -327,7 +352,7 @@ class TransitionTag(BaseTag):
                         previous_conditions).replace_event(self._trans_event_name)
                     sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
                         ec.get_else_execution(), interm_loc_before, interm_loc_after,
-                        hash_str, jani_cond, None)
+                        hash_str, JaniGuard(jani_cond), None)
                     new_edges.extend(sub_edges)
                     new_locations.extend(sub_locs)
                 new_edges.append(JaniEdge({
@@ -418,7 +443,7 @@ class TransitionTag(BaseTag):
 
 
 class StateTag(BaseTag):
-    """Object representing a state tag from a ScXML file.
+    """Object representing a state tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#state
     """
@@ -426,6 +451,7 @@ class StateTag(BaseTag):
     def write_model(self):
         p_name = _get_state_name(self.element)
         self.automaton.add_location(p_name)
+        # TODO: Make sure initial states that have onentry execute the onentry block at start
         super().write_model()
 
 
@@ -433,6 +459,9 @@ CLASS_BY_TAG = {
     'assign': Assign,
     'data': DataTag,
     'datamodel': DatamodelTag,
+    'else': ElseTag,
+    'elseif': ElseIfTag,
+    'if': IfTag,
     'onexit': OnExitTag,
     'onentry': OnEntryTag,
     'param': ParamTag,

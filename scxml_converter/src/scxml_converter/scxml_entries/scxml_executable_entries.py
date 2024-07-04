@@ -145,17 +145,19 @@ class ScxmlSend(ScxmlBase):
     """This class represents a send action."""
 
     def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
+        if params is None:
+            params = []
         self._event = event
         self._params = params
 
     def get_tag_name() -> str:
         return "send"
-    
+
     def get_event(self) -> str:
         """Get the event to send."""
         return self._event
-    
-    def get_params(self) -> Optional[List[ScxmlParam]]:
+
+    def get_params(self) -> List[ScxmlParam]:
         """Get the parameters to send."""
         return self._params
 
@@ -174,10 +176,9 @@ class ScxmlSend(ScxmlBase):
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
         valid_params = True
-        if self._params is not None:
-            for param in self._params:
-                valid_param = isinstance(param, ScxmlParam) and param.check_validity()
-                valid_params = valid_params and valid_param
+        for param in self._params:
+            valid_param = isinstance(param, ScxmlParam) and param.check_validity()
+            valid_params = valid_params and valid_param
         if not valid_event:
             print("Error: SCXML send: event is not valid.")
         if not valid_params:
@@ -191,8 +192,6 @@ class ScxmlSend(ScxmlBase):
 
     def append_param(self, param: ScxmlParam) -> None:
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
-        if self._params is None:
-            self._params = []
         self._params.append(param)
 
     def as_plain_scxml(self, _) -> "ScxmlSend":
@@ -201,9 +200,8 @@ class ScxmlSend(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
-        if self._params is not None:
-            for param in self._params:
-                xml_send.append(param.as_xml())
+        for param in self._params:
+            xml_send.append(param.as_xml())
         return xml_send
 
 

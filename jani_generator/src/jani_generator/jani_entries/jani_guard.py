@@ -22,6 +22,7 @@ from typing import Optional
 
 from jani_generator.jani_entries.jani_expression import JaniExpression
 
+
 class JaniGuard:
     def __init__(self, expression: Optional[JaniExpression]):
         self.expression = expression
@@ -30,8 +31,7 @@ class JaniGuard:
         d = {}
         if self.expression:
             exp = self.expression.as_dict()
-            if (isinstance(exp, dict) and 
-                list(exp.keys()) == ['exp']):
+            if (isinstance(exp, dict) and list(exp.keys()) == ['exp']):
                 d['exp'] = exp['exp']
             else:
                 d['exp'] = exp

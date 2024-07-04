@@ -157,6 +157,6 @@ def bt_converter(
     root_tag.add_state(wait_for_tick, initial=True)
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
-        f.write(ET.tostring(root_tag.as_xml(), encoding='unicode'))
+        f.write(ET.tostring(root_tag.as_xml(), encoding='unicode', xml_declaration=True))
 
     return generated_files
