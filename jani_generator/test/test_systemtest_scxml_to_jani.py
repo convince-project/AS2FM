@@ -24,8 +24,8 @@ import pytest
 from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
-    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
-    interpret_top_level_xml)
+    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton)
+from jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 from .test_utilities_smc_storm import run_smc_storm_with_output
 
 
