@@ -96,6 +96,10 @@ def not_equal_operator(left, right) -> JaniExpression:
 
 
 # Logic operators
+def not_operator(exp) -> JaniExpression:
+    return JaniExpression({"op": "¬", "exp": exp})
+
+
 def and_operator(left, right) -> JaniExpression:
     return JaniExpression({"op": "∧", "left": left, "right": right})
 

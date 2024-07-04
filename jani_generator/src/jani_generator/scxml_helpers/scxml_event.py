@@ -17,37 +17,25 @@
 Module to hold scxml even information to convert to jani syncs later.
 """
 
-from enum import Enum, auto
 from typing import Dict, List, Optional
 
 from jani_generator.jani_entries.jani_assignment import JaniAssignment
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
-class EventSenderType(Enum):
-    """Enum to differentiate between the different options that events can be sent from."""
-    ON_ENTRY = auto()
-    ON_EXIT = auto()
-    EDGE = auto()
-
-
 class EventSender:
-    def __init__(self, automaton_name: str, type: EventSenderType,
-                 entity_name: str, assignments: List[JaniAssignment]):
+    def __init__(self, automaton_name: str,
+                 edge_action_name: str,
+                 assignments: List[JaniAssignment]):
         """
         Initialize the event sender.
 
         :param automaton_name: The name of the automaton sending the event.
-        :param type: The type of the sender.
-        :param entity_name: The name of the entity sending the event.
+        :param edge_action_name: The name of the entity sending the event.
             (location_name for ON_ENTRY and ON_EXIT, edge_action_name for EDGE)
         """
         self.automaton_name = automaton_name
-        self.type = type
-        if type == EventSenderType.EDGE:
-            self.edge_action_name = entity_name
-        else:
-            self.location_name = entity_name
+        self.edge_action_name = edge_action_name
         self._assignments = assignments
 
     def get_assignments(self) -> List[JaniAssignment]:
@@ -62,38 +50,18 @@ class EventReceiver:
 
 
 class Event:
-    def __init__(self, 
-                 name: str, 
-                 data_struct: Optional[Dict[str, str]] = None):
+    def __init__(self,
+                 name: str,
+                 data_struct: Optional[Dict[str, type]] = None):
         self.name = name
-        self.is_timer_event = False
-        if self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
-            self.is_timer_event = True  
-            # If the event is a timer event, there is only a receiver
-            # It is the edge that the user declared with the
-            # `ros_rate_callback` tag. It will be handled in the
-            # `scxml_event_processor` module differently.
         self.data_struct = data_struct
         self.senders: List[EventSender] = []
         self.receivers: List[EventReceiver] = []
 
-    def add_sender_on_entry(self, automaton_name: str, location_name: str,
-                            assignments: List[JaniAssignment]):
-        """Add information about the location sending the event on entry."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.ON_ENTRY, location_name, assignments))
-
-    def add_sender_on_exit(self, automaton_name: str, location_name: str,
-                           assignments: List[JaniAssignment]):
-        """Add information about the location sending the event on exit."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.ON_EXIT, location_name, assignments))
-
     def add_sender_edge(self, automaton_name: str, edge_action_name: str,
                         assignments: List[JaniAssignment]):
         """Add information about the edge sending the event."""
-        self.senders.append(EventSender(
-            automaton_name, EventSenderType.EDGE, edge_action_name, assignments))
+        self.senders.append(EventSender(automaton_name, edge_action_name, assignments))
 
     def add_receiver(self, automaton_name: str, location_name: str, edge_action_name: str):
         """Add information about the edges triggered by the event."""
@@ -108,17 +76,38 @@ class Event:
         """Get the receivers of the event."""
         return self.receivers
 
-    def get_data_structure(self):
+    def get_data_structure(self) -> Dict[str, type]:
         """Get the data structure of the event."""
         return self.data_struct
 
-    def set_data_structure(self, data_struct: Dict[str, str]):
+    def set_data_structure(self, data_struct: Dict[str, type]):
         """Set the data structure of the event."""
         self.data_struct = data_struct
 
     def is_valid(self):
-        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender." 
+        """Check if the event is valid."""
+        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender."
         assert len(self.receivers) > 0, f"Event {self.name} must have at least one receiver."
+
+    def must_be_skipped(self):
+        """Indicate whether this must be considered in the conversion."""
+        return (
+            self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
+            # If the event is a timer event, there is only a receiver
+            # It is the edge that the user declared with the
+            # `ros_rate_callback` tag. It will be handled in the
+            # `scxml_event_processor` module differently.
+            or
+            self._is_bt_event() and len(self.senders) == 0
+        )
+
+    def _is_bt_event(self):
+        """Check if the event is a behavior tree event.
+        They may have no sender if the plugin does not implement it."""
+        return self.name.startswith("bt_") and (
+            self.name.endswith("_running") or
+            self.name.endswith("_success") or
+            self.name.endswith("_failure"))
 
 
 class EventsHolder:

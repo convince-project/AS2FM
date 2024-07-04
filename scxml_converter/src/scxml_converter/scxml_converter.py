@@ -14,18 +14,19 @@
 # limitations under the License.
 
 """
-Facilitation conversion between ScXML flavors.
+Facilitation conversion between SCXML flavors.
 
 This module provides functionalities to convert the ROS-specific macros
-into generic ScXML code.
+into generic SCXML code.
 """
 
 import xml.etree.ElementTree as ET
-from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
-from mc_toolchain_jani_common.common import (ValidTypes, remove_namespace,
-                                          ros_type_name_to_python_type)
+from scxml_converter.scxml_entries import ScxmlRoot
+
+from mc_toolchain_jani_common.common import (remove_namespace,
+                                             ros_type_name_to_python_type)
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 
@@ -102,6 +103,7 @@ def _check_topic_type(
             f"expected {expected_python_type}")
 
 
+# TODO: Not used anymore
 def convert_elem(elem: ET.Element,
                  parent_map: Dict[ET.Element, ET.Element],
                  type_per_topic: Dict[str, dict],
@@ -110,9 +112,10 @@ def convert_elem(elem: ET.Element,
                  timers: Dict[str, float],
                  timer_count: Dict[str, int]
                  ) -> bool:
-    """Convert an element from the ScXML file.
+    """
+    Convert an element from the SCXML file.
 
-    This takes ROS-specific elements and converts them into generic ScXML
+    This takes ROS-specific elements and converts them into generic SCXML
     elements.
 
     :param elem: The element to convert.
@@ -140,11 +143,12 @@ def convert_elem(elem: ET.Element,
         return True
 
     # Publish #################################################################
-    if tag_wo_ns == 'ros_publish':
-        assert elem.attrib['topic'] in type_per_topic
-        assert elem.attrib['topic'] in published_topics
+    if tag_wo_ns == 'ros_topic_publish':
+        topic = elem.attrib['topic']
+        assert topic in type_per_topic
+        assert topic in published_topics
         elem.tag = 'send'
-        event_name = f"ros_topic.{elem.attrib['topic']}"
+        event_name = f"ros_topic.{topic}"
         elem.attrib.pop('topic')
         elem.attrib['event'] = event_name
         return False
@@ -169,7 +173,8 @@ def convert_elem(elem: ET.Element,
         return False
 
     # Callback ################################################################
-    if tag_wo_ns == 'ros_callback':
+    if tag_wo_ns == 'ros_topic_callback':
+        topic = elem.attrib['topic']
         assert elem.attrib['topic'] in type_per_topic
         assert elem.attrib['topic'] in subscribed_topics
         elem.tag = 'transition'
@@ -208,37 +213,12 @@ def convert_elem(elem: ET.Element,
 
 
 def ros_to_scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
-    """Convert one ScXML file that contains ROS-specific tags.
+    """Convert one SCXML file that contains ROS-specific tags.
 
-    :param input_file: The input ScXML file.
-    :return: The converted ScXML and the timers as a list of tuples.
+    :param input_file: The input SCXML file.
+    :return: The converted SCXML and the timers as a list of tuples.
              Each tuple contains the timer name and the rate in Hz.
     """
-    ET.register_namespace('', 'http://www.w3.org/2005/07/scxml')
-    try:
-        tree = ET.fromstring(input_xml)
-    except ET.ParseError as e:
-        print(">>>>")
-        print(input_xml)
-        print(">>>>")
-        raise ValueError(f"Error parsing XML: {e}")    
-    type_per_topic = {}
-    subscribed_topics = []
-    published_topics = []
-    timers = {}
-    timer_count = {}
-    parent_map = {child: parent
-                  for parent in tree.iter() for child in parent}
-    for elem in list(tree.iter()):
-        delete = convert_elem(
-            elem,
-            parent_map,
-            type_per_topic,
-            subscribed_topics,
-            published_topics,
-            timers,
-            timer_count,
-        )
-        if delete:
-            tree.remove(elem)
-    return ET.tostring(tree, encoding='unicode'), timers.items()
+    scxml_root = ScxmlRoot.from_scxml_file(input_xml)
+    plain_scxml, timers = scxml_root.as_plain_scxml()
+    return ET.tostring(plain_scxml.as_xml(), encoding='unicode'), timers

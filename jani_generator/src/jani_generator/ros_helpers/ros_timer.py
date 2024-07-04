@@ -88,6 +88,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
             timer.period_int, timer.unit, smallest_unit)
         for timer in timers
     }
+    # TODO: Should be greatest-common-divisor instead
     global_timer_period = min(timer_periods_in_smallest_unit.values())
     global_timer_period_unit = smallest_unit
 
