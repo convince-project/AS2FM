@@ -37,13 +37,13 @@ jobs:
                 echo SMC_STORM_PATH=$PWD/bin/ >> $GITHUB_OUTPUT
             # Update pip
             - name: Update pip
-              run: python -m pip install --user --upgrade pip
+              run: python -m pip install --break-system-packages --upgrade pip
             # install the packages
             - name: Install packages
               run: | 
-                pip install  --user jani_generator/.[dev]
-                pip install  --user mc_toolchain_jani_common/.[dev]
-                pip install  --user scxml_converter/.[dev]
+                pip install --break-system-packages jani_generator/.[dev]
+                pip install --break-system-packages mc_toolchain_jani_common/.[dev]
+                pip install --break-system-packages scxml_converter/.[dev]
             # lint packages
             # TODO: add linting    
             # run the tests
