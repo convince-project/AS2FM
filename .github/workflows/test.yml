@@ -34,6 +34,13 @@ jobs:
                 repository: boschresearch/bt_tools
                 ref: feature/fsm_conversion
                 path: colcon_ws/src/bt_tools
+            # Remove unused packages from checked out bt_tools
+            - name: Remove packages we don't need
+              run: |
+                rm -rf colcon_ws/src/bt_tools/bt_live
+                rm -rf colcon_ws/src/bt_tools/bt_tools
+                rm -rf colcon_ws/src/bt_tools/bt_tools_common
+                rm -rf colcon_ws/src/bt_tools/bt_view
             # Compile bt_tools TODO: remove after the release of bt_tools
             - name: Compile bt_tools
               run: |
