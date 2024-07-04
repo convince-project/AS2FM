@@ -108,9 +108,9 @@ def bt_converter(
                 this_plugin_content = this_plugin_content.replace(
                     declaration_old, declaration_new)
             # TODO: Replace arguments from the BT xml file.
+            # TODO: Change name to instance name
             with open(output_fname, 'w', encoding='utf-8') as f:
                 f.write(this_plugin_content)
-
     fsm_graph = Bt2FSM(bt_graph).convert()
     output_file_bt = os.path.join(output_folder, 'bt.scxml')
     generated_files.append(output_file_bt)
@@ -148,13 +148,15 @@ def bt_converter(
                 ScxmlTransition("wait_for_tick"))
         root_tag.add_state(state)
 
-    # rtr = RosTimeRate("bt_tick", 1.0)
-    # root_tag.add(rtr)
+    rtr = RosTimeRate("bt_tick", 1.0)
+    root_tag.add_ros_declaration(rtr)
 
     wait_for_tick = ScxmlState("wait_for_tick")
-    # wait_for_tick.add_transition(
-    #     RosRateCallback(rtr, "tick"))
+    wait_for_tick.add_transition(
+        RosRateCallback(rtr, "tick"))
     root_tag.add_state(wait_for_tick, initial=True)
+
+    assert root_tag.check_validity(), "Error: SCXML root tag is not valid."
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
         f.write(ET.tostring(root_tag.as_xml(), encoding='unicode', xml_declaration=True))
