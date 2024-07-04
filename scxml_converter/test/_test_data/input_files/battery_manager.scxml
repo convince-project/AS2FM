@@ -10,10 +10,10 @@
     <ros_topic_publisher topic="alarm" type="std_msgs/Bool" />
 
     <state id="check_battery">
-        <ros_callback topic="level" target="check_battery">
-            <ros_publish topic="alarm">
+        <ros_topic_callback topic="level" target="check_battery">
+            <ros_topic_publish topic="alarm">
                 <field name="data" expr="_msg.data &lt; 30" />
-            </ros_publish>
-        </ros_callback>
+            </ros_topic_publish>
+        </ros_topic_callback>
     </state>
 </scxml>

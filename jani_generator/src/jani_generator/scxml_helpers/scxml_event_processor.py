@@ -26,7 +26,7 @@ from jani_generator.jani_entries.jani_edge import JaniEdge
 from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_variable import JaniVariable
 from jani_generator.ros_helpers.ros_timer import RosTimer
-from jani_generator.scxml_helpers.scxml_event import (Event, EventSenderType,
+from jani_generator.scxml_helpers.scxml_event import (Event,
                                                       EventsHolder)
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
@@ -46,67 +46,20 @@ def implement_scxml_events_as_jani_syncs(
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
-        if event.is_timer_event:
+        if event.must_be_skipped():
             continue
         event.is_valid()
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
-        # Expand states if needed
+        # Check correct action names
         for sender in event.get_senders():
-            automaton = jani_model.get_automaton(sender.automaton_name)
-            if sender.type == EventSenderType.ON_ENTRY:
-                additional_loc_name = f"{sender.location_name}_on_entry"
-                automaton.add_location(additional_loc_name)
-                for edge in automaton.get_edges():
-                    for dest in edge.destinations:
-                        if sender.location_name == dest['location']:
-                            dest['location'] = additional_loc_name
-                event_edge = JaniEdge({
-                    'location': additional_loc_name,
-                    'destinations': [{
-                        'location': sender.location_name,
-                        'probability': {'exp': 1.0},
-                        'assignments': sender.get_assignments()
-                    }],
-                    'action': event_name_on_send
-                })
-                automaton.add_edge(event_edge)
-                # If the original state was initial, now the on_entry state is initial
-                if sender.location_name in automaton.get_initial_locations():
-                    automaton.make_initial(additional_loc_name)
-                    automaton.unset_initial(sender.location_name)
-            elif sender.type == EventSenderType.ON_EXIT:
-                raise NotImplementedError(
-                    "For now, we don't know how to handle on_exit events. " +
-                    "Because we would have to check if one of the originally " +
-                    "outgoing edges can fire.")
-                # TODO: The new edge must only be executed if
-                # one of the original outgoing edges is taken
-                # Especially if the original edge fires on an event
-                # then, where do we consume that?
-                additional_loc_name = f"{sender.location_name}_on_exit"
-                automaton.add_location(additional_loc_name)
-                for edge in automaton.get_edges():
-                    if sender.location_name == edge.location:
-                        edge.location = additional_loc_name
-                event_edge = JaniEdge({
-                    'location': sender.location_name,
-                    'destinations': [{
-                        'location': additional_loc_name,
-                        'probability': {'exp': 1.0},
-                        'assignments': sender.get_assignments()
-                    }],
-                    'action': event_name_on_send
-                })
-                automaton.add_edge(event_edge)
-            else:
-                # sending event from edge
-                assert sender.type == EventSenderType.EDGE, \
-                    "Sender type must be FROM_EDGE."
-                event_name_on_send = sender.edge_action_name
+            action_name = sender.edge_action_name
+            assert action_name == event_name_on_send, \
+                f"Action name {action_name} must be {event_name_on_send}."
         for receivers in event.get_receivers():
             action_name = receivers.edge_action_name
-            assert action_name == event_name_on_receive, f"Action name {action_name} must be {event_name_on_receive}."
+            assert action_name == event_name_on_receive, \
+                f"Action name {action_name} must be {event_name_on_receive}."
         # Collect the event action names
         event_action_names.append(event_name_on_send)
         event_action_names.append(event_name_on_receive)

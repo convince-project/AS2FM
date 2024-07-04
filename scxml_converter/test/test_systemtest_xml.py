@@ -14,39 +14,77 @@
 # limitations under the License.
 
 import os
-import xml.etree.ElementTree as ET
+from test_utils import canonicalize_xml,  remove_empty_lines
 
+from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import ros_to_scxml_converter
 
 
-def _canonicalize_xml(xml: str) -> str:
-    """Helper function to make XML comparable."""
-    # sort attributes
-    et = ET.fromstring(xml)
-    for elem in et.iter():
-        elem.attrib = {k: elem.attrib[k] for k in sorted(elem.attrib.keys())}
-    return ET.tostring(et, encoding='unicode')
+def get_output_folder():
+    return os.path.join(os.path.dirname(__file__), 'output')
+
+
+def clear_output_folder():
+    output_folder = get_output_folder()
+    if os.path.exists(output_folder):
+        for f in os.listdir(output_folder):
+            os.remove(os.path.join(output_folder, f))
+    else:
+        os.makedirs(output_folder)
 
 
 def test_ros_scxml_to_plain_scxml():
     """Test the conversion of SCXML with ROS-specific macros to plain SCXML."""
-    for fname in ['battery_manager.scxml', 'battery_drainer.scxml']:
+    clear_output_folder()
+    scxml_files = [file for file in os.listdir(
+        os.path.join(os.path.dirname(__file__), '_test_data', 'input_files')
+    ) if file.endswith('.scxml')]
+    for fname in scxml_files:
         input_file = os.path.join(os.path.dirname(__file__),
-                                  '_test_data', 'battery_drainer_charge', fname)
+                                  '_test_data', 'input_files', fname)
         output_file = os.path.join(os.path.dirname(__file__),
-                                   '_test_data', 'expected_output', fname)
-        with open(input_file, 'r', encoding='utf-8') as f_i:
-            input_data = f_i.read()
-        sms = ros_to_scxml_converter(input_data)
-        out = sms[0]
-        with open(output_file, 'r', encoding='utf-8') as f_o:
-            expected_output = f_o.read()
-        assert _canonicalize_xml(out) == _canonicalize_xml(expected_output)
+                                   '_test_data', 'expected_output_ros_to_scxml', fname)
+        try:
+            with open(input_file, 'r', encoding='utf-8') as f_i:
+                input_data = f_i.read()
+            scxml, _ = ros_to_scxml_converter(input_data)
+            with open(output_file, 'r', encoding='utf-8') as f_o:
+                expected_output = f_o.read()
+            assert remove_empty_lines(canonicalize_xml(scxml)) == \
+                remove_empty_lines(canonicalize_xml(expected_output))
+        except Exception as e:
+            clear_output_folder()
+            print(f"Error in file {fname}:")
+            raise e
+    clear_output_folder()
 
-        # if fname == 'battery_drainer.scxml':
-        #     assert len(sms) == 2, "Must also have the time state machine."
-        # elif fname == 'battery_manager.scxml':
-        #     assert len(sms) == 1, "Must only have the battery state machine."
+
+def test_bt_to_scxml():
+    clear_output_folder()
+    input_file = os.path.join(
+        os.path.dirname(__file__), '_test_data', 'input_files', 'bt.xml')
+    output_file_bt = os.path.join(get_output_folder(), 'bt.scxml')
+    plugins = [os.path.join(os.path.dirname(__file__),
+                            '_test_data', 'input_files', f)
+               for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
+    bt_converter(input_file, plugins, get_output_folder())
+    files = os.listdir(get_output_folder())
+    assert len(files) == 3, \
+        f"Expecting 3 files, found {len(files)}"
+    # 1 for the main BT and 2 for the plugins
+    assert os.path.exists(output_file_bt), \
+        f"Expecting {output_file_bt} to exist, but it does not."
+    for fname in files:
+        with open(os.path.join(get_output_folder(), fname), 'r', encoding='utf-8') as f_o:
+            output = f_o.read()
+        with open(os.path.join(
+            os.path.dirname(__file__), '_test_data', 'expected_output_bt_and_plugins', fname
+        ), 'r', encoding='utf-8') as f_o:
+            expected_output = f_o.read()
+        assert remove_empty_lines(canonicalize_xml(output)) == \
+            remove_empty_lines(canonicalize_xml(expected_output))
+    clear_output_folder()
+
 
 if __name__ == '__main__':
     test_ros_scxml_to_plain_scxml()

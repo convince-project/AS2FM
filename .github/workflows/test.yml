@@ -26,6 +26,22 @@ jobs:
               uses: ros-tooling/setup-ros@v0.7
               with:
                 required-ros-distributions: ${{ matrix.ros-distro }}
+            # Get bt_tools TODO: remove after the release of bt_tools
+            - name: Checkout bt_tools
+              uses: actions/checkout@v2
+              with:
+                repository: boschresearch/bt_tools
+                ref: feature/fsm_conversion
+                path: colcon_ws/src/bt_tools
+            # Compile bt_tools TODO: remove after the release of bt_tools
+            - name: Compile bt_tools
+              run: |
+                source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                # Install dependencies
+                cd colcon_ws
+                rosdep update && rosdep install --from-paths src --ignore-src -y
+                # Build and install bt_tools
+                colcon build --symlink-install
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
@@ -41,6 +57,7 @@ jobs:
             # install the packages
             - name: Install packages
               run: | 
+                source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pip install --break-system-packages jani_generator/.[dev]
                 pip install --break-system-packages mc_toolchain_jani_common/.[dev]
                 pip install --break-system-packages scxml_converter/.[dev]
@@ -50,5 +67,6 @@ jobs:
             - name: Run tests
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
-                source /opt/ros/${{ matrix.ros-distro }}/setup.bash                
-                pytest-3 -vs  
+                # source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
+                pytest-3 -vs mc_toolchain_jani_common jani_generator scxml_converter

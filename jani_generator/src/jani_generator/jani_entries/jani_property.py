@@ -24,7 +24,7 @@ from jani_generator.jani_entries.jani_convince_expression_expansion import expan
 
 
 class FilterProperty:
-    """All Property operators must occurr i a FilterProperty object."""
+    """All Property operators must occur in a FilterProperty object."""
     def __init__(self, property_filter_exp: Dict[str, Any]):
         assert isinstance(property_filter_exp, dict), "Unexpected FilterProperty initialization"
         assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", "Unexpected FilterProperty initialization"
