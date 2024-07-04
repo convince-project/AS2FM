@@ -19,11 +19,9 @@ import json
 import os
 import unittest
 import xml.etree.ElementTree as ET
-from pprint import pprint
 
 import pytest
-from jani_generator.jani_entries import JaniModel
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
+from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
@@ -233,8 +231,7 @@ class TestConversion(unittest.TestCase):
     def test_with_entrypoint_main_fail(self):
         """Test the main_failing.xml file with the entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint(
-            'main_failing_prop.xml', 'ros_example', 'battery_depleted', False)
+        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_over_depleted', False)
 
     def test_with_entrypoint_w_bt_main_battery_depleted(self):
         """Test the main.xml file with the entrypoint.
