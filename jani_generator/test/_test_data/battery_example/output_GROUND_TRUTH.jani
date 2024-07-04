@@ -28,7 +28,7 @@
             "name": "level_on_send"
         },
         {
-            "name": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13"
+            "name": "use_battery-use_battery-683f44d4"
         }
     ],
     "automata": [
@@ -39,7 +39,7 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery_1"
+                    "name": "use_battery-1-683f44d4"
                 }
             ],
             "initial-locations": [
@@ -50,7 +50,7 @@
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery_1",
+                            "location": "use_battery-1-683f44d4",
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -64,10 +64,10 @@
                             ]
                         }
                     ],
-                    "action": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13"
+                    "action": "use_battery-use_battery-683f44d4"
                 },
                 {
-                    "location": "use_battery_1",
+                    "location": "use_battery-1-683f44d4",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -224,9 +224,9 @@
                 ]
             },
             {
-                "result": "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13",
+                "result": "use_battery-use_battery-683f44d4",
                 "synchronise": [
-                    "use_battery-use_battery-683f44d46c02df80d8211f9c92a72d13",
+                    "use_battery-use_battery-683f44d4",
                     null,
                     null
                 ]

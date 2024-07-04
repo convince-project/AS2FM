@@ -1,6 +1,6 @@
 *_plain.scxml
 *_plain_timer_*.scxml
-1001_TopicAction.scxml
-10000_TopicCondition.scxml
+*_TopicAction.scxml
+*_TopicCondition.scxml
 bt.scxml
 main.jani
