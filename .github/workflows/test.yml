@@ -16,6 +16,7 @@ jobs:
                     os: ubuntu-24.04
                   - ros-distro: humble
                     os: ubuntu-22.04
+            fail-fast: false  
         runs-on: ${{ matrix.os }}
         steps:
             # Checkout the repository
