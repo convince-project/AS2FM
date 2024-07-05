@@ -18,7 +18,24 @@
 from typing import Dict
 
 
-def as_plain_scxml_msg_expression(msg_expr: str) -> str:
+def check_topic_type_known(topic_definition: str) -> bool:
+    """Check if python can import the provided topic definition."""
+    # Check the input type has the expected structure
+    if not (isinstance(topic_definition, str) and topic_definition.count("/") == 1):
+        return False
+    topic_ns, topic_type = topic_definition.split("/")
+    if len(topic_ns) == 0 or len(topic_type) == 0:
+        return False
+    try:
+        msg_importer = __import__(topic_ns + '.msg', fromlist=[''])
+        _ = getattr(msg_importer, topic_type)
+    except (ImportError, AttributeError):
+        print(f"Error: SCXML ROS declarations: topic type {topic_definition} not found.")
+        return False
+    return True
+
+
+def replace_ros_msg_expression(msg_expr: str) -> str:
     """Convert a ROS message expression (referring to ROS msg entries) to plain SCXML."""
     prefix = "_event." if msg_expr.startswith("_msg.") else ""
     return prefix + msg_expr.removeprefix("_msg.")

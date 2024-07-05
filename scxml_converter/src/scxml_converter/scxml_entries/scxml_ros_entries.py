@@ -19,25 +19,10 @@ from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
                                            ScxmlExecutionBody, HelperRosDeclarations,
                                            valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body, as_plain_scxml_msg_expression)
+                                           as_plain_execution_body)
+from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 from xml.etree import ElementTree as ET
-
-
-def _check_topic_type_known(topic_definition: str) -> bool:
-    """Check if python can import the provided topic definition."""
-    # Check the input type has the expected structure
-    if not (isinstance(topic_definition, str) and topic_definition.count("/") == 1):
-        return False
-    topic_ns, topic_type = topic_definition.split("/")
-    if len(topic_ns) == 0 or len(topic_type) == 0:
-        return False
-    try:
-        msg_importer = __import__(topic_ns + '.msg', fromlist=[''])
-        _ = getattr(msg_importer, topic_type)
-    except (ImportError, AttributeError):
-        print(f"Error: SCXML ROS declarations: topic type {topic_definition} not found.")
-        return False
-    return True
+from scxml_converter.scxml_entries.utils import check_topic_type_known
 
 
 class RosTimeRate(ScxmlBase):
@@ -111,7 +96,7 @@ class RosTopicPublisher(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
-        valid_type = _check_topic_type_known(self._topic_type)
+        valid_type = check_topic_type_known(self._topic_type)
         if not valid_name:
             print("Error: SCXML topic subscriber: topic name is not valid.")
         if not valid_type:
@@ -156,7 +141,7 @@ class RosTopicSubscriber(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
-        valid_type = _check_topic_type_known(self._topic_type)
+        valid_type = check_topic_type_known(self._topic_type)
         if not valid_name:
             print("Error: SCXML topic subscriber: topic name is not valid.")
         if not valid_type:
@@ -389,7 +374,7 @@ class RosField(ScxmlParam):
         return valid_name and valid_expr
 
     def as_plain_scxml(self) -> ScxmlParam:
-        return ScxmlParam(self._name, expr=as_plain_scxml_msg_expression(self._expr))
+        return ScxmlParam(self._name, expr=replace_ros_msg_expression(self._expr))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

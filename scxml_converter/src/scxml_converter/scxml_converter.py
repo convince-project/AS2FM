@@ -25,8 +25,7 @@ from typing import Dict, List, Tuple, Union
 
 from scxml_converter.scxml_entries import ScxmlRoot
 
-from mc_toolchain_jani_common.common import (remove_namespace,
-                                             ros_type_name_to_python_type)
+from mc_toolchain_jani_common.common import ros_type_name_to_python_type
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 
