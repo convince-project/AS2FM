@@ -29,6 +29,10 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry, Scxm
 class ScxmlState(ScxmlBase):
     """This class represents a single scxml state."""
 
+    @staticmethod
+    def get_tag_name() -> str:
+        return "state"
+
     def __init__(self, id: str, *,
                  on_entry: Optional[ScxmlExecutionBody] = None,
                  on_exit: Optional[ScxmlExecutionBody] = None,
@@ -38,14 +42,15 @@ class ScxmlState(ScxmlBase):
         self._on_exit = on_exit
         self._body = body
 
-    def get_tag_name() -> str:
-        return "state"
-    
     def get_onentry(self) -> Optional[ScxmlExecutionBody]:
         return self._on_entry
-    
+
     def get_onexit(self) -> Optional[ScxmlExecutionBody]:
         return self._on_exit
+
+    def get_body(self) -> Optional[List[ScxmlTransition]]:
+        """Return the transitions leaving the state."""
+        return self._body
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""

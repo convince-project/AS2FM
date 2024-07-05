@@ -37,7 +37,7 @@ from mc_toolchain_jani_common.ecmascript_interpretation import \
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
-                                           ScxmlState)
+                                           ScxmlState, ScxmlTransition)
 
 # The type to be exctended by parsing the scxml file
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
@@ -231,7 +231,7 @@ class ParamTag(BaseTag):
 class ScxmlTag(BaseTag):
     """Object representing the root SCXML tag."""
 
-    def get_children(self) -> List[ScxmlBase]:
+    def get_children(self) -> List[Union[ScxmlDataModel, ScxmlState]]:
         root_children = []
         data_model = self.element.get_data_model()
         if data_model is not None:
@@ -463,9 +463,15 @@ class StateTag(BaseTag):
     See https://www.w3.org/TR/scxml/#state
     """
 
+    def get_children(self) -> List[ScxmlTransition]:
+        # Here we care only about the transitions.
+        # onentry and onexit are handled in the TransitionTag
+        state_transitions = self.element.get_body()
+        return [] if state_transitions is None else state_transitions
+
     def write_model(self):
-        p_name = _get_state_name(self.element)
-        self.automaton.add_location(p_name)
+        state_name = self.element.get_id()
+        self.automaton.add_location(state_name)
         # TODO: Make sure initial states that have onentry execute the onentry block at start
         super().write_model()
 
@@ -473,7 +479,8 @@ class StateTag(BaseTag):
 CLASS_BY_TYPE = {
     ScxmlDataModel: DatamodelTag,
     ScxmlRoot: ScxmlTag,
-    # ScxmlState: StateTag TODO
+    ScxmlState: StateTag,
+    ScxmlTransition: TransitionTag,
 }
 
 CLASS_BY_TAG = {
