@@ -42,6 +42,9 @@ class ScxmlState(ScxmlBase):
         self._on_exit = on_exit
         self._body = body
 
+    def get_id(self) -> str:
+        return self._id
+
     def get_onentry(self) -> Optional[ScxmlExecutionBody]:
         return self._on_entry
 
@@ -93,9 +96,6 @@ class ScxmlState(ScxmlBase):
             elif child.tag == RosTopicCallback.get_tag_name():
                 transitions.append(RosTopicCallback.from_xml_tree(child))
         return transitions
-
-    def get_id(self) -> str:
-        return self._id
 
     def add_transition(self, transition: ScxmlTransition):
         if self._body is None:

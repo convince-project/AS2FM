@@ -27,11 +27,9 @@ from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
 
-from jani_generator.scxml_helpers.scxml_data import ScxmlData
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
-from mc_toolchain_jani_common.common import remove_namespace
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
@@ -43,7 +41,7 @@ from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
 
-def _hash_element(element: Union[ET.Element, ScxmlBase]) -> str:
+def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
     """
     Hash an ElementTree element.
     :param element: The element to hash.
@@ -53,19 +51,11 @@ def _hash_element(element: Union[ET.Element, ScxmlBase]) -> str:
         s = ET.tostring(element, encoding='unicode', method='xml')
     elif isinstance(element, ScxmlBase):
         s = ET.tostring(element.as_xml(), encoding='unicode', method='xml')
+    elif isinstance(element, list):
+        s = '/'.join(f"{element}")
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
     return sha256(s.encode()).hexdigest()[:8]
-
-
-def _get_state_name(element: ET.Element) -> str:
-    """Get the name of a state element."""
-    assert remove_namespace(element.tag) == 'state', \
-        f"Expected state, got {element.tag}"
-    if 'id' in element.attrib:
-        return element.attrib['id']
-    else:
-        raise NotImplementedError('Only states with an id are supported.')
 
 
 def _interpret_scxml_assign(
@@ -90,12 +80,12 @@ def _interpret_scxml_assign(
 def _merge_conditions(
         previous_conditions: List[JaniExpression],
         new_condition: Optional[JaniExpression] = None) -> JaniExpression:
-    """This merges negated conditions of previous if-clauses with the condition of the current 
-    if-clause. This is necessary to properly implement the if-else semantics of SCXML by parallel 
+    """This merges negated conditions of previous if-clauses with the condition of the current
+    if-clause. This is necessary to properly implement the if-else semantics of SCXML by parallel
     outgoing transitions in Jani.
 
     :param previous_conditions: The conditions of the previous if-clauses. (not yet negated)
-    :param new_condition: The condition of the current if-clause. 
+    :param new_condition: The condition of the current if-clause.
     :return: The merged condition.
     """
     if new_condition is not None:
@@ -159,13 +149,6 @@ class BaseTag:
             child.write_model()
 
 
-class AssignTag(BaseTag):
-    """Object representing an assign tag from a SCXML file.
-
-    See https://www.w3.org/TR/scxml/#assign
-    """
-
-
 class DatamodelTag(BaseTag):
     """Object representing a datamodel tag from a SCXML file.
 
@@ -180,52 +163,10 @@ class DatamodelTag(BaseTag):
             assert expr is not None, f"No init value for {name}."
             # TODO: ScxmlData from scxml_helpers provide many more options.
             # It should be ported to scxml_entries.ScxmlDataModel
-            init_value = interpret_ecma_script_expr(expr)
-            expr_type = type(init_value)
+            init_value = parse_ecmascript_to_jani_expression(expr)
+            expr_type = type(interpret_ecma_script_expr(expr))
             self.automaton.add_variable(
                 JaniVariable(name, expr_type, init_value))
-
-
-class ElseTag(BaseTag):
-    """Object representing an else tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
-
-
-class ElseIfTag(BaseTag):
-    """Object representing an elseif tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
-
-
-class IfTag(BaseTag):
-    """Object representing an if tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
-
-
-class OnEntryTag(BaseTag):
-    """Object representing an onentry tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
-
-
-class OnExitTag(BaseTag):
-    """Object representing an onexid tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
-
-
-class ParamTag(BaseTag):
-    """Object representing a param tag from a SCXML file.
-
-    No implementation needed, because the children are already processed.
-    """
 
 
 class ScxmlTag(BaseTag):
@@ -237,7 +178,7 @@ class ScxmlTag(BaseTag):
         if data_model is not None:
             root_children.append(data_model)
         root_children.extend(self.element.get_states())
-        return []
+        return root_children
 
     def write_model(self):
         assert isinstance(self.element, ScxmlRoot), \
@@ -248,11 +189,23 @@ class ScxmlTag(BaseTag):
         self.automaton.make_initial(self.element.get_initial_state_id())
 
 
-class SendTag(BaseTag):
-    """Object representing a send tag from a SCXML file.
+class StateTag(BaseTag):
+    """Object representing a state tag from a SCXML file.
 
-    See https://www.w3.org/TR/scxml/#send
+    See https://www.w3.org/TR/scxml/#state
     """
+
+    def get_children(self) -> List[ScxmlTransition]:
+        # Here we care only about the transitions.
+        # onentry and onexit are handled in the TransitionTag
+        state_transitions = self.element.get_body()
+        return [] if state_transitions is None else state_transitions
+
+    def write_model(self):
+        state_name = self.element.get_id()
+        self.automaton.add_location(state_name)
+        # TODO: Make sure initial states that have onentry execute the onentry block at start
+        super().write_model()
 
 
 class TransitionTag(BaseTag):
@@ -260,6 +213,9 @@ class TransitionTag(BaseTag):
 
     See https://www.w3.org/TR/scxml/#transition
     """
+
+    def get_children(self) -> List[ScxmlBase]:
+        return []
 
     def interpret_scxml_executable_content_body(
             self,
@@ -276,13 +232,14 @@ class TransitionTag(BaseTag):
         :return: The edges that contain the actions and expressions to be executed.
         """
         edge_action_name = f"{source}-{target}-{hash_str}"
+        trigger_event_action = \
+            trigger_event_action if trigger_event_action is not None else edge_action_name
         new_edges = []
         new_locations = []
         # First edge. Has to evaluate guard and trigger event of original transition.
         new_edges.append(JaniEdge({
             "location": source,
-            "action": (trigger_event_action
-                       if trigger_event_action is not None else edge_action_name),
+            "action": trigger_event_action,
             "guard": guard.expression if guard is not None else None,
             "destinations": [{
                 "location": None,
@@ -309,7 +266,8 @@ class TransitionTag(BaseTag):
                 })
                 data_structure_for_event = {}
                 for param in ec.get_params():
-                    expr = param.get_expr() if param.get_expr() is not None else param.get_location()
+                    expr = param.get_expr() if param.get_expr() is not None else \
+                        param.get_location()
                     new_edge.destinations[0]['assignments'].append(JaniAssignment({
                         "ref": f'{ec.get_event()}.{param.get_name()}',
                         "value": parse_ecmascript_to_jani_expression(
@@ -385,13 +343,22 @@ class TransitionTag(BaseTag):
         return new_edges, new_locations
 
     def write_model(self):
-        parent_name = _get_state_name(self.call_trace[-1])
+        scxml_root = self.call_trace[0]
+        current_state = self.call_trace[-1]
+        current_state_id = current_state.get_id()
+        target_state_id = self.element.get_target_state_id()
+        target_state = scxml_root.get_state_by_id(target_state_id)
+        assert target_state is not None, f"Transition's target state {target_state_id} not found."
+        event_name = self.element.get_events()
+        # TODO: Need to extend this to support multiple events
+        assert event_name is None or len(event_name) == 1, \
+            "Transitions triggered by multiple events are not supported."
         action_name = None
         self._trans_event_name = None
-        if 'event' in self.element.attrib:
-            self._trans_event_name = self.element.attrib['event']
+        if event_name is not None:
+            # TODO: Maybe get rid of one of the two event variables
+            self._trans_event_name = event_name[0]
             assert len(self._trans_event_name) > 0, "Empty event name not supported."
-            assert " " not in self._trans_event_name, "Multiple events not supported."
             action_name = self._trans_event_name + "_on_receive"
             if not self.events_holder.has_event(self._trans_event_name):
                 new_event = Event(
@@ -401,79 +368,34 @@ class TransitionTag(BaseTag):
                 self.events_holder.add_event(new_event)
             existing_event = self.events_holder.get_event(self._trans_event_name)
             existing_event.add_receiver(
-                self.automaton.get_name(), parent_name, action_name)
-        if 'target' in self.element.attrib:
-            target = self.element.attrib['target']
-        else:
-            raise RuntimeError('Target attribute is mandatory.')
-        if 'cond' in self.element.attrib:
-            expression = parse_ecmascript_to_jani_expression(
-                self.element.attrib['cond'])
-            if 'event' in self.element.attrib:
+                self.automaton.get_name(), current_state_id, action_name)
+        transition_condition = self.element.get_condition()
+        if transition_condition is not None:
+            expression = parse_ecmascript_to_jani_expression(transition_condition)
+            if event_name is not None:
                 expression.replace_event(self._trans_event_name)
-            guard = JaniGuard(
-                expression
-            )
+            guard = JaniGuard(expression)
         else:
             guard = None
-        original_transition_body = []
 
-        root = self.call_trace[0]
-        for child in root.iter():
-            child.tag = remove_namespace(child.tag)
+        original_transition_body = self.element.get_executable_body()
 
-        for child in self.element:
-            if remove_namespace(child.tag) == 'send':
-                original_transition_body.append(ScxmlSend.from_xml_tree(child))
-            elif remove_namespace(child.tag) == 'if':
-                original_transition_body.append(ScxmlIf.from_xml_tree(child))
-            elif remove_namespace(child.tag) == 'assign':
-                original_transition_body.append(ScxmlAssign.from_xml_tree(child))
-            else:
-                raise ValueError(
-                    f"Tag {remove_namespace(child.tag)} not supported.")
-
-        # TODO, the children should also contain onexit of the source state
-        # and onentry of the target state
-        root_scxml = ScxmlRoot.from_xml_tree(root)
-        source_state = root_scxml.get_state_by_id(parent_name)
-        assert source_state is not None, f"Source state {parent_name} not found."
-        target_state = root_scxml.get_state_by_id(target)
-        assert target_state is not None, f"Target state {target} not found."
-
-        transition_body = []
-        if source_state.get_onexit() is not None:
-            transition_body.extend(source_state.get_onexit())
-        transition_body.extend(original_transition_body)
+        merged_transition_body = []
+        if current_state.get_onexit() is not None:
+            merged_transition_body.extend(current_state.get_onexit())
+        merged_transition_body.extend(original_transition_body)
         if target_state.get_onentry() is not None:
-            transition_body.extend(target_state.get_onentry())
-
-        hash_str = _hash_element(self.element)
+            merged_transition_body.extend(target_state.get_onentry())
+        # We assume that each transition has a unique combination of the entries below
+        # TODO: If so, we could come up with a more descriptive name, instead of hashing?
+        hash_str = _hash_element([
+            current_state_id, target_state_id, event_name, transition_condition])
         new_edges, new_locations = self.interpret_scxml_executable_content_body(
-            transition_body, parent_name, target, hash_str, guard, action_name)
+            merged_transition_body, current_state_id, target_state_id, hash_str, guard, action_name)
         for edge in new_edges:
             self.automaton.add_edge(edge)
         for loc in new_locations:
             self.automaton.add_location(loc)
-
-
-class StateTag(BaseTag):
-    """Object representing a state tag from a SCXML file.
-
-    See https://www.w3.org/TR/scxml/#state
-    """
-
-    def get_children(self) -> List[ScxmlTransition]:
-        # Here we care only about the transitions.
-        # onentry and onexit are handled in the TransitionTag
-        state_transitions = self.element.get_body()
-        return [] if state_transitions is None else state_transitions
-
-    def write_model(self):
-        state_name = self.element.get_id()
-        self.automaton.add_location(state_name)
-        # TODO: Make sure initial states that have onentry execute the onentry block at start
-        super().write_model()
 
 
 CLASS_BY_TYPE = {
@@ -481,20 +403,4 @@ CLASS_BY_TYPE = {
     ScxmlRoot: ScxmlTag,
     ScxmlState: StateTag,
     ScxmlTransition: TransitionTag,
-}
-
-CLASS_BY_TAG = {
-    'assign': AssignTag,
-    'data': DataTag,
-    'datamodel': DatamodelTag,
-    'else': ElseTag,
-    'elseif': ElseIfTag,
-    'if': IfTag,
-    'onexit': OnExitTag,
-    'onentry': OnEntryTag,
-    'param': ParamTag,
-    'scxml': ScxmlTag,
-    'send': SendTag,
-    'state': StateTag,
-    'transition': TransitionTag,
 }

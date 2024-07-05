@@ -202,7 +202,7 @@ class ScxmlRoot(ScxmlBase):
         """Check whether there are ROS specific features or all entries are plain SCXML."""
         assert self.check_validity(), "SCXML: found invalid root object."
         # If this is a valid scxml object, checking the absence of declarations is enough
-        return self._ros_declarations is None
+        return self._ros_declarations is None or len(self._ros_declarations) == 0
 
     def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[Tuple[str, float]]]:
         """

@@ -17,7 +17,6 @@
 Module handling the conversion from SCXML to Jani.
 """
 
-import os
 from typing import List
 
 from scxml_converter.scxml_entries import ScxmlRoot
@@ -61,7 +60,6 @@ def convert_multiple_scxmls_to_jani(
     events_holder = EventsHolder()
     for scxml_str in scxmls:
         try:
-            assert os.path.exists(scxml_str), f"{scxml_str} is not a path or does not exist."
             scxml_root = ScxmlRoot.from_scxml_file(scxml_str)
             assert scxml_root.is_plain_scxml(), f"{scxml_str} does not contain a plain SCXML model."
         except Exception as e:

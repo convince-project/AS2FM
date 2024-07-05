@@ -18,14 +18,22 @@ Variables in Jani
 """
 
 from typing import Optional, Union, get_args
-from jani_generator.jani_entries import JaniExpression
+from jani_generator.jani_entries import JaniExpression, JaniValue
 
 from mc_toolchain_jani_common.common import ValidTypes
 
 
 class JaniVariable:
-    def __init__(self, v_name: str, v_type: ValidTypes, v_init_value: Optional[JaniExpression] = None, v_transient: bool = False):
-        assert v_init_value is None or isinstance(v_init_value, JaniExpression), "Init value should be a JaniExpression"
+    def __init__(self, v_name: str, v_type: ValidTypes,
+                 v_init_value: Optional[Union[JaniExpression, JaniValue]] = None,
+                 v_transient: bool = False):
+        assert v_init_value is None or isinstance(v_init_value, (JaniExpression, JaniValue)), \
+            "Init value should be a JaniExpression or a JaniValue"
+        if v_init_value is not None:
+            if isinstance(v_init_value, JaniExpression):
+                self._init_value = v_init_value
+            else:  # In this case it can only be a JaniValue
+                self._init_value = JaniExpression(v_init_value)
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
         self._name = v_name
         self._init_value = v_init_value
@@ -40,7 +48,8 @@ class JaniVariable:
             elif self._type == float:
                 self._init_value = JaniExpression(0.0)
         if not self._transient and self._type == float:
-            print(f"Warning: Variable {self._name} is not transient and has type float. This is not supported by STORM yet.")
+            print(f"Warning: Variable {self._name} is not transient and has type float."
+                  "This is not supported by STORM yet.")
 
     def name(self):
         return self._name
@@ -77,8 +86,8 @@ class JaniVariable:
 
         // Types
         // We cover only the most basic types at the moment.
-        // In the remainder of the specification, all requirements like "y must be of type x" are to be interpreted
-        // as "type x must be assignable from y's type".
+        // In the remainder of the specification, all requirements like "y must be of type x" are
+        // to be interpreted as "type x must be assignable from y's type".
         var BasicType = schema([
         "bool", // assignable from bool
         "int", // numeric; assignable from int and bounded int

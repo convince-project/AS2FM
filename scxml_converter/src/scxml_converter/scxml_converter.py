@@ -74,6 +74,7 @@ def _ros_type_fields(type_str: str) -> Dict[str, Union[str, dict]]:
     return msg_fields
 
 
+# TODO: Unused, keeping as reference to output types in low level SCXML
 def _check_topic_type(
         name: str,
         type_dict: dict,
@@ -103,115 +104,6 @@ def _check_topic_type(
             f"expected {expected_python_type}")
 
 
-# TODO: Not used anymore
-def convert_elem(elem: ET.Element,
-                 parent_map: Dict[ET.Element, ET.Element],
-                 type_per_topic: Dict[str, dict],
-                 subscribed_topics: list,
-                 published_topics: list,
-                 timers: Dict[str, float],
-                 timer_count: Dict[str, int]
-                 ) -> bool:
-    """
-    Convert an element from the SCXML file.
-
-    This takes ROS-specific elements and converts them into generic SCXML
-    elements.
-
-    :param elem: The element to convert.
-    :param parent_map: The parent map of the element.
-    :param type_per_topic: The types of the topics.
-    :param subscribed_topics: The list of subscribed topics.
-    :param published_topics: The list of published topics.
-    :param timers: The list of timers.
-    :return: True if the element should be deleted.
-    """
-    tag_wo_ns = remove_namespace(elem.tag)
-
-    # Declaration of publisher and subscriber #################################
-    if tag_wo_ns == 'ros_topic_publisher':
-        imported_type = _ros_type_fields(elem.attrib['type'])
-        type_per_topic[elem.attrib['topic']] = imported_type
-        published_topics.append(elem.attrib['topic'])
-        # TODO
-        return True
-    if tag_wo_ns == 'ros_topic_subscriber':
-        imported_type = _ros_type_fields(elem.attrib['type'])
-        type_per_topic[elem.attrib['topic']] = imported_type
-        subscribed_topics.append(elem.attrib['topic'])
-        # TODO
-        return True
-
-    # Publish #################################################################
-    if tag_wo_ns == 'ros_topic_publish':
-        topic = elem.attrib['topic']
-        assert topic in type_per_topic
-        assert topic in published_topics
-        elem.tag = 'send'
-        event_name = f"ros_topic.{topic}"
-        elem.attrib.pop('topic')
-        elem.attrib['event'] = event_name
-        return False
-    if tag_wo_ns == 'field':
-        topic = parent_map[elem].attrib['event'].replace('ros_topic.', '')
-        try:
-            cb_topic = parent_map[parent_map[elem]].attrib['topic']
-        except KeyError:
-            cb_topic = None
-        assert topic in type_per_topic
-        assert topic in published_topics
-        # TODO: IMPLEMENT:
-        # _check_topic_type(
-        #     elem.attrib['name'],
-        #     type_per_topic,
-        #     topic,
-        #     cb_topic,
-        #     elem.attrib['expr'])
-        elem.tag = 'param'
-        expr_attr = elem.attrib['expr']
-        elem.attrib['expr'] = expr_attr.replace('_msg', '_event')
-        return False
-
-    # Callback ################################################################
-    if tag_wo_ns == 'ros_topic_callback':
-        topic = elem.attrib['topic']
-        assert elem.attrib['topic'] in type_per_topic
-        assert elem.attrib['topic'] in subscribed_topics
-        elem.tag = 'transition'
-        event_name = f"ros_topic.{elem.attrib['topic']}"
-        elem.attrib.pop('topic')
-        elem.attrib['event'] = event_name
-        # check children for assignments that may need to change _msg to _event
-        for child in elem:
-            if remove_namespace(child.tag) == 'assign':
-                if 'expr' not in child.attrib:
-                    continue
-                expr_attr = child.attrib['expr']
-                child.attrib['expr'] = expr_attr.replace('_msg', '_event')
-            # TODO: are there other tags that need to be checked?
-        return False
-
-    # Timer ###################################################################
-    if tag_wo_ns == 'ros_time_rate':
-        name = elem.attrib['name']
-        assert name not in timers, f"Timer {name} already exists."
-        timers[name] = float(elem.attrib['rate_hz'])
-        assert name not in timer_count, f"Timer {name} already exists."
-        timer_count[name] = 0
-        return True
-    if tag_wo_ns == 'ros_rate_callback':
-        elem.tag = 'transition'
-        assert elem.attrib['name'] in timers
-        assert elem.attrib['name'] in timer_count
-        timer_count[elem.attrib['name']] += 1
-        event_name = f"{ROS_TIMER_RATE_EVENT_PREFIX}{elem.attrib['name']}"
-        elem.attrib.pop('name')
-        elem.attrib['event'] = event_name
-        return False
-
-    return False
-
-
 def ros_to_scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]]:
     """Convert one SCXML file that contains ROS-specific tags.
 
@@ -221,4 +113,4 @@ def ros_to_scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]
     """
     scxml_root = ScxmlRoot.from_scxml_file(input_xml)
     plain_scxml, timers = scxml_root.as_plain_scxml()
-    return ET.tostring(plain_scxml.as_xml(), encoding='unicode'), timers
+    return ET.tostring(plain_scxml.as_xml(), encoding='unicode', xml_declaration=True), timers
