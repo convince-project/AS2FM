@@ -33,7 +33,8 @@ class JaniComposition:
 
     def add_element(self, element: str):
         """Append a new automaton name in the composition."""
-        assert element not in self._elements, f"Element {element} already exists in the composition"
+        assert element not in self._elements, \
+            f"Element {element} already exists in the composition"
         self._elements.append(element)
         self._element_to_id[element] = len(self._elements) - 1
 
@@ -49,7 +50,8 @@ class JaniComposition:
         }
         # Generate the synchronize list
         for automata, action in syncs.items():
-            assert automata in self._element_to_id, f"Automaton {automata} does not exist in the composition"
+            assert automata in self._element_to_id, \
+                f"Automaton {automata} does not exist in the composition"
             new_sync["synchronise"][self._element_to_id[automata]] = action
         self._syncs.append(new_sync)
 
@@ -92,6 +94,8 @@ class JaniComposition:
         return generated_syncs
 
     def as_dict(self):
+        # Sort the syncs before return
+        self._syncs = sorted(self._syncs, key=lambda x: x["result"])
         return {
             "elements": [{"automaton": element} for element in self._elements],
             "syncs": self._syncs
