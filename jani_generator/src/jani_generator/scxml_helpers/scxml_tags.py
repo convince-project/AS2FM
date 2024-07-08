@@ -68,7 +68,7 @@ def _interpret_scxml_assign(
     assert isinstance(elem, ScxmlAssign), \
         f"Expected ScxmlAssign, got {type(elem)}"
     assignment_value = parse_ecmascript_to_jani_expression(
-            elem.get_expr())
+        elem.get_expr())
     if isinstance(assignment_value, JaniExpression):
         assignment_value.replace_event(event_substitution)
     return JaniAssignment({
@@ -96,6 +96,129 @@ def _merge_conditions(
         negated_pc = not_operator(pc)
         joint_condition = and_operator(joint_condition, negated_pc)
     return joint_condition
+
+
+def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_holder: EventsHolder,
+                                         body: ScxmlExecutionBody, source: str, target: str,
+                                         hash_str: str, guard: Optional[JaniGuard],
+                                         trigger_event: Optional[str]) \
+                                            -> Tuple[List[JaniEdge], List[str]]:
+    """
+    Converts the body of an SCXML element to a set of locations and edges.
+
+    They need to be added to a JaniAutomaton later on.
+    """
+    edge_action_name = f"{source}-{target}-{hash_str}"
+    trigger_event_action = \
+        edge_action_name if trigger_event is None else f"{trigger_event}_on_receive"
+    new_edges = []
+    new_locations = []
+    # First edge. Has to evaluate guard and trigger event of original transition.
+    new_edges.append(JaniEdge({
+        "location": source,
+        "action": trigger_event_action,
+        "guard": guard.expression if guard is not None else None,
+        "destinations": [{
+            "location": None,
+            "assignments": []
+        }]
+    }))
+    for i, ec in enumerate(body):
+        if isinstance(ec, ScxmlAssign):
+            jani_assignment = _interpret_scxml_assign(ec, trigger_event)
+            new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
+        elif isinstance(ec, ScxmlSend):
+            event_name = ec.get_event()
+            event_send_action_name = event_name + "_on_send"
+            interm_loc = f'{source}-{i}-{hash_str}'
+            new_edges[-1].destinations[0]['location'] = interm_loc
+            new_edge = JaniEdge({
+                "location": interm_loc,
+                "action": event_send_action_name,
+                "guard": None,
+                "destinations": [{
+                    "location": None,
+                    "assignments": []
+                }]
+            })
+            data_structure_for_event = {}
+            for param in ec.get_params():
+                expr = param.get_expr() if param.get_expr() is not None else \
+                    param.get_location()
+                new_edge.destinations[0]['assignments'].append(JaniAssignment({
+                    "ref": f'{ec.get_event()}.{param.get_name()}',
+                    "value": parse_ecmascript_to_jani_expression(
+                        expr).replace_event(trigger_event)
+                }))
+                variables = {}
+                for n, v in jani_automaton.get_variables().items():
+                    variables[n] = v.get_type()()
+                data_structure_for_event[param.get_name()] = \
+                    type(interpret_ecma_script_expr(expr, variables))
+            new_edge.destinations[0]['assignments'].append(JaniAssignment({
+                "ref": f'{ec.get_event()}.valid',
+                "value": True
+            }))
+
+            if not events_holder.has_event(event_name):
+                send_event = Event(
+                    event_name,
+                    data_structure_for_event
+                )
+                events_holder.add_event(send_event)
+            else:
+                send_event = events_holder.get_event(event_name)
+                send_event.set_data_structure(
+                    data_structure_for_event
+                )
+            send_event.add_sender_edge(
+                jani_automaton.get_name(), event_send_action_name, [])
+
+            new_edges.append(new_edge)
+            new_locations.append(interm_loc)
+        elif isinstance(ec, ScxmlIf):
+            interm_loc_before = f"{source}_{i}_before_if"
+            interm_loc_after = f"{source}_{i}_after_if"
+            new_edges[-1].destinations[0]['location'] = interm_loc_before
+            previous_conditions = []
+            for cond_str, conditional_body in ec.get_conditional_executions():
+                print(f"Condition: {cond_str}")
+                print(f"Body: {conditional_body}")
+                current_cond = parse_ecmascript_to_jani_expression(cond_str)
+                jani_cond = _merge_conditions(
+                    previous_conditions, current_cond).replace_event(trigger_event)
+                sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
+                    jani_automaton, events_holder, conditional_body, interm_loc_before,
+                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), cond_str]),
+                    JaniGuard(jani_cond), None)
+                new_edges.extend(sub_edges)
+                new_locations.extend(sub_locs)
+                previous_conditions.append(current_cond)
+            # Add else branch:
+            if ec.get_else_execution() is not None:
+                print(f"Else: {ec.get_else_execution()}")
+                jani_cond = _merge_conditions(
+                    previous_conditions).replace_event(trigger_event)
+                sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
+                    jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
+                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
+                    JaniGuard(jani_cond), None)
+                new_edges.extend(sub_edges)
+                new_locations.extend(sub_locs)
+            # TODO: If no else branch, we probably need to add an branch with empty body!
+            new_edges.append(JaniEdge({
+                "location": interm_loc_after,
+                "action": edge_action_name,
+                "guard": None,
+                "destinations": [{
+                    "location": None,
+                    "assignments": []
+                }]
+            }))
+            new_locations.append(interm_loc_before)
+            new_locations.append(interm_loc_after)
+    new_edges[-1].destinations[0]['location'] = target
+    return new_edges, new_locations
 
 
 class BaseTag:
@@ -186,6 +309,10 @@ class ScxmlTag(BaseTag):
         self.automaton.set_name(self.element.get_name())
         super().write_model()
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
+        # initial_state = self.element.get_state_by_id(self.element.get_initial_state_id())
+        # if initial_state.get_onentry() is not None:
+        #     raise NotImplementedError("Initial state with onentry not supported.")
+        # else:
         self.automaton.make_initial(self.element.get_initial_state_id())
 
 
@@ -218,132 +345,6 @@ class TransitionTag(BaseTag):
     def get_children(self) -> List[ScxmlBase]:
         return []
 
-    def interpret_scxml_executable_content_body(
-            self,
-            body: ScxmlExecutionBody,
-            source: str,
-            target: str,
-            hash_str: str,
-            guard: Optional[JaniGuard] = None,
-            trigger_event_action: Optional[str] = None
-    ) -> List[JaniEdge]:
-        """Interpret a body of executable content of an SCXML element.
-
-        :param body: The body of the SCXML element to interpret.
-        :return: The edges that contain the actions and expressions to be executed.
-        """
-        edge_action_name = f"{source}-{target}-{hash_str}"
-        trigger_event_action = \
-            trigger_event_action if trigger_event_action is not None else edge_action_name
-        new_edges = []
-        new_locations = []
-        # First edge. Has to evaluate guard and trigger event of original transition.
-        new_edges.append(JaniEdge({
-            "location": source,
-            "action": trigger_event_action,
-            "guard": guard.expression if guard is not None else None,
-            "destinations": [{
-                "location": None,
-                "assignments": []
-            }]
-        }))
-        for i, ec in enumerate(body):
-            if isinstance(ec, ScxmlAssign):
-                jani_assignment = _interpret_scxml_assign(ec, self._trans_event_name)
-                new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
-            elif isinstance(ec, ScxmlSend):
-                event_name = ec.get_event()
-                event_send_action_name = event_name + "_on_send"
-                interm_loc = f'{source}-{i}-{hash_str}'
-                new_edges[-1].destinations[0]['location'] = interm_loc
-                new_edge = JaniEdge({
-                    "location": interm_loc,
-                    "action": event_send_action_name,
-                    "guard": None,
-                    "destinations": [{
-                        "location": None,
-                        "assignments": []
-                    }]
-                })
-                data_structure_for_event = {}
-                for param in ec.get_params():
-                    expr = param.get_expr() if param.get_expr() is not None else \
-                        param.get_location()
-                    new_edge.destinations[0]['assignments'].append(JaniAssignment({
-                        "ref": f'{ec.get_event()}.{param.get_name()}',
-                        "value": parse_ecmascript_to_jani_expression(
-                            expr).replace_event(self._trans_event_name)
-                    }))
-                    variables = {}
-                    for n, v in self.automaton.get_variables().items():
-                        variables[n] = v.get_type()()
-                    data_structure_for_event[param.get_name()] = \
-                        type(interpret_ecma_script_expr(expr, variables))
-                new_edge.destinations[0]['assignments'].append(JaniAssignment({
-                    "ref": f'{ec.get_event()}.valid',
-                    "value": True
-                }))
-
-                if not self.events_holder.has_event(event_name):
-                    send_event = Event(
-                        event_name,
-                        data_structure_for_event
-                    )
-                    self.events_holder.add_event(send_event)
-                else:
-                    send_event = self.events_holder.get_event(event_name)
-                    send_event.set_data_structure(
-                        data_structure_for_event
-                    )
-                send_event.add_sender_edge(
-                    self.automaton.get_name(), event_send_action_name, [])
-
-                new_edges.append(new_edge)
-                new_locations.append(interm_loc)
-            elif isinstance(ec, ScxmlIf):
-                interm_loc_before = f"{source}_{i}_before_if"
-                interm_loc_after = f"{source}_{i}_after_if"
-                new_edges[-1].destinations[0]['location'] = interm_loc_before
-                previous_conditions = []
-                for cond_str, conditional_body in ec.get_conditional_executions():
-                    print(f"Condition: {cond_str}")
-                    print(f"Body: {conditional_body}")
-                    current_cond = parse_ecmascript_to_jani_expression(cond_str)
-                    jani_cond = _merge_conditions(
-                        previous_conditions, current_cond).replace_event(self._trans_event_name)
-                    sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
-                        conditional_body, interm_loc_before, interm_loc_after,
-                        '-'.join([hash_str, _hash_element(ec), cond_str]),
-                        JaniGuard(jani_cond), None)
-                    new_edges.extend(sub_edges)
-                    new_locations.extend(sub_locs)
-                    previous_conditions.append(current_cond)
-                # Add else branch:
-                if ec.get_else_execution() is not None:
-                    print(f"Else: {ec.get_else_execution()}")
-                    jani_cond = _merge_conditions(
-                        previous_conditions).replace_event(self._trans_event_name)
-                    sub_edges, sub_locs = self.interpret_scxml_executable_content_body(
-                        ec.get_else_execution(), interm_loc_before, interm_loc_after,
-                        '-'.join([hash_str, _hash_element(ec), 'else']),
-                        JaniGuard(jani_cond), None)
-                    new_edges.extend(sub_edges)
-                    new_locations.extend(sub_locs)
-                # TODO: If no else branch, we probably need to add an branch with empty body!
-                new_edges.append(JaniEdge({
-                    "location": interm_loc_after,
-                    "action": edge_action_name,
-                    "guard": None,
-                    "destinations": [{
-                        "location": None,
-                        "assignments": []
-                    }]
-                }))
-                new_locations.append(interm_loc_before)
-                new_locations.append(interm_loc_after)
-        new_edges[-1].destinations[0]['location'] = target
-        return new_edges, new_locations
-
     def write_model(self):
         scxml_root = self.call_trace[0]
         current_state = self.call_trace[-1]
@@ -355,27 +356,25 @@ class TransitionTag(BaseTag):
         # TODO: Need to extend this to support multiple events
         assert event_name is None or len(event_name) == 1, \
             "Transitions triggered by multiple events are not supported."
-        action_name = None
-        self._trans_event_name = None
-        if event_name is not None:
+        transition_trigger_event = None if event_name is None else event_name[0]
+        if transition_trigger_event is not None:
             # TODO: Maybe get rid of one of the two event variables
-            self._trans_event_name = event_name[0]
-            assert len(self._trans_event_name) > 0, "Empty event name not supported."
-            action_name = self._trans_event_name + "_on_receive"
-            if not self.events_holder.has_event(self._trans_event_name):
+            assert len(transition_trigger_event) > 0, "Empty event name not supported."
+            action_name = transition_trigger_event + "_on_receive"
+            if not self.events_holder.has_event(transition_trigger_event):
                 new_event = Event(
-                    self._trans_event_name
+                    transition_trigger_event
                     # we can't know the data structure here
                 )
                 self.events_holder.add_event(new_event)
-            existing_event = self.events_holder.get_event(self._trans_event_name)
+            existing_event = self.events_holder.get_event(transition_trigger_event)
             existing_event.add_receiver(
                 self.automaton.get_name(), current_state_id, action_name)
         transition_condition = self.element.get_condition()
         if transition_condition is not None:
             expression = parse_ecmascript_to_jani_expression(transition_condition)
             if event_name is not None:
-                expression.replace_event(self._trans_event_name)
+                expression.replace_event(transition_trigger_event)
             guard = JaniGuard(expression)
         else:
             guard = None
@@ -392,8 +391,9 @@ class TransitionTag(BaseTag):
         # TODO: If so, we could come up with a more descriptive name, instead of hashing?
         hash_str = _hash_element([
             current_state_id, target_state_id, event_name, transition_condition])
-        new_edges, new_locations = self.interpret_scxml_executable_content_body(
-            merged_transition_body, current_state_id, target_state_id, hash_str, guard, action_name)
+        new_edges, new_locations = _append_scxml_body_to_jani_automaton(
+            self.automaton, self.events_holder, merged_transition_body, current_state_id,
+            target_state_id, hash_str, guard, transition_trigger_event)
         for edge in new_edges:
             self.automaton.add_edge(edge)
         for loc in new_locations:
