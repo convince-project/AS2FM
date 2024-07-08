@@ -53,10 +53,10 @@ class TestConversion(unittest.TestCase):
         convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
-        self.assertEqual(len(automaton["locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertIn("Initial", init_location["name"])
-        self.assertIn("Initial", automaton["initial-locations"])
+        self.assertEqual(len(automaton["locations"]), 2)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn("Initial-first-exec", locations)
+        self.assertIn("Initial-first-exec", automaton["initial-locations"])
 
     def test_battery_drainer(self):
         """
@@ -73,12 +73,11 @@ class TestConversion(unittest.TestCase):
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
-        self.assertEqual(len(automaton["locations"]), 2)
+        self.assertEqual(len(automaton["locations"]), 4)
         self.assertEqual(len(automaton["initial-locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertEqual(init_location['name'],
-                         automaton.get("initial-locations")[0])
-        self.assertEqual(len(automaton["edges"]), 2)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn(automaton.get("initial-locations")[0], locations)
+        self.assertEqual(len(automaton["edges"]), 4)
 
         # Variables
         self.assertEqual(len(automaton["variables"]), 1)
@@ -154,7 +153,7 @@ class TestConversion(unittest.TestCase):
         self.assertIn({"automaton": "BatteryManager"}, elements)
         self.assertIn({"automaton": "level"}, elements)
         syncs = jani_dict["system"]["syncs"]
-        self.assertEqual(len(syncs), 3)
+        self.assertEqual(len(syncs), 4)
         self.assertIn({'result': 'level_on_send',
                        'synchronise': [
                            'level_on_send', None, 'level_on_send']},

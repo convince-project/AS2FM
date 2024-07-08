@@ -309,11 +309,26 @@ class ScxmlTag(BaseTag):
         self.automaton.set_name(self.element.get_name())
         super().write_model()
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
-        # initial_state = self.element.get_state_by_id(self.element.get_initial_state_id())
-        # if initial_state.get_onentry() is not None:
-        #     raise NotImplementedError("Initial state with onentry not supported.")
-        # else:
-        self.automaton.make_initial(self.element.get_initial_state_id())
+        initial_state_id = self.element.get_initial_state_id()
+        initial_state = self.element.get_state_by_id(initial_state_id)
+        # Make sure we execute the onentry block of the initial state at the start
+        if initial_state.get_onentry() is not None:
+            source_state = f"{initial_state_id}-first-exec"
+            target_state = initial_state_id
+            onentry_body = initial_state.get_onentry()
+            hash_str = _hash_element([source_state, target_state, "onentry"])
+            new_edges, new_locations = _append_scxml_body_to_jani_automaton(
+                self.automaton, self.events_holder, onentry_body, source_state,
+                target_state, hash_str, None, None)
+            # Add the initial state and start sequence to the automaton
+            self.automaton.add_location(source_state)
+            self.automaton.make_initial(source_state)
+            for edge in new_edges:
+                self.automaton.add_edge(edge)
+            for loc in new_locations:
+                self.automaton.add_location(loc)
+        else:
+            self.automaton.make_initial(initial_state_id)
 
 
 class StateTag(BaseTag):
@@ -332,7 +347,6 @@ class StateTag(BaseTag):
     def write_model(self):
         state_name = self.element.get_id()
         self.automaton.add_location(state_name)
-        # TODO: Make sure initial states that have onentry execute the onentry block at start
         super().write_model()
 
 
