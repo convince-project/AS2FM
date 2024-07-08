@@ -198,6 +198,7 @@ class StateTag(BaseTag):
     def get_children(self) -> List[ScxmlTransition]:
         # Here we care only about the transitions.
         # onentry and onexit are handled in the TransitionTag
+        # TODO: If multiple conditional transitions, we need to track and negate the previous cond.
         state_transitions = self.element.get_body()
         return [] if state_transitions is None else state_transitions
 
@@ -328,6 +329,7 @@ class TransitionTag(BaseTag):
                         JaniGuard(jani_cond), None)
                     new_edges.extend(sub_edges)
                     new_locations.extend(sub_locs)
+                # TODO: If no else branch, we probably need to add an branch with empty body!
                 new_edges.append(JaniEdge({
                     "location": interm_loc_after,
                     "action": edge_action_name,
