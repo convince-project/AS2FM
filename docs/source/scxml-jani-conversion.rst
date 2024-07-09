@@ -42,14 +42,40 @@ TODO: Describe how we translate the High-Level SCXML to the Low-Level SCXML.
 Jani Conversion
 ----------------
 
-Once the Low-Level SCXML is obtained, together with the timers information, we can convert it to Jani.
+Once the Low-Level SCXML is obtained, we can use it together with the timers information in the conversion to a Jani model.
 
-The core of the conversion lies in the translation of the SCXML state machines to Jani automata and the handling of the synchronization between them.
+Simple Overview
+________________
 
-The following picture shows how our conversion works:
+The following picture gives a simple overview of how our conversion works:
 
 .. image:: graphics/scxml_to_jani.drawio.svg
     :alt: Conversion process
     :align: center
 
-The main idea...
+The core of the conversion lies in the translation of the SCXML state machines to Jani automata and the handling of the synchronization between them.
+In the example above, we have two SCXML state machines, BatteryDrainer and BatteryManager, that are synchronized using the event "level".
+
+At start, the BatteryDrainer state machine sends a "level" event out, containing the current battery level in the "data" field.
+In Jani, this translates to an edge, i.e. "level_on_send", that advances the BatteryDrainer automaton to a next state where the sending action is carried out and, at the same time, assigns a global variable corresponding to the event parameter, i.e. "level.data", and another edge with the same name that advances an additional automaton "level_sync" from the "wait" to the "received" state, signaling that an event "level" was sent out and needs to be processed.
+
+The BatteryManager automaton has an edge "level_on_receive", that can now be triggered since the "level_sync" automaton is in the "received" state. When executing the edge, the BatteryManager automaton assigns the global variable "battery_alarm" based on the data contained in the "level.data" variable and goes back to the same state, waiting for the next "level" event. Similarly, the "level_sync" automaton transitions back to the "wait" state using the edge "level_on_receive".
+
+The BatteryDrainer can execute the edge "battery_drainer_act_0" and transition back to the initial state either before or after the "level_on_receive" action, as there is no constraint enforcing a specific order of execution.
+
+Similarly, since the automaton "level_sync" has an outgoing edge "level_on_send" that stays in the "received" state, the BatteryManager can send a "level" event before the BatteryDrainer has processed the previous one.
+This has been introduced to make the synchronization more similar to how it works in ROS, where messages can be overridden before being processed.
+
+Handling onentry, onexit and conditions
+________________________________________
+
+TODO
+
+.. image:: graphics/scxml_to_jani_entry_exit_if.drawio.svg
+    :alt: How execution blocks and conditions are translated
+    :align: center
+
+Handling of (ROS) Timers
+__________________________
+
+TODO

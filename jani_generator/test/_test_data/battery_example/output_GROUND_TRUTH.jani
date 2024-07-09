@@ -250,9 +250,9 @@
             {
                 "result": "level_on_receive",
                 "synchronise": [
-                    "use_battery-first-exec-use_battery-766fa6e4",
                     null,
-                    null
+                    "level_on_receive",
+                    "level_on_receive"
                 ]
             },
             {
@@ -261,6 +261,14 @@
                     "level_on_send",
                     null,
                     "level_on_send"
+                ]
+            },
+            {
+                "result": "use_battery-first-exec-use_battery-766fa6e4",
+                "synchronise": [
+                    "use_battery-first-exec-use_battery-766fa6e4",
+                    null,
+                    null
                 ]
             },
             {
