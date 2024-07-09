@@ -194,18 +194,19 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 new_edges.extend(sub_edges)
                 new_locations.extend(sub_locs)
                 previous_conditions.append(current_cond)
-            # Add else branch:
-            if ec.get_else_execution() is not None:
-                print(f"Else: {ec.get_else_execution()}")
-                jani_cond = _merge_conditions(
-                    previous_conditions).replace_event(trigger_event)
-                sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
-                    jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
-                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
-                    JaniGuard(jani_cond), None)
-                new_edges.extend(sub_edges)
-                new_locations.extend(sub_locs)
-            # TODO: If no else branch, we probably need to add an branch with empty body!
+            # Add else branch: if no else is provided, we assume an empty else body!
+            else_execution_body = ec.get_else_execution()
+            else_execution_body = [] if else_execution_body is None else else_execution_body
+            print(f"Else: {ec.get_else_execution()}")
+            jani_cond = _merge_conditions(
+                previous_conditions).replace_event(trigger_event)
+            sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
+                jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
+                interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
+                JaniGuard(jani_cond), None)
+            new_edges.extend(sub_edges)
+            new_locations.extend(sub_locs)
+            # Prepare the edge from the end of the if-else block
             new_edges.append(JaniEdge({
                 "location": interm_loc_after,
                 "action": edge_action_name,
@@ -340,7 +341,6 @@ class StateTag(BaseTag):
     def get_children(self) -> List[ScxmlTransition]:
         # Here we care only about the transitions.
         # onentry and onexit are handled in the TransitionTag
-        # TODO: If multiple conditional transitions, we need to track and negate the previous cond.
         state_transitions = self.element.get_body()
         return [] if state_transitions is None else state_transitions
 
