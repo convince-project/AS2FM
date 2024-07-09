@@ -25,4 +25,5 @@ Contents
    :maxdepth: 2
 
    tutorials
+   scxml-jani-conversion
    api
