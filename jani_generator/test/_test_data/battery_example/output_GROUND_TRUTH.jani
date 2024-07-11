@@ -208,19 +208,19 @@
         ],
         "syncs": [
             {
-                "result": "level_on_send",
-                "synchronise": [
-                    "level_on_send",
-                    null,
-                    "level_on_send"
-                ]
-            },
-            {
                 "result": "level_on_receive",
                 "synchronise": [
                     null,
                     "level_on_receive",
                     "level_on_receive"
+                ]
+            },
+            {
+                "result": "level_on_send",
+                "synchronise": [
+                    "level_on_send",
+                    null,
+                    "level_on_send"
                 ]
             },
             {
