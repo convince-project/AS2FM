@@ -18,7 +18,7 @@
 from typing import Dict
 
 
-def check_topic_type_known(topic_definition: str) -> bool:
+def is_topic_type_known(topic_definition: str) -> bool:
     """Check if python can import the provided topic definition."""
     # Check the input type has the expected structure
     if not (isinstance(topic_definition, str) and topic_definition.count("/") == 1):
