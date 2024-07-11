@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
@@ -194,18 +194,19 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 new_edges.extend(sub_edges)
                 new_locations.extend(sub_locs)
                 previous_conditions.append(current_cond)
-            # Add else branch:
-            if ec.get_else_execution() is not None:
-                print(f"Else: {ec.get_else_execution()}")
-                jani_cond = _merge_conditions(
-                    previous_conditions).replace_event(trigger_event)
-                sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
-                    jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
-                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
-                    JaniGuard(jani_cond), None)
-                new_edges.extend(sub_edges)
-                new_locations.extend(sub_locs)
-            # TODO: If no else branch, we probably need to add an branch with empty body!
+            # Add else branch: if no else is provided, we assume an empty else body!
+            else_execution_body = ec.get_else_execution()
+            else_execution_body = [] if else_execution_body is None else else_execution_body
+            print(f"Else: {ec.get_else_execution()}")
+            jani_cond = _merge_conditions(
+                previous_conditions).replace_event(trigger_event)
+            sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
+                jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
+                interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
+                JaniGuard(jani_cond), None)
+            new_edges.extend(sub_edges)
+            new_locations.extend(sub_locs)
+            # Prepare the edge from the end of the if-else block
             new_edges.append(JaniEdge({
                 "location": interm_loc_after,
                 "action": edge_action_name,
@@ -309,11 +310,26 @@ class ScxmlTag(BaseTag):
         self.automaton.set_name(self.element.get_name())
         super().write_model()
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
-        # initial_state = self.element.get_state_by_id(self.element.get_initial_state_id())
-        # if initial_state.get_onentry() is not None:
-        #     raise NotImplementedError("Initial state with onentry not supported.")
-        # else:
-        self.automaton.make_initial(self.element.get_initial_state_id())
+        initial_state_id = self.element.get_initial_state_id()
+        initial_state = self.element.get_state_by_id(initial_state_id)
+        # Make sure we execute the onentry block of the initial state at the start
+        if initial_state.get_onentry() is not None:
+            source_state = f"{initial_state_id}-first-exec"
+            target_state = initial_state_id
+            onentry_body = initial_state.get_onentry()
+            hash_str = _hash_element([source_state, target_state, "onentry"])
+            new_edges, new_locations = _append_scxml_body_to_jani_automaton(
+                self.automaton, self.events_holder, onentry_body, source_state,
+                target_state, hash_str, None, None)
+            # Add the initial state and start sequence to the automaton
+            self.automaton.add_location(source_state)
+            self.automaton.make_initial(source_state)
+            for edge in new_edges:
+                self.automaton.add_edge(edge)
+            for loc in new_locations:
+                self.automaton.add_location(loc)
+        else:
+            self.automaton.make_initial(initial_state_id)
 
 
 class StateTag(BaseTag):
@@ -325,15 +341,35 @@ class StateTag(BaseTag):
     def get_children(self) -> List[ScxmlTransition]:
         # Here we care only about the transitions.
         # onentry and onexit are handled in the TransitionTag
-        # TODO: If multiple conditional transitions, we need to track and negate the previous cond.
         state_transitions = self.element.get_body()
         return [] if state_transitions is None else state_transitions
 
     def write_model(self):
         state_name = self.element.get_id()
         self.automaton.add_location(state_name)
-        # TODO: Make sure initial states that have onentry execute the onentry block at start
-        super().write_model()
+        # Dictionary tracking the conditional trigger-based transitions
+        self._event_to_conditions: Dict[str, List[str]] = {}
+        # List of events that trigger transitions without conditions
+        self._events_no_condition: List[str] = []
+        for child in self.children:
+            transition_events = child.element.get_events()
+            transition_event = "" if transition_events is None else transition_events[0]
+            transition_condition = child.element.get_condition()
+            # Add previous conditions matching the same event trigger to the current child state
+            child.set_previous_siblings_conditions(
+                self._event_to_conditions.get(transition_event, []))
+            if transition_condition is None:
+                # Make sure we do not have multiple transitions with no condition and same event
+                assert transition_event not in self._events_no_condition, \
+                    f"Event {transition_event} in state {self.element.get_id()} already has a" \
+                    "transition without condition."
+                self._events_no_condition.append(transition_event)
+            else:
+                # Update the list of conditions related to a transition trigger
+                if transition_event not in self._event_to_conditions:
+                    self._event_to_conditions[transition_event] = []
+                self._event_to_conditions[transition_event].append(transition_condition)
+            child.write_model()
 
 
 class TransitionTag(BaseTag):
@@ -345,12 +381,18 @@ class TransitionTag(BaseTag):
     def get_children(self) -> List[ScxmlBase]:
         return []
 
+    def set_previous_siblings_conditions(self, conditions_scripts: List[str]):
+        """Add conditions from previous transitions with same event trigger."""
+        self._previous_conditions = conditions_scripts
+
     def write_model(self):
-        scxml_root = self.call_trace[0]
-        current_state = self.call_trace[-1]
-        current_state_id = current_state.get_id()
-        target_state_id = self.element.get_target_state_id()
-        target_state = scxml_root.get_state_by_id(target_state_id)
+        assert hasattr(self, "_previous_conditions"), \
+            "Make sure 'set_previous_siblings_conditions' was called before."
+        scxml_root: ScxmlRoot = self.call_trace[0]
+        current_state: ScxmlState = self.call_trace[-1]
+        current_state_id: str = current_state.get_id()
+        target_state_id: str = self.element.get_target_state_id()
+        target_state: ScxmlState = scxml_root.get_state_by_id(target_state_id)
         assert target_state is not None, f"Transition's target state {target_state_id} not found."
         event_name = self.element.get_events()
         # TODO: Need to extend this to support multiple events
@@ -370,14 +412,25 @@ class TransitionTag(BaseTag):
             existing_event = self.events_holder.get_event(transition_trigger_event)
             existing_event.add_receiver(
                 self.automaton.get_name(), current_state_id, action_name)
+        # Prepare the previous expressions for the transition guard
+        previous_expressions = [
+            parse_ecmascript_to_jani_expression(cond) for cond in self._previous_conditions]
+        if event_name is not None:
+            for expr in previous_expressions:
+                expr.replace_event(transition_trigger_event)
         transition_condition = self.element.get_condition()
         if transition_condition is not None:
-            expression = parse_ecmascript_to_jani_expression(transition_condition)
+            current_expression = parse_ecmascript_to_jani_expression(transition_condition)
             if event_name is not None:
-                expression.replace_event(transition_trigger_event)
-            guard = JaniGuard(expression)
+                current_expression.replace_event(transition_trigger_event)
+            # If there are multiple transitions for an event, consider the previous conditions
+            merged_expression = _merge_conditions(previous_expressions, current_expression)
+            guard = JaniGuard(merged_expression)
         else:
-            guard = None
+            if len(previous_expressions) > 0:
+                guard = JaniGuard(_merge_conditions(previous_expressions))
+            else:
+                guard = None
 
         original_transition_body = self.element.get_executable_body()
 

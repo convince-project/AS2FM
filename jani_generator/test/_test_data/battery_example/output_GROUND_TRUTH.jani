@@ -28,6 +28,9 @@
             "name": "level_on_send"
         },
         {
+            "name": "use_battery-first-exec-use_battery-766fa6e4"
+        },
+        {
             "name": "use_battery-use_battery-1b935c10"
         }
     ],
@@ -40,10 +43,16 @@
                 },
                 {
                     "name": "use_battery-1-1b935c10"
+                },
+                {
+                    "name": "use_battery-first-exec"
+                },
+                {
+                    "name": "use_battery-first-exec-0-766fa6e4"
                 }
             ],
             "initial-locations": [
-                "use_battery"
+                "use_battery-first-exec"
             ],
             "edges": [
                 {
@@ -68,6 +77,37 @@
                 },
                 {
                     "location": "use_battery-1-1b935c10",
+                    "destinations": [
+                        {
+                            "location": "use_battery",
+                            "assignments": [
+                                {
+                                    "ref": "level.data",
+                                    "value": "battery_percent",
+                                    "index": 0
+                                },
+                                {
+                                    "ref": "level.valid",
+                                    "value": true,
+                                    "index": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "action": "level_on_send"
+                },
+                {
+                    "location": "use_battery-first-exec",
+                    "destinations": [
+                        {
+                            "location": "use_battery-first-exec-0-766fa6e4",
+                            "assignments": []
+                        }
+                    ],
+                    "action": "use_battery-first-exec-use_battery-766fa6e4"
+                },
+                {
+                    "location": "use_battery-first-exec-0-766fa6e4",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -221,6 +261,14 @@
                     "level_on_send",
                     null,
                     "level_on_send"
+                ]
+            },
+            {
+                "result": "use_battery-first-exec-use_battery-766fa6e4",
+                "synchronise": [
+                    "use_battery-first-exec-use_battery-766fa6e4",
+                    null,
+                    null
                 ]
             },
             {
