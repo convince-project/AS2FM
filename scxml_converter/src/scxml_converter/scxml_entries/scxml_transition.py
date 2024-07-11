@@ -27,6 +27,23 @@ from xml.etree import ElementTree as ET
 
 class ScxmlTransition(ScxmlBase):
     """This class represents a single scxml state."""
+    @staticmethod
+    def get_tag_name() -> str:
+        return "transition"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
+        """Create a ScxmlTransition object from an XML tree."""
+        assert xml_tree.tag == ScxmlTransition.get_tag_name(), \
+            f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
+        target = xml_tree.get("target")
+        assert target is not None, "Error: SCXML transition: target attribute not found."
+        events = xml_tree.get("event")
+        events = events.split(" ") if events is not None else None
+        condition = xml_tree.get("cond")
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return ScxmlTransition(target, events, condition, exec_body)
 
     def __init__(self,
                  target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
@@ -53,21 +70,21 @@ class ScxmlTransition(ScxmlBase):
         self._events = events
         self._condition = condition
 
-    def get_tag_name() -> str:
-        return "transition"
+    def get_target_state_id(self) -> str:
+        """Return the ID of the target state of this transition."""
+        return self._target
 
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
-        """Create a ScxmlTransition object from an XML tree."""
-        assert xml_tree.tag == ScxmlTransition.get_tag_name(), \
-            f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
-        target = xml_tree.get("target")
-        assert target is not None, "Error: SCXML transition: target attribute not found."
-        events = xml_tree.get("event")
-        events = events.split(" ") if events is not None else None
-        condition = xml_tree.get("cond")
-        exec_body = execution_body_from_xml(xml_tree)
-        exec_body = exec_body if exec_body is not None else None
-        return ScxmlTransition(target, events, condition, exec_body)
+    def get_events(self) -> Optional[List[str]]:
+        """Return the events that trigger this transition (if any)."""
+        return self._events
+
+    def get_condition(self) -> Optional[str]:
+        """Return the condition required to execute this transition (if any)."""
+        return self._condition
+
+    def get_executable_body(self) -> Optional[ScxmlExecutionBody]:
+        """Return the executable content of this transition."""
+        return self._body
 
     def add_event(self, event: str):
         if self._events is None:

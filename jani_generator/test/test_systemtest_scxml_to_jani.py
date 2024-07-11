@@ -19,15 +19,15 @@ import json
 import os
 import unittest
 import xml.etree.ElementTree as ET
-from pprint import pprint
 
 import pytest
-from jani_generator.jani_entries import JaniModel
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
+
+from scxml_converter.scxml_entries import ScxmlRoot
+from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
-    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
-    interpret_top_level_xml)
+    convert_multiple_scxmls_to_jani, convert_scxml_root_to_jani_automaton)
+from jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 from .test_utilities_smc_storm import run_smc_storm_with_output
 
 
@@ -39,6 +39,7 @@ class TestConversion(unittest.TestCase):
         basic_scxml = """
         <scxml
           version="1.0"
+          name="BasicExample"
           initial="Initial">
             <state id="Initial">
                 <onentry>
@@ -46,10 +47,10 @@ class TestConversion(unittest.TestCase):
                 </onentry>
             </state>
         </scxml>"""
-        basic_scxml = ET.fromstring(basic_scxml)
+        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 1)
@@ -64,12 +65,11 @@ class TestConversion(unittest.TestCase):
         scxml_battery_drainer = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_drainer.scxml')
-        with open(scxml_battery_drainer, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
@@ -94,12 +94,11 @@ class TestConversion(unittest.TestCase):
         scxml_battery_manager = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_manager.scxml')
-        with open(scxml_battery_manager, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -233,8 +232,7 @@ class TestConversion(unittest.TestCase):
     def test_with_entrypoint_main_fail(self):
         """Test the main_failing.xml file with the entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint(
-            'main_failing_prop.xml', 'ros_example', 'battery_depleted', False)
+        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_over_depleted', False)
 
     def test_with_entrypoint_w_bt_main_battery_depleted(self):
         """Test the main.xml file with the entrypoint.

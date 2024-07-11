@@ -31,26 +31,11 @@ from xml.etree import ElementTree as ET
 class ScxmlRoot(ScxmlBase):
     """This class represents a whole scxml model, that is used to define specific skills."""
 
-    def __init__(self, name: str):
-        self._name = name
-        self._version = "1.0"  # This is the only version mentioned in the official documentation
-        self._initial_state: str = None
-        self._states: List[ScxmlState] = []
-        self._data_model: ScxmlDataModel = None
-        self._ros_declarations: List[ScxmlRosDeclarations] = None
-
+    @staticmethod
     def get_tag_name() -> str:
         return "scxml"
 
-    def get_states(self) -> List[ScxmlState]:
-        return self._states
-
-    def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
-        for state in self._states:
-            if state.get_id() == state_id:
-                return state
-        return None
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
@@ -94,6 +79,7 @@ class ScxmlRoot(ScxmlBase):
             scxml_root.add_state(scxml_state, initial=is_initial)
         return scxml_root
 
+    @staticmethod
     def from_scxml_file(xml_file: str) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         if isfile(xml_file):
@@ -108,6 +94,34 @@ class ScxmlRoot(ScxmlBase):
                 child.tag = child.tag.split("}")[1]
         # Do the conversion
         return ScxmlRoot.from_xml_tree(xml_element)
+
+    def __init__(self, name: str):
+        self._name = name
+        self._version = "1.0"  # This is the only version mentioned in the official documentation
+        self._initial_state: str = None
+        self._states: List[ScxmlState] = []
+        self._data_model: ScxmlDataModel = None
+        self._ros_declarations: List[ScxmlRosDeclarations] = None
+
+    def get_name(self) -> str:
+        """Get the name of the automaton represented by this SCXML model."""
+        return self._name
+
+    def get_initial_state_id(self) -> str:
+        """Get the ID of the initial state of the SCXML model."""
+        return self._initial_state
+
+    def get_data_model(self) -> Optional[ScxmlDataModel]:
+        return self._data_model
+
+    def get_states(self) -> List[ScxmlState]:
+        return self._states
+
+    def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
+        for state in self._states:
+            if state.get_id() == state_id:
+                return state
+        return None
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""
@@ -188,7 +202,7 @@ class ScxmlRoot(ScxmlBase):
         """Check whether there are ROS specific features or all entries are plain SCXML."""
         assert self.check_validity(), "SCXML: found invalid root object."
         # If this is a valid scxml object, checking the absence of declarations is enough
-        return self._ros_declarations is None
+        return self._ros_declarations is None or len(self._ros_declarations) == 0
 
     def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[Tuple[str, float]]]:
         """

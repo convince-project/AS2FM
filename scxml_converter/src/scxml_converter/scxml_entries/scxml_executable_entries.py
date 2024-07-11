@@ -20,8 +20,9 @@ Definition of SCXML Tags that can be part of executable content
 from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, HelperRosDeclarations,
-                                           as_plain_scxml_msg_expression)
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, HelperRosDeclarations)
+
+from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -121,7 +122,7 @@ class ScxmlIf(ScxmlBase):
     def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
-            condional_executions.append((as_plain_scxml_msg_expression(condition),
+            condional_executions.append((replace_ros_msg_expression(condition),
                                          as_plain_execution_body(execution, ros_declarations)))
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(condional_executions, else_execution)
@@ -252,7 +253,7 @@ class ScxmlAssign(ScxmlBase):
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
-        expr = as_plain_scxml_msg_expression(self._expr)
+        expr = replace_ros_msg_expression(self._expr)
         return ScxmlAssign(self._location, expr)
 
     def as_xml(self) -> ET.Element:

@@ -28,7 +28,7 @@
             "name": "level_on_send"
         },
         {
-            "name": "use_battery-use_battery-683f44d4"
+            "name": "use_battery-use_battery-1b935c10"
         }
     ],
     "automata": [
@@ -39,7 +39,7 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery-1-683f44d4"
+                    "name": "use_battery-1-1b935c10"
                 }
             ],
             "initial-locations": [
@@ -50,7 +50,7 @@
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery-1-683f44d4",
+                            "location": "use_battery-1-1b935c10",
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -64,10 +64,10 @@
                             ]
                         }
                     ],
-                    "action": "use_battery-use_battery-683f44d4"
+                    "action": "use_battery-use_battery-1b935c10"
                 },
                 {
-                    "location": "use_battery-1-683f44d4",
+                    "location": "use_battery-1-1b935c10",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -208,14 +208,6 @@
         ],
         "syncs": [
             {
-                "result": "level_on_send",
-                "synchronise": [
-                    "level_on_send",
-                    null,
-                    "level_on_send"
-                ]
-            },
-            {
                 "result": "level_on_receive",
                 "synchronise": [
                     null,
@@ -224,9 +216,17 @@
                 ]
             },
             {
-                "result": "use_battery-use_battery-683f44d4",
+                "result": "level_on_send",
                 "synchronise": [
-                    "use_battery-use_battery-683f44d4",
+                    "level_on_send",
+                    null,
+                    "level_on_send"
+                ]
+            },
+            {
+                "result": "use_battery-use_battery-1b935c10",
+                "synchronise": [
+                    "use_battery-use_battery-1b935c10",
                     null,
                     null
                 ]

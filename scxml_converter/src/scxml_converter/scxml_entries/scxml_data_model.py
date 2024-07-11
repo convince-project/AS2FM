@@ -23,16 +23,21 @@ from typing import List, Optional, Tuple
 
 from xml.etree import ElementTree as ET
 
+# Tuple with the variable name and, if set, the expression for the init value
 ScxmlData = Tuple[str, Optional[str]]
 
 
 class ScxmlDataModel(ScxmlBase):
     """This class represents the variables defined in the model."""
     def __init__(self, data_entries: List[ScxmlData] = None):
+        # TODO: Check ScxmlData from scxml_helpers, for alternative parsing
         self._data_entries = data_entries
 
     def get_tag_name() -> str:
         return "datamodel"
+
+    def get_data_entries(self) -> List[ScxmlData]:
+        return self._data_entries
 
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
