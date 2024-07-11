@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 jobs:
   build: 
-    name: py${{ matrix.package }} ⏩ ${{ matrix.linter }}
+    name: ${{ matrix.package }} ⏩ ${{ matrix.linter }}
     strategy:
       fail-fast: false
       matrix:
