@@ -46,11 +46,17 @@ def implement_scxml_events_as_jani_syncs(
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
-        if event.must_be_skipped():
-            continue
-        event.is_valid()
+        # Sender and receiver event names
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
+        # Special case handling for events that must be skipped
+        if event.must_be_skipped():
+            # if this is a bt event, we have to get rid of all edges receiving that event
+            if event._is_bt_event():
+                jani_model.remove_edges_with_action(event_name_on_receive)
+            continue
+        # Normal case handling
+        event.is_valid()
         # Check correct action names
         for sender in event.get_senders():
             action_name = sender.edge_action_name
@@ -77,15 +83,16 @@ def implement_scxml_events_as_jani_syncs(
             }],
             "action": event_name_on_send
         }))
-        event_automaton.add_edge(JaniEdge({
-            "location": "received",
-            "destinations": [{
-                "location": "received",
-                "probability": {"exp": 1.0},
-                "assignments": []
-            }],
-            "action": event_name_on_send
-        }))
+        # Removing the self-loop in the on_send event
+        # event_automaton.add_edge(JaniEdge({
+        #     "location": "received",
+        #     "destinations": [{
+        #         "location": "received",
+        #         "probability": {"exp": 1.0},
+        #         "assignments": []
+        #     }],
+        #     "action": event_name_on_send
+        # }))
         event_automaton.add_edge(JaniEdge({
             "location": "received",
             "destinations": [{
