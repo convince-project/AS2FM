@@ -67,6 +67,8 @@ def implement_scxml_events_as_jani_syncs(
             assert action_name == event_name_on_receive, \
                 f"Action name {action_name} must be {event_name_on_receive}."
         # Collect the event action names
+        # TODO: Potential bug: if the same event is sent by multiple automata,
+        # the same action should be added multiple times
         event_action_names.append(event_name_on_send)
         event_action_names.append(event_name_on_receive)
         # Add event automaton
