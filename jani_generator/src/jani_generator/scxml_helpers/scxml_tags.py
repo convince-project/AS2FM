@@ -58,8 +58,8 @@ def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
     return sha256(s.encode()).hexdigest()[:8]
 
 
-def _interpret_scxml_assign(
-        elem: ScxmlAssign, event_substitution: Optional[str] = None) -> JaniAssignment:
+def _interpret_scxml_assign(elem: ScxmlAssign, event_substitution: Optional[str] = None,
+                            assign_index: int = 0) -> JaniAssignment:
     """Interpret SCXML assign element.
 
     :param element: The SCXML element to interpret.
@@ -73,7 +73,8 @@ def _interpret_scxml_assign(
         assignment_value.replace_event(event_substitution)
     return JaniAssignment({
         "ref": elem.get_location(),
-        "value": assignment_value
+        "value": assignment_value,
+        "index": assign_index
     })
 
 
@@ -125,7 +126,8 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
     }))
     for i, ec in enumerate(body):
         if isinstance(ec, ScxmlAssign):
-            jani_assignment = _interpret_scxml_assign(ec, trigger_event)
+            assign_index = len(new_edges[-1].destinations[0]['assignments'])
+            jani_assignment = _interpret_scxml_assign(ec, trigger_event, assign_index)
             new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
         elif isinstance(ec, ScxmlSend):
             event_name = ec.get_event()
