@@ -193,7 +193,7 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def _test_with_entrypoint(self, main_xml: str, folder: str, property_name: str, success: bool):
+    def _test_with_main(self, main_xml: str, folder: str, property_name: str, success: bool):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
@@ -223,32 +223,38 @@ class TestConversion(unittest.TestCase):
         # if os.path.exists(ouput_path):
         #     os.remove(ouput_path)
 
-    def test_with_entrypoint_main_success(self):
-        """Test the main.xml file with the entrypoint.
+    def test_with_main_success(self):
+        """Test with main.xml as entrypoint.
         Here we expect the property to be satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_depleted', True)
+        self._test_with_main('main.xml', 'ros_example', 'battery_depleted', True)
 
-    def test_with_entrypoint_main_fail(self):
-        """Test the main_failing.xml file with the entrypoint.
+    def test_with_main_fail(self):
+        """Test with main.xml as entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_over_depleted', False)
+        self._test_with_main('main.xml', 'ros_example', 'battery_over_depleted', False)
 
-    def test_with_entrypoint_w_bt_main_battery_depleted(self):
-        """Test the main.xml file with the entrypoint.
-        Here we expect the property to be satisfied."""
-        # TODO: Improve properties under evaluation!
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
-
-    def test_with_entrypoint_w_bt_main_battery_under_twenty(self):
-        """Test the main.xml file with the entrypoint.
-        Here we expect the property to be satisfied."""
-        # TODO: Improve properties under evaluation!
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
-
-    def test_with_entrypoint_w_bt_main_alarm_and_charge(self):
-        """Test the main_failing.xml file with the entrypoint.
+    def test_with_w_bt_main_battery_depleted(self):
+        """Test with main.xml as entrypoint.
         Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
+        # TODO: Improve properties under evaluation!
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
+
+    def test_with_w_bt_main_battery_under_twenty(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        # TODO: Improve properties under evaluation!
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
+
+    def test_with_w_bt_main_alarm_and_charge(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be satisfied."""
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
+
+    def test_events_sync_handling(self):
+        """Test with main.xml as entrypoint.
+        Here we make sure, the synchronization can handle events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('main.xml', 'events_sync_examples', 'seq_check', True)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,33 @@
+{
+    "properties": [
+        {
+            "name": "seq_check",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "msg_a.seq",
+                                "right": 50
+                            },
+                            "right": {
+                                "op": "=",
+                                "left": "msg_b.seq",
+                                "right": 25
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}
