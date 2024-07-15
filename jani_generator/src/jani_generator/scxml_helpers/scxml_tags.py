@@ -372,19 +372,38 @@ class StateTag(BaseTag):
             transition_events.add(event_name)
         return transition_events
 
+    def get_guard_for_prev_conditions(self, event_name: str) -> Optional[JaniGuard]:
+        """Return the guard negating all previous conditions for a specific event.
+
+        This is required to make sure each event is processed, even in case of conditionals like:
+        <transition event="a" cond="_event.X > 5" target="somewhere" />, that could result in a
+        deadlock if the content of the event sent is not greater than 5.
+        We want to automatically generate a "dummy" self-loop for that same event with the opposite
+        condition(s), to cover the case where the self-loop is not met:
+        <transition event="a" cond="_event.X <= 5" target="self" />
+        """
+        previous_expressions = [
+            parse_ecmascript_to_jani_expression(cond) for
+            cond in self._event_to_conditions.get(event_name, [])]
+        if len(previous_expressions) > 0:
+            guard = JaniGuard(_merge_conditions(previous_expressions))
+        else:
+            guard = None
+        return guard
+
     def add_unhandled_transitions(self, transitions_set: Set[str]):
         """Add self-loops for transitions that weren't handled yet."""
         for event_name in transitions_set:
             if event_name in self._events_no_condition or len(event_name) == 0:
                 continue
-            new_scxml_transition = ScxmlTransition(self.element.get_id(), [event_name])
-            new_transition_tag = TransitionTag(
-                new_scxml_transition, self.call_trace + [self.element], self.model)
-            # If previous conditions are present, add them
-            new_transition_tag.set_previous_siblings_conditions(
-                self._event_to_conditions.get(event_name, []))
+            guard = self.get_guard_for_prev_conditions(event_name)
+            edges, locations = _append_scxml_body_to_jani_automaton(
+                self.automaton, self.events_holder, [], self.element.get_id(),
+                self.element.get_id(), "", guard, event_name)
+            assert len(locations) == 0 and len(edges) == 1, \
+                f"Expected one edge for self-loops, got {len(edges)} edges."
+            self.automaton.add_edge(edges[0])
             self._events_no_condition.append(event_name)
-            new_transition_tag.write_model()
 
     def write_model(self):
         state_name = self.element.get_id()
