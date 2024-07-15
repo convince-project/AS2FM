@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
@@ -304,11 +304,11 @@ class ScxmlTag(BaseTag):
         root_children.extend(self.element.get_states())
         return root_children
 
-    def write_model(self):
-        assert isinstance(self.element, ScxmlRoot), \
-            f"Expected ScxmlRoot, got {type(self.element)}."
-        self.automaton.set_name(self.element.get_name())
-        super().write_model()
+    def handle_entry_state(self):
+        """Get the entry state and mark it in the Jani Automaton.
+
+        If the entry state has an onentry block, generate a new entry sequence and add it to Jani.
+        """
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
         initial_state_id = self.element.get_initial_state_id()
         initial_state = self.element.get_state_by_id(initial_state_id)
@@ -331,6 +331,24 @@ class ScxmlTag(BaseTag):
         else:
             self.automaton.make_initial(initial_state_id)
 
+    def add_unhandled_transitions(self):
+        """Add self-loops in each state for transitions that weren't handled yet."""
+        transitions_set = set()
+        for child in self.children:
+            if isinstance(child, StateTag):
+                transitions_set = transitions_set.union(child.get_handled_events())
+        for child in self.children:
+            if isinstance(child, StateTag):
+                child.add_unhandled_transitions(transitions_set)
+
+    def write_model(self):
+        assert isinstance(self.element, ScxmlRoot), \
+            f"Expected ScxmlRoot, got {type(self.element)}."
+        self.automaton.set_name(self.element.get_name())
+        super().write_model()
+        self.add_unhandled_transitions()
+        self.handle_entry_state()
+
 
 class StateTag(BaseTag):
     """Object representing a state tag from a SCXML file.
@@ -343,6 +361,28 @@ class StateTag(BaseTag):
         # onentry and onexit are handled in the TransitionTag
         state_transitions = self.element.get_body()
         return [] if state_transitions is None else state_transitions
+
+    def get_handled_events(self) -> Set[str]:
+        """Return the events that are handled by the state.
+        """
+        transition_events = set(self._events_no_condition)
+        for event_name in self._event_to_conditions.keys():
+            transition_events.add(event_name)
+        return transition_events
+
+    def add_unhandled_transitions(self, transitions_set: Set[str]):
+        """Add self-loops for transitions that weren't handled yet."""
+        for event_name in transitions_set:
+            if event_name in self._events_no_condition or len(event_name) == 0:
+                continue
+            new_scxml_transition = ScxmlTransition(self.element.get_id(), [event_name])
+            new_transition_tag = TransitionTag(
+                new_scxml_transition, self.call_trace + [self.element], self.model)
+            # If previous conditions are present, add them
+            new_transition_tag.set_previous_siblings_conditions(
+                self._event_to_conditions.get(event_name, []))
+            self._events_no_condition.append(event_name)
+            new_transition_tag.write_model()
 
     def write_model(self):
         state_name = self.element.get_id()
