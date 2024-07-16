@@ -84,10 +84,13 @@ class Event:
         """Set the data structure of the event."""
         self.data_struct = data_struct
 
-    def is_valid(self):
-        """Check if the event is valid."""
-        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender."
-        assert len(self.receivers) > 0, f"Event {self.name} must have at least one receiver."
+    def has_senders(self) -> bool:
+        """Check if the event has one or more senders."""
+        return len(self.senders) > 0
+
+    def has_receivers(self) -> bool:
+        """Check if the event has one or more receivers."""
+        return len(self.receivers) > 0
 
     def must_be_skipped_in_jani_conversion(self):
         """Indicate whether this must be considered in the conversion to jani."""
