@@ -23,11 +23,8 @@ from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_composition import JaniComposition
 from jani_generator.jani_entries.jani_edge import JaniEdge
-from jani_generator.jani_entries.jani_expression import JaniExpression
-from jani_generator.jani_entries.jani_variable import JaniVariable
 from jani_generator.ros_helpers.ros_timer import RosTimer
-from jani_generator.scxml_helpers.scxml_event import (Event,
-                                                      EventsHolder)
+from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
@@ -133,9 +130,10 @@ def implement_scxml_events_as_jani_syncs(
         event_name = f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}"
         try:
             event = events_holder.get_event(event_name)
-        except KeyError:
+        except KeyError as e:
             raise RuntimeError(
-                f"Was expecting an event for timer {name}, with name {ROS_TIMER_RATE_EVENT_PREFIX}{name}.")
+                f"Was expecting an event for timer {name}, with name "
+                f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}.") from e
         action_name_receiver = f"{event_name}_on_receive"
         automaton_name = event.get_receivers()[0].automaton_name
         jc.add_sync(action_name_receiver, {
