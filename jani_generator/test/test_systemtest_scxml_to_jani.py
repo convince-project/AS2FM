@@ -256,6 +256,12 @@ class TestConversion(unittest.TestCase):
         being sent in different orders without deadlocks."""
         self._test_with_main('main.xml', 'events_sync_examples', 'seq_check', True)
 
+    def test_multiple_senders_same_event(self):
+        """Test with main.xml as entrypoint.
+        Here we make sure, the synchronization can handle events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('main.xml', 'multiple_senders_same_event', 'seq_check', True)
+
 
 if __name__ == '__main__':
     pytest.main(['-s', '-v', __file__])
