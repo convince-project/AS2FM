@@ -470,8 +470,7 @@ class TransitionTag(BaseTag):
                 )
                 self.events_holder.add_event(new_event)
             existing_event = self.events_holder.get_event(transition_trigger_event)
-            existing_event.add_receiver(
-                self.automaton.get_name(), current_state_id, action_name)
+            existing_event.add_receiver(self.automaton.get_name(), action_name)
         # Prepare the previous expressions for the transition guard
         previous_expressions = [
             parse_ecmascript_to_jani_expression(cond) for cond in self._previous_conditions]

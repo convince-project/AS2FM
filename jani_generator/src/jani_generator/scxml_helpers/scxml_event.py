@@ -36,9 +36,8 @@ class EventSender:
 
 
 class EventReceiver:
-    def __init__(self, automaton_name: str, location_name: str, edge_action_name: str):
+    def __init__(self, automaton_name: str, edge_action_name: str):
         self.automaton_name = automaton_name
-        self.location_name = location_name
         self.edge_action_name = edge_action_name
 
 
@@ -52,16 +51,15 @@ class Event:
         # TODO: In the future, this could be a Dict[str, str] or even a Set, if we the action name
         # is expected to match the event name.
         self.senders: Dict[str, EventSender] = {}
-        self.receivers: List[EventReceiver] = []
+        self.receivers: Dict[str, EventReceiver] = {}
 
     def add_sender_edge(self, automaton_name: str, edge_action_name: str):
         """Add information about the edge sending the event."""
         self.senders.update({automaton_name: EventSender(automaton_name, edge_action_name)})
 
-    def add_receiver(self, automaton_name: str, location_name: str, edge_action_name: str):
+    def add_receiver(self, automaton_name: str, edge_action_name: str):
         """Add information about the edges triggered by the event."""
-        self.receivers.append(EventReceiver(
-            automaton_name, location_name, edge_action_name))
+        self.receivers.update({automaton_name: EventReceiver(automaton_name, edge_action_name)})
 
     def get_senders(self) -> List[EventSender]:
         """Get the senders of the event."""
@@ -69,7 +67,7 @@ class Event:
 
     def get_receivers(self) -> List[EventReceiver]:
         """Get the receivers of the event."""
-        return self.receivers
+        return [receiver for receiver in self.receivers.values()]
 
     def get_data_structure(self) -> Dict[str, type]:
         """Get the data structure of the event."""
