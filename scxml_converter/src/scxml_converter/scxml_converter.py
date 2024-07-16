@@ -23,11 +23,10 @@ into generic SCXML code.
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Tuple, Union
 
-from scxml_converter.scxml_entries import ScxmlRoot
-
 from mc_toolchain_jani_common.common import ros_type_name_to_python_type
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
+from scxml_converter.scxml_entries import ScxmlRoot
 
 BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']
 

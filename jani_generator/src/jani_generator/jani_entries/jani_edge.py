@@ -16,8 +16,11 @@
 """And edge defining the possible transition from one state to another in jani."""
 
 from typing import Dict, Optional
-from jani_generator.jani_entries import JaniGuard, JaniAssignment, JaniExpression, JaniConstant
-from jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
+
+from jani_generator.jani_entries import (JaniAssignment, JaniConstant,
+                                         JaniExpression, JaniGuard)
+from jani_generator.jani_entries.jani_convince_expression_expansion import \
+    expand_expression
 
 
 class JaniEdge:

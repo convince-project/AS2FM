@@ -22,12 +22,14 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from scxml_converter.scxml_entries import ScxmlRoot
 from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani, convert_scxml_root_to_jani_automaton)
-from jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
+from jani_generator.scxml_helpers.top_level_interpreter import \
+    interpret_top_level_xml
+from scxml_converter.scxml_entries import ScxmlRoot
+
 from .test_utilities_smc_storm import run_smc_storm_with_output
 
 

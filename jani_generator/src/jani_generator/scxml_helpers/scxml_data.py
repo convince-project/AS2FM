@@ -21,11 +21,11 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, get_args
 
+from jani_generator.jani_entries.jani_expression import JaniExpression
+from jani_generator.jani_entries.jani_variable import JaniVariable, ValidTypes
 from mc_toolchain_jani_common.common import ros_type_name_to_python_type
 from mc_toolchain_jani_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
-from jani_generator.jani_entries.jani_expression import JaniExpression
-from jani_generator.jani_entries.jani_variable import JaniVariable, ValidTypes
 
 
 class ScxmlData:

@@ -20,9 +20,11 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody,
-                                           ScxmlTransition, HelperRosDeclarations,
-                                           as_plain_execution_body, execution_body_from_xml,
+from scxml_converter.scxml_entries import (HelperRosDeclarations, ScxmlBase,
+                                           ScxmlExecutableEntry,
+                                           ScxmlExecutionBody, ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
                                            valid_execution_body)
 
 

@@ -19,8 +19,6 @@ Module handling the conversion from SCXML to Jani.
 
 from typing import List
 
-from scxml_converter.scxml_entries import ScxmlRoot
-
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_model import JaniModel
 from jani_generator.ros_helpers.ros_timer import (RosTimer,
@@ -29,6 +27,7 @@ from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
 from jani_generator.scxml_helpers.scxml_tags import BaseTag
+from scxml_converter.scxml_entries import ScxmlRoot
 
 
 def convert_scxml_root_to_jani_automaton(

@@ -21,9 +21,10 @@ from typing import Union
 
 import esprima
 
+from jani_generator.jani_entries.jani_convince_expression_expansion import \
+    BASIC_EXPRESSIONS_MAPPING
 from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_value import JaniValue
-from jani_generator.jani_entries.jani_convince_expression_expansion import BASIC_EXPRESSIONS_MAPPING
 
 
 def parse_ecmascript_to_jani_expression(ecmascript: str) -> Union[JaniValue, JaniExpression]:

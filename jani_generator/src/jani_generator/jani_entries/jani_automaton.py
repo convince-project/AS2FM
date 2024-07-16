@@ -15,8 +15,10 @@
 
 """An automaton for jani."""
 
-from typing import List, Dict, Set, Optional
-from jani_generator.jani_entries import JaniEdge, JaniConstant, JaniVariable, JaniExpression
+from typing import Dict, List, Optional, Set
+
+from jani_generator.jani_entries import (JaniConstant, JaniEdge,
+                                         JaniExpression, JaniVariable)
 
 
 class JaniAutomaton:

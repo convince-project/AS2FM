@@ -26,7 +26,6 @@ from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
-
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression

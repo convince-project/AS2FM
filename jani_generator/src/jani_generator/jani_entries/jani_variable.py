@@ -18,8 +18,8 @@ Variables in Jani
 """
 
 from typing import Optional, Union, get_args
-from jani_generator.jani_entries import JaniExpression, JaniValue
 
+from jani_generator.jani_entries import JaniExpression, JaniValue
 from mc_toolchain_jani_common.common import ValidTypes
 
 

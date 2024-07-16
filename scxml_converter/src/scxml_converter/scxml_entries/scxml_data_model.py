@@ -17,11 +17,10 @@
 Container for the variables defined in the SCXML model. In XML, it has the tag `datamodel`.
 """
 
-from scxml_converter.scxml_entries import ScxmlBase
-
 from typing import List, Optional, Tuple
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import ScxmlBase
 
 # Tuple with the variable name and, if set, the expression for the init value
 ScxmlData = Tuple[str, Optional[str]]

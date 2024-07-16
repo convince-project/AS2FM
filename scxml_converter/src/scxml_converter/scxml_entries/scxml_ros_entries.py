@@ -16,13 +16,16 @@
 """Declaration of ROS-Specific SCXML tags extensions."""
 
 from typing import List, Optional, Union
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
-                                           ScxmlExecutionBody, HelperRosDeclarations,
-                                           valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body)
-from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 from xml.etree import ElementTree as ET
-from scxml_converter.scxml_entries.utils import is_topic_type_known
+
+from scxml_converter.scxml_entries import (HelperRosDeclarations, ScxmlBase,
+                                           ScxmlExecutionBody, ScxmlParam,
+                                           ScxmlSend, ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
+from scxml_converter.scxml_entries.utils import (is_topic_type_known,
+                                                 replace_ros_msg_expression)
 
 
 class RosTimeRate(ScxmlBase):

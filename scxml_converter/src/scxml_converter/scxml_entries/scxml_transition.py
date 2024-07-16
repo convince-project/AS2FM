@@ -18,11 +18,13 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody, ScxmlExecutableEntry,
-                                           HelperRosDeclarations, valid_execution_body,
-                                           execution_body_from_xml)
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (HelperRosDeclarations, ScxmlBase,
+                                           ScxmlExecutableEntry,
+                                           ScxmlExecutionBody,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class ScxmlTransition(ScxmlBase):
