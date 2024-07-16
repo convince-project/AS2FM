@@ -53,7 +53,7 @@ jobs:
           pip install scxml_converter/.[dev]
       - uses: ricardochaves/python-lint@v1.4.0
         with:
-          python-root-list: ${{ matrix.package }}
+          python-root-list: ${{ matrix.package }}/src/${{ matrix.package }}
           use-pylint: ${{ matrix.linter == 'pylint' }}
           use-pycodestyle: ${{ matrix.linter == 'pycodestyle' }}
           use-flake8: ${{ matrix.linter == 'flake8' }}
