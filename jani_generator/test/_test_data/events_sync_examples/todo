@@ -1,0 +1,3 @@
+Add a system with the following features:
+- Deadlock-prone sender / receiver structure (send A twice and then send B while receiving A and B once and once)
+- Multiple senders for the same event (to make sure they belong to separated syncs in Jani)

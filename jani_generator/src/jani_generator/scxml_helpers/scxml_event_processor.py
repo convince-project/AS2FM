@@ -23,11 +23,8 @@ from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_composition import JaniComposition
 from jani_generator.jani_entries.jani_edge import JaniEdge
-from jani_generator.jani_entries.jani_expression import JaniExpression
-from jani_generator.jani_entries.jani_variable import JaniVariable
 from jani_generator.ros_helpers.ros_timer import RosTimer
-from jani_generator.scxml_helpers.scxml_event import (Event,
-                                                      EventsHolder)
+from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
@@ -46,11 +43,17 @@ def implement_scxml_events_as_jani_syncs(
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
-        if event.must_be_skipped():
-            continue
-        event.is_valid()
+        # Sender and receiver event names
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
+        # Special case handling for events that must be skipped
+        if event.must_be_skipped_in_jani_conversion():
+            # if this is a bt event, we have to get rid of all edges receiving that event
+            if event.is_bt_response_event():
+                jani_model.remove_edges_with_action(event_name_on_receive)
+            continue
+        # Normal case handling
+        event.is_valid()
         # Check correct action names
         for sender in event.get_senders():
             action_name = sender.edge_action_name
@@ -61,6 +64,8 @@ def implement_scxml_events_as_jani_syncs(
             assert action_name == event_name_on_receive, \
                 f"Action name {action_name} must be {event_name_on_receive}."
         # Collect the event action names
+        # TODO: Potential bug: if the same event is sent by multiple automata,
+        # the same action should be added multiple times in the composition
         event_action_names.append(event_name_on_send)
         event_action_names.append(event_name_on_receive)
         # Add event automaton
@@ -70,15 +75,6 @@ def implement_scxml_events_as_jani_syncs(
         event_automaton.add_location("received")
         event_automaton.add_edge(JaniEdge({
             "location": "waiting",
-            "destinations": [{
-                "location": "received",
-                "probability": {"exp": 1.0},
-                "assignments": []
-            }],
-            "action": event_name_on_send
-        }))
-        event_automaton.add_edge(JaniEdge({
-            "location": "received",
             "destinations": [{
                 "location": "received",
                 "probability": {"exp": 1.0},
@@ -124,9 +120,10 @@ def implement_scxml_events_as_jani_syncs(
         event_name = f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}"
         try:
             event = events_holder.get_event(event_name)
-        except KeyError:
+        except KeyError as e:
             raise RuntimeError(
-                f"Was expecting an event for timer {name}, with name {ROS_TIMER_RATE_EVENT_PREFIX}{name}.")
+                f"Was expecting an event for timer {name}, with name "
+                f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}.") from e
         action_name_receiver = f"{event_name}_on_receive"
         automaton_name = event.get_receivers()[0].automaton_name
         jc.add_sync(action_name_receiver, {

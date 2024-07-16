@@ -83,6 +83,15 @@ class JaniModel:
         self._system = system
         self._generate_missing_syncs()
 
+    def remove_edges_with_action(self, action: str):
+        """Remove the edges in all automaton with the action name provided.
+
+        :param action: The name of the action to remove.
+        """
+        assert isinstance(action, str), "Action name must be a string"
+        for automaton in self._automata:
+            automaton.remove_edges_with_action_name(action)
+
     def _generate_missing_syncs(self):
         """Automatically generate the syncs that are not explicitly defined."""
         assert len(self._automata) == len(self._system.get_elements()), \

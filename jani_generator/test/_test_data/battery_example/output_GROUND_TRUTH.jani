@@ -209,19 +209,6 @@
                     "location": "received",
                     "destinations": [
                         {
-                            "location": "received",
-                            "probability": {
-                                "exp": 1.0
-                            },
-                            "assignments": []
-                        }
-                    ],
-                    "action": "level_on_send"
-                },
-                {
-                    "location": "received",
-                    "destinations": [
-                        {
                             "location": "waiting",
                             "probability": {
                                 "exp": 1.0

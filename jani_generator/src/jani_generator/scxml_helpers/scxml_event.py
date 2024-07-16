@@ -89,8 +89,8 @@ class Event:
         assert len(self.senders) > 0, f"Event {self.name} must have at least one sender."
         assert len(self.receivers) > 0, f"Event {self.name} must have at least one receiver."
 
-    def must_be_skipped(self):
-        """Indicate whether this must be considered in the conversion."""
+    def must_be_skipped_in_jani_conversion(self):
+        """Indicate whether this must be considered in the conversion to jani."""
         return (
             self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
             # If the event is a timer event, there is only a receiver
@@ -98,11 +98,11 @@ class Event:
             # `ros_rate_callback` tag. It will be handled in the
             # `scxml_event_processor` module differently.
             or
-            self._is_bt_event() and len(self.senders) == 0
+            self.is_bt_response_event() and len(self.senders) == 0
         )
 
-    def _is_bt_event(self):
-        """Check if the event is a behavior tree event.
+    def is_bt_response_event(self):
+        """Check if the event is a behavior tree response event (running, success, failure).
         They may have no sender if the plugin does not implement it."""
         return self.name.startswith("bt_") and (
             self.name.endswith("_running") or

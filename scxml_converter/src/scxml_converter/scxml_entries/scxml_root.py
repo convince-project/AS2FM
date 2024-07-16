@@ -213,7 +213,7 @@ class ScxmlRoot(ScxmlBase):
             - A list of timers with related rate in Hz
         """
         if self.is_plain_scxml():
-            return self
+            return self, []
         # Convert the ROS specific entries to plain SCXML
         plain_root = ScxmlRoot(self._name)
         plain_root._data_model = deepcopy(self._data_model)

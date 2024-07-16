@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
@@ -58,8 +58,8 @@ def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
     return sha256(s.encode()).hexdigest()[:8]
 
 
-def _interpret_scxml_assign(
-        elem: ScxmlAssign, event_substitution: Optional[str] = None) -> JaniAssignment:
+def _interpret_scxml_assign(elem: ScxmlAssign, event_substitution: Optional[str] = None,
+                            assign_index: int = 0) -> JaniAssignment:
     """Interpret SCXML assign element.
 
     :param element: The SCXML element to interpret.
@@ -73,7 +73,8 @@ def _interpret_scxml_assign(
         assignment_value.replace_event(event_substitution)
     return JaniAssignment({
         "ref": elem.get_location(),
-        "value": assignment_value
+        "value": assignment_value,
+        "index": assign_index
     })
 
 
@@ -125,7 +126,8 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
     }))
     for i, ec in enumerate(body):
         if isinstance(ec, ScxmlAssign):
-            jani_assignment = _interpret_scxml_assign(ec, trigger_event)
+            assign_index = len(new_edges[-1].destinations[0]['assignments'])
+            jani_assignment = _interpret_scxml_assign(ec, trigger_event, assign_index)
             new_edges[-1].destinations[0]['assignments'].append(jani_assignment)
         elif isinstance(ec, ScxmlSend):
             event_name = ec.get_event()
@@ -304,11 +306,11 @@ class ScxmlTag(BaseTag):
         root_children.extend(self.element.get_states())
         return root_children
 
-    def write_model(self):
-        assert isinstance(self.element, ScxmlRoot), \
-            f"Expected ScxmlRoot, got {type(self.element)}."
-        self.automaton.set_name(self.element.get_name())
-        super().write_model()
+    def handle_entry_state(self):
+        """Get the entry state and mark it in the Jani Automaton.
+
+        If the entry state has an onentry block, generate a new entry sequence and add it to Jani.
+        """
         # Note: we don't support the initial tag (as state) https://www.w3.org/TR/scxml/#initial
         initial_state_id = self.element.get_initial_state_id()
         initial_state = self.element.get_state_by_id(initial_state_id)
@@ -331,6 +333,24 @@ class ScxmlTag(BaseTag):
         else:
             self.automaton.make_initial(initial_state_id)
 
+    def add_unhandled_transitions(self):
+        """Add self-loops in each state for transitions that weren't handled yet."""
+        transitions_set = set()
+        for child in self.children:
+            if isinstance(child, StateTag):
+                transitions_set = transitions_set.union(child.get_handled_events())
+        for child in self.children:
+            if isinstance(child, StateTag):
+                child.add_unhandled_transitions(transitions_set)
+
+    def write_model(self):
+        assert isinstance(self.element, ScxmlRoot), \
+            f"Expected ScxmlRoot, got {type(self.element)}."
+        self.automaton.set_name(self.element.get_name())
+        super().write_model()
+        self.add_unhandled_transitions()
+        self.handle_entry_state()
+
 
 class StateTag(BaseTag):
     """Object representing a state tag from a SCXML file.
@@ -343,6 +363,47 @@ class StateTag(BaseTag):
         # onentry and onexit are handled in the TransitionTag
         state_transitions = self.element.get_body()
         return [] if state_transitions is None else state_transitions
+
+    def get_handled_events(self) -> Set[str]:
+        """Return the events that are handled by the state.
+        """
+        transition_events = set(self._events_no_condition)
+        for event_name in self._event_to_conditions.keys():
+            transition_events.add(event_name)
+        return transition_events
+
+    def get_guard_for_prev_conditions(self, event_name: str) -> Optional[JaniGuard]:
+        """Return the guard negating all previous conditions for a specific event.
+
+        This is required to make sure each event is processed, even in case of conditionals like:
+        <transition event="a" cond="_event.X > 5" target="somewhere" />, that could result in a
+        deadlock if the content of the event sent is not greater than 5.
+        We want to automatically generate a "dummy" self-loop for that same event with the opposite
+        condition(s), to cover the case where the self-loop is not met:
+        <transition event="a" cond="_event.X <= 5" target="self" />
+        """
+        previous_expressions = [
+            parse_ecmascript_to_jani_expression(cond) for
+            cond in self._event_to_conditions.get(event_name, [])]
+        if len(previous_expressions) > 0:
+            guard = JaniGuard(_merge_conditions(previous_expressions))
+        else:
+            guard = None
+        return guard
+
+    def add_unhandled_transitions(self, transitions_set: Set[str]):
+        """Add self-loops for transitions that weren't handled yet."""
+        for event_name in transitions_set:
+            if event_name in self._events_no_condition or len(event_name) == 0:
+                continue
+            guard = self.get_guard_for_prev_conditions(event_name)
+            edges, locations = _append_scxml_body_to_jani_automaton(
+                self.automaton, self.events_holder, [], self.element.get_id(),
+                self.element.get_id(), "", guard, event_name)
+            assert len(locations) == 0 and len(edges) == 1, \
+                f"Expected one edge for self-loops, got {len(edges)} edges."
+            self.automaton.add_edge(edges[0])
+            self._events_no_condition.append(event_name)
 
     def write_model(self):
         state_name = self.element.get_id()

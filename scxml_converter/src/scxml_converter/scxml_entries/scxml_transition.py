@@ -60,7 +60,7 @@ class ScxmlTransition(ScxmlBase):
             target) > 0, "Error SCXML transition: target must be a non-empty string."
         assert events is None or (isinstance(events, list) and
                                   all((isinstance(ev, str) and len(ev) > 0) for ev in events)), \
-            "Error SCXML transition: events must be a list of non-empty strings."
+            f"Error SCXML transition: events must be a list of non-empty strings. Found {events}."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
         assert body is None or valid_execution_body(
@@ -82,9 +82,9 @@ class ScxmlTransition(ScxmlBase):
         """Return the condition required to execute this transition (if any)."""
         return self._condition
 
-    def get_executable_body(self) -> Optional[ScxmlExecutionBody]:
+    def get_executable_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
-        return self._body
+        return self._body if self._body is not None else []
 
     def add_event(self, event: str):
         if self._events is None:
