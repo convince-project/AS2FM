@@ -82,16 +82,6 @@ def implement_scxml_events_as_jani_syncs(
             }],
             "action": event_name_on_send
         }))
-        # Removing the self-loop in the on_send event
-        # event_automaton.add_edge(JaniEdge({
-        #     "location": "received",
-        #     "destinations": [{
-        #         "location": "received",
-        #         "probability": {"exp": 1.0},
-        #         "assignments": []
-        #     }],
-        #     "action": event_name_on_send
-        # }))
         event_automaton.add_edge(JaniEdge({
             "location": "received",
             "destinations": [{
