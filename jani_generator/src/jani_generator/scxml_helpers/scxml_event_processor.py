@@ -47,9 +47,9 @@ def implement_scxml_events_as_jani_syncs(
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
         # Special case handling for events that must be skipped
-        if event.must_be_skipped():
+        if event.must_be_skipped_in_jani_conversion():
             # if this is a bt event, we have to get rid of all edges receiving that event
-            if event._is_bt_event():
+            if event.is_bt_response_event():
                 jani_model.remove_edges_with_action(event_name_on_receive)
             continue
         # Normal case handling
