@@ -1,9 +1,9 @@
 from .scxml_base import ScxmlBase  # noqa: F401
 from .scxml_data_model import ScxmlDataModel  # noqa: F401
+from .scxml_executable_entries import ScxmlAssign  # noqa: F401
 from .scxml_executable_entries import as_plain_execution_body  # noqa: F401
 from .scxml_executable_entries import execution_body_from_xml  # noqa: F401
-from .scxml_executable_entries import (ScxmlAssign,  # noqa: F401
-                                       ScxmlExecutableEntry,
+from .scxml_executable_entries import (ScxmlExecutableEntry,
                                        ScxmlExecutionBody, ScxmlIf, ScxmlSend,
                                        execution_entry_from_xml,
                                        valid_execution_body)
