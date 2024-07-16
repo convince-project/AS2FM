@@ -173,8 +173,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 send_event.set_data_structure(
                     data_structure_for_event
                 )
-            send_event.add_sender_edge(
-                jani_automaton.get_name(), event_send_action_name, [])
+            send_event.add_sender_edge(jani_automaton.get_name(), event_send_action_name)
 
             new_edges.append(new_edge)
             new_locations.append(interm_loc)
