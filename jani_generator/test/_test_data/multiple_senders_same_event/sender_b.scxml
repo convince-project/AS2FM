@@ -15,11 +15,11 @@
 
     <state id="send_msg">
         <transition target="send_msg">
+            <ros_topic_publish topic="/trigger" />
             <assign location="counter" expr="counter + 1" />
             <ros_topic_publish topic="/sender_b_counter">
                 <field name="data" expr="counter" />
             </ros_topic_publish>
-            <ros_topic_publish topic="/trigger" />
         </transition>
     </state>
 

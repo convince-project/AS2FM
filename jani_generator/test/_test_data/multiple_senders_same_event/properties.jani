@@ -31,11 +31,12 @@
                     }
                   },
                   "right": {
+                    "comment": "Ensure no message is skipped. Leave some buffer since some message ca be sent during callback evaluation",
                     "op": "∧",
                     "left": {
-                      "op": "=",
+                      "op": ">",
                       "left": "ros_topic./receiver_counter.data",
-                      "right": 50
+                      "right": 48
                     },
                     "right": {
                       "op": "=",
