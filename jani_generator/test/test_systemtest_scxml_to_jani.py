@@ -17,19 +17,18 @@
 
 import json
 import os
-from pprint import pprint
-import pytest
 import unittest
 import xml.etree.ElementTree as ET
 
+import pytest
 
-from jani_generator.jani_entries import JaniModel
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
+from scxml_converter.scxml_entries import ScxmlRoot
+from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from jani_generator.scxml_helpers.scxml_to_jani import \
-    convert_multiple_scxmls_to_jani, \
-    convert_scxml_element_to_jani_automaton, \
-    interpret_top_level_xml
+from jani_generator.scxml_helpers.scxml_to_jani import (
+    convert_multiple_scxmls_to_jani, convert_scxml_root_to_jani_automaton)
+from jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
+from .test_utilities_smc_storm import run_smc_storm_with_output
 
 
 class TestConversion(unittest.TestCase):
@@ -38,25 +37,26 @@ class TestConversion(unittest.TestCase):
         Very basic example of a SCXML file.
         """
         basic_scxml = """
-        <scxml 
+        <scxml
           version="1.0"
+          name="BasicExample"
           initial="Initial">
             <state id="Initial">
                 <onentry>
-                    <log expr="Hello, world!" label="INFO"/>
+                    <assign location="x" expr="42" />
                 </onentry>
             </state>
         </scxml>"""
-        basic_scxml = ET.fromstring(basic_scxml)
+        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
-        self.assertEqual(len(automaton["locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertIn("Initial", init_location["name"])
-        self.assertIn("Initial", automaton["initial-locations"])
+        self.assertEqual(len(automaton["locations"]), 2)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn("Initial-first-exec", locations)
+        self.assertIn("Initial-first-exec", automaton["initial-locations"])
 
     def test_battery_drainer(self):
         """
@@ -65,21 +65,19 @@ class TestConversion(unittest.TestCase):
         scxml_battery_drainer = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_drainer.scxml')
-        with open(scxml_battery_drainer, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
-        self.assertEqual(len(automaton["locations"]), 1)
+        self.assertEqual(len(automaton["locations"]), 4)
         self.assertEqual(len(automaton["initial-locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertEqual(init_location['name'],
-                         automaton.get("initial-locations")[0])
-        self.assertEqual(len(automaton["edges"]), 1)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn(automaton.get("initial-locations")[0], locations)
+        self.assertEqual(len(automaton["edges"]), 4)
 
         # Variables
         self.assertEqual(len(automaton["variables"]), 1)
@@ -95,12 +93,11 @@ class TestConversion(unittest.TestCase):
         scxml_battery_manager = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_manager.scxml')
-        with open(scxml_battery_manager, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -118,26 +115,31 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(variable["type"], "bool")
         self.assertEqual(variable["initial-value"], False)
 
-    @pytest.mark.skip(reason="WIP")
     def test_example_with_sync(self):
         """
         Testing the conversion of two SCXML files with a sync.
         """
-        scxml_battery_drainer = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'battery_example',
-            'battery_drainer.scxml')
-        scxml_battery_manager = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'battery_example',
-            'battery_manager.scxml')
+        TEST_DATA_FOLDER = os.path.join(
+            os.path.dirname(__file__), '_test_data', 'battery_example')
+        scxml_battery_drainer_path = os.path.join(
+            TEST_DATA_FOLDER, 'battery_drainer.scxml')
+        scxml_battery_manager_path = os.path.join(
+            TEST_DATA_FOLDER, 'battery_manager.scxml')
+        with open(scxml_battery_drainer_path, 'r', encoding='utf-8') as f:
+            scxml_battery_drainer = f.read()
+        with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
+            scxml_battery_manager = f.read()
 
         jani_model = convert_multiple_scxmls_to_jani([
             scxml_battery_drainer,
             scxml_battery_manager],
-            []
-            )
+            [],
+            0
+        )
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
+        # Check automata
         self.assertEqual(len(jani_dict["automata"]), 3)
         names = [a["name"] for a in jani_dict["automata"]]
         self.assertIn("BatteryDrainer", names)
@@ -151,7 +153,7 @@ class TestConversion(unittest.TestCase):
         self.assertIn({"automaton": "BatteryManager"}, elements)
         self.assertIn({"automaton": "level"}, elements)
         syncs = jani_dict["system"]["syncs"]
-        self.assertEqual(len(syncs), 3)
+        self.assertEqual(len(syncs), 4)
         self.assertIn({'result': 'level_on_send',
                        'synchronise': [
                            'level_on_send', None, 'level_on_send']},
@@ -159,10 +161,6 @@ class TestConversion(unittest.TestCase):
         self.assertIn({'result': 'level_on_receive',
                        'synchronise': [
                            None, 'level_on_receive', 'level_on_receive']},
-                      syncs)
-        self.assertIn({'result': 'BatteryDrainer_action_0',
-                       'synchronise': [
-                           'BatteryDrainer_action_0', None, None]},
                       syncs)
 
         # Check global variables for event
@@ -178,10 +176,10 @@ class TestConversion(unittest.TestCase):
                        "transient": False}, variables)
 
         # Check full jani file
-        TEST_FILE = 'test_output.jani'
+        TEST_FILE = os.path.join(
+            TEST_DATA_FOLDER, 'output.jani')
         GROUND_TRUTH_FILE = os.path.join(
-            os.path.dirname(__file__), '_test_data',
-            'battery_example', 'output.jani')
+            TEST_DATA_FOLDER, 'output_GROUND_TRUTH.jani')
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
         with open(TEST_FILE, "w", encoding='utf-8') as output_file:
@@ -191,29 +189,72 @@ class TestConversion(unittest.TestCase):
             ground_truth = json.load(f)
         self.maxDiff = None
         self.assertEqual(jani_dict, ground_truth)
+        # TODO: Can't test this in storm right now, because it has no properties.
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def test_with_entrypoint_main(self):
+    def _test_with_main(self, main_xml: str, folder: str, property_name: str, success: bool):
+        """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
-            os.path.dirname(__file__), '_test_data', 'ros_example')
-        xml_main_path = os.path.join(test_data_dir, 'main.xml')
+            os.path.dirname(__file__), '_test_data', folder)
+        xml_main_path = os.path.join(test_data_dir, main_xml)
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
         interpret_top_level_xml(xml_main_path)
         self.assertTrue(os.path.exists(ouput_path))
-        ground_truth = os.path.join(
-            test_data_dir,
-            'jani_model_GROUND_TRUTH.jani')
-        with open(ouput_path, "r", encoding='utf-8') as f:
-            jani_dict = json.load(f)
-        with open(ground_truth, "r", encoding='utf-8') as f:
-            ground_truth = json.load(f)
-        self.maxDiff = None
-        self.assertEqual(jani_dict, ground_truth)
-        if os.path.exists(ouput_path):
-            os.remove(ouput_path)
+        # ground_truth = os.path.join(
+        #     test_data_dir,
+        #     'jani_model_GROUND_TRUTH.jani')
+        # with open(ouput_path, "r", encoding='utf-8') as f:
+        #     jani_dict = json.load(f)
+        # with open(ground_truth, "r", encoding='utf-8') as f:
+        #     ground_truth = json.load(f)
+        # self.maxDiff = None
+        # self.assertEqual(jani_dict, ground_truth)
+        pos_res = "Result: 1" if success else "Result: 0"
+        neg_res = "Result: 0" if success else "Result: 1"
+        run_smc_storm_with_output(
+            f"--model {ouput_path} --property-name {property_name}",
+            [property_name,
+             ouput_path,
+             pos_res],
+            [neg_res])
+        # if os.path.exists(ouput_path):
+        #     os.remove(ouput_path)
+
+    def test_with_main_success(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be satisfied."""
+        self._test_with_main('main.xml', 'ros_example', 'battery_depleted', True)
+
+    def test_with_main_fail(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        self._test_with_main('main.xml', 'ros_example', 'battery_over_depleted', False)
+
+    def test_with_w_bt_main_battery_depleted(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        # TODO: Improve properties under evaluation!
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
+
+    def test_with_w_bt_main_battery_under_twenty(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be *not* satisfied."""
+        # TODO: Improve properties under evaluation!
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
+
+    def test_with_w_bt_main_alarm_and_charge(self):
+        """Test with main.xml as entrypoint.
+        Here we expect the property to be satisfied."""
+        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
+
+    def test_events_sync_handling(self):
+        """Test with main.xml as entrypoint.
+        Here we make sure, the synchronization can handle events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('main.xml', 'events_sync_examples', 'seq_check', True)
 
 
 if __name__ == '__main__':

@@ -22,13 +22,16 @@
     "constants": [],
     "actions": [
         {
-            "name": "BatteryDrainer_action_0"
-        },
-        {
             "name": "level_on_receive"
         },
         {
             "name": "level_on_send"
+        },
+        {
+            "name": "use_battery-first-exec-use_battery-766fa6e4"
+        },
+        {
+            "name": "use_battery-use_battery-1b935c10"
         }
     ],
     "automata": [
@@ -39,18 +42,24 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery_on_entry"
+                    "name": "use_battery-1-1b935c10"
+                },
+                {
+                    "name": "use_battery-first-exec"
+                },
+                {
+                    "name": "use_battery-first-exec-0-766fa6e4"
                 }
             ],
             "initial-locations": [
-                "use_battery_on_entry"
+                "use_battery-first-exec"
             ],
             "edges": [
                 {
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery_on_entry",
+                            "location": "use_battery-1-1b935c10",
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -64,16 +73,13 @@
                             ]
                         }
                     ],
-                    "action": "BatteryDrainer_action_0"
+                    "action": "use_battery-use_battery-1b935c10"
                 },
                 {
-                    "location": "use_battery_on_entry",
+                    "location": "use_battery-1-1b935c10",
                     "destinations": [
                         {
                             "location": "use_battery",
-                            "probability": {
-                                "exp": 1.0
-                            },
                             "assignments": [
                                 {
                                     "ref": "level.data",
@@ -83,7 +89,38 @@
                                 {
                                     "ref": "level.valid",
                                     "value": true,
-                                    "index": 1
+                                    "index": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "action": "level_on_send"
+                },
+                {
+                    "location": "use_battery-first-exec",
+                    "destinations": [
+                        {
+                            "location": "use_battery-first-exec-0-766fa6e4",
+                            "assignments": []
+                        }
+                    ],
+                    "action": "use_battery-first-exec-use_battery-766fa6e4"
+                },
+                {
+                    "location": "use_battery-first-exec-0-766fa6e4",
+                    "destinations": [
+                        {
+                            "location": "use_battery",
+                            "assignments": [
+                                {
+                                    "ref": "level.data",
+                                    "value": "battery_percent",
+                                    "index": 0
+                                },
+                                {
+                                    "ref": "level.valid",
+                                    "value": true,
+                                    "index": 0
                                 }
                             ]
                         }
@@ -172,19 +209,6 @@
                     "location": "received",
                     "destinations": [
                         {
-                            "location": "received",
-                            "probability": {
-                                "exp": 1.0
-                            },
-                            "assignments": []
-                        }
-                    ],
-                    "action": "level_on_send"
-                },
-                {
-                    "location": "received",
-                    "destinations": [
-                        {
                             "location": "waiting",
                             "probability": {
                                 "exp": 1.0
@@ -211,14 +235,6 @@
         ],
         "syncs": [
             {
-                "result": "level_on_send",
-                "synchronise": [
-                    "level_on_send",
-                    null,
-                    "level_on_send"
-                ]
-            },
-            {
                 "result": "level_on_receive",
                 "synchronise": [
                     null,
@@ -227,9 +243,25 @@
                 ]
             },
             {
-                "result": "BatteryDrainer_action_0",
+                "result": "level_on_send",
                 "synchronise": [
-                    "BatteryDrainer_action_0",
+                    "level_on_send",
+                    null,
+                    "level_on_send"
+                ]
+            },
+            {
+                "result": "use_battery-first-exec-use_battery-766fa6e4",
+                "synchronise": [
+                    "use_battery-first-exec-use_battery-766fa6e4",
+                    null,
+                    null
+                ]
+            },
+            {
+                "result": "use_battery-use_battery-1b935c10",
+                "synchronise": [
+                    "use_battery-use_battery-1b935c10",
                     null,
                     null
                 ]

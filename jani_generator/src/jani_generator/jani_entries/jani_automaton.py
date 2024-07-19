@@ -76,6 +76,10 @@ class JaniAutomaton:
     def get_edges(self) -> List[JaniEdge]:
         return self._edges
 
+    def remove_edges_with_action_name(self, action_name: str):
+        assert isinstance(action_name, str), "Action name must be a string"
+        self._edges = [edge for edge in self._edges if edge.get_action() != action_name]
+
     def _generate_locations(self, location_list: List[str], initial_locations: List[str]):
         for location in location_list:
             self._locations.add(location["name"])

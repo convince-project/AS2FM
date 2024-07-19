@@ -19,14 +19,15 @@ Complete Jani Model
 
 
 from typing import List, Dict, Optional, Union, Type
-from jani_generator.jani_entries import JaniValue, JaniVariable, JaniConstant, JaniAutomaton, JaniComposition, JaniProperty, JaniExpression
+from jani_generator.jani_entries import JaniValue, JaniVariable, JaniConstant, JaniAutomaton, JaniComposition, \
+    JaniProperty, JaniExpression
 
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
 
 class JaniModel:
-    """This class represents a complete Jani Model, containing all the necessary information to generate a (Plain) Jani file."""
+    """Class representing a complete Jani Model, containing all necessary information to generate a plain Jani file."""
     def __init__(self):
         self._name = ""
         self._type = "mdp"
@@ -46,12 +47,14 @@ class JaniModel:
     def add_jani_variable(self, variable: JaniVariable):
         self._variables.update({variable.name(): variable})
 
-    def add_variable(self, variable_name: str, variable_type: Type, variable_init_expression: Optional[ValidValue] = None, transient: bool = False):
+    def add_variable(self, variable_name: str, variable_type: Type,
+                     variable_init_expression: Optional[ValidValue] = None, transient: bool = False):
         if variable_init_expression is None or isinstance(variable_init_expression, JaniExpression):
             self.add_jani_variable(JaniVariable(variable_name, variable_type, variable_init_expression, transient))
         else:
             assert JaniValue(variable_init_expression).is_valid(), f"Invalid value for variable {variable_name}"
-            self.add_jani_variable(JaniVariable(variable_name, variable_type, JaniExpression(variable_init_expression), transient))
+            self.add_jani_variable(
+                JaniVariable(variable_name, variable_type, JaniExpression(variable_init_expression), transient))
 
     def add_jani_constant(self, constant: JaniConstant):
         self._constants.update({constant.name(): constant})
@@ -79,6 +82,15 @@ class JaniModel:
         """Specify how the different automata are composed together."""
         self._system = system
         self._generate_missing_syncs()
+
+    def remove_edges_with_action(self, action: str):
+        """Remove the edges in all automaton with the action name provided.
+
+        :param action: The name of the action to remove.
+        """
+        assert isinstance(action, str), "Action name must be a string"
+        for automaton in self._automata:
+            automaton.remove_edges_with_action_name(action)
 
     def _generate_missing_syncs(self):
         """Automatically generate the syncs that are not explicitly defined."""

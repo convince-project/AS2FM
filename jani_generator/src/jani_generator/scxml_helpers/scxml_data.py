@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Module handling ScXML data tags.
+Module handling SCXML data tags.
 """
 
 import re
@@ -29,7 +29,7 @@ from jani_generator.jani_entries.jani_variable import JaniVariable, ValidTypes
 
 
 class ScxmlData:
-    """Object representing a data tag from a ScXML file.
+    """Object representing a data tag from a SCXML file.
 
     See https://www.w3.org/TR/scxml/#data
     """
@@ -109,7 +109,7 @@ class ScxmlData:
         :return: The type of the data
         """
         my_type = type(interpret_ecma_script_expr(expr))
-        if not my_type in get_args(ValidTypes):
+        if my_type not in get_args(ValidTypes):
             raise ValueError(
                 f"Type {my_type} must be supported by Jani.")
         return my_type
@@ -145,6 +145,13 @@ class ScxmlData:
         if len(types) > 1:
             raise ValueError(
                 f"Multiple types found for data {self.id}: {types}")
+        
+    def get_type(self) -> type:
+        """Get the type of the data.
+
+        :return: The type of the data
+        """
+        return self.type
 
     def to_jani_variable(self) -> JaniVariable:
         """Convert the ScxmlData object to a JaniVariable object.

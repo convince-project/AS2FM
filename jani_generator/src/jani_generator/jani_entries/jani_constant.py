@@ -36,7 +36,7 @@ class JaniConstant:
     def value(self) -> JaniValue:
         assert self._value is not None, "Value not set"
         jani_value = self._value.value
-        assert jani_value is not None and jani_value.is_valid(), "The expression cannot be evaluated to a constant value"
+        assert jani_value is not None and jani_value.is_valid(), "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
     def jani_type_from_string(str_type: str) -> ValidTypes:
@@ -52,6 +52,7 @@ class JaniConstant:
         else:
             raise ValueError(f"Type {str_type} not supported by Jani")
 
+    # TODO: Move this to a util function file
     def jani_type_to_string(c_type: ValidTypes) -> str:
         """
         Translate a Python type to the name of the type in Jani.
@@ -68,14 +69,14 @@ class JaniConstant:
         src https://docs.google.com/document/d/\
             1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
         """
+        assert isinstance(c_type, type), f"Type {c_type} is not a type"
         if c_type == bool:
             return "bool"
-        elif c_type == int:
+        if c_type == int:
             return "int"
-        elif c_type == float:
+        if c_type == float:
             return "real"
-        else:
-            raise ValueError(f"Type {c_type} not supported by Jani")
+        raise ValueError(f"Type {c_type} not supported by Jani")
 
     def as_dict(self):
         return {

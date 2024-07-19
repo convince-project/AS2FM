@@ -17,18 +17,18 @@
 Expressions in Jani
 """
 
-from typing import Union
+from typing import Dict, Union
 from jani_generator.jani_entries import JaniValue
 
 SupportedExp = Union[str, int, float, bool, dict]
 
 
 class JaniExpression:
-    def __init__(self, expression):
+    def __init__(self, expression: Union[SupportedExp, 'JaniExpression', JaniValue]):
         self.identifier: str = None
         self.value: JaniValue = None
         self.op = None
-        self.operands = None
+        self.operands: Dict[str, Union[JaniExpression, JaniValue]] = None
         if isinstance(expression, JaniExpression):
             self.identifier = expression.identifier
             self.value = expression.value
@@ -46,7 +46,8 @@ class JaniExpression:
                 # If it is a value, then we don't need to expand further
                 self.value = JaniValue(expression)
             else:
-                # If it isn't a value or an identifier, it must be a dictionary providing op and related operands
+                # If it isn't a value or an identifier, it must be a dictionary providing op and
+                # related operands
                 # Operands need to be expanded further, until we encounter a value expression
                 assert isinstance(expression, dict), "Expected a dictionary"
                 assert "op" in expression, "Expected either a value or an operator"
@@ -55,9 +56,11 @@ class JaniExpression:
 
     def _get_operands(self, expression_dict: dict):
         if (self.op in ("intersect", "distance")):
-            # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory the intersection occurs.
-            #            0.0 means no intersection occurs (destination reached), 1.0 means the intersection occurs at the start
-            # distance: returns the distance between the robot and the barrier
+            # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory
+            # the intersection occurs.
+            #            0.0 means no intersection occurs (destination reached), 1.0 means the
+            # intersection occurs at the start distance: returns the distance between the robot and
+            # the barrier.
             return {
                 "robot": JaniExpression(expression_dict["robot"]),
                 "barrier": JaniExpression(expression_dict["barrier"])}
@@ -75,7 +78,8 @@ class JaniExpression:
             return {
                 "left": JaniExpression(expression_dict["left"]),
                 "right": JaniExpression(expression_dict["right"])}
-        if (self.op in ("!", "¬", "sin", "cos", "floor", "ceil", "abs", "to_cm", "to_m", "to_deg", "to_rad")):
+        if (self.op in ("!", "¬", "sin", "cos", "floor", "ceil",
+                        "abs", "to_cm", "to_m", "to_deg", "to_rad")):
             return {
                 "exp": JaniExpression(expression_dict["exp"])}
         if (self.op in ("ite")):
@@ -96,13 +100,27 @@ class JaniExpression:
         assert False, f"Unknown operator \"{self.op}\" found."
 
     def replace_event(self, replacement):
+        """Replace `_event` with `replacement`.
+
+        Within a transitions, scxml can access data of events from the `_event` variable. We
+        have to replace this by the global variable where we stored the data from the received
+        event.
+
+        :param replacement: The string to replace `_event` with.
+        :return self: for the convenience of chain-ability
+        """
+        if replacement is None:
+            # No replacement needed!
+            return self
         if self.identifier is not None:
             self.identifier = self.identifier.replace("_event", replacement)
-            return
+            return self
         if self.value is not None:
-            return
+            return self
         for operand in self.operands.values():
-            operand.replace_event(replacement)
+            if isinstance(operand, JaniExpression):
+                operand.replace_event(replacement)
+        return self
 
     def is_valid(self) -> bool:
         return self.identifier is not None or self.value is not None or self.op is not None
@@ -117,7 +135,8 @@ class JaniExpression:
             "op": self.op,
         }
         for op_key, op_value in self.operands.items():
-            assert isinstance(op_value, JaniExpression), f"Expected an expression, found {type(op_value)} for {op_key}"
+            assert isinstance(op_value, JaniExpression), \
+                f"Expected an expression, found {type(op_value)} for {op_key}"
             assert hasattr(op_value, "identifier"), f"Identifier not set for {op_key}"
             op_dict.update({op_key: op_value.as_dict()})
         return op_dict
