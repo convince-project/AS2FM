@@ -1,7 +1,7 @@
 # Model Checking Toolchain Components
 # Autonomous Systems to Formal Models (AS2FM)
 
-> Please access the documentation via [convince-project.github.io/as2fm](https://convince-project.github.io/as2fm)
+> Please access the documentation via [convince-project.github.io/AS2FM](https://convince-project.github.io/AS2FM)
 
 ## Further Information
 
