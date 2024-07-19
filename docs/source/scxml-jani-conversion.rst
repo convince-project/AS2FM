@@ -96,15 +96,23 @@ That concept works for the simplest cases, but there are more complex scenarios 
 In order to understand possible problematic scenarios, let's consider the following example:
 
 .. image:: graphics/scxml_to_jani_events_handling_pt1.drawio.svg
-    :alt: How SCXML events are translated to Jani
+    :alt: SCXML events with possible deadlocks
     :align: center
 
-TODO: List all issues that can arise from the example above.
+In this example there are two state machines that are sending `event_a` and `event_b` out and one state machine receiving them.
+The first state machine sends `event_a` out at each loop, the second state machine sends `event_a` twice and `event_b` once before starting again and the third state machine receives `event_a` and `event_b` in alternating order.
 
-TODO: List the counter-measures we are taking
+If we use the event_sync automaton strategy as exemplified in the :ref:`Simple Overview<simple_overview>`, i.e., we make an automaton for synching `event_a` and one for synching `event_b` without any further handling, we will reach a deadlock situation where the `event_a` is waiting to be processed by the receiver before being able to send out `event_b`, but the receiver is waiting for `event_b` to be available before processing `event_a`.
 
-After taking the counter-measures, the Jani model resulting from the example above would look like this:
+In order to overcome such situation, we need to introduce a mechanism that allows a receiver to discard an event it is not expecting, such that the senders are allowed to continue their execution.
+This is achieved by tracking all events that an automaton can receive during its execution and, for each one of its states, introducing a self loop transition processing the events that aren't explicitly handled. 
+
+An additional thing to keep in mind during the conversion, is the synchronization of the senders: if both senders are in a state where they can send out `event_a`, it is important that only one of them does it at a time: this will result in having one line for each automaton sending a specific event in the Jani composition table.
+
+The Jani model resulting from applying the conversion strategies we just described is the following:
 
 .. image:: graphics/scxml_to_jani_events_handling_pt2.drawio.svg
-    :alt: How SCXML events are translated to Jani
+    :alt: Handling SCXML events preventing deadlocks in Jani
     :align: center
+
+It can be noticed how new self loop edges are added in the `A_B_receiver` automaton (the dashed ones) and how the `ev_a_on_send` is now duplicated in the Composition table, one advancing the `A sender` automaton and the other advancing the `A_B sender` automaton.
