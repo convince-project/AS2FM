@@ -30,7 +30,7 @@ from jani_generator.jani_entries.jani_expression_generator import (
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
-from mc_toolchain_jani_common.ecmascript_interpretation import \
+from as2fm_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
                                            ScxmlDataModel, ScxmlExecutionBody,

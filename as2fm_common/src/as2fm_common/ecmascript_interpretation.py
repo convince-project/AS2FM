@@ -21,7 +21,7 @@ from typing import Dict, Optional
 
 import js2py
 
-from mc_toolchain_jani_common.common import ValidTypes
+from as2fm_common.common import ValidTypes
 
 
 def interpret_ecma_script_expr(

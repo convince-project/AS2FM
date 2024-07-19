@@ -9,7 +9,7 @@ To run the Python scripts install the required dependencies with the following c
 
 .. code-block:: bash
 
-    python3 -m pip install mc_toolchain_jani_common/
+    python3 -m pip install as2fm_common/
     python3 -m pip install jani_generator/
     python3 -m pip install scxml_converter/
 

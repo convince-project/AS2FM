@@ -24,7 +24,7 @@ from typing import List, Optional
 
 from xml.etree import ElementTree as ET
 
-from mc_toolchain_jani_common.common import remove_namespace
+from as2fm_common.common import remove_namespace
 from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_converter import ros_to_scxml_converter
 from jani_generator.jani_entries import JaniModel
