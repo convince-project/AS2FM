@@ -36,7 +36,7 @@ After it has been installed, the script can be run on a CONVINCE robotics JANI m
 Example
 `````````
 
-Let's convert a first simple robotic JANI model. An example can be found in `here <https://github.com/convince-project/mc-toolchain-jani/blob/main/jani_generator/test/_test_data/convince_jani/first-model-mc-version.jani>`_. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
+Let's convert a first simple robotic JANI model. An example can be found in `here <https://github.com/convince-project/as2fm/blob/main/jani_generator/test/_test_data/convince_jani/first-model-mc-version.jani>`_. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
 
 .. image:: graphics/room.PNG
     :width: 200
@@ -76,7 +76,7 @@ A full system model can be converted into a model-checkable JANI file as follows
 Structure of input
 `````````````````````
 
-The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_. With the following content:
+The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_. With the following content:
 
 * one or multiple ROS nodes in SCXML:
 
@@ -115,16 +115,16 @@ Example
 `````````
 
 We demonstrate the usage of this conversion for a full model based on an example of a battery which is continuously drained. 
-All input files can be found in this `folder <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example>`_. The core functionality of the battery drainer is implemented in `battery_drainer.scxml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_drainer.scxml>`_. 
+All input files can be found in this `folder <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example>`_. The core functionality of the battery drainer is implemented in `battery_drainer.scxml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_drainer.scxml>`_. 
 The battery is drained by 1% at a frequency of 1 Hz given by the ros time rate ``my_timer``.
 The percentage level of the battery is stored in ``battery_percent``. The current state of the battery is published on a ROS topic ``level``.
 
-In addition, there is the `battery_manager.scxml <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_manager.scxml>`_ file. The manager subscribes to the ``level`` topic of the battery drainer to check its level and sets the ``battery_alarm`` to true as soon as the ``level`` is less than 30%. 
+In addition, there is the `battery_manager.scxml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_manager.scxml>`_ file. The manager subscribes to the ``level`` topic of the battery drainer to check its level and sets the ``battery_alarm`` to true as soon as the ``level`` is less than 30%. 
 This means there is a communication between the two processes described by the drainer and the manager.
 
-The JANI property given in `battery_depleted.jani <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
+The JANI property given in `battery_depleted.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
 
-In the `main.xml file <https://github.com/convince-project/mc-toolchain-jani/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property is fulfilled with probability 1, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
+In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property is fulfilled with probability 1, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
 
 
