@@ -38,10 +38,11 @@ def implement_scxml_events_as_jani_syncs(
     :param events_holder: The holder of the events.
     :param timers: The timers to add to the jani model.
     :param jani_model: The jani model to add the syncs to.
-    :return: The list of event that have only senders
+    :return: The list of events having only senders
     """
     jc = JaniComposition()
     event_action_names = []
+    events_without_receivers = []
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
@@ -88,6 +89,8 @@ def implement_scxml_events_as_jani_syncs(
                 "action": event_name_on_receive
             }))
         else:
+            # Store the events without receivers
+            events_without_receivers.append(event_name)
             # If there are no receivers, we add a self-loop
             event_automaton.add_edge(JaniEdge({
                 "location": "waiting",
@@ -147,3 +150,4 @@ def implement_scxml_events_as_jani_syncs(
             automaton_name: action_name_receiver,
             'global_timer': action_name_receiver})
     jani_model.add_system_sync(jc)
+    return events_without_receivers
