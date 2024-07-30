@@ -42,7 +42,7 @@ jobs:
             - name: Get smc_storm
               id: get_smc_storm
               run: |
-                wget https://github.com/convince-project/smc_storm/releases/download/0.0.1/smc_storm_executable.tar.gz
+                wget https://github.com/convince-project/smc_storm/releases/download/0.0.2/smc_storm_executable.tar.gz
                 tar -xzf smc_storm_executable.tar.gz
                 ./install.sh --install-dependencies
                 # Save the path to the smc_storm executable
