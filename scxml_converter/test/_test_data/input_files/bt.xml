@@ -2,9 +2,9 @@
     <BehaviorTree>
         <Sequence>
             <Inverter>
-                <TopicCondition name="alarm" />
+                <Condition ID="TopicCondition" name="alarm" />
             </Inverter>
-            <TopicAction name="charge" />
+            <Action ID="TopicAction" name="charge" />
         </Sequence>
     </BehaviorTree>
 </root>
