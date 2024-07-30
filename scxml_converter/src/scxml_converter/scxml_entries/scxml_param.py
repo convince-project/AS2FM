@@ -34,13 +34,13 @@ class ScxmlParam(ScxmlBase):
 
     def get_tag_name() -> str:
         return "param"
-    
+
     def get_name(self) -> str:
         return self._name
-    
+
     def get_expr(self) -> Optional[str]:
         return self._expr
-    
+
     def get_location(self) -> Optional[str]:
         return self._location
 

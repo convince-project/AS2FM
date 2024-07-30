@@ -47,11 +47,11 @@ class ScxmlIf(ScxmlBase):
 
     def get_tag_name() -> str:
         return "if"
-    
+
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
         return self._conditional_executions
-    
+
     def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
         """Get the else execution."""
         return self._else_execution
@@ -215,11 +215,11 @@ class ScxmlAssign(ScxmlBase):
 
     def get_tag_name() -> str:
         return "assign"
-    
+
     def get_location(self) -> str:
         """Get the location to assign."""
         return self._location
-    
+
     def get_expr(self) -> str:
         """Get the expression to assign."""
         return self._expr

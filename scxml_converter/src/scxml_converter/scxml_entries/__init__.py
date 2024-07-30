@@ -1,5 +1,6 @@
 from .scxml_base import ScxmlBase  # noqa: F401
 from .utils import HelperRosDeclarations  # noqa: F401
+from .scxml_data import ScxmlData  # noqa: F401
 from .scxml_data_model import ScxmlDataModel  # noqa: F401
 from .scxml_param import ScxmlParam  # noqa: F401
 from .scxml_executable_entries import ScxmlAssign, ScxmlIf, ScxmlSend  # noqa: F401
