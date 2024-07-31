@@ -17,7 +17,7 @@
 
 from typing import Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlTransition,
-                                           ScxmlExecutionBody, HelperRosDeclarations,
+                                           ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
                                            valid_execution_body, execution_body_from_xml,
                                            as_plain_execution_body)
 from xml.etree import ElementTree as ET
@@ -63,6 +63,7 @@ class RosTimeRate(ScxmlBase):
         return self._rate_hz
 
     def as_plain_scxml(self, _) -> ScxmlBase:
+        # This is discarded in the as_plain_scxml method from ScxmlRoot
         raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
@@ -129,9 +130,9 @@ class RosRateCallback(ScxmlTransition):
             print("Error: SCXML rate callback: body is not valid.")
         return valid_timer and valid_target and valid_cond and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML rate callback: invalid ROS declarations container."
         timer_cb_declared = ros_declarations.is_timer_defined(self._timer_name)
         if not timer_cb_declared:
@@ -142,7 +143,7 @@ class RosRateCallback(ScxmlTransition):
             print("Error: SCXML rate callback: body has invalid ROS instantiations.")
         return valid_body
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         event_name = "ros_time_rate." + self._timer_name
         target = self._target
         cond = self._condition

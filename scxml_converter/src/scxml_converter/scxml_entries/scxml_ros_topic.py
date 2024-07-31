@@ -22,7 +22,7 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 
 from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
-                                           ScxmlExecutionBody, HelperRosDeclarations,
+                                           ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
                                            valid_execution_body, execution_body_from_xml,
                                            as_plain_execution_body)
 from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
@@ -66,6 +66,7 @@ class RosTopicPublisher(ScxmlBase):
         return self._topic_type
 
     def as_plain_scxml(self, _) -> ScxmlBase:
+        # This is discarded in the as_plain_scxml method from ScxmlRoot
         raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
@@ -111,6 +112,7 @@ class RosTopicSubscriber(ScxmlBase):
         return self._topic_type
 
     def as_plain_scxml(self, _) -> ScxmlBase:
+        # This is discarded in the as_plain_scxml method from ScxmlRoot
         raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
@@ -178,9 +180,9 @@ class RosTopicCallback(ScxmlTransition):
             print("Error: SCXML topic callback: body is not valid.")
         return valid_topic and valid_target and valid_cond and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML topic callback: invalid ROS declarations container."
         topic_cb_declared = ros_declarations.is_subscriber_defined(self._topic)
         if not topic_cb_declared:
@@ -191,7 +193,7 @@ class RosTopicCallback(ScxmlTransition):
             print("Error: SCXML topic callback: body has invalid ROS instantiations.")
         return valid_body
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> ScxmlTransition:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         event_name = "ros_topic." + self._topic
         target = self._target
         cond = self._condition
@@ -290,9 +292,9 @@ class RosTopicPublish(ScxmlSend):
             print("Error: SCXML topic publish: fields are not valid.")
         return valid_topic and valid_fields
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML topic publish: invalid ROS declarations container."
         topic_pub_declared = ros_declarations.is_publisher_defined(self._topic)
         if not topic_pub_declared:

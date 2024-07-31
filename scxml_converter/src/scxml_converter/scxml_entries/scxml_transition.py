@@ -19,7 +19,7 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 
 from typing import List, Optional
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody, ScxmlExecutableEntry,
-                                           HelperRosDeclarations, valid_execution_body,
+                                           ScxmlRosDeclarationsContainer, valid_execution_body,
                                            execution_body_from_xml)
 
 from xml.etree import ElementTree as ET
@@ -117,7 +117,7 @@ class ScxmlTransition(ScxmlBase):
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check the executable content
         valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
@@ -126,9 +126,9 @@ class ScxmlTransition(ScxmlBase):
         return valid_body
 
     def _check_valid_ros_instantiations_exec_body(self,
-                                                  ros_declarations: HelperRosDeclarations) -> bool:
+                                                  ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the executable body."""
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML transition: invalid ROS declarations container."
         if self._body is None:
             return True
@@ -137,8 +137,8 @@ class ScxmlTransition(ScxmlBase):
                 return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlTransition":
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML transition: invalid ROS declarations container."
         new_body = None
         if self._body is not None:

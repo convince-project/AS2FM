@@ -21,7 +21,7 @@ from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlBase, RosRateCallback, RosTopicCallback,
-                                           ScxmlTransition, HelperRosDeclarations,
+                                           ScxmlTransition, ScxmlRosDeclarationsContainer,
                                            ScxmlExecutableEntry, ScxmlExecutionBody,
                                            as_plain_execution_body, execution_body_from_xml,
                                            valid_execution_body)
@@ -135,15 +135,13 @@ class ScxmlState(ScxmlBase):
             print("Error: SCXML state: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check onentry and onexit
-        valid_entry = ScxmlState._check_valid_ros_instantiations(self._on_entry,
-                                                                 ros_declarations)
-        valid_exit = ScxmlState._check_valid_ros_instantiations(self._on_exit,
-                                                                ros_declarations)
-        valid_body = ScxmlState._check_valid_ros_instantiations(self._body,
-                                                                ros_declarations)
+        valid_entry = ScxmlState._check_valid_ros_instantiations(self._on_entry, ros_declarations)
+        valid_exit = ScxmlState._check_valid_ros_instantiations(self._on_exit, ros_declarations)
+        valid_body = ScxmlState._check_valid_ros_instantiations(self._body, ros_declarations)
         if not valid_entry:
             print("Error: SCXML state: onentry has invalid ROS instantiations.")
         if not valid_exit:
@@ -153,7 +151,7 @@ class ScxmlState(ScxmlBase):
         return valid_entry and valid_exit and valid_body
 
     def _check_valid_ros_instantiations(body: List[Union[ScxmlExecutableEntry, ScxmlTransition]],
-                                        ros_declarations: HelperRosDeclarations) -> bool:
+                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
         if body is None:
             return True
@@ -162,7 +160,7 @@ class ScxmlState(ScxmlBase):
                 return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlState":
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
         plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
         plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)

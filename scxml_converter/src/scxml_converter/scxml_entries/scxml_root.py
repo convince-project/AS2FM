@@ -20,12 +20,15 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 from typing import List, Optional, Tuple, get_args
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
                                            ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
-                                           RosTopicPublisher, HelperRosDeclarations)
+                                           RosTopicPublisher, ScxmlRosDeclarationsContainer)
 
 from copy import deepcopy
 from os.path import isfile
 
 from xml.etree import ElementTree as ET
+
+
+TimerType = Tuple[str, float]
 
 
 class ScxmlRoot(ScxmlBase):
@@ -142,9 +145,9 @@ class ScxmlRoot(ScxmlBase):
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
-    def _generate_ros_declarations_helper(self) -> Optional[HelperRosDeclarations]:
+    def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
-        ros_decl_container = HelperRosDeclarations()
+        ros_decl_container = ScxmlRosDeclarationsContainer()
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
                 if not ros_declaration.check_validity():
@@ -204,7 +207,7 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None or len(self._ros_declarations) == 0
 
-    def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[Tuple[str, float]]]:
+    def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[TimerType]]:
         """
         Convert all internal ROS specific entries to plain SCXML.
 

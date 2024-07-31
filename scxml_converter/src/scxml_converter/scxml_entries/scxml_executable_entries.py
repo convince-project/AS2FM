@@ -20,7 +20,7 @@ Definition of SCXML Tags that can be part of executable content
 from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, HelperRosDeclarations)
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer)
 
 from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 
@@ -104,10 +104,10 @@ class ScxmlIf(ScxmlBase):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check the executable content
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML if: invalid ROS declarations type provided."
         for _, exec_body in self._conditional_executions:
             for exec_entry in exec_body:
@@ -119,7 +119,7 @@ class ScxmlIf(ScxmlBase):
                     return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlIf":
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
             condional_executions.append((replace_ros_msg_expression(condition),
@@ -340,7 +340,7 @@ def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecuti
 
 def as_plain_execution_body(
         exec_body: Optional[ScxmlExecutionBody],
-        ros_declarations: HelperRosDeclarations) -> Optional[ScxmlExecutionBody]:
+        ros_declarations: ScxmlRosDeclarationsContainer) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 

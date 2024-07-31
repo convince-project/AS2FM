@@ -55,7 +55,7 @@ def replace_ros_msg_expression(msg_expr: str) -> str:
     return prefix + msg_expr.removeprefix("_msg.")
 
 
-class HelperRosDeclarations:
+class ScxmlRosDeclarationsContainer:
     """Object that contains a description of the ROS declarations in the SCXML root."""
 
     def __init__(self):
