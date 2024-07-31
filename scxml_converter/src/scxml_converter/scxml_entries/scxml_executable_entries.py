@@ -299,7 +299,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :return: The execution entry
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
-    from .scxml_ros_entries import RosTopicPublish
+    from .scxml_ros_topic import RosTopicPublish
     # Switch based on the tag name
     exec_tag = xml_tree.tag
     if exec_tag == ScxmlIf.get_tag_name():

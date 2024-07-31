@@ -20,8 +20,9 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody,
+from scxml_converter.scxml_entries import (ScxmlBase, RosRateCallback, RosTopicCallback,
                                            ScxmlTransition, HelperRosDeclarations,
+                                           ScxmlExecutableEntry, ScxmlExecutionBody,
                                            as_plain_execution_body, execution_body_from_xml,
                                            valid_execution_body)
 
@@ -85,8 +86,6 @@ class ScxmlState(ScxmlBase):
         return scxml_state
 
     def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
-        # import ros callbacks inheriting from ScxmlTransition
-        from .scxml_ros_entries import RosRateCallback, RosTopicCallback
         transitions: List[ScxmlTransition] = []
         for child in xml_tree:
             if child.tag == ScxmlTransition.get_tag_name():
