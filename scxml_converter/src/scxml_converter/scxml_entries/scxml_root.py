@@ -28,9 +28,6 @@ from os.path import isfile
 from xml.etree import ElementTree as ET
 
 
-TimerType = Tuple[str, float]
-
-
 class ScxmlRoot(ScxmlBase):
     """This class represents a whole scxml model, that is used to define specific skills."""
 
@@ -207,7 +204,7 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None or len(self._ros_declarations) == 0
 
-    def to_plain_scxml_and_declarations(self) -> Tuple["ScxmlRoot", List[TimerType]]:
+    def to_plain_scxml_and_declarations(self) -> Tuple["ScxmlRoot", ScxmlRosDeclarationsContainer]:
         """
         Convert all internal ROS specific entries to plain SCXML.
 
@@ -216,7 +213,7 @@ class ScxmlRoot(ScxmlBase):
             - A list of timers with related rate in Hz
         """
         if self.is_plain_scxml():
-            return self, []
+            return self, ScxmlRosDeclarationsContainer()
         # Convert the ROS specific entries to plain SCXML
         plain_root = ScxmlRoot(self._name)
         plain_root._data_model = deepcopy(self._data_model)
@@ -224,7 +221,7 @@ class ScxmlRoot(ScxmlBase):
         ros_declarations = self._generate_ros_declarations_helper()
         plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
-        return (plain_root, ros_declarations._timers.items())
+        return (plain_root, ros_declarations)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."

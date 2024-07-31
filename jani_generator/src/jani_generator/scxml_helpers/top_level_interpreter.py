@@ -125,8 +125,8 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     all_timers: List[RosTimer] = []
     for fname in scxml_files_to_convert:
         with open(fname, 'r', encoding='utf-8') as f:
-            model, timers = ros_to_scxml_converter(f.read())
-        for timer_name, timer_rate in timers:
+            model, ros_declarations = ros_to_scxml_converter(f.read())
+        for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
