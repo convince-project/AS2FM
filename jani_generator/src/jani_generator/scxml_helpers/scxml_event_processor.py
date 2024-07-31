@@ -38,7 +38,7 @@ def implement_scxml_events_as_jani_syncs(
     :param events_holder: The holder of the events.
     :param timers: The timers to add to the jani model.
     :param jani_model: The jani model to add the syncs to.
-    :return: The list of events having only senders
+    :return: The list of events having only senders.
     """
     jc = JaniComposition()
     event_action_names = []
@@ -65,8 +65,6 @@ def implement_scxml_events_as_jani_syncs(
         jc.add_element(event_name)
         if event.has_receivers():
             # Add the receiver event as well
-            # TODO: Potential bug: if the same event is sent by multiple automata,
-            # the same action should be added multiple times in the composition
             event_action_names.append(event_name_on_receive)
             # Prepare the automaton
             event_automaton.add_location("received")

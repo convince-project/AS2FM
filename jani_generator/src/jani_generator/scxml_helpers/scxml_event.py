@@ -48,8 +48,9 @@ class Event:
         self.name = name
         self.data_struct = data_struct
         # Map automaton -> event name
-        # TODO: In the future, this could be a Dict[str, str] or even a Set, if we the action name
-        # is expected to match the event name.
+        # TODO: EventSender and EventReceiver are only containers for the automaton-action name pair
+        # In the future, this could be a Dict[str, str] or even a Set, if we assume the action name
+        # always matches with the event name.
         self.senders: Dict[str, EventSender] = {}
         self.receivers: Dict[str, EventReceiver] = {}
 
