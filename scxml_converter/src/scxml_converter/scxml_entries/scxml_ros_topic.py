@@ -180,7 +180,8 @@ class RosTopicCallback(ScxmlTransition):
             print("Error: SCXML topic callback: body is not valid.")
         return valid_topic and valid_target and valid_cond and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML topic callback: invalid ROS declarations container."
@@ -292,7 +293,8 @@ class RosTopicPublish(ScxmlSend):
             print("Error: SCXML topic publish: fields are not valid.")
         return valid_topic and valid_fields
 
-    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML topic publish: invalid ROS declarations container."

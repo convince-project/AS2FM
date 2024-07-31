@@ -62,7 +62,7 @@ class RosServiceServer(ScxmlBase):
             print("Error: SCXML Service Server: service type is not valid.")
         return valid_name and valid_type
 
-    def as_plain_scxml(self) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> ScxmlBase:
         pass
 
     def as_xml(self) -> ET.Element:
@@ -92,7 +92,7 @@ class RosServiceClient(ScxmlBase):
     def check_validity(self) -> bool:
         pass
 
-    def as_plain_scxml(self) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> ScxmlBase:
         pass
 
     def as_xml(self) -> ET.Element:

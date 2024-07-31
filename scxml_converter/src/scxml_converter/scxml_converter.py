@@ -111,5 +111,5 @@ def ros_to_scxml_converter(input_xml: str) -> Tuple[str, List[Tuple[str, float]]
              Each tuple contains the timer name and the rate in Hz.
     """
     scxml_root = ScxmlRoot.from_scxml_file(input_xml)
-    plain_scxml, timers = scxml_root.as_plain_scxml()
+    plain_scxml, timers = scxml_root.to_plain_scxml_and_declarations()
     return ET.tostring(plain_scxml.as_xml(), encoding='unicode', xml_declaration=True), timers
