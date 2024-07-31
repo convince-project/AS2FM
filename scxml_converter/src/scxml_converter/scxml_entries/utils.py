@@ -18,21 +18,35 @@
 from typing import Dict
 
 
-def is_topic_type_known(topic_definition: str) -> bool:
-    """Check if python can import the provided topic definition."""
-    # Check the input type has the expected structure
-    if not (isinstance(topic_definition, str) and topic_definition.count("/") == 1):
+def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
+    """
+    Check if python can import the provided type definition.
+
+    :param type_definition: The type definition to check (e.g. std_msgs/Empty).
+    """
+    if not (isinstance(type_definition, str) and type_definition.count("/") == 1):
         return False
-    topic_ns, topic_type = topic_definition.split("/")
-    if len(topic_ns) == 0 or len(topic_type) == 0:
+    interface_ns, interface_type = type_definition.split("/")
+    if len(interface_ns) == 0 or len(interface_type) == 0:
         return False
+    assert ros_interface in ["msg", "srv"], "Error: SCXML ROS declarations: unknown ROS interface."
     try:
-        msg_importer = __import__(topic_ns + '.msg', fromlist=[''])
-        _ = getattr(msg_importer, topic_type)
+        interface_importer = __import__(interface_ns + f'.{ros_interface}', fromlist=[''])
+        _ = getattr(interface_importer, interface_type)
     except (ImportError, AttributeError):
-        print(f"Error: SCXML ROS declarations: topic type {topic_definition} not found.")
+        print(f"Error: SCXML ROS declarations: topic type {type_definition} not found.")
         return False
     return True
+
+
+def is_msg_type_known(topic_definition: str) -> bool:
+    """Check if python can import the provided topic definition."""
+    return is_ros_type_known(topic_definition, "msg")
+
+
+def is_srv_type_known(service_definition: str) -> bool:
+    """Check if python can import the provided service definition."""
+    return is_ros_type_known(service_definition, "srv")
 
 
 def replace_ros_msg_expression(msg_expr: str) -> str:

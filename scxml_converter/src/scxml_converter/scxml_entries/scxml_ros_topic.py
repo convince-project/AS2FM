@@ -27,7 +27,7 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, Scx
                                            as_plain_execution_body)
 from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 from xml.etree import ElementTree as ET
-from scxml_converter.scxml_entries.utils import is_topic_type_known
+from scxml_converter.scxml_entries.utils import is_msg_type_known
 
 
 class RosTopicPublisher(ScxmlBase):
@@ -52,7 +52,7 @@ class RosTopicPublisher(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
-        valid_type = is_topic_type_known(self._topic_type)
+        valid_type = is_msg_type_known(self._topic_type)
         if not valid_name:
             print("Error: SCXML topic subscriber: topic name is not valid.")
         if not valid_type:
@@ -97,7 +97,7 @@ class RosTopicSubscriber(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
-        valid_type = is_topic_type_known(self._topic_type)
+        valid_type = is_msg_type_known(self._topic_type)
         if not valid_name:
             print("Error: SCXML topic subscriber: topic name is not valid.")
         if not valid_type:
