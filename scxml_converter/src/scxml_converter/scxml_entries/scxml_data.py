@@ -67,6 +67,15 @@ class ScxmlData(ScxmlBase):
         self._lower_bound = lower_bound
         self._upper_bound = upper_bound
 
+    def get_name(self) -> str:
+        return self._id
+
+    def get_type(self) -> type:
+        return SCXML_DATA_MAPPING[self._data_type]
+
+    def get_expr(self) -> str:
+        return self._expr
+
     def check_validity(self) -> bool:
         validity = True
         # ID

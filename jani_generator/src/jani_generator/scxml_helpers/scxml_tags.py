@@ -32,7 +32,7 @@ from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
 from as2fm_common.ecmascript_interpretation import \
     interpret_ecma_script_expr
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
                                            ScxmlState, ScxmlTransition)
@@ -284,14 +284,17 @@ class DatamodelTag(BaseTag):
         return []
 
     def write_model(self):
-        for name, expr in self.element.get_data_entries():
-            assert expr is not None, f"No init value for {name}."
+        for scxml_data in self.element.get_data_entries():
+            assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
+            assert scxml_data.check_validity(), "Found invalid data entry."
             # TODO: ScxmlData from scxml_helpers provide many more options.
             # It should be ported to scxml_entries.ScxmlDataModel
-            init_value = parse_ecmascript_to_jani_expression(expr)
-            expr_type = type(interpret_ecma_script_expr(expr))
+            init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr())
+            expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
+            assert expr_type == scxml_data.get_type(), \
+                f"Expected type {scxml_data.get_type()}, got {expr_type}."
             self.automaton.add_variable(
-                JaniVariable(name, expr_type, init_value))
+                JaniVariable(scxml_data.get_name(), scxml_data.get_type(), init_value))
 
 
 class ScxmlTag(BaseTag):
