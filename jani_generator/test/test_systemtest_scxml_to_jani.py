@@ -215,7 +215,7 @@ class TestConversion(unittest.TestCase):
         pos_res = "Result: 1" if success else "Result: 0"
         neg_res = "Result: 0" if success else "Result: 1"
         run_smc_storm_with_output(
-            f"--model {ouput_path} --property-name {property_name}",
+            f"--model {ouput_path} --properties-names {property_name}",
             [property_name,
              ouput_path,
              pos_res],
@@ -255,6 +255,12 @@ class TestConversion(unittest.TestCase):
         Here we make sure, the synchronization can handle events
         being sent in different orders without deadlocks."""
         self._test_with_main('main.xml', 'events_sync_examples', 'seq_check', True)
+
+    def test_multiple_senders_same_event(self):
+        """Test with main.xml as entrypoint.
+        Here we make sure, the synchronization can handle events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('main.xml', 'multiple_senders_same_event', 'seq_check', True)
 
 
 if __name__ == '__main__':

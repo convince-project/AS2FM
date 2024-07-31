@@ -22,8 +22,8 @@ In CONVINCE, we extended the standard SCXML format defined `here <https://www.w3
 In this guide we will refer to the extended SCXML format as High-Level SCXML and the standard SCXML format as Low-Level SCXML.
 
 Currently, the supported ROS-features are:
-- ROS Topics
-- ROS Timers (Rate-callbacks)
+* ROS Topics
+* ROS Timers (Rate-callbacks)
 
 TODO: Example of Topic and Timer declaration + usage.
 
@@ -39,6 +39,8 @@ The conversion between the two SCXML formats is implemented in ScxmlRoot.as_plai
 
 TODO: Describe how we translate the High-Level SCXML to the Low-Level SCXML.
 
+TODO: Timers are useful for SCAN as well: instead of keeping them in a runtime object, we can consider to list them in an intermediary xml file.
+
 Jani Conversion
 ----------------
 
@@ -46,6 +48,7 @@ Once the Low-Level SCXML is obtained, we can use it together with the timers inf
 
 Simple Overview
 ________________
+.. _simple_overview:
 
 The following picture gives a simple overview of how our conversion works:
 
@@ -63,8 +66,11 @@ The BatteryManager automaton has an edge "level_on_receive", that can now be tri
 
 The BatteryDrainer can execute the edge "battery_drainer_act_0" and transition back to the initial state either before or after the "level_on_receive" action, as there is no constraint enforcing a specific order of execution.
 
-Similarly, since the automaton "level_sync" has an outgoing edge "level_on_send" that stays in the "received" state, the BatteryManager can send a "level" event before the BatteryDrainer has processed the previous one.
-This has been introduced to make the synchronization more similar to how it works in ROS, where messages can be overridden before being processed.
+It is important to notice that the level_sync automaton enforces the "level_on_receive" action to be execute before "level_on_send" can be executed again: this is to make sure the event is processed before sending the next event.
+
+Though the approach described here works as it is in many cases, there are specific configurations that require special handling and will be discussed in the section :ref:`Handling events<handling_events>`.
+
+In the next sections we are going to describe in more detail how specific parts of the SCXML to Jani conversion are carried out.
 
 Handling onentry, onexit and conditions
 ________________________________________
@@ -79,3 +85,34 @@ Handling of (ROS) Timers
 __________________________
 
 TODO
+
+Handling events
+________________
+.. _handling_events:
+
+In section :ref:`Simple Overview<simple_overview>` we introduced the basic concept of how events are handled in the conversion from SCXML to Jani.
+That concept works for the simplest cases, but there are more complex scenarios where problems may occur, and require special handling.
+
+In order to understand possible problematic scenarios, let's consider the following example:
+
+.. image:: graphics/scxml_to_jani_events_handling_pt1.drawio.svg
+    :alt: SCXML events with possible deadlocks
+    :align: center
+
+In this example there are two state machines that are sending `event_a` and `event_b` out and one state machine receiving them.
+The first state machine sends `event_a` out at each loop, the second state machine sends `event_a` twice and `event_b` once before starting again and the third state machine receives `event_a` and `event_b` in alternating order.
+
+If we use the event_sync automaton strategy as exemplified in the :ref:`Simple Overview<simple_overview>`, i.e., we make an automaton for synching `event_a` and one for synching `event_b` without any further handling, we will reach a deadlock situation where the `event_a` is waiting to be processed by the receiver before being able to send out `event_b`, but the receiver is waiting for `event_b` to be available before processing `event_a`.
+
+In order to overcome such situation, we need to introduce a mechanism that allows a receiver to discard an event it is not expecting, such that the senders are allowed to continue their execution.
+This is achieved by tracking all events that an automaton can receive during its execution and, for each one of its states, introducing a self loop transition processing the events that aren't explicitly handled. 
+
+An additional thing to keep in mind during the conversion, is the synchronization of the senders: if both senders are in a state where they can send out `event_a`, it is important that only one of them does it at a time: this will result in having one line for each automaton sending a specific event in the Jani composition table.
+
+The Jani model resulting from applying the conversion strategies we just described is the following:
+
+.. image:: graphics/scxml_to_jani_events_handling_pt2.drawio.svg
+    :alt: Handling SCXML events preventing deadlocks in Jani
+    :align: center
+
+It can be noticed how new self loop edges are added in the `A_B_receiver` automaton (the dashed ones) and how the `ev_a_on_send` is now duplicated in the Composition table, one advancing the `A sender` automaton and the other advancing the `A_B sender` automaton.

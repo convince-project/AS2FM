@@ -37,13 +37,21 @@ class JaniComposition:
             f"Element {element} already exists in the composition"
         self._elements.append(element)
         self._element_to_id[element] = len(self._elements) - 1
+        for sync in self._syncs:
+            assert len(sync["synchronise"]) == len(self._elements) - 1, \
+                "Unexpected number of syncs found in the composition during the update"
+            sync["synchronise"].append(None)
 
     def get_elements(self):
         """Get the elements of the composition."""
         return self._elements
 
     def add_sync(self, sync_name: str, syncs: Dict[str, str]):
-        """Add a new synchronisation between the elements."""
+        """Add a new synchronization between the elements.
+
+        :param sync_name: The name of the synchronization action
+        :param syncs: A dictionary relating each automaton to the action to be executed in the sync
+        """
         new_sync = {
             "result": sync_name,
             "synchronise": [None] * len(self._elements)
