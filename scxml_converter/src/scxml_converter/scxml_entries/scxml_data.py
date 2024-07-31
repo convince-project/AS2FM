@@ -23,11 +23,16 @@ from scxml_converter.scxml_entries import ScxmlBase
 from xml.etree import ElementTree as ET
 
 
+# TODO: add lower and upper bounds depending on the n. of bits used.
+# TODO: add support to uint
 SCXML_DATA_MAPPING = {
-    "int": int,
-    "float": float,
-    "string": str,
-    "bool": bool
+    "bool": bool,
+    "float32": float,
+    "float64": float,
+    "int8": int,
+    "int16": int,
+    "int32": int,
+    "int64": int
 }
 
 

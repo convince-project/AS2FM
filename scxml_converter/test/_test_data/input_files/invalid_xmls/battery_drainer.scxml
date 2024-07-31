@@ -7,7 +7,7 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="battery_percent" expr="100" />
+        <data id="battery_percent" expr="100" type="int32" />
     </datamodel>
 
     <ros_topic_subscriber topic="charge" type="std_msgs/Empty" />
