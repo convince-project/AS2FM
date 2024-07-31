@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Declaration of SCXML tags related to ROS Topics."""
+"""
+Declaration of SCXML tags related to ROS Topics.
+
+Additional information:
+https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html
+"""
 
 from typing import List, Optional, Union
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
