@@ -27,7 +27,7 @@ jobs:
               uses: actions/checkout@v2
               with:
                 repository: boschresearch/bt_tools
-                ref: feature/fsm_conversion
+                ref: main
                 path: colcon_ws/src/bt_tools
             # Compile bt_tools TODO: remove after the release of bt_tools
             - name: Compile bt_tools
