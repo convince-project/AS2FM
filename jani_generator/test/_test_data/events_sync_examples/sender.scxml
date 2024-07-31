@@ -7,8 +7,8 @@
     xmlns="http://www.w3.org/2005/07/scxml">
     
     <datamodel>
-        <data id="msg_a_seq" expr="0" type="int" />
-        <data id="msg_b_seq" expr="0" type="int" />
+        <data id="msg_a_seq" expr="0" type="int16" />
+        <data id="msg_b_seq" expr="0" type="int16" />
     </datamodel>
 
     <state id="send_a_1">

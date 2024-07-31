@@ -16,8 +16,8 @@
 import os
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot,
-                                           ScxmlSend, ScxmlState, ScxmlTransition,
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam,
+                                           ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
                                            RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
                                            RosRateCallback, RosTopicPublish, RosTopicCallback,
                                            RosField)
@@ -47,7 +47,8 @@ def test_battery_drainer_from_code():
         - assign
 """
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
-    battery_drainer_scxml.set_data_model(ScxmlDataModel([("battery_percent", "100")]))
+    battery_drainer_scxml.set_data_model(ScxmlDataModel([
+        ScxmlData("battery_percent", "100", "int16")]))
     use_battery_state = ScxmlState(
         "use_battery",
         on_entry=[ScxmlSend("ros_topic.level",
@@ -95,7 +96,8 @@ def test_battery_drainer_ros_from_code():
         - assign
 """
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
-    battery_drainer_scxml.set_data_model(ScxmlDataModel([("battery_percent", "100")]))
+    battery_drainer_scxml.set_data_model(ScxmlDataModel([
+        ScxmlData("battery_percent", "100", "int16")]))
     ros_topic_sub = RosTopicSubscriber("charge", "std_msgs/Empty")
     ros_topic_pub = RosTopicPublisher("level", "std_msgs/Int32")
     ros_timer = RosTimeRate("my_timer", 1)
