@@ -16,6 +16,8 @@
 """Declaration of ROS-Specific SCXML tags extensions."""
 
 from typing import Union
-from scxml_converter.scxml_entries import (RosTimeRate, RosTopicPublisher, RosTopicSubscriber)
+from scxml_converter.scxml_entries import (RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
+                                           RosServiceServer, RosServiceClient)
 
-ScxmlRosDeclarations = Union[RosTimeRate, RosTopicPublisher, RosTopicSubscriber]
+ScxmlRosDeclarations = Union[RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
+                             RosServiceServer, RosServiceClient]

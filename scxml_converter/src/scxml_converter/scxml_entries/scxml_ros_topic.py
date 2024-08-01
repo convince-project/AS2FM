@@ -21,11 +21,11 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 """
 
 from typing import List, Optional, Union
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlSend, ScxmlParam, ScxmlTransition,
-                                           ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
+from scxml_converter.scxml_entries import (RosField, ScxmlBase, ScxmlSend, ScxmlParam, 
+                                           ScxmlTransition, ScxmlExecutionBody, 
+                                           ScxmlRosDeclarationsContainer,
                                            valid_execution_body, execution_body_from_xml,
                                            as_plain_execution_body)
-from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
 from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries.utils import is_msg_type_known
 
@@ -211,45 +211,6 @@ class RosTopicCallback(ScxmlTransition):
             for entry in self._body:
                 xml_topic_callback.append(entry.as_xml())
         return xml_topic_callback
-
-
-class RosField(ScxmlParam):
-    """Field of a ROS msg published in a topic."""
-
-    def __init__(self, name: str, expr: str):
-        self._name = name
-        self._expr = expr
-        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
-
-    def get_tag_name() -> str:
-        return "field"
-
-    def from_xml_tree(xml_tree: ET.Element) -> "RosField":
-        """Create a RosField object from an XML tree."""
-        assert xml_tree.tag == RosField.get_tag_name(), \
-            f"Error: SCXML topic publish field: XML tag name is not {RosField.get_tag_name()}"
-        name = xml_tree.attrib.get("name")
-        expr = xml_tree.attrib.get("expr")
-        assert name is not None and expr is not None, \
-            "Error: SCXML topic publish field: 'name' or 'expr' attribute not found in input xml."
-        return RosField(name, expr)
-
-    def check_validity(self) -> bool:
-        valid_name = isinstance(self._name, str) and len(self._name) > 0
-        valid_expr = isinstance(self._expr, str) and len(self._expr) > 0
-        if not valid_name:
-            print("Error: SCXML topic publish field: name is not valid.")
-        if not valid_expr:
-            print("Error: SCXML topic publish field: expr is not valid.")
-        return valid_name and valid_expr
-
-    def as_plain_scxml(self) -> ScxmlParam:
-        return ScxmlParam(self._name, expr=replace_ros_msg_expression(self._expr))
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
-        xml_field = ET.Element(RosField.get_tag_name(), {"name": self._name, "expr": self._expr})
-        return xml_field
 
 
 class RosTopicPublish(ScxmlSend):

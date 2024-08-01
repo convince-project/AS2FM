@@ -123,6 +123,7 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
 
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
+    
     for fname in scxml_files_to_convert:
         with open(fname, 'r', encoding='utf-8') as f:
             model, ros_declarations = ros_to_scxml_converter(f.read())

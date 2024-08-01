@@ -30,19 +30,11 @@ from scxml_converter.scxml_entries.utils import is_srv_type_known
 class RosServiceServer(ScxmlBase):
     """Object used in SCXML root to declare a new service server."""
 
-    def __init__(self, service_name: str, type: str) -> None:
-        """
-        Initialize a new RosServiceServer object.
-
-        :param service_name: Topic used by the service.
-        :param type: ROS type of the service.
-        """
-        self._service_name = service_name
-        self._type = type
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_service_server"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceServer":
         """Create a RosServiceServer object from an XML tree."""
         assert xml_tree.tag == RosServiceServer.get_tag_name(), \
@@ -52,6 +44,16 @@ class RosServiceServer(ScxmlBase):
         assert service_name is not None and service_type is not None, \
             "Error: SCXML Service Server: 'service_name' or 'type' cannot be found in input xml."
         return RosServiceServer(service_name, service_type)
+
+    def __init__(self, service_name: str, type: str) -> None:
+        """
+        Initialize a new RosServiceServer object.
+
+        :param service_name: Topic used by the service.
+        :param type: ROS type of the service.
+        """
+        self._service_name = service_name
+        self._type = type
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
@@ -70,6 +72,128 @@ class RosServiceServer(ScxmlBase):
 
 
 class RosServiceClient(ScxmlBase):
+    """Object used in SCXML root to declare a new service client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_service_client"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+        """Create a RosServiceServer object from an XML tree."""
+        pass
+
+    def __init__(self, service_name: str, type: str) -> None:
+        """
+        Initialize a new RosServiceClient object.
+
+        :param service_name: Topic used by the service.
+        :param type: ROS type of the service.
+        """
+        self._service_name = service_name
+        self._type = type
+
+    def check_validity(self) -> bool:
+        pass
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        pass
+
+    def as_xml(self) -> ET.Element:
+        pass
+
+
+class RosServiceSendRequest(ScxmlBase):
+    """Object used in SCXML root to declare a new service client."""
+
+    def __init__(self, service_name: str, type: str) -> None:
+        """
+        Initialize a new RosServiceClient object.
+
+        :param service_name: Topic used by the service.
+        :param type: ROS type of the service.
+        """
+        self._service_name = service_name
+        self._type = type
+
+    def get_tag_name() -> str:
+        return "ros_service_client"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+        """Create a RosServiceServer object from an XML tree."""
+        pass
+
+    def check_validity(self) -> bool:
+        pass
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        pass
+
+    def as_xml(self) -> ET.Element:
+        pass
+
+
+class RosServiceHandleRequest(ScxmlBase):
+    """Object used in SCXML root to declare a new service client."""
+
+    def __init__(self, service_name: str, type: str) -> None:
+        """
+        Initialize a new RosServiceClient object.
+
+        :param service_name: Topic used by the service.
+        :param type: ROS type of the service.
+        """
+        self._service_name = service_name
+        self._type = type
+
+    def get_tag_name() -> str:
+        return "ros_service_client"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+        """Create a RosServiceServer object from an XML tree."""
+        pass
+
+    def check_validity(self) -> bool:
+        pass
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        pass
+
+    def as_xml(self) -> ET.Element:
+        pass
+
+
+class RosServiceSendResponse(ScxmlBase):
+    """Object used in SCXML root to declare a new service client."""
+
+    def __init__(self, service_name: str, type: str) -> None:
+        """
+        Initialize a new RosServiceClient object.
+
+        :param service_name: Topic used by the service.
+        :param type: ROS type of the service.
+        """
+        self._service_name = service_name
+        self._type = type
+
+    def get_tag_name() -> str:
+        return "ros_service_client"
+
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+        """Create a RosServiceServer object from an XML tree."""
+        pass
+
+    def check_validity(self) -> bool:
+        pass
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        pass
+
+    def as_xml(self) -> ET.Element:
+        pass
+
+
+class RosServiceHandleResponse(ScxmlBase):
     """Object used in SCXML root to declare a new service client."""
 
     def __init__(self, service_name: str, type: str) -> None:
