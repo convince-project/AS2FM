@@ -76,6 +76,25 @@ class RosTimeRate(ScxmlBase):
 class RosRateCallback(ScxmlTransition):
     """Callback that triggers each time the associated timer ticks."""
 
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_rate_callback"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosRateCallback":
+        """Create a RosRateCallback object from an XML tree."""
+        assert xml_tree.tag == RosRateCallback.get_tag_name(), \
+            f"Error: SCXML rate callback: XML tag name is not {RosRateCallback.get_tag_name()}"
+        timer_name = xml_tree.attrib.get("name")
+        target = xml_tree.attrib.get("target")
+        assert timer_name is not None and target is not None, \
+            "Error: SCXML rate callback: 'name' or 'target' attribute not found in input xml."
+        condition = xml_tree.get("cond")
+        condition = condition if condition is not None and len(condition) > 0 else None
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return RosRateCallback(timer_name, target, condition, exec_body)
+
     def __init__(self, timer: Union[RosTimeRate, str], target: str, condition: Optional[str] = None,
                  body: Optional[ScxmlExecutionBody] = None):
         """
@@ -96,23 +115,6 @@ class RosRateCallback(ScxmlTransition):
         self._condition = condition
         self._body = body
         assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
-
-    def get_tag_name() -> str:
-        return "ros_rate_callback"
-
-    def from_xml_tree(xml_tree: ET.Element) -> "RosRateCallback":
-        """Create a RosRateCallback object from an XML tree."""
-        assert xml_tree.tag == RosRateCallback.get_tag_name(), \
-            f"Error: SCXML rate callback: XML tag name is not {RosRateCallback.get_tag_name()}"
-        timer_name = xml_tree.attrib.get("name")
-        target = xml_tree.attrib.get("target")
-        assert timer_name is not None and target is not None, \
-            "Error: SCXML rate callback: 'name' or 'target' attribute not found in input xml."
-        condition = xml_tree.get("cond")
-        condition = condition if condition is not None and len(condition) > 0 else None
-        exec_body = execution_body_from_xml(xml_tree)
-        exec_body = exec_body if exec_body is not None else None
-        return RosRateCallback(timer_name, target, condition, exec_body)
 
     def check_validity(self) -> bool:
         valid_timer = isinstance(self._timer_name, str) and len(self._timer_name) > 0
