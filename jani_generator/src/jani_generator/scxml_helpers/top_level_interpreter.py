@@ -26,9 +26,10 @@ from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
 from scxml_converter.bt_converter import bt_converter
-from scxml_converter.scxml_converter import ros_to_scxml_converter
+from scxml_converter.scxml_entries import ScxmlRoot
 from jani_generator.jani_entries import JaniModel
 from jani_generator.ros_helpers.ros_timer import RosTimer
+from jani_generator.ros_helpers.ros_services import RosServices, RosService
 from jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
 
 
@@ -123,15 +124,25 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
 
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
-    
+    all_services: RosServices = {}
     for fname in scxml_files_to_convert:
-        with open(fname, 'r', encoding='utf-8') as f:
-            model, ros_declarations = ros_to_scxml_converter(f.read())
+        plain_scxml, ros_declarations = \
+            ScxmlRoot.from_scxml_file(fname).to_plain_scxml_and_declarations()
         for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
-        plain_scxml_models.append(model)
+        for service_name, service_type in ros_declarations._service_clients.items():
+            if service_name not in all_services:
+                all_services[service_name] = RosService()
+            all_services[service_name].append_service_client(
+                service_name, service_type, plain_scxml.get_name())
+        for service_name, service_type in ros_declarations._service_servers.items():
+            if service_name not in all_services:
+                all_services[service_name] = RosService()
+            all_services[service_name].set_service_server(
+                service_name, service_type, plain_scxml.get_name())
+        plain_scxml_models.append(plain_scxml)
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, max_time_ns)

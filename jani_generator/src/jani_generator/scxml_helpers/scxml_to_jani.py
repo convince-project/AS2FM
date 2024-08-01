@@ -17,7 +17,7 @@
 Module handling the conversion from SCXML to Jani.
 """
 
-from typing import List
+from typing import List, Union
 
 from scxml_converter.scxml_entries import ScxmlRoot
 
@@ -46,7 +46,7 @@ def convert_scxml_root_to_jani_automaton(
 
 
 def convert_multiple_scxmls_to_jani(
-        scxmls: List[str],
+        scxmls: List[Union[str, ScxmlRoot]],
         timers: List[RosTimer],
         max_time_ns: int
 ) -> JaniModel:
@@ -58,14 +58,14 @@ def convert_multiple_scxmls_to_jani(
     """
     base_model = JaniModel()
     events_holder = EventsHolder()
-    for scxml_str in scxmls:
-        try:
-            scxml_root = ScxmlRoot.from_scxml_file(scxml_str)
-            assert scxml_root.is_plain_scxml(), f"{scxml_str} does not contain a plain SCXML model."
-        except Exception as e:
-            print(">>>")
-            print(scxml_str)
-            raise e
+    for input_scxml in scxmls:
+        if isinstance(input_scxml, str):
+            scxml_root = ScxmlRoot.from_scxml_file(input_scxml)
+        else:
+            assert isinstance(input_scxml, ScxmlRoot)
+            scxml_root = input_scxml
+        assert scxml_root.is_plain_scxml(), \
+            f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
         automaton = JaniAutomaton()
         convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder)
         base_model.add_jani_automaton(automaton)

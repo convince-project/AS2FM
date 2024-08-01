@@ -101,17 +101,3 @@ def _check_topic_type(
         raise ConversionStaticAnalysisError(
             f"Field {name} has type {expression_type}, " +
             f"expected {expected_python_type}")
-
-
-def ros_to_scxml_converter(input_xml: str) -> Tuple[str, ScxmlRosDeclarationsContainer]:
-    """Convert one SCXML file that contains ROS-specific tags.
-
-    :param input_file: The input SCXML file.
-    :return: The converted SCXML and the timers as a list of tuples.
-             Each tuple contains the timer name and the rate in Hz.
-    """
-    scxml_root = ScxmlRoot.from_scxml_file(input_xml)
-    plain_scxml, ros_declarations = scxml_root.to_plain_scxml_and_declarations()
-    return \
-        ET.tostring(plain_scxml.as_xml(), encoding='unicode', xml_declaration=True), \
-        ros_declarations

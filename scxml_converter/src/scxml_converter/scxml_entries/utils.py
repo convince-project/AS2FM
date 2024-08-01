@@ -64,6 +64,7 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     srv_module = __import__(interface_ns + '.srv', fromlist=[''])
     srv_class = getattr(srv_module, interface_type)
 
+    # TODO: Fields can be nested. Look AS2FM/scxml_converter/src/scxml_converter/scxml_converter.py
     req = srv_class.Request.get_fields_and_field_types()
     for key in req.keys():
         req[key] = MSG_TYPE_SUBSTITUTIONS.get(req[key], req[key])

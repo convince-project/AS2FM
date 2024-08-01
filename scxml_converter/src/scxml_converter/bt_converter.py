@@ -158,6 +158,6 @@ def bt_converter(
     assert root_tag.check_validity(), "Error: SCXML root tag is not valid."
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
-        f.write(ET.tostring(root_tag.as_xml(), encoding='unicode', xml_declaration=True))
+        f.write(root_tag.as_xml_string())
 
     return generated_files

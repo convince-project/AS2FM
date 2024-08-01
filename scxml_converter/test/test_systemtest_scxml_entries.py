@@ -64,7 +64,7 @@ def test_battery_drainer_from_code():
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
-    test_output = ET.tostring(battery_drainer_scxml.as_xml(), encoding='unicode')
+    test_output = battery_drainer_scxml.as_xml_string()
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
@@ -122,7 +122,7 @@ def test_battery_drainer_ros_from_code():
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
-    test_output = ET.tostring(battery_drainer_scxml.as_xml(), encoding='unicode')
+    test_output = battery_drainer_scxml.as_xml_string()
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
@@ -134,7 +134,7 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
     scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
     # Check output xml
     if valid_xml:
-        test_output = ET.tostring(scxml_root.as_xml(), encoding='unicode')
+        test_output = scxml_root.as_xml_string()
         test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
         with open(xml_file_path, 'r', encoding='utf-8') as f_o:
             ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))

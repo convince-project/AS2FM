@@ -241,3 +241,6 @@ class ScxmlRoot(ScxmlBase):
             xml_root.append(state.as_xml())
         ET.indent(xml_root, "    ")
         return xml_root
+
+    def as_xml_string(self) -> str:
+        return ET.tostring(self.as_xml(), encoding='unicode', xml_declaration=True)
