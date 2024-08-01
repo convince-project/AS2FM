@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="idle" 
+    version="1.0" 
+    name="server"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_service_server service_name="/adder" service_type="example_interfaces/AddTwoInts" />
+
+    <state id="idle">
+        <ros_service_handle_request service_name="/adder" target="idle">
+            <ros_service_send_response service_name="/adder">
+                <field name="sum" expr="_req.a + _req.b" />
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+</scxml>

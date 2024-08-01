@@ -66,7 +66,7 @@ class RosTopicPublisher(ScxmlBase):
         return self._topic_type
 
     def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the as_plain_scxml method from ScxmlRoot
+        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
@@ -112,7 +112,7 @@ class RosTopicSubscriber(ScxmlBase):
         return self._topic_type
 
     def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the as_plain_scxml method from ScxmlRoot
+        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:

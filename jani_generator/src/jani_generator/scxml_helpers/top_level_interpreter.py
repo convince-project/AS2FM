@@ -128,10 +128,12 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     for fname in scxml_files_to_convert:
         plain_scxml, ros_declarations = \
             ScxmlRoot.from_scxml_file(fname).to_plain_scxml_and_declarations()
+        # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
+        # Handle ROS Services
         for service_name, service_type in ros_declarations._service_clients.items():
             if service_name not in all_services:
                 all_services[service_name] = RosService()

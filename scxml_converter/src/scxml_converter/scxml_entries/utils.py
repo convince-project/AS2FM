@@ -22,6 +22,8 @@ MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
 }
 
+BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']
+
 
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     """
@@ -67,10 +69,15 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     # TODO: Fields can be nested. Look AS2FM/scxml_converter/src/scxml_converter/scxml_converter.py
     req = srv_class.Request.get_fields_and_field_types()
     for key in req.keys():
+        # TODO: Support nested fields
+        assert req[key] in BASIC_FIELD_TYPES, \
+            "Error: SCXML ROS declarations: service request type contains non-basic fields."
         req[key] = MSG_TYPE_SUBSTITUTIONS.get(req[key], req[key])
 
     res = srv_class.Response.get_fields_and_field_types()
     for key in res.keys():
+        assert res[key] in BASIC_FIELD_TYPES, \
+            "Error: SCXML ROS declarations: service response type contains non-basic fields."
         res[key] = MSG_TYPE_SUBSTITUTIONS.get(res[key], res[key])
 
     return req, res

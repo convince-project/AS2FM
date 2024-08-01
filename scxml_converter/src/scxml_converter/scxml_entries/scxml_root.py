@@ -20,7 +20,8 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 from typing import List, Optional, Tuple, get_args
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
                                            ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
-                                           RosTopicPublisher, ScxmlRosDeclarationsContainer)
+                                           RosTopicPublisher, RosServiceServer, RosServiceClient,
+                                           ScxmlRosDeclarationsContainer)
 
 from copy import deepcopy
 from os.path import isfile
@@ -58,6 +59,10 @@ class ScxmlRoot(ScxmlBase):
                 ros_declarations.append(RosTopicSubscriber.from_xml_tree(child))
             elif child.tag == RosTopicPublisher.get_tag_name():
                 ros_declarations.append(RosTopicPublisher.from_xml_tree(child))
+            elif child.tag == RosServiceServer.get_tag_name():
+                ros_declarations.append(RosServiceServer.from_xml_tree(child))
+            elif child.tag == RosServiceClient.get_tag_name():
+                ros_declarations.append(RosServiceClient.from_xml_tree(child))
         # States
         assert "initial" in xml_tree.attrib, \
             "Error: SCXML root: 'initial' attribute not found in input xml."
@@ -142,7 +147,7 @@ class ScxmlRoot(ScxmlBase):
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
-    def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
+    def _generate_ros_declarations_helper(self) -> ScxmlRosDeclarationsContainer:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
         ros_decl_container = ScxmlRosDeclarationsContainer()
         if self._ros_declarations is not None:
@@ -158,6 +163,12 @@ class ScxmlRoot(ScxmlBase):
                 elif isinstance(ros_declaration, RosTopicPublisher):
                     ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
                                                         ros_declaration.get_topic_type())
+                elif isinstance(ros_declaration, RosServiceServer):
+                    ros_decl_container.append_service_server(ros_declaration.get_service_name(),
+                                                             ros_declaration.get_service_type())
+                elif isinstance(ros_declaration, RosServiceClient):
+                    ros_decl_container.append_service_client(ros_declaration.get_service_name(),
+                                                             ros_declaration.get_service_type())
                 else:
                     raise ValueError("Error: SCXML root: invalid ROS declaration type.")
         return ros_decl_container

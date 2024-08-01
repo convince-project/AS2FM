@@ -193,11 +193,13 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def _test_with_main(self, main_xml: str, folder: str, property_name: str, success: bool):
+    # Tests using main.xml ...
+
+    def _test_with_main(self, folder: str, property_name: str, success: bool):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
-        xml_main_path = os.path.join(test_data_dir, main_xml)
+        xml_main_path = os.path.join(test_data_dir, 'main.xml')
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
@@ -224,43 +226,41 @@ class TestConversion(unittest.TestCase):
         #     os.remove(ouput_path)
 
     def test_with_main_success(self):
-        """Test with main.xml as entrypoint.
-        Here we expect the property to be satisfied."""
-        self._test_with_main('main.xml', 'ros_example', 'battery_depleted', True)
+        """Test the battery_depleted property is satisfied."""
+        self._test_with_main('ros_example', 'battery_depleted', True)
 
     def test_with_main_fail(self):
-        """Test with main.xml as entrypoint.
-        Here we expect the property to be *not* satisfied."""
-        self._test_with_main('main.xml', 'ros_example', 'battery_over_depleted', False)
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main('ros_example', 'battery_over_depleted', False)
 
     def test_with_w_bt_main_battery_depleted(self):
-        """Test with main.xml as entrypoint.
-        Here we expect the property to be *not* satisfied."""
+        """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
+        self._test_with_main('ros_example_w_bt', 'battery_depleted', False)
 
     def test_with_w_bt_main_battery_under_twenty(self):
-        """Test with main.xml as entrypoint.
-        Here we expect the property to be *not* satisfied."""
+        """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
+        self._test_with_main('ros_example_w_bt', 'battery_below_20', False)
 
     def test_with_w_bt_main_alarm_and_charge(self):
-        """Test with main.xml as entrypoint.
-        Here we expect the property to be satisfied."""
-        self._test_with_main('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
+        """Here we expect the property to be satisfied in a battery example
+        with charging feature."""
+        self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
 
     def test_events_sync_handling(self):
-        """Test with main.xml as entrypoint.
-        Here we make sure, the synchronization can handle events
+        """Here we make sure, the synchronization can handle events
         being sent in different orders without deadlocks."""
-        self._test_with_main('main.xml', 'events_sync_examples', 'seq_check', True)
+        self._test_with_main('events_sync_examples', 'seq_check', True)
 
     def test_multiple_senders_same_event(self):
-        """Test with main.xml as entrypoint.
-        Here we make sure, the synchronization can handle events
+        """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
-        self._test_with_main('main.xml', 'multiple_senders_same_event', 'seq_check', True)
+        self._test_with_main('multiple_senders_same_event', 'seq_check', True)
+
+    def test_ros_add_int_srv_example(self):
+        """Test the services are properly handled in Jani."""
+        self._test_with_main('ros_add_int_srv_example', 'happy_clients', True)
 
 
 if __name__ == '__main__':

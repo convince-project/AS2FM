@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam,
                                            ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
