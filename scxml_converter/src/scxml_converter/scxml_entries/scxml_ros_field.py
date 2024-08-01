@@ -16,7 +16,7 @@
 """Declaration of the ROS Field SCXML tag extension."""
 
 from scxml_converter.scxml_entries import ScxmlParam
-from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
+from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
 from xml.etree import ElementTree as ET
 
 
@@ -51,7 +51,7 @@ class RosField(ScxmlParam):
         return valid_name and valid_expr
 
     def as_plain_scxml(self) -> ScxmlParam:
-        return ScxmlParam(self._name, expr=replace_ros_msg_expression(self._expr))
+        return ScxmlParam(self._name, expr=replace_ros_interface_expression(self._expr))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

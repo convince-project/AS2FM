@@ -149,7 +149,7 @@ class ScxmlRoot(ScxmlBase):
 
     def _generate_ros_declarations_helper(self) -> ScxmlRosDeclarationsContainer:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
-        ros_decl_container = ScxmlRosDeclarationsContainer()
+        ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
                 if not ros_declaration.check_validity():
@@ -224,7 +224,7 @@ class ScxmlRoot(ScxmlBase):
             - A list of timers with related rate in Hz
         """
         if self.is_plain_scxml():
-            return self, ScxmlRosDeclarationsContainer()
+            return self, ScxmlRosDeclarationsContainer(self._name)
         # Convert the ROS specific entries to plain SCXML
         plain_root = ScxmlRoot(self._name)
         plain_root._data_model = deepcopy(self._data_model)

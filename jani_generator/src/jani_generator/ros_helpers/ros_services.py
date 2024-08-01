@@ -20,7 +20,11 @@ Representation of ROS Services.
 from typing import Dict, List, Optional
 from scxml_converter.scxml_entries import (ScxmlRoot, ScxmlState, ScxmlParam,
                                            ScxmlTransition, ScxmlSend)
-from scxml_converter.scxml_entries.utils import get_srv_type_params
+from scxml_converter.scxml_entries.utils import (get_srv_type_params, sanitize_ros_interface_name,
+                                                 generate_srv_request_event,
+                                                 generate_srv_response_event,
+                                                 generate_srv_server_request_event,
+                                                 generate_srv_server_response_event)
 
 
 class RosService:
@@ -93,27 +97,31 @@ class RosService:
         self._assert_validity()
         req_params, res_params = get_srv_type_params(self._service_type)
         # Make sure the service name has no slashes and spaces
-        scxml_root_name = self._service_name.replace("/", "__")
+        scxml_root_name = sanitize_ros_interface_name(self._service_name)
         wait_state = ScxmlState("waiting",
                                 body=[
                                     ScxmlTransition(
                                         f"processing_client_{client_id}",
-                                        [f"srv_{scxml_root_name}_req_client_{client_id}"],
+                                        [generate_srv_request_event(self._service_name, client_id)],
                                         body=[
-                                            ScxmlSend(f"srv_{scxml_root_name}_request",
-                                                      [ScxmlParam(
-                                                          field_name, expr=f"_event.{field_name}")
-                                                       for field_name, _ in req_params])])
-                                    for client_id, _ in enumerate(self._service_client_automata)])
+                                            ScxmlSend(
+                                                generate_srv_server_request_event(
+                                                    self._service_name),
+                                                [ScxmlParam(field_name, expr=f"_event.{field_name}")
+                                                 for field_name, _ in req_params]
+                                                )])
+                                    for client_id in self._service_client_automata])
         processing_states = [
             ScxmlState(f"processing_client_{client_id}",
                        body=[
                            ScxmlTransition(
-                               "waiting", [f"srv_{scxml_root_name}_response"],
-                               body=[ScxmlSend(f"srv_{scxml_root_name}_response_client_{client_id}",
-                                               [ScxmlParam(field_name, expr=f"_event.{field_name}")
-                                                for field_name, _ in res_params])])])
-            for client_id, _ in enumerate(self._service_client_automata)]
+                               "waiting", [generate_srv_server_response_event(self._service_name)],
+                               body=[ScxmlSend(
+                                   generate_srv_response_event(self._service_name, client_id),
+                                   [ScxmlParam(field_name, expr=f"_event.{field_name}")
+                                    for field_name, _ in res_params]
+                                    )])])
+            for client_id in self._service_client_automata]
         # Prepare the ScxmlRoot object and return it
         scxml_root = ScxmlRoot(scxml_root_name)
         scxml_root.add_state(wait_state)

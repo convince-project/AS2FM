@@ -15,7 +15,7 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 
 MSG_TYPE_SUBSTITUTIONS = {
@@ -83,22 +83,64 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     return req, res
 
 
-def replace_ros_msg_expression(msg_expr: str) -> str:
-    """Convert a ROS message expression (referring to ROS msg entries) to plain SCXML."""
-    prefix = "_event." if msg_expr.startswith("_msg.") else ""
-    return prefix + msg_expr.removeprefix("_msg.")
+def replace_ros_interface_expression(msg_expr: str) -> str:
+    """Convert a ROS interface expression (msg, req, res) to plain SCXML (event)."""
+    scxml_prefix = "_event."
+    for ros_prefix in ["_msg.", "_req.", "_res."]:
+        if msg_expr.startswith(ros_prefix):
+            return scxml_prefix + msg_expr.removeprefix(ros_prefix)
+    # if there are no prefixes, return as is
+    return msg_expr
+
+
+def sanitize_ros_interface_name(interface_name: str) -> str:
+    """Replace slashes in a ROS interface name."""
+    assert isinstance(interface_name, str), \
+        "Error: ROS interface sanitizer: interface name must be a string."
+    assert interface_name.count(" ") == 0, \
+        "Error: ROS interface sanitizer: interface name must not contain spaces."
+    return interface_name.replace("/", "__")
+
+
+def generate_srv_request_event(service_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that triggers a service request."""
+    return f"srv_{sanitize_ros_interface_name(service_name)}_req_client_{automaton_name}"
+
+
+def generate_srv_response_event(service_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that provides the service response."""
+    return f"srv_{sanitize_ros_interface_name(service_name)}_response_client_{automaton_name}"
+
+
+def generate_srv_server_request_event(service_name: str) -> str:
+    """Generate the name of the event that makes a service server start processing a request."""
+    return f"srv_{sanitize_ros_interface_name(service_name)}_request"
+
+
+def generate_srv_server_response_event(service_name: str) -> str:
+    """Generate the name of the event that makes a service server send a response."""
+    return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
 class ScxmlRosDeclarationsContainer:
     """Object that contains a description of the ROS declarations in the SCXML root."""
 
-    def __init__(self):
+    def __init__(self, automaton_name: str):
+        """Constructor of container.
+
+        :automaton_name: Name of the automaton these declarations belong to.
+        """
+        self._automaton_name: str = automaton_name
         # Dict of publishers and subscribers: topic name -> type
         self._publishers: Dict[str, str] = {}
         self._subscribers: Dict[str, str] = {}
         self._service_servers: Dict[str, str] = {}
         self._service_clients: Dict[str, str] = {}
         self._timers: Dict[str, float] = {}
+
+    def get_automaton_name(self) -> str:
+        """Get name of the automaton that these declarations are defined in."""
+        return self._automaton_name
 
     def append_publisher(self, topic_name: str, topic_type: str) -> None:
         assert isinstance(topic_name, str) and isinstance(topic_type, str), \
@@ -147,3 +189,9 @@ class ScxmlRosDeclarationsContainer:
 
     def get_timers(self) -> Dict[str, float]:
         return self._timers
+
+    def get_service_client_type(self, service_name: str) -> Optional[str]:
+        return self._service_clients.get(service_name, None)
+
+    def get_service_server_type(self, service_name: str) -> Optional[str]:
+        return self._service_servers.get(service_name, None)
