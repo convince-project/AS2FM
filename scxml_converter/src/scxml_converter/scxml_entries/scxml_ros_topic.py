@@ -33,13 +33,11 @@ from scxml_converter.scxml_entries.utils import is_msg_type_known
 class RosTopicPublisher(ScxmlBase):
     """Object used in SCXML root to declare a new topic publisher."""
 
-    def __init__(self, topic_name: str, topic_type: str) -> None:
-        self._topic_name = topic_name
-        self._topic_type = topic_type
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_topic_publisher"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
         """Create a RosTopicPublisher object from an XML tree."""
         assert xml_tree.tag == RosTopicPublisher.get_tag_name(), \
@@ -49,6 +47,10 @@ class RosTopicPublisher(ScxmlBase):
         assert topic_name is not None and topic_type is not None, \
             "Error: SCXML topic publisher: 'topic' or 'type' attribute not found in input xml."
         return RosTopicPublisher(topic_name, topic_type)
+
+    def __init__(self, topic_name: str, topic_type: str) -> None:
+        self._topic_name = topic_name
+        self._topic_type = topic_type
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -79,13 +81,11 @@ class RosTopicPublisher(ScxmlBase):
 class RosTopicSubscriber(ScxmlBase):
     """Object used in SCXML root to declare a new topic subscriber."""
 
-    def __init__(self, topic_name: str, topic_type: str) -> None:
-        self._topic_name = topic_name
-        self._topic_type = topic_type
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_topic_subscriber"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicSubscriber":
         """Create a RosTopicSubscriber object from an XML tree."""
         assert xml_tree.tag == RosTopicSubscriber.get_tag_name(), \
@@ -95,6 +95,10 @@ class RosTopicSubscriber(ScxmlBase):
         assert topic_name is not None and topic_type is not None, \
             "Error: SCXML topic subscriber: 'topic' or 'type' attribute not found in input xml."
         return RosTopicSubscriber(topic_name, topic_type)
+
+    def __init__(self, topic_name: str, topic_type: str) -> None:
+        self._topic_name = topic_name
+        self._topic_type = topic_type
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -126,6 +130,22 @@ class RosTopicSubscriber(ScxmlBase):
 class RosTopicCallback(ScxmlTransition):
     """Object representing a transition to perform when a new ROS msg is received."""
 
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_topic_callback"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicCallback":
+        """Create a RosTopicCallback object from an XML tree."""
+        assert xml_tree.tag == RosTopicCallback.get_tag_name(), \
+            f"Error: SCXML topic callback: XML tag name is not {RosTopicCallback.get_tag_name()}"
+        topic_name = xml_tree.attrib.get("topic")
+        target = xml_tree.attrib.get("target")
+        assert topic_name is not None and target is not None, \
+            "Error: SCXML topic callback: 'topic' or 'target' attribute not found in input xml."
+        exec_body = execution_body_from_xml(xml_tree)
+        return RosTopicCallback(topic_name, target, exec_body)
+
     def __init__(
             self, topic: Union[RosTopicSubscriber, str], target: str,
             body: Optional[ScxmlExecutionBody] = None):
@@ -145,21 +165,6 @@ class RosTopicCallback(ScxmlTransition):
         self._target = target
         self._body = body
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
-
-    def get_tag_name() -> str:
-        return "ros_topic_callback"
-
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicCallback":
-        """Create a RosTopicCallback object from an XML tree."""
-        assert xml_tree.tag == RosTopicCallback.get_tag_name(), \
-            f"Error: SCXML topic callback: XML tag name is not {RosTopicCallback.get_tag_name()}"
-        topic_name = xml_tree.attrib.get("topic")
-        target = xml_tree.attrib.get("target")
-        assert topic_name is not None and target is not None, \
-            "Error: SCXML topic callback: 'topic' or 'target' attribute not found in input xml."
-        exec_body = execution_body_from_xml(xml_tree)
-        exec_body = exec_body if exec_body is not None else None
-        return RosTopicCallback(topic_name, target, exec_body)
 
     def check_validity(self) -> bool:
         valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
@@ -206,20 +211,11 @@ class RosTopicCallback(ScxmlTransition):
 class RosTopicPublish(ScxmlSend):
     """Object representing the shipping of a ROS msg through a topic."""
 
-    def __init__(self, topic: Union[RosTopicPublisher, str],
-                 fields: Optional[List[RosField]] = None):
-        if isinstance(topic, RosTopicPublisher):
-            self._topic = topic.get_topic_name()
-        else:
-            # Used for generating ROS entries from xml file
-            assert isinstance(topic, str), "Error: SCXML topic publish: invalid topic type."
-            self._topic = topic
-        self._fields = fields
-        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_topic_publish"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> ScxmlSend:
         """Create a RosTopicPublish object from an XML tree."""
         assert xml_tree.tag == RosTopicPublish.get_tag_name(), \
@@ -233,6 +229,17 @@ class RosTopicPublish(ScxmlSend):
         if len(fields) == 0:
             fields = None
         return RosTopicPublish(topic_name, fields)
+
+    def __init__(self, topic: Union[RosTopicPublisher, str],
+                 fields: Optional[List[RosField]] = None):
+        if isinstance(topic, RosTopicPublisher):
+            self._topic = topic.get_topic_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(topic, str), "Error: SCXML topic publish: invalid topic type."
+            self._topic = topic
+        self._fields = fields
+        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
 
     def check_validity(self) -> bool:
         valid_topic = isinstance(self._topic, str) and len(self._topic) > 0

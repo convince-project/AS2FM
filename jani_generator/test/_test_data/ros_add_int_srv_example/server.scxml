@@ -6,7 +6,7 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_service_server service_name="/adder" service_type="example_interfaces/AddTwoInts" />
+    <ros_service_server service_name="/adder" type="example_interfaces/AddTwoInts" />
 
     <state id="idle">
         <ros_service_handle_request service_name="/adder" target="idle">

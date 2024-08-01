@@ -21,11 +21,17 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Ser
 """
 
 from typing import Optional, List, Union
-from scxml_converter.scxml_entries import (ScxmlBase, RosField, ScxmlSend)
+from scxml_converter.scxml_entries import (ScxmlBase, RosField, ScxmlSend, ScxmlTransition,
+                                           ScxmlExecutionBody)
+from scxml_converter.scxml_entries import (execution_body_from_xml, valid_execution_body,
+                                           as_plain_execution_body)
 from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries.utils import ScxmlRosDeclarationsContainer
 from scxml_converter.scxml_entries.utils import (is_srv_type_known, get_srv_type_params,
-                                                 generate_srv_request_event)
+                                                 generate_srv_request_event,
+                                                 generate_srv_response_event,
+                                                 generate_srv_server_request_event,
+                                                 generate_srv_server_response_event)
 
 
 class RosServiceServer(ScxmlBase):
@@ -142,31 +148,14 @@ class RosServiceClient(ScxmlBase):
         return xml_srv_server
 
 
-class RosServiceSendRequest(ScxmlBase):
+class RosServiceSendRequest(ScxmlSend):
     """Object representing a ROS service request (from the client side) in SCXML."""
 
-    def __init__(self,
-                 service_decl: Union[str, RosServiceClient],
-                 fields: Optional[List[RosField]]) -> None:
-        """
-        Initialize a new RosServiceClient object.
-
-        :param service_decl: Name of the service of Scxml obj. of Service Client declaration.
-        :param type: List of fields to be sent in the request.
-        """
-        if isinstance(service_decl, RosServiceClient):
-            self._srv_name = service_decl.get_service_name()
-        else:
-            # Used for generating ROS entries from xml file
-            assert isinstance(service_decl, str), \
-                "Error: SCXML Service Send Request: invalid service name."
-            self._srv_name = service_decl
-        self._fields = fields
-        assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_service_send_request"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendRequest":
         """Create a RosServiceServer object from an XML tree."""
         assert xml_tree.tag == RosServiceSendRequest.get_tag_name(), \
@@ -181,6 +170,25 @@ class RosServiceSendRequest(ScxmlBase):
         if len(fields) == 0:
             fields = None
         return RosServiceSendRequest(srv_name, fields)
+
+    def __init__(self,
+                 service_decl: Union[str, RosServiceClient],
+                 fields: Optional[List[RosField]]) -> None:
+        """
+        Initialize a new RosServiceSendRequest object.
+
+        :param service_decl: Name of the service of Scxml obj. of Service Client declaration.
+        :param fields: List of fields to be sent in the request.
+        """
+        if isinstance(service_decl, RosServiceClient):
+            self._srv_name = service_decl.get_service_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(service_decl, str), \
+                "Error: SCXML Service Send Request: invalid service name."
+            self._srv_name = service_decl
+        self._fields = fields
+        assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
@@ -216,78 +224,126 @@ class RosServiceSendRequest(ScxmlBase):
         return xml_srv_request
 
 
-class RosServiceHandleRequest(ScxmlBase):
+class RosServiceHandleRequest(ScxmlTransition):
     """SCXML object representing a ROS service callback on the server, acting upon a request."""
 
-    def __init__(self, service_name: str, target: str) -> None:
-        """
-        Initialize a new RosServiceClient object.
-
-        :param service_name: Topic used by the service.
-        :param type: ROS type of the service.
-        """
-        self._service_name = service_name
-        self._type = type
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_service_handle_request"
 
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleRequest":
         """Create a RosServiceServer object from an XML tree."""
-        pass
+        assert xml_tree.tag == RosServiceHandleRequest.get_tag_name(), \
+            "Error: SCXML service request handler: XML tag name is not " +\
+            RosServiceHandleRequest.get_tag_name()
+        srv_name = xml_tree.attrib.get("service_name")
+        target_name = xml_tree.attrib.get("target")
+        assert srv_name is not None and target_name is not None, \
+            "Error: SCXML service request handler: 'service_name' or 'target' attribute not " \
+            "found in input xml."
+        exec_body = execution_body_from_xml(xml_tree)
+        return RosServiceHandleRequest(srv_name, target_name, exec_body)
+
+    def __init__(self, service_decl: Union[str, RosServiceServer], target: str,
+                 body: Optional[ScxmlExecutionBody] = None) -> None:
+        """
+        Initialize a new RosServiceHandleRequest object.
+
+        :param service_decl: The service server declaration, or its name.
+        :param target: Target state after the request has been received.
+        :param body: Execution body to be executed upon request, before transitioning to target.
+        """
+        if isinstance(service_decl, RosServiceServer):
+            self._service_name = service_decl.get_service_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(service_decl, str), \
+                "Error: SCXML Service Handle Request: invalid service name."
+            self._service_name = service_decl
+        self._target = target
+        self._body = body
+        assert self.check_validity(), "Error: SCXML Service Handle Request: invalid parameters."
 
     def check_validity(self) -> bool:
-        pass
+        valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
+        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_body = self._body is None or valid_execution_body(self._body)
+        if not valid_name:
+            print("Error: SCXML Service Handle Request: service name is not valid.")
+        if not valid_target:
+            print("Error: SCXML Service Handle Request: target is not valid.")
+        if not valid_body:
+            print("Error: SCXML Service Handle Request: body is not valid.")
+        return valid_name and valid_target and valid_body
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        pass
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        event_name = generate_srv_server_request_event(self._service_name)
+        target = self._target
+        body = as_plain_execution_body(self._body, ros_declarations)
+        return ScxmlTransition(target, [event_name], None, body)
 
     def as_xml(self) -> ET.Element:
-        pass
+        assert self.check_validity(), "Error: SCXML Service Handle Request: invalid parameters."
+        xml_srv_request = ET.Element(RosServiceHandleRequest.get_tag_name(),
+                                     {"service_name": self._service_name, "target": self._target})
+        if self._body is not None:
+            for body_elem in self._body.as_xml():
+                xml_srv_request.append(body_elem)
+        return xml_srv_request
 
 
-class RosServiceSendResponse(ScxmlBase):
-    """Object used in SCXML root to declare a new service client."""
+class RosServiceSendResponse(ScxmlSend):
+    """SCXML object representing the response from a service server."""
 
-    def __init__(self, service_name: str, type: str) -> None:
-        """
-        Initialize a new RosServiceClient object.
-
-        :param service_name: Topic used by the service.
-        :param type: ROS type of the service.
-        """
-        self._service_name = service_name
-        self._type = type
-
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_service_send_response"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
         """Create a RosServiceServer object from an XML tree."""
         pass
 
+    def __init__(self, service_name: Union[str, RosServiceServer],
+                 fields: Optional[List[RosField]]) -> None:
+        """
+        Initialize a new RosServiceClient object.
+
+        :param service_name: Topic used by the service.
+        :param fields: List of fields to be sent in the response.
+        """
+        if isinstance(service_name, RosServiceServer):
+            self._service_name = service_name.get_service_name()
+        else:
+            # Used for generating ROS entries from xml file
+            assert isinstance(service_name, str), \
+                "Error: SCXML Service Send Response: invalid service name."
+            self._service_name = service_name
+        assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
+
     def check_validity(self) -> bool:
         pass
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> ScxmlSend:
         pass
 
     def as_xml(self) -> ET.Element:
         pass
 
 
-class RosServiceHandleResponse(ScxmlBase):
-    """Object used in SCXML root to declare a new service client."""
+class RosServiceHandleResponse(ScxmlTransition):
+    """SCXML object representing the handler of a service response for a service client."""
 
-    def __init__(self, service_name: str, type: str) -> None:
+    def __init__(self, service_decl: Union[str, RosServiceClient], target: str,
+                 body: Optional[ScxmlExecutionBody] = None) -> None:
         """
         Initialize a new RosServiceClient object.
 
         :param service_name: Topic used by the service.
         :param type: ROS type of the service.
         """
-        self._service_name = service_name
-        self._type = type
+        pass
 
     def get_tag_name() -> str:
         return "ros_service_handle_response"
@@ -299,7 +355,7 @@ class RosServiceHandleResponse(ScxmlBase):
     def check_validity(self) -> bool:
         pass
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> ScxmlTransition:
         pass
 
     def as_xml(self) -> ET.Element:
