@@ -300,24 +300,13 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :return: The execution entry
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
-    from .scxml_ros_topic import RosTopicPublish
-    from .scxml_ros_service import RosServiceSendRequest, RosServiceSendResponse
-    # Switch based on the tag name
+    from .scxml_ros_entries import ScxmlRosSends
+    # TODO: This should be generated only once, since it stays as it is
+    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
     exec_tag = xml_tree.tag
-    if exec_tag == ScxmlIf.get_tag_name():
-        return ScxmlIf.from_xml_tree(xml_tree)
-    elif exec_tag == ScxmlAssign.get_tag_name():
-        return ScxmlAssign.from_xml_tree(xml_tree)
-    elif exec_tag == ScxmlSend.get_tag_name():
-        return ScxmlSend.from_xml_tree(xml_tree)
-    elif exec_tag == RosTopicPublish.get_tag_name():
-        return RosTopicPublish.from_xml_tree(xml_tree)
-    elif exec_tag == RosServiceSendRequest.get_tag_name():
-        return RosServiceSendRequest.from_xml_tree(xml_tree)
-    elif exec_tag == RosServiceSendResponse.get_tag_name():
-        return RosServiceSendResponse.from_xml_tree(xml_tree)
-    else:
-        raise ValueError(f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry.")
+    assert exec_tag in tag_to_cls, \
+        f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
+    return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 
 def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:

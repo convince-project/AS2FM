@@ -20,11 +20,10 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, RosRateCallback, RosTopicCallback,
-                                           ScxmlTransition, ScxmlRosDeclarationsContainer,
-                                           ScxmlExecutableEntry, ScxmlExecutionBody,
-                                           as_plain_execution_body, execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlTransition, ScxmlRosDeclarationsContainer,
+    ScxmlRosTransitions, ScxmlExecutableEntry, ScxmlExecutionBody,
+    as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
 
 class ScxmlState(ScxmlBase):
@@ -87,13 +86,11 @@ class ScxmlState(ScxmlBase):
 
     def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
+        tag_to_cls = {cls.get_tag_name(): cls for cls in ScxmlRosTransitions}
+        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
-            if child.tag == ScxmlTransition.get_tag_name():
-                transitions.append(ScxmlTransition.from_xml_tree(child))
-            elif child.tag == RosRateCallback.get_tag_name():
-                transitions.append(RosRateCallback.from_xml_tree(child))
-            elif child.tag == RosTopicCallback.get_tag_name():
-                transitions.append(RosTopicCallback.from_xml_tree(child))
+            if child.tag in tag_to_cls:
+                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
         return transitions
 
     def add_transition(self, transition: ScxmlTransition):

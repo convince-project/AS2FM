@@ -16,8 +16,18 @@
 """Declaration of ROS-Specific SCXML tags extensions."""
 
 from typing import Union
-from scxml_converter.scxml_entries import (RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
-                                           RosServiceServer, RosServiceClient)
+from scxml_converter.scxml_entries import (
+    RosTimeRate, RosTopicPublisher, RosTopicSubscriber, RosServiceServer, RosServiceClient,
+    RosServiceHandleRequest, RosServiceHandleResponse,
+    RosServiceSendRequest, RosServiceSendResponse,
+    RosTopicPublish, RosTopicCallback, RosRateCallback)
 
 ScxmlRosDeclarations = Union[RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
                              RosServiceServer, RosServiceClient]
+
+# List of Ros entries inheriting from ScxmlTransition
+ScxmlRosTransitions = (RosServiceHandleRequest, RosServiceHandleResponse,
+                       RosTopicCallback, RosRateCallback)
+
+# List of Ros entries inheriting from ScxmlSend
+ScxmlRosSends = (RosServiceSendRequest, RosServiceSendResponse, RosTopicPublish)

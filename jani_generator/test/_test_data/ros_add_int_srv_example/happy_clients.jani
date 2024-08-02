@@ -9,7 +9,7 @@
                     "op": "Pmin",
                     "exp": {
                         "op": "F",
-                        "expr": {
+                        "exp": {
                             "op": "∧",
                             "left": {
                                 "op": "∧",
