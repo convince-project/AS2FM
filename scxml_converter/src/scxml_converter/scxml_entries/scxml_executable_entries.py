@@ -104,7 +104,8 @@ class ScxmlIf(ScxmlBase):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check the executable content
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
@@ -300,6 +301,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
     from .scxml_ros_topic import RosTopicPublish
+    from .scxml_ros_service import RosServiceSendRequest, RosServiceSendResponse
     # Switch based on the tag name
     exec_tag = xml_tree.tag
     if exec_tag == ScxmlIf.get_tag_name():
@@ -310,6 +312,10 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
         return ScxmlSend.from_xml_tree(xml_tree)
     elif exec_tag == RosTopicPublish.get_tag_name():
         return RosTopicPublish.from_xml_tree(xml_tree)
+    elif exec_tag == RosServiceSendRequest.get_tag_name():
+        return RosServiceSendRequest.from_xml_tree(xml_tree)
+    elif exec_tag == RosServiceSendResponse.get_tag_name():
+        return RosServiceSendResponse.from_xml_tree(xml_tree)
     else:
         raise ValueError(f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry.")
 
