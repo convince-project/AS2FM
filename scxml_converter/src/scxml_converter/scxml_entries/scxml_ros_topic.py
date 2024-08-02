@@ -244,7 +244,7 @@ class RosTopicPublish(ScxmlSend):
     def check_validity(self) -> bool:
         valid_topic = isinstance(self._topic, str) and len(self._topic) > 0
         valid_fields = self._fields is None or \
-            all([isinstance(field, RosField) for field in self._fields])
+            all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
         if not valid_topic:
             print("Error: SCXML topic publish: topic name is not valid.")
         if not valid_fields:

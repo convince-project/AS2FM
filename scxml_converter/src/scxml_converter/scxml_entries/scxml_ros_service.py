@@ -193,7 +193,7 @@ class RosServiceSendRequest(ScxmlSend):
     def check_validity(self) -> bool:
         valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
         valid_fields = self._fields is None or \
-            all([isinstance(field, RosField) for field in self._fields])
+            all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
         if not valid_name:
             print("Error: SCXML service request: service name is not valid.")
         if not valid_fields:
@@ -202,15 +202,17 @@ class RosServiceSendRequest(ScxmlSend):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         service_type = ros_declarations.get_service_client_type(self._srv_name)
-        expected_params, _ = get_srv_type_params(service_type)
+        # Get all params expected in the service request
+        req_params, _ = get_srv_type_params(service_type)
         event_name = generate_srv_request_event(
             self._srv_name, ros_declarations.get_automaton_name())
+        # Ensure all required fields are specified
         for field in self._fields:
-            assert field.get_name() in expected_params, \
+            assert field.get_name() in req_params, \
                 f"Error: SCXML service request: field {field.get_name()} not in {service_type}."
-            expected_params.pop(field.get_name())
-        assert len(expected_params) == 0, \
-            f"Error: SCXML service request: missing fields {expected_params}."
+            req_params.pop(field.get_name())
+        assert len(req_params) == 0, \
+            f"Error: SCXML service request: missing fields {req_params}."
         event_params = [field.as_plain_scxml() for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
@@ -303,7 +305,18 @@ class RosServiceSendResponse(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
         """Create a RosServiceServer object from an XML tree."""
-        pass
+        assert xml_tree.tag == RosServiceSendResponse.get_tag_name(), \
+            "Error: SCXML service response: XML tag name is not " + \
+            RosServiceSendResponse.get_tag_name()
+        srv_name = xml_tree.attrib.get("service_name")
+        assert srv_name is not None, \
+            "Error: SCXML service response: 'service_name' attribute not found in input xml."
+        fields = []
+        for field_xml in xml_tree:
+            fields.append(RosField.from_xml_tree(field_xml))
+        if len(fields) == 0:
+            fields = None
+        return RosServiceSendResponse(srv_name, fields)
 
     def __init__(self, service_name: Union[str, RosServiceServer],
                  fields: Optional[List[RosField]]) -> None:
@@ -320,20 +333,55 @@ class RosServiceSendResponse(ScxmlSend):
             assert isinstance(service_name, str), \
                 "Error: SCXML Service Send Response: invalid service name."
             self._service_name = service_name
+        self._fields = fields
         assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
 
     def check_validity(self) -> bool:
-        pass
+        valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
+        valid_fields = self._fields is None or \
+            all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
+        if not valid_name:
+            print("Error: SCXML service response: service name is not valid.")
+        if not valid_fields:
+            print("Error: SCXML service response: fields are not valid.")
+        return valid_name and valid_fields
 
-    def as_plain_scxml(self, _) -> ScxmlSend:
-        pass
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
+        service_type = ros_declarations.get_service_server_type(self._service_name)
+        # Get all params expected in the service response
+        _, res_params = get_srv_type_params(service_type)
+        event_name = generate_srv_server_response_event(self._service_name)
+        # Ensure all required fields are specified
+        for field in self._fields:
+            assert field.get_name() in res_params, \
+                f"Error: SCXML service response: field {field.get_name()} not in {service_type}."
+            res_params.pop(field.get_name())
+        assert len(res_params) == 0, \
+            f"Error: SCXML service server response: missing fields {res_params}."
+        event_params = [field.as_plain_scxml() for field in self._fields]
+        return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:
-        pass
+        assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
+        xml_srv_response = ET.Element(RosServiceSendResponse.get_tag_name(),
+                                      {"service_name": self._service_name})
+        if self._fields is not None:
+            for field in self._fields:
+                xml_srv_response.append(field.as_xml())
+        return xml_srv_response
 
 
 class RosServiceHandleResponse(ScxmlTransition):
     """SCXML object representing the handler of a service response for a service client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_service_handle_response"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+        """Create a RosServiceServer object from an XML tree."""
+        pass
 
     def __init__(self, service_decl: Union[str, RosServiceClient], target: str,
                  body: Optional[ScxmlExecutionBody] = None) -> None:
@@ -343,13 +391,6 @@ class RosServiceHandleResponse(ScxmlTransition):
         :param service_name: Topic used by the service.
         :param type: ROS type of the service.
         """
-        pass
-
-    def get_tag_name() -> str:
-        return "ros_service_handle_response"
-
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
-        """Create a RosServiceServer object from an XML tree."""
         pass
 
     def check_validity(self) -> bool:
