@@ -16,7 +16,6 @@
 """Declaration of the ROS Field SCXML tag extension."""
 
 from scxml_converter.scxml_entries import ScxmlParam
-from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
 from xml.etree import ElementTree as ET
 
 
@@ -51,6 +50,7 @@ class RosField(ScxmlParam):
         return valid_name and valid_expr
 
     def as_plain_scxml(self) -> ScxmlParam:
+        from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
         return ScxmlParam(self._name, expr=replace_ros_interface_expression(self._expr))
 
     def as_xml(self) -> ET.Element:

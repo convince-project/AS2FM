@@ -140,7 +140,7 @@ class RosRateCallback(ScxmlTransition):
         if not timer_cb_declared:
             print(f"Error: SCXML rate callback: timer {self._timer_name} not declared.")
             return False
-        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
+        valid_body = super().check_valid_ros_instantiations(ros_declarations)
         if not valid_body:
             print("Error: SCXML rate callback: body has invalid ROS instantiations.")
         return valid_body

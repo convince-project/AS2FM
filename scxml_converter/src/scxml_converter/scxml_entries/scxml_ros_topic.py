@@ -187,12 +187,14 @@ class RosTopicCallback(ScxmlTransition):
         if not topic_cb_declared:
             print(f"Error: SCXML topic callback: topic subscriber {self._topic} not declared.")
             return False
-        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
+        valid_body = super().check_valid_ros_instantiations(ros_declarations)
         if not valid_body:
             print("Error: SCXML topic callback: body has invalid ROS instantiations.")
         return valid_body
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML topic callback: invalid ROS instantiations."
         event_name = "ros_topic." + self._topic
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
@@ -272,7 +274,9 @@ class RosTopicPublish(ScxmlSend):
             self._fields = []
         self._fields.append(field)
 
-    def as_plain_scxml(self, _) -> ScxmlSend:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML topic publish: invalid ROS instantiations."
         event_name = "ros_topic." + self._topic
         params = None if self._fields is None else \
             [field.as_plain_scxml() for field in self._fields]

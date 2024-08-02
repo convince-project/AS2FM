@@ -117,29 +117,18 @@ class ScxmlTransition(ScxmlBase):
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
-        # Check the executable content
-        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
-        if not valid_body:
-            print("Error: SCXML transition: executable content has invalid ROS instantiations.")
-        return valid_body
-
-    def _check_valid_ros_instantiations_exec_body(self,
-                                                  ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared in the executable body."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML transition: invalid ROS declarations container."
-        if self._body is None:
-            return True
-        for entry in self._body:
-            if not entry.check_valid_ros_instantiations(ros_declarations):
-                return False
-        return True
+        # For SCXML transitions, ROS interfaces can be found only in the exec body
+        return self._body is None or \
+            all(entry.check_valid_ros_instantiations(ros_declarations) for entry in self._body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML transition: invalid ROS declarations container."
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML transition: invalid ROS instantiations in transition body."
         new_body = None
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]

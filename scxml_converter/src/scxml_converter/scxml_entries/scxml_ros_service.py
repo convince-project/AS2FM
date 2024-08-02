@@ -27,7 +27,7 @@ from scxml_converter.scxml_entries import (execution_body_from_xml, valid_execut
                                            as_plain_execution_body)
 from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries.utils import ScxmlRosDeclarationsContainer
-from scxml_converter.scxml_entries.utils import (is_srv_type_known, get_srv_type_params,
+from scxml_converter.scxml_entries.utils import (is_srv_type_known,
                                                  generate_srv_request_event,
                                                  generate_srv_response_event,
                                                  generate_srv_server_request_event,
@@ -200,19 +200,26 @@ class RosServiceSendRequest(ScxmlSend):
             print("Error: SCXML service request: fields are not valid.")
         return valid_name and valid_fields
 
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the ros instantiations have been declared."""
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML service request: invalid ROS declarations container."
+        srv_client_declared = ros_declarations.is_service_client_defined(self._srv_name)
+        if not srv_client_declared:
+            print(f"Error: SCXML service request: srv client {self._srv_name} not declared.")
+            return False
+        valid_fields = ros_declarations.check_valid_srv_req_fields(self._srv_name, self._fields)
+        if not valid_fields:
+            print("Error: SCXML service request: invalid fields in request.")
+            return False
+        return True
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        service_type = ros_declarations.get_service_client_type(self._srv_name)
-        # Get all params expected in the service request
-        req_params, _ = get_srv_type_params(service_type)
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML service request: invalid ROS instantiations."
         event_name = generate_srv_request_event(
             self._srv_name, ros_declarations.get_automaton_name())
-        # Ensure all required fields are specified
-        for field in self._fields:
-            assert field.get_name() in req_params, \
-                f"Error: SCXML service request: field {field.get_name()} not in {service_type}."
-            req_params.pop(field.get_name())
-        assert len(req_params) == 0, \
-            f"Error: SCXML service request: missing fields {req_params}."
         event_params = [field.as_plain_scxml() for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
@@ -279,7 +286,23 @@ class RosServiceHandleRequest(ScxmlTransition):
             print("Error: SCXML Service Handle Request: body is not valid.")
         return valid_name and valid_target and valid_body
 
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML service request handler: invalid ROS declarations container."
+        srv_server_declared = ros_declarations.is_service_server_defined(self._service_name)
+        if not srv_server_declared:
+            print("Error: SCXML service request handler: "
+                  f"srv server {self._service_name} not declared.")
+            return False
+        valid_body = super().check_valid_ros_instantiations(ros_declarations)
+        if not valid_body:
+            print("Error: SCXML service request handler: body has invalid ROS instantiations.")
+        return valid_body
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML service request handler: invalid ROS instantiations."
         event_name = generate_srv_server_request_event(self._service_name)
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
@@ -346,18 +369,25 @@ class RosServiceSendResponse(ScxmlSend):
             print("Error: SCXML service response: fields are not valid.")
         return valid_name and valid_fields
 
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML service request handler: invalid ROS declarations container."
+        srv_declared = ros_declarations.is_service_server_defined(self._service_name)
+        if not srv_declared:
+            print("Error: SCXML service request handler: "
+                  f"srv server {self._service_name} not declared.")
+            return False
+        valid_fields = ros_declarations.check_valid_srv_res_fields(self._service_name, self._fields)
+        if not valid_fields:
+            print("Error: SCXML service request handler: invalid fields in response.")
+            return False
+        return True
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        service_type = ros_declarations.get_service_server_type(self._service_name)
-        # Get all params expected in the service response
-        _, res_params = get_srv_type_params(service_type)
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML service response: invalid ROS instantiations."
         event_name = generate_srv_server_response_event(self._service_name)
-        # Ensure all required fields are specified
-        for field in self._fields:
-            assert field.get_name() in res_params, \
-                f"Error: SCXML service response: field {field.get_name()} not in {service_type}."
-            res_params.pop(field.get_name())
-        assert len(res_params) == 0, \
-            f"Error: SCXML service server response: missing fields {res_params}."
         event_params = [field.as_plain_scxml() for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
@@ -423,7 +453,23 @@ class RosServiceHandleResponse(ScxmlTransition):
             print("Error: SCXML Service Handle Response: body is not valid.")
         return valid_name and valid_target and valid_body
 
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML service request handler: invalid ROS declarations container."
+        srv_declared = ros_declarations.is_service_server_defined(self._service_name)
+        if not srv_declared:
+            print("Error: SCXML service request handler: "
+                  f"srv server {self._service_name} not declared.")
+            return False
+        valid_body = super().check_valid_ros_instantiations(ros_declarations)
+        if not valid_body:
+            print("Error: SCXML service request handler: body has invalid ROS instantiations.")
+        return valid_body
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML service response handler: invalid ROS instantiations."
         event_name = generate_srv_response_event(self._service_name)
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
