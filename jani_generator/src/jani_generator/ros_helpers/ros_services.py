@@ -108,7 +108,7 @@ class RosService:
                                                 generate_srv_server_request_event(
                                                     self._service_name),
                                                 [ScxmlParam(field_name, expr=f"_event.{field_name}")
-                                                 for field_name, _ in req_params]
+                                                 for field_name in req_params]
                                                 )])
                                     for client_id in self._service_client_automata])
         processing_states = [
@@ -119,14 +119,15 @@ class RosService:
                                body=[ScxmlSend(
                                    generate_srv_response_event(self._service_name, client_id),
                                    [ScxmlParam(field_name, expr=f"_event.{field_name}")
-                                    for field_name, _ in res_params]
+                                    for field_name in res_params]
                                     )])])
             for client_id in self._service_client_automata]
         # Prepare the ScxmlRoot object and return it
         scxml_root = ScxmlRoot(scxml_root_name)
-        scxml_root.add_state(wait_state)
+        scxml_root.add_state(wait_state, initial=True)
         for processing_state in processing_states:
             scxml_root.add_state(processing_state)
+        assert scxml_root.is_plain_scxml(), "Generated SCXML for srv sync is not plain SCXML."
         return scxml_root
 
 

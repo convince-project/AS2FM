@@ -159,7 +159,9 @@ def generate_plain_scxml_models_and_timers(
             all_services[service_name].set_service_server(
                 service_name, service_type, plain_scxml.get_name())
         plain_scxml_models.append(plain_scxml)
-    # TODO: Generate missing service sync SCXML models
+    # Generate service sync SCXML models
+    for service_info in all_services.values():
+        plain_scxml_models.append(service_info.to_scxml())
     return plain_scxml_models, all_timers
 
 
