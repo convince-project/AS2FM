@@ -20,7 +20,7 @@ Module reading the top level xml file containing the whole model to check.
 import os
 import json
 
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple
 
 from xml.etree import ElementTree as ET
 
@@ -163,16 +163,25 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def interpret_top_level_xml(xml_path: str) -> JaniModel:
+def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False) -> JaniModel:
     """
     Interpret the top-level XML file as a Jani model.
 
     :param xml_path: The path to the XML file to interpret.
     :return: The interpreted Jani model.
     """
+    model_dir = os.path.dirname(xml_path)
     full_model_dict = parse_main_xml(xml_path)
     assert full_model_dict["max_time"] is not None, f"Max time must be defined in {xml_path}."
     plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(full_model_dict)
+
+    if store_generated_scxmls:
+        plain_scxml_dir = os.path.join(model_dir, "generated_plain_scxml")
+        os.makedirs(plain_scxml_dir, exist_ok=True)
+        for scxml_model in plain_scxml_models:
+            with open(os.path.join(plain_scxml_dir, f"{scxml_model.get_name()}.scxml"), "w",
+                      encoding='utf-8') as f:
+                f.write(scxml_model.as_xml_string())
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, full_model_dict["max_time"])
@@ -182,6 +191,6 @@ def interpret_top_level_xml(xml_path: str) -> JaniModel:
     with open(full_model_dict["properties"][0], "r", encoding='utf-8') as f:
         jani_dict["properties"] = json.load(f)["properties"]
 
-    output_path = os.path.join(os.path.dirname(xml_path), "main.jani")
+    output_path = os.path.join(model_dir, "main.jani")
     with open(output_path, "w", encoding='utf-8') as f:
         json.dump(jani_dict, f, indent=2, ensure_ascii=False)

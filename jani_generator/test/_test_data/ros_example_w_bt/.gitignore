@@ -1,6 +1,3 @@
-*_plain.scxml
-*_plain_timer_*.scxml
-*_TopicAction.scxml
-*_TopicCondition.scxml
-bt.scxml
+generated_bt_scxml
+generated_plain_scxml
 main.jani

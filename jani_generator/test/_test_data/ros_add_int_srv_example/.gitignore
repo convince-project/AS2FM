@@ -1,4 +1,3 @@
-*_plain.scxml
-*_plain_timer_*.scxml
-global_time_statemachine.scxml\
+generated_bt_scxml
+generated_plain_scxml
 main.jani

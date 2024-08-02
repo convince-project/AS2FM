@@ -195,7 +195,9 @@ class TestConversion(unittest.TestCase):
 
     # Tests using main.xml ...
 
-    def _test_with_main(self, folder: str, property_name: str, success: bool):
+    def _test_with_main(self,
+                        folder: str, property_name: str, success: bool,
+                        store_generated_scxmls: bool = False):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
@@ -203,7 +205,7 @@ class TestConversion(unittest.TestCase):
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
-        interpret_top_level_xml(xml_main_path)
+        interpret_top_level_xml(xml_main_path, store_generated_scxmls)
         self.assertTrue(os.path.exists(ouput_path))
         # ground_truth = os.path.join(
         #     test_data_dir,
@@ -260,7 +262,7 @@ class TestConversion(unittest.TestCase):
 
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
-        self._test_with_main('ros_add_int_srv_example', 'happy_clients', True)
+        self._test_with_main('ros_add_int_srv_example', 'happy_clients', True, True)
 
 
 if __name__ == '__main__':
