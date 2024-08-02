@@ -24,6 +24,17 @@ SupportedExp = Union[str, int, float, bool, dict]
 
 
 class JaniExpression:
+    """
+    Jani Expression class.
+
+    Content of an instance of this class can be:
+    - identifier: a string representing a reference to a constant or variable (literal)
+    or
+    - value: a JaniValue object
+    or
+    - op: a string representing an operator
+    - operands: a dictionary of operands, related to the specified operator
+    """
     def __init__(self, expression: Union[SupportedExp, 'JaniExpression', JaniValue]):
         self.identifier: str = None
         self.value: JaniValue = None

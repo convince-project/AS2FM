@@ -23,7 +23,9 @@ MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
 }
 
-BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']
+BASIC_FIELD_TYPES = ['boolean',
+                     'int8', 'int16', 'int32', 'int64',
+                     'float', 'double']
 
 
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
@@ -72,7 +74,7 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     for key in req.keys():
         # TODO: Support nested fields
         assert req[key] in BASIC_FIELD_TYPES, \
-            "Error: SCXML ROS declarations: service request type contains non-basic fields."
+            f"Error: SCXML ROS declarations: service request type {req[key]} isn't a basic field."
         req[key] = MSG_TYPE_SUBSTITUTIONS.get(req[key], req[key])
 
     res = srv_class.Response.get_fields_and_field_types()

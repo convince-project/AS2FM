@@ -17,8 +17,6 @@
 Module producing jani expressions from ecmascript.
 """
 
-from typing import Union
-
 import esprima
 
 from jani_generator.jani_entries.jani_expression import JaniExpression
@@ -26,7 +24,7 @@ from jani_generator.jani_entries.jani_value import JaniValue
 from jani_generator.jani_entries.jani_convince_expression_expansion import BASIC_EXPRESSIONS_MAPPING
 
 
-def parse_ecmascript_to_jani_expression(ecmascript: str) -> Union[JaniValue, JaniExpression]:
+def parse_ecmascript_to_jani_expression(ecmascript: str) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
 
@@ -39,8 +37,7 @@ def parse_ecmascript_to_jani_expression(ecmascript: str) -> Union[JaniValue, Jan
     return _parse_ecmascript_to_jani_expression(ast)
 
 
-def _parse_ecmascript_to_jani_expression(ast: esprima.nodes.Script
-                                         ) -> Union[JaniValue, JaniExpression]:
+def _parse_ecmascript_to_jani_expression(ast: esprima.nodes.Script) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
 
@@ -48,7 +45,7 @@ def _parse_ecmascript_to_jani_expression(ast: esprima.nodes.Script
     :return: The jani expression.
     """
     if ast.type == "Literal":
-        return JaniValue(ast.value)
+        return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
         return JaniExpression(ast.name)

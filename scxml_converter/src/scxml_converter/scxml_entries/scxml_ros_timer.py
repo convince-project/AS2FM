@@ -132,7 +132,8 @@ class RosRateCallback(ScxmlTransition):
             print("Error: SCXML rate callback: body is not valid.")
         return valid_timer and valid_target and valid_cond and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML rate callback: invalid ROS declarations container."
