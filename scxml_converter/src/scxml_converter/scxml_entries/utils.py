@@ -89,10 +89,9 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
 def replace_ros_interface_expression(msg_expr: str) -> str:
     """Convert a ROS interface expression (msg, req, res) to plain SCXML (event)."""
     scxml_prefix = "_event."
+    # TODO: Use regex and ensure no other valid character exists before the initial underscore
     for ros_prefix in ["_msg.", "_req.", "_res."]:
-        if msg_expr.startswith(ros_prefix):
-            return scxml_prefix + msg_expr.removeprefix(ros_prefix)
-    # if there are no prefixes, return as is
+        msg_expr = msg_expr.replace(ros_prefix, scxml_prefix)
     return msg_expr
 
 
