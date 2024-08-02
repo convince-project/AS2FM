@@ -85,7 +85,7 @@ class JaniExpression:
                 "&&", "||", "and", "or", "∨", "∧",
                 "⇒", "=>", "=", "≠", "!=", "+", "-", "*", "%",
                 "pow", "log", "/", "min", "max",
-                "<", "≤", ">", "≥", "<=", ">=")):
+                "<", "≤", ">", "≥", "<=", ">=", "==")):
             return {
                 "left": JaniExpression(expression_dict["left"]),
                 "right": JaniExpression(expression_dict["right"])}

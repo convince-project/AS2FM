@@ -7,7 +7,7 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="battery_alarm" expr="false" type="bool" />
+        <data id="temp_sum" type="int64" expr="0" />
     </datamodel>
     
     <ros_topic_publisher topic="/client_1_res" type="std_msgs/Bool" />
@@ -21,8 +21,9 @@
             </ros_service_send_request>
         </onentry>
         <ros_service_handle_response service_name="/adder" target="done">
+            <assign location="temp_sum" expr="_res.sum" />
             <ros_topic_publish topic="/client_1_res">
-                <field name="data" expr="_res.sum == 42" />
+                <field name="data" expr="temp_sum == 42" />
             </ros_topic_publish>
         </ros_service_handle_response>
     </state>

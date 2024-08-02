@@ -94,6 +94,7 @@ class RosService:
 
         :return: Scxml object representing the necessary file content.
         """
+        # TODO: Use support variables in the data model to avoid having _event in send params (hack)
         self._assert_validity()
         req_params, res_params = get_srv_type_params(self._service_type)
         # Make sure the service name has no slashes and spaces
