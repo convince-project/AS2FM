@@ -20,20 +20,9 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 from typing import Any
 from scxml_converter.scxml_entries import ScxmlBase
 
+from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+
 from xml.etree import ElementTree as ET
-
-
-# TODO: add lower and upper bounds depending on the n. of bits used.
-# TODO: add support to uint
-SCXML_DATA_MAPPING = {
-    "bool": bool,
-    "float32": float,
-    "float64": float,
-    "int8": int,
-    "int16": int,
-    "int32": int,
-    "int64": int
-}
 
 
 class ScxmlData(ScxmlBase):
@@ -71,7 +60,7 @@ class ScxmlData(ScxmlBase):
         return self._id
 
     def get_type(self) -> type:
-        return SCXML_DATA_MAPPING[self._data_type]
+        return SCXML_DATA_STR_TO_TYPE[self._data_type]
 
     def get_expr(self) -> str:
         return self._expr
@@ -87,10 +76,10 @@ class ScxmlData(ScxmlBase):
             print(f"Error: SCXML data: 'expr' {self._expr} is not valid.")
             validity = False
         # Data type
-        if not (isinstance(self._data_type, str) and self._data_type in SCXML_DATA_MAPPING):
+        if not (isinstance(self._data_type, str) and self._data_type in SCXML_DATA_STR_TO_TYPE):
             print(f"Error: SCXML data: 'type' {self._data_type} is not valid.")
             validity = False
-        type_of_data = SCXML_DATA_MAPPING[self._data_type]
+        type_of_data = SCXML_DATA_STR_TO_TYPE[self._data_type]
         # Lower bound
         if self._lower_bound is not None:
             if not isinstance(self._lower_bound, type_of_data):

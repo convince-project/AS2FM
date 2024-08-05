@@ -145,7 +145,7 @@ class ScxmlData:
         if len(types) > 1:
             raise ValueError(
                 f"Multiple types found for data {self.id}: {types}")
-        
+
     def get_type(self) -> type:
         """Get the type of the data.
 

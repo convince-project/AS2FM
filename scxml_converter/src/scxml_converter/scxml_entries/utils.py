@@ -27,6 +27,18 @@ BASIC_FIELD_TYPES = ['boolean',
                      'int8', 'int16', 'int32', 'int64',
                      'float', 'double']
 
+# TODO: add lower and upper bounds depending on the n. of bits used.
+# TODO: add support to uint
+SCXML_DATA_STR_TO_TYPE = {
+    "bool": bool,
+    "float32": float,
+    "float64": float,
+    "int8": int,
+    "int16": int,
+    "int32": int,
+    "int64": int
+}
+
 
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     """
@@ -102,6 +114,11 @@ def sanitize_ros_interface_name(interface_name: str) -> str:
     assert interface_name.count(" ") == 0, \
         "Error: ROS interface sanitizer: interface name must not contain spaces."
     return interface_name.replace("/", "__")
+
+
+def get_default_expression_for_type(field_type: str) -> str:
+    """Generate a default expression for a field type."""
+    return str(SCXML_DATA_STR_TO_TYPE[field_type]())
 
 
 def generate_srv_request_event(service_name: str, automaton_name: str) -> str:
