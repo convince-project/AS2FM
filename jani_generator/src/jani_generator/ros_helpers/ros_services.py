@@ -102,7 +102,7 @@ class RosService:
             default_expr = get_default_expression_for_type(field_type)
             req_fields_as_data.append(ScxmlData(field_name, default_expr, field_type))
         # Make sure the service name has no slashes and spaces
-        scxml_root_name = sanitize_ros_interface_name(self._service_name)
+        scxml_root_name = "srv_handler_" + sanitize_ros_interface_name(self._service_name)
         wait_state = ScxmlState("waiting",
                                 body=[
                                     ScxmlTransition(

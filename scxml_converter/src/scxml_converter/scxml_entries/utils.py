@@ -111,6 +111,10 @@ def sanitize_ros_interface_name(interface_name: str) -> str:
     """Replace slashes in a ROS interface name."""
     assert isinstance(interface_name, str), \
         "Error: ROS interface sanitizer: interface name must be a string."
+    # Remove potential prepended slash
+    interface_name = interface_name.removeprefix("/")
+    assert len(interface_name) > 0, \
+        "Error: ROS interface sanitizer: interface name must not be empty."
     assert interface_name.count(" ") == 0, \
         "Error: ROS interface sanitizer: interface name must not contain spaces."
     return interface_name.replace("/", "__")
