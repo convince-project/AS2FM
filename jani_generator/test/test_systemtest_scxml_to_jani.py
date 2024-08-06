@@ -103,6 +103,7 @@ class TestConversion(unittest.TestCase):
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
+        print(automaton)
         self.assertEqual(len(automaton["locations"]), 1)
         self.assertEqual(len(automaton["initial-locations"]), 1)
         init_location = automaton["locations"][0]

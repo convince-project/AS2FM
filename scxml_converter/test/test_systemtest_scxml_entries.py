@@ -131,7 +131,7 @@ def test_battery_drainer_ros_from_code():
 
 
 def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
-    # TODO: Input path to scxml file fro args
+    # TODO: Input path to scxml file from args
     scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
     # Check output xml
     if valid_xml:

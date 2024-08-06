@@ -319,7 +319,7 @@ class ScxmlTag(BaseTag):
         initial_state_id = self.element.get_initial_state_id()
         initial_state = self.element.get_state_by_id(initial_state_id)
         # Make sure we execute the onentry block of the initial state at the start
-        if initial_state.get_onentry() is not None:
+        if len(initial_state.get_onentry()) > 0:
             source_state = f"{initial_state_id}-first-exec"
             target_state = initial_state_id
             onentry_body = initial_state.get_onentry()
