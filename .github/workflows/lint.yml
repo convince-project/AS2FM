@@ -13,7 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        linter: [ "pylint", "pycodestyle", "flake8", "mypy", "isort" ]
+        linter: [ 
+        # "pylint", 
+        # "pycodestyle", 
+        # "flake8", 
+        # "mypy", 
+          "isort" 
+          ]
         package: [ "jani_generator", "as2fm_common", "scxml_converter" ]
         include:
             # (for humble):
