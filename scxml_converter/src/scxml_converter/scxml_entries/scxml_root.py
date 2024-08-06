@@ -53,7 +53,7 @@ class ScxmlRoot(ScxmlBase):
         assert datamodel_elements is None or len(datamodel_elements) <= 1, \
             f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
-        ros_declarations = []
+        ros_declarations: List[ScxmlRosDeclarations] = []
         for child in xml_tree:
             if child.tag == RosTimeRate.get_tag_name():
                 ros_declarations.append(RosTimeRate.from_xml_tree(child))
@@ -105,10 +105,10 @@ class ScxmlRoot(ScxmlBase):
     def __init__(self, name: str):
         self._name = name
         self._version = "1.0"  # This is the only version mentioned in the official documentation
-        self._initial_state: str = None
+        self._initial_state: Optional[str] = None
         self._states: List[ScxmlState] = []
-        self._data_model: ScxmlDataModel = None
-        self._ros_declarations: List[ScxmlRosDeclarations] = None
+        self._data_model: Optional[ScxmlDataModel] = None
+        self._ros_declarations: List[ScxmlRosDeclarations] = []
 
     def get_name(self) -> str:
         """Get the name of the automaton represented by this SCXML model."""
@@ -116,6 +116,7 @@ class ScxmlRoot(ScxmlBase):
 
     def get_initial_state_id(self) -> str:
         """Get the ID of the initial state of the SCXML model."""
+        assert self._initial_state is not None, "Error: SCXML root: Initial state not set."
         return self._initial_state
 
     def get_data_model(self) -> Optional[ScxmlDataModel]:
@@ -149,7 +150,7 @@ class ScxmlRoot(ScxmlBase):
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
-    def _generate_ros_declarations_helper(self) -> ScxmlRosDeclarationsContainer:
+    def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
         ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
         if self._ros_declarations is not None:
@@ -232,12 +233,14 @@ class ScxmlRoot(ScxmlBase):
         plain_root._data_model = deepcopy(self._data_model)
         plain_root._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
+        assert ros_declarations is not None, "Error: SCXML root: invalid ROS declarations."
         plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
         return (plain_root, ros_declarations)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
+        assert self._initial_state is not None, "Error: SCXML root: no initial state set."
         xml_root = ET.Element("scxml", {
             "name": self._name,
             "version": self._version,
@@ -246,7 +249,9 @@ class ScxmlRoot(ScxmlBase):
             "xmlns": "http://www.w3.org/2005/07/scxml"
         })
         if self._data_model is not None:
-            xml_root.append(self._data_model.as_xml())
+            data_model_xml = self._data_model.as_xml()
+            assert data_model_xml is not None, "Error: SCXML root: invalid data model."
+            xml_root.append(data_model_xml)
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
                 xml_root.append(ros_declaration.as_xml())
