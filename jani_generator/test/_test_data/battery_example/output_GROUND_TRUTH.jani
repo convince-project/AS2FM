@@ -31,7 +31,7 @@
             "name": "use_battery-first-exec-use_battery-766fa6e4"
         },
         {
-            "name": "use_battery-use_battery-1b935c10"
+            "name": "use_battery-use_battery-cf7e7c41"
         }
     ],
     "automata": [
@@ -42,7 +42,7 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery-1-1b935c10"
+                    "name": "use_battery-1-cf7e7c41"
                 },
                 {
                     "name": "use_battery-first-exec"
@@ -59,7 +59,7 @@
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery-1-1b935c10",
+                            "location": "use_battery-1-cf7e7c41",
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -73,10 +73,10 @@
                             ]
                         }
                     ],
-                    "action": "use_battery-use_battery-1b935c10"
+                    "action": "use_battery-use_battery-cf7e7c41"
                 },
                 {
-                    "location": "use_battery-1-1b935c10",
+                    "location": "use_battery-1-cf7e7c41",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -259,9 +259,9 @@
                 ]
             },
             {
-                "result": "use_battery-use_battery-1b935c10",
+                "result": "use_battery-use_battery-cf7e7c41",
                 "synchronise": [
-                    "use_battery-use_battery-1b935c10",
+                    "use_battery-use_battery-cf7e7c41",
                     null,
                     null
                 ]
