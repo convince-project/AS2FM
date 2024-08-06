@@ -17,8 +17,8 @@
 
 import os
 
-from jani_generator.convince_jani_helpers import convince_jani_parser
 from jani_generator.jani_entries import JaniModel
+from jani_generator.convince_jani_helpers import convince_jani_parser
 
 
 def test_convince_to_plain_jani():

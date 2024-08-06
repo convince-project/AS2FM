@@ -17,12 +17,12 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import List, Optional, Tuple, Union, get_args
+from typing import List, Optional, Union, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (HelperRosDeclarations, ScxmlBase,
-                                           ScxmlParam)
-from scxml_converter.scxml_entries.utils import replace_ros_msg_expression
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer)
+
+from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -47,11 +47,11 @@ class ScxmlIf(ScxmlBase):
 
     def get_tag_name() -> str:
         return "if"
-    
+
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
         return self._conditional_executions
-    
+
     def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
         """Get the else execution."""
         return self._else_execution
@@ -104,10 +104,11 @@ class ScxmlIf(ScxmlBase):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check the executable content
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML if: invalid ROS declarations type provided."
         for _, exec_body in self._conditional_executions:
             for exec_entry in exec_body:
@@ -119,10 +120,10 @@ class ScxmlIf(ScxmlBase):
                     return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlIf":
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
-            condional_executions.append((replace_ros_msg_expression(condition),
+            condional_executions.append((replace_ros_interface_expression(condition),
                                          as_plain_execution_body(execution, ros_declarations)))
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(condional_executions, else_execution)
@@ -215,11 +216,11 @@ class ScxmlAssign(ScxmlBase):
 
     def get_tag_name() -> str:
         return "assign"
-    
+
     def get_location(self) -> str:
         """Get the location to assign."""
         return self._location
-    
+
     def get_expr(self) -> str:
         """Get the expression to assign."""
         return self._expr
@@ -253,7 +254,7 @@ class ScxmlAssign(ScxmlBase):
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
-        expr = replace_ros_msg_expression(self._expr)
+        expr = replace_ros_interface_expression(self._expr)
         return ScxmlAssign(self._location, expr)
 
     def as_xml(self) -> ET.Element:
@@ -299,20 +300,13 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :return: The execution entry
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
-    from .scxml_ros_entries import RosTopicPublish
-
-    # Switch based on the tag name
+    from .scxml_ros_entries import ScxmlRosSends
+    # TODO: This should be generated only once, since it stays as it is
+    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
     exec_tag = xml_tree.tag
-    if exec_tag == ScxmlIf.get_tag_name():
-        return ScxmlIf.from_xml_tree(xml_tree)
-    elif exec_tag == ScxmlAssign.get_tag_name():
-        return ScxmlAssign.from_xml_tree(xml_tree)
-    elif exec_tag == ScxmlSend.get_tag_name():
-        return ScxmlSend.from_xml_tree(xml_tree)
-    elif exec_tag == RosTopicPublish.get_tag_name():
-        return RosTopicPublish.from_xml_tree(xml_tree)
-    else:
-        raise ValueError(f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry.")
+    assert exec_tag in tag_to_cls, \
+        f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
+    return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 
 def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
@@ -341,7 +335,7 @@ def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecuti
 
 def as_plain_execution_body(
         exec_body: Optional[ScxmlExecutionBody],
-        ros_declarations: HelperRosDeclarations) -> Optional[ScxmlExecutionBody]:
+        ros_declarations: ScxmlRosDeclarationsContainer) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 

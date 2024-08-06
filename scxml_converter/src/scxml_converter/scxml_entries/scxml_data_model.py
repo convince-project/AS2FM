@@ -17,13 +17,11 @@
 Container for the variables defined in the SCXML model. In XML, it has the tag `datamodel`.
 """
 
-from typing import List, Optional, Tuple
+from scxml_converter.scxml_entries import ScxmlBase, ScxmlData
+
+from typing import List, Optional
+
 from xml.etree import ElementTree as ET
-
-from scxml_converter.scxml_entries import ScxmlBase
-
-# Tuple with the variable name and, if set, the expression for the init value
-ScxmlData = Tuple[str, Optional[str]]
 
 
 class ScxmlDataModel(ScxmlBase):
@@ -46,10 +44,7 @@ class ScxmlDataModel(ScxmlBase):
         assert data_entries_xml is not None, "Error: SCXML datamodel: No data entries found."
         data_entries = []
         for data_entry_xml in data_entries_xml:
-            name = data_entry_xml.attrib.get("id")
-            assert name is not None, "Error: SCXML datamodel: 'id' not found for data entry."
-            expr = data_entry_xml.attrib.get("expr", None)
-            data_entries.append((name, expr))
+            data_entries.append(ScxmlData.from_xml_tree(data_entry_xml))
         return ScxmlDataModel(data_entries)
 
     def check_validity(self) -> bool:
@@ -58,14 +53,9 @@ class ScxmlDataModel(ScxmlBase):
             valid_data_entries = isinstance(self._data_entries, list)
             if valid_data_entries:
                 for data_entry in self._data_entries:
-                    valid_data_entry = isinstance(data_entry, tuple) and len(data_entry) == 2
+                    valid_data_entry = isinstance(data_entry, ScxmlData) and \
+                        data_entry.check_validity()
                     if not valid_data_entry:
-                        valid_data_entries = False
-                        break
-                    name, expr = data_entry
-                    valid_name = isinstance(name, str) and len(name) > 0
-                    valid_expr = expr is None or isinstance(expr, str)
-                    if not valid_name or not valid_expr:
                         valid_data_entries = False
                         break
         if not valid_data_entries:
@@ -78,9 +68,5 @@ class ScxmlDataModel(ScxmlBase):
             return None
         xml_datamodel = ET.Element(ScxmlDataModel.get_tag_name())
         for data_entry in self._data_entries:
-            name, expr = data_entry
-            xml_data = ET.Element("data", {"id": name})
-            if expr is not None:
-                xml_data.set("expr", expr)
-            xml_datamodel.append(xml_data)
+            xml_datamodel.append(data_entry.as_xml())
         return xml_datamodel

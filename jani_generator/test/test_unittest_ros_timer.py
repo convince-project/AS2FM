@@ -15,9 +15,8 @@
 
 """Test the ROS timer conversion"""
 
-import unittest
-
 import pytest
+import unittest
 
 from jani_generator.ros_helpers.ros_timer import RosTimer
 

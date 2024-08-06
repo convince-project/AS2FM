@@ -16,8 +16,8 @@
 """A constant value expression."""
 
 from typing import Type, Union, get_args
-
 from jani_generator.jani_entries import JaniExpression, JaniValue
+
 
 ValidTypes = Union[bool, int, float]
 

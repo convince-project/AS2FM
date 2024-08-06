@@ -21,11 +21,11 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, get_args
 
+from as2fm_common.common import ros_type_name_to_python_type
+from as2fm_common.ecmascript_interpretation import \
+    interpret_ecma_script_expr
 from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_variable import JaniVariable, ValidTypes
-from mc_toolchain_jani_common.common import ros_type_name_to_python_type
-from mc_toolchain_jani_common.ecmascript_interpretation import \
-    interpret_ecma_script_expr
 
 
 class ScxmlData:
@@ -145,7 +145,7 @@ class ScxmlData:
         if len(types) > 1:
             raise ValueError(
                 f"Multiple types found for data {self.id}: {types}")
-        
+
     def get_type(self) -> type:
         """Get the type of the data.
 

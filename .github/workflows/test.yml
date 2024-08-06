@@ -27,7 +27,7 @@ jobs:
               uses: actions/checkout@v2
               with:
                 repository: boschresearch/bt_tools
-                ref: feature/fsm_conversion
+                ref: main
                 path: colcon_ws/src/bt_tools
             # Compile bt_tools TODO: remove after the release of bt_tools
             - name: Compile bt_tools
@@ -42,7 +42,7 @@ jobs:
             - name: Get smc_storm
               id: get_smc_storm
               run: |
-                wget https://github.com/convince-project/smc_storm/releases/download/0.0.1/smc_storm_executable.tar.gz
+                wget https://github.com/convince-project/smc_storm/releases/download/0.0.2/smc_storm_executable.tar.gz
                 tar -xzf smc_storm_executable.tar.gz
                 ./install.sh --install-dependencies
                 # Save the path to the smc_storm executable
@@ -55,7 +55,7 @@ jobs:
               run: | 
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pip install jani_generator/.[dev]
-                pip install mc_toolchain_jani_common/.[dev]
+                pip install as2fm_common/.[dev]
                 pip install scxml_converter/.[dev]
             # lint packages
             # TODO: add linting    
@@ -65,4 +65,4 @@ jobs:
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 # source /opt/ros/${{ matrix.ros-distro }}/setup.bash
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
-                pytest-3 -vs mc_toolchain_jani_common jani_generator scxml_converter
+                pytest-3 -vs as2fm_common jani_generator scxml_converter

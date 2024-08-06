@@ -17,16 +17,16 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
+from typing import List, Optional, Tuple, get_args
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
+                                           ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
+                                           RosTopicPublisher, RosServiceServer, RosServiceClient,
+                                           ScxmlRosDeclarationsContainer)
+
 from copy import deepcopy
 from os.path import isfile
-from typing import List, Optional, Tuple, get_args
-from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (HelperRosDeclarations, RosTimeRate,
-                                           RosTopicPublisher,
-                                           RosTopicSubscriber, ScxmlBase,
-                                           ScxmlDataModel,
-                                           ScxmlRosDeclarations, ScxmlState)
+from xml.etree import ElementTree as ET
 
 
 class ScxmlRoot(ScxmlBase):
@@ -59,6 +59,10 @@ class ScxmlRoot(ScxmlBase):
                 ros_declarations.append(RosTopicSubscriber.from_xml_tree(child))
             elif child.tag == RosTopicPublisher.get_tag_name():
                 ros_declarations.append(RosTopicPublisher.from_xml_tree(child))
+            elif child.tag == RosServiceServer.get_tag_name():
+                ros_declarations.append(RosServiceServer.from_xml_tree(child))
+            elif child.tag == RosServiceClient.get_tag_name():
+                ros_declarations.append(RosServiceClient.from_xml_tree(child))
         # States
         assert "initial" in xml_tree.attrib, \
             "Error: SCXML root: 'initial' attribute not found in input xml."
@@ -143,9 +147,9 @@ class ScxmlRoot(ScxmlBase):
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
-    def _generate_ros_declarations_helper(self) -> Optional[HelperRosDeclarations]:
+    def _generate_ros_declarations_helper(self) -> ScxmlRosDeclarationsContainer:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
-        ros_decl_container = HelperRosDeclarations()
+        ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
                 if not ros_declaration.check_validity():
@@ -159,6 +163,12 @@ class ScxmlRoot(ScxmlBase):
                 elif isinstance(ros_declaration, RosTopicPublisher):
                     ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
                                                         ros_declaration.get_topic_type())
+                elif isinstance(ros_declaration, RosServiceServer):
+                    ros_decl_container.append_service_server(ros_declaration.get_service_name(),
+                                                             ros_declaration.get_service_type())
+                elif isinstance(ros_declaration, RosServiceClient):
+                    ros_decl_container.append_service_client(ros_declaration.get_service_name(),
+                                                             ros_declaration.get_service_type())
                 else:
                     raise ValueError("Error: SCXML root: invalid ROS declaration type.")
         return ros_decl_container
@@ -205,7 +215,7 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None or len(self._ros_declarations) == 0
 
-    def as_plain_scxml(self) -> Tuple["ScxmlRoot", List[Tuple[str, float]]]:
+    def to_plain_scxml_and_declarations(self) -> Tuple["ScxmlRoot", ScxmlRosDeclarationsContainer]:
         """
         Convert all internal ROS specific entries to plain SCXML.
 
@@ -214,7 +224,7 @@ class ScxmlRoot(ScxmlBase):
             - A list of timers with related rate in Hz
         """
         if self.is_plain_scxml():
-            return self, []
+            return self, ScxmlRosDeclarationsContainer(self._name)
         # Convert the ROS specific entries to plain SCXML
         plain_root = ScxmlRoot(self._name)
         plain_root._data_model = deepcopy(self._data_model)
@@ -222,7 +232,7 @@ class ScxmlRoot(ScxmlBase):
         ros_declarations = self._generate_ros_declarations_helper()
         plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
-        return (plain_root, list(ros_declarations.get_timers().items()))
+        return (plain_root, ros_declarations)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
@@ -242,3 +252,6 @@ class ScxmlRoot(ScxmlBase):
             xml_root.append(state.as_xml())
         ET.indent(xml_root, "    ")
         return xml_root
+
+    def as_xml_string(self) -> str:
+        return ET.tostring(self.as_xml(), encoding='unicode', xml_declaration=True)

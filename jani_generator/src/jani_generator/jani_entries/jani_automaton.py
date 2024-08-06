@@ -15,10 +15,8 @@
 
 """An automaton for jani."""
 
-from typing import Dict, List, Optional, Set
-
-from jani_generator.jani_entries import (JaniConstant, JaniEdge,
-                                         JaniExpression, JaniVariable)
+from typing import List, Dict, Set, Optional
+from jani_generator.jani_entries import JaniEdge, JaniConstant, JaniVariable, JaniExpression
 
 
 class JaniAutomaton:
@@ -82,6 +80,10 @@ class JaniAutomaton:
         assert isinstance(action_name, str), "Action name must be a string"
         self._edges = [edge for edge in self._edges if edge.get_action() != action_name]
 
+    def remove_empty_self_loop_edges(self):
+        """Remove all self-loop edges from the automaton."""
+        self._edges = [edge for edge in self._edges if not edge.is_empty_self_loop()]
+
     def _generate_locations(self, location_list: List[str], initial_locations: List[str]):
         for location in location_list:
             self._locations.add(location["name"])
@@ -101,7 +103,6 @@ class JaniAutomaton:
                 variable["name"], var_type, init_expr, is_transient)})
 
     def _generate_edges(self, edge_list: List[dict]):
-        # TODO: Proposal -> Edges might require support variables? In case we want to provide standard ones...
         for edge in edge_list:
             jani_edge = JaniEdge(edge)
             self.add_edge(jani_edge)

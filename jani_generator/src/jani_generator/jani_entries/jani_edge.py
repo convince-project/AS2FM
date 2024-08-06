@@ -16,11 +16,8 @@
 """And edge defining the possible transition from one state to another in jani."""
 
 from typing import Dict, Optional
-
-from jani_generator.jani_entries import (JaniAssignment, JaniConstant,
-                                         JaniExpression, JaniGuard)
-from jani_generator.jani_entries.jani_convince_expression_expansion import \
-    expand_expression
+from jani_generator.jani_entries import JaniGuard, JaniAssignment, JaniExpression, JaniConstant
+from jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
 
 
 class JaniEdge:
@@ -54,6 +51,11 @@ class JaniEdge:
     def get_action(self) -> Optional[str]:
         """Get the action name, if set."""
         return self.action
+
+    def is_empty_self_loop(self) -> bool:
+        """Check if the edge is an empty self loop (i.e. has no assignments)."""
+        return len(self.destinations) == 1 and self.location == self.destinations[0]["location"] \
+            and len(self.destinations[0]["assignments"]) == 0
 
     def set_action(self, action_name: str):
         """Set the action name."""

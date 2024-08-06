@@ -24,11 +24,9 @@ import xml.etree.ElementTree as ET
 from enum import Enum, auto
 from typing import List
 
-import networkx as nx
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
-
 from scxml_converter.scxml_entries import (RosRateCallback, RosTimeRate,
                                            ScxmlRoot, ScxmlSend, ScxmlState,
                                            ScxmlTransition)
@@ -88,8 +86,8 @@ def bt_converter(
         assert 'category' in bt_graph.nodes[node], 'Node must have a category.'
         if bt_graph.nodes[node]['category'] == NODE_CAT.LEAF:
             leaf_node_ids.append(node)
-            assert 'NAME' in bt_graph.nodes[node], 'Leaf node must have a type.'
-            node_type = bt_graph.nodes[node]['NAME']
+            assert 'ID' in bt_graph.nodes[node], 'Leaf node must have a type.'
+            node_type = bt_graph.nodes[node]['ID']
             node_id = node
             assert node_type in bt_plugins_scxml, \
                 f'Leaf node must have a plugin. {node_type} not found.'
@@ -160,6 +158,6 @@ def bt_converter(
     assert root_tag.check_validity(), "Error: SCXML root tag is not valid."
 
     with open(output_file_bt, 'w', encoding='utf-8') as f:
-        f.write(ET.tostring(root_tag.as_xml(), encoding='unicode', xml_declaration=True))
+        f.write(root_tag.as_xml_string())
 
     return generated_files

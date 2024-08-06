@@ -16,15 +16,14 @@
 # limitations under the License.
 
 import argparse
-import json
 import os
 import timeit
+import json
 from typing import Optional, Sequence
 
-from jani_generator.convince_jani_helpers import convince_jani_parser
 from jani_generator.jani_entries import JaniModel
-from jani_generator.scxml_helpers.top_level_interpreter import \
-    interpret_top_level_xml
+from jani_generator.convince_jani_helpers import convince_jani_parser
+from jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 
 
 def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:

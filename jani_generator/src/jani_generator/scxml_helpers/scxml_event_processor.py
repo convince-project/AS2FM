@@ -31,15 +31,18 @@ from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 def implement_scxml_events_as_jani_syncs(
         events_holder: EventsHolder,
         timers: List[RosTimer],
-        jani_model: JaniModel):
+        jani_model: JaniModel) -> List[str]:
     """
     Implement the scxml events as jani syncs.
 
     :param events_holder: The holder of the events.
+    :param timers: The timers to add to the jani model.
     :param jani_model: The jani model to add the syncs to.
+    :return: The list of events having only senders.
     """
     jc = JaniComposition()
     event_action_names = []
+    events_without_receivers = []
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
     for event_name, event in events_holder.get_events().items():
@@ -52,49 +55,73 @@ def implement_scxml_events_as_jani_syncs(
             if event.is_bt_response_event():
                 jani_model.remove_edges_with_action(event_name_on_receive)
             continue
-        # Normal case handling
-        event.is_valid()
-        # Check correct action names
+        assert event.has_senders(), f"Event {event_name} must have at least one sender"
+        # Prepare the automaton handling the event
+        event_automaton = JaniAutomaton()
+        event_automaton.set_name(event_name)
+        event_automaton.add_location("waiting", is_initial=True)
+        event_action_names.append(event_name_on_send)
+        # Add the event handling automaton
+        jc.add_element(event_name)
+        if event.has_receivers():
+            # Add the receiver event as well
+            event_action_names.append(event_name_on_receive)
+            # Prepare the automaton
+            event_automaton.add_location("received")
+            event_automaton.add_edge(JaniEdge({
+                "location": "waiting",
+                "destinations": [{
+                    "location": "received",
+                    "probability": {"exp": 1.0},
+                    "assignments": []
+                }],
+                "action": event_name_on_send
+            }))
+            event_automaton.add_edge(JaniEdge({
+                "location": "received",
+                "destinations": [{
+                    "location": "waiting",
+                    "probability": {"exp": 1.0},
+                    "assignments": []
+                }],
+                "action": event_name_on_receive
+            }))
+        else:
+            # Store the events without receivers
+            events_without_receivers.append(event_name)
+            # If there are no receivers, we add a self-loop
+            event_automaton.add_edge(JaniEdge({
+                "location": "waiting",
+                "destinations": [{
+                    "location": "waiting",
+                    "probability": {"exp": 1.0},
+                    "assignments": []
+                }],
+                "action": event_name_on_send
+            }))
+        jani_model.add_jani_automaton(event_automaton)
+        # Verify and prepare the receiver syncs
+        if event.has_receivers():
+            receivers_syncs = {event_name: event_name_on_receive}
+            for receiver in event.get_receivers():
+                print(receiver)
+                action_name = receiver.edge_action_name
+                assert action_name == event_name_on_receive, \
+                    f"Action name {action_name} must be {event_name_on_receive}."
+                receivers_syncs.update({receiver.automaton_name: action_name})
+            jc.add_sync(event_name_on_receive, receivers_syncs)
+        # Verify and prepare the sender syncs
         for sender in event.get_senders():
             action_name = sender.edge_action_name
             assert action_name == event_name_on_send, \
                 f"Action name {action_name} must be {event_name_on_send}."
-        for receivers in event.get_receivers():
-            action_name = receivers.edge_action_name
-            assert action_name == event_name_on_receive, \
-                f"Action name {action_name} must be {event_name_on_receive}."
-        # Collect the event action names
-        # TODO: Potential bug: if the same event is sent by multiple automata,
-        # the same action should be added multiple times in the composition
-        event_action_names.append(event_name_on_send)
-        event_action_names.append(event_name_on_receive)
-        # Add event automaton
-        event_automaton = JaniAutomaton()
-        event_automaton.set_name(event_name)
-        event_automaton.add_location("waiting", is_initial=True)
-        event_automaton.add_location("received")
-        event_automaton.add_edge(JaniEdge({
-            "location": "waiting",
-            "destinations": [{
-                "location": "received",
-                "probability": {"exp": 1.0},
-                "assignments": []
-            }],
-            "action": event_name_on_send
-        }))
-        event_automaton.add_edge(JaniEdge({
-            "location": "received",
-            "destinations": [{
-                "location": "waiting",
-                "probability": {"exp": 1.0},
-                "assignments": []
-            }],
-            "action": event_name_on_receive
-        }))
-        jani_model.add_jani_automaton(event_automaton)
-        jc.add_element(event_name)
+            senders_syncs = {
+                event_name: action_name,
+                sender.automaton_name: action_name}
+            jc.add_sync(action_name, senders_syncs)
         # Add the global data, if needed
         for p_name, p_type_str in event.get_data_structure().items():
+            # TODO: Dots are likely to create problems in the future. Consider replacing them
             jani_model.add_variable(
                 variable_name=f"{event_name}.{p_name}",
                 variable_type=p_type_str
@@ -105,15 +132,6 @@ def implement_scxml_events_as_jani_syncs(
             variable_type=bool,
             variable_init_expression=False
         )
-    # Add the syncs
-    syncs = {en: {} for en in event_action_names}
-    for automaton in jani_model.get_automata():
-        for edge in automaton.get_edges():
-            if edge.get_action() in event_action_names:
-                syncs[edge.get_action()].update(
-                    {automaton.get_name(): edge.get_action()})
-    for event_action_name, sync in syncs.items():
-        jc.add_sync(event_action_name, sync)
     # Add syncs for rate timers
     for timer in timers:
         name = timer.name
@@ -130,3 +148,4 @@ def implement_scxml_events_as_jani_syncs(
             automaton_name: action_name_receiver,
             'global_timer': action_name_receiver})
     jani_model.add_system_sync(jc)
+    return events_without_receivers

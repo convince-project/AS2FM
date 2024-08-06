@@ -1,6 +1,7 @@
 # Model Checking Toolchain Components
+# Autonomous Systems to Formal Models (AS2FM)
 
-> Please access the documentation via [convince-project.github.io/mc-toolchain-jani](https://convince-project.github.io/mc-toolchain-jani)
+> Please access the documentation via [convince-project.github.io/AS2FM](https://convince-project.github.io/AS2FM)
 
 ## Further Information
 
@@ -10,8 +11,8 @@ See [Contributing](./CONTRIBUTING.md).
 
 ### Feedback
 
-Feedback is highly appreciated. Please open issues on new ideas, bugs, etc. here at [mc-toolchain-jani/issues](https://github.com/convince-project/mc-toolchain-jani/issues) or reach out to the maintainers.
+Feedback is highly appreciated. Please open issues on new ideas, bugs, etc. here at [as2fm/issues](https://github.com/convince-project/as2fm/issues) or reach out to the maintainers.
 
 ### License
 
-mc-toolchain-jani comes under the Apache-2.0 license, see [LICENSE](./LICENSE).
+as2fm comes under the Apache-2.0 license, see [LICENSE](./LICENSE).

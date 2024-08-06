@@ -14,17 +14,13 @@
 # limitations under the License.
 
 import os
-from xml.etree import ElementTree as ET
 
+from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam,
+                                           ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
+                                           RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
+                                           RosRateCallback, RosTopicPublish, RosTopicCallback,
+                                           RosField)
 from test_utils import canonicalize_xml, remove_empty_lines
-
-from scxml_converter.scxml_entries import (RosField, RosRateCallback,
-                                           RosTimeRate, RosTopicCallback,
-                                           RosTopicPublish, RosTopicPublisher,
-                                           RosTopicSubscriber, ScxmlAssign,
-                                           ScxmlDataModel, ScxmlParam,
-                                           ScxmlRoot, ScxmlSend, ScxmlState,
-                                           ScxmlTransition)
 
 
 def test_battery_drainer_from_code():
@@ -50,7 +46,8 @@ def test_battery_drainer_from_code():
         - assign
 """
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
-    battery_drainer_scxml.set_data_model(ScxmlDataModel([("battery_percent", "100")]))
+    battery_drainer_scxml.set_data_model(ScxmlDataModel([
+        ScxmlData("battery_percent", "100", "int16")]))
     use_battery_state = ScxmlState(
         "use_battery",
         on_entry=[ScxmlSend("ros_topic.level",
@@ -66,7 +63,7 @@ def test_battery_drainer_from_code():
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
-    test_output = ET.tostring(battery_drainer_scxml.as_xml(), encoding='unicode')
+    test_output = battery_drainer_scxml.as_xml_string()
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
@@ -98,7 +95,8 @@ def test_battery_drainer_ros_from_code():
         - assign
 """
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
-    battery_drainer_scxml.set_data_model(ScxmlDataModel([("battery_percent", "100")]))
+    battery_drainer_scxml.set_data_model(ScxmlDataModel([
+        ScxmlData("battery_percent", "100", "int16")]))
     ros_topic_sub = RosTopicSubscriber("charge", "std_msgs/Empty")
     ros_topic_pub = RosTopicPublisher("level", "std_msgs/Int32")
     ros_timer = RosTimeRate("my_timer", 1)
@@ -113,8 +111,7 @@ def test_battery_drainer_ros_from_code():
         RosRateCallback(ros_timer, "use_battery", None,
                         [ScxmlAssign("battery_percent", "battery_percent - 1")]))
     use_battery_state.add_transition(
-        RosTopicCallback(ros_topic_sub, "use_battery", None,
-                         [ScxmlAssign("battery_percent", "100")]))
+        RosTopicCallback(ros_topic_sub, "use_battery", [ScxmlAssign("battery_percent", "100")]))
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
 
     # Check output xml
@@ -123,7 +120,7 @@ def test_battery_drainer_ros_from_code():
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
-    test_output = ET.tostring(battery_drainer_scxml.as_xml(), encoding='unicode')
+    test_output = battery_drainer_scxml.as_xml_string()
     test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
     ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
     assert test_xml_string == ref_xml_string
@@ -135,7 +132,7 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
     scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
     # Check output xml
     if valid_xml:
-        test_output = ET.tostring(scxml_root.as_xml(), encoding='unicode')
+        test_output = scxml_root.as_xml_string()
         test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
         with open(xml_file_path, 'r', encoding='utf-8') as f_o:
             ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))

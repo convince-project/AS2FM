@@ -17,8 +17,8 @@
 Values in Jani
 """
 
-from math import e, pi
 from typing import Union
+from math import e, pi
 
 
 class JaniValue:
@@ -29,7 +29,8 @@ class JaniValue:
     def is_valid(self) -> bool:
         if isinstance(self._value, dict):
             if "constant" in self._value:
-                assert self._value["constant"] in ("e", "π"), f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' are supported"
+                assert self._value["constant"] in ("e", "π"), \
+                    f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
             return False
         return isinstance(self._value, (int, float, bool))

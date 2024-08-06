@@ -17,13 +17,12 @@
 Module to convert convince-flavored robotic, specific jani into plain jani.
 """
 
-import json
-from math import degrees
-from os import path
 from typing import List
 
-from jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
-                                         JaniModel, JaniProperty)
+from os import path
+import json
+from jani_generator.jani_entries import JaniModel, JaniAutomaton, JaniComposition, JaniProperty
+from math import degrees
 
 
 def to_cm(value: float) -> int:

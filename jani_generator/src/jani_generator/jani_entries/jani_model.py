@@ -18,17 +18,20 @@ Complete Jani Model
 """
 
 
-from typing import Dict, List, Optional, Type, Union
+from typing import List, Dict, Optional, Union, Type
+from jani_generator.jani_entries import (
+    JaniValue, JaniVariable, JaniConstant, JaniAutomaton, JaniComposition,
+    JaniProperty, JaniExpression)
 
-from jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
-                                         JaniConstant, JaniExpression,
-                                         JaniProperty, JaniValue, JaniVariable)
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
 
 class JaniModel:
-    """Class representing a complete Jani Model, containing all necessary information to generate a plain Jani file."""
+    """
+    Class representing a complete Jani Model, containing all necessary information to generate
+    a plain Jani file.
+    """
     def __init__(self):
         self._name = ""
         self._type = "mdp"
@@ -49,13 +52,17 @@ class JaniModel:
         self._variables.update({variable.name(): variable})
 
     def add_variable(self, variable_name: str, variable_type: Type,
-                     variable_init_expression: Optional[ValidValue] = None, transient: bool = False):
+                     variable_init_expression: Optional[ValidValue] = None,
+                     transient: bool = False):
         if variable_init_expression is None or isinstance(variable_init_expression, JaniExpression):
-            self.add_jani_variable(JaniVariable(variable_name, variable_type, variable_init_expression, transient))
-        else:
-            assert JaniValue(variable_init_expression).is_valid(), f"Invalid value for variable {variable_name}"
             self.add_jani_variable(
-                JaniVariable(variable_name, variable_type, JaniExpression(variable_init_expression), transient))
+                JaniVariable(variable_name, variable_type, variable_init_expression, transient))
+        else:
+            assert JaniValue(variable_init_expression).is_valid(), \
+                f"Invalid value for variable {variable_name}"
+            self.add_jani_variable(
+                JaniVariable(variable_name, variable_type,
+                             JaniExpression(variable_init_expression), transient))
 
     def add_jani_constant(self, constant: JaniConstant):
         self._constants.update({constant.name(): constant})
@@ -64,8 +71,10 @@ class JaniModel:
         if isinstance(constant_value, JaniExpression):
             self.add_jani_constant(JaniConstant(constant_name, constant_type, constant_value))
         else:
-            assert JaniValue(constant_value).is_valid(), f"Invalid value for constant {constant_name}"
-            self.add_jani_constant(JaniConstant(constant_name, constant_type, JaniExpression(constant_value)))
+            assert JaniValue(constant_value).is_valid(), \
+                f"Invalid value for constant {constant_name}"
+            self.add_jani_constant(
+                JaniConstant(constant_name, constant_type, JaniExpression(constant_value)))
 
     def add_jani_automaton(self, automaton: JaniAutomaton):
         self._automata.append(automaton)
@@ -109,7 +118,8 @@ class JaniModel:
     def as_dict(self):
         assert self._system is not None, "The system composition is not set"
         model_dict = {}
-        # The available actions need to be stored explicitly in jani: extract from existing automaton
+        # The available actions need to be stored explicitly in jani:
+        # we extract them from all the automaton in the model
         available_actions = set()
         for automaton in self._automata:
             available_actions.update(automaton.get_actions())
@@ -123,8 +133,10 @@ class JaniModel:
             "variables": [jani_variable.as_dict() for jani_variable in self._variables.values()],
             "constants": [jani_constant.as_dict() for jani_constant in self._constants.values()],
             "actions": [{"name": action} for action in sorted(list(available_actions))],
-            "automata": [jani_automaton.as_dict(self._constants) for jani_automaton in self._automata],
+            "automata": [jani_automaton.as_dict(self._constants) for
+                         jani_automaton in self._automata],
             "system": self._system.as_dict(),
-            "properties": [jani_property.as_dict(self._constants) for jani_property in self._properties]
+            "properties": [jani_property.as_dict(self._constants) for
+                           jani_property in self._properties]
         })
         return model_dict

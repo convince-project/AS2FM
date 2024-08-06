@@ -15,15 +15,14 @@
 
 """Expand expressions into jani."""
 
-from math import pi
 from typing import Dict
+from jani_generator.jani_entries.jani_expression_generator import minus_operator, plus_operator, \
+    equal_operator, max_operator, min_operator, greater_equal_operator, lower_operator, \
+    and_operator, or_operator, if_operator, multiply_operator, divide_operator, pow_operator, \
+    abs_operator, floor_operator, modulo_operator
+from jani_generator.jani_entries import JaniExpression, JaniConstant
+from math import pi
 
-from jani_generator.jani_entries import JaniConstant, JaniExpression
-from jani_generator.jani_entries.jani_expression_generator import (
-    abs_operator, and_operator, divide_operator, equal_operator,
-    floor_operator, greater_equal_operator, if_operator, lower_operator,
-    max_operator, min_operator, minus_operator, modulo_operator,
-    multiply_operator, or_operator, plus_operator, pow_operator)
 
 BASIC_EXPRESSIONS_MAPPING = {
     "-": "-",
@@ -43,6 +42,7 @@ BASIC_EXPRESSIONS_MAPPING = {
     "≤": "≤",
     "<=": "≤",
     "=": "=",
+    "==": "=",
     "≠": "≠",
     "!=": "≠",
     "!": "¬",
@@ -63,15 +63,25 @@ BASIC_EXPRESSIONS_MAPPING = {
 
 # Custom operators (CONVINCE, specific to mobile 2D robot use case)
 def intersection_operator(left, right) -> JaniExpression:
-    return JaniExpression({"op": "intersect", "robot": JaniExpression(left), "barrier": JaniExpression(right)})
+    return JaniExpression({
+        "op": "intersect",
+        "robot": JaniExpression(left),
+        "barrier": JaniExpression(right)})
 
 
 def distance_operator(left, right) -> JaniExpression:
-    return JaniExpression({"op": "distance", "robot": JaniExpression(left), "barrier": JaniExpression(right)})
+    return JaniExpression({
+        "op": "distance",
+        "robot": JaniExpression(left),
+        "barrier": JaniExpression(right)})
 
 
 def distance_to_point_operator(robot, target_x, target_y) -> JaniExpression:
-    return JaniExpression({"op": "distance_to_point", "robot": JaniExpression(robot), "x": JaniExpression(target_x), "y": JaniExpression(target_y)})
+    return JaniExpression({
+        "op": "distance_to_point",
+        "robot": JaniExpression(robot),
+        "x": JaniExpression(target_x),
+        "y": JaniExpression(target_y)})
 
 
 def norm2d_operator(x=None, y=None, *, exp=None) -> JaniExpression:
@@ -103,7 +113,8 @@ def cross2d_operator(x1=None, y1=None, x2=None, y2=None, *, exp=None) -> JaniExp
         exp_y1 = y1
         exp_x2 = x2
         exp_y2 = y2
-    assert exp_x1 is not None and exp_y1 is not None and exp_x2 is not None and exp_y2 is not None, "The 2D vectors components must be provided"
+    assert all(exp is not None for exp in [exp_x1, exp_y1, exp_x2, exp_y2]), \
+        "The 2D vectors components must be provided"
     return minus_operator(multiply_operator(exp_x1, exp_y2), multiply_operator(exp_y1, exp_x2))
 
 
@@ -120,7 +131,8 @@ def dot2d_operator(x1=None, y1=None, x2=None, y2=None, *, exp=None) -> JaniExpre
         exp_y1 = y1
         exp_x2 = x2
         exp_y2 = y2
-    assert exp_x1 is not None and exp_y1 is not None and exp_x2 is not None and exp_y2 is not None, "The 2D vectors components must be provided"
+    assert all(exp is not None for exp in [exp_x1, exp_y1, exp_x2, exp_y2]), \
+        "The 2D vectors components must be provided"
     return plus_operator(multiply_operator(exp_x1, exp_x2), multiply_operator(exp_y1, exp_y2))
 
 
@@ -177,7 +189,9 @@ def to_rad_operator(value=None, *, exp=None) -> JaniExpression:
 
 
 # Functionalities for interpolation
-def __expression_interpolation_single_boundary(jani_constants: Dict[str, JaniConstant], robot_name: str, boundary_id: int) -> JaniExpression:
+def __expression_interpolation_single_boundary(
+        jani_constants: Dict[str, JaniConstant],
+        robot_name: str, boundary_id: int) -> JaniExpression:
     n_vertices = jani_constants["boundaries.count"].value()
     # Variables names
     robot_radius = f"robots.{robot_name}.shape.radius"
@@ -204,7 +218,8 @@ def __expression_interpolation_single_boundary(jani_constants: Dict[str, JaniCon
     # Boundary length
     boundary_norm_exp = norm2d_operator(ab_x, ab_y)
     # Distance from the robot to the boundary perpendicular to the boundary segment
-    v_dist_exp = divide_operator(abs_operator(cross2d_operator(ab_x, ab_y, ea_x, ea_y)), boundary_norm_exp)
+    v_dist_exp = divide_operator(
+        abs_operator(cross2d_operator(ab_x, ab_y, ea_x, ea_y)), boundary_norm_exp)
     # Distance between the boundary extreme points and the robot parallel to the boundary segment
     ha_dist_exp = divide_operator(dot2d_operator(ab_x, ab_y, ea_x, ea_y), boundary_norm_exp)
     hb_dist_exp = divide_operator(dot2d_operator(ba_x, ba_y, eb_x, eb_y), boundary_norm_exp)
@@ -213,29 +228,38 @@ def __expression_interpolation_single_boundary(jani_constants: Dict[str, JaniCon
     is_parallel_exp = equal_operator(cross2d_operator(ab_x, ab_y, es_x, es_y), 0.0)
     # Interpolation factors
     ha_interp_exp = if_operator(
-        and_operator(greater_equal_operator(ha_dist_exp, 0.0), lower_operator(ha_dist_exp, robot_radius)),
-        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius), dot2d_operator(ab_x, ab_y, ea_x, ea_y)),
+        and_operator(greater_equal_operator(ha_dist_exp, 0.0),
+                     lower_operator(ha_dist_exp, robot_radius)),
+        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius),
+                                       dot2d_operator(ab_x, ab_y, ea_x, ea_y)),
                         dot2d_operator(ba_x, ba_y, es_x, es_y)),
         1.0)
     hb_interp_exp = if_operator(
-        and_operator(greater_equal_operator(hb_dist_exp, 0.0), lower_operator(hb_dist_exp, robot_radius)),
-        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius), dot2d_operator(ba_x, ba_y, eb_x, eb_y)),
+        and_operator(greater_equal_operator(hb_dist_exp, 0.0),
+                     lower_operator(hb_dist_exp, robot_radius)),
+        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius),
+                                       dot2d_operator(ba_x, ba_y, eb_x, eb_y)),
                         dot2d_operator(ab_x, ab_y, es_x, es_y)),
         1.0)
-    h_interp_exp = if_operator(is_perpendicular_exp, 1.0, min_operator(ha_interp_exp, hb_interp_exp))
+    h_interp_exp = if_operator(is_perpendicular_exp,
+                               1.0, min_operator(ha_interp_exp, hb_interp_exp))
     v_interp_exp = if_operator(
         or_operator(is_parallel_exp, greater_equal_operator(v_dist_exp, robot_radius)),
         1.0,
-        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius), abs_operator(cross2d_operator(ab_x, ab_y, ea_x, ea_y))),
+        divide_operator(minus_operator(multiply_operator(boundary_norm_exp, robot_radius),
+                                       abs_operator(cross2d_operator(ab_x, ab_y, ea_x, ea_y))),
                         abs_operator(cross2d_operator(ab_x, ab_y, es_x, es_y))))
     return if_operator(
-        greater_equal_operator(max_operator(v_dist_exp, max_operator(ha_dist_exp, hb_dist_exp)), robot_radius),
+        greater_equal_operator(max_operator(v_dist_exp, max_operator(ha_dist_exp, hb_dist_exp)),
+                               robot_radius),
         0.0, min_operator(h_interp_exp, v_interp_exp))
 
 
-def __expression_interpolation_next_boundaries(jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
+def __expression_interpolation_next_boundaries(
+        jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
     n_vertices = jani_constants["boundaries.count"].value()
-    assert isinstance(n_vertices, int) and n_vertices > 1, f"The number of boundaries ({n_vertices}) must greater than 1"
+    assert isinstance(n_vertices, int) and n_vertices > 1, \
+        f"The number of boundaries ({n_vertices}) must greater than 1"
     if boundary_id >= n_vertices:
         return JaniExpression(0.0)
     return max_operator(
@@ -243,12 +267,14 @@ def __expression_interpolation_next_boundaries(jani_constants: Dict[str, JaniCon
         __expression_interpolation_next_boundaries(jani_constants, robot_name, boundary_id + 1))
 
 
-def __expression_interpolation_next_obstacles(jani_constants, robot_name, obstacle_id) -> JaniExpression:
+def __expression_interpolation_next_obstacles(
+        jani_constants, robot_name, obstacle_id) -> JaniExpression:
     # TODO
     return JaniExpression(0.0)
 
 
-def __expression_interpolation(jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+def __expression_interpolation(
+        jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "intersect"
     robot_name = jani_expression.operands["robot"].identifier
@@ -265,7 +291,8 @@ def __expression_interpolation(jani_expression: JaniExpression, jani_constants: 
 
 
 # Functionalities for validity check
-def __expression_distance_single_boundary(jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
+def __expression_distance_single_boundary(
+        jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
     n_vertices = jani_constants["boundaries.count"].value()
     # Variables names
     robot_radius = f"robots.{robot_name}.shape.radius"
@@ -288,7 +315,8 @@ def __expression_distance_single_boundary(jani_constants: Dict[str, JaniConstant
     # Boundary length
     boundary_norm_exp = norm2d_operator(ab_x, ab_y)
     # Distance from the robot to the boundary perpendicular to the boundary segment
-    v_dist_exp = divide_operator(abs_operator(cross2d_operator(ab_x, ab_y, ra_x, ra_y)), boundary_norm_exp)
+    v_dist_exp = divide_operator(abs_operator(cross2d_operator(ab_x, ab_y, ra_x, ra_y)),
+                                 boundary_norm_exp)
     # Distance between the boundary extreme points and the robot parallel to the boundary segment
     ha_dist_exp = divide_operator(dot2d_operator(ab_x, ab_y, ra_x, ra_y), boundary_norm_exp)
     hb_dist_exp = divide_operator(dot2d_operator(ba_x, ba_y, rb_x, rb_y), boundary_norm_exp)
@@ -296,9 +324,11 @@ def __expression_distance_single_boundary(jani_constants: Dict[str, JaniConstant
     return minus_operator(norm2d_operator(h_dist_exp, v_dist_exp), robot_radius)
 
 
-def __expression_distance_next_boundaries(jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
+def __expression_distance_next_boundaries(
+        jani_constants: Dict[str, JaniConstant], robot_name, boundary_id) -> JaniExpression:
     n_vertices = jani_constants["boundaries.count"].value()
-    assert isinstance(n_vertices, int) and n_vertices > 1, f"The number of boundaries ({n_vertices}) must greater than 1"
+    assert isinstance(n_vertices, int) and n_vertices > 1, \
+        f"The number of boundaries ({n_vertices}) must greater than 1"
     if boundary_id >= n_vertices:
         return JaniExpression(True)
     return min_operator(
@@ -311,7 +341,8 @@ def __expression_distance_next_obstacles(jani_constants, robot_name, obstacle_id
     return JaniExpression(True)
 
 
-def __expression_distance(jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+def __expression_distance(
+        jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "distance"
     robot_name = jani_expression.operands["robot"].identifier
@@ -327,7 +358,8 @@ def __expression_distance(jani_expression: JaniExpression, jani_constants: Dict[
     raise NotImplementedError("The barrier type is not implemented")
 
 
-def __expression_distance_to_point(jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+def __expression_distance_to_point(
+        jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "distance_to_point"
     robot_name = jani_expression.operands["robot"].identifier
@@ -335,20 +367,25 @@ def __expression_distance_to_point(jani_expression: JaniExpression, jani_constan
     target_y_cm = to_cm_operator(expand_expression(jani_expression.operands["y"], jani_constants))
     robot_x_cm = f"robots.{robot_name}.pose.x_cm"
     robot_y_cm = f"robots.{robot_name}.pose.y_cm"
-    return to_m_operator(norm2d_operator(minus_operator(robot_x_cm, target_x_cm), minus_operator(robot_y_cm, target_y_cm)))
+    return to_m_operator(norm2d_operator(minus_operator(robot_x_cm, target_x_cm),
+                                         minus_operator(robot_y_cm, target_y_cm)))
 
 
 def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
     assert isinstance(expression, JaniExpression), "The input must be a JaniExpression"
-    assert expression.op in BASIC_EXPRESSIONS_MAPPING, f"The operator {expression.op} is not supported"
+    assert expression.op in BASIC_EXPRESSIONS_MAPPING, \
+        f"The operator {expression.op} is not supported"
     expression.op = BASIC_EXPRESSIONS_MAPPING[expression.op]
     return expression
 
 
-def expand_expression(expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+def expand_expression(
+        expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
-    assert isinstance(expression, JaniExpression), f"The expression should be a JaniExpression instance, found {type(expression)} instead."
-    assert expression.is_valid(), "The expression is not valid: it defines no value, nor variable, nor operation to be done."
+    assert isinstance(expression, JaniExpression), \
+        f"The expression should be a JaniExpression instance, found {type(expression)} instead."
+    assert expression.is_valid(), \
+        "The expression is not valid: it defines no value, nor variable, nor operation to be done."
     if expression.op is None:
         # It is either a variable/constant identifier or a value
         return expression
@@ -358,7 +395,7 @@ def expand_expression(expression: JaniExpression, jani_constants: Dict[str, Jani
         return __expression_distance(expression, jani_constants)
     if expression.op == "distance_to_point":
         return __expression_distance_to_point(expression, jani_constants)
-    # If the expressions is neither of the above, we expand the operands and then we return the expanded expression
+    # If the expressions is neither of the above, we expand the operands and return them
     for key, value in expression.operands.items():
         expression.operands[key] = expand_expression(value, jani_constants)
     if expression.op == "norm2d":

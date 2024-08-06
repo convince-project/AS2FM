@@ -17,29 +17,31 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from typing import Optional
-from xml.etree import ElementTree as ET
-
 from scxml_converter.scxml_entries import ScxmlBase
+
+from typing import Optional
+
+from xml.etree import ElementTree as ET
 
 
 class ScxmlParam(ScxmlBase):
     """This class represents a single parameter."""
 
     def __init__(self, name: str, *, expr: Optional[str] = None, location: Optional[str] = None):
+        # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
         self._name = name
         self._expr = expr
         self._location = location
 
     def get_tag_name() -> str:
         return "param"
-    
+
     def get_name(self) -> str:
         return self._name
-    
+
     def get_expr(self) -> Optional[str]:
         return self._expr
-    
+
     def get_location(self) -> Optional[str]:
         return self._location
 
