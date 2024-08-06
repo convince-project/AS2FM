@@ -18,7 +18,7 @@ jobs:
         include:
             # (for humble):
           - python-version: "3.10" 
-            os: "ubuntu-20.04"
+            os: "ubuntu-latest"
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -49,7 +49,7 @@ jobs:
       - name: Install packages
         run: |
           pip install jani_generator/.[dev]
-          pip install mc_toolchain_jani_common/.[dev]
+          pip install as2fm_common/.[dev]
           pip install scxml_converter/.[dev]
       - uses: ricardochaves/python-lint@v1.4.0
         with:
