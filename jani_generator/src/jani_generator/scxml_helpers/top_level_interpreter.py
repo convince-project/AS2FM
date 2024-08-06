@@ -168,12 +168,13 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False) -> JaniModel:
+def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False):
     """
-    Interpret the top-level XML file as a Jani model.
+    Interpret the top-level XML file as a Jani model. And write it to a file.
+    The generated Jani model is written to the same directory as the input XML file under the
+    name `main.jani`.
 
     :param xml_path: The path to the XML file to interpret.
-    :return: The interpreted Jani model.
     """
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
