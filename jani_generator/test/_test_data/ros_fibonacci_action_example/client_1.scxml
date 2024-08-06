@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="send_req" 
+    version="1.0"
+    name="client_1"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="temp_result" type="int64" expr="0" />
+    </datamodel>
+    
+    <ros_topic_publisher topic="/client_1_res" type="std_msgs/Bool" />
+    <ros_action_client action_name="/fibonacci" type="example_interfaces/Fibonacci" />
+
+    <state id="send_req">
+        <onentry>
+            <ros_action_send_goal action_name="/fibonacci">
+                <field name="order" expr="5" />
+            </ros_action_send_goal>
+        </onentry>
+        <ros_action_handle_response action_name="/fibonacci" target="done">
+            <assign location="temp_result" expr="_res.sum" />
+            <ros_topic_publish topic="/client_1_res">
+                <field name="data" expr="temp_result == 42" />
+            </ros_topic_publish>
+        </ros_action_handle_response>
+    </state>
+
+    <state id="done" />
+</scxml>
