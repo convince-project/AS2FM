@@ -26,7 +26,7 @@ from jani_generator.jani_entries.jani_convince_expression_expansion import \
 class JaniEdge:
     def __init__(self, edge_dict: dict):
         self.location = edge_dict["location"]
-        self.action: str = None
+        self.action: Optional[str] = None
         if "action" in edge_dict:
             self.action = edge_dict["action"]
         self.guard = None

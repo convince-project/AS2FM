@@ -17,7 +17,7 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Optional, Union, Sequence
+from typing import List, Optional, Sequence, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,

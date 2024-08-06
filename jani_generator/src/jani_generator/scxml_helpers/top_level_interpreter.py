@@ -20,7 +20,7 @@ Module reading the top level xml file containing the whole model to check.
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace

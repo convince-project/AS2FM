@@ -18,7 +18,7 @@ Properties in Jani
 """
 
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from jani_generator.jani_entries import JaniConstant, JaniExpression
 from jani_generator.jani_entries.jani_convince_expression_expansion import \
@@ -36,7 +36,7 @@ class FilterProperty:
         self._process_values(property_filter_exp["values"])
 
     def _process_values(self, prop_values: Dict[str, Any]) -> None:
-        self._values = ProbabilityProperty(prop_values)
+        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = ProbabilityProperty(prop_values)
         if self._values.is_valid():
             return
         self._values = RewardProperty(prop_values)
@@ -46,6 +46,8 @@ class FilterProperty:
         assert self._values.is_valid(), "Unexpected values in FilterProperty"
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
+        assert isinstance(self._values, ProbabilityProperty), \
+            "Only ProbabilityProperty is supported in FilterProperty"
         return {
             "op": "filter",
             "fun": self._fun,
