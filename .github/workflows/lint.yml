@@ -14,12 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         linter: [ "pylint", "pycodestyle", "flake8", "mypy", "isort" ]
-        package: [ "jani_generator", "mc_toolchain_jani_common", "scxml_converter" ]
+        package: [ "jani_generator", "as2fm_common", "scxml_converter" ]
         include:
             # (for humble):
           - python-version: "3.10" 
-            os: "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
+            # os: "ubuntu-latest"
+    runs-on: ubuntu-latest
 
     steps:
       - uses: szenius/set-timezone@v1.0
