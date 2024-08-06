@@ -46,7 +46,7 @@ class ScxmlDataModel(ScxmlBase):
             data_entries.append(ScxmlData.from_xml_tree(data_entry_xml))
         return ScxmlDataModel(data_entries)
 
-    def get_data_entries(self) -> List[ScxmlData]:
+    def get_data_entries(self) -> Optional[List[ScxmlData]]:
         return self._data_entries
 
     def check_validity(self) -> bool:

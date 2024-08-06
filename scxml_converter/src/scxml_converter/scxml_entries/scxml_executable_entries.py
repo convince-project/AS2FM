@@ -58,7 +58,8 @@ class ScxmlIf(ScxmlBase):
         conditions: List[str] = []
         exec_bodies: List[ScxmlExecutionBody] = []
         conditions.append(xml_tree.attrib["cond"])
-        current_body: ScxmlExecutionBody = []
+        current_body: Optional[ScxmlExecutionBody] = []
+        assert current_body is not None, "Error: SCXML if: current body is not valid."
         for child in xml_tree:
             if child.tag == "elseif":
                 conditions.append(child.attrib["cond"])
@@ -126,8 +127,10 @@ class ScxmlIf(ScxmlBase):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
+            execution_body = as_plain_execution_body(execution, ros_declarations)
+            assert execution_body is not None, "Error: SCXML if: invalid execution body."
             condional_executions.append((replace_ros_interface_expression(condition),
-                                         as_plain_execution_body(execution, ros_declarations)))
+                                         execution_body))
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(condional_executions, else_execution)
 
@@ -138,7 +141,7 @@ class ScxmlIf(ScxmlBase):
         xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
         append_execution_body_to_xml(xml_if, first_conditional_execution[1])
         for condition, execution in self._conditional_executions[1:]:
-            xml_if.append = ET.Element('elseif', {"cond": condition})
+            xml_if.append(ET.Element('elseif', {"cond": condition}))
             append_execution_body_to_xml(xml_if, execution)
         if self._else_execution is not None:
             xml_if.append(ET.Element('else'))
@@ -165,7 +168,8 @@ class ScxmlSend(ScxmlBase):
         assert xml_tree.tag == ScxmlSend.get_tag_name(), \
             f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
         event = xml_tree.attrib["event"]
-        params = []
+        params: Optional[List[ScxmlParam]] = []
+        assert params is not None, "Error: SCXML send: params is not valid."
         for param_xml in xml_tree:
             params.append(ScxmlParam.from_xml_tree(param_xml))
         if len(params) == 0:
