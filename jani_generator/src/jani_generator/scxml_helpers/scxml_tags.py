@@ -418,7 +418,7 @@ class StateTag(BaseTag):
         self._events_no_condition: List[str] = []
         for child in self.children:
             transition_events = child.element.get_events()
-            transition_event = "" if transition_events is None else transition_events[0]
+            transition_event = "" if len(transition_events) == 0 else transition_events[0]
             transition_condition = child.element.get_condition()
             # Add previous conditions matching the same event trigger to the current child state
             child.set_previous_siblings_conditions(
@@ -461,9 +461,9 @@ class TransitionTag(BaseTag):
         assert target_state is not None, f"Transition's target state {target_state_id} not found."
         event_name = self.element.get_events()
         # TODO: Need to extend this to support multiple events
-        assert event_name is None or len(event_name) == 1, \
+        assert len(event_name) == 0 or len(event_name) == 1, \
             "Transitions triggered by multiple events are not supported."
-        transition_trigger_event = None if event_name is None else event_name[0]
+        transition_trigger_event = None if len(event_name) == 0 else event_name[0]
         if transition_trigger_event is not None:
             # TODO: Maybe get rid of one of the two event variables
             assert len(transition_trigger_event) > 0, "Empty event name not supported."

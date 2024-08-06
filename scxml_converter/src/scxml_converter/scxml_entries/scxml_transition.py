@@ -137,7 +137,7 @@ class ScxmlTransition(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})
-        if self._events is not None:
+        if len(self._events) > 0:
             xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:
             xml_transition.set("cond", self._condition)
