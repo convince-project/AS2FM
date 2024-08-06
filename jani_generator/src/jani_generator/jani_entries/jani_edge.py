@@ -52,6 +52,10 @@ class JaniEdge:
         """Get the action name, if set."""
         return self.action
 
+    def is_self_loop(self) -> bool:
+        """Check if the edge is a self loop."""
+        return len(self.destinations) == 1 and self.location == self.destinations[0]["location"]
+
     def set_action(self, action_name: str):
         """Set the action name."""
         self.action = action_name

@@ -26,6 +26,11 @@ from scxml_converter.scxml_entries.utils import (
     generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, get_default_expression_for_type)
 
+from jani_generator.jani_entries import JaniModel
+
+
+SRV_PREFIX = "srv_handler_"
+
 
 class RosService:
     """Object that contains a description of a ROS service with its server and clients."""
@@ -88,9 +93,10 @@ class RosService:
 
     def to_scxml(self) -> ScxmlRoot:
         """
-        Generate the automaton that implements the link between the server of this service its
-        clients. This ensures that only one request can be processed at the time and that the
-        client receives the right response related to it's request.
+        Generate the srv_handler automaton that implements the link between the server of this
+        service and its clients.
+        This ensures that only one request can be processed at the time and that the client receives
+        only the response related to it's request.
 
         :return: Scxml object representing the necessary file content.
         """
@@ -102,7 +108,7 @@ class RosService:
             default_expr = get_default_expression_for_type(field_type)
             req_fields_as_data.append(ScxmlData(field_name, default_expr, field_type))
         # Make sure the service name has no slashes and spaces
-        scxml_root_name = "srv_handler_" + sanitize_ros_interface_name(self._service_name)
+        scxml_root_name = SRV_PREFIX + sanitize_ros_interface_name(self._service_name)
         wait_state = ScxmlState("waiting",
                                 body=[
                                     ScxmlTransition(
@@ -140,3 +146,15 @@ class RosService:
 
 # Mapping from RosService name and RosService information
 RosServices = Dict[str, RosService]
+
+
+def remove_self_loops_from_srv_handlers_in_jani(jani_model: JaniModel) -> None:
+    """
+    Remove self-loops from srv_handler automata in the Jani model.
+
+    :param jani_model: The Jani model to modify.
+    """
+    for automaton in jani_model.get_automata():
+        # Modify the automaton in place
+        if automaton.get_name().startswith(SRV_PREFIX):
+            automaton.remove_self_loop_edges()
