@@ -25,7 +25,8 @@ from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_model import JaniModel
 from jani_generator.ros_helpers.ros_timer import (
     RosTimer, make_global_timer_automaton)
-from jani_generator.ros_helpers.ros_services import remove_self_loops_from_srv_handlers_in_jani
+from jani_generator.ros_helpers.ros_services import (
+    remove_empty_self_loops_from_srv_handlers_in_jani)
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
@@ -74,5 +75,5 @@ def convert_multiple_scxmls_to_jani(
     if timer_automaton is not None:
         base_model.add_jani_automaton(timer_automaton)
     implement_scxml_events_as_jani_syncs(events_holder, timers, base_model)
-    remove_self_loops_from_srv_handlers_in_jani(base_model)
+    remove_empty_self_loops_from_srv_handlers_in_jani(base_model)
     return base_model

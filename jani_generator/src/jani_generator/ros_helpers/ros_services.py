@@ -148,7 +148,7 @@ class RosService:
 RosServices = Dict[str, RosService]
 
 
-def remove_self_loops_from_srv_handlers_in_jani(jani_model: JaniModel) -> None:
+def remove_empty_self_loops_from_srv_handlers_in_jani(jani_model: JaniModel) -> None:
     """
     Remove self-loops from srv_handler automata in the Jani model.
 
@@ -157,4 +157,4 @@ def remove_self_loops_from_srv_handlers_in_jani(jani_model: JaniModel) -> None:
     for automaton in jani_model.get_automata():
         # Modify the automaton in place
         if automaton.get_name().startswith(SRV_PREFIX):
-            automaton.remove_self_loop_edges()
+            automaton.remove_empty_self_loop_edges()
