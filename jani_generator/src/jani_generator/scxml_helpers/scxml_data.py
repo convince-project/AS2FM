@@ -78,16 +78,18 @@ class ScxmlData:
             else self.type())
 
     def _interpret_type_from_comment_above(
-            self, comment_above: Optional[str]) -> Optional[type]:
+            self, comment_above: Optional[str]) -> Optional[Dict[str, type]]:
         """Interpret the type of the data from the comment above the data tag.
 
         :param comment_above: The comment above the data tag (optional)
-        :return: The type of the data
+        :return: The type of the data, None if not found
         """
         if comment_above is None:
             return None
         # match string inside xml comment brackets
         match = re.match(r'<!--(.*?)-->', comment_above.strip())
+        if match is None:
+            return None
         comment_content = match.group(1).strip()
         if 'TYPE' not in comment_content:
             return None
@@ -139,9 +141,9 @@ class ScxmlData:
         if len(types) == 0:
             raise ValueError(
                 f"Could not determine type for data {self.id}")
-        if len(types) == 1:
+        elif len(types) == 1:
             return types.pop()
-        if len(types) > 1:
+        else: # len(types) > 1
             raise ValueError(
                 f"Multiple types found for data {self.id}: {types}")
 

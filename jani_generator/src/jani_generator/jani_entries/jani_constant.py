@@ -33,13 +33,14 @@ class JaniConstant:
     def name(self) -> str:
         return self._name
 
-    def value(self) -> JaniValue:
+    def value(self) -> ValidTypes:
         assert self._value is not None, "Value not set"
         jani_value = self._value.value
         assert jani_value is not None and jani_value.is_valid(), "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
-    def jani_type_from_string(str_type: str) -> ValidTypes:
+    @staticmethod
+    def jani_type_from_string(str_type: str) -> Type[ValidTypes]:
         """
         Translate a (Jani) type string to a Python type.
         """
@@ -53,6 +54,7 @@ class JaniConstant:
             raise ValueError(f"Type {str_type} not supported by Jani")
 
     # TODO: Move this to a util function file
+    @staticmethod
     def jani_type_to_string(c_type: ValidTypes) -> str:
         """
         Translate a Python type to the name of the type in Jani.

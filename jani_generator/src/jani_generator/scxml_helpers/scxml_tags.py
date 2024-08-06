@@ -101,7 +101,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                                          body: ScxmlExecutionBody, source: str, target: str,
                                          hash_str: str, guard: Optional[JaniGuard],
                                          trigger_event: Optional[str]) \
-                                            -> Tuple[List[JaniEdge], List[str]]:
+        -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
@@ -182,7 +182,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             interm_loc_before = f"{source}_{i}_before_if"
             interm_loc_after = f"{source}_{i}_after_if"
             new_edges[-1].destinations[0]['location'] = interm_loc_before
-            previous_conditions = []
+            previous_conditions: List[JaniExpression] = []
             for cond_str, conditional_body in ec.get_conditional_executions():
                 print(f"Condition: {cond_str}")
                 print(f"Body: {conditional_body}")
