@@ -28,6 +28,7 @@ class ScxmlParam(ScxmlBase):
     """This class represents a single parameter."""
 
     def __init__(self, name: str, *, expr: Optional[str] = None, location: Optional[str] = None):
+        # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
         self._name = name
         self._expr = expr
         self._location = location

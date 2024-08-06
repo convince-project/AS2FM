@@ -155,6 +155,9 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 variables = {}
                 for n, v in jani_automaton.get_variables().items():
                     variables[n] = v.get_type()()
+                # TODO: We should get the type explicitly: sometimes the expression is underdefined
+                print(f"Interpreting {expr} with {variables}")
+                # This might contain reference to event variables, that have no type specified
                 data_structure_for_event[param.get_name()] = \
                     type(interpret_ecma_script_expr(expr, variables))
             new_edge.destinations[0]['assignments'].append(JaniAssignment({
@@ -293,6 +296,7 @@ class DatamodelTag(BaseTag):
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
             assert expr_type == scxml_data.get_type(), \
                 f"Expected type {scxml_data.get_type()}, got {expr_type}."
+            # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
                 JaniVariable(scxml_data.get_name(), scxml_data.get_type(), init_value))
 

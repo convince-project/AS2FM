@@ -52,6 +52,11 @@ class JaniEdge:
         """Get the action name, if set."""
         return self.action
 
+    def is_empty_self_loop(self) -> bool:
+        """Check if the edge is an empty self loop (i.e. has no assignments)."""
+        return len(self.destinations) == 1 and self.location == self.destinations[0]["location"] \
+            and len(self.destinations[0]["assignments"]) == 0
+
     def set_action(self, action_name: str):
         """Set the action name."""
         self.action = action_name
