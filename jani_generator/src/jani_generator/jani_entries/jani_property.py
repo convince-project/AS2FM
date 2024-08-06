@@ -18,9 +18,11 @@ Properties in Jani
 """
 
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from jani_generator.jani_entries import JaniConstant, JaniExpression
-from jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
+from jani_generator.jani_entries.jani_convince_expression_expansion import \
+    expand_expression
 
 
 class FilterProperty:

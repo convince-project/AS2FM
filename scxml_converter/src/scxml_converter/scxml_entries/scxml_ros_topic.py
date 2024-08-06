@@ -21,12 +21,15 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 """
 
 from typing import List, Optional, Union
-from scxml_converter.scxml_entries import (RosField, ScxmlBase, ScxmlSend, ScxmlParam, 
-                                           ScxmlTransition, ScxmlExecutionBody, 
-                                           ScxmlRosDeclarationsContainer,
-                                           valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body)
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (RosField, ScxmlBase,
+                                           ScxmlExecutionBody, ScxmlParam,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlSend, ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 from scxml_converter.scxml_entries.utils import is_msg_type_known
 
 

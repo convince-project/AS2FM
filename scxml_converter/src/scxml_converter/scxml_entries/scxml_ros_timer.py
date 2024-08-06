@@ -16,11 +16,14 @@
 """Declaration of SCXML tags related to ROS Timers."""
 
 from typing import Optional, Union
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlTransition,
-                                           ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-                                           valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body)
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class RosTimeRate(ScxmlBase):

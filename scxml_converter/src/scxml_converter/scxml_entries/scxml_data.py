@@ -18,11 +18,10 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 """
 
 from typing import Any
-from scxml_converter.scxml_entries import ScxmlBase
-
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import ScxmlBase
+from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 
 
 class ScxmlData(ScxmlBase):

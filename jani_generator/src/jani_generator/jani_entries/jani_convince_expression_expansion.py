@@ -15,14 +15,15 @@
 
 """Expand expressions into jani."""
 
-from typing import Dict
-from jani_generator.jani_entries.jani_expression_generator import minus_operator, plus_operator, \
-    equal_operator, max_operator, min_operator, greater_equal_operator, lower_operator, \
-    and_operator, or_operator, if_operator, multiply_operator, divide_operator, pow_operator, \
-    abs_operator, floor_operator, modulo_operator
-from jani_generator.jani_entries import JaniExpression, JaniConstant
 from math import pi
+from typing import Dict
 
+from jani_generator.jani_entries import JaniConstant, JaniExpression
+from jani_generator.jani_entries.jani_expression_generator import (
+    abs_operator, and_operator, divide_operator, equal_operator,
+    floor_operator, greater_equal_operator, if_operator, lower_operator,
+    max_operator, min_operator, minus_operator, modulo_operator,
+    multiply_operator, or_operator, plus_operator, pow_operator)
 
 BASIC_EXPRESSIONS_MAPPING = {
     "-": "-",

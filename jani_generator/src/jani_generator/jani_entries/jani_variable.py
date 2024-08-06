@@ -18,9 +18,9 @@ Variables in Jani
 """
 
 from typing import Optional, Union, get_args
-from jani_generator.jani_entries import JaniExpression, JaniValue
 
 from as2fm_common.common import ValidTypes
+from jani_generator.jani_entries import JaniExpression, JaniValue
 
 
 class JaniVariable:

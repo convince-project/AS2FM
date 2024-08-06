@@ -20,18 +20,19 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html
 """
 
-from typing import Optional, List, Union
-from scxml_converter.scxml_entries import (ScxmlBase, RosField, ScxmlSend, ScxmlTransition,
-                                           ScxmlExecutionBody)
-from scxml_converter.scxml_entries import (execution_body_from_xml, valid_execution_body,
-                                           as_plain_execution_body)
+from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
-from scxml_converter.scxml_entries.utils import ScxmlRosDeclarationsContainer
-from scxml_converter.scxml_entries.utils import (is_srv_type_known,
-                                                 generate_srv_request_event,
-                                                 generate_srv_response_event,
-                                                 generate_srv_server_request_event,
-                                                 generate_srv_server_response_event)
+
+from scxml_converter.scxml_entries import (RosField, ScxmlBase,
+                                           ScxmlExecutionBody, ScxmlSend,
+                                           ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
+from scxml_converter.scxml_entries.utils import (
+    ScxmlRosDeclarationsContainer, generate_srv_request_event,
+    generate_srv_response_event, generate_srv_server_request_event,
+    generate_srv_server_response_event, is_srv_type_known)
 
 
 class RosServiceServer(ScxmlBase):

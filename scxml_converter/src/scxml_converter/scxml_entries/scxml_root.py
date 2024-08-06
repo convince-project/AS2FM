@@ -17,16 +17,18 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from typing import List, Optional, Tuple, get_args
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlState, ScxmlDataModel,
-                                           ScxmlRosDeclarations, RosTimeRate, RosTopicSubscriber,
-                                           RosTopicPublisher, RosServiceServer, RosServiceClient,
-                                           ScxmlRosDeclarationsContainer)
-
 from copy import deepcopy
 from os.path import isfile
-
+from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (RosServiceClient, RosServiceServer,
+                                           RosTimeRate, RosTopicPublisher,
+                                           RosTopicSubscriber, ScxmlBase,
+                                           ScxmlDataModel,
+                                           ScxmlRosDeclarations,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlState)
 
 
 class ScxmlRoot(ScxmlBase):

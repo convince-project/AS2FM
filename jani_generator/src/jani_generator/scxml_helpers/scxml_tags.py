@@ -21,17 +21,15 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, Optional, Set, Tuple, Union
 
+from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
                                          JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
-
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
-from as2fm_common.ecmascript_interpretation import \
-    interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,

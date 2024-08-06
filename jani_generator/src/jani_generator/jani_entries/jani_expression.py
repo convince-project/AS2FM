@@ -18,6 +18,7 @@ Expressions in Jani
 """
 
 from typing import Dict, Union
+
 from jani_generator.jani_entries import JaniValue
 
 SupportedExp = Union[str, int, float, bool, dict]

@@ -15,12 +15,15 @@
 
 import os
 
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam,
-                                           ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
-                                           RosTimeRate, RosTopicPublisher, RosTopicSubscriber,
-                                           RosRateCallback, RosTopicPublish, RosTopicCallback,
-                                           RosField)
 from test_utils import canonicalize_xml, remove_empty_lines
+
+from scxml_converter.scxml_entries import (RosField, RosRateCallback,
+                                           RosTimeRate, RosTopicCallback,
+                                           RosTopicPublish, RosTopicPublisher,
+                                           RosTopicSubscriber, ScxmlAssign,
+                                           ScxmlData, ScxmlDataModel,
+                                           ScxmlParam, ScxmlRoot, ScxmlSend,
+                                           ScxmlState, ScxmlTransition)
 
 
 def test_battery_drainer_from_code():

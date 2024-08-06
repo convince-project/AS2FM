@@ -15,7 +15,7 @@
 
 """This allows the composition of multiple automata in jani."""
 
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class JaniComposition:

@@ -15,9 +15,9 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Dict, List, Tuple, Optional
-from scxml_converter.scxml_entries.scxml_ros_field import RosField
+from typing import Dict, List, Optional, Tuple
 
+from scxml_converter.scxml_entries.scxml_ros_field import RosField
 
 MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",

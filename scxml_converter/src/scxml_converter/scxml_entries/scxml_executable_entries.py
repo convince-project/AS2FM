@@ -17,12 +17,13 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import List, Optional, Union, Tuple, get_args
+from typing import List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer)
-
-from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam,
+                                           ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries.utils import \
+    replace_ros_interface_expression
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -301,6 +302,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
     from .scxml_ros_entries import ScxmlRosSends
+
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
     exec_tag = xml_tree.tag

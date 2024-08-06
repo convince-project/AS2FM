@@ -17,11 +17,10 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from scxml_converter.scxml_entries import ScxmlBase
-
 from typing import Optional
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import ScxmlBase
 
 
 class ScxmlParam(ScxmlBase):
