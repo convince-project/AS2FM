@@ -17,7 +17,7 @@ jobs:
         # "pylint", 
         # "pycodestyle", 
         # "flake8", 
-        # "mypy", 
+          "mypy", 
           "isort" 
           ]
         package: [ "jani_generator", "as2fm_common", "scxml_converter" ]

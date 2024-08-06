@@ -47,9 +47,9 @@ class ScxmlData(ScxmlBase):
         return ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
 
     def __init__(
-            self, id: str, expr: str, data_type: str,
+            self, id_   : str, expr: str, data_type: str,
             lower_bound: Any = None, upper_bound: Any = None):
-        self._id = id
+        self._id = id_
         self._expr = expr
         self._data_type = data_type
         self._lower_bound = lower_bound
@@ -102,7 +102,10 @@ class ScxmlData(ScxmlBase):
         xml_data = ET.Element(ScxmlData.get_tag_name(),
                               {"id": self._id, "expr": self._expr, "type": self._data_type})
         if self._lower_bound is not None:
-            xml_data.set("lower_bound_incl", str(self._lower_bound_incl))
+            xml_data.set("lower_bound_incl", str(self._lower_bound))
         if self._upper_bound is not None:
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
+    
+    def as_plain_scxml(self, ros_declarations):
+        raise NotImplementedError("Error: SCXML data: as_plain_scxml not implemented.") 
