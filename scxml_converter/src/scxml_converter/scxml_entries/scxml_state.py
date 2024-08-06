@@ -40,7 +40,7 @@ class ScxmlState(ScxmlBase):
     def __init__(self, id_: str, *,
                  on_entry: Optional[ScxmlExecutionBody] = None,
                  on_exit: Optional[ScxmlExecutionBody] = None,
-                 body: Optional[List[ScxmlTransition]] = None):
+                 body: Optional[ScxmlExecutionBody] = None):
         self._id = id_
         self._on_entry = on_entry
         self._on_exit = on_exit
@@ -151,6 +151,7 @@ class ScxmlState(ScxmlBase):
             print("Error: SCXML state: found invalid transition in state body.")
         return valid_entry and valid_exit and valid_body
 
+    @staticmethod
     def _check_valid_ros_instantiations(body: List[Union[ScxmlExecutableEntry, ScxmlTransition]],
                                         ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""

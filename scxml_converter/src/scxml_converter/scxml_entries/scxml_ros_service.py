@@ -165,16 +165,14 @@ class RosServiceSendRequest(ScxmlSend):
         srv_name = xml_tree.attrib.get("service_name")
         assert srv_name is not None, \
             "Error: SCXML service request: 'service_name' attribute not found in input xml."
-        fields = []
+        fields: List[RosField] = []
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
-        if len(fields) == 0:
-            fields = None
         return RosServiceSendRequest(srv_name, fields)
 
     def __init__(self,
                  service_decl: Union[str, RosServiceClient],
-                 fields: Optional[List[RosField]]) -> None:
+                 fields: List[RosField] = list()) -> None:
         """
         Initialize a new RosServiceSendRequest object.
 
@@ -327,7 +325,7 @@ class RosServiceSendResponse(ScxmlSend):
         return "ros_service_send_response"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert xml_tree.tag == RosServiceSendResponse.get_tag_name(), \
             "Error: SCXML service response: XML tag name is not " + \
@@ -335,7 +333,8 @@ class RosServiceSendResponse(ScxmlSend):
         srv_name = xml_tree.attrib.get("service_name")
         assert srv_name is not None, \
             "Error: SCXML service response: 'service_name' attribute not found in input xml."
-        fields = []
+        fields: Optional[List[RosField]] = []
+        assert fields is not None, "Error: SCXML service response: fields is not valid."
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
         if len(fields) == 0:
@@ -357,7 +356,7 @@ class RosServiceSendResponse(ScxmlSend):
             assert isinstance(service_name, str), \
                 "Error: SCXML Service Send Response: invalid service name."
             self._service_name = service_name
-        self._fields = fields
+        self._fields = fields if fields is not None else []
         assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
 
     def check_validity(self) -> bool:
@@ -410,7 +409,7 @@ class RosServiceHandleResponse(ScxmlTransition):
         return "ros_service_handle_response"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
+    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert xml_tree.tag == RosServiceHandleResponse.get_tag_name(), \
             "Error: SCXML service response handler: XML tag name is not " + \

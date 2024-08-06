@@ -168,12 +168,10 @@ class ScxmlSend(ScxmlBase):
         assert xml_tree.tag == ScxmlSend.get_tag_name(), \
             f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
         event = xml_tree.attrib["event"]
-        params: Optional[List[ScxmlParam]] = []
+        params: List[ScxmlParam] = []
         assert params is not None, "Error: SCXML send: params is not valid."
         for param_xml in xml_tree:
             params.append(ScxmlParam.from_xml_tree(param_xml))
-        if len(params) == 0:
-            params = None
         return ScxmlSend(event, params)
 
     def get_event(self) -> str:

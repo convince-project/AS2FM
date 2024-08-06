@@ -43,13 +43,13 @@ class RosTimeRate(ScxmlBase):
         assert xml_tree.tag == RosTimeRate.get_tag_name(), \
             f"Error: SCXML rate timer: XML tag name is not {RosTimeRate.get_tag_name()}"
         timer_name = xml_tree.attrib.get("name")
-        timer_rate = xml_tree.attrib.get("rate_hz")
-        assert timer_name is not None and timer_rate is not None, \
+        timer_rate_str = xml_tree.attrib.get("rate_hz")
+        assert timer_name is not None and timer_rate_str is not None, \
             "Error: SCXML rate timer: 'name' or 'rate_hz' attribute not found in input xml."
         try:
-            timer_rate = float(timer_rate)
-        except ValueError:
-            raise ValueError("Error: SCXML rate timer: rate is not a number.")
+            timer_rate = float(timer_rate_str)
+        except ValueError as e:
+            raise ValueError("Error: SCXML rate timer: rate is not a number.") from e
         return RosTimeRate(timer_name, timer_rate)
 
     def check_validity(self) -> bool:
