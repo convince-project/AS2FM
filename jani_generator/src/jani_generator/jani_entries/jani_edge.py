@@ -53,7 +53,7 @@ class JaniEdge:
         return self.action
 
     def is_empty_self_loop(self) -> bool:
-        """Check if the edge is a self loop."""
+        """Check if the edge is an empty self loop (i.e. has no assignments)."""
         return len(self.destinations) == 1 and self.location == self.destinations[0]["location"] \
             and len(self.destinations[0]["assignments"]) == 0
 
