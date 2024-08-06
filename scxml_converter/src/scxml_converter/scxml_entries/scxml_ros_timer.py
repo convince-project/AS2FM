@@ -33,9 +33,11 @@ class RosTimeRate(ScxmlBase):
         self._name = name
         self._rate_hz = float(rate_hz)
 
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_time_rate"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert xml_tree.tag == RosTimeRate.get_tag_name(), \

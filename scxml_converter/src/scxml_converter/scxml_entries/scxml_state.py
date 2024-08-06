@@ -37,35 +37,23 @@ class ScxmlState(ScxmlBase):
     def get_tag_name() -> str:
         return "state"
 
-    def __init__(self, id: str, *,
+    def __init__(self, id_: str, *,
                  on_entry: Optional[ScxmlExecutionBody] = None,
                  on_exit: Optional[ScxmlExecutionBody] = None,
                  body: Optional[List[ScxmlTransition]] = None):
-        self._id = id
+        self._id = id_
         self._on_entry = on_entry
         self._on_exit = on_exit
         self._body = body
 
-    def get_id(self) -> str:
-        return self._id
-
-    def get_onentry(self) -> Optional[ScxmlExecutionBody]:
-        return self._on_entry
-
-    def get_onexit(self) -> Optional[ScxmlExecutionBody]:
-        return self._on_exit
-
-    def get_body(self) -> Optional[List[ScxmlTransition]]:
-        """Return the transitions leaving the state."""
-        return self._body
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert xml_tree.tag == ScxmlState.get_tag_name(), \
             f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
-        id = xml_tree.attrib.get("id")
-        assert id is not None and len(id) > 0, "Error: SCXML state: id is not valid."
-        scxml_state = ScxmlState(id)
+        id_ = xml_tree.attrib.get("id")
+        assert id_ is not None and len(id_) > 0, "Error: SCXML state: id is not valid."
+        scxml_state = ScxmlState(id_)
         # Get the onentry and onexit execution bodies
         on_entry = xml_tree.findall("onentry")
         if on_entry is not None and len(on_entry) == 0:
@@ -87,6 +75,19 @@ class ScxmlState(ScxmlBase):
         for body_entry in ScxmlState._transitions_from_xml(xml_tree):
             scxml_state.add_transition(body_entry)
         return scxml_state
+
+    def get_id(self) -> str:
+        return self._id
+
+    def get_onentry(self) -> Optional[ScxmlExecutionBody]:
+        return self._on_entry
+
+    def get_onexit(self) -> Optional[ScxmlExecutionBody]:
+        return self._on_exit
+
+    def get_body(self) -> Optional[List[ScxmlTransition]]:
+        """Return the transitions leaving the state."""
+        return self._body
 
     def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []

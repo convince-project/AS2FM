@@ -282,7 +282,7 @@ class RosTopicPublish(ScxmlSend):
             "Error: SCXML topic publish: invalid ROS instantiations."
         event_name = "ros_topic." + self._topic
         params = None if self._fields is None else \
-            [field.as_plain_scxml() for field in self._fields]
+            [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, params)
 
     def as_xml(self) -> ET.Element:

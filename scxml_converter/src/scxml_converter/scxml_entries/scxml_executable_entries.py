@@ -46,17 +46,11 @@ class ScxmlIf(ScxmlBase):
         self._conditional_executions = conditional_executions
         self._else_execution = else_execution
 
+    @staticmethod
     def get_tag_name() -> str:
         return "if"
 
-    def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
-        """Get the conditional executions."""
-        return self._conditional_executions
-
-    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
-        """Get the else execution."""
-        return self._else_execution
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
         """Create a ScxmlIf object from an XML tree."""
         assert xml_tree.tag == ScxmlIf.get_tag_name(), \
@@ -80,6 +74,14 @@ class ScxmlIf(ScxmlBase):
         if len(current_body) == 0:
             current_body = None
         return ScxmlIf(list(zip(conditions, exec_bodies)), current_body)
+
+    def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
+        """Get the conditional executions."""
+        return self._conditional_executions
+
+    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
+        """Get the else execution."""
+        return self._else_execution
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -153,17 +155,11 @@ class ScxmlSend(ScxmlBase):
         self._event = event
         self._params = params
 
+    @staticmethod
     def get_tag_name() -> str:
         return "send"
 
-    def get_event(self) -> str:
-        """Get the event to send."""
-        return self._event
-
-    def get_params(self) -> List[ScxmlParam]:
-        """Get the parameters to send."""
-        return self._params
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
         """Create a ScxmlSend object from an XML tree."""
         assert xml_tree.tag == ScxmlSend.get_tag_name(), \
@@ -175,6 +171,14 @@ class ScxmlSend(ScxmlBase):
         if len(params) == 0:
             params = None
         return ScxmlSend(event, params)
+
+    def get_event(self) -> str:
+        """Get the event to send."""
+        return self._event
+
+    def get_params(self) -> List[ScxmlParam]:
+        """Get the parameters to send."""
+        return self._params
 
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
@@ -215,17 +219,11 @@ class ScxmlAssign(ScxmlBase):
         self._location = location
         self._expr = expr
 
+    @staticmethod
     def get_tag_name() -> str:
         return "assign"
 
-    def get_location(self) -> str:
-        """Get the location to assign."""
-        return self._location
-
-    def get_expr(self) -> str:
-        """Get the expression to assign."""
-        return self._expr
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
         """Create a ScxmlAssign object from an XML tree."""
         assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
@@ -237,6 +235,15 @@ class ScxmlAssign(ScxmlBase):
         assert expr is not None and len(expr) > 0, \
             "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
+    
+    def get_location(self) -> str:
+        """Get the location to assign."""
+        return self._location
+
+    def get_expr(self) -> str:
+        """Get the expression to assign."""
+        return self._expr
+
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model

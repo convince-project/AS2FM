@@ -221,7 +221,7 @@ class RosServiceSendRequest(ScxmlSend):
             "Error: SCXML service request: invalid ROS instantiations."
         event_name = generate_srv_request_event(
             self._srv_name, ros_declarations.get_automaton_name())
-        event_params = [field.as_plain_scxml() for field in self._fields]
+        event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:
@@ -389,7 +389,7 @@ class RosServiceSendResponse(ScxmlSend):
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML service response: invalid ROS instantiations."
         event_name = generate_srv_server_response_event(self._service_name)
-        event_params = [field.as_plain_scxml() for field in self._fields]
+        event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:

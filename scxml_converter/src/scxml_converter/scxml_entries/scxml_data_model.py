@@ -25,16 +25,16 @@ from scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 
 class ScxmlDataModel(ScxmlBase):
     """This class represents the variables defined in the model."""
+
     def __init__(self, data_entries: List[ScxmlData] = None):
         # TODO: Check ScxmlData from scxml_helpers, for alternative parsing
         self._data_entries = data_entries
 
+    @staticmethod
     def get_tag_name() -> str:
         return "datamodel"
 
-    def get_data_entries(self) -> List[ScxmlData]:
-        return self._data_entries
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert xml_tree.tag == ScxmlDataModel.get_tag_name(), \
@@ -45,6 +45,9 @@ class ScxmlDataModel(ScxmlBase):
         for data_entry_xml in data_entries_xml:
             data_entries.append(ScxmlData.from_xml_tree(data_entry_xml))
         return ScxmlDataModel(data_entries)
+
+    def get_data_entries(self) -> List[ScxmlData]:
+        return self._data_entries
 
     def check_validity(self) -> bool:
         valid_data_entries = True

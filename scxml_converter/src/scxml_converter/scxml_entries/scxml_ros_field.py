@@ -28,9 +28,11 @@ class RosField(ScxmlParam):
         self._expr = expr
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
 
+    @staticmethod
     def get_tag_name() -> str:
         return "field"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert xml_tree.tag == RosField.get_tag_name(), \
@@ -50,7 +52,7 @@ class RosField(ScxmlParam):
             print("Error: SCXML topic publish field: expr is not valid.")
         return valid_name and valid_expr
 
-    def as_plain_scxml(self) -> ScxmlParam:
+    def as_plain_scxml(self, _) -> ScxmlParam:
         from scxml_converter.scxml_entries.utils import \
             replace_ros_interface_expression
         return ScxmlParam(self._name, expr=replace_ros_interface_expression(self._expr))

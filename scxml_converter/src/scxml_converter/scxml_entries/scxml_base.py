@@ -17,15 +17,19 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from xml.etree import ElementTree as ET
+
 
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
 
+    @staticmethod
     def get_tag_name() -> str:
         """Get the tag name of the XML element."""
         raise NotImplementedError
 
-    def from_xml_tree(xml_tree) -> "ScxmlBase":
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlBase":
         """Create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
