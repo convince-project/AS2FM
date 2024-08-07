@@ -55,7 +55,7 @@ class JaniConstant:
 
     # TODO: Move this to a util function file
     @staticmethod
-    def jani_type_to_string(c_type: ValidTypes) -> str:
+    def jani_type_to_string(c_type: Type[ValidTypes]) -> str:
         """
         Translate a Python type to the name of the type in Jani.
 
