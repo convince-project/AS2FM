@@ -108,9 +108,9 @@ class JaniModel:
             "We expect there to be explicit syncs for all automata."
         for automaton in self._automata:
             existing_syncs = self._system.get_syncs_for_element(automaton.get_name())
-            for actions in automaton.get_actions():
-                if actions not in existing_syncs:
-                    self._system.add_sync(actions, {automaton.get_name(): actions})
+            for action in automaton.get_actions():
+                if action not in existing_syncs:
+                    self._system.add_sync(action, {automaton.get_name(): action})
 
     def add_jani_property(self, property: JaniProperty):
         self._properties.append(property)
