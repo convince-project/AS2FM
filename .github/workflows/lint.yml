@@ -57,9 +57,10 @@ jobs:
           pip install jani_generator/.[dev]
           pip install as2fm_common/.[dev]
           pip install scxml_converter/.[dev]
-      - uses: p-peytral/python-lint@v1.0.12
+      - uses: marian-code/python-lint-annotate@v4
         with:
           python-root-list: ${{ matrix.package }}/src/${{ matrix.package }}
+          python-version: ${{ matrix.python-version }}
           use-pylint: ${{ matrix.linter == 'pylint' }}
           use-pycodestyle: ${{ matrix.linter == 'pycodestyle' }}
           use-flake8: ${{ matrix.linter == 'flake8' }}
