@@ -390,10 +390,9 @@ class StateTag(BaseTag):
             parse_ecmascript_to_jani_expression(cond) for
             cond in self._event_to_conditions.get(event_name, [])]
         if len(previous_expressions) > 0:
-            guard = JaniGuard(_merge_conditions(previous_expressions))
+            return JaniGuard(_merge_conditions(previous_expressions))
         else:
-            guard = None
-        return guard
+            return None
 
     def add_unhandled_transitions(self, transitions_set: Set[str]):
         """Add self-loops for transitions that weren't handled yet."""
