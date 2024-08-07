@@ -21,12 +21,15 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 """
 
 from typing import List, Optional, Union
-from scxml_converter.scxml_entries import (RosField, ScxmlBase, ScxmlSend, ScxmlParam, 
-                                           ScxmlTransition, ScxmlExecutionBody, 
-                                           ScxmlRosDeclarationsContainer,
-                                           valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body)
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (RosField, ScxmlBase,
+                                           ScxmlExecutionBody, ScxmlParam,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlSend, ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 from scxml_converter.scxml_entries.utils import is_msg_type_known
 
 
@@ -225,15 +228,15 @@ class RosTopicPublish(ScxmlSend):
         topic_name = xml_tree.attrib.get("topic")
         assert topic_name is not None, \
             "Error: SCXML topic publish: 'topic' attribute not found in input xml."
-        fields = []
+        fields: List[RosField] = []
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
-        if len(fields) == 0:
-            fields = None
         return RosTopicPublish(topic_name, fields)
 
     def __init__(self, topic: Union[RosTopicPublisher, str],
-                 fields: Optional[List[RosField]] = None):
+                 fields: List[RosField] = None) -> None:
+        if fields is None:
+            fields = []
         if isinstance(topic, RosTopicPublisher):
             self._topic = topic.get_topic_name()
         else:
@@ -279,7 +282,7 @@ class RosTopicPublish(ScxmlSend):
             "Error: SCXML topic publish: invalid ROS instantiations."
         event_name = "ros_topic." + self._topic
         params = None if self._fields is None else \
-            [field.as_plain_scxml() for field in self._fields]
+            [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, params)
 
     def as_xml(self) -> ET.Element:

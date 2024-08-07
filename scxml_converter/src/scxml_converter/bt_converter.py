@@ -27,6 +27,7 @@ from typing import List
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
+
 from scxml_converter.scxml_entries import (RosRateCallback, RosTimeRate,
                                            ScxmlRoot, ScxmlSend, ScxmlState,
                                            ScxmlTransition)
@@ -39,6 +40,7 @@ class BT_EVENT_TYPE(Enum):
     FAILURE = auto()
     RUNNING = auto()
 
+    @staticmethod
     def from_str(event_name: str) -> 'BT_EVENT_TYPE':
         event_name = event_name.replace('event=', '')
         event_name = event_name.replace('"', '')

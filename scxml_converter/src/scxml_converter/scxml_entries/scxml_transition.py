@@ -18,11 +18,13 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody, ScxmlExecutableEntry,
-                                           ScxmlRosDeclarationsContainer, valid_execution_body,
-                                           execution_body_from_xml)
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
+                                           ScxmlExecutionBody,
+                                           ScxmlRosDeclarationsContainer,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class ScxmlTransition(ScxmlBase):
@@ -38,8 +40,8 @@ class ScxmlTransition(ScxmlBase):
             f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
         target = xml_tree.get("target")
         assert target is not None, "Error: SCXML transition: target attribute not found."
-        events = xml_tree.get("event")
-        events = events.split(" ") if events is not None else None
+        events_str = xml_tree.get("event")
+        events = events_str.split(" ") if events_str is not None else []
         condition = xml_tree.get("cond")
         exec_body = execution_body_from_xml(xml_tree)
         exec_body = exec_body if exec_body is not None else None
@@ -67,7 +69,7 @@ class ScxmlTransition(ScxmlBase):
             body), "Error SCXML transition: invalid body provided."
         self._target = target
         self._body = body
-        self._events = events
+        self._events = events if events is not None else []
         self._condition = condition
 
     def get_target_state_id(self) -> str:
@@ -87,8 +89,6 @@ class ScxmlTransition(ScxmlBase):
         return self._body if self._body is not None else []
 
     def add_event(self, event: str):
-        if self._events is None:
-            self._events = []
         self._events.append(event)
 
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
@@ -137,7 +137,7 @@ class ScxmlTransition(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})
-        if self._events is not None:
+        if len(self._events) > 0:
             xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:
             xml_transition.set("cond", self._condition)

@@ -15,14 +15,15 @@
 
 """Expand expressions into jani."""
 
-from typing import Dict
-from jani_generator.jani_entries.jani_expression_generator import minus_operator, plus_operator, \
-    equal_operator, max_operator, min_operator, greater_equal_operator, lower_operator, \
-    and_operator, or_operator, if_operator, multiply_operator, divide_operator, pow_operator, \
-    abs_operator, floor_operator, modulo_operator
-from jani_generator.jani_entries import JaniExpression, JaniConstant
 from math import pi
+from typing import Dict, Union
 
+from jani_generator.jani_entries import JaniConstant, JaniExpression, JaniValue
+from jani_generator.jani_entries.jani_expression_generator import (
+    abs_operator, and_operator, divide_operator, equal_operator,
+    floor_operator, greater_equal_operator, if_operator, lower_operator,
+    max_operator, min_operator, minus_operator, modulo_operator,
+    multiply_operator, or_operator, plus_operator, pow_operator)
 
 BASIC_EXPRESSIONS_MAPPING = {
     "-": "-",
@@ -277,8 +278,12 @@ def __expression_interpolation(
         jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "intersect"
-    robot_name = jani_expression.operands["robot"].identifier
-    barrier_name = jani_expression.operands["barrier"].identifier
+    robot_op = jani_expression.operands["robot"]
+    assert isinstance(robot_op, JaniExpression), "The robot operand must be a JaniExpression"
+    barrier_op = jani_expression.operands["barrier"]
+    assert isinstance(barrier_op, JaniExpression), "The barrier operand must be a JaniExpression"
+    robot_name = robot_op.identifier
+    barrier_name = barrier_op.identifier
     if barrier_name == "all":
         return max_operator(
             __expression_interpolation_next_boundaries(jani_constants, robot_name, 0),
@@ -345,8 +350,12 @@ def __expression_distance(
         jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "distance"
-    robot_name = jani_expression.operands["robot"].identifier
-    barrier_name = jani_expression.operands["barrier"].identifier
+    robot_op = jani_expression.operands["robot"]
+    assert isinstance(robot_op, JaniExpression), "The robot operand must be a JaniExpression"
+    barrier_op = jani_expression.operands["barrier"]
+    assert isinstance(barrier_op, JaniExpression), "The barrier operand must be a JaniExpression"
+    robot_name = robot_op.identifier
+    barrier_name = barrier_op.identifier
     if barrier_name == "all":
         return min_operator(
             __expression_distance_next_boundaries(jani_constants, robot_name, 0),
@@ -362,7 +371,9 @@ def __expression_distance_to_point(
         jani_expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     assert isinstance(jani_expression, JaniExpression), "The input must be a JaniExpression"
     assert jani_expression.op == "distance_to_point"
-    robot_name = jani_expression.operands["robot"].identifier
+    robot_op = jani_expression.operands["robot"]
+    assert isinstance(robot_op, JaniExpression), "The robot operand must be a JaniExpression"
+    robot_name = robot_op.identifier
     target_x_cm = to_cm_operator(expand_expression(jani_expression.operands["x"], jani_constants))
     target_y_cm = to_cm_operator(expand_expression(jani_expression.operands["y"], jani_constants))
     robot_x_cm = f"robots.{robot_name}.pose.x_cm"
@@ -380,7 +391,7 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-        expression: JaniExpression, jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+        expression: Union[JaniExpression, JaniValue], jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
     assert isinstance(expression, JaniExpression), \
         f"The expression should be a JaniExpression instance, found {type(expression)} instead."

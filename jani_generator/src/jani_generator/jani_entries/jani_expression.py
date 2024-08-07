@@ -17,7 +17,8 @@
 Expressions in Jani
 """
 
-from typing import Dict, Union
+from typing import Any, Dict, Optional, Union
+
 from jani_generator.jani_entries import JaniValue
 
 SupportedExp = Union[str, int, float, bool, dict]
@@ -36,10 +37,10 @@ class JaniExpression:
     - operands: a dictionary of operands, related to the specified operator
     """
     def __init__(self, expression: Union[SupportedExp, 'JaniExpression', JaniValue]):
-        self.identifier: str = None
-        self.value: JaniValue = None
-        self.op = None
-        self.operands: Dict[str, Union[JaniExpression, JaniValue]] = None
+        self.identifier: Optional[str] = None
+        self.value: Optional[JaniValue] = None
+        self.op: Optional[str] = None
+        self.operands: Dict[str, Union[JaniExpression, JaniValue]] = {}
         if isinstance(expression, JaniExpression):
             self.identifier = expression.identifier
             self.value = expression.value
@@ -48,8 +49,8 @@ class JaniExpression:
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
-            assert isinstance(expression, SupportedExp), \
-                f"Unexpected expression type: {type(expression)} should be a dict or a base type."
+            if (not isinstance(expression, SupportedExp)):  # type: ignore
+                raise RuntimeError(f"Unexpected expression type: {type(expression)} should be a dict or a base type.")
             if isinstance(expression, str):
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
@@ -66,6 +67,7 @@ class JaniExpression:
                 self.operands = self._get_operands(expression)
 
     def _get_operands(self, expression_dict: dict):
+        assert self.op is not None, "Operator not set"
         if (self.op in ("intersect", "distance")):
             # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory
             # the intersection occurs.
@@ -142,7 +144,7 @@ class JaniExpression:
             return self.identifier
         if self.value is not None:
             return self.value.as_dict()
-        op_dict = {
+        op_dict: Dict[str, Any] = {
             "op": self.op,
         }
         for op_key, op_value in self.operands.items():

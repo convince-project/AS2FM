@@ -17,11 +17,10 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from scxml_converter.scxml_entries import ScxmlBase
-
 from typing import Optional
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import ScxmlBase
 
 
 class ScxmlParam(ScxmlBase):
@@ -33,18 +32,11 @@ class ScxmlParam(ScxmlBase):
         self._expr = expr
         self._location = location
 
+    @staticmethod
     def get_tag_name() -> str:
         return "param"
 
-    def get_name(self) -> str:
-        return self._name
-
-    def get_expr(self) -> Optional[str]:
-        return self._expr
-
-    def get_location(self) -> Optional[str]:
-        return self._location
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert xml_tree.tag == ScxmlParam.get_tag_name(), \
@@ -58,6 +50,15 @@ class ScxmlParam(ScxmlBase):
         assert expr is not None or location is not None, \
             "Error: SCXML param: expr and location are both unset."
         return ScxmlParam(name, expr=expr, location=location)
+
+    def get_name(self) -> str:
+        return self._name
+
+    def get_expr(self) -> Optional[str]:
+        return self._expr
+
+    def get_location(self) -> Optional[str]:
+        return self._location
 
     def check_validity(self) -> bool:
         valid_name = len(self._name) > 0

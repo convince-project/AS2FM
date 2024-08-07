@@ -15,12 +15,14 @@
 
 """An automaton for jani."""
 
-from typing import List, Dict, Set, Optional
-from jani_generator.jani_entries import JaniEdge, JaniConstant, JaniVariable, JaniExpression
+from typing import Any, Dict, List, Optional, Set
+
+from jani_generator.jani_entries import (JaniConstant, JaniEdge,
+                                         JaniExpression, JaniVariable)
 
 
 class JaniAutomaton:
-    def __init__(self, *, automaton_dict: Optional[dict] = None):
+    def __init__(self, *, automaton_dict: Optional[Dict[str, Any]] = None):
         self._locations: Set[str] = set()
         self._initial_locations: Set[str] = set()
         self._local_variables: Dict[str, JaniVariable] = {}
@@ -84,7 +86,7 @@ class JaniAutomaton:
         """Remove all self-loop edges from the automaton."""
         self._edges = [edge for edge in self._edges if not edge.is_empty_self_loop()]
 
-    def _generate_locations(self, location_list: List[str], initial_locations: List[str]):
+    def _generate_locations(self, location_list: List[Dict[str, Any]], initial_locations: List[str]):
         for location in location_list:
             self._locations.add(location["name"])
         for init_location in initial_locations:
@@ -107,10 +109,12 @@ class JaniAutomaton:
             jani_edge = JaniEdge(edge)
             self.add_edge(jani_edge)
 
-    def get_actions(self) -> Set[JaniEdge]:
+    def get_actions(self) -> Set[str]:
         actions = set()
         for edge in self._edges:
-            actions.add(edge.get_action())
+            action = edge.get_action()
+            if action is not None:
+                actions.add(action)
         return actions
 
     def merge(self, other: 'JaniAutomaton'):

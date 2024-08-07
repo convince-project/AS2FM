@@ -21,17 +21,15 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, Optional, Set, Tuple, Union
 
+from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
                                          JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
-
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import \
     parse_ecmascript_to_jani_expression
-from as2fm_common.ecmascript_interpretation import \
-    interpret_ecma_script_expr
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
@@ -103,7 +101,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                                          body: ScxmlExecutionBody, source: str, target: str,
                                          hash_str: str, guard: Optional[JaniGuard],
                                          trigger_event: Optional[str]) \
-                                            -> Tuple[List[JaniEdge], List[str]]:
+        -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
@@ -184,7 +182,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             interm_loc_before = f"{source}_{i}_before_if"
             interm_loc_after = f"{source}_{i}_after_if"
             new_edges[-1].destinations[0]['location'] = interm_loc_before
-            previous_conditions = []
+            previous_conditions: List[JaniExpression] = []
             for cond_str, conditional_body in ec.get_conditional_executions():
                 print(f"Condition: {cond_str}")
                 print(f"Body: {conditional_body}")
@@ -321,7 +319,7 @@ class ScxmlTag(BaseTag):
         initial_state_id = self.element.get_initial_state_id()
         initial_state = self.element.get_state_by_id(initial_state_id)
         # Make sure we execute the onentry block of the initial state at the start
-        if initial_state.get_onentry() is not None:
+        if len(initial_state.get_onentry()) > 0:
             source_state = f"{initial_state_id}-first-exec"
             target_state = initial_state_id
             onentry_body = initial_state.get_onentry()
@@ -392,10 +390,9 @@ class StateTag(BaseTag):
             parse_ecmascript_to_jani_expression(cond) for
             cond in self._event_to_conditions.get(event_name, [])]
         if len(previous_expressions) > 0:
-            guard = JaniGuard(_merge_conditions(previous_expressions))
+            return JaniGuard(_merge_conditions(previous_expressions))
         else:
-            guard = None
-        return guard
+            return None
 
     def add_unhandled_transitions(self, transitions_set: Set[str]):
         """Add self-loops for transitions that weren't handled yet."""
@@ -420,7 +417,7 @@ class StateTag(BaseTag):
         self._events_no_condition: List[str] = []
         for child in self.children:
             transition_events = child.element.get_events()
-            transition_event = "" if transition_events is None else transition_events[0]
+            transition_event = "" if len(transition_events) == 0 else transition_events[0]
             transition_condition = child.element.get_condition()
             # Add previous conditions matching the same event trigger to the current child state
             child.set_previous_siblings_conditions(
@@ -463,9 +460,9 @@ class TransitionTag(BaseTag):
         assert target_state is not None, f"Transition's target state {target_state_id} not found."
         event_name = self.element.get_events()
         # TODO: Need to extend this to support multiple events
-        assert event_name is None or len(event_name) == 1, \
+        assert len(event_name) == 0 or len(event_name) == 1, \
             "Transitions triggered by multiple events are not supported."
-        transition_trigger_event = None if event_name is None else event_name[0]
+        transition_trigger_event = None if len(event_name) == 0 else event_name[0]
         if transition_trigger_event is not None:
             # TODO: Maybe get rid of one of the two event variables
             assert len(transition_trigger_event) > 0, "Empty event name not supported."
