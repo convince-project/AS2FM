@@ -17,14 +17,28 @@
 Variables in Jani
 """
 
-from typing import Optional, Union, get_args
+from typing import Optional, Union, Type, get_args
 
 from as2fm_common.common import ValidTypes
 from jani_generator.jani_entries import JaniExpression, JaniValue
 
 
 class JaniVariable:
-    def __init__(self, v_name: str, v_type: ValidTypes,
+    @staticmethod
+    def from_dict(variable_dict: dict) -> "JaniVariable":
+        initial_value = variable_dict.get("initial-value", None)
+        variable_type: type = JaniVariable.jani_type_from_string(variable_dict["type"])
+        if initial_value is None:
+            return JaniVariable(variable_dict["name"],
+                                JaniVariable.jani_type_from_string(variable_dict["type"]),
+                                None,
+                                variable_dict.get("transient", False))
+        return JaniVariable(variable_dict["name"],
+                            variable_type,
+                            JaniExpression(initial_value),
+                            variable_dict.get("transient", False))
+
+    def __init__(self, v_name: str, v_type: Type[ValidTypes],
                  init_value: Optional[Union[JaniExpression, JaniValue]] = None,
                  v_transient: bool = False):
         assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), \

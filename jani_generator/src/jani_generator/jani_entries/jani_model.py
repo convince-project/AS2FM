@@ -32,9 +32,27 @@ class JaniModel:
     Class representing a complete Jani Model, containing all necessary information to generate
     a plain Jani file.
     """
+    @staticmethod
+    def from_dict(model_dict: dict) -> "JaniModel":
+        model = JaniModel()
+        model.set_name(model_dict["name"])
+        for feature in model_dict.get("features", []):
+            model.add_feature(feature)
+        for variable_dict in model_dict["variables"]:
+            model.add_jani_variable(JaniVariable.from_dict(variable_dict))
+        for constant_dict in model_dict["constants"]:
+            model.add_jani_constant(JaniConstant.from_dict(constant_dict))
+        for automaton_dict in model_dict["automata"]:
+            model.add_jani_automaton(JaniAutomaton.from_dict(automaton_dict))
+        model.add_system_sync(JaniComposition.from_dict(model_dict["system"]))
+        for property_dict in model_dict["properties"]:
+            model.add_jani_property(JaniProperty.from_dict(property_dict))
+        return model
+
     def __init__(self):
         self._name = ""
         self._type = "mdp"
+        self._features: List[str] = []
         self._variables: Dict[str, JaniVariable] = {}
         self._constants: Dict[str, JaniConstant] = {}
         self._automata: List[JaniAutomaton] = []
@@ -47,6 +65,13 @@ class JaniModel:
 
     def get_name(self):
         return self._name
+
+    def add_feature(self, feature: str):
+        assert feature in ["arrays", "trigonometric-functions"], f"Unknown Jani feature {feature}"
+        self._features.append(feature)
+
+    def get_features(self) -> List[str]:
+        return self._features
 
     def add_jani_variable(self, variable: JaniVariable):
         self._variables.update({variable.name(): variable})

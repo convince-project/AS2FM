@@ -49,8 +49,8 @@ class JaniExpression:
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
-            if (not isinstance(expression, SupportedExp)):  # type: ignore
-                raise RuntimeError(f"Unexpected expression type: {type(expression)} should be a dict or a base type.")
+            assert isinstance(expression, SupportedExp), \
+                f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
