@@ -67,6 +67,8 @@ jobs:
           use-black: false
           use-mypy: ${{ matrix.linter == 'mypy' }}
           use-isort: ${{ matrix.linter == 'isort' }}
+          use-vulture: false
+          use-pydocstyle: false
           extra-pylint-options: ""
           extra-pycodestyle-options: ""
           extra-flake8-options: ""
