@@ -107,7 +107,7 @@ class PlantUMLAutomata:
             # add a box for the automaton
             puml += f"package {automaton['name']} {{\n"
             for location in automaton['locations']:
-                puml += f"    usecase {location['name']}\n"
+                puml += f"    usecase \"{location['name']}\"\n"
             for edge in automaton['edges']:
                 source = edge['location']
                 assert len(edge['destinations']) == 1, \
@@ -128,7 +128,7 @@ class PlantUMLAutomata:
 
                 # Guards
                 if (
-                    with_syncs and
+                    with_guards and
                     'guard' in edge
                 ):
                     guard_str = _compact_assignments(edge['guard']).strip()
@@ -145,9 +145,9 @@ class PlantUMLAutomata:
                         color = colors_per_action[automaton['name']][action]
 
                 if len(edge_label.strip()) > 0:
-                    puml += f"    {source} -[{color}]-> {target} : {edge_label}\n"
+                    puml += f"    \"{source}\" -[{color}]-> \"{target}\" : {edge_label}\n"
                 else:
-                    puml += f"    {source} -[{color}]-> {target}\n"
+                    puml += f"    \"{source}\" -[{color}]-> \"{target}\"\n"
             puml += "}\n"
 
         return puml
