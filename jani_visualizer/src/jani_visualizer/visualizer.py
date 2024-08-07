@@ -51,6 +51,13 @@ def _compact_assignments(assignments: Union[dict, list, str, int]) -> str:
     return out
 
 
+def _unique_name(automaton_name: str, location_name: str) -> str:
+    out = f"{automaton_name}_{location_name}"
+    for repl in ("-", ".", "/"):
+        out = out.replace(repl, "_")
+    return out
+
+
 class PlantUMLAutomata:
     """This represents jani automata in plantuml format."""
 
@@ -61,7 +68,7 @@ class PlantUMLAutomata:
             "The automata must be a list."
         assert len(self.jani_automata) >= 1, \
             "At least one automaton must be present."
-        
+
     def _preprocess_syncs(self):
         """Preprocess the synchronizations."""
         assert 'system' in self.jani_dict, \
@@ -70,7 +77,7 @@ class PlantUMLAutomata:
             "The system must have syncs."
         n_syncs = len(self.jani_dict["system"]["syncs"])
         automata = [a['name'] for a in self.jani_automata]
-        
+
         # define colors for the syncs
         colors = []
         for i in range(n_syncs):
@@ -78,7 +85,7 @@ class PlantUMLAutomata:
             r, g, b = hsv_to_rgb(h, 1, 0.8)
             color = rgb_to_hex((int(r * 255), int(g * 255), int(b * 255)))
             colors.append(color)
-        
+
         # produce a dict with automaton, action -> color
         colors_per_action = {}
         for i, sync in enumerate(self.jani_dict["system"]["syncs"]):
@@ -93,7 +100,6 @@ class PlantUMLAutomata:
                 colors_per_action[automaton][action] = colors[i]
         return colors_per_action
 
-
     def to_plantuml(self,
                     with_assignments: bool = False,
                     with_guards: bool = False,
@@ -105,15 +111,17 @@ class PlantUMLAutomata:
 
         for automaton in self.jani_automata:
             # add a box for the automaton
-            puml += f"package {automaton['name']} {{\n"
+            automaton_name = automaton['name']
+            puml += f"package {automaton_name} {{\n"
             for location in automaton['locations']:
-                puml += f"    usecase \"{location['name']}\"\n"
+                loc_name = _unique_name(automaton_name, location['name'])
+                puml += f"    usecase \"{location['name']}\" as {loc_name}\n"
             for edge in automaton['edges']:
-                source = edge['location']
+                source = _unique_name(automaton_name, edge['location'])
                 assert len(edge['destinations']) == 1, \
                     "Only one destination is supported."
                 destination = edge['destinations'][0]
-                target = destination['location']
+                target = _unique_name(automaton_name, destination['location'])
                 edge_label = ""
                 color = "#000"  # black by default
 
@@ -145,9 +153,9 @@ class PlantUMLAutomata:
                         color = colors_per_action[automaton['name']][action]
 
                 if len(edge_label.strip()) > 0:
-                    puml += f"    \"{source}\" -[{color}]-> \"{target}\" : {edge_label}\n"
+                    puml += f"    {source} -[{color}]-> {target} : {edge_label}\n"
                 else:
-                    puml += f"    \"{source}\" -[{color}]-> \"{target}\"\n"
+                    puml += f"    {source} -[{color}]-> {target}\n"
             puml += "}\n"
 
         return puml
