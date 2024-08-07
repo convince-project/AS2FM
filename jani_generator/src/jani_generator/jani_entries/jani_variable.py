@@ -29,35 +29,35 @@ class JaniVariable:
                  v_transient: bool = False):
         assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), \
             "Init value should be a JaniExpression or a JaniValue"
-        self._init_expr: Optional[JaniExpression] = None
-        if init_value is not None:
-            if isinstance(init_value, JaniExpression):
-                self._init_expr = init_value
-            else:  # In this case it can only be a JaniValue
-                self._init_expr = JaniExpression(init_value)
-        assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
         self._name = v_name
         self._type = v_type
         self._transient = v_transient
-        # Some Model Checkers really need them to be defined to have a unique initial state
-        if self._init_expr is None:
+        self._init_expr: Optional[JaniExpression] = None
+        if init_value is not None:
+            self._init_expr = JaniExpression(init_value)
+        else:
+            # Some Model Checkers need a explicit initial value.
             if self._type == int:
                 self._init_expr = JaniExpression(0)
             elif self._type == bool:
                 self._init_expr = JaniExpression(False)
             elif self._type == float:
                 self._init_expr = JaniExpression(0.0)
+        assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
         if not self._transient and self._type == float:
             print(f"Warning: Variable {self._name} is not transient and has type float."
                   "This is not supported by STORM yet.")
 
     def name(self):
+        """Get name."""
         return self._name
 
     def get_type(self):
+        """Get type."""
         return self._type
 
     def as_dict(self):
+        """Return the variable as a dictionary."""
         d = {
             "name": self._name,
             "type": JaniVariable.jani_type_to_string(self._type),
