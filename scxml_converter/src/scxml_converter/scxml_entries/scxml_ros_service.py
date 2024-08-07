@@ -172,7 +172,7 @@ class RosServiceSendRequest(ScxmlSend):
 
     def __init__(self,
                  service_decl: Union[str, RosServiceClient],
-                 fields: List[RosField] = list()) -> None:
+                 fields: List[RosField] = None) -> None:
         """
         Initialize a new RosServiceSendRequest object.
 
@@ -186,6 +186,8 @@ class RosServiceSendRequest(ScxmlSend):
             assert isinstance(service_decl, str), \
                 "Error: SCXML Service Send Request: invalid service name."
             self._srv_name = service_decl
+        if fields is None:
+            fields = []
         self._fields = fields
         assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
 
