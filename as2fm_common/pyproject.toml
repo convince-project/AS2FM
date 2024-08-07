@@ -19,7 +19,7 @@ keywords = []
 dependencies = [
     
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
