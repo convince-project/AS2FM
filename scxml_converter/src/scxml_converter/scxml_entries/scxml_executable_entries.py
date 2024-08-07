@@ -237,7 +237,7 @@ class ScxmlAssign(ScxmlBase):
         assert expr is not None and len(expr) > 0, \
             "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
-    
+
     def get_location(self) -> str:
         """Get the location to assign."""
         return self._location
@@ -245,7 +245,6 @@ class ScxmlAssign(ScxmlBase):
     def get_expr(self) -> str:
         """Get the expression to assign."""
         return self._expr
-
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
