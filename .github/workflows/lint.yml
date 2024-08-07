@@ -57,7 +57,7 @@ jobs:
           pip install jani_generator/.[dev]
           pip install as2fm_common/.[dev]
           pip install scxml_converter/.[dev]
-      - uses: ricardochaves/python-lint@v1.4.0
+      - uses: p-peytral/python-lint@v1.0.12
         with:
           python-root-list: ${{ matrix.package }}/src/${{ matrix.package }}
           use-pylint: ${{ matrix.linter == 'pylint' }}
