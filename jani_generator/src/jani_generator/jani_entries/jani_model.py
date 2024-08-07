@@ -18,11 +18,11 @@ Complete Jani Model
 """
 
 
-from typing import List, Dict, Optional, Union, Type
-from jani_generator.jani_entries import (
-    JaniValue, JaniVariable, JaniConstant, JaniAutomaton, JaniComposition,
-    JaniProperty, JaniExpression)
+from typing import Dict, List, Optional, Type, Union
 
+from jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
+                                         JaniConstant, JaniExpression,
+                                         JaniProperty, JaniValue, JaniVariable)
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
@@ -108,9 +108,9 @@ class JaniModel:
             "We expect there to be explicit syncs for all automata."
         for automaton in self._automata:
             existing_syncs = self._system.get_syncs_for_element(automaton.get_name())
-            for edge in automaton.get_actions():
-                if edge not in existing_syncs:
-                    self._system.add_sync(edge, {automaton.get_name(): edge})
+            for action in automaton.get_actions():
+                if action not in existing_syncs:
+                    self._system.add_sync(action, {automaton.get_name(): action})
 
     def add_jani_property(self, property: JaniProperty):
         self._properties.append(property)

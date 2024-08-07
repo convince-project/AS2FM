@@ -72,6 +72,8 @@ class Event:
 
     def get_data_structure(self) -> Dict[str, type]:
         """Get the data structure of the event."""
+        if self.data_struct is None:
+            return {}
         return self.data_struct
 
     def set_data_structure(self, data_struct: Dict[str, type]):

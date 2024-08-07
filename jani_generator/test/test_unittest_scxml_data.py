@@ -15,9 +15,10 @@
 
 """"Test the SCXML data conversion"""
 
-import pytest
-import xml.etree.ElementTree as ET
 import unittest
+import xml.etree.ElementTree as ET
+
+import pytest
 
 from jani_generator.scxml_helpers.scxml_data import ScxmlData
 

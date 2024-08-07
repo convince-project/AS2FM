@@ -17,12 +17,13 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-from typing import List, Optional, Union, Tuple, get_args
+from typing import List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer)
-
-from scxml_converter.scxml_entries.utils import replace_ros_interface_expression
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam,
+                                           ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries.utils import \
+    replace_ros_interface_expression
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -45,17 +46,11 @@ class ScxmlIf(ScxmlBase):
         self._conditional_executions = conditional_executions
         self._else_execution = else_execution
 
+    @staticmethod
     def get_tag_name() -> str:
         return "if"
 
-    def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
-        """Get the conditional executions."""
-        return self._conditional_executions
-
-    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
-        """Get the else execution."""
-        return self._else_execution
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
         """Create a ScxmlIf object from an XML tree."""
         assert xml_tree.tag == ScxmlIf.get_tag_name(), \
@@ -63,7 +58,8 @@ class ScxmlIf(ScxmlBase):
         conditions: List[str] = []
         exec_bodies: List[ScxmlExecutionBody] = []
         conditions.append(xml_tree.attrib["cond"])
-        current_body: ScxmlExecutionBody = []
+        current_body: Optional[ScxmlExecutionBody] = []
+        assert current_body is not None, "Error: SCXML if: current body is not valid."
         for child in xml_tree:
             if child.tag == "elseif":
                 conditions.append(child.attrib["cond"])
@@ -79,6 +75,14 @@ class ScxmlIf(ScxmlBase):
         if len(current_body) == 0:
             current_body = None
         return ScxmlIf(list(zip(conditions, exec_bodies)), current_body)
+
+    def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
+        """Get the conditional executions."""
+        return self._conditional_executions
+
+    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
+        """Get the else execution."""
+        return self._else_execution
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -123,8 +127,10 @@ class ScxmlIf(ScxmlBase):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:
+            execution_body = as_plain_execution_body(execution, ros_declarations)
+            assert execution_body is not None, "Error: SCXML if: invalid execution body."
             condional_executions.append((replace_ros_interface_expression(condition),
-                                         as_plain_execution_body(execution, ros_declarations)))
+                                         execution_body))
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(condional_executions, else_execution)
 
@@ -135,7 +141,7 @@ class ScxmlIf(ScxmlBase):
         xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
         append_execution_body_to_xml(xml_if, first_conditional_execution[1])
         for condition, execution in self._conditional_executions[1:]:
-            xml_if.append = ET.Element('elseif', {"cond": condition})
+            xml_if.append(ET.Element('elseif', {"cond": condition}))
             append_execution_body_to_xml(xml_if, execution)
         if self._else_execution is not None:
             xml_if.append(ET.Element('else'))
@@ -152,8 +158,21 @@ class ScxmlSend(ScxmlBase):
         self._event = event
         self._params = params
 
+    @staticmethod
     def get_tag_name() -> str:
         return "send"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
+        """Create a ScxmlSend object from an XML tree."""
+        assert xml_tree.tag == ScxmlSend.get_tag_name(), \
+            f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
+        event = xml_tree.attrib["event"]
+        params: List[ScxmlParam] = []
+        assert params is not None, "Error: SCXML send: params is not valid."
+        for param_xml in xml_tree:
+            params.append(ScxmlParam.from_xml_tree(param_xml))
+        return ScxmlSend(event, params)
 
     def get_event(self) -> str:
         """Get the event to send."""
@@ -162,18 +181,6 @@ class ScxmlSend(ScxmlBase):
     def get_params(self) -> List[ScxmlParam]:
         """Get the parameters to send."""
         return self._params
-
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
-        """Create a ScxmlSend object from an XML tree."""
-        assert xml_tree.tag == ScxmlSend.get_tag_name(), \
-            f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
-        event = xml_tree.attrib["event"]
-        params = []
-        for param_xml in xml_tree:
-            params.append(ScxmlParam.from_xml_tree(param_xml))
-        if len(params) == 0:
-            params = None
-        return ScxmlSend(event, params)
 
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
@@ -214,17 +221,11 @@ class ScxmlAssign(ScxmlBase):
         self._location = location
         self._expr = expr
 
+    @staticmethod
     def get_tag_name() -> str:
         return "assign"
 
-    def get_location(self) -> str:
-        """Get the location to assign."""
-        return self._location
-
-    def get_expr(self) -> str:
-        """Get the expression to assign."""
-        return self._expr
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
         """Create a ScxmlAssign object from an XML tree."""
         assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
@@ -236,6 +237,15 @@ class ScxmlAssign(ScxmlBase):
         assert expr is not None and len(expr) > 0, \
             "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
+    
+    def get_location(self) -> str:
+        """Get the location to assign."""
+        return self._location
+
+    def get_expr(self) -> str:
+        """Get the expression to assign."""
+        return self._expr
+
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
@@ -301,6 +311,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     """
     # TODO: This is pretty bad, need to re-check how to break the circle
     from .scxml_ros_entries import ScxmlRosSends
+
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
     exec_tag = xml_tree.tag

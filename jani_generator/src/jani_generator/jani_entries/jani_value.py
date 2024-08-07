@@ -17,8 +17,8 @@
 Values in Jani
 """
 
-from typing import Union
 from math import e, pi
+from typing import Union
 
 
 class JaniValue:

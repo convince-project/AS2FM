@@ -15,7 +15,7 @@
 
 """This allows the composition of multiple automata in jani."""
 
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class JaniComposition:
@@ -52,16 +52,16 @@ class JaniComposition:
         :param sync_name: The name of the synchronization action
         :param syncs: A dictionary relating each automaton to the action to be executed in the sync
         """
-        new_sync = {
-            "result": sync_name,
-            "synchronise": [None] * len(self._elements)
-        }
         # Generate the synchronize list
+        sync_list: List[Optional[str]] = [None] * len(self._elements)
         for automata, action in syncs.items():
             assert automata in self._element_to_id, \
                 f"Automaton {automata} does not exist in the composition"
-            new_sync["synchronise"][self._element_to_id[automata]] = action
-        self._syncs.append(new_sync)
+            sync_list[self._element_to_id[automata]] = action
+        self._syncs.append({
+            "result": sync_name,
+            "synchronise": sync_list
+        })
 
     def get_syncs_for_element(self, element: str) -> List[str]:
         """Get the existing syncs for a specific element (=automaton)."""

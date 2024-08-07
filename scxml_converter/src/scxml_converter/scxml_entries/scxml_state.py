@@ -17,13 +17,17 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlTransition, ScxmlRosDeclarationsContainer,
-    ScxmlRosTransitions, ScxmlExecutableEntry, ScxmlExecutionBody,
-    as_plain_execution_body, execution_body_from_xml, valid_execution_body)
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
+                                           ScxmlExecutionBody,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlRosTransitions,
+                                           ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class ScxmlState(ScxmlBase):
@@ -33,50 +37,42 @@ class ScxmlState(ScxmlBase):
     def get_tag_name() -> str:
         return "state"
 
-    def __init__(self, id: str, *,
-                 on_entry: Optional[ScxmlExecutionBody] = None,
-                 on_exit: Optional[ScxmlExecutionBody] = None,
-                 body: Optional[List[ScxmlTransition]] = None):
-        self._id = id
-        self._on_entry = on_entry
-        self._on_exit = on_exit
-        self._body = body
+    def __init__(self, id_: str, *,
+                 on_entry: ScxmlExecutionBody = None,
+                 on_exit: ScxmlExecutionBody = None,
+                 body: List[ScxmlTransition] = None):
+        self._id = id_
+        self._on_entry = on_entry if on_entry is not None else []
+        self._on_exit = on_exit if on_exit is not None else []
+        self._body: List[ScxmlTransition] = body if body is not None else []
 
-    def get_id(self) -> str:
-        return self._id
-
-    def get_onentry(self) -> Optional[ScxmlExecutionBody]:
-        return self._on_entry
-
-    def get_onexit(self) -> Optional[ScxmlExecutionBody]:
-        return self._on_exit
-
-    def get_body(self) -> Optional[List[ScxmlTransition]]:
-        """Return the transitions leaving the state."""
-        return self._body
-
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert xml_tree.tag == ScxmlState.get_tag_name(), \
             f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
-        id = xml_tree.attrib.get("id")
-        assert id is not None and len(id) > 0, "Error: SCXML state: id is not valid."
-        scxml_state = ScxmlState(id)
+        id_ = xml_tree.attrib.get("id")
+        assert id_ is not None and len(id_) > 0, "Error: SCXML state: id is not valid."
+        scxml_state = ScxmlState(id_)
         # Get the onentry and onexit execution bodies
-        on_entry = xml_tree.findall("onentry")
-        if on_entry is not None and len(on_entry) == 0:
-            on_entry = None
-        assert on_entry is None or len(on_entry) == 1, \
+        on_entry_xml = xml_tree.findall("onentry")
+        if on_entry_xml is None:
+            on_entry = []
+        else:
+            on_entry = on_entry_xml
+        assert len(on_entry) == 0 or len(on_entry) == 1, \
             f"Error: SCXML state: {len(on_entry)} onentry tags found, expected 0 or 1."
-        on_exit = xml_tree.findall("onexit")
-        if on_exit is not None and len(on_exit) == 0:
-            on_exit = None
-        assert on_exit is None or len(on_exit) == 1, \
+        on_exit_xml = xml_tree.findall("onexit")
+        if on_exit_xml is None:
+            on_exit = []
+        else:
+            on_exit = on_exit_xml
+        assert len(on_exit) == 0 or len(on_exit) == 1, \
             f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
-        if on_entry is not None:
+        if len(on_entry) > 0:
             for exec_entry in execution_body_from_xml(on_entry[0]):
                 scxml_state.append_on_entry(exec_entry)
-        if on_exit is not None:
+        if len(on_exit) > 0:
             for exec_entry in execution_body_from_xml(on_exit[0]):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
@@ -84,9 +80,23 @@ class ScxmlState(ScxmlBase):
             scxml_state.add_transition(body_entry)
         return scxml_state
 
-    def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
+    def get_id(self) -> str:
+        return self._id
+
+    def get_onentry(self) -> ScxmlExecutionBody:
+        return self._on_entry
+
+    def get_onexit(self) -> ScxmlExecutionBody:
+        return self._on_exit
+
+    def get_body(self) -> List[ScxmlTransition]:
+        """Return the transitions leaving the state."""
+        return self._body
+
+    @classmethod
+    def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
-        tag_to_cls = {cls.get_tag_name(): cls for cls in ScxmlRosTransitions}
+        tag_to_cls = {cls.get_tag_name(): cls for cls in ScxmlTransition.__subclasses__()}
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
             if child.tag in tag_to_cls:
@@ -94,18 +104,12 @@ class ScxmlState(ScxmlBase):
         return transitions
 
     def add_transition(self, transition: ScxmlTransition):
-        if self._body is None:
-            self._body = []
         self._body.append(transition)
 
     def append_on_entry(self, executable_entry: ScxmlExecutableEntry):
-        if self._on_entry is None:
-            self._on_entry = []
         self._on_entry.append(executable_entry)
 
     def append_on_exit(self, executable_entry: ScxmlExecutableEntry):
-        if self._on_exit is None:
-            self._on_exit = []
         self._on_exit.append(executable_entry)
 
     def check_validity(self) -> bool:
@@ -146,33 +150,33 @@ class ScxmlState(ScxmlBase):
             print("Error: SCXML state: found invalid transition in state body.")
         return valid_entry and valid_exit and valid_body
 
-    def _check_valid_ros_instantiations(body: List[Union[ScxmlExecutableEntry, ScxmlTransition]],
+    @staticmethod
+    def _check_valid_ros_instantiations(body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
                                         ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
-        return body is None or \
+        return len(body) == 0 or \
             all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
         plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
         plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
-        plain_body = as_plain_execution_body(self._body, ros_declarations)
+        plain_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."
         xml_state = ET.Element(ScxmlState.get_tag_name(), {"id": self._id})
-        if self._on_entry is not None:
+        if len(self._on_entry) > 0:
             xml_on_entry = ET.Element('onentry')
             for executable_entry in self._on_entry:
                 xml_on_entry.append(executable_entry.as_xml())
             xml_state.append(xml_on_entry)
-        if self._on_exit is not None:
+        if len(self._on_exit) > 0:
             xml_on_exit = ET.Element('onexit')
             for executable_entry in self._on_exit:
                 xml_on_exit.append(executable_entry.as_xml())
             xml_state.append(xml_on_exit)
-        if self._body is not None:
-            for transition in self._body:
-                xml_state.append(transition.as_xml())
+        for transition in self._body:
+            xml_state.append(transition.as_xml())
         return xml_state

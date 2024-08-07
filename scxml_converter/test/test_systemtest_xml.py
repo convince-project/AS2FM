@@ -14,7 +14,8 @@
 # limitations under the License.
 
 import os
-from test_utils import canonicalize_xml,  remove_empty_lines
+
+from test_utils import canonicalize_xml, remove_empty_lines
 
 from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_entries import ScxmlRoot

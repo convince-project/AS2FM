@@ -17,20 +17,30 @@
 Module reading the top level xml file containing the whole model to check.
 """
 
-import os
 import json
-
-from typing import Any, Dict, List, Tuple
-
+import os
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
+from jani_generator.jani_entries import JaniModel
+from jani_generator.ros_helpers.ros_services import RosService, RosServices
+from jani_generator.ros_helpers.ros_timer import RosTimer
+from jani_generator.scxml_helpers.scxml_to_jani import \
+    convert_multiple_scxmls_to_jani
 from scxml_converter.bt_converter import bt_converter
 from scxml_converter.scxml_entries import ScxmlRoot
-from jani_generator.jani_entries import JaniModel
-from jani_generator.ros_helpers.ros_timer import RosTimer
-from jani_generator.ros_helpers.ros_services import RosServices, RosService
-from jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
+
+
+@dataclass()
+class FullModel:
+    max_time: Optional[int] = None
+    bt: Optional[str] = None
+    plugins: List[str] = field(default_factory=list)
+    skills: List[str] = field(default_factory=list)
+    components: List[str] = field(default_factory=list)
+    properties: List[str] = field(default_factory=list)
 
 
 def _parse_time_element(time_element: ET.Element) -> int:
@@ -51,7 +61,7 @@ def _parse_time_element(time_element: ET.Element) -> int:
     return int(time_element.attrib["value"]) * TIME_MULTIPLIERS[time_unit]
 
 
-def parse_main_xml(xml_path: str) -> Dict[str, Any]:
+def parse_main_xml(xml_path: str) -> FullModel:
     """
     Interpret the top-level XML file as a dictionary.
 
@@ -69,21 +79,14 @@ def parse_main_xml(xml_path: str) -> Dict[str, Any]:
         xml = ET.parse(f)
     assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", \
         "The top-level XML element must be convince_mc_tc."
-    main_dict = {
-        "max_time": None,
-        "bt": None,
-        "plugins": [],
-        "skills": [],
-        "components": [],
-        "properties": []
-    }
+    model = FullModel()
     for first_level in xml.getroot():
         if remove_namespace(first_level.tag) == "mc_parameters":
             for mc_parameter in first_level:
                 # if remove_namespace(mc_parameter.tag) == "time_resolution":
                 #     time_resolution = _parse_time_element(mc_parameter)
                 if remove_namespace(mc_parameter.tag) == "max_time":
-                    main_dict["max_time"] = _parse_time_element(mc_parameter)
+                    model.max_time = _parse_time_element(mc_parameter)
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -91,48 +94,48 @@ def parse_main_xml(xml_path: str) -> Dict[str, Any]:
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
                     if child.attrib["type"] == "bt.cpp-xml":
-                        assert main_dict["bt"] is None, "Only one BT is supported."
-                        main_dict["bt"] = os.path.join(folder_of_xml, child.attrib["src"])
+                        assert model.bt is None, "Only one Behavior Tree is supported."
+                        model.bt = os.path.join(folder_of_xml, child.attrib["src"])
                     elif child.attrib["type"] == "bt-plugin-ros-scxml":
-                        main_dict["plugins"].append(
+                        model.plugins.append(
                             os.path.join(folder_of_xml, child.attrib["src"]))
                     else:
                         raise ValueError(f"Invalid input type: {child.attrib['type']}")
                 else:
                     raise ValueError(
                         f"Invalid behavior_tree tag: {child.tag} != input")
-            assert main_dict["bt"] is not None, "There must be a Behavior Tree defined."
+            assert model.bt is not None, "A Behavior Tree must be defined."
         elif remove_namespace(first_level.tag) == "node_models":
             for node_model in first_level:
                 assert remove_namespace(node_model.tag) == "input", \
                     "Only input tags are supported."
                 assert node_model.attrib["type"] == "ros-scxml", \
                     "Only ROS-SCXML node models are supported."
-                main_dict["skills"].append(os.path.join(folder_of_xml, node_model.attrib["src"]))
+                model.skills.append(os.path.join(folder_of_xml, node_model.attrib["src"]))
         elif remove_namespace(first_level.tag) == "properties":
             for property in first_level:
                 assert remove_namespace(property.tag) == "input", \
                     "Only input tags are supported."
                 assert property.attrib["type"] == "jani", \
                     "Only Jani properties are supported."
-                main_dict["properties"].append(os.path.join(folder_of_xml, property.attrib["src"]))
+                model.properties.append(os.path.join(folder_of_xml, property.attrib["src"]))
         else:
             raise ValueError(f"Invalid main point tag: {first_level.tag}")
-    return main_dict
+    return model
 
 
 def generate_plain_scxml_models_and_timers(
-        full_model_dict: str) -> Tuple[List[ScxmlRoot], List[RosTimer]]:
+        model: FullModel) -> Tuple[List[ScxmlRoot], List[RosTimer]]:
     """
     Generate plain SCXML models and ROS timers from the full model dictionary.
     """
     # Convert behavior tree and plugins to ROS-scxml
-    scxml_files_to_convert: list = full_model_dict["skills"] + full_model_dict["components"]
-    if full_model_dict["bt"] is not None:
-        bt_out_dir = os.path.join(os.path.dirname(full_model_dict["bt"]), "generated_bt_scxml")
+    scxml_files_to_convert: list = model.skills + model.components
+    if model.bt is not None:
+        bt_out_dir = os.path.join(os.path.dirname(model.bt), "generated_bt_scxml")
         os.makedirs(bt_out_dir, exist_ok=True)
         expanded_bt_plugin_scxmls = bt_converter(
-            full_model_dict["bt"], full_model_dict["plugins"], bt_out_dir)
+            model.bt, model.plugins, bt_out_dir)
         scxml_files_to_convert.extend(expanded_bt_plugin_scxmls)
 
     # Convert ROS-SCXML FSMs to plain SCXML
@@ -165,17 +168,18 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False) -> JaniModel:
+def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False):
     """
-    Interpret the top-level XML file as a Jani model.
+    Interpret the top-level XML file as a Jani model. And write it to a file.
+    The generated Jani model is written to the same directory as the input XML file under the
+    name `main.jani`.
 
     :param xml_path: The path to the XML file to interpret.
-    :return: The interpreted Jani model.
     """
     model_dir = os.path.dirname(xml_path)
-    full_model_dict = parse_main_xml(xml_path)
-    assert full_model_dict["max_time"] is not None, f"Max time must be defined in {xml_path}."
-    plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(full_model_dict)
+    model = parse_main_xml(xml_path)
+    assert model.max_time is not None, f"Max time must be defined in {xml_path}."
+    plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(model)
 
     if store_generated_scxmls:
         plain_scxml_dir = os.path.join(model_dir, "generated_plain_scxml")
@@ -186,11 +190,11 @@ def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False)
                 f.write(scxml_model.as_xml_string())
 
     jani_model = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, all_timers, full_model_dict["max_time"])
+        plain_scxml_models, all_timers, model.max_time)
 
     jani_dict = jani_model.as_dict()
-    assert len(full_model_dict["properties"]) == 1, "Only one property is supported right now."
-    with open(full_model_dict["properties"][0], "r", encoding='utf-8') as f:
+    assert len(model.properties) == 1, "Only one property is supported right now."
+    with open(model.properties[0], "r", encoding='utf-8') as f:
         jani_dict["properties"] = json.load(f)["properties"]
 
     output_path = os.path.join(model_dir, "main.jani")

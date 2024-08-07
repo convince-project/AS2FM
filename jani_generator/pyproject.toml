@@ -21,7 +21,7 @@ dependencies = [
     "js2py",
     "esprima"
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
@@ -32,3 +32,7 @@ scxml_to_jani = "jani_generator.main:main_scxml_to_jani"
 
 [isort]
 profile = "google"
+line_length = 100
+
+[flake8]
+max_line_length = 100

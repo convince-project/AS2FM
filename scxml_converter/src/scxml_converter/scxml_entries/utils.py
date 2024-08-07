@@ -15,9 +15,9 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Dict, List, Tuple, Optional
-from scxml_converter.scxml_entries.scxml_ros_field import RosField
+from typing import Dict, List, Optional, Tuple
 
+from scxml_converter.scxml_entries.scxml_ros_field import RosField
 
 MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
@@ -225,42 +225,42 @@ class ScxmlRosDeclarationsContainer:
     def get_service_server_type(self, service_name: str) -> Optional[str]:
         return self._service_servers.get(service_name, None)
 
-    def check_valid_srv_req_fields(self, service_name: str, fields: List[RosField]) -> bool:
+    def check_valid_srv_req_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service request type."""
         req_type = self.get_service_client_type(service_name)
         if req_type is None:
             print(f"Error: SCXML ROS declarations: unknown service client {service_name}.")
             return False
         req_fields, _ = get_srv_type_params(req_type)
-        for field in fields:
-            if field.get_name() not in req_fields:
+        for ros_field in ros_fields:
+            if ros_field.get_name() not in req_fields:
                 print("Error: SCXML ROS declarations: "
-                      f"unknown field {field.get_name()} in service request.")
+                      f"unknown field {ros_field.get_name()} in service request.")
                 return False
-            req_fields.pop(field.get_name())
+            req_fields.pop(ros_field.get_name())
         if len(req_fields) > 0:
             print("Error: SCXML ROS declarations: missing fields in service request.")
-            for field in req_fields.keys():
-                print(f"\t-{field}.")
+            for req_field in req_fields.keys():
+                print(f"\t-{req_field}.")
             return False
         return True
 
-    def check_valid_srv_res_fields(self, service_name: str, fields: List[RosField]) -> bool:
+    def check_valid_srv_res_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service response type."""
         res_type = self.get_service_server_type(service_name)
         if res_type is None:
             print(f"Error: SCXML ROS declarations: unknown service server {service_name}.")
             return False
         _, res_fields = get_srv_type_params(res_type)
-        for field in fields:
-            if field.get_name() not in res_fields:
+        for ros_field in ros_fields:
+            if ros_field.get_name() not in res_fields:
                 print("Error: SCXML ROS declarations: "
-                      f"unknown field {field.get_name()} in service response.")
+                      f"unknown field {ros_field.get_name()} in service response.")
                 return False
-            res_fields.pop(field.get_name())
+            res_fields.pop(ros_field.get_name())
         if len(res_fields) > 0:
             print("Error: SCXML ROS declarations: missing fields in service response.")
-            for field in res_fields.keys():
-                print(f"\t-{field}.")
+            for res_field in res_fields.keys():
+                print(f"\t-{res_field}.")
             return False
         return True

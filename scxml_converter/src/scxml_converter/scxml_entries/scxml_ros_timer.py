@@ -16,11 +16,14 @@
 """Declaration of SCXML tags related to ROS Timers."""
 
 from typing import Optional, Union
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlTransition,
-                                           ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-                                           valid_execution_body, execution_body_from_xml,
-                                           as_plain_execution_body)
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody,
+                                           ScxmlRosDeclarationsContainer,
+                                           ScxmlTransition,
+                                           as_plain_execution_body,
+                                           execution_body_from_xml,
+                                           valid_execution_body)
 
 
 class RosTimeRate(ScxmlBase):
@@ -30,21 +33,23 @@ class RosTimeRate(ScxmlBase):
         self._name = name
         self._rate_hz = float(rate_hz)
 
+    @staticmethod
     def get_tag_name() -> str:
         return "ros_time_rate"
 
+    @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert xml_tree.tag == RosTimeRate.get_tag_name(), \
             f"Error: SCXML rate timer: XML tag name is not {RosTimeRate.get_tag_name()}"
         timer_name = xml_tree.attrib.get("name")
-        timer_rate = xml_tree.attrib.get("rate_hz")
-        assert timer_name is not None and timer_rate is not None, \
+        timer_rate_str = xml_tree.attrib.get("rate_hz")
+        assert timer_name is not None and timer_rate_str is not None, \
             "Error: SCXML rate timer: 'name' or 'rate_hz' attribute not found in input xml."
         try:
-            timer_rate = float(timer_rate)
-        except ValueError:
-            raise ValueError("Error: SCXML rate timer: rate is not a number.")
+            timer_rate = float(timer_rate_str)
+        except ValueError as e:
+            raise ValueError("Error: SCXML rate timer: rate is not a number.") from e
         return RosTimeRate(timer_name, timer_rate)
 
     def check_validity(self) -> bool:

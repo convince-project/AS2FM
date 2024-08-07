@@ -1,3 +1,5 @@
+# isort: skip_file
+# Skipping file to avoid circular import problem
 from .scxml_base import ScxmlBase                                               # noqa: F401
 from .scxml_param import ScxmlParam                                             # noqa: F401
 from .scxml_ros_field import RosField                                           # noqa: F401

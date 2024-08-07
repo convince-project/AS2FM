@@ -16,8 +16,8 @@
 """A constant value expression."""
 
 from typing import Type, Union, get_args
-from jani_generator.jani_entries import JaniExpression, JaniValue
 
+from jani_generator.jani_entries import JaniExpression, JaniValue
 
 ValidTypes = Union[bool, int, float]
 
@@ -33,13 +33,14 @@ class JaniConstant:
     def name(self) -> str:
         return self._name
 
-    def value(self) -> JaniValue:
+    def value(self) -> ValidTypes:
         assert self._value is not None, "Value not set"
         jani_value = self._value.value
         assert jani_value is not None and jani_value.is_valid(), "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
-    def jani_type_from_string(str_type: str) -> ValidTypes:
+    @staticmethod
+    def jani_type_from_string(str_type: str) -> Type[ValidTypes]:
         """
         Translate a (Jani) type string to a Python type.
         """
@@ -53,7 +54,8 @@ class JaniConstant:
             raise ValueError(f"Type {str_type} not supported by Jani")
 
     # TODO: Move this to a util function file
-    def jani_type_to_string(c_type: ValidTypes) -> str:
+    @staticmethod
+    def jani_type_to_string(c_type: Type[ValidTypes]) -> str:
         """
         Translate a Python type to the name of the type in Jani.
 
