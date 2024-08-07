@@ -16,7 +16,10 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 keywords = []
-dependencies = []
+dependencies = [
+    "webcolors",
+    "plantuml",
+]
 
 requires-python = ">=3.7"
 

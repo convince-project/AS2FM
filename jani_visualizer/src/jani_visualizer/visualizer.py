@@ -108,6 +108,7 @@ class PlantUMLAutomata:
         colors_per_action = self._preprocess_syncs()
 
         puml: str = "@startuml\n"
+        puml += "scale 500 width\n"
 
         for automaton in self.jani_automata:
             # add a box for the automaton

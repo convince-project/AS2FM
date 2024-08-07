@@ -18,6 +18,7 @@
 import argparse
 import os
 import json
+import plantuml
 
 from jani_visualizer.visualizer import PlantUMLAutomata
 
@@ -25,7 +26,8 @@ def main_to_plantuml():
     parser = argparse.ArgumentParser(
         description='Converts a `*.jani` file to a `*.plantuml` file.')
     parser.add_argument('input_fname', type=str, help='The input jani file.')
-    parser.add_argument('output_fname', type=str, help='The output plantuml file.')
+    parser.add_argument('output_plantuml_fname', type=str, help='The output plantuml file.')
+    parser.add_argument('output_svg_fname', type=str, help='The output svg file.')
     parser.add_argument('--no-syncs', action='store_true', 
                         help='Don\'t connects transitions that are synchronized.')
     parser.add_argument('--no-assignments', action='store_true',
@@ -41,13 +43,22 @@ def main_to_plantuml():
     except json.JSONDecodeError as e:
         raise ValueError(f"Error while reading the input file {args.input_fname}") from e
     
-    assert not os.path.isfile(args.output_fname), \
-        f"File {args.output_fname} must not exist."
+    assert not os.path.isfile(args.output_plantuml_fname), \
+        f"File {args.output_plantuml_fname} must not exist."
+    
+    assert not os.path.isfile(args.output_svg_fname), \
+        f"File {args.output_svg_fname} must not exist."
     
     pua = PlantUMLAutomata(jani_dict)
-    with open(args.output_fname, 'w') as f:
-        f.write(pua.to_plantuml(
+    puml_str = pua.to_plantuml(
             with_assignments=not args.no_assignments,
             with_guards=not args.no_guard,
             with_syncs=not args.no_syncs
-        ))
+        )
+    with open(args.output_plantuml_fname, 'w') as f:
+        f.write(puml_str)
+
+    plantuml.PlantUML('http://www.plantuml.com/plantuml/img/').processes_file(
+        args.output_plantuml_fname, outfile=args.output_svg_fname)
+    url = plantuml.PlantUML('http://www.plantuml.com/plantuml/img/').get_url(puml_str)
+    print(f"{url=}")
