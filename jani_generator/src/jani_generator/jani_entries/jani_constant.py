@@ -45,7 +45,6 @@ class JaniConstant:
         return JaniConstant(constant_name,
                             constant_type,
                             JaniExpression(constant_value))
-        
 
     def __init__(self, c_name: str, c_type: Type, c_value: Optional[JaniExpression]):
         assert isinstance(c_value, JaniExpression), "Value should be a JaniExpression"

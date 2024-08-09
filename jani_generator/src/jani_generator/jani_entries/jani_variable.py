@@ -17,10 +17,12 @@
 Variables in Jani
 """
 
-from typing import Optional, Union, Type, get_args
+from typing import List, Optional, Union, Type, get_args
 
 from as2fm_common.common import ValidTypes
 from jani_generator.jani_entries import JaniExpression, JaniValue
+
+import typesentry
 
 
 class JaniVariable:
@@ -28,10 +30,10 @@ class JaniVariable:
     def from_dict(variable_dict: dict) -> "JaniVariable":
         variable_name = variable_dict["name"]
         initial_value = variable_dict.get("initial-value", None)
-        variable_type: type = JaniVariable.jani_type_from_string(variable_dict["type"])
+        variable_type: type = JaniVariable.python_type_from_json(variable_dict["type"])
         if initial_value is None:
             return JaniVariable(variable_name,
-                                JaniVariable.jani_type_from_string(variable_dict["type"]),
+                                variable_type,
                                 None,
                                 variable_dict.get("transient", False))
         if isinstance(initial_value, str):
@@ -71,8 +73,10 @@ class JaniVariable:
                 self._init_expr = JaniExpression(False)
             elif self._type == float:
                 self._init_expr = JaniExpression(0.0)
+            else:
+                raise ValueError(f"Type {self._type} needs an initial value")
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
-        if not self._transient and self._type == float:
+        if not self._transient and self._type in (float, List[float]):
             print(f"Warning: Variable {self._name} is not transient and has type float."
                   "This is not supported by STORM yet.")
 
@@ -88,7 +92,7 @@ class JaniVariable:
         """Return the variable as a dictionary."""
         d = {
             "name": self._name,
-            "type": JaniVariable.jani_type_to_string(self._type),
+            "type": JaniVariable.python_type_to_json(self._type),
             "transient": self._transient
         }
         if self._init_expr is not None:
@@ -96,21 +100,31 @@ class JaniVariable:
         return d
 
     @staticmethod
-    def jani_type_from_string(str_type: str) -> ValidTypes:
+    def python_type_from_json(json_type: Union[str, dict]) -> ValidTypes:
         """
-        Translate a (Jani) type string to a Python type.
+        Translate a (Jani) type string or dict to a Python type.
         """
-        if str_type == "bool":
-            return bool
-        elif str_type == "int":
-            return int
-        elif str_type == "real":
-            return float
-        else:
-            raise ValueError(f"Type {str_type} not supported by Jani")
+        if isinstance(json_type, str):
+            if json_type == "bool":
+                return bool
+            elif json_type == "int":
+                return int
+            elif json_type == "real":
+                return float
+            else:
+                raise ValueError(f"Type {json_type} not supported by Jani")
+        elif isinstance(json_type, dict):
+            assert "kind" in json_type, "Type dict should contain a 'kind' key"
+            if json_type["kind"] == "array":
+                assert "base" in json_type, "Array type should contain a 'base' key"
+                if json_type["base"] == "int":
+                    return List[int]
+                if json_type["base"] == "real":
+                    return List[float]
+        raise ValueError(f"Type {json_type} not supported by Jani")
 
     @staticmethod
-    def jani_type_to_string(v_type: ValidTypes) -> str:
+    def python_type_to_json(v_type: Type[ValidTypes]) -> Union[str, dict]:
         """
         Translate a Python type to the name of the type in Jani.
 
@@ -132,5 +146,9 @@ class JaniVariable:
             return "int"
         elif v_type == float:
             return "real"
+        elif v_type == List[int]:
+            return {"kind": "array", "base": "int"}
+        elif v_type == List[float]:
+            return {"kind": "array", "base": "real"}
         else:
             raise ValueError(f"Type {v_type} not supported by Jani")

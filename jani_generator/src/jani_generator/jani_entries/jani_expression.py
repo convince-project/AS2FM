@@ -95,6 +95,11 @@ class JaniExpression:
                         "abs", "to_cm", "to_m", "to_deg", "to_rad")):
             return {
                 "exp": JaniExpression(expression_dict["exp"])}
+        if (self.op == "ac"):
+            return {
+                "var": JaniExpression(expression_dict["var"]),
+                "length": JaniExpression(expression_dict["length"]),
+                "exp": JaniExpression(expression_dict["exp"])}
         if (self.op in ("ite")):
             return {
                 "if": JaniExpression(expression_dict["if"]),

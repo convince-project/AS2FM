@@ -38,7 +38,7 @@ class JaniAutomaton:
         self._name = automaton_dict["name"]
         self._generate_locations(
             automaton_dict["locations"], automaton_dict["initial-locations"])
-        self._generate_variables(automaton_dict["variables"])
+        self._generate_variables(automaton_dict.get("variables", []))
         self._generate_edges(automaton_dict["edges"])
 
     def get_name(self):
@@ -105,7 +105,7 @@ class JaniAutomaton:
             is_transient = False
             if "transient" in variable:
                 is_transient = variable["transient"]
-            var_type = JaniVariable.jani_type_from_string(variable["type"])
+            var_type = JaniVariable.python_type_from_json(variable["type"])
             self._local_variables.update({variable["name"]: JaniVariable(
                 variable["name"], var_type, init_expr, is_transient)})
 
