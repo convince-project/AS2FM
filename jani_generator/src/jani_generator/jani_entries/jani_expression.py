@@ -95,16 +95,22 @@ class JaniExpression:
                         "abs", "to_cm", "to_m", "to_deg", "to_rad")):
             return {
                 "exp": JaniExpression(expression_dict["exp"])}
-        if (self.op == "ac"):
-            return {
-                "var": JaniExpression(expression_dict["var"]),
-                "length": JaniExpression(expression_dict["length"]),
-                "exp": JaniExpression(expression_dict["exp"])}
         if (self.op in ("ite")):
             return {
                 "if": JaniExpression(expression_dict["if"]),
                 "then": JaniExpression(expression_dict["then"]),
                 "else": JaniExpression(expression_dict["else"])}
+        # Array-specific expressions
+        if (self.op == "ac"):
+            return {
+                "var": JaniExpression(expression_dict["var"]),
+                "length": JaniExpression(expression_dict["length"]),
+                "exp": JaniExpression(expression_dict["exp"])}
+        if (self.op == "aa"):
+            return {
+                "exp": JaniExpression(expression_dict["exp"]),
+                "index": JaniExpression(expression_dict["index"])}
+        # Convince specific expressions
         if (self.op in ("norm2d")):
             return {
                 "x": JaniExpression(expression_dict["x"]),
