@@ -15,15 +15,39 @@
 
 """A constant value expression."""
 
-from typing import Type, Union, get_args
+from typing import Type, Optional, Union, get_args
 
-from jani_generator.jani_entries import JaniExpression, JaniValue
+from jani_generator.jani_entries import JaniExpression
 
 ValidTypes = Union[bool, int, float]
 
 
 class JaniConstant:
-    def __init__(self, c_name: str, c_type: Type, c_value: JaniExpression):
+    @staticmethod
+    def from_dict(constant_dict: dict) -> "JaniConstant":
+        constant_name = constant_dict["name"]
+        constant_type = JaniConstant.jani_type_from_string(constant_dict["type"])
+        constant_value = constant_dict.get("value", None)
+        if constant_value is None:
+            return JaniConstant(constant_name, constant_type, None)
+        if isinstance(constant_value, str):
+            # Check if conversion from string to constant_type is possible
+            try:
+                const_value_cast = constant_type(constant_value)
+                return JaniConstant(constant_name,
+                                    constant_type,
+                                    JaniExpression(const_value_cast))
+            except ValueError:
+                # If no conversion possible, raise an error (constant names are not supported)
+                raise ValueError(
+                    f"Value {constant_value} for constant {constant_name} "
+                    f"is not a valid value for type {constant_type}.")
+        return JaniConstant(constant_name,
+                            constant_type,
+                            JaniExpression(constant_value))
+        
+
+    def __init__(self, c_name: str, c_type: Type, c_value: Optional[JaniExpression]):
         assert isinstance(c_value, JaniExpression), "Value should be a JaniExpression"
         assert c_type in get_args(ValidTypes), f"Type {c_type} not supported by Jani"
         self._name = c_name
@@ -33,10 +57,12 @@ class JaniConstant:
     def name(self) -> str:
         return self._name
 
-    def value(self) -> ValidTypes:
-        assert self._value is not None, "Value not set"
+    def value(self) -> Optional[ValidTypes]:
+        if self._value is None:
+            return None
         jani_value = self._value.value
-        assert jani_value is not None and jani_value.is_valid(), "The expression can't be evaluated to a constant value"
+        assert jani_value.is_valid(), \
+            "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
     @staticmethod
@@ -61,8 +87,8 @@ class JaniConstant:
 
         // Types
         // We cover only the most basic types at the moment.
-        // In the remainder of the specification, all requirements like "y must be of type x" are to be interpreted
-        // as "type x must be assignable from y's type".
+        // In the remainder of the specification, all requirements like "y must be of type x" are
+        // to be interpreted as "type x must be assignable from y's type".
         var BasicType = schema([
         "bool", // assignable from bool
         "int", // numeric; assignable from int and bounded int
@@ -81,8 +107,10 @@ class JaniConstant:
         raise ValueError(f"Type {c_type} not supported by Jani")
 
     def as_dict(self):
-        return {
+        const_dict = {
             "name": self._name,
-            "type": JaniConstant.jani_type_to_string(self._type),
-            "value": self._value.as_dict()
+            "type": JaniConstant.jani_type_to_string(self._type)
         }
+        if self._value is not None:
+            const_dict["value"] = self._value.as_dict()
+        return const_dict

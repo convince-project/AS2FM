@@ -13,6 +13,8 @@
         <data id="cancel_id" type="int32" expr="0" />
         <!-- ID of the last thread that terminated -->
         <data id="finished_thread_id" type="int32" expr="0" />
+        <!-- ID of the next goal to be sent -->
+        <data id="next_goal_id" type="int32" expr="0" />
         <!-- TODO: Use array -->
         <!-- Keep track of which thread is in use -->
         <data id="thread_1_busy" type="bool" expr="False" />
@@ -49,12 +51,15 @@
         </onentry>
         <transition target="idle" cond="thread_to_start > 0">
             <!-- Basically sending an event... -->
-            <ros_action_accept_goal action_name="/fibonacci" goal_id="thread_to_start" />
-            <!-- This send event could be wrapped in another method. Kept separated from ros_action_accept_goal for flexibility. -->
-            <send event="execute_fibonacci" />
-                <param name="goal_id" expr="thread_to_start" />
+            <assign location="next_goal_id" expr="next_goal_id + 1" />
+            <ros_action_accept_goal action_name="/fibonacci" goal_id="next_goal_id" />
+            <!-- This send event could be wrapped in another method. Kept separated from 
+             ros_action_accept_goal for flexibility. -->
+            <!-- This should be expanded into multiple send events, one for each possible thread -->
+            <ros_action_start_thread action_name="/fibonacci" thread_id="thread_to_start">
+                <param name="goal_id" expr="next_goal_id" />
                 <param name="order" expr="order" />
-            </send>
+            </ros_action_start_thread>
         </transition>
         <!-- In case the prev. transition condition is not holding, reject! -->
         <transition target="idle">

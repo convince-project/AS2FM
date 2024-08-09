@@ -22,6 +22,10 @@ from jani_generator.jani_entries import (JaniConstant, JaniEdge,
 
 
 class JaniAutomaton:
+    @staticmethod
+    def from_dict(automaton_dict: dict) -> "JaniAutomaton":
+        return JaniAutomaton(automaton_dict=automaton_dict)
+
     def __init__(self, *, automaton_dict: Optional[Dict[str, Any]] = None):
         self._locations: Set[str] = set()
         self._initial_locations: Set[str] = set()
@@ -86,7 +90,8 @@ class JaniAutomaton:
         """Remove all self-loop edges from the automaton."""
         self._edges = [edge for edge in self._edges if not edge.is_empty_self_loop()]
 
-    def _generate_locations(self, location_list: List[Dict[str, Any]], initial_locations: List[str]):
+    def _generate_locations(self,
+                            location_list: List[Dict[str, Any]], initial_locations: List[str]):
         for location in location_list:
             self._locations.add(location["name"])
         for init_location in initial_locations:

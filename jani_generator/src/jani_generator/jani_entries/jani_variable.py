@@ -26,14 +26,28 @@ from jani_generator.jani_entries import JaniExpression, JaniValue
 class JaniVariable:
     @staticmethod
     def from_dict(variable_dict: dict) -> "JaniVariable":
+        variable_name = variable_dict["name"]
         initial_value = variable_dict.get("initial-value", None)
         variable_type: type = JaniVariable.jani_type_from_string(variable_dict["type"])
         if initial_value is None:
-            return JaniVariable(variable_dict["name"],
+            return JaniVariable(variable_name,
                                 JaniVariable.jani_type_from_string(variable_dict["type"]),
                                 None,
                                 variable_dict.get("transient", False))
-        return JaniVariable(variable_dict["name"],
+        if isinstance(initial_value, str):
+            # Check if conversion from string to variable_type is possible
+            try:
+                init_value_cast = variable_type(initial_value)
+                return JaniVariable(variable_name,
+                                    variable_type,
+                                    JaniExpression(init_value_cast),
+                                    variable_dict.get("transient", False))
+            except ValueError:
+                # If no conversion possible, raise an error (variable names are not supported)
+                raise ValueError(
+                    f"Initial value {initial_value} for variable {variable_name} "
+                    f"is not a valid value for type {variable_type}.")
+        return JaniVariable(variable_name,
                             variable_type,
                             JaniExpression(initial_value),
                             variable_dict.get("transient", False))
