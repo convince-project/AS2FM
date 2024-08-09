@@ -28,9 +28,8 @@ from scxml_converter.scxml_entries import (RosField, ScxmlBase,
                                            as_plain_execution_body,
                                            execution_body_from_xml,
                                            valid_execution_body)
-from scxml_converter.scxml_entries.utils import is_action_type_known
+from scxml_converter.scxml_entries.utils import generate_action_goal_event, is_action_type_known, generate_action_result_event
 from scxml_converter.scxml_converter import ScxmlRosDeclarationsContainer
-
 
 
 class RosActionServer(ScxmlBase):
@@ -160,8 +159,8 @@ class RosActionHandleGoal(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML action goal handler: invalid ROS instantiations."
-        # TODO
-        # event_name = generate_action_server_goal_event(self._action_name)
+        event_name = generate_action_goal_event(
+            self._action_name, ros_declarations.get_automaton_name())
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], None, body)
@@ -176,29 +175,29 @@ class RosActionHandleGoal(ScxmlTransition):
         return xml_action_goal
 
 
-class RosActionSendResponse(ScxmlSend):
-    """SCXML object representing the response from a action server."""
+class RosActionSendResult(ScxmlSend):
+    """SCXML object representing the result from a action server."""
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_send_response"
+        return "ros_action_send_result"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendResponse":
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendResult":
         """Create a RosActionServer object from an XML tree."""
-        assert xml_tree.tag == RosActionSendResponse.get_tag_name(), \
-            "Error: SCXML action response: XML tag name is not " + \
-            RosActionSendResponse.get_tag_name()
+        assert xml_tree.tag == RosActionSendResult.get_tag_name(), \
+            "Error: SCXML action result: XML tag name is not " + \
+            RosActionSendResult.get_tag_name()
         action_name = xml_tree.attrib.get("action_name")
         assert action_name is not None, \
-            "Error: SCXML action response: 'action_name' attribute not found in input xml."
+            "Error: SCXML action result: 'action_name' attribute not found in input xml."
         fields: Optional[List[RosField]] = []
-        assert fields is not None, "Error: SCXML action response: fields is not valid."
+        assert fields is not None, "Error: SCXML action result: fields is not valid."
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
         if len(fields) == 0:
             fields = None
-        return RosActionSendResponse(action_name, fields)
+        return RosActionSendResult(action_name, fields)
 
     def __init__(self, action_name: Union[str, RosActionServer],
                  fields: Optional[List[RosField]]) -> None:
@@ -206,56 +205,57 @@ class RosActionSendResponse(ScxmlSend):
         Initialize a new RosActionClient object.
 
         :param action_name: Topic used by the action.
-        :param fields: List of fields to be sent in the response.
+        :param fields: List of fields to be sent in the result.
         """
         if isinstance(action_name, RosActionServer):
             self._action_name = action_name.get_action_name()
         else:
             # Used for generating ROS entries from xml file
             assert isinstance(action_name, str), \
-                "Error: SCXML Action Send Response: invalid action name."
+                "Error: SCXML Action Send Result: invalid action name."
             self._action_name = action_name
         self._fields = fields if fields is not None else []
-        assert self.check_validity(), "Error: SCXML Action Send Response: invalid parameters."
+        assert self.check_validity(), "Error: SCXML Action Send Result: invalid parameters."
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._action_name, str) and len(self._action_name) > 0
         valid_fields = self._fields is None or \
             all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
         if not valid_name:
-            print("Error: SCXML action response: action name is not valid.")
+            print("Error: SCXML action result: action name is not valid.")
         if not valid_fields:
-            print("Error: SCXML action response: fields are not valid.")
+            print("Error: SCXML action result: fields are not valid.")
         return valid_name and valid_fields
 
     def check_valid_ros_instantiations(self,
                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML action response: invalid ROS declarations container."
+            "Error: SCXML action result: invalid ROS declarations container."
         action_declared = ros_declarations.is_action_server_defined(self._action_name)
         if not action_declared:
-            print("Error: SCXML action response: "
+            print("Error: SCXML action result: "
                   f"action server {self._action_name} not declared.")
             return False
-        valid_fields = ros_declarations.check_valid_action_res_fields(self._action_name, self._fields)
+        valid_fields = ros_declarations.check_valid_action_res_fields(
+            self._action_name, self._fields)
         if not valid_fields:
-            print("Error: SCXML action response: invalid fields in response.")
+            print("Error: SCXML action result: invalid fields in result.")
             return False
         return True
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML action response: invalid ROS instantiations."
-        # TODO
-        # event_name = generate_action_server_response_event(self._action_name)
+            "Error: SCXML action result: invalid ROS instantiations."
+        event_name = generate_action_result_event(
+            self._action_name, ros_declarations.get_automaton_name())
         event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Action Send Response: invalid parameters."
-        xml_action_response = ET.Element(RosActionSendResponse.get_tag_name(),
-                                      {"action_name": self._action_name})
+        assert self.check_validity(), "Error: SCXML Action Send Result: invalid parameters."
+        xml_action_result = ET.Element(RosActionSendResult.get_tag_name(),
+                                       {"action_name": self._action_name})
         if self._fields is not None:
             for field in self._fields:
-                xml_action_response.append(field.as_xml())
-        return xml_action_response
+                xml_action_result.append(field.as_xml())
+        return xml_action_result
