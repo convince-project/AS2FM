@@ -27,3 +27,6 @@ def test_jani_file_loading():
         convince_jani_json = json.load(file)
     jani_model = JaniModel.from_dict(convince_jani_json)
     assert jani_model is not None
+    # output_file = os.path.join(os.path.dirname(jani_file), "GT_example_arrays.jani")
+    # with open(output_file, "w", encoding='utf-8') as f:
+    #     json.dump(jani_model.as_dict(), f, indent=2, ensure_ascii=False)

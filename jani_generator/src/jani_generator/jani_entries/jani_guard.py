@@ -24,10 +24,18 @@ from jani_generator.jani_entries.jani_expression import JaniExpression
 
 
 class JaniGuard:
+    @staticmethod
+    def from_dict(guard_dict: dict) -> "JaniGuard":
+        assert isinstance(guard_dict, dict), f"Unexpected type {type(guard_dict)} for guard_dict."
+        assert "exp" in guard_dict, "Missing 'exp' key in guard_dict."
+        return JaniGuard(JaniExpression(guard_dict["exp"]))
+
     def __init__(self, expression: Optional[JaniExpression]):
+        assert expression is None or isinstance(expression, JaniExpression), \
+            f"Unexpected expression type: {type(expression)} should be a JaniExpression."
         self.expression = expression
 
-    def as_dict(self, constants: Optional[dict] = None):
+    def as_dict(self, _: Optional[dict] = None):
         d = {}
         if self.expression:
             exp = self.expression.as_dict()

@@ -112,3 +112,25 @@ def or_operator(left, right) -> JaniExpression:
 # if operator
 def if_operator(condition, true_value, false_value) -> JaniExpression:
     return JaniExpression({"op": "ite", "if": condition, "then": true_value, "else": false_value})
+
+
+# array operators
+def array_create_operator(var, length, exp) -> JaniExpression:
+    """
+    Generate an array initialization expression
+
+    :param var: The name of an int variable, used to iterate over the array indexes
+    :param length: The length of the array
+    :param exp: The expression to initialize the array with, based on the variable in var
+    """
+    return JaniExpression({"op": "ac", "var": var, "length": length, "exp": exp})
+
+
+def array_access_operator(exp, index) -> JaniExpression:
+    """
+    Generate an array access expression
+
+    :param exp: The array variable to access
+    :param index: The index to access on exp
+    """
+    return JaniExpression({"op": "aa", "exp": exp, "index": index})

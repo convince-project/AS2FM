@@ -59,6 +59,8 @@ BASIC_EXPRESSIONS_MAPPING = {
     "ite": "ite",
     "⇒": "⇒",
     "=>": "⇒",
+    "aa": "aa",
+    "ac": "ac",
 }
 
 
@@ -391,7 +393,8 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-        expression: Union[JaniExpression, JaniValue], jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+        expression: Union[JaniExpression, JaniValue],
+        jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
     assert isinstance(expression, JaniExpression), \
         f"The expression should be a JaniExpression instance, found {type(expression)} instead."
