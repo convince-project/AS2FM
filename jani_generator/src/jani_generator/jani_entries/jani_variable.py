@@ -22,8 +22,6 @@ from typing import List, Optional, Union, Type, get_args
 from as2fm_common.common import ValidTypes
 from jani_generator.jani_entries import JaniExpression, JaniValue
 
-import typesentry
-
 
 class JaniVariable:
     @staticmethod

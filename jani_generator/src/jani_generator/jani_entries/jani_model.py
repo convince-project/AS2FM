@@ -107,6 +107,12 @@ class JaniModel:
     def get_automata(self) -> List[JaniAutomaton]:
         return self._automata
 
+    def get_constants(self) -> Dict[str, JaniConstant]:
+        return self._constants
+
+    def get_variables(self) -> Dict[str, JaniVariable]:
+        return self._variables
+
     def get_automaton(self, automaton_name: str) -> Optional[JaniAutomaton]:
         for automaton in self._automata:
             if automaton._name == automaton_name:

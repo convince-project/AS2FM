@@ -26,7 +26,9 @@ def test_jani_file_loading():
     with open(jani_file, "r", encoding='utf-8') as file:
         convince_jani_json = json.load(file)
     jani_model = JaniModel.from_dict(convince_jani_json)
-    assert jani_model is not None
-    # output_file = os.path.join(os.path.dirname(jani_file), "GT_example_arrays.jani")
-    # with open(output_file, "w", encoding='utf-8') as f:
-    #     json.dump(jani_model.as_dict(), f, indent=2, ensure_ascii=False)
+    assert isinstance(jani_model, JaniModel)
+    assert jani_model.get_name() == "example_arrays"
+    assert "arrays" in jani_model.get_features()
+    assert len(jani_model.get_variables()) == 12
+    assert len(jani_model.get_constants()) == 0
+    assert len(jani_model.get_automata()) == 14

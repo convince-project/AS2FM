@@ -1,6 +1,6 @@
 {
   "jani-version": 1,
-  "name": "",
+  "name": "example_arrays",
   "type": "mdp",
   "features": [
     "arrays"
