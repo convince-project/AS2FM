@@ -69,6 +69,11 @@ def is_msg_type_known(topic_definition: str) -> bool:
 def is_srv_type_known(service_definition: str) -> bool:
     """Check if python can import the provided service definition."""
     return is_ros_type_known(service_definition, "srv")
+        
+
+def is_action_type_known(service_definition: str) -> bool:
+    """Check if python can import the provided service definition."""
+    return is_ros_type_known(service_definition, "action")
 
 
 def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[str, str]]:
@@ -98,11 +103,56 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     return req, res
 
 
+def get_action_type_params(action_definition: str) -> Tuple[Dict[str, str], Dict[str, str]]:
+    """
+    Get the data fields of a action request and response type as pairs of name and type objects.
+
+    :return: goal, feedback, result
+    """
+    assert is_action_type_known(action_definition), \
+        "Error: SCXML ROS declarations: action type not found."
+    interface_ns, interface_type = action_definition.split("/")
+    action_module = __import__(interface_ns + '.action', fromlist=[''])
+    action_class = getattr(action_module, interface_type)
+
+    # TODO: Fields can be nested. Look AS2FM/scxml_converter/src/scxml_converter/scxml_converter.py
+    goal = action_class.Goal.get_fields_and_field_types()
+    for key in goal.keys():
+        # TODO: Support nested fields
+        assert goal[key] in BASIC_FIELD_TYPES, \
+            f"Error: SCXML ROS declarations: action goal type {goal[key]} isn't a basic field."
+        goal[key] = MSG_TYPE_SUBSTITUTIONS.get(goal[key], goal[key])
+
+    feedback = action_class.Feedback.get_fields_and_field_types()
+    for key in feedback.keys():
+        assert feedback[key] in BASIC_FIELD_TYPES, \
+            "Error: SCXML ROS declarations: action feedback type contains non-basic fields."
+        feedback[key] = MSG_TYPE_SUBSTITUTIONS.get(feedback[key], feedback[key])
+
+    result = action_class.Result.get_fields_and_field_types()
+    for key in result.keys():
+        assert result[key] in BASIC_FIELD_TYPES, \
+            "Error: SCXML ROS declarations: action result type contains non-basic fields."
+        result[key] = MSG_TYPE_SUBSTITUTIONS.get(result[key], result[key])
+
+    return goal, feedback, result
+
+
 def replace_ros_interface_expression(msg_expr: str) -> str:
-    """Convert a ROS interface expression (msg, req, res) to plain SCXML (event)."""
+    """
+    Convert a ROS interface expression (msg, req, res, goal, feedback, result) to plain SCXML 
+    (event).
+    """
     scxml_prefix = "_event."
     # TODO: Use regex and ensure no other valid character exists before the initial underscore
-    for ros_prefix in ["_msg.", "_req.", "_res."]:
+    for ros_prefix in [
+            "_msg.",  # topics
+            "_req.",  # services
+            "_res.",  # services
+            "_goal.",  # actions
+            "_feedback.",  # actions
+            "_result."  # actions
+    ]:
         msg_expr = msg_expr.replace(ros_prefix, scxml_prefix)
     return msg_expr
 
@@ -145,6 +195,21 @@ def generate_srv_server_response_event(service_name: str) -> str:
     return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
+def generate_action_goal_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that sends a goal to an action server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_client_{automaton_name}"
+
+
+def generate_action_feedback_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that sends a feedback to an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_feedback_client_{automaton_name}"
+
+
+def generate_action_result_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that sends a result to an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_result_client_{automaton_name}"
+
+
 class ScxmlRosDeclarationsContainer:
     """Object that contains a description of the ROS declarations in the SCXML root."""
 
@@ -159,6 +224,8 @@ class ScxmlRosDeclarationsContainer:
         self._subscribers: Dict[str, str] = {}
         self._service_servers: Dict[str, str] = {}
         self._service_clients: Dict[str, str] = {}
+        self._action_servers: Dict[str, str] = {}
+        self._action_clients: Dict[str, str] = {}
         self._timers: Dict[str, float] = {}
 
     def get_automaton_name(self) -> str:
@@ -193,6 +260,20 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: service server {service_name} already declared."
         self._service_servers[service_name] = service_type
 
+    def append_action_client(self, action_name: str, action_type: str) -> None:
+        assert isinstance(action_name, str) and isinstance(action_type, str), \
+            "Error: ROS declarations: action name and type must be strings."
+        assert action_name not in self._action_clients, \
+            f"Error: ROS declarations: action client {action_name} already declared."
+        self._action_clients[action_name] = action_type
+
+    def append_action_server(self, action_name: str, action_type: str) -> None:
+        assert isinstance(action_name, str) and isinstance(action_type, str), \
+            "Error: ROS declarations: action name and type must be strings."
+        assert action_name not in self._action_servers, \
+            f"Error: ROS declarations: action server {action_name} already declared."
+        self._action_servers[action_name] = action_type
+
     def append_timer(self, timer_name: str, timer_rate: float) -> None:
         assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
         assert isinstance(timer_rate, float) and timer_rate > 0, \
@@ -224,6 +305,18 @@ class ScxmlRosDeclarationsContainer:
 
     def get_service_server_type(self, service_name: str) -> Optional[str]:
         return self._service_servers.get(service_name, None)
+    
+    def is_action_client_defined(self, action_name: str) -> bool:
+        return action_name in self._action_clients
+    
+    def is_action_server_defined(self, action_name: str) -> bool:
+        return action_name in self._action_servers
+
+    def get_action_client_type(self, action_name: str) -> Optional[str]:
+        return self._action_clients.get(action_name, None)
+
+    def get_action_server_type(self, action_name: str) -> Optional[str]:
+        return self._action_servers.get(action_name, None)
 
     def check_valid_srv_req_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service request type."""
@@ -262,5 +355,67 @@ class ScxmlRosDeclarationsContainer:
             print("Error: SCXML ROS declarations: missing fields in service response.")
             for res_field in res_fields.keys():
                 print(f"\t-{res_field}.")
+            return False
+        return True
+
+    def check_valid_action_goal_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
+        """Check if the provided fields match the service goal type."""
+        goal_type = self.get_service_client_type(service_name)
+        if goal_type is None:
+            print(f"Error: SCXML ROS declarations: unknown service client {service_name}.")
+            return False
+        goal_fields, _, _ = get_action_type_params(goal_type)
+        for ros_field in ros_fields:
+            if ros_field.get_name() not in goal_fields:
+                print("Error: SCXML ROS declarations: "
+                      f"unknown field {ros_field.get_name()} in service goal.")
+                return False
+            goal_fields.pop(ros_field.get_name())
+        if len(goal_fields) > 0:
+            print("Error: SCXML ROS declarations: missing fields in service goal.")
+            for goal_field in goal_fields.keys():
+                print(f"\t-{goal_field}.")
+            return False
+        return True
+
+    def check_valid_action_feedback_fields(
+            self, service_name: str, ros_fields: List[RosField]) -> bool:
+        """Check if the provided fields match the service feedback type."""
+        feedback_type = self.get_service_client_type(service_name)
+        if feedback_type is None:
+            print(f"Error: SCXML ROS declarations: unknown service client {service_name}.")
+            return False
+        _, feedback_fields, _ = get_action_type_params(feedback_type)
+        for ros_field in ros_fields:
+            if ros_field.get_name() not in feedback_fields:
+                print("Error: SCXML ROS declarations: "
+                      f"unknown field {ros_field.get_name()} in service feedback.")
+                return False
+            feedback_fields.pop(ros_field.get_name())
+        if len(feedback_fields) > 0:
+            print("Error: SCXML ROS declarations: missing fields in service feedback.")
+            for feedback_field in feedback_fields.keys():
+                print(f"\t-{feedback_field}.")
+            return False
+        return True
+
+    def check_valid_action_result_fields(
+            self, service_name: str, ros_fields: List[RosField]) -> bool:
+        """Check if the provided fields match the service result type."""
+        result_type = self.get_service_client_type(service_name)
+        if result_type is None:
+            print(f"Error: SCXML ROS declarations: unknown service client {service_name}.")
+            return False
+        _, result_fields, _ = get_action_type_params(result_type)
+        for ros_field in ros_fields:
+            if ros_field.get_name() not in result_fields:
+                print("Error: SCXML ROS declarations: "
+                      f"unknown field {ros_field.get_name()} in service result.")
+                return False
+            result_fields.pop(ros_field.get_name())
+        if len(result_fields) > 0:
+            print("Error: SCXML ROS declarations: missing fields in service result.")
+            for result_field in result_fields.keys():
+                print(f"\t-{result_field}.")
             return False
         return True

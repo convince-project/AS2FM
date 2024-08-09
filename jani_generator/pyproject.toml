@@ -19,7 +19,8 @@ keywords = []
 dependencies = [
     "jsonschema",
     "js2py",
-    "esprima"
+    "esprima",
+    "typesentry"
 ]
 requires-python = ">=3.10"
 
