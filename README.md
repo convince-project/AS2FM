@@ -1,7 +1,12 @@
-# Model Checking Toolchain Components
 # Autonomous Systems to Formal Models (AS2FM)
 
-> Please access the documentation via [convince-project.github.io/AS2FM](https://convince-project.github.io/AS2FM)
+## Summary overview
+
+This package provides tools to convert the high level representation of an autonomous system (implemented using a combination of BT xml + a ROS flavoured set of scxml (also called ros-scxml) files) to a formal model (i.e. jani).
+
+## Documentation
+
+Please access the documentation via [convince-project.github.io/AS2FM](https://convince-project.github.io/AS2FM)
 
 ## Further Information
 
