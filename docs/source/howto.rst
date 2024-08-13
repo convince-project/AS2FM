@@ -1,4 +1,4 @@
-How To guides
+How To Guides
 =============
 
 
@@ -18,7 +18,7 @@ A simple, exemplary SCXML model is shown below:
 
     <scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" initial="s0">
         <datamodel>
-            <data id="counter" expr="0"/>
+            <data id="counter" expr="0" type="int16"/>
         </datamodel>
         <state id="s0">
             <transition event="e1" target="s1">
@@ -57,13 +57,15 @@ Creating a SCXML model of a ROS node
 
 In AS2FM, we extended the SCXML language with some additional functionalities, to support the following ROS specific features:
 
-* **ROS Timers**: to schedule events at a specific rate
-* **ROS Topics**: to publish-receive messages via a ROS topic
-* **ROS Services**: to call a ROS service and implement service servers
-* **ROS Actions**: to call a ROS action and implement action servers (under development)
+* :ref:`ROS Timers <ros_timers>`: to schedule events at a specific rate
+* :ref:`ROS Topics <ros_topics>`: to publish-receive messages via a ROS topic
+* :ref:`ROS Services <ros_services>`: to call a ROS service and implement service servers
+* :ref:`ROS Actions <ros_actions>`: to call a ROS action and implement action servers (under development)
 
 All functionalities require the interface to be declared before being used, similarly to variables in the SCXML datamodel.
 
+
+.. _ros_timers:
 
 ROS Timers
 ___________
@@ -90,17 +92,59 @@ Assuming the automaton is in the `src_state`, the transition to `target_state` w
 Additionally, the internal variable `internal_var` will be updated with the value of `some_expression` when that transition is performed.
 
 
+.. _ros_topics:
+
 ROS Topics
 ___________
 
-TODO
+ROS Topics are used to publish (via a ROS Publisher) and receive (via a ROS Subscriber) messages via a ROS topic across different automata. They can be declared as follows:
 
+.. code-block:: xml
+
+    <!-- ROS Topic Subscriber -->
+    <ros_topic_subscriber topic="/topic1" type="std_msgs/Bool" />
+    <!-- ROS Topic Publisher -->
+    <ros_topic_publisher topic="/topic2" type="std_msgs/Int32" />
+
+Once created, subscribers and publishers can be referenced using the `topic` name, and can be used in the states to send messages and perform callbacks upon messages receipt, as in the following:
+
+.. code-block:: xml
+
+    <datamodel>
+        <data id="internal_bool" expr="True" type="bool" />
+    </datamodel>
+
+    <state id="src_state">
+        <ros_topic_callback topic="/topic1" target="target_state">
+            <assign location="internal_var" expr="_msg.data" />
+        </ros_topic_callback>
+    </state>
+
+    <state id="target_state">
+        <onentry>
+            <if cond="internal_bool">
+                <ros_topic_publish topic="/topic2" >
+                    <field name="data" expr="10">
+                </ros_topic_publish>
+            <else />
+                <ros_topic_publish topic="/topic2" >
+                    <field name="data" expr="20">
+                </ros_topic_publish>
+            </if>
+        </onentry>
+        <transition target="src_state" />
+    </state>
+
+
+.. _ros_services:
 
 ROS Services
 ____________
 
 TODO
 
+
+.. _ros_actions:
 
 ROS Actions
 ___________
