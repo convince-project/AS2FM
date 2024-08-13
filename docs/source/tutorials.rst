@@ -9,26 +9,41 @@ The resulting JANI model from one of the approaches above can then be given to a
 It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
 
 
-How to convert from (SC)XML to plain JANI?
---------------------------------------------
 .. _scxml_conversion:
 
-But writing a JANI model by hand is quite difficult. Therefore we also developed an approach to directly extract a JANI model from the robotic system specified in (SC)XML files, e.g., for the ROS nodes, the environment, the behavior tree, and the interaction of those components. 
+How to convert from (SC)XML to plain JANI?
+--------------------------------------------
 
-Running the script
-`````````````````````
+This tutorial explains how to convert an autonomous system specified using a combination of BT-XML and SCXML files into a JANI model.
+For this tutorial, we assume the system specification is already available. Further explanations on how to specify the system can be found in the `SCXML how-to <scxml_howto>`.
 
-A full system model can be converted into a model-checkable JANI file as follows.
 
-.. code-block:: bash
+Reference model
+```````````````
 
-    scxml_to_jani path_to_main.xml
+For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example_w_bt>`_.
+The model consists of a main.xml file, referencing to the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes. 
+
+This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
+A behavior tree continuously monitor the alarm topic and, once it is triggered, recharges the battery to its full level before starting the draining process again.
+
+In this example, the system is composed by the following components modeled in SCXML:
+
+* a **battery_drainer**, that at each time step drains the battery by 1%, and each time the charge trigger is received, it recharges the battery to 100%.
+* a **battery_manager**, that at each time the battery level is received checks if it is below 30% and, if so, triggers the alarm.
+
+The **behavior tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery_drainer.
+
+The JANI property given in `battery_depleted.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
+
+In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
+In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
 
 
 Structure of input
 `````````````````````
 
-The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_. With the following content:
+The `scxml_to_jani` tool takes a main XML file, e.g. `main.xml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ with the following content:
 
 * one or multiple ROS nodes in SCXML:
 
@@ -63,27 +78,23 @@ The `scxml_to_jani` tool takes an XML file, e.g. `main.xml <https://github.com/c
 All of those components are converted into one JANI DTMC model by the ``scxml_to_jani`` tool.
 
 
-Example
-`````````
+Running the script
+`````````````````````
 
-We demonstrate the usage of this conversion for a full model based on an example of a battery which is continuously drained. 
-All input files can be found in this `folder <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example>`_. The core functionality of the battery drainer is implemented in `battery_drainer.scxml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_drainer.scxml>`_. 
-The battery is drained by 1% at a frequency of 1 Hz given by the ros time rate ``my_timer``.
-The percentage level of the battery is stored in ``battery_percent``. The current state of the battery is published on a ROS topic ``level``.
+After installing the AS2FM packages as described in the :ref:`installation section <installation>`, a full system model can be converted into a model-checkable JANI file as follows:
 
-In addition, there is the `battery_manager.scxml <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_manager.scxml>`_ file. The manager subscribes to the ``level`` topic of the battery drainer to check its level and sets the ``battery_alarm`` to true as soon as the ``level`` is less than 30%. 
-This means there is a communication between the two processes described by the drainer and the manager.
+.. code-block:: bash
 
-The JANI property given in `battery_depleted.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
+    cd AS2FM/jani_generator/test/_test_data/ros_example_w_bt/
+    scxml_to_jani main.xml
 
-In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property is fulfilled with probability 1, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
-In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
+The output is a JANI file will be located in the same folder, and it will be called `main.jani`.
 
 
+.. _jani_conversion:
 
 How to convert from CONVINCE robotic JANI to plain JANI?
 -----------------------------------------------------------
-.. _jani_conversion:
 
 We provide a Python script to convert models describing the system and its environment together, given in the CONVINCE robotics JANI flavor as specified in the `data model repository <https://github.com/convince-project/data-model>`_, into `plain JANI <https://jani-spec.org>`_ accepted as input by model checkers.
 

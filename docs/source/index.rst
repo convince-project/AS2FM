@@ -30,6 +30,7 @@ Contents
 
    installation
    tutorials
+   howto
    scxml-jani-conversion
    api
    contacts
