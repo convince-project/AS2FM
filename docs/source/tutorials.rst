@@ -22,10 +22,16 @@ Reference model
 ```````````````
 
 For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example_w_bt>`_.
-The model consists of a main.xml file, referencing to the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes. 
+The model consists of a main.xml file, referencing to the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
 
 This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
 A behavior tree continuously monitor the alarm topic and, once it is triggered, recharges the battery to its full level before starting the draining process again.
+
+The following image gives an overview of the complete system:
+
+.. image:: graphics/scxml_tutorial_ros_example_w_bt.drawio.svg
+    :width: 800
+    :alt: An image of the complete exemplary system.
 
 In this example, the system is composed by the following components modeled in SCXML:
 
