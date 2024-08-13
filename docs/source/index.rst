@@ -28,6 +28,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   installation
    tutorials
    scxml-jani-conversion
    api

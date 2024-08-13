@@ -1,65 +1,17 @@
 Tutorials
 =========
 
-The scripts have been tested with Python 3.10 and pip version 24.0. 
+This section provides tutorials on how to use the AS2FM tools to convert an autonomous robotic system into a formal model compatible with existing model checker tools (i.e. jani).
 
-Installation
---------------
-To run the Python scripts install the required dependencies with the following commands:
+The page is subdivided in two main section, one providing a :ref:`tutorial for converting an SCXML model into jani <scxml_conversion>`, and the other one providing a :ref:`tutorial for converting a "CONVINCE robotic jani" model (plain) jani <jani_conversion>`.
 
-.. code-block:: bash
-
-    python3 -m pip install as2fm_common/
-    python3 -m pip install jani_generator/
-    python3 -m pip install scxml_converter/
-
-
-To run the ``scxml_converter`` also ROS has to be installed, for example `ROS Humble <https://docs.ros.org/en/humble/index.html>`_. Make sure to source ROS before running the ``scxml_converter`` by executing ``source /opt/ros/humble/setup.bash``.
-
-
-
-How to convert from CONVINCE robotic JANI to plain JANI?
------------------------------------------------------------
-
-We provide a Python script to convert models describing the system and its environment together, given in the CONVINCE robotics JANI flavor as specified in the `data model repository <https://github.com/convince-project/data-model>`_, into `plain JANI <https://jani-spec.org>`_ accepted as input by model checkers.
-
-Running the script
-```````````````````
-
-After it has been installed, the script can be run on a CONVINCE robotics JANI model. It outputs a plain JANI conversion.
-
-.. code-block:: bash
-
-    convince_to_plain_jani --convince_jani path_to_convince_robotic_file.jani --output output_plain_file.jani
-
-
-Example
-`````````
-
-Let's convert a first simple robotic JANI model. An example can be found in `here <https://github.com/convince-project/as2fm/blob/main/jani_generator/test/_test_data/convince_jani/first-model-mc-version.jani>`_. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
-
-.. image:: graphics/room.PNG
-    :width: 200
-    :alt: An image illustrating the room's shape.
-
-The lower left corner is at coordinates (0,0) and the upper right corner at coordinates (3,5). Lengths are given in meters, which means that the room has a dimension of 3x5 m with a corner of 0.5m at the top left. 
-The robot is placed at coordinates (0.5, 0.5) initially, and has a round shape with a radius of 0.3 m and a height of 0.2 m. In the small and simple example there are no further obstacles and the robot drives with a linear and angular velocity of 0.5 m/s and 0.5 rad/s, respectively.
-
-The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and the conversion to and from floats to integers. The latter is only necessary to make the example run in Storm because the tool currently does not support transient floats.
-
-.. image:: graphics/dtmc.PNG
-    :width: 800
-    :alt: An image of the DTMC representing the robot's behavior.
-
-The property given in the JANI file checks for the minimal probability that eventually within 10 000 steps the position (1.0, 1.0) is reached with an error range of 0.05 m.
-
-
-
-
+The resulting JANI model from one of the approaches above can then be given to any model checker accepting JANI as an input format and being able to handle DTMC models. This could for example be the `Storm SMC extension smc-storm <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC Storm for further details.
+It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
 
 
 How to convert from (SC)XML to plain JANI?
 --------------------------------------------
+.. _scxml_conversion:
 
 But writing a JANI model by hand is quite difficult. Therefore we also developed an approach to directly extract a JANI model from the robotic system specified in (SC)XML files, e.g., for the ROS nodes, the environment, the behavior tree, and the interaction of those components. 
 
@@ -128,8 +80,39 @@ In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
 
 
-How to model check the robotic system?
-----------------------------------------
 
-The resulting JANI model from one of the approaches above can then be given to any model checker accepting JANI as an input format and being able to handle DTMC models. This could for example be the `Storm SMC extension smc-storm <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC Storm for further details.
-It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
+How to convert from CONVINCE robotic JANI to plain JANI?
+-----------------------------------------------------------
+.. _jani_conversion:
+
+We provide a Python script to convert models describing the system and its environment together, given in the CONVINCE robotics JANI flavor as specified in the `data model repository <https://github.com/convince-project/data-model>`_, into `plain JANI <https://jani-spec.org>`_ accepted as input by model checkers.
+
+Running the script
+```````````````````
+
+After it has been installed, the script can be run on a CONVINCE robotics JANI model. It outputs a plain JANI conversion.
+
+.. code-block:: bash
+
+    convince_to_plain_jani --convince_jani path_to_convince_robotic_file.jani --output output_plain_file.jani
+
+
+Example
+`````````
+
+Let's convert a first simple robotic JANI model. An example can be found in `here <https://github.com/convince-project/as2fm/blob/main/jani_generator/test/_test_data/convince_jani/first-model-mc-version.jani>`_. The environment model describes a room with three straight edges and one edge with a small corner in the middle. The room describing the environment in which the robot operates looks like this:
+
+.. image:: graphics/room.PNG
+    :width: 200
+    :alt: An image illustrating the room's shape.
+
+The lower left corner is at coordinates (0,0) and the upper right corner at coordinates (3,5). Lengths are given in meters, which means that the room has a dimension of 3x5 m with a corner of 0.5m at the top left. 
+The robot is placed at coordinates (0.5, 0.5) initially, and has a round shape with a radius of 0.3 m and a height of 0.2 m. In the small and simple example there are no further obstacles and the robot drives with a linear and angular velocity of 0.5 m/s and 0.5 rad/s, respectively.
+
+The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and the conversion to and from floats to integers. The latter is only necessary to make the example run in Storm because the tool currently does not support transient floats.
+
+.. image:: graphics/dtmc.PNG
+    :width: 800
+    :alt: An image of the DTMC representing the robot's behavior.
+
+The property given in the JANI file checks for the minimal probability that eventually within 10 000 steps the position (1.0, 1.0) is reached with an error range of 0.05 m.
