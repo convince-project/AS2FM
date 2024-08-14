@@ -13,9 +13,15 @@ jobs:
             # Checkout the repository
             - name: Checkout repository
               uses: actions/checkout@v2
-            # install the dependencies
+            # Install the dependencies
             - name: Install dependencies
               run: pip install -r docs/requirements.txt
+            # Install packages
+            - name: Install our packages
+              run: |
+                    pip install as2fm_common/.
+                    pip install scxml_converter/.
+                    pip install jani_generator/.
             # build the documentation
             - name: Build documentation
               run: |
