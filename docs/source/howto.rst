@@ -1,3 +1,5 @@
+.. _howto:
+
 How To Guides
 =============
 
@@ -40,12 +42,12 @@ A simple, exemplary SCXML model is shown below:
         </state>
     </scxml>
 
-In this example, the SCXML model consists of three states, `s0`, `s1`, and `s2`, and three transitions, `e1`, `e2` and `e3`, that transition each state to the next one.
+In this example, the SCXML model consists of three states, `s0`, `s1`, and `s2`, and three transitions, triggered by the events `e1`, `e2` and `e3`, respectively. Each transition will advance the automaton state to the next one.
 Additionally, on each transition, a counter is incremented.
 
 The events are expected to be sent by another scxml model, similarly to how it is done in the `s2` state.
 
-In order to make it more appealing to robotics developers, we have extended the default SCXML language with some ROS and BT specific features.
+In order to make SCXML fit more the typical robotics tech-stack, we extended the default SCXML language to support ROS specific specific features and Behavior Trees.
 
 The following sections will guide you through the process of :ref:`creating a SCXML model of a ROS node <ros_node_scxml>` and of a :ref:`BT plugin <bt_plugin_scxml>` that can be processed by AS2FM.
 
@@ -57,20 +59,20 @@ Creating a SCXML model of a ROS node
 
 In AS2FM, we extended the SCXML language with some additional functionalities, to support the following ROS specific features:
 
-* :ref:`ROS Timers <ros_timers>`: to schedule events at a specific rate
+* :ref:`ROS Timers <ros_timers>`: to trigger callbacks at a specific rate
 * :ref:`ROS Topics <ros_topics>`: to publish-receive messages via a ROS topic
 * :ref:`ROS Services <ros_services>`: to call a ROS service and implement service servers
 * :ref:`ROS Actions <ros_actions>`: to call a ROS action and implement action servers (under development)
 
-All functionalities require the interface to be declared before being used, similarly to variables in the SCXML datamodel.
-
+All functionalities require the interface to be declared before being used, similarly to how ROS requires the interfaces to be declared in a node.
+In (ROS) SCXML, this is done similarly to how variables are defined in the datamodel.
 
 .. _ros_timers:
 
 ROS Timers
 ___________
 
-ROS Timers are used to schedule events at a specific rate. They can be declared as follows:
+ROS Timers are used to trigger callbacks (behaving like an SCXML transition) at a specific rate. They can be declared as follows:
 
 .. code-block:: xml
 
@@ -106,7 +108,7 @@ ROS Topics are used to publish (via a ROS Publisher) and receive (via a ROS Subs
     <!-- ROS Topic Publisher -->
     <ros_topic_publisher topic="/topic2" type="std_msgs/Int32" />
 
-Once created, subscribers and publishers can be referenced using the `topic` name, and can be used in the states to send messages and perform callbacks upon messages receipt, as in the following:
+Once created, subscribers and publishers can be referenced using the `topic` name, and can be used in the states to send messages and perform callbacks upon receiving messages:
 
 .. code-block:: xml
 
@@ -135,16 +137,19 @@ Once created, subscribers and publishers can be referenced using the `topic` nam
         <transition target="src_state" />
     </state>
 
+Note that the `ros_topic_publish` can be used where one would normally use executable content in SCXML: in `transition`s, in `onentry` and `onexit` tags.
+The `ros_topic_callback` tag is similarly to the `ros_rate_callback` used like a transition and will transition the state machine to the state declared in `target` upon receiving a message.
+Executable content within it can use `_msg` to access the message content.
 
 .. _ros_services:
 
 ROS Services
 ____________
 
-ROS Services are used to provide, for a given topic, one server and, possibly, multiple clients.
+ROS Services are used to provide, for a given service name, one server and, possibly, multiple clients.
 The clients makes a request and the server provides a response to that request only to the client that made the request.
 
-The declaration of a ROS Service server and the one of a client looks as in the following:
+The declaration of a ROS Service server and the one of a client can be achieved like this:
 
 .. code-block:: xml
 
@@ -172,9 +177,13 @@ In the following, an exemplary client is provided:
         </ros_service_handle_response>
     </state>
 
+To send a request, the `ros_service_send_request` can be used where any other executable content may be used.
+After the server has processed the service, `ros_service_handle_response`, can be used similarly to a SCXML transition and is triggered by the server.
+The data of the request can be accessed with the `_res` field.
+
 And here, an example of a server:
 
-..code-block:: xml
+.. code-block:: xml
 
     <datamodel>
         <data id="temp_data" type="bool" expr="False" />
@@ -189,6 +198,9 @@ And here, an example of a server:
         </ros_service_handle_request>
     </state>
 
+A service request from a client will trigger the `ros_service_handle_request` callback which transitions the automaton to the state declared in `target` (it is a self loop in the example).
+After processing the request the server must use the `ros_service_send_response` to send the response.
+
 
 .. _ros_actions:
 
@@ -202,5 +214,19 @@ TODO
 
 Creating a SCXML model of a BT plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+
+.. _additional_params_howto:
+
+Additional Parameters for the Main XML file
+-------------------------------------------
+
+
+.. _max_time_tag:
+
+Max Time
+~~~~~~~~
 
 TODO

@@ -26,3 +26,9 @@ Afterwards, install the AS2FM packages with the following commands:
     python3 -m pip install as2fm_common/
     python3 -m pip install jani_generator/
     python3 -m pip install scxml_converter/
+
+Verify your installation by running:
+
+.. code-block:: bash
+
+    scxml_to_jani --help

@@ -9,6 +9,12 @@ The resulting JANI model from one of the approaches above can then be given to a
 It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
 
 
+Pre-requisites
+--------------
+
+Before starting the tutorials, make sure to install AS2FM, as described in the :ref:`installation guide <installation>`.
+
+
 .. _scxml_conversion:
 
 How to convert from (SC)XML to plain JANI?
@@ -27,7 +33,7 @@ The model consists of a main.xml file, referencing to the BT files running in th
 This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
 A behavior tree continuously monitor the alarm topic and, once it is triggered, recharges the battery to its full level before starting the draining process again.
 
-The following image gives an overview of the complete system:
+The image below gives an overview of an exemplary system to be model-checked.
 
 .. image:: graphics/scxml_tutorial_ros_example_w_bt.drawio.svg
     :width: 800
@@ -35,14 +41,16 @@ The following image gives an overview of the complete system:
 
 In this example, the system is composed by the following components modeled in SCXML:
 
-* a **battery_drainer**, that at each time step drains the battery by 1%, and each time the charge trigger is received, it recharges the battery to 100%.
-* a **battery_manager**, that at each time the battery level is received checks if it is below 30% and, if so, triggers the alarm.
+* a **Battery Drainer**, that at each time step drains the battery by 1%, and each time the charge trigger is received, it recharges the battery to 100%.
+* a **Battery Manager**, that at each time the battery level is received checks if it is below 30% and, if so, triggers the alarm.
 
-The **behavior tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery_drainer.
+The **Behavior Tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery_drainer.
 
-The JANI property given in `battery_depleted.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked. In this case, it calculates the minimal probability that the battery level is below or equal to zero eventually, i.e., all we verify here is that the battery is empty at some point.
+The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked.
+In this case, it calculates the minimal probability that the battery level will eventually be 100, after an initial discharge time, i.e., all we verify here is that the battery is charged at some point.
 
-In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second.
+In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this concept can be found in the :ref:`related section <max_time_tag>` of the :ref:`How To page <howto>`.
+
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
 
 
@@ -101,6 +109,9 @@ The output is a JANI file will be located in the same folder, and it will be cal
 
 How to convert from CONVINCE robotic JANI to plain JANI?
 -----------------------------------------------------------
+
+.. note::
+    The CONVINCE-Jani extension is not related to the modeling of robotics system using ROS, unlike the SCXML approach. The following tutorial targets users that want to develop a Jani model of a robotics system by hand.
 
 We provide a Python script to convert models describing the system and its environment together, given in the CONVINCE robotics JANI flavor as specified in the `data model repository <https://github.com/convince-project/data-model>`_, into `plain JANI <https://jani-spec.org>`_ accepted as input by model checkers.
 
