@@ -131,6 +131,11 @@ class ScxmlRoot(ScxmlBase):
                 return state
         return None
 
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Update all BT-related events to use the assigned instance ID."""
+        for state in self._states:
+            state.instantiate_bt_events(instance_id)
+
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""
         self._states.append(state)

@@ -10,7 +10,8 @@ from .scxml_executable_entries import ScxmlAssign, ScxmlIf, ScxmlSend           
 from .scxml_executable_entries import ScxmlExecutableEntry, ScxmlExecutionBody  # noqa: F401
 from .scxml_executable_entries import (                                         # noqa: F401
     execution_body_from_xml, as_plain_execution_body,                           # noqa: F401
-    execution_entry_from_xml, valid_execution_body)                             # noqa: F401
+    execution_entry_from_xml, valid_execution_body,                             # noqa: F401
+    instantiate_exec_body_bt_events)                                            # noqa: F401
 from .scxml_transition import ScxmlTransition                                   # noqa: F401
 from .scxml_ros_topic import (                                                  # noqa: F401
     RosTopicPublisher, RosTopicSubscriber, RosTopicCallback, RosTopicPublish)   # noqa: F401

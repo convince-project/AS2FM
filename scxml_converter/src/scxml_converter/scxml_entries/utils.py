@@ -40,6 +40,18 @@ SCXML_DATA_STR_TO_TYPE = {
 }
 
 
+def is_bt_event(event_name: str) -> bool:
+    """Given an event name, returns whether it is related to a BT event or not."""
+    bt_events = [f"bt_{suffix}" for suffix in ["tick", "running", "success", "failure"]]
+    return event_name in bt_events
+
+
+def replace_bt_event(event_name: str, instance_id: str) -> str:
+    """Given a BT event name, returns the same event including the BT node instance."""
+    assert is_bt_event(event_name), "Error: BT event instantiation: invalid BT event name."
+    return f"bt_{instance_id}_{event_name.removeprefix('bt_')}"
+
+
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     """
     Check if python can import the provided type definition.

@@ -24,7 +24,10 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
                                            ScxmlExecutionBody,
                                            ScxmlRosDeclarationsContainer,
                                            execution_body_from_xml,
-                                           valid_execution_body)
+                                           valid_execution_body,
+                                           instantiate_exec_body_bt_events)
+
+from scxml_converter.scxml_entries.utils import is_bt_event, replace_bt_event
 
 
 class ScxmlTransition(ScxmlBase):
@@ -87,6 +90,13 @@ class ScxmlTransition(ScxmlBase):
     def get_executable_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
+
+    def instantiate_bt_events(self, instance_id: str):
+        """Instantiate the BT events of this transition."""
+        for event in self._events:
+            if is_bt_event(event):
+                event = replace_bt_event(event, instance_id)
+        instantiate_exec_body_bt_events(self._body, instance_id)
 
     def add_event(self, event: str):
         self._events.append(event)

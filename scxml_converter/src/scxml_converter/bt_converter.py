@@ -22,7 +22,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 import os
 import xml.etree.ElementTree as ET
 from enum import Enum, auto
-from typing import List
+from typing import List, Tuple, Dict
 
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
@@ -31,6 +31,14 @@ from btlib.common import NODE_CAT
 from scxml_converter.scxml_entries import (RosRateCallback, RosTimeRate,
                                            ScxmlRoot, ScxmlSend, ScxmlState,
                                            ScxmlTransition)
+
+
+# A pair containing a node ID and the value for each of its ports
+NodeAndPorts = Tuple[str, Dict[str, str]]
+
+
+# A list of all the nodes in a BT and their ports values
+BtNodes = List[NodeAndPorts]
 
 
 class BT_EVENT_TYPE(Enum):
@@ -57,7 +65,7 @@ def bt_converter(
     bt_xml_path: str,
     bt_plugins_scxml_paths: List[str],
     output_folder: str
-):
+) -> Tuple[ScxmlRoot, BtNodes]:
     """
     Convert a Behavior Tree (BT) in XML format to SCXML.
 
@@ -72,16 +80,16 @@ def bt_converter(
     bt_graph, xpi = xml_to_networkx(bt_xml_path)
     generated_files = []
 
-    bt_plugins_scxml = {}
+    bt_plugins_scxml_paths_by_plugin = {}
     for path in bt_plugins_scxml_paths:
         assert os.path.exists(path), f'SCXML must exist. {path} not found.'
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
             xml = ET.fromstring(content)
             name = xml.attrib['name']
-            assert name not in bt_plugins_scxml, \
+            assert name not in bt_plugins_scxml_paths_by_plugin, \
                 f'Plugin name must be unique. {name} already exists.'
-            bt_plugins_scxml[name] = content
+            bt_plugins_scxml_paths_by_plugin[name] = path
 
     leaf_node_ids = []
     for node in bt_graph.nodes:
@@ -91,27 +99,19 @@ def bt_converter(
             assert 'ID' in bt_graph.nodes[node], 'Leaf node must have a type.'
             node_type = bt_graph.nodes[node]['ID']
             node_id = node
-            assert node_type in bt_plugins_scxml, \
+            assert node_type in bt_plugins_scxml_paths_by_plugin, \
                 f'Leaf node must have a plugin. {node_type} not found.'
             instance_name = f'{node_id}_{node_type}'
             output_fname = os.path.join(
                 output_folder, f'{instance_name}.scxml')
             generated_files.append(output_fname)
-            this_plugin_content = bt_plugins_scxml[node_type]
-            event_names_to_replace = [
-                f'bt_{t}' for t in [
-                    'tick', 'success', 'failure', 'running']]
-            for event_name in event_names_to_replace:
-                declaration_old = f'event="{event_name}"'
-                new_event_name = bt_event_name(
-                    node_id, BT_EVENT_TYPE.from_str(event_name))
-                declaration_new = f'event="{new_event_name}"'
-                this_plugin_content = this_plugin_content.replace(
-                    declaration_old, declaration_new)
+            this_plugin_scxml = ScxmlRoot.from_scxml_file(
+                bt_plugins_scxml_paths_by_plugin[node_type])
+            this_plugin_scxml.instantiate_bt_events(node_id)
             # TODO: Replace arguments from the BT xml file.
             # TODO: Change name to instance name
             with open(output_fname, 'w', encoding='utf-8') as f:
-                f.write(this_plugin_content)
+                f.write(this_plugin_scxml.as_xml_string())
     fsm_graph = Bt2FSM(bt_graph).convert()
     output_file_bt = os.path.join(output_folder, 'bt.scxml')
     generated_files.append(output_file_bt)

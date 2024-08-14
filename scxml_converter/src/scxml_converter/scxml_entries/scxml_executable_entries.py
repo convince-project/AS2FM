@@ -23,12 +23,25 @@ from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam,
                                            ScxmlRosDeclarationsContainer)
 from scxml_converter.scxml_entries.utils import \
-    replace_ros_interface_expression
+    replace_ros_interface_expression, is_bt_event, replace_bt_event
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
 ScxmlExecutionBody = List[ScxmlExecutableEntry]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
+
+
+def instantiate_exec_body_bt_events(
+        exec_body: Optional[ScxmlExecutionBody], instance_id: str) -> None:
+    """
+    Instantiate the behavior tree events in the execution body.
+
+    :param exec_body: The execution body to instantiate the BT events in
+    :param instance_id: The instance ID of the BT node
+    """
+    if exec_body is not None:
+        for entry in exec_body:
+            entry.instantiate_bt_events(instance_id)
 
 
 class ScxmlIf(ScxmlBase):
@@ -83,6 +96,12 @@ class ScxmlIf(ScxmlBase):
     def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
         """Get the else execution."""
         return self._else_execution
+
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Instantiate the behavior tree events in the If action, if available."""
+        for _, exec_body in self._conditional_executions:
+            instantiate_exec_body_bt_events(exec_body, instance_id)
+        instantiate_exec_body_bt_events(self._else_execution, instance_id)
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -182,6 +201,11 @@ class ScxmlSend(ScxmlBase):
         """Get the parameters to send."""
         return self._params
 
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Instantiate the behavior tree events in the send action, if available."""
+        if is_bt_event(self._event):
+            replace_bt_event(self._event, instance_id)
+
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
         valid_params = True
@@ -237,7 +261,7 @@ class ScxmlAssign(ScxmlBase):
         assert expr is not None and len(expr) > 0, \
             "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
-    
+
     def get_location(self) -> str:
         """Get the location to assign."""
         return self._location
@@ -246,6 +270,9 @@ class ScxmlAssign(ScxmlBase):
         """Get the expression to assign."""
         return self._expr
 
+    def instantiate_bt_events(self, _) -> None:
+        """This functionality is not needed in this class."""
+        return
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model

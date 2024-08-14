@@ -27,7 +27,8 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
                                            ScxmlTransition,
                                            as_plain_execution_body,
                                            execution_body_from_xml,
-                                           valid_execution_body)
+                                           valid_execution_body,
+                                           instantiate_exec_body_bt_events)
 
 
 class ScxmlState(ScxmlBase):
@@ -92,6 +93,14 @@ class ScxmlState(ScxmlBase):
     def get_body(self) -> List[ScxmlTransition]:
         """Return the transitions leaving the state."""
         return self._body
+
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Instantiate the BT events in all entries belonging to a state."""
+        for transition in self._body:
+            transition.instantiate_bt_events(instance_id)
+        instantiate_exec_body_bt_events(self._on_entry, instance_id)
+        instantiate_exec_body_bt_events(self._on_exit, instance_id)
+
 
     @classmethod
     def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:
