@@ -141,7 +141,53 @@ Once created, subscribers and publishers can be referenced using the `topic` nam
 ROS Services
 ____________
 
-TODO
+ROS Services are used to provide, for a given topic, one server and, possibly, multiple clients.
+The clients makes a request and the server provides a response to that request only to the client that made the request.
+
+The declaration of a ROS Service server and the one of a client looks as in the following:
+
+.. code-block:: xml
+
+    <!-- ROS Service Server -->
+    <ros_service_server service_name="/service1" type="std_srvs/SetBool" />
+    <!-- ROS Service Client -->
+    <ros_service_client service_name="/service2" type="std_srvs/Trigger" />
+
+Once created, servers and clients can be referenced using the `service_name` name, and can be used in the states of a SCXML model to provide and request services.
+In the following, an exemplary client is provided:
+
+.. code-block:: xml
+
+    <datamodel>
+        <data id="internal_bool" expr="False" type="bool" />
+    </datamodel>
+
+    <state id="send_req">
+        <onentry>
+            <ros_service_send_request service_name="/service2">
+            </ros_service_send_request>
+        </onentry>
+        <ros_service_handle_response service_name="/service2" target="done">
+            <assign location="internal_bool" expr="_res.success" />
+        </ros_service_handle_response>
+    </state>
+
+And here, an example of a server:
+
+..code-block:: xml
+
+    <datamodel>
+        <data id="temp_data" type="bool" expr="False" />
+    </datamodel>
+
+    <state id="idle">
+        <ros_service_handle_request service_name="/service1" target="idle">
+            <assign location="temp_data" expr="_req.data" />
+            <ros_service_send_response service_name="/adder">
+                <field name="success" expr="temp_data" />
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
 
 
 .. _ros_actions:
