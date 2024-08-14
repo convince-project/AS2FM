@@ -252,6 +252,11 @@ class TestConversion(unittest.TestCase):
         with charging feature."""
         self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
 
+    def test_with_w_bt_main_charged_after_time(self):
+        """Here we expect the property to be satisfied in a battery example
+        with charging feature."""
+        self._test_with_main('ros_example_w_bt', 'battery_charged', True)
+
     def test_events_sync_handling(self):
         """Here we make sure, the synchronization can handle events
         being sent in different orders without deadlocks."""

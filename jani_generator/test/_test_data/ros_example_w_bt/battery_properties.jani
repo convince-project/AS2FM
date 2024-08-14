@@ -73,6 +73,35 @@
                     "op": "initial"
                 }
             }
+        },
+        {
+            "name": "battery_charged",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "step-bounds": {
+                            "lower": 100
+                        },
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "left": {
+                                "op": "=",
+                                "left": "ros_topic.level.data",
+                                "right": 100
+                            },
+                            "op": "∧",
+                            "right": "ros_topic.level.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
         }
     ]
 }
