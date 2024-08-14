@@ -46,7 +46,7 @@ In this example, the system is composed by the following components modeled in S
 
 The **Behavior Tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery_drainer.
 
-The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_depleted.jani>`_ defines the property of interest to be model checked.
+The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/battery_properties.jani>`_ defines the property of interest to be model checked.
 In this case, it calculates the minimal probability that the battery level will eventually be 100, after an initial discharge time, i.e., all we verify here is that the battery is charged at some point.
 
 In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this concept can be found in the :ref:`related section <max_time_tag>` of the :ref:`How To page <howto>`.
