@@ -46,9 +46,10 @@ Jani Conversion
 
 Once the Low-Level SCXML is obtained, we can use it together with the timers information in the conversion to a Jani model.
 
+.. _simple_overview:
+
 Simple Overview
 ________________
-.. _simple_overview:
 
 The following picture gives a simple overview of how our conversion works:
 
@@ -81,9 +82,10 @@ TODO
     :alt: How execution blocks and conditions are translated
     :align: center
 
+.. _handling_events:
+
 Handling events
 ________________
-.. _handling_events:
 
 In section :ref:`Simple Overview<simple_overview>` we introduced the basic concept of how events are handled in the conversion from SCXML to Jani.
 That concept works for the simplest cases, but there are more complex scenarios where problems may occur, and require special handling.

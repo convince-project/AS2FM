@@ -28,7 +28,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   installation
    tutorials
+   howto
    scxml-jani-conversion
    api
    contacts
