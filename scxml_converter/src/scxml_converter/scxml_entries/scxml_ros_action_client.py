@@ -28,10 +28,10 @@ from scxml_converter.scxml_entries import (RosField, ScxmlBase,
                                            as_plain_execution_body,
                                            execution_body_from_xml,
                                            valid_execution_body)
-from scxml_converter.scxml_entries.utils import is_action_type_known
-from scxml_converter.scxml_converter import (
-    ScxmlRosDeclarationsContainer, generate_action_goal_event,
-    generate_action_feedback_event, generate_action_result_event)
+from scxml_converter.scxml_entries.utils import (
+    is_action_type_known, generate_action_goal_event, generate_action_feedback_handle_event,
+    generate_action_result_handle_event)
+from scxml_converter.scxml_converter import ScxmlRosDeclarationsContainer
 
 
 class RosActionClient(ScxmlBase):
@@ -246,7 +246,7 @@ class RosActionHandleFeedback(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML action feedback handler: invalid ROS instantiations."
-        event_name = generate_action_feedback_event(
+        event_name = generate_action_feedback_handle_event(
             self._action_name, ros_declarations.get_automaton_name())
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
@@ -331,7 +331,7 @@ class RosActionHandleResult(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML action result handler: invalid ROS instantiations."
-        event_name = generate_action_result_event(
+        event_name = generate_action_result_handle_event(
             self._action_name, ros_declarations.get_automaton_name())
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)

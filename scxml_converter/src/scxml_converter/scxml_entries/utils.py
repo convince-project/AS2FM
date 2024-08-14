@@ -69,7 +69,7 @@ def is_msg_type_known(topic_definition: str) -> bool:
 def is_srv_type_known(service_definition: str) -> bool:
     """Check if python can import the provided service definition."""
     return is_ros_type_known(service_definition, "srv")
-        
+
 
 def is_action_type_known(service_definition: str) -> bool:
     """Check if python can import the provided service definition."""
@@ -140,7 +140,7 @@ def get_action_type_params(action_definition: str) -> Tuple[Dict[str, str], Dict
 
 def replace_ros_interface_expression(msg_expr: str) -> str:
     """
-    Convert a ROS interface expression (msg, req, res, goal, feedback, result) to plain SCXML 
+    Convert a ROS interface expression (msg, req, res, goal, feedback, result) to plain SCXML
     (event).
     """
     scxml_prefix = "_event."
@@ -196,18 +196,35 @@ def generate_srv_server_response_event(service_name: str) -> str:
 
 
 def generate_action_goal_event(action_name: str, automaton_name: str) -> str:
-    """Generate the name of the event that sends a goal to an action server."""
+    """Generate the name of the event that sends an action goal from a client to the server."""
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_client_{automaton_name}"
 
 
-def generate_action_feedback_event(action_name: str, automaton_name: str) -> str:
-    """Generate the name of the event that sends a feedback to an action client."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_feedback_client_{automaton_name}"
+def generate_action_goal_handle_event(action_name: str) -> str:
+    """Generate the name of the event that triggers an action goal handling in the server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
 
 
-def generate_action_result_event(action_name: str, automaton_name: str) -> str:
-    """Generate the name of the event that sends a result to an action client."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_result_client_{automaton_name}"
+def generate_action_feedback_event(action_name: str) -> str:
+    """Generate the name of the event that sends a feedback from the action server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_feedback"
+
+
+def generate_action_feedback_handle_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that handles a feedback in an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_" \
+           f"feedback_handle_client_{automaton_name}"
+
+
+def generate_action_result_event(action_name: str) -> str:
+    """Generate the name of the event that sends a result from the action server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_result"
+
+
+def generate_action_result_handle_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that handles a result in an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_" \
+           f"result_handle_client_{automaton_name}"
 
 
 class ScxmlRosDeclarationsContainer:
@@ -305,10 +322,10 @@ class ScxmlRosDeclarationsContainer:
 
     def get_service_server_type(self, service_name: str) -> Optional[str]:
         return self._service_servers.get(service_name, None)
-    
+
     def is_action_client_defined(self, action_name: str) -> bool:
         return action_name in self._action_clients
-    
+
     def is_action_server_defined(self, action_name: str) -> bool:
         return action_name in self._action_servers
 
