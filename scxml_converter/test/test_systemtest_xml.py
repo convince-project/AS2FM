@@ -60,30 +60,22 @@ def test_ros_scxml_to_plain_scxml():
 
 
 def test_bt_to_scxml():
-    clear_output_folder()
     input_file = os.path.join(
         os.path.dirname(__file__), '_test_data', 'input_files', 'bt.xml')
-    output_file_bt = os.path.join(get_output_folder(), 'bt.scxml')
-    plugins = [os.path.join(os.path.dirname(__file__),
-                            '_test_data', 'input_files', f)
-               for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
-    bt_converter(input_file, plugins, get_output_folder())
-    files = os.listdir(get_output_folder())
-    assert len(files) == 3, \
-        f"Expecting 3 files, found {len(files)}"
-    # 1 for the main BT and 2 for the plugins
-    assert os.path.exists(output_file_bt), \
-        f"Expecting {output_file_bt} to exist, but it does not."
-    for fname in files:
-        with open(os.path.join(get_output_folder(), fname), 'r', encoding='utf-8') as f_o:
-            output = f_o.read()
-        with open(os.path.join(
-            os.path.dirname(__file__), '_test_data', 'expected_output_bt_and_plugins', fname
-        ), 'r', encoding='utf-8') as f_o:
-            expected_output = f_o.read()
-        assert remove_empty_lines(canonicalize_xml(output)) == \
-            remove_empty_lines(canonicalize_xml(expected_output))
-    clear_output_folder()
+    plugin_paths = [os.path.join(os.path.dirname(__file__), '_test_data', 'input_files', f)
+                    for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
+    scxml_objs = bt_converter(input_file, plugin_paths)
+    assert len(scxml_objs) == 3, \
+        f"Expecting 3 scxml objects, found {len(scxml_objs)}."
+    for scxml_root in scxml_objs:
+        scxml_name = scxml_root.get_name()
+        gt_scxml_path = os.path.join(os.path.dirname(__file__), '_test_data',
+                                     'expected_output_bt_and_plugins', f'{scxml_name}.scxml')
+        with open(gt_scxml_path, 'r', encoding='utf-8') as f_o:
+            gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
+            scxml_xml = remove_empty_lines(canonicalize_xml(scxml_root.as_xml_string()))
+
+        assert scxml_xml == gt_xml
 
 
 if __name__ == '__main__':
