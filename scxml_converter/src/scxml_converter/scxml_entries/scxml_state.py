@@ -101,7 +101,6 @@ class ScxmlState(ScxmlBase):
         instantiate_exec_body_bt_events(self._on_entry, instance_id)
         instantiate_exec_body_bt_events(self._on_exit, instance_id)
 
-
     @classmethod
     def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []

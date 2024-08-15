@@ -203,7 +203,9 @@ class ScxmlSend(ScxmlBase):
 
     def instantiate_bt_events(self, instance_id: str) -> None:
         """Instantiate the behavior tree events in the send action, if available."""
-        if is_bt_event(self._event):
+        # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
+        if type(self) is ScxmlSend and is_bt_event(self._event):
+            # Those are expected to be only bt_success, bt_failure and bt_running
             replace_bt_event(self._event, instance_id)
 
     def check_validity(self) -> bool:
