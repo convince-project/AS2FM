@@ -6,7 +6,8 @@ from .scxml_ros_field import RosField                                           
 from .ros_utils import ScxmlRosDeclarationsContainer                            # noqa: F401
 from .scxml_data import ScxmlData                                               # noqa: F401
 from .scxml_data_model import ScxmlDataModel                                    # noqa: F401
-from .scxml_bt import BtInputPortDeclaration, BtOutputPortDeclaration           # noqa: F401
+from .scxml_bt import (                                                         # noqa: F401
+    BtInputPortDeclaration, BtOutputPortDeclaration, BtGetValueInputPort)       # noqa: F401
 from .scxml_executable_entries import ScxmlAssign, ScxmlIf, ScxmlSend           # noqa: F401
 from .scxml_executable_entries import ScxmlExecutableEntry, ScxmlExecutionBody  # noqa: F401
 from .scxml_executable_entries import (                                         # noqa: F401

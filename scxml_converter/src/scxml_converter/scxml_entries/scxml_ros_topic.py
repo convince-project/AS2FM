@@ -23,14 +23,14 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (RosField, ScxmlBase,
-                                           ScxmlExecutionBody, ScxmlParam,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlSend, ScxmlTransition,
-                                           as_plain_execution_body,
-                                           execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import (
+    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend,
+    ScxmlTransition, BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml,
+    valid_execution_body)
 from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
+from scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok, get_children_as_scxml,
+                                                     get_xml_argument)
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class RosTopicPublisher(ScxmlBase):
@@ -43,17 +43,27 @@ class RosTopicPublisher(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
         """Create a RosTopicPublisher object from an XML tree."""
-        assert xml_tree.tag == RosTopicPublisher.get_tag_name(), \
-            f"Error: SCXML topic publisher: XML tag name is not {RosTopicPublisher.get_tag_name()}"
-        topic_name = xml_tree.attrib.get("topic")
-        topic_type = xml_tree.attrib.get("type")
-        assert topic_name is not None and topic_type is not None, \
-            "Error: SCXML topic publisher: 'topic' or 'type' attribute not found in input xml."
+        assert_xml_tag_ok(RosTopicPublisher, xml_tree)
+        # TODO: add optional name tag, to be used for referencing declared topics
+        topic_name = get_xml_argument(RosTopicPublisher, xml_tree, "topic", none_allowed=True)
+        topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
+        if topic_name is None:
+            # Ensure the name is provided as a child of the publisher tag
+            topic_xml = xml_tree.find("topic")
+            assert topic_xml is not None, "Error: SCXML topic publisher: topic name not found."
+            topic_children = get_children_as_scxml(topic_xml, (BtGetValueInputPort))
+            if len(topic_children) == 0:
+                topic_name = topic_xml.text
+                assert is_non_empty_string(RosTopicPublisher, "topic", topic_name)
+            else:
+                assert len(topic_children) == 1, \
+                    "Error: SCXML topic publisher: too many children for the topic tag."
+                topic_name = topic_children[0]
         return RosTopicPublisher(topic_name, topic_type)
 
-    def __init__(self, topic_name: str, topic_type: str) -> None:
-        self._topic_name = topic_name
-        self._topic_type = topic_type
+    def __init__(self, topic_name: Union[str, BtGetValueInputPort], topic_type: str) -> None:
+        self._topic_name: Union[str, BtGetValueInputPort] = topic_name
+        self._topic_type: str = topic_type
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -64,7 +74,7 @@ class RosTopicPublisher(ScxmlBase):
             print("Error: SCXML topic subscriber: topic type is not valid.")
         return valid_name and valid_type
 
-    def get_topic_name(self) -> str:
+    def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
         return self._topic_name
 
     def get_topic_type(self) -> str:

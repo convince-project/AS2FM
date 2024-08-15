@@ -33,7 +33,14 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
 
 
 def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> bool:
-    """Check if a string is non-empty."""
+    """
+    Check if a string is non-empty.
+
+    :param scxml_type: The scxml entry where this function is called, to write error msgs.
+    :param arg_name: The name of the argument, to write error msgs.
+    :param arg_value: The value of the argument to be checked.
+    :return: True if the string is non-empty, False otherwise.
+    """
     valid_str = isinstance(arg_value, str) and len(arg_value) > 0
     if not valid_str:
         print(f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
