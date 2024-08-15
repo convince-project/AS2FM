@@ -15,13 +15,13 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Type
+from typing import Dict, Type
 
 from scxml_converter.scxml_entries import ScxmlBase
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
-SCXML_DATA_STR_TO_TYPE = {
+SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "bool": bool,
     "float32": float,
     "float64": float,
