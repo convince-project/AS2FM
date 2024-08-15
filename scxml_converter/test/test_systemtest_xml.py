@@ -34,8 +34,23 @@ def clear_output_folder():
         os.makedirs(output_folder)
 
 
-def bt_to_scxml_test():
-    pass
+def bt_to_scxml_test(test_folder: str):
+    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data')
+    bt_file = os.path.join(test_data_path, test_folder, 'bt.xml')
+    plugin_files = [os.path.join(test_data_path, test_folder, f)
+                    for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
+    scxml_objs = bt_converter(bt_file, plugin_files)
+    assert len(scxml_objs) == 3, \
+        f"Expecting 3 scxml objects, found {len(scxml_objs)}."
+    for scxml_root in scxml_objs:
+        scxml_name = scxml_root.get_name()
+        gt_scxml_path = os.path.join(test_data_path, test_folder, 'gt_bt_scxml',
+                                     f'{scxml_name}.scxml')
+        with open(gt_scxml_path, 'r', encoding='utf-8') as f_o:
+            gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
+            scxml_xml = remove_empty_lines(canonicalize_xml(scxml_root.as_xml_string()))
+
+        assert scxml_xml == gt_xml
 
 
 def test_ros_scxml_to_plain_scxml():
@@ -57,24 +72,8 @@ def test_ros_scxml_to_plain_scxml():
             raise e
 
 
-def test_bt_to_scxml():
-    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data')
-    test_folder = 'battery_drainer_w_bt'
-    bt_file = os.path.join(test_data_path, test_folder, 'bt.xml')
-    plugin_files = [os.path.join(test_data_path, test_folder, f)
-                    for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
-    scxml_objs = bt_converter(bt_file, plugin_files)
-    assert len(scxml_objs) == 3, \
-        f"Expecting 3 scxml objects, found {len(scxml_objs)}."
-    for scxml_root in scxml_objs:
-        scxml_name = scxml_root.get_name()
-        gt_scxml_path = os.path.join(test_data_path, test_folder, 'gt_bt_scxml',
-                                     f'{scxml_name}.scxml')
-        with open(gt_scxml_path, 'r', encoding='utf-8') as f_o:
-            gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
-            scxml_xml = remove_empty_lines(canonicalize_xml(scxml_root.as_xml_string()))
-
-        assert scxml_xml == gt_xml
+def test_bt_to_scxml_battery_drainer():
+    bt_to_scxml_test('battery_drainer_w_bt')
 
 
 if __name__ == '__main__':
