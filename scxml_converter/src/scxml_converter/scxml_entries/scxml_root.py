@@ -114,6 +114,11 @@ class ScxmlRoot(ScxmlBase):
         """Get the name of the automaton represented by this SCXML model."""
         return self._name
 
+    def set_name(self, name: str) -> None:
+        """Rename the automaton represented by this SCXML model."""
+        assert isinstance(name, str) and len(name) > 0, "Error: SCXML root: invalid name."
+        self._name = name
+
     def get_initial_state_id(self) -> str:
         """Get the ID of the initial state of the SCXML model."""
         assert self._initial_state is not None, "Error: SCXML root: Initial state not set."

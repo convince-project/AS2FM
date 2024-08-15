@@ -20,11 +20,10 @@ Module reading the top level xml file containing the whole model to check.
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
-from jani_generator.jani_entries import JaniModel
 from jani_generator.ros_helpers.ros_services import RosService, RosServices
 from jani_generator.ros_helpers.ros_timer import RosTimer
 from jani_generator.scxml_helpers.scxml_to_jani import \
@@ -129,22 +128,21 @@ def generate_plain_scxml_models_and_timers(
     """
     Generate plain SCXML models and ROS timers from the full model dictionary.
     """
-    # Convert behavior tree and plugins to ROS-scxml
+    # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
+    ros_scxmls: List[ScxmlRoot] = []
+    for fname in scxml_files_to_convert:
+        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
+    # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        bt_out_dir = os.path.join(os.path.dirname(model.bt), "generated_bt_scxml")
-        os.makedirs(bt_out_dir, exist_ok=True)
-        expanded_bt_plugin_scxmls = bt_converter(
-            model.bt, model.plugins, bt_out_dir)
-        scxml_files_to_convert.extend(expanded_bt_plugin_scxmls)
-
-    # Convert ROS-SCXML FSMs to plain SCXML
+        ros_scxmls.extend(bt_converter(model.bt, model.plugins))
+    # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
     all_services: RosServices = {}
-    for fname in scxml_files_to_convert:
+    for scxml_entry in ros_scxmls:
         plain_scxml, ros_declarations = \
-            ScxmlRoot.from_scxml_file(fname).to_plain_scxml_and_declarations()
+            scxml_entry.to_plain_scxml_and_declarations()
         # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, \
