@@ -34,43 +34,42 @@ def clear_output_folder():
         os.makedirs(output_folder)
 
 
+def bt_to_scxml_test():
+    pass
+
+
 def test_ros_scxml_to_plain_scxml():
     """Test the conversion of SCXML with ROS-specific macros to plain SCXML."""
-    clear_output_folder()
-    scxml_files = [file for file in os.listdir(
-        os.path.join(os.path.dirname(__file__), '_test_data', 'input_files')
-    ) if file.endswith('.scxml')]
+    test_folder = os.path.join(os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt')
+    scxml_files = [file for file in os.listdir(test_folder) if file.endswith('.scxml')]
     for fname in scxml_files:
-        input_file = os.path.join(os.path.dirname(__file__),
-                                  '_test_data', 'input_files', fname)
-        output_file = os.path.join(os.path.dirname(__file__),
-                                   '_test_data', 'expected_output_ros_to_scxml', fname)
+        input_file = os.path.join(test_folder, fname)
+        gt_file = os.path.join(test_folder, 'gt_plain_scxml', fname)
         try:
             scxml, _ = ScxmlRoot.from_scxml_file(input_file).to_plain_scxml_and_declarations()
             scxml_str = scxml.as_xml_string()
-            with open(output_file, 'r', encoding='utf-8') as f_o:
-                expected_output = f_o.read()
+            with open(gt_file, 'r', encoding='utf-8') as f_o:
+                gt_output = f_o.read()
             assert remove_empty_lines(canonicalize_xml(scxml_str)) == \
-                remove_empty_lines(canonicalize_xml(expected_output))
+                remove_empty_lines(canonicalize_xml(gt_output))
         except Exception as e:
-            clear_output_folder()
             print(f"Error in file {fname}:")
             raise e
-    clear_output_folder()
 
 
 def test_bt_to_scxml():
-    input_file = os.path.join(
-        os.path.dirname(__file__), '_test_data', 'input_files', 'bt.xml')
-    plugin_paths = [os.path.join(os.path.dirname(__file__), '_test_data', 'input_files', f)
+    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data')
+    test_folder = 'battery_drainer_w_bt'
+    bt_file = os.path.join(test_data_path, test_folder, 'bt.xml')
+    plugin_files = [os.path.join(test_data_path, test_folder, f)
                     for f in ['bt_topic_action.scxml', 'bt_topic_condition.scxml']]
-    scxml_objs = bt_converter(input_file, plugin_paths)
+    scxml_objs = bt_converter(bt_file, plugin_files)
     assert len(scxml_objs) == 3, \
         f"Expecting 3 scxml objects, found {len(scxml_objs)}."
     for scxml_root in scxml_objs:
         scxml_name = scxml_root.get_name()
-        gt_scxml_path = os.path.join(os.path.dirname(__file__), '_test_data',
-                                     'expected_output_bt_and_plugins', f'{scxml_name}.scxml')
+        gt_scxml_path = os.path.join(test_data_path, test_folder, 'gt_bt_scxml',
+                                     f'{scxml_name}.scxml')
         with open(gt_scxml_path, 'r', encoding='utf-8') as f_o:
             gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
             scxml_xml = remove_empty_lines(canonicalize_xml(scxml_root.as_xml_string()))

@@ -15,7 +15,7 @@
     <state id="init">
         <onentry>
             <assign location="number" expr="{in}" />
-            <bt_set_output key="{out}" expr="number" />
+            <bt_set_output key="out" expr="number" />
         </onentry>
     </state>
 </scxml>
