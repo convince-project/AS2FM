@@ -19,7 +19,7 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 
 from copy import deepcopy
 from os.path import isfile
-from typing import Dict, List, Optional, Tuple, Type, get_args
+from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
