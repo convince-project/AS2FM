@@ -206,7 +206,7 @@ class ScxmlSend(ScxmlBase):
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         if type(self) is ScxmlSend and is_bt_event(self._event):
             # Those are expected to be only bt_success, bt_failure and bt_running
-            replace_bt_event(self._event, instance_id)
+            self._event = replace_bt_event(self._event, instance_id)
 
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0

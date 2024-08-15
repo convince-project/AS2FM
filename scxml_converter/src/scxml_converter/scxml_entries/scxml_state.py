@@ -17,18 +17,13 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Optional, Sequence, Union
+from typing import List, Sequence, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
-                                           ScxmlExecutionBody,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlRosTransitions,
-                                           ScxmlTransition,
-                                           as_plain_execution_body,
-                                           execution_body_from_xml,
-                                           valid_execution_body,
-                                           instantiate_exec_body_bt_events)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
+    ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
+    instantiate_exec_body_bt_events)
 
 
 class ScxmlState(ScxmlBase):
@@ -159,8 +154,9 @@ class ScxmlState(ScxmlBase):
         return valid_entry and valid_exit and valid_body
 
     @staticmethod
-    def _check_valid_ros_instantiations(body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
-                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def _check_valid_ros_instantiations(
+            body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
+            ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
         return len(body) == 0 or \
             all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body)

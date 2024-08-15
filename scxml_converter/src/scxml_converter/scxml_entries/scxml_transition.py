@@ -95,10 +95,10 @@ class ScxmlTransition(ScxmlBase):
         """Instantiate the BT events of this transition."""
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
-            for event in self._events:
+            for event_id, event_str in enumerate(self._events):
                 # Those are expected to be only ticks
-                if is_bt_event(event):
-                    event = replace_bt_event(event, instance_id)
+                if is_bt_event(event_str):
+                    self._events[event_id] = replace_bt_event(event_str, instance_id)
         # The body of a transition is needs to be replaced on derived classes, too
         instantiate_exec_body_bt_events(self._body, instance_id)
 
