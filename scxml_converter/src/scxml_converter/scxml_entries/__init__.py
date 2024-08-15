@@ -3,7 +3,7 @@
 from .scxml_base import ScxmlBase                                               # noqa: F401
 from .scxml_param import ScxmlParam                                             # noqa: F401
 from .scxml_ros_field import RosField                                           # noqa: F401
-from .utils import ScxmlRosDeclarationsContainer                                # noqa: F401
+from .ros_utils import ScxmlRosDeclarationsContainer                            # noqa: F401
 from .scxml_data import ScxmlData                                               # noqa: F401
 from .scxml_data_model import ScxmlDataModel                                    # noqa: F401
 from .scxml_executable_entries import ScxmlAssign, ScxmlIf, ScxmlSend           # noqa: F401

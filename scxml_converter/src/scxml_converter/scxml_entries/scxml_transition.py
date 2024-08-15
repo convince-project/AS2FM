@@ -27,7 +27,7 @@ from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
                                            valid_execution_body,
                                            instantiate_exec_body_bt_events)
 
-from scxml_converter.scxml_entries.utils import is_bt_event, replace_bt_event
+from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event
 
 
 class ScxmlTransition(ScxmlBase):

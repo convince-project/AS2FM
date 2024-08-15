@@ -24,7 +24,11 @@
 
     <state id="initial">
         <transition event="bt_tick" target="initial">
-            <bt_get_input key="data" location="number" />
+            <assign location="number">
+                <expr>
+                    <bt_get_input key="data" />
+                </expr>
+            </assign>
             <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number" />
             </ros_topic_publish>

@@ -30,7 +30,7 @@ from scxml_converter.scxml_entries import (RosField, ScxmlBase,
                                            as_plain_execution_body,
                                            execution_body_from_xml,
                                            valid_execution_body)
-from scxml_converter.scxml_entries.utils import is_msg_type_known
+from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
 
 
 class RosTopicPublisher(ScxmlBase):

@@ -22,8 +22,8 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam,
                                            ScxmlRosDeclarationsContainer)
-from scxml_converter.scxml_entries.utils import \
-    replace_ros_interface_expression, is_bt_event, replace_bt_event
+from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
+from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']

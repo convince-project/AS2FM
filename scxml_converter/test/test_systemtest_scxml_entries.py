@@ -61,8 +61,8 @@ def test_battery_drainer_from_code():
                               body=[ScxmlAssign("battery_percent", "100")])])
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
     # Check output xml
-    ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
-                            'expected_output_ros_to_scxml', 'battery_drainer.scxml')
+    ref_file = os.path.join(os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',
+                            'gt_plain_scxml', 'battery_drainer.scxml')
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
@@ -119,7 +119,7 @@ def test_battery_drainer_ros_from_code():
 
     # Check output xml
     ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
-                            'input_files', 'battery_drainer.scxml')
+                            'battery_drainer_w_bt', 'battery_drainer.scxml')
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
@@ -148,21 +148,21 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
 
 def test_xml_parsing_battery_drainer():
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
-                                   'input_files', 'battery_drainer.scxml'))
+                                   'battery_drainer_w_bt', 'battery_drainer.scxml'))
 
 
 def test_xml_parsing_bt_topic_condition():
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
-                                   'input_files', 'bt_topic_condition.scxml'))
+                                   'battery_drainer_w_bt', 'bt_topic_condition.scxml'))
 
 
 def test_xml_parsing_invalid_battery_drainer_xml():
-    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data', 'input_files',
+    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'battery_drainer.scxml'), valid_xml=False)
 
 
 def test_xml_parsing_invalid_bt_topic_action_xml():
-    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data', 'input_files',
+    _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'bt_topic_action.scxml'), valid_xml=False)
 
 
