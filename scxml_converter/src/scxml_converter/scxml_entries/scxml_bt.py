@@ -17,6 +17,7 @@
 SCXML entries related to Behavior Trees.
 """
 
+from typing import Union
 from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import ScxmlBase
 from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
@@ -138,3 +139,6 @@ class BtGetValueInputPort(ScxmlBase):
         xml_bt_in_port = ET.Element(
             BtGetValueInputPort.get_tag_name(), {"key": self._key})
         return xml_bt_in_port
+
+
+BtPortDeclarations = Union[BtInputPortDeclaration, BtOutputPortDeclaration]

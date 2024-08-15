@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Type
+from typing import List, Tuple, Type
 
 from scxml_converter.scxml_entries import ScxmlBase
 from xml.etree.ElementTree import Element
@@ -36,3 +36,20 @@ def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: s
         assert empty_allowed, \
             f"{error_prefix}: Expected non-empty argument {arg_name} in {xml_tree.tag}"
     return xml_tree.attrib[arg_name]
+
+
+def get_children_as_scxml(
+        xml_tree: Element, scxml_types: Tuple[Type[ScxmlBase]]) -> List[ScxmlBase]:
+    """
+    Load the children of the xml tree as scxml entries.
+
+    :param xml_tree: The xml tree to read the children from.
+    :param scxml_types: The classes to read from the children. All others will be discarded.
+    :return: A list of scxml entries.
+    """
+    scxml_list = []
+    tag_to_type = {scxml_type.get_tag_name(): scxml_type for scxml_type in scxml_types}
+    for child in xml_tree:
+        if child.tag in tag_to_type:
+            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
+    return scxml_list
