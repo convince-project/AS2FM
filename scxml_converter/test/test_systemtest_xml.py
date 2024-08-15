@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import pytest
 
 from typing import List
 
@@ -92,6 +93,11 @@ def test_ros_scxml_to_plain_scxml():
 def test_bt_to_scxml_battery_drainer():
     bt_to_scxml_test('battery_drainer_w_bt', 'bt.xml',
                      ['bt_topic_action.scxml', 'bt_topic_condition.scxml'], True)
+
+
+@pytest.mark.skip(reason="Under development")
+def test_bt_to_scxml_bt_ports():
+    bt_to_scxml_test('bt_ports_only', 'bt.xml', ['bt_topic_action.scxml'], True)
 
 
 if __name__ == '__main__':
