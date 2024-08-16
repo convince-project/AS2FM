@@ -72,7 +72,7 @@ class BtOutputPortDeclaration(ScxmlBase):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "bt_declare_port_in"
+        return "bt_declare_port_out"
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtOutputPortDeclaration":

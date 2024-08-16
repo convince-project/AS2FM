@@ -48,11 +48,12 @@ class RosTopicPublisher(ScxmlBase):
         # TODO: add optional name tag, to be used for referencing declared topics
         topic_name = get_xml_argument(RosTopicPublisher, xml_tree, "topic", none_allowed=True)
         topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
+        pub_name = get_xml_argument(RosTopicPublisher, xml_tree, "name", none_allowed=True)
         if topic_name is None:
             # Ensure the name is provided as a child of the publisher tag
             topic_xml = xml_tree.find("topic")
             assert topic_xml is not None, "Error: SCXML topic publisher: topic name not found."
-            topic_children = get_children_as_scxml(topic_xml, (BtGetValueInputPort))
+            topic_children = get_children_as_scxml(topic_xml, (BtGetValueInputPort,))
             if len(topic_children) == 0:
                 topic_name = topic_xml.text
                 assert is_non_empty_string(RosTopicPublisher, "topic", topic_name)
@@ -60,7 +61,7 @@ class RosTopicPublisher(ScxmlBase):
                 assert len(topic_children) == 1, \
                     "Error: SCXML topic publisher: too many children for the topic tag."
                 topic_name = topic_children[0]
-        return RosTopicPublisher(topic_name, topic_type)
+        return RosTopicPublisher(topic_name, topic_type, pub_name)
 
     def __init__(self,
                  topic_name: Union[str, BtGetValueInputPort], topic_type: str,

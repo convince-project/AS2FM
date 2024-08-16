@@ -35,7 +35,7 @@ def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: s
     elif len(arg_value) == 0:
         assert empty_allowed, \
             f"{error_prefix}: Expected non-empty argument {arg_name} in {xml_tree.tag}"
-    return xml_tree.attrib[arg_name]
+    return arg_value
 
 
 def get_children_as_scxml(

@@ -95,7 +95,6 @@ def test_bt_to_scxml_battery_drainer():
                      ['bt_topic_action.scxml', 'bt_topic_condition.scxml'], True)
 
 
-@pytest.mark.skip(reason="Under development")
 def test_bt_to_scxml_bt_ports():
     bt_to_scxml_test('bt_ports_only', 'bt.xml', ['bt_topic_action.scxml'], True)
 
