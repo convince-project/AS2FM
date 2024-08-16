@@ -136,7 +136,7 @@ class RosTopicSubscriber(ScxmlBase):
         return RosTopicSubscriber(topic_name, topic_type, sub_name)
 
     def __init__(self, topic_name: Union[str, BtGetValueInputPort], topic_type: str,
-                 sub_name: Optional[str]) -> None:
+                 sub_name: Optional[str] = None) -> None:
         self._topic_type = topic_type
         self._topic_name = topic_name
         assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \

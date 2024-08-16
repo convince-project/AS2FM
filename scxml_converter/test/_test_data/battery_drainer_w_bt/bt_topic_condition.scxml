@@ -10,7 +10,7 @@
         <data id="last_msg" type="bool" expr="False" />
     </datamodel>
 
-    <ros_topic_subscriber topic="alarm" type="std_msgs/Bool" />
+    <ros_topic_subscriber name="alarm" topic="alarm" type="std_msgs/Bool" />
     
     <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
     <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
