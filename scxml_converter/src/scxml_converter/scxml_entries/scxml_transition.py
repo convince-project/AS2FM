@@ -20,12 +20,10 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
-                                           ScxmlExecutionBody,
-                                           ScxmlRosDeclarationsContainer,
-                                           execution_body_from_xml,
-                                           valid_execution_body,
-                                           instantiate_exec_body_bt_events)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
+    execution_body_from_xml, valid_execution_body, valid_execution_body_entry_types,
+    instantiate_exec_body_bt_events)
 
 from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
 
@@ -68,8 +66,8 @@ class ScxmlTransition(ScxmlBase):
             f"Error SCXML transition: events must be a list of non-empty strings. Found {events}."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
-        assert body is None or valid_execution_body(
-            body), "Error SCXML transition: invalid body provided."
+        assert body is None or valid_execution_body_entry_types(body), \
+            "Error SCXML transition: invalid body provided."
         self._target = target
         self._body = body
         self._events = events if events is not None else []
@@ -114,8 +112,8 @@ class ScxmlTransition(ScxmlBase):
         if self._body is None:
             self._body = []
         self._body.append(exec_entry)
-        assert valid_execution_body(self._body), \
-            "Error SCXML transition: invalid body after extension."
+        assert valid_execution_body_entry_types(self._body), \
+            "Error SCXML transition: invalid body entry found after extension."
 
     def check_validity(self) -> bool:
         valid_target = isinstance(self._target, str) and len(self._target) > 0

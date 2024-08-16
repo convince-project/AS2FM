@@ -1,8 +1,8 @@
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
         <Sequence name="root_sequence">
-            <TopicAction name="answer" data="42" />
-            <TopicAction name="answer_incremented" data="43" />
+            <Action ID="TopicAction" name="answer" data="42" />
+            <Action ID="TopicAction" name="answer_incremented" data="43" />
         </Sequence>
     </BehaviorTree>
 </root>

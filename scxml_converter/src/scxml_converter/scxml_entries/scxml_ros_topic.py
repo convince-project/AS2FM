@@ -30,7 +30,7 @@ from scxml_converter.scxml_entries import (
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -45,7 +45,6 @@ class RosTopicPublisher(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
         """Create a RosTopicPublisher object from an XML tree."""
         assert_xml_tag_ok(RosTopicPublisher, xml_tree)
-        # TODO: add optional name tag, to be used for referencing declared topics
         topic_name = get_xml_argument(RosTopicPublisher, xml_tree, "topic", none_allowed=True)
         topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
         pub_name = get_xml_argument(RosTopicPublisher, xml_tree, "name", none_allowed=True)
@@ -67,10 +66,10 @@ class RosTopicPublisher(ScxmlBase):
         :param topic_type: The type of the message to be published
         :param pub_name: Alias used to reference the publisher in SCXML.
         """
-        self._topic_name: Union[str, BtGetValueInputPort] = topic_name
-        self._topic_type: str = topic_type
-        assert isinstance(self._topic_type, (str, BtGetValueInputPort)), \
-            "Error: SCXML topic publisher: invalid topic type."
+        self._topic_type = topic_type
+        self._topic_name = topic_name
+        assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
+            "Error: SCXML topic publisher: invalid topic name."
         if pub_name is None:
             assert is_non_empty_string(RosTopicPublisher, "topic", self._topic_name), \
                 "Error: SCXML topic publisher: alias must be provided for dynamic topic names."
@@ -112,7 +111,8 @@ class RosTopicPublisher(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_publisher = ET.Element(
-            RosTopicPublisher.get_tag_name(), {"topic": self._topic_name, "type": self._topic_type})
+            RosTopicPublisher.get_tag_name(),
+            {"name": self._pub_name, "topic": self._topic_name, "type": self._topic_type})
         return xml_topic_publisher
 
 
@@ -126,17 +126,27 @@ class RosTopicSubscriber(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicSubscriber":
         """Create a RosTopicSubscriber object from an XML tree."""
-        assert xml_tree.tag == RosTopicSubscriber.get_tag_name(), \
-            f"Error: SCXML topic subscribe: XML tag name is not {RosTopicSubscriber.get_tag_name()}"
-        topic_name = xml_tree.attrib.get("topic")
-        topic_type = xml_tree.attrib.get("type")
-        assert topic_name is not None and topic_type is not None, \
-            "Error: SCXML topic subscriber: 'topic' or 'type' attribute not found in input xml."
-        return RosTopicSubscriber(topic_name, topic_type)
+        assert_xml_tag_ok(RosTopicSubscriber, xml_tree)
+        topic_name = get_xml_argument(RosTopicSubscriber, xml_tree, "topic", none_allowed=True)
+        topic_type = get_xml_argument(RosTopicSubscriber, xml_tree, "type")
+        sub_name = get_xml_argument(RosTopicSubscriber, xml_tree, "name", none_allowed=True)
+        if topic_name is None:
+            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort,))
+            assert topic_name is not None, "Error: SCXML topic subscriber: topic name not found."
+        return RosTopicSubscriber(topic_name, topic_type, sub_name)
 
-    def __init__(self, topic_name: str, topic_type: str) -> None:
-        self._topic_name = topic_name
+    def __init__(self, topic_name: Union[str, BtGetValueInputPort], topic_type: str,
+                 sub_name: Optional[str]) -> None:
         self._topic_type = topic_type
+        self._topic_name = topic_name
+        assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
+            "Error: SCXML topic subscriber: invalid topic name."
+        if sub_name is None:
+            assert is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name), \
+                "Error: SCXML topic subscriber: alias must be provided for dynamic topic names."
+            self._sub_name = self._topic_name
+        else:
+            self._sub_name = sub_name
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
@@ -147,11 +157,14 @@ class RosTopicSubscriber(ScxmlBase):
             print("Error: SCXML topic subscriber: topic type is not valid.")
         return valid_name and valid_type
 
-    def get_topic_name(self) -> str:
+    def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
         return self._topic_name
 
     def get_topic_type(self) -> str:
         return self._topic_type
+
+    def get_name(self) -> str:
+        return self._sub_name
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -165,7 +178,7 @@ class RosTopicSubscriber(ScxmlBase):
         assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
         xml_topic_subscriber = ET.Element(
             RosTopicSubscriber.get_tag_name(),
-            {"topic": self._topic_name, "type": self._topic_type})
+            {"name": self._sub_name, "topic": self._topic_name, "type": self._topic_type})
         return xml_topic_subscriber
 
 
@@ -262,18 +275,17 @@ class RosTopicPublish(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> ScxmlSend:
         """Create a RosTopicPublish object from an XML tree."""
-        assert xml_tree.tag == RosTopicPublish.get_tag_name(), \
-            f"Error: SCXML topic publish: XML tag name is not {RosTopicPublish.get_tag_name()}"
-        topic_name = xml_tree.attrib.get("topic")
-        assert topic_name is not None, \
-            "Error: SCXML topic publish: 'topic' attribute not found in input xml."
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosTopicPublish(topic_name, fields)
+        assert_xml_tag_ok(RosTopicPublish, xml_tree)
+        pub_name = get_xml_argument(RosTopicPublish, xml_tree, "name", none_allowed=True)
+        if pub_name is None:
+            pub_name = get_xml_argument(RosTopicSubscriber, xml_tree, "topic")
+            print("Warning: SCXML topic publisher: the 'topic' argument is deprecated. "
+                  "Use 'name' instead.")
+        fields: List[RosField] = get_children_as_scxml(xml_tree, (RosField,))
+        return RosTopicPublish(pub_name, fields)
 
     def __init__(self, topic: Union[RosTopicPublisher, str],
-                 fields: List[RosField] = None) -> None:
+                 fields: Optional[List[RosField]] = None) -> None:
         if fields is None:
             fields = []
         if isinstance(topic, RosTopicPublisher):
@@ -315,6 +327,11 @@ class RosTopicPublish(ScxmlSend):
         if self._fields is None:
             self._fields = []
         self._fields.append(field)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        for field in self._fields:
+            field.update_bt_ports_values(bt_ports_handler)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \

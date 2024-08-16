@@ -18,6 +18,7 @@
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlParam
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class RosField(ScxmlParam):
@@ -51,6 +52,11 @@ class RosField(ScxmlParam):
         if not valid_expr:
             print("Error: SCXML topic publish field: expr is not valid.")
         return valid_name and valid_expr
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        # For now we do nothing, but it might be useful in the future
+        pass
 
     def as_plain_scxml(self, _) -> ScxmlParam:
         from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression

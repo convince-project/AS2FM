@@ -189,12 +189,6 @@ class ScxmlIf(ScxmlBase):
 class ScxmlSend(ScxmlBase):
     """This class represents a send action."""
 
-    def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
-        if params is None:
-            params = []
-        self._event = event
-        self._params = params
-
     @staticmethod
     def get_tag_name() -> str:
         return "send"
@@ -210,6 +204,12 @@ class ScxmlSend(ScxmlBase):
         for param_xml in xml_tree:
             params.append(ScxmlParam.from_xml_tree(param_xml))
         return ScxmlSend(event, params)
+
+    def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
+        if params is None:
+            params = []
+        self._event = event
+        self._params = params
 
     def get_event(self) -> str:
         """Get the event to send."""
@@ -284,6 +284,7 @@ class ScxmlAssign(ScxmlBase):
     def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
         self._location = location
         self._expr = expr
+        print(f"ScxmlAssign: {location} = {expr}")
 
     def get_location(self) -> str:
         """Get the location to assign."""
@@ -304,8 +305,8 @@ class ScxmlAssign(ScxmlBase):
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
-        valid_location = is_non_empty_string(ScxmlAssign, self._location)
-        valid_expr = is_non_empty_string(ScxmlAssign, self._expr)
+        valid_location = is_non_empty_string(ScxmlAssign, "location", self._location)
+        valid_expr = is_non_empty_string(ScxmlAssign, "expr", self._expr)
         return valid_location and valid_expr
 
     def check_valid_ros_instantiations(self, _) -> bool:
@@ -330,6 +331,24 @@ _ResolvedScxmlExecutableEntry = \
           for entry in get_args(ScxmlExecutableEntry))
 
 
+def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
+    """
+    Check if the type of the entries in an execution body are valid.
+
+    :param exec_body: The execution body to check
+    :return: True if all types of the body entries are the expected ones, False otherwise
+    """
+    if not isinstance(exec_body, list):
+        print("Error: SCXML execution body: invalid type found: expected a list.")
+        return False
+    for entry in exec_body:
+        if not isinstance(entry, _ResolvedScxmlExecutableEntry):
+            print(f"Error: SCXML execution body: entry type {type(entry)} not in valid set."
+                  f" {_ResolvedScxmlExecutableEntry}.")
+            return False
+    return True
+
+
 def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     """
     Check if an execution body is valid.
@@ -337,20 +356,13 @@ def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     :param execution_body: The execution body to check
     :return: True if the execution body is valid, False otherwise
     """
-    valid = isinstance(execution_body, list)
-    if not valid:
-        print("Error: SCXML execution body: invalid type found: expected a list.")
-    for entry in execution_body:
-        if not isinstance(entry, _ResolvedScxmlExecutableEntry):
-            valid = False
-            print(f"Error: SCXML execution body: entry type {type(entry)} not in valid set "
-                  f" {_ResolvedScxmlExecutableEntry}.")
-            break
-        if not entry.check_validity():
-            valid = False
-            print("Error: SCXML execution body: invalid entry content found.")
-            break
-    return valid
+    if valid_execution_body_entry_types(execution_body):
+        for entry in execution_body:
+            if not entry.check_validity():
+                print(f"Error: SCXML execution body: content of {entry.get_tag_name()} is invalid.")
+                return False
+        return True
+    return False
 
 
 def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
