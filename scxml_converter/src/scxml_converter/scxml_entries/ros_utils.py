@@ -202,6 +202,19 @@ class ScxmlRosDeclarationsContainer:
     def get_timers(self) -> Dict[str, float]:
         return self._timers
 
+    def get_publisher_info(self, pub_name: str) -> Tuple[str, str]:
+        """Provide a publisher topic name and type"""
+        pub_info = self._publishers.get(pub_name)
+        assert pub_info is not None, f"Error: SCXML ROS declarations: unknown publisher {pub_name}."
+        return pub_info
+
+    def get_subscriber_info(self, sub_name: str) -> Tuple[str, str]:
+        """Provide a subscriber topic name and type"""
+        sub_info = self._subscribers.get(sub_name)
+        assert sub_info is not None, \
+            f"Error: SCXML ROS declarations: unknown subscriber {sub_name}."
+        return sub_info
+
     def is_service_client_defined(self, client_name: str) -> bool:
         return client_name in self._service_clients
 

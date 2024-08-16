@@ -200,7 +200,7 @@ class ScxmlRoot(ScxmlBase):
                     ros_decl_container.append_timer(ros_declaration.get_name(),
                                                     ros_declaration.get_rate())
                 elif isinstance(ros_declaration, RosTopicSubscriber):
-                    ros_decl_container.append_subscriber(ros_declaration.get_topic_name(),
+                    ros_decl_container.append_subscriber(ros_declaration.get_name(),
                                                          ros_declaration.get_topic_name(),
                                                          ros_declaration.get_topic_type())
                 elif isinstance(ros_declaration, RosTopicPublisher):

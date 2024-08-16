@@ -7,7 +7,7 @@
     <state id="initial">
         <transition target="initial" event="bt_1001_tick">
             <assign location="number" expr="43" />
-            <ros_topic_publish topic="answer_pub">
+            <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number" />
             </ros_topic_publish>
         </transition>

@@ -14,9 +14,8 @@
 # limitations under the License.
 
 import os
-import pytest
 
-from typing import List
+from typing import Dict, List, Tuple
 
 from test_utils import canonicalize_xml, remove_empty_lines
 
@@ -47,9 +46,9 @@ def bt_to_scxml_test(
     :param bt_plugins: The names of the BT plugins scxml files.
     :param store_generated: If True, the generated SCXML files are stored in the output folder.
     """
-    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data')
-    bt_file = os.path.join(test_data_path, test_folder, bt_file)
-    plugin_files = [os.path.join(test_data_path, test_folder, f) for f in bt_plugins]
+    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data', test_folder)
+    bt_file = os.path.join(test_data_path, bt_file)
+    plugin_files = [os.path.join(test_data_path, f) for f in bt_plugins]
     scxml_objs = bt_converter(bt_file, plugin_files)
     assert len(scxml_objs) == 3, \
         f"Expecting 3 scxml objects, found {len(scxml_objs)}."
@@ -62,7 +61,7 @@ def bt_to_scxml_test(
                 f_o.write(scxml_obj.as_xml_string())
     for scxml_root in scxml_objs:
         scxml_name = scxml_root.get_name()
-        gt_scxml_path = os.path.join(test_data_path, test_folder, 'gt_bt_scxml',
+        gt_scxml_path = os.path.join(test_data_path, 'gt_bt_scxml',
                                      f'{scxml_name}.scxml')
         with open(gt_scxml_path, 'r', encoding='utf-8') as f_o:
             gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
@@ -71,16 +70,28 @@ def bt_to_scxml_test(
         assert scxml_xml == gt_xml
 
 
-def test_ros_scxml_to_plain_scxml():
+def ros_to_plain_scxml_test(test_folder: str,
+                            scxml_bt_ports: Dict[str, List[Tuple[str, str]]],
+                            store_generated: bool = False):
     """Test the conversion of SCXML with ROS-specific macros to plain SCXML."""
-    test_folder = os.path.join(os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt')
-    scxml_files = [file for file in os.listdir(test_folder) if file.endswith('.scxml')]
+    test_data_path = os.path.join(os.path.dirname(__file__), '_test_data', test_folder)
+    scxml_files = [file for file in os.listdir(test_data_path) if file.endswith('.scxml')]
+    if store_generated:
+        clear_output_folder(test_folder)
     for fname in scxml_files:
-        input_file = os.path.join(test_folder, fname)
-        gt_file = os.path.join(test_folder, 'gt_plain_scxml', fname)
+        input_file = os.path.join(test_data_path, fname)
+        gt_file = os.path.join(test_data_path, 'gt_plain_scxml', fname)
         try:
-            scxml, _ = ScxmlRoot.from_scxml_file(input_file).to_plain_scxml_and_declarations()
-            scxml_str = scxml.as_xml_string()
+            scxml_obj = ScxmlRoot.from_scxml_file(input_file)
+            if fname in scxml_bt_ports:
+                scxml_obj.set_bt_ports_values(scxml_bt_ports[fname])
+                scxml_obj.update_bt_ports_values()
+            plain_scxml, _ = scxml_obj.to_plain_scxml_and_declarations()
+            if store_generated:
+                output_file = os.path.join(get_output_folder(test_folder), fname)
+                with open(output_file, 'w') as f_o:
+                    f_o.write(plain_scxml.as_xml_string())
+            scxml_str = plain_scxml.as_xml_string()
             with open(gt_file, 'r', encoding='utf-8') as f_o:
                 gt_output = f_o.read()
             assert remove_empty_lines(canonicalize_xml(scxml_str)) == \
@@ -92,12 +103,18 @@ def test_ros_scxml_to_plain_scxml():
 
 def test_bt_to_scxml_battery_drainer():
     bt_to_scxml_test('battery_drainer_w_bt', 'bt.xml',
-                     ['bt_topic_action.scxml', 'bt_topic_condition.scxml'], True)
+                     ['bt_topic_action.scxml', 'bt_topic_condition.scxml'], False)
+
+
+def test_ros_to_plain_scxml_battery_drainer():
+    ros_to_plain_scxml_test('battery_drainer_w_bt', {}, True)
 
 
 def test_bt_to_scxml_bt_ports():
-    bt_to_scxml_test('bt_ports_only', 'bt.xml', ['bt_topic_action.scxml'], True)
+    bt_to_scxml_test('bt_ports_only', 'bt.xml', ['bt_topic_action.scxml'], False)
 
 
-if __name__ == '__main__':
-    test_ros_scxml_to_plain_scxml()
+def test_ros_to_plain_scxml_bt_ports():
+    ros_to_plain_scxml_test('bt_ports_only',
+                            {'bt_topic_action.scxml': [('name', 'out'), ('data', '123')]},
+                            True)
