@@ -18,20 +18,14 @@
 from typing import Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlTransition,
-                                           as_plain_execution_body,
-                                           execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlExecutionBody, ScxmlRosDeclarationsContainer, ScxmlTransition,
+    as_plain_execution_body, execution_body_from_xml, valid_execution_body)
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class RosTimeRate(ScxmlBase):
     """Object used in the SCXML root to declare a new timer with its related tick rate."""
-
-    def __init__(self, name: str, rate_hz: float):
-        self._name = name
-        self._rate_hz = float(rate_hz)
 
     @staticmethod
     def get_tag_name() -> str:
@@ -51,6 +45,14 @@ class RosTimeRate(ScxmlBase):
         except ValueError as e:
             raise ValueError("Error: SCXML rate timer: rate is not a number.") from e
         return RosTimeRate(timer_name, timer_rate)
+
+    def __init__(self, name: str, rate_hz: float):
+        self._name = name
+        self._rate_hz = float(rate_hz)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        pass
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._name, str) and len(self._name) > 0

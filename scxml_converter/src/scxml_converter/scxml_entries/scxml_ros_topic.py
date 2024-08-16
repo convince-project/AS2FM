@@ -29,8 +29,8 @@ from scxml_converter.scxml_entries import (
     valid_execution_body)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
-from scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok, get_children_as_scxml,
-                                                     get_xml_argument)
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -160,6 +160,10 @@ class RosTopicSubscriber(ScxmlBase):
 
     def get_topic_type(self) -> str:
         return self._topic_type
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        pass
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot

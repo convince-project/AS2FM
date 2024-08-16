@@ -4,6 +4,7 @@ from .scxml_base import ScxmlBase                                               
 from .scxml_param import ScxmlParam                                             # noqa: F401
 from .scxml_ros_field import RosField                                           # noqa: F401
 from .ros_utils import ScxmlRosDeclarationsContainer                            # noqa: F401
+from .bt_utils import RESERVED_BT_PORT_NAMES                                    # noqa: F401
 from .scxml_data import ScxmlData                                               # noqa: F401
 from .scxml_data_model import ScxmlDataModel                                    # noqa: F401
 from .scxml_bt import (                                                         # noqa: F401

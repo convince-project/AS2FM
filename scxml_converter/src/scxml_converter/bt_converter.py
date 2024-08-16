@@ -15,8 +15,6 @@
 
 """
 Convert Behavior Trees (BT xml) to SCXML.
-
-
 """
 
 from copy import deepcopy
@@ -29,9 +27,9 @@ from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
 
-from scxml_converter.scxml_entries import (RosRateCallback, RosTimeRate,
-                                           ScxmlRoot, ScxmlSend, ScxmlState,
-                                           ScxmlTransition)
+from scxml_converter.scxml_entries import (
+    RosRateCallback, RosTimeRate, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
+    RESERVED_BT_PORT_NAMES)
 
 
 class BT_EVENT_TYPE(Enum):
@@ -95,7 +93,12 @@ def bt_converter(
             scxml_plugin_instance: ScxmlRoot = deepcopy(bt_plugins_scxmls[node_type])
             scxml_plugin_instance.set_name(instance_name)
             scxml_plugin_instance.instantiate_bt_events(node_id)
-            # TODO: Replace arguments from the BT xml file.
+            bt_ports = [(p_name, p_value) for p_name, p_value in bt_graph.nodes[node].items()
+                        if p_name not in RESERVED_BT_PORT_NAMES]
+            scxml_plugin_instance.set_bt_ports_values(bt_ports)
+            scxml_plugin_instance.update_bt_ports_values()
+            assert scxml_plugin_instance.check_validity(), \
+                f"Error: SCXML plugin instance {instance_name} is not valid."
             generated_scxmls.append(scxml_plugin_instance)
     # Generate the BT SCXML
     fsm_graph = Bt2FSM(bt_graph).convert()

@@ -32,6 +32,8 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
 
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+
 
 class RosServiceServer(ScxmlBase):
     """Object used in SCXML root to declare a new service server."""
@@ -77,6 +79,10 @@ class RosServiceServer(ScxmlBase):
         if not valid_type:
             print("Error: SCXML Service Server: service type is not valid.")
         return valid_name and valid_type
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        pass
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
@@ -134,6 +140,10 @@ class RosServiceClient(ScxmlBase):
         if not valid_type:
             print("Error: SCXML Service Client: service type is not valid.")
         return valid_name and valid_type
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        pass
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
