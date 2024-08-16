@@ -19,6 +19,8 @@ from typing import Dict, List, Optional, Tuple
 
 from scxml_converter.scxml_entries.scxml_ros_field import RosField
 
+from scxml_converter.scxml_entries.utils import all_non_empty_strings
+
 
 MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
@@ -27,6 +29,9 @@ MSG_TYPE_SUBSTITUTIONS = {
 BASIC_FIELD_TYPES = ['boolean',
                      'int8', 'int16', 'int32', 'int64',
                      'float', 'double']
+
+"""Container for the ROS interface (e.g. topic or service) name and the related type"""
+RosInterfaceAndType = Tuple[str, str]
 
 
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
@@ -65,7 +70,7 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     Get the data fields of a service request and response type as pairs of name and type objects.
     """
     assert is_srv_type_known(service_definition), \
-        "Error: SCXML ROS declarations: service type not found."
+        f"Error: SCXML ROS declarations: service type {service_definition} not found."
     interface_ns, interface_type = service_definition.split("/")
     srv_module = __import__(interface_ns + '.srv', fromlist=[''])
     srv_class = getattr(srv_module, interface_type)
@@ -139,43 +144,43 @@ class ScxmlRosDeclarationsContainer:
         """
         self._automaton_name: str = automaton_name
         # Dict of publishers and subscribers: topic name -> type
-        self._publishers: Dict[str, str] = {}
-        self._subscribers: Dict[str, str] = {}
-        self._service_servers: Dict[str, str] = {}
-        self._service_clients: Dict[str, str] = {}
+        self._publishers: Dict[str, RosInterfaceAndType] = {}
+        self._subscribers: Dict[str, RosInterfaceAndType] = {}
+        self._service_servers: Dict[str, RosInterfaceAndType] = {}
+        self._service_clients: Dict[str, RosInterfaceAndType] = {}
         self._timers: Dict[str, float] = {}
 
     def get_automaton_name(self) -> str:
         """Get name of the automaton that these declarations are defined in."""
         return self._automaton_name
 
-    def append_publisher(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._publishers, \
-            f"Error: ROS declarations: topic publisher {topic_name} already declared."
-        self._publishers[topic_name] = topic_type
+    def append_publisher(self, pub_name: str, topic_name: str, topic_type: str) -> None:
+        assert all_non_empty_strings(pub_name, topic_name, topic_type), \
+            "Error: ROS declarations: publisher name, topic name and type must be strings."
+        assert pub_name not in self._publishers, \
+            f"Error: ROS declarations: topic publisher {pub_name} already declared."
+        self._publishers[pub_name] = (topic_name, topic_type)
 
-    def append_subscriber(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._subscribers, \
-            f"Error: ROS declarations: topic subscriber {topic_name} already declared."
-        self._subscribers[topic_name] = topic_type
+    def append_subscriber(self, sub_name: str, topic_name: str, topic_type: str) -> None:
+        assert all_non_empty_strings(sub_name, topic_name, topic_type), \
+            "Error: ROS declarations: subscriber name, topic name and type must be strings."
+        assert sub_name not in self._subscribers, \
+            f"Error: ROS declarations: topic subscriber {sub_name} already declared."
+        self._subscribers[sub_name] = (topic_name, topic_type)
 
-    def append_service_client(self, service_name: str, service_type: str) -> None:
-        assert isinstance(service_name, str) and isinstance(service_type, str), \
-            "Error: ROS declarations: service name and type must be strings."
-        assert service_name not in self._service_clients, \
-            f"Error: ROS declarations: service client {service_name} already declared."
-        self._service_clients[service_name] = service_type
+    def append_service_client(self, client_name: str, service_name: str, service_type: str) -> None:
+        assert all_non_empty_strings(client_name, service_name, service_type), \
+            "Error: ROS declarations: client name, service name and type must be strings."
+        assert client_name not in self._service_clients, \
+            f"Error: ROS declarations: service client {client_name} already declared."
+        self._service_clients[client_name] = (service_name, service_type)
 
-    def append_service_server(self, service_name: str, service_type: str) -> None:
-        assert isinstance(service_name, str) and isinstance(service_type, str), \
-            "Error: ROS declarations: service name and type must be strings."
-        assert service_name not in self._service_servers, \
-            f"Error: ROS declarations: service server {service_name} already declared."
-        self._service_servers[service_name] = service_type
+    def append_service_server(self, server_name: str, service_name: str, service_type: str) -> None:
+        assert all_non_empty_strings(server_name, service_name, service_type), \
+            "Error: ROS declarations: server name, service name and type must be strings."
+        assert server_name not in self._service_servers, \
+            f"Error: ROS declarations: service server {server_name} already declared."
+        self._service_servers[server_name] = (service_name, service_type)
 
     def append_timer(self, timer_name: str, timer_rate: float) -> None:
         assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
@@ -185,11 +190,11 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: timer {timer_name} already declared."
         self._timers[timer_name] = timer_rate
 
-    def is_publisher_defined(self, topic_name: str) -> bool:
-        return topic_name in self._publishers
+    def is_publisher_defined(self, pub_name: str) -> bool:
+        return pub_name in self._publishers
 
-    def is_subscriber_defined(self, topic_name: str) -> bool:
-        return topic_name in self._subscribers
+    def is_subscriber_defined(self, sub_name: str) -> bool:
+        return sub_name in self._subscribers
 
     def is_timer_defined(self, timer_name: str) -> bool:
         return timer_name in self._timers
@@ -197,23 +202,29 @@ class ScxmlRosDeclarationsContainer:
     def get_timers(self) -> Dict[str, float]:
         return self._timers
 
-    def is_service_client_defined(self, service_name: str) -> bool:
-        return service_name in self._service_clients
+    def is_service_client_defined(self, client_name: str) -> bool:
+        return client_name in self._service_clients
 
-    def is_service_server_defined(self, service_name: str) -> bool:
-        return service_name in self._service_servers
+    def is_service_server_defined(self, server_name: str) -> bool:
+        return server_name in self._service_servers
 
-    def get_service_client_type(self, service_name: str) -> Optional[str]:
-        return self._service_clients.get(service_name, None)
+    def get_service_client_type(self, client_name: str) -> Optional[str]:
+        client_definition = self._service_clients.get(client_name, None)
+        if client_definition is None:
+            return None
+        return client_definition[1]
 
-    def get_service_server_type(self, service_name: str) -> Optional[str]:
-        return self._service_servers.get(service_name, None)
+    def get_service_server_type(self, server_name: str) -> Optional[str]:
+        server_definition = self._service_servers.get(server_name, None)
+        if server_definition is None:
+            return None
+        return server_definition[1]
 
-    def check_valid_srv_req_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
+    def check_valid_srv_req_fields(self, client_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service request type."""
-        req_type = self.get_service_client_type(service_name)
+        req_type = self.get_service_client_type(client_name)
         if req_type is None:
-            print(f"Error: SCXML ROS declarations: unknown service client {service_name}.")
+            print(f"Error: SCXML ROS declarations: unknown service client {client_name}.")
             return False
         req_fields, _ = get_srv_type_params(req_type)
         for ros_field in ros_fields:
@@ -229,11 +240,11 @@ class ScxmlRosDeclarationsContainer:
             return False
         return True
 
-    def check_valid_srv_res_fields(self, service_name: str, ros_fields: List[RosField]) -> bool:
+    def check_valid_srv_res_fields(self, server_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service response type."""
-        res_type = self.get_service_server_type(service_name)
+        res_type = self.get_service_server_type(server_name)
         if res_type is None:
-            print(f"Error: SCXML ROS declarations: unknown service server {service_name}.")
+            print(f"Error: SCXML ROS declarations: unknown service server {server_name}.")
             return False
         _, res_fields = get_srv_type_params(res_type)
         for ros_field in ros_fields:

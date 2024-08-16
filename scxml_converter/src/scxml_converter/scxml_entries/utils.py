@@ -32,6 +32,19 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
 }
 
 
+def all_non_empty_strings(*in_args) -> bool:
+    """
+    Check if all the arguments are non-empty strings.
+
+    :param kwargs: The arguments to be checked.
+    :return: True if all the arguments are non-empty strings, False otherwise.
+    """
+    for arg_value in in_args:
+        if not isinstance(arg_value, str) or len(arg_value) == 0:
+            return False
+    return True
+
+
 def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> bool:
     """
     Check if a string is non-empty.
@@ -45,6 +58,7 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     if not valid_str:
         print(f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
               f"Expected non-empty argument {arg_name}.")
+    return valid_str
 
 
 def get_default_expression_for_type(field_type: str) -> str:

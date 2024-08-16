@@ -27,6 +27,7 @@ from scxml_converter.scxml_entries import (
     RosField, ScxmlBase, ScxmlExecutionBody, ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend,
     ScxmlTransition, BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml,
     valid_execution_body)
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
 from scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok, get_children_as_scxml,
                                                      get_xml_argument)
@@ -61,24 +62,56 @@ class RosTopicPublisher(ScxmlBase):
                 topic_name = topic_children[0]
         return RosTopicPublisher(topic_name, topic_type)
 
-    def __init__(self, topic_name: Union[str, BtGetValueInputPort], topic_type: str) -> None:
+    def __init__(self,
+                 topic_name: Union[str, BtGetValueInputPort], topic_type: str,
+                 pub_name: Optional[str] = None) -> None:
+        """
+        Create a new ros_topic_publisher object instance.
+
+        By default, its alias is the same as the topic name, if that is defined as a string.
+        If the topic is defined as a BtGetValueInputPort, an alias must be provided.
+
+        :param topic_name: The name of the topic where messages are published.
+        :param topic_type: The type of the message to be published
+        :param pub_name: Alias used to reference the publisher in SCXML.
+        """
         self._topic_name: Union[str, BtGetValueInputPort] = topic_name
         self._topic_type: str = topic_type
+        assert isinstance(self._topic_type, (str, BtGetValueInputPort)), \
+            "Error: SCXML topic publisher: invalid topic type."
+        if pub_name is None:
+            assert is_non_empty_string(RosTopicPublisher, "topic", self._topic_name), \
+                "Error: SCXML topic publisher: alias must be provided for dynamic topic names."
+            self._pub_name = self._topic_name
+        else:
+            self._pub_name = pub_name
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
+        valid_topic_name = is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
         valid_type = is_msg_type_known(self._topic_type)
-        if not valid_name:
-            print("Error: SCXML topic subscriber: topic name is not valid.")
+        valid_pub_name = is_non_empty_string(RosTopicPublisher, "name", self._pub_name)
         if not valid_type:
             print("Error: SCXML topic subscriber: topic type is not valid.")
-        return valid_name and valid_type
+        return valid_topic_name and valid_type and valid_pub_name
 
     def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
+        """Get the name of the topic where messages are published."""
         return self._topic_name
 
     def get_topic_type(self) -> str:
+        """Get a string representation of the topic type."""
         return self._topic_type
+
+    def get_name(self) -> str:
+        """Get the alias used to reference the publisher in SCXML."""
+        return self._pub_name
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """
+        Update the value of the BT ports used in the publisher, if any.
+        """
+        if isinstance(self._topic_name, BtGetValueInputPort):
+            self._topic_name = bt_ports_handler.get_in_port_value(self._topic_name.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot

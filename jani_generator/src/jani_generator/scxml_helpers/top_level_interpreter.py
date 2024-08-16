@@ -149,12 +149,12 @@ def generate_plain_scxml_models_and_timers(
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
         # Handle ROS Services
-        for service_name, service_type in ros_declarations._service_clients.items():
+        for service_name, service_type in ros_declarations._service_clients.values():
             if service_name not in all_services:
                 all_services[service_name] = RosService()
             all_services[service_name].append_service_client(
                 service_name, service_type, plain_scxml.get_name())
-        for service_name, service_type in ros_declarations._service_servers.items():
+        for service_name, service_type in ros_declarations._service_servers.values():
             if service_name not in all_services:
                 all_services[service_name] = RosService()
             all_services[service_name].set_service_server(
