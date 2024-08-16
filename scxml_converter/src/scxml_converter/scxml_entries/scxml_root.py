@@ -171,14 +171,23 @@ class ScxmlRoot(ScxmlBase):
             raise ValueError(
                 f"Error: SCXML root: invalid BT port declaration type {type(bt_port_decl)}.")
 
-    def set_bt_input_port_value(self, port_name: str, port_value: str):
+    def set_bt_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
-        self._bt_ports_handler.set_in_port_value(port_name, port_value)
+        self._bt_ports_handler.set_port_value(port_name, port_value)
 
-    def set_bt_output_port_value(self, port_name: str, port_value: str):
-        """Set the value of an output port."""
-        raise NotImplementedError("Error: SCXML root: BT output ports are not supported.")
-        # self._bt_ports_handler.set_out_port_value(port_name, port_value)
+    def set_bt_ports_values(self, ports_values: List[Tuple[str, str]]):
+        """Set the values of multiple input ports."""
+        for port_name, port_value in ports_values:
+            self.set_bt_port_value(port_name, port_value)
+
+    def update_bt_ports_values(self):
+        """Update the values of the declared BT ports in the SCXML object."""
+        for ros_decl_scxml in self._ros_declarations:
+            ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
+        # TODO: BT Ports should be integrated in the states and the data model as well
+        # for state in self._states:
+        #     state.update_bt_ports_values(self._bt_ports_handler)
+        # self._data_model.update_bt_ports_values(self._bt_ports_handler)
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""

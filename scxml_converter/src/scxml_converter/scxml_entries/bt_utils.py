@@ -66,9 +66,9 @@ class BtPortsHandler:
     def declare_in_port(self, port_name: str, port_type: str):
         """Add an input port to the handler."""
         assert not self.in_port_exists(port_name), \
-            f"Error: Port {port_name} already declared as input port."
+            f"Error: Input port {port_name} already declared as input port."
         assert not self.out_port_exists(port_name), \
-            f"Error: Port {port_name} already declared as output port."
+            f"Error: Input port {port_name} already declared as output port."
         assert port_type in VALID_BT_INPUT_PORTS, \
             f"Error: Unsupported input port type {port_type}."
         self._in_ports[port_name] = (port_type, None)
@@ -76,17 +76,37 @@ class BtPortsHandler:
     def declare_out_port(self, port_name: str, port_type: str):
         """Add an output port to the handler."""
         assert not self.out_port_exists(port_name), \
-            f"Error: Port {port_name} already declared as output port."
+            f"Error: Output port {port_name} already declared as output port."
         assert not self.in_port_exists(port_name), \
-            f"Error: Port {port_name} already declared as input port."
+            f"Error: Output port {port_name} already declared as input port."
         assert port_type in VALID_BT_OUTPUT_PORTS, \
             f"Error: Unsupported output port type {port_type}."
         self._out_ports[port_name] = (port_type, None)
 
-    def set_in_port_value(self, port_name: str, port_value: Any):
+    def set_port_value(self, port_name: str, port_value: Any):
+        """Set the value of a port."""
+        if self.in_port_exists(port_name):
+            self._set_in_port_value(port_name, port_value)
+        elif self.out_port_exists(port_name):
+            self._set_out_port_value(port_name, port_value)
+        else:
+            raise RuntimeError(f"Error: Port {port_name} is not declared.")
+
+    def get_port_value(self, port_name: str) -> Any:
+        """Get the value of a port."""
+        if self.in_port_exists(port_name):
+            return self._get_in_port_value(port_name)
+        elif self.out_port_exists(port_name):
+            return self._get_out_port_value(port_name)
+        else:
+            raise RuntimeError(f"Error: Port {port_name} is not declared.")
+
+    def _set_in_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
         assert self.in_port_exists(port_name), \
             f"Error: Port {port_name} is not declared as input port."
+        assert self._in_ports[port_name][1] is None, \
+            f"Error: Port {port_name} already has a value assigned."
         port_type = self._in_ports[port_name][0]
         # Ensure this is not a Blackboard variable reference: currently not supported
         if is_blackboard_reference(port_value):
@@ -95,10 +115,18 @@ class BtPortsHandler:
                 "This is not yet supported.")
         self._in_ports[port_name] = (port_type, port_value)
 
-    def get_in_port_value(self, port_name: str) -> str:
+    def _set_out_port_value(self, port_name: str, port_value: Any):
+        """Set the value of an output port."""
+        raise NotImplementedError("Error: Output ports are not supported yet.")
+
+    def _get_in_port_value(self, port_name: str) -> str:
         """Get the value of an input port."""
         assert self.in_port_exists(port_name), \
             f"Error: Port {port_name} is not declared as input port."
         port_value = self._in_ports[port_name][1]
         assert port_value is not None, f"Error: Port {port_name} has no assigned value."
         return port_value
+
+    def _get_out_port_value(self, port_name: str) -> str:
+        """Get the value of an output port."""
+        raise NotImplementedError("Error: Output ports are not supported yet.")
