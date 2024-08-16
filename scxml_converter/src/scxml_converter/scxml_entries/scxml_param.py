@@ -21,6 +21,7 @@ from typing import Optional
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlBase
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class ScxmlParam(ScxmlBase):
@@ -59,6 +60,11 @@ class ScxmlParam(ScxmlBase):
 
     def get_location(self) -> Optional[str]:
         return self._location
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        # For now we do nothing, but it might be useful in the future
+        pass
 
     def check_validity(self) -> bool:
         valid_name = len(self._name) > 0

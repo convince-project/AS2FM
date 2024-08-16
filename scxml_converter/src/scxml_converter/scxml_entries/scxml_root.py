@@ -184,9 +184,9 @@ class ScxmlRoot(ScxmlBase):
         """Update the values of the declared BT ports in the SCXML object."""
         for ros_decl_scxml in self._ros_declarations:
             ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
-        # TODO: BT Ports should be integrated in the states and the data model as well
-        # for state in self._states:
-        #     state.update_bt_ports_values(self._bt_ports_handler)
+        for state in self._states:
+            state.update_bt_ports_values(self._bt_ports_handler)
+        # TODO: BT Ports should be integrated in the data model as well
         # self._data_model.update_bt_ports_values(self._bt_ports_handler)
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:

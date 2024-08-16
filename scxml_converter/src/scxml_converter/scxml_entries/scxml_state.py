@@ -24,6 +24,7 @@ from scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
     ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
     instantiate_exec_body_bt_events)
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class ScxmlState(ScxmlBase):
@@ -95,6 +96,15 @@ class ScxmlState(ScxmlBase):
             transition.instantiate_bt_events(instance_id)
         instantiate_exec_body_bt_events(self._on_entry, instance_id)
         instantiate_exec_body_bt_events(self._on_exit, instance_id)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        for transition in self._body:
+            transition.update_bt_ports_values(bt_ports_handler)
+        for entry in self._on_entry:
+            entry.update_bt_ports_values(bt_ports_handler)
+        for entry in self._on_exit:
+            entry.update_bt_ports_values(bt_ports_handler)
 
     @classmethod
     def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:

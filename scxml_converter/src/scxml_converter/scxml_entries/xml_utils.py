@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Tuple, Type
+from typing import List, Optional, Tuple, Type, Union
 
 from scxml_converter.scxml_entries import ScxmlBase
 from xml.etree.ElementTree import Element
@@ -53,3 +53,34 @@ def get_children_as_scxml(
         if child.tag in tag_to_type:
             scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
     return scxml_list
+
+
+def read_value_from_xml_child(
+        xml_tree: Element, child_tag: str, valid_types: Tuple[Type[ScxmlBase]]
+        ) -> Optional[Union[str, ScxmlBase]]:
+    """
+    Try to read the value of a child tag from the xml tree. If the child is not found, return None.
+    """
+    xml_child = xml_tree.findall(child_tag)
+    if xml_child is None or len(xml_child) == 0:
+        print(f"Error reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
+        return None
+    if len(xml_child) > 1:
+        print(f"Error reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
+        return None
+    n_tag_children = len(xml_child[0])
+    if n_tag_children == 0:
+        # Try to read the text value
+        text_value = xml_child[0].text
+        if text_value is None or len(text_value) == 0:
+            print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no text value.")
+            return None
+        return text_value
+    if n_tag_children > 1:
+        print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has multiple children.")
+        return None
+    scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
+    if len(scxml_entry) == 0:
+        print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
+        return None
+    return scxml_entry[0]

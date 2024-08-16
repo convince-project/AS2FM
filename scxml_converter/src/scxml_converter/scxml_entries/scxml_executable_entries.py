@@ -20,10 +20,13 @@ Definition of SCXML Tags that can be part of executable content
 from typing import List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlParam,
-                                           ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer, BtGetValueInputPort)
 from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
-from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event
+from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -42,6 +45,16 @@ def instantiate_exec_body_bt_events(
     if exec_body is not None:
         for entry in exec_body:
             entry.instantiate_bt_events(instance_id)
+
+
+def update_exec_body_bt_ports_values(
+        exec_body: Optional[ScxmlExecutionBody], bt_ports_handler: BtPortsHandler) -> None:
+    """
+    Update the BT ports values in the execution body.
+    """
+    if exec_body is not None:
+        for entry in exec_body:
+            entry.update_bt_ports_values(bt_ports_handler)
 
 
 class ScxmlIf(ScxmlBase):
@@ -102,6 +115,11 @@ class ScxmlIf(ScxmlBase):
         for _, exec_body in self._conditional_executions:
             instantiate_exec_body_bt_events(exec_body, instance_id)
         instantiate_exec_body_bt_events(self._else_execution, instance_id)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        for _, exec_body in self._conditional_executions:
+            update_exec_body_bt_ports_values(exec_body, bt_ports_handler)
+        update_exec_body_bt_ports_values(self._else_execution, bt_ports_handler)
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0
@@ -208,6 +226,11 @@ class ScxmlSend(ScxmlBase):
             # Those are expected to be only bt_success, bt_failure and bt_running
             self._event = replace_bt_event(self._event, instance_id)
 
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        for param in self._params:
+            param.update_bt_ports_values(bt_ports_handler)
+
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
         valid_params = True
@@ -243,10 +266,6 @@ class ScxmlSend(ScxmlBase):
 class ScxmlAssign(ScxmlBase):
     """This class represents a variable assignment."""
 
-    def __init__(self, location: str, expr: str):
-        self._location = location
-        self._expr = expr
-
     @staticmethod
     def get_tag_name() -> str:
         return "assign"
@@ -254,21 +273,23 @@ class ScxmlAssign(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
         """Create a ScxmlAssign object from an XML tree."""
-        assert xml_tree.tag == ScxmlAssign.get_tag_name(), \
-            f"Error: SCXML assign: XML tag name is {xml_tree.tag} != {ScxmlAssign.get_tag_name()}."
-        location = xml_tree.attrib.get("location")
-        assert location is not None and len(location) > 0, \
-            "Error: SCXML assign: location is not valid."
-        expr = xml_tree.attrib.get("expr")
-        assert expr is not None and len(expr) > 0, \
-            "Error: SCXML assign: expr is not valid."
+        assert_xml_tag_ok(ScxmlAssign, xml_tree)
+        location = get_xml_argument(ScxmlAssign, xml_tree, "location")
+        expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
+        if expr is None:
+            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort,))
+            assert expr is not None, "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
+
+    def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
+        self._location = location
+        self._expr = expr
 
     def get_location(self) -> str:
         """Get the location to assign."""
         return self._location
 
-    def get_expr(self) -> str:
+    def get_expr(self) -> Union[str, BtGetValueInputPort]:
         """Get the expression to assign."""
         return self._expr
 
@@ -276,14 +297,15 @@ class ScxmlAssign(ScxmlBase):
         """This functionality is not needed in this class."""
         return
 
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        if isinstance(self._expr, BtGetValueInputPort):
+            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
-        valid_location = isinstance(self._location, str) and len(self._location) > 0
-        valid_expr = isinstance(self._expr, str) and len(self._expr) > 0
-        if not valid_location:
-            print("Error: SCXML assign: location is not valid.")
-        if not valid_expr:
-            print("Error: SCXML assign: expr is not valid.")
+        valid_location = is_non_empty_string(ScxmlAssign, self._location)
+        valid_expr = is_non_empty_string(ScxmlAssign, self._expr)
         return valid_location and valid_expr
 
     def check_valid_ros_instantiations(self, _) -> bool:

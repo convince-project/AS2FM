@@ -93,6 +93,27 @@ class BtPortsHandler:
             f"Error: Unsupported output port type {port_type}."
         self._out_ports[port_name] = (port_type, None)
 
+    def get_port_value(self, port_name: str) -> Any:
+        """Get the value of a port."""
+        if self.in_port_exists(port_name):
+            return self.get_in_port_value(port_name)
+        elif self.out_port_exists(port_name):
+            return self.get_out_port_value(port_name)
+        else:
+            raise RuntimeError(f"Error: Port {port_name} is not declared.")
+
+    def get_in_port_value(self, port_name: str) -> str:
+        """Get the value of an input port."""
+        assert self.in_port_exists(port_name), \
+            f"Error: Port {port_name} is not declared as input port."
+        port_value = self._in_ports[port_name][1]
+        assert port_value is not None, f"Error: Port {port_name} has no assigned value."
+        return port_value
+
+    def get_out_port_value(self, port_name: str) -> str:
+        """Get the value of an output port."""
+        raise NotImplementedError("Error: Output ports are not supported yet.")
+
     def set_port_value(self, port_name: str, port_value: Any) -> None:
         """Set the value of a port."""
         if self.in_port_exists(port_name):
@@ -103,15 +124,6 @@ class BtPortsHandler:
             # The 'name' port can be set even if undeclared, since it defines the node name in BT.
             if port_name != "name":
                 raise RuntimeError(f"Error: Port {port_name} is not declared.")
-
-    def get_port_value(self, port_name: str) -> Any:
-        """Get the value of a port."""
-        if self.in_port_exists(port_name):
-            return self._get_in_port_value(port_name)
-        elif self.out_port_exists(port_name):
-            return self._get_out_port_value(port_name)
-        else:
-            raise RuntimeError(f"Error: Port {port_name} is not declared.")
 
     def _set_in_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
@@ -129,16 +141,4 @@ class BtPortsHandler:
 
     def _set_out_port_value(self, port_name: str, port_value: Any):
         """Set the value of an output port."""
-        raise NotImplementedError("Error: Output ports are not supported yet.")
-
-    def _get_in_port_value(self, port_name: str) -> str:
-        """Get the value of an input port."""
-        assert self.in_port_exists(port_name), \
-            f"Error: Port {port_name} is not declared as input port."
-        port_value = self._in_ports[port_name][1]
-        assert port_value is not None, f"Error: Port {port_name} has no assigned value."
-        return port_value
-
-    def _get_out_port_value(self, port_name: str) -> str:
-        """Get the value of an output port."""
         raise NotImplementedError("Error: Output ports are not supported yet.")

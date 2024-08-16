@@ -30,7 +30,7 @@ from scxml_converter.scxml_entries import (
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import is_msg_type_known
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -50,17 +50,8 @@ class RosTopicPublisher(ScxmlBase):
         topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
         pub_name = get_xml_argument(RosTopicPublisher, xml_tree, "name", none_allowed=True)
         if topic_name is None:
-            # Ensure the name is provided as a child of the publisher tag
-            topic_xml = xml_tree.find("topic")
-            assert topic_xml is not None, "Error: SCXML topic publisher: topic name not found."
-            topic_children = get_children_as_scxml(topic_xml, (BtGetValueInputPort,))
-            if len(topic_children) == 0:
-                topic_name = topic_xml.text
-                assert is_non_empty_string(RosTopicPublisher, "topic", topic_name)
-            else:
-                assert len(topic_children) == 1, \
-                    "Error: SCXML topic publisher: too many children for the topic tag."
-                topic_name = topic_children[0]
+            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort,))
+            assert topic_name is not None, "Error: SCXML topic publisher: topic name not found."
         return RosTopicPublisher(topic_name, topic_type, pub_name)
 
     def __init__(self,
