@@ -13,13 +13,13 @@
                             "op": "∧",
                             "left": {
                                 "op": "∧",
-                                "left": "ros_topic./client_1_res.data",
-                                "right": "ros_topic./client_1_res.valid"
+                                "left": "ros_topic.client_1_res.data",
+                                "right": "ros_topic.client_1_res.valid"
                             },
                             "right": {
                                 "op": "∧",
-                                "left": "ros_topic./client_2_res.data",
-                                "right": "ros_topic./client_2_res.valid"
+                                "left": "ros_topic.client_2_res.data",
+                                "right": "ros_topic.client_2_res.valid"
                             }
                         }
                     }

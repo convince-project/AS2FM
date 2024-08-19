@@ -13,19 +13,19 @@
                     "op": "∧",
                     "left": {
                       "op": "<",
-                      "left": "ros_topic./sender_a_counter.data",
+                      "left": "ros_topic.sender_a_counter.data",
                       "right": 100
                     },
                     "right": {
                       "op": "∧",
                       "left": {
                         "op": "<",
-                        "left": "ros_topic./sender_b_counter.data",
+                        "left": "ros_topic.sender_b_counter.data",
                         "right": 100
                       },
                       "right": {
                         "op": "<",
-                        "left": "ros_topic./receiver_counter.data",
+                        "left": "ros_topic.receiver_counter.data",
                         "right": 100
                       }
                     }
@@ -35,7 +35,7 @@
                     "op": "∧",
                     "left": {
                       "op": ">",
-                      "left": "ros_topic./receiver_counter.data",
+                      "left": "ros_topic.receiver_counter.data",
                       "right": 48
                     },
                     "right": {
@@ -43,8 +43,8 @@
                       "left": 50,
                       "right": {
                         "op": "+",
-                        "left": "ros_topic./sender_a_counter.data",
-                        "right": "ros_topic./sender_b_counter.data"
+                        "left": "ros_topic.sender_a_counter.data",
+                        "right": "ros_topic.sender_b_counter.data"
                       }
                     }
                   }
