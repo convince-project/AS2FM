@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="addition_client" version="1.0" model_src="" initial="send_req" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="temp_sum" expr="0" type="int64" />
+    </datamodel>
+    <state id="send_req">
+        <onentry>
+            <send event="srv_adder_req_client_addition_client">
+                <param name="a" expr="10" />
+                <param name="b" expr="32" />
+            </send>
+        </onentry>
+        <transition target="done" event="srv_adder_response_client_addition_client">
+            <assign location="temp_sum" expr="_event.sum" />
+            <send event="ros_topic.client_1_res">
+                <param name="data" expr="temp_sum == 42" />
+            </send>
+        </transition>
+    </state>
+    <state id="done" />
+</scxml>

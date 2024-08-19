@@ -22,13 +22,15 @@ from os.path import isfile
 from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (RosServiceClient, RosServiceServer,
-                                           RosTimeRate, RosTopicPublisher,
-                                           RosTopicSubscriber, ScxmlBase,
-                                           ScxmlDataModel,
-                                           ScxmlRosDeclarations,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlState)
+from scxml_converter.scxml_entries import (
+    BtInputPortDeclaration, BtOutputPortDeclaration, RosServiceClient, RosServiceServer,
+    RosTimeRate, RosTopicPublisher, RosTopicSubscriber, ScxmlBase, ScxmlDataModel,
+    ScxmlRosDeclarations, ScxmlRosDeclarationsContainer, ScxmlState)
+
+from scxml_converter.scxml_entries.xml_utils import get_children_as_scxml
+
+from scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class ScxmlRoot(ScxmlBase):
@@ -53,18 +55,11 @@ class ScxmlRoot(ScxmlBase):
         assert datamodel_elements is None or len(datamodel_elements) <= 1, \
             f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
-        ros_declarations: List[ScxmlRosDeclarations] = []
-        for child in xml_tree:
-            if child.tag == RosTimeRate.get_tag_name():
-                ros_declarations.append(RosTimeRate.from_xml_tree(child))
-            elif child.tag == RosTopicSubscriber.get_tag_name():
-                ros_declarations.append(RosTopicSubscriber.from_xml_tree(child))
-            elif child.tag == RosTopicPublisher.get_tag_name():
-                ros_declarations.append(RosTopicPublisher.from_xml_tree(child))
-            elif child.tag == RosServiceServer.get_tag_name():
-                ros_declarations.append(RosServiceServer.from_xml_tree(child))
-            elif child.tag == RosServiceClient.get_tag_name():
-                ros_declarations.append(RosServiceClient.from_xml_tree(child))
+        ros_declarations: List[ScxmlRosDeclarations] = get_children_as_scxml(
+            xml_tree, get_args(ScxmlRosDeclarations))
+        # BT Declarations
+        bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
+            xml_tree, get_args(BtPortDeclarations))
         # States
         assert "initial" in xml_tree.attrib, \
             "Error: SCXML root: 'initial' attribute not found in input xml."
@@ -72,13 +67,16 @@ class ScxmlRoot(ScxmlBase):
         state_elements = xml_tree.findall(ScxmlState.get_tag_name())
         assert state_elements is not None and len(state_elements) > 0, \
             "Error: SCXML root: no state found in input xml."
-        # Fill Data in the ScxmlRoot object
+        # --- Fill Data in the ScxmlRoot object
         scxml_root = ScxmlRoot(xml_tree.attrib["name"])
         # Data Model
         if datamodel_elements is not None and len(datamodel_elements) > 0:
             scxml_root.set_data_model(ScxmlDataModel.from_xml_tree(datamodel_elements[0]))
         # ROS Declarations
         scxml_root._ros_declarations = ros_declarations
+        # BT Declarations
+        for bt_port_declaration in bt_port_declarations:
+            scxml_root.add_bt_port_declaration(bt_port_declaration)
         # States
         for state_element in state_elements:
             scxml_state = ScxmlState.from_xml_tree(state_element)
@@ -109,10 +107,16 @@ class ScxmlRoot(ScxmlBase):
         self._states: List[ScxmlState] = []
         self._data_model: Optional[ScxmlDataModel] = None
         self._ros_declarations: List[ScxmlRosDeclarations] = []
+        self._bt_ports_handler = BtPortsHandler()
 
     def get_name(self) -> str:
         """Get the name of the automaton represented by this SCXML model."""
         return self._name
+
+    def set_name(self, name: str) -> None:
+        """Rename the automaton represented by this SCXML model."""
+        assert isinstance(name, str) and len(name) > 0, "Error: SCXML root: invalid name."
+        self._name = name
 
     def get_initial_state_id(self) -> str:
         """Get the ID of the initial state of the SCXML model."""
@@ -130,6 +134,11 @@ class ScxmlRoot(ScxmlBase):
             if state.get_id() == state_id:
                 return state
         return None
+
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Update all BT-related events to use the assigned instance ID."""
+        for state in self._states:
+            state.instantiate_bt_events(instance_id)
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states. If initial is True, set it as the initial state."""
@@ -150,27 +159,62 @@ class ScxmlRoot(ScxmlBase):
             self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
+    def add_bt_port_declaration(self, bt_port_decl: BtPortDeclarations):
+        """Add a BT port declaration to the handler."""
+        if isinstance(bt_port_decl, BtInputPortDeclaration):
+            self._bt_ports_handler.declare_in_port(
+                bt_port_decl.get_key_name(), bt_port_decl.get_key_type())
+        elif isinstance(bt_port_decl, BtOutputPortDeclaration):
+            self._bt_ports_handler.declare_out_port(
+                bt_port_decl.get_key_name(), bt_port_decl.get_key_type())
+        else:
+            raise ValueError(
+                f"Error: SCXML root: invalid BT port declaration type {type(bt_port_decl)}.")
+
+    def set_bt_port_value(self, port_name: str, port_value: str):
+        """Set the value of an input port."""
+        self._bt_ports_handler.set_port_value(port_name, port_value)
+
+    def set_bt_ports_values(self, ports_values: List[Tuple[str, str]]):
+        """Set the values of multiple input ports."""
+        for port_name, port_value in ports_values:
+            self.set_bt_port_value(port_name, port_value)
+
+    def update_bt_ports_values(self):
+        """Update the values of the declared BT ports in the SCXML object."""
+        if self._data_model is not None:
+            self._data_model.update_bt_ports_values(self._bt_ports_handler)
+        for ros_decl_scxml in self._ros_declarations:
+            ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
+        for state in self._states:
+            state.update_bt_ports_values(self._bt_ports_handler)
+
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
         ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
-                if not ros_declaration.check_validity():
+                if not (ros_declaration.check_validity() and
+                        ros_declaration.check_valid_instantiation()):
                     return None
                 if isinstance(ros_declaration, RosTimeRate):
                     ros_decl_container.append_timer(ros_declaration.get_name(),
                                                     ros_declaration.get_rate())
                 elif isinstance(ros_declaration, RosTopicSubscriber):
-                    ros_decl_container.append_subscriber(ros_declaration.get_topic_name(),
+                    ros_decl_container.append_subscriber(ros_declaration.get_name(),
+                                                         ros_declaration.get_topic_name(),
                                                          ros_declaration.get_topic_type())
                 elif isinstance(ros_declaration, RosTopicPublisher):
-                    ros_decl_container.append_publisher(ros_declaration.get_topic_name(),
+                    ros_decl_container.append_publisher(ros_declaration.get_name(),
+                                                        ros_declaration.get_topic_name(),
                                                         ros_declaration.get_topic_type())
                 elif isinstance(ros_declaration, RosServiceServer):
-                    ros_decl_container.append_service_server(ros_declaration.get_service_name(),
+                    ros_decl_container.append_service_server(ros_declaration.get_name(),
+                                                             ros_declaration.get_service_name(),
                                                              ros_declaration.get_service_type())
                 elif isinstance(ros_declaration, RosServiceClient):
-                    ros_decl_container.append_service_client(ros_declaration.get_service_name(),
+                    ros_decl_container.append_service_client(ros_declaration.get_name(),
+                                                             ros_declaration.get_service_name(),
                                                              ros_declaration.get_service_type())
                 else:
                     raise ValueError("Error: SCXML root: invalid ROS declaration type.")

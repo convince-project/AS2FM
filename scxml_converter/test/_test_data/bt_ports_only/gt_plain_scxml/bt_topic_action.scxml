@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="TopicAction" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="number" expr="0" type="int16" />
+    </datamodel>
+    <state id="initial">
+        <transition target="initial" event="bt_tick">
+            <assign location="number" expr="123" />
+            <send event="ros_topic.out">
+                <param name="data" expr="number" />
+            </send>
+        </transition>
+    </state>
+</scxml>

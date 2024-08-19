@@ -17,17 +17,14 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Optional, Sequence, Union
+from typing import List, Sequence, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutableEntry,
-                                           ScxmlExecutionBody,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlRosTransitions,
-                                           ScxmlTransition,
-                                           as_plain_execution_body,
-                                           execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
+    ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
+    instantiate_exec_body_bt_events)
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class ScxmlState(ScxmlBase):
@@ -93,6 +90,22 @@ class ScxmlState(ScxmlBase):
         """Return the transitions leaving the state."""
         return self._body
 
+    def instantiate_bt_events(self, instance_id: str) -> None:
+        """Instantiate the BT events in all entries belonging to a state."""
+        for transition in self._body:
+            transition.instantiate_bt_events(instance_id)
+        instantiate_exec_body_bt_events(self._on_entry, instance_id)
+        instantiate_exec_body_bt_events(self._on_exit, instance_id)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        for transition in self._body:
+            transition.update_bt_ports_values(bt_ports_handler)
+        for entry in self._on_entry:
+            entry.update_bt_ports_values(bt_ports_handler)
+        for entry in self._on_exit:
+            entry.update_bt_ports_values(bt_ports_handler)
+
     @classmethod
     def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
@@ -151,8 +164,9 @@ class ScxmlState(ScxmlBase):
         return valid_entry and valid_exit and valid_body
 
     @staticmethod
-    def _check_valid_ros_instantiations(body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
-                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def _check_valid_ros_instantiations(
+            body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
+            ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
         return len(body) == 0 or \
             all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body)

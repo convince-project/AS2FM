@@ -240,7 +240,7 @@ class TestConversion(unittest.TestCase):
     def test_with_w_bt_main_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('ros_example_w_bt', 'battery_depleted', False)
+        self._test_with_main('ros_example_w_bt', 'battery_depleted', False, True)
 
     def test_with_w_bt_main_battery_under_twenty(self):
         """Here we expect the property to be *not* satisfied."""

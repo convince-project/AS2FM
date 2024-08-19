@@ -37,6 +37,10 @@ class ScxmlBase:
         """Check if the object is valid."""
         raise NotImplementedError
 
+    def update_bt_ports_values(self, bt_ports_handler):
+        """Update the values of potential entries making use of BT ports."""
+        raise NotImplementedError
+
     def as_plain_scxml(self, ros_declarations) -> "ScxmlBase":
         """Convert the object to its plain SCXML  version."""
         raise NotImplementedError
