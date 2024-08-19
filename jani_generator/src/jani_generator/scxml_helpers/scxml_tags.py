@@ -116,7 +116,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
     new_edges.append(JaniEdge({
         "location": source,
         "action": trigger_event_action,
-        "guard": guard.expression if guard is not None else None,
+        "guard": JaniGuard(guard),
         "destinations": [{
             "location": None,
             "assignments": []
