@@ -104,11 +104,14 @@ ROS Topics are used to publish (via a ROS Publisher) and receive (via a ROS Subs
 .. code-block:: xml
 
     <!-- ROS Topic Subscriber -->
-    <ros_topic_subscriber topic="/topic1" type="std_msgs/Bool" />
+    <ros_topic_subscriber name="bool_topic" topic="/topic1" type="std_msgs/Bool" />
     <!-- ROS Topic Publisher -->
-    <ros_topic_publisher topic="/topic2" type="std_msgs/Int32" />
+    <ros_topic_publisher name="int_topic" topic="/topic2" type="std_msgs/Int32" />
 
-Once created, subscribers and publishers can be referenced using the `topic` name, and can be used in the states to send messages and perform callbacks upon receiving messages:
+The two declarations above will create a ROS subscriber called `bool_topic` that reads messages of type `std_msgs/Bool` from the topic `/topic1` and a ROS publisher called `int_topic` that writes messages of type `std_msgs/Int32` on the topic `/topic2`.
+The `name` argument is optional, and if not provided, it will be set to the same value as the `topic` argument.
+
+Once created, subscribers and publishers can be referenced using their names (`bool_topic` and `int_topic`), and can be used in the states to send messages and perform callbacks upon receiving messages:
 
 .. code-block:: xml
 
@@ -117,7 +120,7 @@ Once created, subscribers and publishers can be referenced using the `topic` nam
     </datamodel>
 
     <state id="src_state">
-        <ros_topic_callback topic="/topic1" target="target_state">
+        <ros_topic_callback name="bool_topic" target="target_state">
             <assign location="internal_var" expr="_msg.data" />
         </ros_topic_callback>
     </state>
@@ -125,11 +128,11 @@ Once created, subscribers and publishers can be referenced using the `topic` nam
     <state id="target_state">
         <onentry>
             <if cond="internal_bool">
-                <ros_topic_publish topic="/topic2" >
+                <ros_topic_publish name="int_topic" >
                     <field name="data" expr="10">
                 </ros_topic_publish>
             <else />
-                <ros_topic_publish topic="/topic2" >
+                <ros_topic_publish name="int_topic" >
                     <field name="data" expr="20">
                 </ros_topic_publish>
             </if>
@@ -154,11 +157,11 @@ The declaration of a ROS Service server and the one of a client can be achieved 
 .. code-block:: xml
 
     <!-- ROS Service Server -->
-    <ros_service_server service_name="/service1" type="std_srvs/SetBool" />
+    <ros_service_server name="the_srv" service_name="/service1" type="std_srvs/SetBool" />
     <!-- ROS Service Client -->
-    <ros_service_client service_name="/service2" type="std_srvs/Trigger" />
+    <ros_service_client name="the_client" service_name="/service2" type="std_srvs/Trigger" />
 
-Once created, servers and clients can be referenced using the `service_name` name, and can be used in the states of a SCXML model to provide and request services.
+Once created, servers and clients can be referenced using the provided `name` (i.e. `the_srv` and `the_client`), and can be used in the states of a SCXML model to provide and request services.
 In the following, an exemplary client is provided:
 
 .. code-block:: xml
@@ -169,16 +172,16 @@ In the following, an exemplary client is provided:
 
     <state id="send_req">
         <onentry>
-            <ros_service_send_request service_name="/service2">
+            <ros_service_send_request name="the_client">
             </ros_service_send_request>
         </onentry>
-        <ros_service_handle_response service_name="/service2" target="done">
+        <ros_service_handle_response name="the_client" target="done">
             <assign location="internal_bool" expr="_res.success" />
         </ros_service_handle_response>
     </state>
 
 To send a request, the `ros_service_send_request` can be used where any other executable content may be used.
-After the server has processed the service, `ros_service_handle_response`, can be used similarly to a SCXML transition and is triggered by the server.
+After the server has processed the service, `ros_service_handle_response`, can be used similarly to a SCXML transition and is triggered when a response from the server is received.
 The data of the request can be accessed with the `_res` field.
 
 And here, an example of a server:
@@ -190,9 +193,9 @@ And here, an example of a server:
     </datamodel>
 
     <state id="idle">
-        <ros_service_handle_request service_name="/service1" target="idle">
+        <ros_service_handle_request name="the_srv" target="idle">
             <assign location="temp_data" expr="_req.data" />
-            <ros_service_send_response service_name="/adder">
+            <ros_service_send_response name="the_srv">
                 <field name="success" expr="temp_data" />
             </ros_service_send_response>
         </ros_service_handle_request>
