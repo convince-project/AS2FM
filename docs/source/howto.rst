@@ -218,7 +218,60 @@ TODO
 Creating a SCXML model of a BT plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+SCXML models of BT plugins can be done similarly to the ones for ROS nodes. However, in BT plugins there are a few special functionalities that are provided:
+
+* :ref:`BT communication <bt_communication>`: A set of special events that are used in each BT plugins for starting a BT Node and provide results.
+* :ref:`BT Ports <bt_ports>`: A special BT interface to parametrize a specific plugin instance.
+
+
+.. _bt_communication:
+
+BT Communication
+_________________
+
+TODO: describe `bt_tick`, `bt_running`, `bt_success`, `bt_failure`.
+
+
+.. _bt_ports:
+
+BT Ports
+________
+
+Additionally, when loading a BT plugin in the BT XML Tree, it is possible to configure a specific plugin instance by means of the BT ports.
+
+As in the case of ROS functionalities, BT Ports need to be declared before being used, to provide the port name and expected type.
+
+.. code-block:: xml
+
+    <bt_port key="my_string_port" type="string" />
+    <bt_port key="start_value" type="int32">
+
+Once declared, it is possible to reference to the port in multiple SCXML entries.
+
+For example, we can use `my_string_port` to define the topic used by a ROS publisher.
+
+.. code-block:: xml
+
+    <ros_topic_publisher name="int_topic" type="std_msgs/Int32">
+        <topic>
+            <bt_get_input key="my_string_port" />
+        </topic>
+    </ros_topic_publisher>
+
+Or we can use `start_value` to define the initial value of a variable.
+
+.. code-block:: xml
+
+    <datamodel>
+        <data id="counter" type="int32">
+            <expr>
+                <bt_get_input key="start_value" />
+            </expr>
+        </data>
+    </datamodel>
+
+
+BT ports can also be linked to variables in the `BT Blackboard` by wrapping the variable name in curly braces in the BT xml file. However, this feature is not yet supported.
 
 
 .. _additional_params_howto:
