@@ -26,7 +26,7 @@ def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: Element):
 
 
 def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: str, *,
-                     none_allowed=False, empty_allowed=False):
+                     none_allowed=False, empty_allowed=False) -> Optional[str]:
     """Load an argument from the xml tree's root tag."""
     arg_value = xml_tree.get(arg_name)
     error_prefix = f"SCXML conversion of {scxml_type.get_tag_name()}"
@@ -86,3 +86,24 @@ def read_value_from_xml_child(
         print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
         return None
     return scxml_entry[0]
+
+
+def read_value_from_xml_arg_or_child(
+        scxml_type: Type[ScxmlBase], xml_tree: Element, tag_name: str,
+        valid_types: Tuple[Type[Union[ScxmlBase, str]]],
+        none_allowed=False) -> Optional[Union[str, ScxmlBase]]:
+    """
+    Read a value from an xml attribute or, if not found, the child tag with the same name.
+
+    To read the value from the xml arguments, valid_types must include string.
+    """
+    assert str in valid_types, \
+        "Error: read_value_from_arg_or_child: valid_types must include str. " \
+        "If strings are not expected, use 'read_value_from_xml_child'."
+    read_value = get_xml_argument(scxml_type, xml_tree, tag_name, none_allowed=True)
+    if read_value is None:
+        read_value = read_value_from_xml_child(xml_tree, tag_name, valid_types)
+    if not none_allowed:
+        assert read_value is not None, \
+            f"Error: SCXML conversion of {scxml_type.get_tag_name()}: Missing argument {tag_name}."
+    return read_value

@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import ScxmlParam, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -38,9 +38,8 @@ class RosField(ScxmlParam):
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_argument(RosField, xml_tree, "name")
-        expr = get_xml_argument(RosField, xml_tree, "expr", none_allowed=True)
-        if expr is None:
-            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
+        expr = read_value_from_xml_arg_or_child(RosField, xml_tree, "expr",
+                                                (BtGetValueInputPort, str))
         return RosField(name, expr)
 
     def __init__(self, name: str, expr: Optional[Union[BtGetValueInputPort, str]]):

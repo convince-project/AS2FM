@@ -21,6 +21,7 @@ from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlBase, ScxmlData
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 
 class ScxmlDataModel(ScxmlBase):
@@ -48,6 +49,10 @@ class ScxmlDataModel(ScxmlBase):
 
     def get_data_entries(self) -> Optional[List[ScxmlData]]:
         return self._data_entries
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        for data_entry in self._data_entries:
+            data_entry.update_bt_ports_values(bt_ports_handler)
 
     def check_validity(self) -> bool:
         valid_data_entries = True

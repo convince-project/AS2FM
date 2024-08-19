@@ -23,7 +23,7 @@ from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -39,9 +39,8 @@ class ScxmlParam(ScxmlBase):
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_argument(ScxmlParam, xml_tree, "name")
-        expr = get_xml_argument(ScxmlParam, xml_tree, "expr", none_allowed=True)
-        if expr is None:
-            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
+        expr = read_value_from_xml_arg_or_child(ScxmlParam, xml_tree, "expr",
+                                                (BtGetValueInputPort, str), True)
         location = get_xml_argument(ScxmlParam, xml_tree, "location", none_allowed=True)
         return ScxmlParam(name, expr=expr, location=location)
 

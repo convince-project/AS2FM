@@ -17,11 +17,44 @@
 Container for a single variable definition in SCXML. In XML, it has the tag `data`.
 """
 
-from typing import Any
+from typing import Any, Union, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlBase
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
+
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE, is_non_empty_string
+
+
+ValidExpr = Union[BtGetValueInputPort, str, int, float]
+
+
+def get_valid_entry_data_type(
+        value: Optional[Union[str, int, float]], data_type: str) -> Optional[Any]:
+    """
+    Convert a value to the provided data type. Raise if impossible.
+    """
+    if value is None:
+        return None
+    assert data_type in SCXML_DATA_STR_TO_TYPE, \
+        f"Error: SCXML conversion of data entry: Unknown data type {data_type}."
+    if isinstance(value, str):
+        assert len(value) > 0, "Error: SCXML conversion of data bounds: Empty string."
+        return SCXML_DATA_STR_TO_TYPE[data_type](value)
+    assert isinstance(value, SCXML_DATA_STR_TO_TYPE[data_type]), \
+        f"Error: SCXML conversion of data entry: Expected {data_type}, but got {type(value)}."
+    return value
+
+
+def valid_bound(bound_value: Any) -> bool:
+    """Check if a bound is invalid."""
+    if bound_value is None:
+        return True
+    if isinstance(bound_value, str):
+        return len(bound_value) > 0
+    return isinstance(bound_value, (int, float))
 
 
 class ScxmlData(ScxmlBase):
@@ -34,21 +67,20 @@ class ScxmlData(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
-        assert xml_tree.tag == ScxmlData.get_tag_name(), \
-            f"Error: SCXML data: XML tag name is not {ScxmlData.get_tag_name()}."
-        data_id = xml_tree.attrib.get("id")
-        assert data_id is not None, "Error: SCXML data: 'id' not found."
-        data_expr = xml_tree.attrib.get("expr")
-        assert data_expr is not None, "Error: SCXML data: 'expr' not found."
-        data_type = xml_tree.attrib.get("type")
-        assert data_type is not None, "Error: SCXML data: 'type' not found."
-        lower_bound = xml_tree.attrib.get("lower_bound_incl", None)
-        upper_bound = xml_tree.attrib.get("upper_bound_incl", None)
+        assert_xml_tag_ok(ScxmlData, xml_tree)
+        data_id = get_xml_argument(ScxmlData, xml_tree, "id")
+        data_type = get_xml_argument(ScxmlData, xml_tree, "type")
+        data_expr = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "expr",
+                                                     (BtGetValueInputPort, str))
+        lower_bound = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "lower_bound_incl",
+                                                       (BtGetValueInputPort, str), True)
+        upper_bound = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "upper_bound_incl",
+                                                       (BtGetValueInputPort, str), True)
         return ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
 
     def __init__(
-            self, id_   : str, expr: str, data_type: str,
-            lower_bound: Any = None, upper_bound: Any = None):
+            self, id_: str, expr: ValidExpr, data_type: str,
+            lower_bound: Optional[ValidExpr] = None, upper_bound: Optional[ValidExpr] = None):
         self._id = id_
         self._expr = expr
         self._data_type = data_type
@@ -65,37 +97,23 @@ class ScxmlData(ScxmlBase):
         return self._expr
 
     def check_validity(self) -> bool:
-        validity = True
-        # ID
-        if not (isinstance(self._id, str) and len(self._id) > 0):
-            print(f"Error: SCXML data: 'id' {self._id} is not valid.")
-            validity = False
-        # Expression
-        if not (isinstance(self._expr, str) and len(self._expr) > 0):
-            print(f"Error: SCXML data: 'expr' {self._expr} is not valid.")
-            validity = False
-        # Data type
-        if not (isinstance(self._data_type, str) and self._data_type in SCXML_DATA_STR_TO_TYPE):
-            print(f"Error: SCXML data: 'type' {self._data_type} is not valid.")
-            validity = False
-        type_of_data = SCXML_DATA_STR_TO_TYPE[self._data_type]
-        # Lower bound
-        if self._lower_bound is not None:
-            if not isinstance(self._lower_bound, type_of_data):
-                print(f"Error: SCXML data: 'lower_bound_incl' type {self._lower_bound} is invalid.")
-                validity = False
-        # Upper bound
-        if self._upper_bound is not None:
-            if not isinstance(self._upper_bound, type_of_data):
-                print(f"Error: SCXML data: 'upper_bound_incl' type {self._upper_bound} is invalid.")
-                validity = False
-        # Check if lower bound is smaller than upper bound
-        if validity and self._upper_bound is not None and self._lower_bound is not None:
-            if self._lower_bound >= self._upper_bound:
-                print(f"Error: SCXML data: 'lower_bound_incl' {self._lower_bound} is not smaller "
-                      f"than 'upper_bound_incl' {self._upper_bound}.")
-                validity = False
-        return validity
+        valid_id = is_non_empty_string(ScxmlData, "id", self._id)
+        valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
+        valid_type = is_non_empty_string(ScxmlData, "type", self._data_type) and \
+            self._data_type in SCXML_DATA_STR_TO_TYPE
+        if not (valid_bound(self._lower_bound) and valid_bound(self._upper_bound)):
+            print("Error: SCXML data: invalid lower_bound_incl or upper_bound_incl. "
+                  f"lower_bound_incl: {self._lower_bound}, upper_bound_incl: {self._upper_bound}")
+            return False
+        lower_bound = get_valid_entry_data_type(self._lower_bound, self._data_type)
+        upper_bound = get_valid_entry_data_type(self._upper_bound, self._data_type)
+        valid_bounds = True
+        if lower_bound is not None and upper_bound is not None:
+            valid_bounds = lower_bound <= upper_bound
+        if not valid_bounds:
+            print(f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
+                  f"than 'upper_bound_incl' {upper_bound}.")
+        return valid_id and valid_expr and valid_type and valid_bounds
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid data object."
@@ -106,6 +124,14 @@ class ScxmlData(ScxmlBase):
         if self._upper_bound is not None:
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
-    
-    def as_plain_scxml(self, ros_declarations):
-        raise NotImplementedError("Error: SCXML data: as_plain_scxml not implemented.") 
+
+    def as_plain_scxml(self, _):
+        raise RuntimeError("Error: SCXML data: unexpected call to as_plain_scxml.")
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        if isinstance(self._expr, BtGetValueInputPort):
+            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+        if isinstance(self._lower_bound, BtGetValueInputPort):
+            self._lower_bound = bt_ports_handler.get_in_port_value(self._lower_bound.get_key_name())
+        if isinstance(self._upper_bound, BtGetValueInputPort):
+            self._upper_bound = bt_ports_handler.get_in_port_value(self._upper_bound.get_key_name())
