@@ -25,7 +25,9 @@ from jani_generator.jani_entries.jani_expression import JaniExpression
 
 class JaniGuard:
     @staticmethod
-    def from_dict(guard_dict: dict) -> "JaniGuard":
+    def from_dict(guard_dict: Optional[dict]) -> "JaniGuard":
+        if guard_dict is None:
+            return None
         assert isinstance(guard_dict, dict), f"Unexpected type {type(guard_dict)} for guard_dict."
         assert "exp" in guard_dict, "Missing 'exp' key in guard_dict."
         return JaniGuard(JaniExpression(guard_dict["exp"]))
