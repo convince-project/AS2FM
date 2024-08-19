@@ -68,14 +68,13 @@ class RosTopicPublisher(ScxmlBase):
         """
         self._topic_type = topic_type
         self._topic_name = topic_name
+        self._pub_name = pub_name
         assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
             "Error: SCXML topic publisher: invalid topic name."
-        if pub_name is None:
+        if self._pub_name is None:
             assert is_non_empty_string(RosTopicPublisher, "topic", self._topic_name), \
                 "Error: SCXML topic publisher: alias must be provided for dynamic topic names."
             self._pub_name = self._topic_name
-        else:
-            self._pub_name = pub_name
 
     def check_validity(self) -> bool:
         valid_topic_name = is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
@@ -139,14 +138,13 @@ class RosTopicSubscriber(ScxmlBase):
                  sub_name: Optional[str] = None) -> None:
         self._topic_type = topic_type
         self._topic_name = topic_name
+        self._sub_name = sub_name
         assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
             "Error: SCXML topic subscriber: invalid topic name."
-        if sub_name is None:
+        if self._sub_name is None:
             assert is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name), \
                 "Error: SCXML topic subscriber: alias must be provided for dynamic topic names."
             self._sub_name = self._topic_name
-        else:
-            self._sub_name = sub_name
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0

@@ -27,14 +27,14 @@ from scxml_converter.scxml_entries import (
     RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
     as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
     ScxmlRosDeclarationsContainer, generate_srv_request_event,
     generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
-
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class RosServiceServer(ScxmlBase):
@@ -51,26 +51,31 @@ class RosServiceServer(ScxmlBase):
         service_name = get_xml_argument(
             RosServiceServer, xml_tree, "service_name", none_allowed=True)
         service_type = get_xml_argument(RosServiceServer, xml_tree, "type")
-        service_alias = get_xml_argument(RosServiceServer, xml_tree, "name", none_allowed=True)
+        service_alias = get_xml_argument(
+            RosServiceServer, xml_tree, "name", none_allowed=True)
         if service_name is None:
-            service_name = read_value_from_xml_child(xml_tree, "service_name", (BtGetValueInputPort, str))
-        assert xml_tree.tag == RosServiceServer.get_tag_name(), \
-            f"Error: SCXML Service Server: XML tag name is not '{RosServiceServer.get_tag_name()}'."
-        service_name = xml_tree.attrib.get("service_name")
-        service_type = xml_tree.attrib.get("type")
-        assert service_name is not None and service_type is not None, \
-            "Error: SCXML Service Server: 'service_name' or 'type' cannot be found in input xml."
-        return RosServiceServer(service_name, service_type)
+            service_name = read_value_from_xml_child(xml_tree, "service_name",
+                                                     (BtGetValueInputPort, str))
+        return RosServiceServer(service_name, service_type, service_alias)
 
-    def __init__(self, srv_name: str, srv_type: str) -> None:
+    def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
+                 srv_alias: Optional[str] = None) -> None:
         """
         Initialize a new RosServiceServer object.
 
-        :param srv_name: Topic used by the service.
+        :param srv_name: Service name used by the service for communication.
         :param srv_type: ROS type of the service.
+        :param srv_alias: Alias for the service server, for the handler to reference to it
         """
         self._srv_name = srv_name
         self._srv_type = srv_type
+        self._srv_alias = srv_alias
+        assert isinstance(srv_name, (str, BtGetValueInputPort)), \
+            "Error: SCXML Service Server: invalid service name."
+        if self._srv_alias is None:
+            assert is_non_empty_string(RosServiceServer, "service_name", self._srv_name), \
+                "Error: SCXML Service Server: an alias name is required for dynamic service names."
+            self._srv_alias = srv_name
 
     def get_service_name(self) -> str:
         """Get the name of the service."""
@@ -79,6 +84,10 @@ class RosServiceServer(ScxmlBase):
     def get_service_type(self) -> str:
         """Get the type of the service."""
         return self._srv_type
+
+    def get_name(self) -> str:
+        """Get the alias of the service server."""
+        return self._srv_alias
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
@@ -115,23 +124,35 @@ class RosServiceClient(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
         """Create a RosServiceClient object from an XML tree."""
-        assert xml_tree.tag == RosServiceClient.get_tag_name(), \
-            f"Error: SCXML Service Client: XML tag name is not '{RosServiceClient.get_tag_name()}'."
-        service_name = xml_tree.attrib.get("service_name")
-        service_type = xml_tree.attrib.get("type")
-        assert service_name is not None and service_type is not None, \
-            "Error: SCXML Service Client: 'service_name' or 'type' cannot be found in input xml."
-        return RosServiceClient(service_name, service_type)
+        assert_xml_tag_ok(RosServiceClient, xml_tree)
+        service_name = get_xml_argument(
+            RosServiceClient, xml_tree, "service_name", none_allowed=True)
+        service_type = get_xml_argument(RosServiceClient, xml_tree, "type")
+        service_alias = get_xml_argument(
+            RosServiceClient, xml_tree, "name", none_allowed=True)
+        if service_name is None:
+            service_name = read_value_from_xml_child(xml_tree, "service_name",
+                                                     (BtGetValueInputPort, str))
+        return RosServiceClient(service_name, service_type, service_alias)
 
-    def __init__(self, srv_name: str, srv_type: str) -> None:
+    def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
+                 srv_alias: Optional[str] = None) -> None:
         """
         Initialize a new RosServiceClient object.
 
         :param srv_name: Topic used by the service.
         :param srv_type: ROS type of the service.
+        :param srv_alias: Alias for the service client, for the handler to reference to it
         """
         self._srv_name = srv_name
         self._srv_type = srv_type
+        self._srv_alias = srv_alias
+        assert isinstance(srv_name, (str, BtGetValueInputPort)), \
+            "Error: SCXML Service Client: invalid service name."
+        if self._srv_alias is None:
+            assert is_non_empty_string(RosServiceClient, "service_name", self._srv_name), \
+                "Error: SCXML Service Client: an alias name is required for dynamic service names."
+            self._srv_alias = srv_name
 
     def get_service_name(self) -> str:
         """Get the name of the service."""
@@ -140,6 +161,10 @@ class RosServiceClient(ScxmlBase):
     def get_service_type(self) -> str:
         """Get the type of the service."""
         return self._srv_type
+
+    def get_name(self) -> str:
+        """Get the alias of the service client."""
+        return self._srv_alias
 
     def check_validity(self) -> bool:
         valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
