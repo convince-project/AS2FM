@@ -31,7 +31,7 @@ class JaniEdge:
             self.action = edge_dict["action"]
         self.guard = None
         if "guard" in edge_dict:
-            self.guard = JaniGuard(edge_dict["guard"])
+            self.guard = JaniGuard.from_dict(edge_dict["guard"])
         self.destinations = []
         for dest in edge_dict["destinations"]:
             jani_destination = {

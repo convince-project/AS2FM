@@ -19,6 +19,10 @@ from typing import Any, Dict, List, Optional
 
 
 class JaniComposition:
+    @staticmethod
+    def from_dict(composition_dict: dict) -> "JaniComposition":
+        return JaniComposition(composition_dict=composition_dict)
+
     def __init__(self, composition_dict: Optional[Dict[str, Any]] = None):
         if composition_dict is None:
             self._elements = []

@@ -29,14 +29,16 @@ class FilterProperty:
     """All Property operators must occur in a FilterProperty object."""
     def __init__(self, property_filter_exp: Dict[str, Any]):
         assert isinstance(property_filter_exp, dict), "Unexpected FilterProperty initialization"
-        assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", "Unexpected FilterProperty initialization"
+        assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", \
+            "Unexpected FilterProperty initialization"
         self._fun = property_filter_exp["fun"]
         raw_states = property_filter_exp["states"]
         assert isinstance(raw_states, dict) and raw_states["op"] == "initial"
         self._process_values(property_filter_exp["values"])
 
     def _process_values(self, prop_values: Dict[str, Any]) -> None:
-        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = ProbabilityProperty(prop_values)
+        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = \
+            ProbabilityProperty(prop_values)
         if self._values.is_valid():
             return
         self._values = RewardProperty(prop_values)
@@ -153,6 +155,10 @@ class PathPropertyStepBounds:
 
 
 class JaniProperty:
+    @staticmethod
+    def from_dict(property_dict: dict) -> "JaniProperty":
+        return JaniProperty(property_dict["name"], property_dict["expression"])
+
     def __init__(self, name, expression):
         self._name = name
         # TODO: For now copy as it is. Later we might expand it to support more functionalities

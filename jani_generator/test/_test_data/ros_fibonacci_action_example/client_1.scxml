@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="send_req" 
+    version="1.0"
+    name="client_1"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <!-- The size of an array should be known a priori... -->
+        <data id="fibonacci_result" type="int32[]" expr="Array(50)" />
+        <data id="counter" type="int32" expr="0" />
+    </datamodel>
+    
+    <ros_topic_publisher topic="/client_1_last_fibonacci" type="std_msgs/Int32" />
+    <ros_topic_publisher topic="/client_1_feedback_count" type="std_msgs/Int32" />
+    <ros_action_client action_name="/fibonacci" type="example_interfaces/Fibonacci" />
+
+    <state id="send_req">
+        <onentry>
+            <ros_action_send_goal action_name="/fibonacci">
+                <field name="order" expr="5" />
+            </ros_action_send_goal>
+        </onentry>
+        <ros_action_handle_goal_response action_name="/fibonacci" accept="wait_result" decline="send_req" />
+    </state>
+
+    <state id="wait_result">
+        <ros_action_handle_feedback action_name="/fibonacci" target="wait_result">
+            <assign location="counter" expr="counter + 1" />
+            <ros_topic_publish topic="/client_1_feedback_count">
+                <field name="data" expr="counter" />
+            </ros_topic_publish>
+        </ros_action_handle_feedback>
+        <ros_action_handle_result action_name="/fibonacci" target="done">
+            <assign location="fibonacci_result" expr="_res.sequence" />
+            <ros_topic_publish topic="/client_1_last_fibonacci">
+                <!-- TODO: Shall we make it possible to retrieve the size of a "dynamic" vector? -->
+                <field name="data" expr="fibonacci_result[4]" />
+            </ros_topic_publish>
+        </ros_action_handle_result>
+    </state>
+
+    <state id="done" />
+</scxml>
