@@ -194,7 +194,8 @@ class ScxmlRoot(ScxmlBase):
         ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
         if self._ros_declarations is not None:
             for ros_declaration in self._ros_declarations:
-                if not ros_declaration.check_validity():
+                if not (ros_declaration.check_validity() and
+                        ros_declaration.check_valid_instantiation()):
                     return None
                 if isinstance(ros_declaration, RosTimeRate):
                     ros_decl_container.append_timer(ros_declaration.get_name(),

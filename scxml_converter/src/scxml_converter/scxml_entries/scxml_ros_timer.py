@@ -63,6 +63,10 @@ class RosTimeRate(ScxmlBase):
             print("Error: SCXML rate timer: rate is not valid.")
         return valid_name and valid_rate
 
+    def check_valid_instantiation(self) -> bool:
+        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
+        return True
+
     def get_name(self) -> str:
         return self._name
 

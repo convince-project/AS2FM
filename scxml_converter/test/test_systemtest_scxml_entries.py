@@ -17,37 +17,43 @@ import os
 
 from test_utils import canonicalize_xml, remove_empty_lines
 
-from scxml_converter.scxml_entries import (RosField, RosRateCallback,
-                                           RosTimeRate, RosTopicCallback,
-                                           RosTopicPublish, RosTopicPublisher,
-                                           RosTopicSubscriber, ScxmlAssign,
-                                           ScxmlData, ScxmlDataModel,
-                                           ScxmlParam, ScxmlRoot, ScxmlSend,
-                                           ScxmlState, ScxmlTransition)
+from scxml_converter.scxml_entries import (
+    RosField, RosRateCallback, RosTimeRate, RosTopicCallback, RosTopicPublish, RosTopicPublisher,
+    RosTopicSubscriber, ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend,
+    ScxmlState, ScxmlTransition, BtInputPortDeclaration, BtGetValueInputPort)
+
+
+def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):
+    # Check output xml
+    with open(ref_file_path, 'r', encoding='utf-8') as f_o:
+        expected_output = f_o.read()
+    test_output = scxml_root.as_xml_string()
+    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+    ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
+    assert test_xml_string == ref_xml_string
+
+
+def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
+    scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
+    # Check output xml
+    if valid_xml:
+        test_output = scxml_root.as_xml_string()
+        test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+        ref_file_path = os.path.join(os.path.dirname(xml_file_path), 'gt_parsed_scxml',
+                                     os.path.basename(xml_file_path))
+        with open(ref_file_path, 'r', encoding='utf-8') as f_o:
+            ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
+        assert test_xml_string == ref_xml_string
+        # All the test scxml files we are using contain ROS declarations
+        assert not scxml_root.is_plain_scxml()
+    else:
+        assert not scxml_root.check_validity()
 
 
 def test_battery_drainer_from_code():
     """
     Test for scxml_entries generation and conversion to xml.
-
-    It should support the following xml tree:
-    - scxml
-        - state
-            - onentry
-                - {executable content}
-            - onexit
-                - {executable content}
-            - transition
-                - {executable content}
-        - datamodel
-            - data
-
-        Executable content consists of the following entries:
-        - send
-            - param
-        - if / elseif / else
-        - assign
-"""
+    """
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
     battery_drainer_scxml.set_data_model(ScxmlDataModel([
         ScxmlData("battery_percent", "100", "int16")]))
@@ -60,17 +66,9 @@ def test_battery_drainer_from_code():
               ScxmlTransition("use_battery", ["ros_topic.charge"],
                               body=[ScxmlAssign("battery_percent", "100")])])
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
-    # Check output xml
-    ref_file = os.path.join(os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',
-                            'gt_plain_scxml', 'battery_drainer.scxml')
-    assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
-    with open(ref_file, 'r', encoding='utf-8') as f_o:
-        expected_output = f_o.read()
-    test_output = battery_drainer_scxml.as_xml_string()
-    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-    ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
-    assert test_xml_string == ref_xml_string
-    assert battery_drainer_scxml.is_plain_scxml()
+    _test_scxml_from_code(battery_drainer_scxml, os.path.join(
+        os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',
+        'gt_plain_scxml', 'battery_drainer.scxml'))
 
 
 def test_battery_drainer_ros_from_code():
@@ -116,36 +114,35 @@ def test_battery_drainer_ros_from_code():
     use_battery_state.add_transition(
         RosTopicCallback(ros_topic_sub, "use_battery", [ScxmlAssign("battery_percent", "100")]))
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
-
-    # Check output xml
-    ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
-                            'battery_drainer_w_bt', 'gt_parsed_xml', 'battery_drainer.scxml')
-    assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
-    with open(ref_file, 'r', encoding='utf-8') as f_o:
-        expected_output = f_o.read()
-    test_output = battery_drainer_scxml.as_xml_string()
-    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-    ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
-    assert test_xml_string == ref_xml_string
-    assert not battery_drainer_scxml.is_plain_scxml()
+    _test_scxml_from_code(battery_drainer_scxml, os.path.join(
+        os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',
+        'gt_parsed_scxml', 'battery_drainer.scxml'))
 
 
-def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
-    # TODO: Input path to scxml file from args
-    scxml_root = ScxmlRoot.from_scxml_file(xml_file_path)
-    # Check output xml
-    if valid_xml:
-        test_output = scxml_root.as_xml_string()
-        test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-        ref_file_path = os.path.join(os.path.dirname(xml_file_path), 'gt_parsed_xml',
-                                     os.path.basename(xml_file_path))
-        with open(ref_file_path, 'r', encoding='utf-8') as f_o:
-            ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
-        assert test_xml_string == ref_xml_string
-        # All the test scxml files we are using contain ROS declarations
-        assert not scxml_root.is_plain_scxml()
-    else:
-        assert not scxml_root.check_validity()
+def test_bt_action_with_ports_from_code():
+    """
+    Test for generating scxml code containing BT Ports
+    """
+    data_model = ScxmlDataModel([ScxmlData("number", "0", "int16")])
+    topic_publisher = RosTopicPublisher(BtGetValueInputPort("name"), "std_msgs/Int16", "answer_pub")
+    init_state = ScxmlState("initial", body=[
+        ScxmlTransition("initial", ["bt_tick"], None, [
+            ScxmlAssign("number", BtGetValueInputPort("data")),
+            RosTopicPublish(topic_publisher, [RosField("data", "number")])
+        ])
+    ])
+    scxml_root = ScxmlRoot("TopicAction")
+    scxml_root.set_data_model(data_model)
+    scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
+    scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))
+    scxml_root.add_ros_declaration(topic_publisher)
+    scxml_root.add_state(init_state, initial=True)
+    assert not scxml_root.check_validity(), "Currently, we handle unspecified BT entries as invalid"
+    scxml_root.set_bt_ports_values([("name", "/sys/add_srv"), ("data", "25")])
+    scxml_root.update_bt_ports_values()
+    _test_scxml_from_code(scxml_root, os.path.join(
+        os.path.dirname(__file__), '_test_data', 'bt_ports_only',
+        'gt_parsed_scxml', 'bt_topic_action.scxml'))
 
 
 def test_xml_parsing_battery_drainer():

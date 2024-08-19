@@ -98,6 +98,10 @@ class RosServiceServer(ScxmlBase):
             print("Error: SCXML Service Server: service type is not valid.")
         return valid_name and valid_type
 
+    def check_valid_instantiation(self) -> bool:
+        """Check if the service server has undefined entries (i.e. from BT ports)."""
+        return is_non_empty_string(RosServiceServer, "service_name", self._srv_name)
+
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         pass
@@ -174,6 +178,10 @@ class RosServiceClient(ScxmlBase):
         if not valid_type:
             print("Error: SCXML Service Client: service type is not valid.")
         return valid_name and valid_type
+
+    def check_valid_instantiation(self) -> bool:
+        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
+        return is_non_empty_string(RosServiceClient, "service_name", self._srv_name)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""

@@ -77,12 +77,17 @@ class RosTopicPublisher(ScxmlBase):
             self._pub_name = self._topic_name
 
     def check_validity(self) -> bool:
-        valid_topic_name = is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
+        valid_topic_name = isinstance(self._topic_name, BtGetValueInputPort) or \
+            is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
         valid_type = is_msg_type_known(self._topic_type)
-        valid_pub_name = is_non_empty_string(RosTopicPublisher, "name", self._pub_name)
+        valid_alias = is_non_empty_string(RosTopicPublisher, "name", self._pub_name)
         if not valid_type:
             print("Error: SCXML topic subscriber: topic type is not valid.")
-        return valid_topic_name and valid_type and valid_pub_name
+        return valid_topic_name and valid_type and valid_alias
+
+    def check_valid_instantiation(self) -> bool:
+        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
+        return is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
 
     def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
         """Get the name of the topic where messages are published."""
@@ -147,13 +152,17 @@ class RosTopicSubscriber(ScxmlBase):
             self._sub_name = self._topic_name
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._topic_name, str) and len(self._topic_name) > 0
+        valid_name = isinstance(self._topic_name, BtGetValueInputPort) or \
+            is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name)
         valid_type = is_msg_type_known(self._topic_type)
-        if not valid_name:
-            print("Error: SCXML topic subscriber: topic name is not valid.")
+        valid_alias = is_non_empty_string(RosTopicSubscriber, "name", self._sub_name)
         if not valid_type:
             print("Error: SCXML topic subscriber: topic type is not valid.")
-        return valid_name and valid_type
+        return valid_name and valid_type and valid_alias
+
+    def check_valid_instantiation(self) -> bool:
+        """Check if the topic subscriber has undefined entries (i.e. from BT ports)."""
+        return is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name)
 
     def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
         return self._topic_name
