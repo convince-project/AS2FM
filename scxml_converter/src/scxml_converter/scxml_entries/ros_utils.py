@@ -215,6 +215,20 @@ class ScxmlRosDeclarationsContainer:
             f"Error: SCXML ROS declarations: unknown subscriber {sub_name}."
         return sub_info
 
+    def get_service_server_info(self, server_name: str) -> Tuple[str, str]:
+        """Provide a server's service name and type"""
+        server_info = self._service_servers.get(server_name)
+        assert server_info is not None, \
+            f"Error: SCXML ROS declarations: unknown service server {server_name}."
+        return server_info
+
+    def get_service_client_info(self, client_name: str) -> Tuple[str, str]:
+        """Provide a client's service name and type"""
+        client_info = self._service_clients.get(client_name)
+        assert client_info is not None, \
+            f"Error: SCXML ROS declarations: unknown service client {client_name}."
+        return client_info
+
     def is_service_client_defined(self, client_name: str) -> bool:
         return client_name in self._service_clients
 

@@ -118,3 +118,7 @@ def test_ros_to_plain_scxml_bt_ports():
     ros_to_plain_scxml_test('bt_ports_only',
                             {'bt_topic_action.scxml': [('name', 'out'), ('data', '123')]},
                             True)
+
+
+def test_ros_to_plain_scxml_add_int_srv():
+    ros_to_plain_scxml_test('add_int_srv_example', {}, True)

@@ -110,7 +110,7 @@ class RosServiceServer(ScxmlBase):
         assert self.check_validity(), "Error: SCXML Service Server: invalid parameters."
         xml_srv_server = ET.Element(
             RosServiceServer.get_tag_name(),
-            {"service_name": self._srv_name, "type": self._srv_type})
+            {"name": self._srv_alias, "service_name": self._srv_name, "type": self._srv_type})
         return xml_srv_server
 
 
@@ -187,7 +187,7 @@ class RosServiceClient(ScxmlBase):
         assert self.check_validity(), "Error: SCXML Service Client: invalid parameters."
         xml_srv_server = ET.Element(
             RosServiceClient.get_tag_name(),
-            {"service_name": self._srv_name, "type": self._srv_type})
+            {"name": self._srv_alias, "service_name": self._srv_name, "type": self._srv_type})
         return xml_srv_server
 
 
@@ -201,12 +201,12 @@ class RosServiceSendRequest(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendRequest":
         """Create a RosServiceServer object from an XML tree."""
-        assert xml_tree.tag == RosServiceSendRequest.get_tag_name(), \
-            "Error: SCXML service request: XML tag name is not " + \
-            RosServiceSendRequest.get_tag_name()
-        srv_name = xml_tree.attrib.get("service_name")
-        assert srv_name is not None, \
-            "Error: SCXML service request: 'service_name' attribute not found in input xml."
+        assert_xml_tag_ok(RosServiceSendRequest, xml_tree)
+        srv_name = get_xml_argument(RosServiceSendRequest, xml_tree, "name", none_allowed=True)
+        if srv_name is None:
+            srv_name = get_xml_argument(RosServiceSendRequest, xml_tree, "service_name")
+            print("Warning: SCXML service request: 'service_name' xml arg. is deprecated. "
+                  "Use 'name' instead.")
         fields: List[RosField] = []
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
@@ -222,7 +222,7 @@ class RosServiceSendRequest(ScxmlSend):
         :param fields: List of fields to be sent in the request.
         """
         if isinstance(service_decl, RosServiceClient):
-            self._srv_name = service_decl.get_service_name()
+            self._srv_name = service_decl.get_name()
         else:
             # Used for generating ROS entries from xml file
             assert isinstance(service_decl, str), \
@@ -261,15 +261,16 @@ class RosServiceSendRequest(ScxmlSend):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML service request: invalid ROS instantiations."
-        event_name = generate_srv_request_event(
-            self._srv_name, ros_declarations.get_automaton_name())
+        automaton_name = ros_declarations.get_automaton_name()
+        srv_interface, _ = ros_declarations.get_service_client_info(self._srv_name)
+        event_name = generate_srv_request_event(srv_interface, automaton_name)
         event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
         xml_srv_request = ET.Element(RosServiceSendRequest.get_tag_name(),
-                                     {"service_name": self._srv_name})
+                                     {"name": self._srv_name})
         if self._fields is not None:
             for field in self._fields:
                 xml_srv_request.append(field.as_xml())
@@ -286,14 +287,13 @@ class RosServiceHandleRequest(ScxmlTransition):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleRequest":
         """Create a RosServiceServer object from an XML tree."""
-        assert xml_tree.tag == RosServiceHandleRequest.get_tag_name(), \
-            "Error: SCXML service request handler: XML tag name is not " +\
-            RosServiceHandleRequest.get_tag_name()
-        srv_name = xml_tree.attrib.get("service_name")
-        target_name = xml_tree.attrib.get("target")
-        assert srv_name is not None and target_name is not None, \
-            "Error: SCXML service request handler: 'service_name' or 'target' attribute not " \
-            "found in input xml."
+        assert_xml_tag_ok(RosServiceHandleRequest, xml_tree)
+        srv_name = get_xml_argument(RosServiceHandleRequest, xml_tree, "name", none_allowed=True)
+        if srv_name is None:
+            srv_name = get_xml_argument(RosServiceHandleRequest, xml_tree, "service_name")
+            print("Warning: SCXML service request handler: 'service_name' xml arg. is deprecated. "
+                  "Use 'name' instead.")
+        target_name = get_xml_argument(RosServiceHandleRequest, xml_tree, "target")
         exec_body = execution_body_from_xml(xml_tree)
         return RosServiceHandleRequest(srv_name, target_name, exec_body)
 
@@ -307,7 +307,7 @@ class RosServiceHandleRequest(ScxmlTransition):
         :param body: Execution body to be executed upon request, before transitioning to target.
         """
         if isinstance(service_decl, RosServiceServer):
-            self._service_name = service_decl.get_service_name()
+            self._service_name = service_decl.get_name()
         else:
             # Used for generating ROS entries from xml file
             assert isinstance(service_decl, str), \
@@ -346,7 +346,8 @@ class RosServiceHandleRequest(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML service request handler: invalid ROS instantiations."
-        event_name = generate_srv_server_request_event(self._service_name)
+        interface_name, _ = ros_declarations.get_service_server_info(self._service_name)
+        event_name = generate_srv_server_request_event(interface_name)
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], None, body)
@@ -354,7 +355,7 @@ class RosServiceHandleRequest(ScxmlTransition):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Service Handle Request: invalid parameters."
         xml_srv_request = ET.Element(RosServiceHandleRequest.get_tag_name(),
-                                     {"service_name": self._service_name, "target": self._target})
+                                     {"name": self._service_name, "target": self._target})
         if self._body is not None:
             for body_elem in self._body:
                 xml_srv_request.append(body_elem.as_xml())
@@ -371,12 +372,12 @@ class RosServiceSendResponse(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendResponse":
         """Create a RosServiceServer object from an XML tree."""
-        assert xml_tree.tag == RosServiceSendResponse.get_tag_name(), \
-            "Error: SCXML service response: XML tag name is not " + \
-            RosServiceSendResponse.get_tag_name()
-        srv_name = xml_tree.attrib.get("service_name")
-        assert srv_name is not None, \
-            "Error: SCXML service response: 'service_name' attribute not found in input xml."
+        assert_xml_tag_ok(RosServiceSendResponse, xml_tree)
+        srv_name = get_xml_argument(RosServiceSendResponse, xml_tree, "name", none_allowed=True)
+        if srv_name is None:
+            srv_name = get_xml_argument(RosServiceSendResponse, xml_tree, "service_name")
+            print("Warning: SCXML service send response: 'service_name' xml arg. is deprecated. "
+                  "Use 'name' instead.")
         fields: Optional[List[RosField]] = []
         assert fields is not None, "Error: SCXML service response: fields is not valid."
         for field_xml in xml_tree:
@@ -394,7 +395,7 @@ class RosServiceSendResponse(ScxmlSend):
         :param fields: List of fields to be sent in the response.
         """
         if isinstance(service_name, RosServiceServer):
-            self._service_name = service_name.get_service_name()
+            self._service_name = service_name.get_name()
         else:
             # Used for generating ROS entries from xml file
             assert isinstance(service_name, str), \
@@ -431,14 +432,15 @@ class RosServiceSendResponse(ScxmlSend):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML service response: invalid ROS instantiations."
-        event_name = generate_srv_server_response_event(self._service_name)
+        interface_name, _ = ros_declarations.get_service_server_info(self._service_name)
+        event_name = generate_srv_server_response_event(interface_name)
         event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, event_params)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
         xml_srv_response = ET.Element(RosServiceSendResponse.get_tag_name(),
-                                      {"service_name": self._service_name})
+                                      {"name": self._service_name})
         if self._fields is not None:
             for field in self._fields:
                 xml_srv_response.append(field.as_xml())
@@ -455,14 +457,13 @@ class RosServiceHandleResponse(ScxmlTransition):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleResponse":
         """Create a RosServiceServer object from an XML tree."""
-        assert xml_tree.tag == RosServiceHandleResponse.get_tag_name(), \
-            "Error: SCXML service response handler: XML tag name is not " + \
-            RosServiceHandleResponse.get_tag_name()
-        srv_name = xml_tree.attrib.get("service_name")
-        target_name = xml_tree.attrib.get("target")
-        assert srv_name is not None and target_name is not None, \
-            "Error: SCXML service response handler: 'service_name' or 'target' attribute not " \
-            "found in input xml."
+        assert_xml_tag_ok(RosServiceHandleResponse, xml_tree)
+        srv_name = get_xml_argument(RosServiceHandleResponse, xml_tree, "name", none_allowed=True)
+        if srv_name is None:
+            srv_name = get_xml_argument(RosServiceHandleResponse, xml_tree, "service_name")
+            print("Warning: SCXML service response handler: 'service_name' xml arg. is deprecated. "
+                  "Use 'name' instead.")
+        target_name = get_xml_argument(RosServiceHandleResponse, xml_tree, "target")
         exec_body = execution_body_from_xml(xml_tree)
         return RosServiceHandleResponse(srv_name, target_name, exec_body)
 
@@ -475,7 +476,7 @@ class RosServiceHandleResponse(ScxmlTransition):
         :param type: ROS type of the service.
         """
         if isinstance(service_decl, RosServiceClient):
-            self._service_name = service_decl.get_service_name()
+            self._service_name = service_decl.get_name()
         else:
             # Used for generating ROS entries from xml file
             assert isinstance(service_decl, str), \
@@ -514,8 +515,9 @@ class RosServiceHandleResponse(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML service response handler: invalid ROS instantiations."
-        event_name = generate_srv_response_event(
-            self._service_name, ros_declarations.get_automaton_name())
+        automaton_name = ros_declarations.get_automaton_name()
+        interface_name, _ = ros_declarations.get_service_client_info(self._service_name)
+        event_name = generate_srv_response_event(interface_name, automaton_name)
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], None, body)
@@ -523,7 +525,7 @@ class RosServiceHandleResponse(ScxmlTransition):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
         xml_srv_response = ET.Element(RosServiceHandleResponse.get_tag_name(),
-                                      {"service_name": self._service_name, "target": self._target})
+                                      {"name": self._service_name, "target": self._target})
         if self._body is not None:
             for body_elem in self._body:
                 xml_srv_response.append(body_elem.as_xml())
