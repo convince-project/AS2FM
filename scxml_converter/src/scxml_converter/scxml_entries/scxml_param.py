@@ -17,21 +17,18 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from typing import Optional
+from typing import Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlBase
+from scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class ScxmlParam(ScxmlBase):
     """This class represents a single parameter."""
-
-    def __init__(self, name: str, *, expr: Optional[str] = None, location: Optional[str] = None):
-        # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
-        self._name = name
-        self._expr = expr
-        self._location = location
 
     @staticmethod
     def get_tag_name() -> str:
@@ -40,17 +37,30 @@ class ScxmlParam(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
-        assert xml_tree.tag == ScxmlParam.get_tag_name(), \
-            f"Error: SCXML param: XML tag name is not {ScxmlParam.get_tag_name()}."
-        name = xml_tree.attrib.get("name")
-        assert name is not None and len(name) > 0, "Error: SCXML param: name is not valid."
-        expr = xml_tree.attrib.get("expr")
-        location = xml_tree.attrib.get("location")
-        assert not (expr is not None and location is not None), \
-            "Error: SCXML param: expr and location are both set."
-        assert expr is not None or location is not None, \
-            "Error: SCXML param: expr and location are both unset."
+        assert_xml_tag_ok(ScxmlParam, xml_tree)
+        name = get_xml_argument(ScxmlParam, xml_tree, "name")
+        expr = get_xml_argument(ScxmlParam, xml_tree, "expr", none_allowed=True)
+        if expr is None:
+            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
+        location = get_xml_argument(ScxmlParam, xml_tree, "location", none_allowed=True)
         return ScxmlParam(name, expr=expr, location=location)
+
+    def __init__(self, name: str, *,
+                 expr: Optional[Union[BtGetValueInputPort, str]] = None,
+                 location: Optional[str] = None):
+        """
+        Initialize the SCXML Parameter object.
+
+        The location entryu is kept for consistency, but using expr achieves the same result.
+
+        :param name: The name of the parameter.
+        :param expr: The expression to assign to the parameter. Can come from a BT port.
+        :param location: The expression to assign to the parameter, if that's a data variable.
+        """
+        # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
+        self._name = name
+        self._expr = expr
+        self._location = location
 
     def get_name(self) -> str:
         return self._name
@@ -63,29 +73,19 @@ class ScxmlParam(ScxmlBase):
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
-        # For now we do nothing, but it might be useful in the future
-        pass
+        if isinstance(self._expr, BtGetValueInputPort):
+            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
 
     def check_validity(self) -> bool:
-        valid_name = len(self._name) > 0
-        if not valid_name:
-            print("Error: SCXML param: name is not valid")
-        valid_expr = isinstance(self._expr, str) and len(self._expr) > 0 and self._location is None
-        valid_location = isinstance(self._location, str) and len(
-            self._location) > 0 and self._expr is None
-        # Print possible errors
-        if self._expr is not None:
-            if not isinstance(self._expr, str) or len(self._expr) == 0:
-                print("Error: SCXML param: expr is not valid")
-        if self._location is not None:
-            if not isinstance(self._location, str) or len(self._location) == 0:
-                print("Error: SCXML param: location is not valid")
-        if self._expr is not None and self._location is not None:
-            print("Error: SCXML param: expr and location are both set")
-        if self._expr is None and self._location is None:
-            print("Error: SCXML param: expr and location are both unset")
-
-        return valid_name and (valid_expr or valid_location)
+        valid_name = is_non_empty_string(ScxmlParam, "name", self._name)
+        valid_expr = False
+        if self._location is None:
+            valid_expr = is_non_empty_string(ScxmlParam, "expr", self._expr)
+        elif self._expr is None:
+            valid_expr = is_non_empty_string(ScxmlParam, "location", self._location)
+        else:
+            print("Error: SCXML param: expr and location are both set.")
+        return valid_name and valid_expr
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid param."
