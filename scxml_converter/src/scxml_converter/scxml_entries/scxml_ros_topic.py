@@ -49,7 +49,7 @@ class RosTopicPublisher(ScxmlBase):
         topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
         pub_name = get_xml_argument(RosTopicPublisher, xml_tree, "name", none_allowed=True)
         if topic_name is None:
-            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort,))
+            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort, str))
             assert topic_name is not None, "Error: SCXML topic publisher: topic name not found."
         return RosTopicPublisher(topic_name, topic_type, pub_name)
 
@@ -131,7 +131,7 @@ class RosTopicSubscriber(ScxmlBase):
         topic_type = get_xml_argument(RosTopicSubscriber, xml_tree, "type")
         sub_name = get_xml_argument(RosTopicSubscriber, xml_tree, "name", none_allowed=True)
         if topic_name is None:
-            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort,))
+            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort, str))
             assert topic_name is not None, "Error: SCXML topic subscriber: topic name not found."
         return RosTopicSubscriber(topic_name, topic_type, sub_name)
 

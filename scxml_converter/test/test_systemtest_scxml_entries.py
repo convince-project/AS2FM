@@ -100,8 +100,8 @@ def test_battery_drainer_ros_from_code():
     battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
     battery_drainer_scxml.set_data_model(ScxmlDataModel([
         ScxmlData("battery_percent", "100", "int16")]))
-    ros_topic_sub = RosTopicSubscriber("charge", "std_msgs/Empty")
-    ros_topic_pub = RosTopicPublisher("level", "std_msgs/Int32")
+    ros_topic_sub = RosTopicSubscriber("charge", "std_msgs/Empty", "sub")
+    ros_topic_pub = RosTopicPublisher("level", "std_msgs/Int32", "pub")
     ros_timer = RosTimeRate("my_timer", 1)
     battery_drainer_scxml.add_ros_declaration(ros_topic_sub)
     battery_drainer_scxml.add_ros_declaration(ros_topic_pub)
@@ -119,7 +119,7 @@ def test_battery_drainer_ros_from_code():
 
     # Check output xml
     ref_file = os.path.join(os.path.dirname(__file__), '_test_data',
-                            'battery_drainer_w_bt', 'battery_drainer.scxml')
+                            'battery_drainer_w_bt', 'gt_parsed_xml', 'battery_drainer.scxml')
     assert os.path.exists(ref_file), f"Cannot find ref. file {ref_file}."
     with open(ref_file, 'r', encoding='utf-8') as f_o:
         expected_output = f_o.read()
@@ -137,7 +137,9 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
     if valid_xml:
         test_output = scxml_root.as_xml_string()
         test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-        with open(xml_file_path, 'r', encoding='utf-8') as f_o:
+        ref_file_path = os.path.join(os.path.dirname(xml_file_path), 'gt_parsed_xml',
+                                     os.path.basename(xml_file_path))
+        with open(ref_file_path, 'r', encoding='utf-8') as f_o:
             ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
         assert test_xml_string == ref_xml_string
         # All the test scxml files we are using contain ROS declarations

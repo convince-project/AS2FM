@@ -24,7 +24,7 @@ from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition,
+    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
     as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
 from scxml_converter.scxml_entries.ros_utils import (
@@ -33,6 +33,8 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_server_response_event, is_srv_type_known)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
 
 
 class RosServiceServer(ScxmlBase):
@@ -45,6 +47,13 @@ class RosServiceServer(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceServer":
         """Create a RosServiceServer object from an XML tree."""
+        assert_xml_tag_ok(RosServiceServer, xml_tree)
+        service_name = get_xml_argument(
+            RosServiceServer, xml_tree, "service_name", none_allowed=True)
+        service_type = get_xml_argument(RosServiceServer, xml_tree, "type")
+        service_alias = get_xml_argument(RosServiceServer, xml_tree, "name", none_allowed=True)
+        if service_name is None:
+            service_name = read_value_from_xml_child(xml_tree, "service_name", (BtGetValueInputPort, str))
         assert xml_tree.tag == RosServiceServer.get_tag_name(), \
             f"Error: SCXML Service Server: XML tag name is not '{RosServiceServer.get_tag_name()}'."
         service_name = xml_tree.attrib.get("service_name")

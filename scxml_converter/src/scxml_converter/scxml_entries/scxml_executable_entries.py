@@ -277,7 +277,7 @@ class ScxmlAssign(ScxmlBase):
         location = get_xml_argument(ScxmlAssign, xml_tree, "location")
         expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
         if expr is None:
-            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort,))
+            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
             assert expr is not None, "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
 

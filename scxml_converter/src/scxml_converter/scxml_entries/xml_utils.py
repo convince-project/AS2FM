@@ -56,7 +56,7 @@ def get_children_as_scxml(
 
 
 def read_value_from_xml_child(
-        xml_tree: Element, child_tag: str, valid_types: Tuple[Type[ScxmlBase]]
+        xml_tree: Element, child_tag: str, valid_types: Tuple[Type[Union[ScxmlBase, str]]]
         ) -> Optional[Union[str, ScxmlBase]]:
     """
     Try to read the value of a child tag from the xml tree. If the child is not found, return None.
@@ -69,7 +69,7 @@ def read_value_from_xml_child(
         print(f"Error reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
         return None
     n_tag_children = len(xml_child[0])
-    if n_tag_children == 0:
+    if n_tag_children == 0 and str in valid_types:
         # Try to read the text value
         text_value = xml_child[0].text
         if text_value is None or len(text_value) == 0:
@@ -79,6 +79,8 @@ def read_value_from_xml_child(
     if n_tag_children > 1:
         print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has multiple children.")
         return None
+    # Remove string from valid types, if present
+    valid_types = tuple(t for t in valid_types if t != str)
     scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
     if len(scxml_entry) == 0:
         print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
