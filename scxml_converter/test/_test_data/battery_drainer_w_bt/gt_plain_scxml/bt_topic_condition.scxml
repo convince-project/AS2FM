@@ -5,7 +5,7 @@
     </datamodel>
 
     <state id="initial">
-        <transition target="initial" event="ros_topic.alarm">
+        <transition target="initial" event="topic_alarm_msg">
             <assign location="last_msg" expr="_event.data" />
         </transition>
         <transition event="bt_tick" target="initial">

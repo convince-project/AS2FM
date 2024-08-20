@@ -20,16 +20,16 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlExecutionBody, ScxmlRosDeclarationsContainer, ScxmlSend,
-    ScxmlTransition, BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml,
-    valid_execution_body)
+    RosField, ScxmlRosDeclarationsContainer, ScxmlSend, BtGetValueInputPort,
+    execution_body_from_xml)
+from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosDeclaration
+
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import (
-    RosDeclaration, is_msg_type_known, sanitize_ros_interface_name)
+from scxml_converter.scxml_entries.ros_utils import (is_msg_type_known, generate_topic_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -103,12 +103,16 @@ class RosTopicSubscriber(RosDeclaration):
         return xml_topic_subscriber
 
 
-class RosTopicCallback(ScxmlTransition):
+class RosTopicCallback(RosCallback):
     """Object representing a transition to perform when a new ROS msg is received."""
 
     @staticmethod
     def get_tag_name() -> str:
         return "ros_topic_callback"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosDeclaration]:
+        return RosTopicSubscriber
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTopicCallback":
@@ -123,61 +127,16 @@ class RosTopicCallback(ScxmlTransition):
         exec_body = execution_body_from_xml(xml_tree)
         return RosTopicCallback(sub_name, target, exec_body)
 
-    def __init__(
-            self, topic_sub: Union[RosTopicSubscriber, str], target: str,
-            body: Optional[ScxmlExecutionBody] = None):
-        """
-        Create a new ros_topic_callback object  instance.
+    def check_valid_interface(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_subscriber_defined(self._interface_name)
 
-        :param topic_sub: The RosTopicSubscriber instance triggering the callback, or its name
-        :param target: The target state of the transition
-        :param body: Execution body executed at the time the received message gets processed
-        """
-        if isinstance(topic_sub, RosTopicSubscriber):
-            self._sub_name = topic_sub.get_name()
-        else:
-            # Used for generating ROS entries from xml file
-            assert is_non_empty_string(RosTopicCallback, "name", topic_sub)
-            self._sub_name = topic_sub
-        self._target = target
-        self._body = body
-        assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
-
-    def check_validity(self) -> bool:
-        valid_sub_name = is_non_empty_string(RosTopicCallback, "name", self._sub_name)
-        valid_target = is_non_empty_string(RosTopicCallback, "target", self._target)
-        valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_body:
-            print("Error: SCXML topic callback: body is not valid.")
-        return valid_sub_name and valid_target and valid_body
-
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML topic callback: invalid ROS declarations container."
-        topic_cb_declared = ros_declarations.is_subscriber_defined(self._sub_name)
-        if not topic_cb_declared:
-            print(f"Error: SCXML topic callback: topic subscriber {self._sub_name} not declared.")
-            return False
-        valid_body = super().check_valid_ros_instantiations(ros_declarations)
-        if not valid_body:
-            print("Error: SCXML topic callback: body has invalid ROS instantiations.")
-        return valid_body
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML topic callback: invalid ROS instantiations."
-        topic_name, _ = ros_declarations.get_subscriber_info(self._sub_name)
-        event_name = "ros_topic." + sanitize_ros_interface_name(topic_name)
-        target = self._target
-        body = as_plain_execution_body(self._body, ros_declarations)
-        return ScxmlTransition(target, [event_name], None, body)
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_topic_event(ros_declarations.get_subscriber_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
         xml_topic_callback = ET.Element(
-            "ros_topic_callback", {"name": self._sub_name, "target": self._target})
+            "ros_topic_callback", {"name": self._interface_name, "target": self._target})
         if self._body is not None:
             for entry in self._body:
                 xml_topic_callback.append(entry.as_xml())
@@ -250,7 +209,7 @@ class RosTopicPublish(ScxmlSend):
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML topic publish: invalid ROS instantiations."
         topic_name, _ = ros_declarations.get_publisher_info(self._pub_name)
-        event_name = "ros_topic." + sanitize_ros_interface_name(topic_name)
+        event_name = generate_topic_event(topic_name)
         params = None if self._fields is None else \
             [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, params)

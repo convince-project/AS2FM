@@ -12,7 +12,7 @@
         </onentry>
         <transition target="done" event="srv_adder_response_client_addition_client">
             <assign location="temp_sum" expr="_event.sum" />
-            <send event="ros_topic.client_1_res">
+            <send event="topic_client_1_res_msg">
                 <param name="data" expr="temp_sum == 42" />
             </send>
         </transition>

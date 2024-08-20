@@ -27,10 +27,11 @@ from scxml_converter.scxml_entries import (
     RosField, ScxmlRosDeclarationsContainer, ScxmlExecutionBody, ScxmlSend, ScxmlTransition,
     BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
-    RosDeclaration, generate_srv_request_event,
-    generate_srv_response_event, generate_srv_server_request_event,
+    generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)

@@ -27,9 +27,10 @@ from scxml_converter.scxml_entries import (
     as_plain_execution_body, execution_body_from_xml, valid_execution_body,
     ScxmlRosDeclarationsContainer)
 
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import (
-    RosDeclaration, is_action_type_known)
+from scxml_converter.scxml_entries.ros_utils import (is_action_type_known)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -79,7 +80,7 @@ class RosActionHandleGoalRequest(ScxmlTransition):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_handle_goal_response"
+        return "ros_action_handle_goal"
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleGoalResponse":

@@ -59,11 +59,11 @@ def test_battery_drainer_from_code():
         ScxmlData("battery_percent", "100", "int16")]))
     use_battery_state = ScxmlState(
         "use_battery",
-        on_entry=[ScxmlSend("ros_topic.level",
+        on_entry=[ScxmlSend("topic_level_msg",
                             [ScxmlParam("data", expr="battery_percent")])],
         body=[ScxmlTransition("use_battery", ["ros_time_rate.my_timer"],
                               body=[ScxmlAssign("battery_percent", "battery_percent - 1")]),
-              ScxmlTransition("use_battery", ["ros_topic.charge"],
+              ScxmlTransition("use_battery", ["topic_charge_msg"],
                               body=[ScxmlAssign("battery_percent", "100")])])
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
     _test_scxml_from_code(battery_drainer_scxml, os.path.join(

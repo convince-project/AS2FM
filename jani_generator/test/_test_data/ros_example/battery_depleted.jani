@@ -13,11 +13,11 @@
                         "right": {
                             "left": {
                                 "op": "≤",
-                                "left": "ros_topic.level.data",
+                                "left": "topic_level_msg.data",
                                 "right": 0
                             },
                             "op": "∧",
-                            "right": "ros_topic.level.valid"
+                            "right": "topic_level_msg.valid"
                         }
                     }
                 },
@@ -39,11 +39,11 @@
                         "right": {
                             "left": {
                                 "op": "≤",
-                                "left": "ros_topic.level.data",
+                                "left": "topic_level_msg.data",
                                 "right": -1
                             },
                             "op": "∧",
-                            "right": "ros_topic.level.valid"
+                            "right": "topic_level_msg.valid"
                         }
                     }
                 },

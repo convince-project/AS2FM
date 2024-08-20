@@ -106,10 +106,15 @@ class ScxmlState(ScxmlBase):
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
 
-    @classmethod
-    def _transitions_from_xml(cls, xml_tree: ET.Element) -> List[ScxmlTransition]:
+    @staticmethod
+    def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
+        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
         transitions: List[ScxmlTransition] = []
-        tag_to_cls = {cls.get_tag_name(): cls for cls in ScxmlTransition.__subclasses__()}
+        tag_to_cls = {cls.get_tag_name(): cls
+                      for cls in ScxmlTransition.__subclasses__()
+                      if cls != RosCallback}
+        # TODO: Temporary workaroud, to fix once all ROS callbacks are implemented
+        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
             if child.tag in tag_to_cls:

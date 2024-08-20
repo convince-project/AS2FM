@@ -6,7 +6,7 @@
     <state id="initial">
         <transition target="initial" event="bt_tick">
             <assign location="number" expr="123" />
-            <send event="ros_topic.out">
+            <send event="topic_out_msg">
                 <param name="data" expr="number" />
             </send>
         </transition>

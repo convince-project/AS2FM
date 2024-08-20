@@ -26,9 +26,10 @@ from scxml_converter.scxml_entries import (
     RosField, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
     as_plain_execution_body, execution_body_from_xml, valid_execution_body,
     ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 
 from scxml_converter.scxml_entries.ros_utils import (
-    RosDeclaration, is_action_type_known, generate_action_goal_req_event,
+    is_action_type_known, generate_action_goal_req_event,
     generate_action_goal_accepted_event, generate_action_goal_rejected_event,
     generate_action_feedback_handle_event, generate_action_result_handle_event)
 from scxml_converter.scxml_entries.xml_utils import (
