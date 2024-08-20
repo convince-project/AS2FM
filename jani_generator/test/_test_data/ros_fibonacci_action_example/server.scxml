@@ -22,10 +22,10 @@
         <data id="thread_to_start" type="int32" expr="0" />
     </datamodel>
 
-    <ros_action_server action_name="/fibonacci" type="example_interfaces/Fibonacci" />
+    <ros_action_server name="act_srv" action_name="/fibonacci" type="example_interfaces/Fibonacci" />
 
     <state id="idle">
-        <ros_action_handle_goal action_name="/fibonacci" target="check_goal">
+        <ros_action_handle_goal name="act_srv" target="check_goal">
             <assign location="order" expr="_req.order" />
         </ros_action_handle_goal>
         <ros_action_handle_cancel action_name="/fibonacci" target="cancel_goal">

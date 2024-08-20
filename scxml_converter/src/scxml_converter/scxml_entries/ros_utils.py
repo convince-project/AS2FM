@@ -15,11 +15,15 @@
 
 """Collection of SCXML utilities related to ROS functionalities."""
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Optional, Union, Tuple, Type
+
+from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
+
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 
 from scxml_converter.scxml_entries.scxml_ros_field import RosField
 
-from scxml_converter.scxml_entries.utils import all_non_empty_strings
+from scxml_converter.scxml_entries.utils import all_non_empty_strings, is_non_empty_string
 
 
 MSG_TYPE_SUBSTITUTIONS = {
@@ -36,6 +40,72 @@ ROS_EVENT_PREFIXES = [
     "_req.", "_res.",                   # Service-related
     "_goal.", "_feedback.", "_result."  # Action-related
 ]
+
+
+class RosDeclaration(ScxmlBase):
+    """Base class for ROS declarations in SCXML."""
+
+    @classmethod
+    def get_tag_name(cls) -> str:
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+
+    def __init__(self, interface_name: Union[str, BtGetValueInputPort], interface_type: str,
+                 interface_alias: Optional[str] = None):
+        """
+        Constructor of ROS declaration.
+
+        :param interface_name: Comm. interface used by the declared ROS interface.
+        :param interface_type: ROS type used for communication.
+        :param interface_alias: Alias for the defined interface, used for ref. by the the handlers
+        """
+        self._interface_name = interface_name
+        self._interface_type = interface_type
+        self._interface_alias = interface_alias
+        assert isinstance(interface_name, (str, BtGetValueInputPort)), \
+            f"Error: SCXML {self.get_tag_name()}: " \
+            f"invalid type of interface_name {type(interface_name)}."
+        if self._interface_alias is None:
+            assert is_non_empty_string(self.__class__, "interface_name", self._interface_name), \
+                f"Error: SCXML {self.get_tag_name()}: " \
+                "an alias name is required for dynamic ROS interfaces."
+            self._interface_alias = interface_name
+
+    def get_interface_name(self) -> str:
+        """Get the name of the ROS comm. interface."""
+        return self._interface_name
+
+    def get_interface_type(self) -> str:
+        """Get the ROS type used for communication."""
+        return self._interface_type
+
+    def get_name(self) -> str:
+        """Get the alias name of the ROS interface."""
+        return self._interface_alias
+
+    def check_valid_interface_type(self) -> bool:
+        return NotImplementedError(
+            f"{self.__class__.__name__} doesn't implement check_valid_interface_type.")
+
+    def check_validity(self) -> bool:
+        valid_alias = is_non_empty_string(self.__class__, "name", self._interface_alias)
+        valid_action_name = isinstance(self._interface_name, BtGetValueInputPort) or \
+            is_non_empty_string(self.__class__, "interface_name", self._interface_name)
+        valid_action_type = self.check_valid_interface_type()
+        return valid_alias and valid_action_name and valid_action_type
+
+    def check_valid_instantiation(self) -> bool:
+        """Check if the interface name is still undefined (i.e. from BT ports)."""
+        return is_non_empty_string(self.__class__, "interface_name", self._interface_name)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        if isinstance(self._interface_name, BtGetValueInputPort):
+            self._interface_name = \
+                bt_ports_handler.get_in_port_value(self._interface_name.get_key_name())
+
+    def as_plain_scxml(self, _) -> ScxmlBase:
+        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
+        raise RuntimeError(f"Error: SCXML {self.__class__} cannot be converted to plain SCXML.")
 
 
 """Container for the ROS interface (e.g. topic or service) name and the related type"""

@@ -48,8 +48,7 @@ class RosActionClient(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosActionClient":
         """Create a RosActionClient object from an XML tree."""
         assert_xml_tag_ok(RosActionClient, xml_tree)
-        action_alias = get_xml_argument(
-            RosActionClient, xml_tree, "name", none_allowed=True)
+        action_alias = get_xml_argument(RosActionClient, xml_tree, "name", none_allowed=True)
         action_name = read_value_from_xml_arg_or_child(RosActionClient, xml_tree, "action_name",
                                                        (BtGetValueInputPort, str))
         action_type = get_xml_argument(RosActionClient, xml_tree, "type")
