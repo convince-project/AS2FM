@@ -183,14 +183,34 @@ def generate_srv_server_response_event(service_name: str) -> str:
     return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
-def generate_action_goal_event(action_name: str, automaton_name: str) -> str:
+def generate_action_goal_req_event(action_name: str, client_name: str) -> str:
     """Generate the name of the event that sends an action goal from a client to the server."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_goal_client_{automaton_name}"
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_req_client_{client_name}"
+
+
+def generate_action_goal_accepted_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal acceptance to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accept_client_{client_name}"
+
+
+def generate_action_goal_rejected_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal rejection to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_reject_client_{client_name}"
 
 
 def generate_action_goal_handle_event(action_name: str) -> str:
     """Generate the name of the event that triggers an action goal handling in the server."""
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
+
+
+def generate_action_goal_handle_accepted_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal acceptance."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accepted"
+
+
+def generate_action_goal_handle_rejected_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal rejection."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_rejected"
 
 
 def generate_action_feedback_event(action_name: str) -> str:

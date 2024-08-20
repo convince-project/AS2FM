@@ -22,7 +22,7 @@
                 <field name="order" expr="5" />
             </ros_action_send_goal>
         </onentry>
-        <ros_action_handle_goal_response name="example_action" accept="wait_result" decline="send_req" />
+        <ros_action_handle_goal_response name="example_action" accept="wait_result" reject="send_req" />
     </state>
 
     <state id="wait_result">
