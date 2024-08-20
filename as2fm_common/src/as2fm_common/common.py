@@ -17,9 +17,9 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import Union
+from typing import List, Union
 
-ValidTypes = Union[bool, int, float]
+ValidTypes = Union[bool, int, float, List[int], List[float]]
 """We define the basic types that are supported by the Jani language:
 
 // Types
