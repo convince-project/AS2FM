@@ -24,12 +24,12 @@ from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
-    as_plain_execution_body, execution_body_from_xml, valid_execution_body)
+    RosField, ScxmlRosDeclarationsContainer, ScxmlExecutionBody, ScxmlSend, ScxmlTransition,
+    BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
-    ScxmlRosDeclarationsContainer, generate_srv_request_event,
+    RosDeclaration, generate_srv_request_event,
     generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
 from scxml_converter.scxml_entries.xml_utils import (
@@ -37,7 +37,7 @@ from scxml_converter.scxml_entries.xml_utils import (
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
-class RosServiceServer(ScxmlBase):
+class RosServiceServer(RosDeclaration):
     """Object used in SCXML root to declare a new service server."""
 
     @staticmethod
@@ -55,68 +55,22 @@ class RosServiceServer(ScxmlBase):
             RosServiceServer, xml_tree, "name", none_allowed=True)
         return RosServiceServer(service_name, service_type, service_alias)
 
-    def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
-                 srv_alias: Optional[str] = None) -> None:
-        """
-        Initialize a new RosServiceServer object.
-
-        :param srv_name: Service name used for communication.
-        :param srv_type: ROS type of the service.
-        :param srv_alias: Alias for the service server, for the handler to reference to it
-        """
-        self._srv_name = srv_name
-        self._srv_type = srv_type
-        self._srv_alias = srv_alias
-        assert isinstance(srv_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML Service Server: invalid service name."
-        if self._srv_alias is None:
-            assert is_non_empty_string(RosServiceServer, "service_name", self._srv_name), \
-                "Error: SCXML Service Server: an alias name is required for dynamic service names."
-            self._srv_alias = srv_name
-
-    def get_service_name(self) -> str:
-        """Get the name of the service."""
-        return self._srv_name
-
-    def get_service_type(self) -> str:
-        """Get the type of the service."""
-        return self._srv_type
-
-    def get_name(self) -> str:
-        """Get the alias of the service server."""
-        return self._srv_alias
-
-    def check_validity(self) -> bool:
-        valid_alias = is_non_empty_string(RosServiceServer, "name", self._srv_alias)
-        valid_srv_name = isinstance(self._srv_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosServiceServer, "service_name", self._srv_name)
-        valid_srv_type = is_srv_type_known(self._srv_type)
-        if not valid_srv_type:
-            print("Error: SCXML Service Server: service type is not valid.")
-        return valid_alias and valid_srv_name and valid_srv_type
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the service server has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosServiceServer, "service_name", self._srv_name)
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._srv_name, BtGetValueInputPort):
-            self._srv_name = bt_ports_handler.get_in_port_value(self._srv_name.get_key_name())
-
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def check_valid_interface_type(self) -> bool:
+        if not is_srv_type_known(self._interface_type):
+            print("Error: SCXML RosServiceServer: service type is not valid.")
+            return False
+        return True
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Server: invalid parameters."
+        assert self.check_validity(), "Error: SCXML RosServiceServer: invalid parameters."
         xml_srv_server = ET.Element(
             RosServiceServer.get_tag_name(),
-            {"name": self._srv_alias, "service_name": self._srv_name, "type": self._srv_type})
+            {"name": self._interface_alias,
+             "service_name": self._interface_name, "type": self._interface_type})
         return xml_srv_server
 
 
-class RosServiceClient(ScxmlBase):
+class RosServiceClient(RosDeclaration):
     """Object used in SCXML root to declare a new service client."""
 
     @staticmethod
@@ -134,64 +88,18 @@ class RosServiceClient(ScxmlBase):
             RosServiceClient, xml_tree, "name", none_allowed=True)
         return RosServiceClient(service_name, service_type, service_alias)
 
-    def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
-                 srv_alias: Optional[str] = None) -> None:
-        """
-        Initialize a new RosServiceClient object.
-
-        :param srv_name: Service name used for communication.
-        :param srv_type: ROS type of the service.
-        :param srv_alias: Alias for the service client, for the handler to reference to it
-        """
-        self._srv_name = srv_name
-        self._srv_type = srv_type
-        self._srv_alias = srv_alias
-        assert isinstance(srv_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML Service Client: invalid service name."
-        if self._srv_alias is None:
-            assert is_non_empty_string(RosServiceClient, "service_name", self._srv_name), \
-                "Error: SCXML Service Client: an alias name is required for dynamic service names."
-            self._srv_alias = srv_name
-
-    def get_service_name(self) -> str:
-        """Get the name of the service."""
-        return self._srv_name
-
-    def get_service_type(self) -> str:
-        """Get the type of the service."""
-        return self._srv_type
-
-    def get_name(self) -> str:
-        """Get the alias of the service client."""
-        return self._srv_alias
-
-    def check_validity(self) -> bool:
-        valid_alias = is_non_empty_string(RosServiceClient, "name", self._srv_alias)
-        valid_srv_name = isinstance(self._srv_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosServiceClient, "service_name", self._srv_name)
-        valid_srv_type = is_srv_type_known(self._srv_type)
-        if not valid_srv_type:
-            print("Error: SCXML Service Client: service type is not valid.")
-        return valid_alias and valid_srv_name and valid_srv_type
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosServiceClient, "service_name", self._srv_name)
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._srv_name, BtGetValueInputPort):
-            self._srv_name = bt_ports_handler.get_in_port_value(self._srv_name.get_key_name())
-
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def check_valid_interface_type(self) -> bool:
+        if not is_srv_type_known(self._interface_type):
+            print("Error: SCXML RosServiceClient: service type is not valid.")
+            return False
+        return True
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Client: invalid parameters."
+        assert self.check_validity(), "Error: SCXML RosServiceClient: invalid parameters."
         xml_srv_server = ET.Element(
             RosServiceClient.get_tag_name(),
-            {"name": self._srv_alias, "service_name": self._srv_name, "type": self._srv_type})
+            {"name": self._interface_alias,
+             "service_name": self._interface_name, "type": self._interface_type})
         return xml_srv_server
 
 
@@ -238,11 +146,9 @@ class RosServiceSendRequest(ScxmlSend):
         assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
+        valid_name = is_non_empty_string(RosServiceSendRequest, "name", self._srv_name)
         valid_fields = self._fields is None or \
             all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
-        if not valid_name:
-            print("Error: SCXML service request: service name is not valid.")
         if not valid_fields:
             print("Error: SCXML service request: fields are not valid.")
         return valid_name and valid_fields
@@ -261,6 +167,11 @@ class RosServiceSendRequest(ScxmlSend):
             print("Error: SCXML service request: invalid fields in request.")
             return False
         return True
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        for field in self._fields:
+            field.update_bt_ports_values(bt_ports_handler)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
@@ -322,13 +233,9 @@ class RosServiceHandleRequest(ScxmlTransition):
         assert self.check_validity(), "Error: SCXML Service Handle Request: invalid parameters."
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
-        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_name = is_non_empty_string(RosServiceHandleRequest, "name", self._service_name)
+        valid_target = is_non_empty_string(RosServiceHandleRequest, "target", self._target)
         valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_name:
-            print("Error: SCXML Service Handle Request: service name is not valid.")
-        if not valid_target:
-            print("Error: SCXML Service Handle Request: target is not valid.")
         if not valid_body:
             print("Error: SCXML Service Handle Request: body is not valid.")
         return valid_name and valid_target and valid_body
@@ -409,11 +316,9 @@ class RosServiceSendResponse(ScxmlSend):
         assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
+        valid_name = is_non_empty_string(RosServiceSendResponse, "name", self._service_name)
         valid_fields = self._fields is None or \
             all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
-        if not valid_name:
-            print("Error: SCXML service response: service name is not valid.")
         if not valid_fields:
             print("Error: SCXML service response: fields are not valid.")
         return valid_name and valid_fields
@@ -432,6 +337,11 @@ class RosServiceSendResponse(ScxmlSend):
             print("Error: SCXML service response: invalid fields in response.")
             return False
         return True
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        for field in self._fields:
+            field.update_bt_ports_values(bt_ports_handler)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
@@ -491,13 +401,9 @@ class RosServiceHandleResponse(ScxmlTransition):
         assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._service_name, str) and len(self._service_name) > 0
-        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_name = is_non_empty_string(RosServiceHandleResponse, "name", self._service_name)
+        valid_target = is_non_empty_string(RosServiceHandleResponse, "target", self._target)
         valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_name:
-            print("Error: SCXML Service Handle Response: service name is not valid.")
-        if not valid_target:
-            print("Error: SCXML Service Handle Response: target is not valid.")
         if not valid_body:
             print("Error: SCXML Service Handle Response: body is not valid.")
         return valid_name and valid_target and valid_body

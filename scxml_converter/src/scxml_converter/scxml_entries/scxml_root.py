@@ -202,20 +202,20 @@ class ScxmlRoot(ScxmlBase):
                                                     ros_declaration.get_rate())
                 elif isinstance(ros_declaration, RosTopicSubscriber):
                     ros_decl_container.append_subscriber(ros_declaration.get_name(),
-                                                         ros_declaration.get_topic_name(),
-                                                         ros_declaration.get_topic_type())
+                                                         ros_declaration.get_interface_name(),
+                                                         ros_declaration.get_interface_type())
                 elif isinstance(ros_declaration, RosTopicPublisher):
                     ros_decl_container.append_publisher(ros_declaration.get_name(),
-                                                        ros_declaration.get_topic_name(),
-                                                        ros_declaration.get_topic_type())
+                                                        ros_declaration.get_interface_name(),
+                                                        ros_declaration.get_interface_type())
                 elif isinstance(ros_declaration, RosServiceServer):
                     ros_decl_container.append_service_server(ros_declaration.get_name(),
-                                                             ros_declaration.get_service_name(),
-                                                             ros_declaration.get_service_type())
+                                                             ros_declaration.get_interface_name(),
+                                                             ros_declaration.get_interface_type())
                 elif isinstance(ros_declaration, RosServiceClient):
                     ros_decl_container.append_service_client(ros_declaration.get_name(),
-                                                             ros_declaration.get_service_name(),
-                                                             ros_declaration.get_service_type())
+                                                             ros_declaration.get_interface_name(),
+                                                             ros_declaration.get_interface_type())
                 else:
                     raise ValueError("Error: SCXML root: invalid ROS declaration type.")
         return ros_decl_container

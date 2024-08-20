@@ -24,17 +24,18 @@ from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend,
+    RosField, ScxmlExecutionBody, ScxmlRosDeclarationsContainer, ScxmlSend,
     ScxmlTransition, BtGetValueInputPort, as_plain_execution_body, execution_body_from_xml,
     valid_execution_body)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import is_msg_type_known, sanitize_ros_interface_name
+from scxml_converter.scxml_entries.ros_utils import (
+    RosDeclaration, is_msg_type_known, sanitize_ros_interface_name)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
-class RosTopicPublisher(ScxmlBase):
+class RosTopicPublisher(RosDeclaration):
     """Object used in SCXML root to declare a new topic publisher."""
 
     @staticmethod
@@ -53,74 +54,22 @@ class RosTopicPublisher(ScxmlBase):
             assert topic_name is not None, "Error: SCXML topic publisher: topic name not found."
         return RosTopicPublisher(topic_name, topic_type, pub_name)
 
-    def __init__(self,
-                 topic_name: Union[str, BtGetValueInputPort], topic_type: str,
-                 pub_name: Optional[str] = None) -> None:
-        """
-        Create a new ros_topic_publisher object instance.
-
-        By default, its alias is the same as the topic name, if that is defined as a string.
-        If the topic is defined as a BtGetValueInputPort, an alias must be provided.
-
-        :param topic_name: The name of the topic where messages are published.
-        :param topic_type: The type of the message to be published
-        :param pub_name: Alias used to reference the publisher in SCXML.
-        """
-        self._topic_type = topic_type
-        self._topic_name = topic_name
-        self._pub_name = pub_name
-        assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML topic publisher: invalid topic name."
-        if self._pub_name is None:
-            assert is_non_empty_string(RosTopicPublisher, "topic", self._topic_name), \
-                "Error: SCXML topic publisher: alias must be provided for dynamic topic names."
-            self._pub_name = self._topic_name
-
-    def check_validity(self) -> bool:
-        valid_topic_name = isinstance(self._topic_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
-        valid_type = is_msg_type_known(self._topic_type)
-        valid_alias = is_non_empty_string(RosTopicPublisher, "name", self._pub_name)
-        if not valid_type:
-            print("Error: SCXML topic subscriber: topic type is not valid.")
-        return valid_topic_name and valid_type and valid_alias
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosTopicPublisher, "topic", self._topic_name)
-
-    def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
-        """Get the name of the topic where messages are published."""
-        return self._topic_name
-
-    def get_topic_type(self) -> str:
-        """Get a string representation of the topic type."""
-        return self._topic_type
-
-    def get_name(self) -> str:
-        """Get the alias used to reference the publisher in SCXML."""
-        return self._pub_name
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """
-        Update the value of the BT ports used in the publisher, if any.
-        """
-        if isinstance(self._topic_name, BtGetValueInputPort):
-            self._topic_name = bt_ports_handler.get_in_port_value(self._topic_name.get_key_name())
-
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def check_valid_interface_type(self) -> bool:
+        if not is_msg_type_known(self._interface_type):
+            print(f"Error: SCXML RosTopicPublisher: invalid msg type {self._interface_type}.")
+            return False
+        return True
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+        assert self.check_validity(), "Error: RosTopicPublisher: invalid parameters."
         xml_topic_publisher = ET.Element(
             RosTopicPublisher.get_tag_name(),
-            {"name": self._pub_name, "topic": self._topic_name, "type": self._topic_type})
+            {"name": self._interface_alias,
+             "topic": self._interface_name, "type": self._interface_type})
         return xml_topic_publisher
 
 
-class RosTopicSubscriber(ScxmlBase):
+class RosTopicSubscriber(RosDeclaration):
     """Object used in SCXML root to declare a new topic subscriber."""
 
     @staticmethod
@@ -139,53 +88,18 @@ class RosTopicSubscriber(ScxmlBase):
             assert topic_name is not None, "Error: SCXML topic subscriber: topic name not found."
         return RosTopicSubscriber(topic_name, topic_type, sub_name)
 
-    def __init__(self, topic_name: Union[str, BtGetValueInputPort], topic_type: str,
-                 sub_name: Optional[str] = None) -> None:
-        self._topic_type = topic_type
-        self._topic_name = topic_name
-        self._sub_name = sub_name
-        assert isinstance(self._topic_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML topic subscriber: invalid topic name."
-        if self._sub_name is None:
-            assert is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name), \
-                "Error: SCXML topic subscriber: alias must be provided for dynamic topic names."
-            self._sub_name = self._topic_name
-
-    def check_validity(self) -> bool:
-        valid_name = isinstance(self._topic_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name)
-        valid_type = is_msg_type_known(self._topic_type)
-        valid_alias = is_non_empty_string(RosTopicSubscriber, "name", self._sub_name)
-        if not valid_type:
-            print("Error: SCXML topic subscriber: topic type is not valid.")
-        return valid_name and valid_type and valid_alias
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the topic subscriber has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosTopicSubscriber, "topic", self._topic_name)
-
-    def get_topic_name(self) -> Union[str, BtGetValueInputPort]:
-        return self._topic_name
-
-    def get_topic_type(self) -> str:
-        return self._topic_type
-
-    def get_name(self) -> str:
-        return self._sub_name
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        pass
-
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def check_valid_interface_type(self) -> bool:
+        if not is_msg_type_known(self._interface_type):
+            print(f"Error: SCXML RosTopicSubscriber: invalid msg type {self._interface_type}.")
+            return False
+        return True
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML topic subscriber: invalid parameters."
+        assert self.check_validity(), "Error: SCXML RosTopicSubscriber: invalid parameters."
         xml_topic_subscriber = ET.Element(
             RosTopicSubscriber.get_tag_name(),
-            {"name": self._sub_name, "topic": self._topic_name, "type": self._topic_type})
+            {"name": self._interface_alias,
+             "topic": self._interface_name, "type": self._interface_type})
         return xml_topic_subscriber
 
 
@@ -320,10 +234,6 @@ class RosTopicPublish(ScxmlSend):
             print(f"Error: SCXML topic publish: topic publisher {self._pub_name} not declared.")
         # TODO: Check for valid fields can be done here
         return topic_pub_declared
-
-    def append_param(self, param: ScxmlParam) -> None:
-        raise RuntimeError(
-            "Error: SCXML topic publish: cannot append scxml params, use append_field instead.")
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."

@@ -23,21 +23,20 @@ from typing import List, Optional, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
+    RosField, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
     as_plain_execution_body, execution_body_from_xml, valid_execution_body,
     ScxmlRosDeclarationsContainer)
 
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
-    is_action_type_known, generate_action_goal_req_event, generate_action_goal_accepted_event,
-    generate_action_goal_rejected_event, generate_action_feedback_handle_event,
-    generate_action_result_handle_event)
+    RosDeclaration, is_action_type_known, generate_action_goal_req_event,
+    generate_action_goal_accepted_event, generate_action_goal_rejected_event,
+    generate_action_feedback_handle_event, generate_action_result_handle_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
-class RosActionClient(ScxmlBase):
+class RosActionClient(RosDeclaration):
     """Object used in SCXML root to declare a new action client."""
 
     @staticmethod
@@ -54,66 +53,19 @@ class RosActionClient(ScxmlBase):
         action_type = get_xml_argument(RosActionClient, xml_tree, "type")
         return RosActionClient(action_name, action_type, action_alias)
 
-    def __init__(self, action_name: Union[str, BtGetValueInputPort], action_type: str,
-                 action_alias: Optional[str] = None) -> None:
-        """
-        Initialize a new RosActionClient object.
-
-        :param action_name: Comm. interface used by the action.
-        :param action_type: ROS type of the service.
-        :param action_alias: Alias for the service client, for the handler to reference to it
-        """
-        self._action_name = action_name
-        self._action_type = action_type
-        self._action_alias = action_alias
-        assert isinstance(action_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML Service Client: invalid service name."
-        if self._action_alias is None:
-            assert is_non_empty_string(RosActionClient, "action_name", self._action_name), \
-                "Error: SCXML Action Client: an alias name is required for dynamic action names."
-            self._action_alias = action_name
-
-    def get_action_name(self) -> str:
-        """Get the name of the action."""
-        return self._action_name
-
-    def get_action_type(self) -> str:
-        """Get the type of the action."""
-        return self._action_type
-
-    def get_name(self) -> str:
-        """Get the alias of the action client."""
-        return self._action_alias
-
-    def check_validity(self) -> bool:
-        valid_alias = is_non_empty_string(RosActionClient, "name", self._action_alias)
-        valid_action_name = isinstance(self._action_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosActionClient, "action_name", self._action_name)
-        valid_action_type = is_action_type_known(self._action_type)
-        if not valid_action_type:
-            print(f"Error: SCXML Action Client: action type {self._action_type} is not valid.")
-        return valid_alias and valid_action_name and valid_action_type
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosActionClient, "action_name", self._action_name)
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._action_name, BtGetValueInputPort):
-            self._action_name = bt_ports_handler.get_in_port_value(self._action_name.get_key_name())
-
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def check_valid_interface_type(self) -> bool:
+        if not is_action_type_known(self._interface_type):
+            print(f"Error: SCXML RosActionServer: invalid action type {self._interface_type}.")
+            return False
+        return True
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Action Client: invalid parameters."
         xml_action_server = ET.Element(
             RosActionClient.get_tag_name(),
-            {"name": self._action_alias,
-             "action_name": self._action_name,
-             "type": self._action_type})
+            {"name": self._interface_alias,
+             "action_name": self._interface_name,
+             "type": self._interface_type})
         return xml_action_server
 
 
