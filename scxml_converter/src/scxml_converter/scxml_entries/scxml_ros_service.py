@@ -48,7 +48,7 @@ class RosServiceServer(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceServer":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosServiceServer, xml_tree)
-        service_name = read_value_from_xml_arg_or_child(RosServiceServer, xml_tree, "service_name"
+        service_name = read_value_from_xml_arg_or_child(RosServiceServer, xml_tree, "service_name",
                                                         (BtGetValueInputPort, str))
         service_type = get_xml_argument(RosServiceServer, xml_tree, "type")
         service_alias = get_xml_argument(

@@ -63,27 +63,27 @@ def read_value_from_xml_child(
     """
     xml_child = xml_tree.findall(child_tag)
     if xml_child is None or len(xml_child) == 0:
-        print(f"Error reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
+        print(f"Warn: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
         return None
     if len(xml_child) > 1:
-        print(f"Error reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
+        print(f"Warn: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
         return None
     n_tag_children = len(xml_child[0])
     if n_tag_children == 0 and str in valid_types:
         # Try to read the text value
         text_value = xml_child[0].text
         if text_value is None or len(text_value) == 0:
-            print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no text value.")
+            print(f"Warn: reading from {xml_tree.tag}: Child '{child_tag}' has no text value.")
             return None
         return text_value
     if n_tag_children > 1:
-        print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has multiple children.")
+        print(f"Warn: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children.")
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
     scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
     if len(scxml_entry) == 0:
-        print(f"Error reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
+        print(f"Warn: reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
         return None
     return scxml_entry[0]
 
