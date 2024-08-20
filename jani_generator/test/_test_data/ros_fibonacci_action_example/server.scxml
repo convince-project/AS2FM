@@ -77,6 +77,7 @@
 
     <state id="idle">
         <ros_action_handle_goal name="act_srv" target="check_goal">
+            <assign location="next_goal_id" expr="_req.goal_id" />
             <assign location="order" expr="_req.order" />
         </ros_action_handle_goal>
         <ros_action_handle_cancel name="act_srv" target="cancel_goal">
@@ -102,8 +103,9 @@
         </onentry>
         <transition target="idle" cond="thread_to_start > 0">
             <!-- Basically sending an event... -->
-            <assign location="next_goal_id" expr="next_goal_id + 1" />
-            <ros_action_accept_goal name="act_srv" goal_id="next_goal_id" />
+            <ros_action_accept_goal name="act_srv">
+                <field name="goal_id" expr="next_goal_id" />
+            <ros_action_accept_goal />
             <!-- This send event could be wrapped in another method. Kept separated from 
              ros_action_accept_goal for flexibility. -->
             <!-- This should be expanded into multiple send events, one for each possible thread -->
@@ -114,7 +116,9 @@
         </transition>
         <!-- In case the prev. transition condition is not holding, reject! -->
         <transition target="idle">
-            <ros_action_reject_goal name="act_srv" />
+            <ros_action_reject_goal name="act_srv">
+                <field name="goal_id" expr="next_goal_id" />
+            </ros_action_reject_goal>
         </transition>
     </state>
 
