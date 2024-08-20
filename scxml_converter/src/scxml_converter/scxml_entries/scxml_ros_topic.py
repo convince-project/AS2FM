@@ -20,19 +20,17 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html
 """
 
-from typing import List, Optional, Union, Type
+from typing import List, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
     RosField, ScxmlRosDeclarationsContainer, ScxmlSend, BtGetValueInputPort,
     execution_body_from_xml)
-from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosDeclaration
+from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger, RosDeclaration
 
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (is_msg_type_known, generate_topic_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class RosTopicPublisher(RosDeclaration):
@@ -127,7 +125,7 @@ class RosTopicCallback(RosCallback):
         exec_body = execution_body_from_xml(xml_tree)
         return RosTopicCallback(sub_name, target, exec_body)
 
-    def check_valid_interface(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_subscriber_defined(self._interface_name)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
@@ -143,12 +141,16 @@ class RosTopicCallback(RosCallback):
         return xml_topic_callback
 
 
-class RosTopicPublish(ScxmlSend):
+class RosTopicPublish(RosTrigger):
     """Object representing the shipping of a ROS msg through a topic."""
 
     @staticmethod
     def get_tag_name() -> str:
         return "ros_topic_publish"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosTopicPublisher]:
+        return RosTopicPublisher
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> ScxmlSend:
@@ -162,61 +164,20 @@ class RosTopicPublish(ScxmlSend):
         fields: List[RosField] = get_children_as_scxml(xml_tree, (RosField,))
         return RosTopicPublish(pub_name, fields)
 
-    def __init__(self, topic_pub: Union[RosTopicPublisher, str],
-                 fields: Optional[List[RosField]] = None) -> None:
-        if fields is None:
-            fields = []
-        if isinstance(topic_pub, RosTopicPublisher):
-            self._pub_name = topic_pub.get_name()
-        else:
-            # Used for generating ROS entries from xml file
-            assert is_non_empty_string(RosTopicPublish, "name", topic_pub)
-            self._pub_name = topic_pub
-        self._fields = fields
-        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_publisher_defined(self._interface_name)
 
-    def check_validity(self) -> bool:
-        valid_pub_name = is_non_empty_string(RosTopicPublish, "name", self._pub_name)
-        valid_fields = self._fields is None or \
-            all([isinstance(field, RosField) and field.check_validity() for field in self._fields])
-        if not valid_fields:
-            print("Error: SCXML topic publish: fields are not valid.")
-        return valid_pub_name and valid_fields
+    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        # TODO: CHeck fields for topics, too
+        return True
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML topic publish: invalid ROS declarations container."
-        topic_pub_declared = ros_declarations.is_publisher_defined(self._pub_name)
-        if not topic_pub_declared:
-            print(f"Error: SCXML topic publish: topic publisher {self._pub_name} not declared.")
-        # TODO: Check for valid fields can be done here
-        return topic_pub_declared
-
-    def append_field(self, field: RosField) -> None:
-        assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
-        if self._fields is None:
-            self._fields = []
-        self._fields.append(field)
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        """Update the values of potential entries making use of BT ports."""
-        for field in self._fields:
-            field.update_bt_ports_values(bt_ports_handler)
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML topic publish: invalid ROS instantiations."
-        topic_name, _ = ros_declarations.get_publisher_info(self._pub_name)
-        event_name = generate_topic_event(topic_name)
-        params = None if self._fields is None else \
-            [field.as_plain_scxml(ros_declarations) for field in self._fields]
-        return ScxmlSend(event_name, params)
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_topic_event(ros_declarations.get_publisher_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
-        xml_topic_publish = ET.Element(RosTopicPublish.get_tag_name(), {"name": self._pub_name})
+        xml_topic_publish = ET.Element(RosTopicPublish.get_tag_name(),
+                                       {"name": self._interface_name})
         if self._fields is not None:
             for field in self._fields:
                 xml_topic_publish.append(field.as_xml())

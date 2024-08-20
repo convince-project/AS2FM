@@ -15,10 +15,10 @@
 
 """Collection of SCXML ROS Base classes to derive from."""
 
-from typing import Optional, Union, Type
+from typing import Optional, List, Union, Type
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlTransition, ScxmlExecutionBody, BtGetValueInputPort,
+    ScxmlBase, ScxmlTransition, ScxmlSend, ScxmlExecutionBody, RosField, BtGetValueInputPort,
     ScxmlRosDeclarationsContainer, as_plain_execution_body, valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -135,10 +135,10 @@ class RosCallback(ScxmlTransition):
             print(f"Error: SCXML {self.__class__}: invalid entries in executable body.")
         return valid_name and valid_target and valid_body
 
-    def check_valid_interface(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ROS interface used in the callback exists."""
         raise NotImplementedError(
-            f"{self.__class__.__name__} doesn't implement check_valid_interface.")
+            f"{self.__class__.__name__} doesn't implement check_interface_defined.")
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         """Translate the ROS interface name to a plain scxml event."""
@@ -150,18 +150,109 @@ class RosCallback(ScxmlTransition):
         """Check if the ROS entries in the callback are correctly defined."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             f"Error: SCXML {self.__class__}: invalid type of ROS declarations container."
-        if not self.check_valid_interface(ros_declarations):
+        if not self.check_interface_defined(ros_declarations):
             print(f"Error: SCXML {self.__class__}: undefined ROS interface {self._interface_name}.")
             return False
         valid_body = super().check_valid_ros_instantiations(ros_declarations)
         if not valid_body:
-            print(f"Error: SCXML {self.__class__}: body has invalid ROS instantiations.")
+            print(f"Error: SCXML {self.__class__}: "
+                  f"body of {self._interface_name} has invalid ROS instantiations.")
         return valid_body
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlBase:
         assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML topic callback: invalid ROS instantiations."
+            f"Error: SCXML {self.__class__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
         target = self._target
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], None, body)
+
+
+class RosTrigger(ScxmlSend):
+    """Base class for ROS triggers in SCXML."""
+
+    @classmethod
+    def get_tag_name(cls) -> str:
+        """XML tag name for the ROS trigger type."""
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+
+    @classmethod
+    def get_declaration_type(cls) -> Type[RosDeclaration]:
+        """
+        Get the type of ROS declaration related to the trigger.
+
+        Examples: RosServiceClient, RosActionClient, ...
+        """
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_declaration_type.")
+
+    def __init__(self, interface_decl: Union[str, RosDeclaration],
+                 fields: Optional[List[RosField]] = None) -> None:
+        """
+        Constructor of a generic ROS trigger.
+
+        :param interface_decl: ROS interface declaration to be used in the trigger, or its name.
+        :param fields: Name of fields that are sent together with the trigger.
+        """
+        if isinstance(interface_decl, self.get_declaration_type()):
+            self._interface_name = interface_decl.get_name()
+        else:
+            assert is_non_empty_string(self.__class__, "name", interface_decl)
+            self._interface_name = interface_decl
+        if fields is None:
+            fields = []
+        self._fields: List[RosField] = fields
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+
+    def append_field(self, field: RosField) -> None:
+        assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
+        if self._fields is None:
+            self._fields = []
+        self._fields.append(field)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        """Update the values of potential entries making use of BT ports."""
+        for field in self._fields:
+            field.update_bt_ports_values(bt_ports_handler)
+
+    def check_validity(self) -> bool:
+        valid_name = is_non_empty_string(self.__class__, "name", self._interface_name)
+        valid_fields = all(isinstance(field, RosField) for field in self._fields)
+        if not valid_fields:
+            print(f"Error: SCXML {self.__class__}: "
+                  f"invalid entries in fields of {self._interface_name}.")
+        return valid_name and valid_fields
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the ROS interface used in the trigger exists."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} doesn't implement check_interface_defined.")
+
+    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if all fields are assigned, given the ROS interface definition."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} doesn't implement check_fields_validity.")
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        """Translate the ROS interface name to a plain scxml event."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} doesn't implement get_plain_scxml_event.")
+
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the ROS entries in the trigger are correctly defined."""
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            f"Error: SCXML {self.__class__}: invalid type of ROS declarations container."
+        if not self.check_interface_defined(ros_declarations):
+            print(f"Error: SCXML {self.__class__}: undefined ROS interface {self._interface_name}.")
+            return False
+        if not self.check_fields_validity(ros_declarations):
+            print(f"Error: SCXML {self.__class__}: invalid fields for {self._interface_name}.")
+            return False
+        return True
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlBase:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            f"Error: SCXML {self.__class__}: invalid ROS instantiations."
+        event_name = self.get_plain_scxml_event(ros_declarations)
+        params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
+        return ScxmlSend(event_name, params)
