@@ -111,7 +111,7 @@ class RosTopicCallback(RosCallback):
         return "ros_topic_callback"
 
     @staticmethod
-    def get_declaration_type() -> Type[RosDeclaration]:
+    def get_declaration_type() -> Type[RosTopicSubscriber]:
         return RosTopicSubscriber
 
     @staticmethod
@@ -135,8 +135,8 @@ class RosTopicCallback(RosCallback):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
-        xml_topic_callback = ET.Element(
-            "ros_topic_callback", {"name": self._interface_name, "target": self._target})
+        xml_topic_callback = ET.Element(RosTopicCallback.get_tag_name(),
+                                        {"name": self._interface_name, "target": self._target})
         if self._body is not None:
             for entry in self._body:
                 xml_topic_callback.append(entry.as_xml())
