@@ -33,7 +33,7 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -48,14 +48,11 @@ class RosServiceServer(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceServer":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosServiceServer, xml_tree)
-        service_name = get_xml_argument(
-            RosServiceServer, xml_tree, "service_name", none_allowed=True)
+        service_name = read_value_from_xml_arg_or_child(RosServiceServer, xml_tree, "service_name"
+                                                        (BtGetValueInputPort, str))
         service_type = get_xml_argument(RosServiceServer, xml_tree, "type")
         service_alias = get_xml_argument(
             RosServiceServer, xml_tree, "name", none_allowed=True)
-        if service_name is None:
-            service_name = read_value_from_xml_child(xml_tree, "service_name",
-                                                     (BtGetValueInputPort, str))
         return RosServiceServer(service_name, service_type, service_alias)
 
     def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
@@ -63,7 +60,7 @@ class RosServiceServer(ScxmlBase):
         """
         Initialize a new RosServiceServer object.
 
-        :param srv_name: Service name used by the service for communication.
+        :param srv_name: Service name used for communication.
         :param srv_type: ROS type of the service.
         :param srv_alias: Alias for the service server, for the handler to reference to it
         """
@@ -90,13 +87,13 @@ class RosServiceServer(ScxmlBase):
         return self._srv_alias
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
-        valid_type = is_srv_type_known(self._srv_type)
-        if not valid_name:
-            print("Error: SCXML Service Server: service name is not valid.")
-        if not valid_type:
+        valid_alias = is_non_empty_string(RosServiceServer, "name", self._srv_alias)
+        valid_srv_name = isinstance(self._srv_name, BtGetValueInputPort) or \
+            is_non_empty_string(RosServiceServer, "service_name", self._srv_name)
+        valid_srv_type = is_srv_type_known(self._srv_type)
+        if not valid_srv_type:
             print("Error: SCXML Service Server: service type is not valid.")
-        return valid_name and valid_type
+        return valid_alias and valid_srv_name and valid_srv_type
 
     def check_valid_instantiation(self) -> bool:
         """Check if the service server has undefined entries (i.e. from BT ports)."""
@@ -104,7 +101,8 @@ class RosServiceServer(ScxmlBase):
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
-        pass
+        if isinstance(self._srv_name, BtGetValueInputPort):
+            self._srv_name = bt_ports_handler.get_in_port_value(self._srv_name.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
@@ -129,14 +127,11 @@ class RosServiceClient(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
         """Create a RosServiceClient object from an XML tree."""
         assert_xml_tag_ok(RosServiceClient, xml_tree)
-        service_name = get_xml_argument(
-            RosServiceClient, xml_tree, "service_name", none_allowed=True)
+        service_name = read_value_from_xml_arg_or_child(RosServiceClient, xml_tree, "service_name",
+                                                        (BtGetValueInputPort, str))
         service_type = get_xml_argument(RosServiceClient, xml_tree, "type")
         service_alias = get_xml_argument(
             RosServiceClient, xml_tree, "name", none_allowed=True)
-        if service_name is None:
-            service_name = read_value_from_xml_child(xml_tree, "service_name",
-                                                     (BtGetValueInputPort, str))
         return RosServiceClient(service_name, service_type, service_alias)
 
     def __init__(self, srv_name: Union[str, BtGetValueInputPort], srv_type: str,
@@ -144,7 +139,7 @@ class RosServiceClient(ScxmlBase):
         """
         Initialize a new RosServiceClient object.
 
-        :param srv_name: Topic used by the service.
+        :param srv_name: Service name used for communication.
         :param srv_type: ROS type of the service.
         :param srv_alias: Alias for the service client, for the handler to reference to it
         """
@@ -171,13 +166,13 @@ class RosServiceClient(ScxmlBase):
         return self._srv_alias
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._srv_name, str) and len(self._srv_name) > 0
-        valid_type = is_srv_type_known(self._srv_type)
-        if not valid_name:
-            print("Error: SCXML Service Client: service name is not valid.")
-        if not valid_type:
+        valid_alias = is_non_empty_string(RosServiceClient, "name", self._srv_alias)
+        valid_srv_name = isinstance(self._srv_name, BtGetValueInputPort) or \
+            is_non_empty_string(RosServiceClient, "service_name", self._srv_name)
+        valid_srv_type = is_srv_type_known(self._srv_type)
+        if not valid_srv_type:
             print("Error: SCXML Service Client: service type is not valid.")
-        return valid_name and valid_type
+        return valid_alias and valid_srv_name and valid_srv_type
 
     def check_valid_instantiation(self) -> bool:
         """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
@@ -185,7 +180,8 @@ class RosServiceClient(ScxmlBase):
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
-        pass
+        if isinstance(self._srv_name, BtGetValueInputPort):
+            self._srv_name = bt_ports_handler.get_in_port_value(self._srv_name.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
@@ -208,7 +204,7 @@ class RosServiceSendRequest(ScxmlSend):
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendRequest":
-        """Create a RosServiceServer object from an XML tree."""
+        """Create a RosServiceSendRequest object from an XML tree."""
         assert_xml_tag_ok(RosServiceSendRequest, xml_tree)
         srv_name = get_xml_argument(RosServiceSendRequest, xml_tree, "name", none_allowed=True)
         if srv_name is None:
@@ -294,7 +290,7 @@ class RosServiceHandleRequest(ScxmlTransition):
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleRequest":
-        """Create a RosServiceServer object from an XML tree."""
+        """Create a RosServiceHandleRequest object from an XML tree."""
         assert_xml_tag_ok(RosServiceHandleRequest, xml_tree)
         srv_name = get_xml_argument(RosServiceHandleRequest, xml_tree, "name", none_allowed=True)
         if srv_name is None:
@@ -379,7 +375,7 @@ class RosServiceSendResponse(ScxmlSend):
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceSendResponse":
-        """Create a RosServiceServer object from an XML tree."""
+        """Create a RosServiceSendResponse object from an XML tree."""
         assert_xml_tag_ok(RosServiceSendResponse, xml_tree)
         srv_name = get_xml_argument(RosServiceSendResponse, xml_tree, "name", none_allowed=True)
         if srv_name is None:
@@ -464,7 +460,7 @@ class RosServiceHandleResponse(ScxmlTransition):
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosServiceHandleResponse":
-        """Create a RosServiceServer object from an XML tree."""
+        """Create a RosServiceHandleResponse object from an XML tree."""
         assert_xml_tag_ok(RosServiceHandleResponse, xml_tree)
         srv_name = get_xml_argument(RosServiceHandleResponse, xml_tree, "name", none_allowed=True)
         if srv_name is None:

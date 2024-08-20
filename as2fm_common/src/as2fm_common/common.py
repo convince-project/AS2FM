@@ -19,20 +19,25 @@ Common functionalities used throughout the toolchain.
 
 from typing import List, Union
 
-ValidTypes = Union[bool, int, float, List[int], List[float]]
-"""We define the basic types that are supported by the Jani language:
+"""
+Set of basic types that are supported by the Jani language.
 
-// Types
-// We cover only the most basic types at the moment.
-// In the remainder of the specification, all requirements like "y must be of type x" are to be interpreted
-// as "type x must be assignable from y's type".
+Basic types (from Jani docs):
+Types
+We cover only the most basic types at the moment.
+In the remainder of the specification, all requirements like "y must be of type x" are to be
+interpreted as "type x must be assignable from y's type".
 var BasicType = schema([
 "bool", // assignable from bool
 "int", // numeric; assignable from int and bounded int
 "real" // numeric; assignable from all numeric types
 ]);
 src https://docs.google.com/document/d/\
-    1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit"""
+    1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
+
+Additionally, we support the array types from the array extension.
+"""
+ValidTypes = Union[bool, int, float, List[int], List[float]]
 
 
 def ros_type_name_to_python_type(type_str: str) -> type:
@@ -51,6 +56,10 @@ def ros_type_name_to_python_type(type_str: str) -> type:
         return int
     if type_str in ['float32', 'float64']:
         return float
+    if type_str in ['sequence<int32>', 'sequence<int64>']:
+        return List[int]
+    if type_str in ['sequence<float32>', 'sequence<float64>']:
+        return List[float]
     raise NotImplementedError(f"Type {type_str} not supported.")
 
 
