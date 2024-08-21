@@ -19,24 +19,20 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Optional, Union, Type
+from typing import List, Union, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlBase, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
-    as_plain_execution_body, execution_body_from_xml, valid_execution_body,
-    ScxmlRosDeclarationsContainer)
+    RosField, BtGetValueInputPort, ScxmlRosDeclarationsContainer, execution_body_from_xml)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_handle_event,
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
     generate_action_thread_execution_start_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class RosActionServer(RosDeclaration):
@@ -243,12 +239,10 @@ class RosActionStartThread(RosTrigger):
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        if not any([field.get_name() == "goal_id" for field in self._fields]):
-            print(f"Error: SCXML {self.__class__}: goal_id not defined.")
-            return False
-        goal_fields = [field for field in self._fields if field.get_name() != "goal_id"]
-        if not ros_declarations.check_valid_action_goal_fields(self._interface_name, goal_fields):
-            print(f"Error: SCXML {self.__class__}: invalid fields in goal request.")
+        if not ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields,
+                                                               has_goal_id=True):
+            print(f"Error: SCXML {self.__class__}: "
+                  f"invalid fields in goal request {self._interface_name}.")
             return False
         return True
 
@@ -258,161 +252,92 @@ class RosActionStartThread(RosTrigger):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
-        xml_thread_start_req = ET.Element(RosActionStartThread.get_tag_name(), {
-            "name": self._interface_name, "thread_id": self._thread_id})
+        xml_thread_start_req = ET.Element(RosActionStartThread.get_tag_name(),
+                                          {"name": self._interface_name,
+                                           "thread_id": self._thread_id})
         if self._fields is not None:
             for field in self._fields:
                 xml_thread_start_req.append(field.as_xml())
         return xml_thread_start_req
 
 
-class RosActionSendFeedback(ScxmlSend):
+class RosActionSendFeedback(RosTrigger):
     """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_send_goal"
+        return "ros_action_feedback"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendGoal":
-        """Create a RosActionSendGoal object from an XML tree."""
-        assert_xml_tag_ok(RosActionSendGoal, xml_tree)
-        action_name = get_xml_argument(RosActionSendGoal, xml_tree, "name")
+    def get_declaration_type() -> Type[RosActionServer]:
+        return RosActionServer
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendFeedback":
+        """Create a RosActionSendFeedback object from an XML tree."""
+        assert_xml_tag_ok(RosActionSendFeedback, xml_tree)
+        action_name = get_xml_argument(RosActionSendFeedback, xml_tree, "name")
         fields: List[RosField] = []
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionSendGoal(action_name, fields)
+        return RosActionSendFeedback(action_name, fields)
 
-    def __init__(self, action_client: Union[str, RosActionClient],
-                 fields: List[RosField] = None) -> None:
-        """
-        Initialize a new RosActionSendGoal object.
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_server_defined(self._interface_name)
 
-        :param action_client: The ActionClient object used by the sender, or its name.
-        :param fields: List of fields to be sent in the goal request.
-        """
-        if isinstance(action_client, RosActionClient):
-            self._client_name = action_client.get_name()
-        else:
-            assert is_non_empty_string(RosActionSendGoal, "name", action_client)
-            self._client_name = action_client
-        if fields is None:
-            fields = []
-        self._fields = fields
-        assert self.check_validity(), "Error: SCXML Action Goal Request: invalid parameters."
-
-    def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(RosActionSendGoal, "name", self._client_name)
-        valid_fields = all([isinstance(field, RosField) and field.check_validity()
-                            for field in self._fields])
-        if not valid_fields:
-            print("Error: SCXML service request: fields are not valid.")
-        return valid_name and valid_fields
-
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML action goal request: invalid ROS declarations container."
-        if not ros_declarations.is_action_client_defined(self._client_name):
-            print("Error: SCXML action goal request: "
-                  f"action client {self._client_name} not declared.")
-            return False
-        if not ros_declarations.check_valid_action_goal_fields(self._client_name, self._fields):
-            print("Error: SCXML action goal request: invalid fields in request.")
-            return False
-        return True
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML action goal request: invalid ROS instantiations."
-        automaton_name = ros_declarations.get_automaton_name()
-        action_interface, _ = ros_declarations.get_action_client_info(self._client_name)
-        event_name = generate_action_goal_req_event(action_interface, automaton_name)
-        event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
-        return ScxmlSend(event_name, event_params)
+    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the goal_id and the request fields have been defined."""
+        if not ros_declarations.check_valid_action_feedback_fields(self._interface_name,
+                                                                   self._fields, has_goal_id=True):
+            print(f"Error: SCXML {self.__class__}: "
+                  f"invalid fields in feedback request {self._interface_name}.")
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML action goal Request: invalid parameters."
-        xml_goal_request = ET.Element(RosActionSendGoal.get_tag_name(), {
-            "name": self._client_name})
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_action_feedback = ET.Element(RosActionSendFeedback.get_tag_name(),
+                                         {"name": self._interface_name})
         if self._fields is not None:
             for field in self._fields:
-                xml_goal_request.append(field.as_xml())
-        return xml_goal_request
+                xml_action_feedback.append(field.as_xml())
+        return xml_action_feedback
 
 
-class RosActionSendResult(ScxmlSend):
+class RosActionSendResult(RosTrigger):
     """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_send_goal"
+        return "ros_action_succeed"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendGoal":
-        """Create a RosActionSendGoal object from an XML tree."""
-        assert_xml_tag_ok(RosActionSendGoal, xml_tree)
-        action_name = get_xml_argument(RosActionSendGoal, xml_tree, "name")
+    def get_declaration_type() -> Type[RosActionServer]:
+        return RosActionServer
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendResult":
+        """Create a RosActionSendResult object from an XML tree."""
+        assert_xml_tag_ok(RosActionSendResult, xml_tree)
+        action_name = get_xml_argument(RosActionSendResult, xml_tree, "name")
         fields: List[RosField] = []
         for field_xml in xml_tree:
             fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionSendGoal(action_name, fields)
+        return RosActionSendResult(action_name, fields)
 
-    def __init__(self, action_client: Union[str, RosActionClient],
-                 fields: List[RosField] = None) -> None:
-        """
-        Initialize a new RosActionSendGoal object.
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_server_defined(self._interface_name)
 
-        :param action_client: The ActionClient object used by the sender, or its name.
-        :param fields: List of fields to be sent in the goal request.
-        """
-        if isinstance(action_client, RosActionClient):
-            self._client_name = action_client.get_name()
-        else:
-            assert is_non_empty_string(RosActionSendGoal, "name", action_client)
-            self._client_name = action_client
-        if fields is None:
-            fields = []
-        self._fields = fields
-        assert self.check_validity(), "Error: SCXML Action Goal Request: invalid parameters."
-
-    def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(RosActionSendGoal, "name", self._client_name)
-        valid_fields = all([isinstance(field, RosField) and field.check_validity()
-                            for field in self._fields])
-        if not valid_fields:
-            print("Error: SCXML service request: fields are not valid.")
-        return valid_name and valid_fields
-
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML action goal request: invalid ROS declarations container."
-        if not ros_declarations.is_action_client_defined(self._client_name):
-            print("Error: SCXML action goal request: "
-                  f"action client {self._client_name} not declared.")
-            return False
-        if not ros_declarations.check_valid_action_goal_fields(self._client_name, self._fields):
-            print("Error: SCXML action goal request: invalid fields in request.")
-            return False
-        return True
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML action goal request: invalid ROS instantiations."
-        automaton_name = ros_declarations.get_automaton_name()
-        action_interface, _ = ros_declarations.get_action_client_info(self._client_name)
-        event_name = generate_action_goal_req_event(action_interface, automaton_name)
-        event_params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
-        return ScxmlSend(event_name, event_params)
+    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the goal_id and the request fields have been defined."""
+        if not ros_declarations.check_valid_action_result_fields(self._interface_name,
+                                                                 self._fields, has_goal_id=True):
+            print(f"Error: SCXML {self.__class__}: "
+                  f"invalid fields in result request {self._interface_name}.")
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML action goal Request: invalid parameters."
-        xml_goal_request = ET.Element(RosActionSendGoal.get_tag_name(), {
-            "name": self._client_name})
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_action_result = ET.Element(RosActionSendResult.get_tag_name(),
+                                       {"name": self._interface_name})
         if self._fields is not None:
             for field in self._fields:
-                xml_goal_request.append(field.as_xml())
-        return xml_goal_request
+                xml_action_result.append(field.as_xml())
+        return xml_action_result
