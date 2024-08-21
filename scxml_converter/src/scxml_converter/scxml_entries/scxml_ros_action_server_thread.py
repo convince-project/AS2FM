@@ -19,19 +19,18 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlRoot, ScxmlDataModel, ScxmlExecutionBody, ScxmlSend, ScxmlTransition, BtGetValueInputPort,
-    as_plain_execution_body, execution_body_from_xml, valid_execution_body,
-    ScxmlRosDeclarationsContainer)
+    ScxmlRoot, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition,
+    ScxmlRosDeclarationsContainer, as_plain_execution_body,
+    execution_body_from_xml, valid_execution_body)
+from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import (
-    is_action_type_known)
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child, get_children_as_scxml)
+    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -50,77 +49,99 @@ class RosActionThread(ScxmlRoot):
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_argument(RosActionThread, xml_tree, "name")
         n_threads = get_xml_argument(RosActionThread, xml_tree, "n_threads")
+        n_threads = int(n_threads)
+        assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
         initial_state = get_xml_argument(RosActionThread, xml_tree, "initial_state")
         datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
-        ros_declarations: List[ScxmlRosDeclarations] = get_children_as_scxml(
-            xml_tree, get_args(ScxmlRosDeclarations))
-        # TODO: Append the action server to the ROS declarations in the thread, somehow
+        # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
+        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
+        assert scxml_states > 0, "Error: SCXML Action Thread: no states defined."
+        # The non-plain SCXML Action thread has the same name as the action
+        scxml_action_thread = RosActionThread(action_alias, n_threads)
+        # Fill the thread with the states and datamodel
+        if len(datamodel) == 1:
+            scxml_action_thread.set_data_model(datamodel[0])
+        for scxml_state in scxml_states:
+            is_initial = scxml_state.get_id() == initial_state
+            scxml_action_thread.add_state(scxml_state, initial=is_initial)
+        return scxml_action_thread
 
-        action_name = read_value_from_xml_arg_or_child(RosActionThread, xml_tree, "action_name",
-                                                       (BtGetValueInputPort, str))
-        action_type = get_xml_argument(RosActionClient, xml_tree, "type")
-        return RosActionClient(action_name, action_type, action_alias)
+    @staticmethod
+    def from_scxml_file(_):
+        raise RuntimeError("Error: Cannot load a RosActionThread directly from SCXML file.")
 
-    def __init__(self, action_name: Union[str, BtGetValueInputPort], action_type: str,
-                 action_alias: Optional[str] = None) -> None:
+    def __init__(self, action_server: Union[str, RosActionServer], n_threads: int) -> None:
         """
-        Initialize a new RosActionClient object.
+        Initialize a new RosActionThread object.
 
-        :param action_name: Comm. interface used by the action.
-        :param action_type: ROS type of the service.
-        :param action_alias: Alias for the service client, for the handler to reference to it
+        :param action_server: ActionServer declaration, or its alias name.
+        :param n_threads: Max. n. of parallel action requests that can be handled.
         """
-        self._action_name = action_name
-        self._action_type = action_type
-        self._action_alias = action_alias
-        assert isinstance(action_name, (str, BtGetValueInputPort)), \
-            "Error: SCXML Service Client: invalid service name."
-        if self._action_alias is None:
-            assert is_non_empty_string(RosActionClient, "action_name", self._action_name), \
-                "Error: SCXML Action Client: an alias name is required for dynamic action names."
-            self._action_alias = action_name
-
-    def get_action_name(self) -> str:
-        """Get the name of the action."""
-        return self._action_name
-
-    def get_action_type(self) -> str:
-        """Get the type of the action."""
-        return self._action_type
-
-    def get_name(self) -> str:
-        """Get the alias of the action client."""
-        return self._action_alias
-
-    def check_validity(self) -> bool:
-        valid_alias = is_non_empty_string(RosActionClient, "name", self._action_alias)
-        valid_action_name = isinstance(self._action_name, BtGetValueInputPort) or \
-            is_non_empty_string(RosActionClient, "action_name", self._action_name)
-        valid_action_type = is_action_type_known(self._action_type)
-        if not valid_action_type:
-            print(f"Error: SCXML Action Client: action type {self._action_type} is not valid.")
-        return valid_alias and valid_action_name and valid_action_type
-
-    def check_valid_instantiation(self) -> bool:
-        """Check if the topic publisher has undefined entries (i.e. from BT ports)."""
-        return is_non_empty_string(RosActionClient, "action_name", self._action_name)
+        if isinstance(action_server, RosActionServer):
+            action_name = action_server.get_name()
+        else:
+            assert is_non_empty_string(RosActionThread, "name", action_server)
+            action_name = action_server
+        self._n_threads = n_threads
+        super().__init__(action_name)
+        del self._ros_declarations  # The ROS declarations should be externally provided
+        del self._bt_ports_handler  # The BT ports should be externally provided
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._action_name, BtGetValueInputPort):
-            self._action_name = bt_ports_handler.get_in_port_value(self._action_name.get_key_name())
+        # TODO
+        pass
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlRoot:
-        raise NotImplementedError("Error: This should return a ScxmlRoot.")
+    def check_validity(self) -> bool:
+        # TODO
+        pass
+
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        # TODO
+        pass
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlRoot]:
+        """Convert the ROS-specific entries to be plain SCXML"""
+        # TODO
+        pass
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Action Client: invalid parameters."
-        xml_action_server = ET.Element(
-            RosActionClient.get_tag_name(),
-            {"name": self._action_alias,
-             "action_name": self._action_name,
-             "type": self._action_type})
-        return xml_action_server
+        assert self.check_validity(), "SCXML: found invalid state object."
+        # TODO
+        pass
+
+    # Disable a bunch of unneeded methods
+    def instantiate_bt_events(self, _) -> None:
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'instantiate_bt_events'.")
+
+    def add_ros_declaration(self, _):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'add_ros_declaration'.")
+
+    def add_bt_port_declaration(self, _):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'add_bt_port_declaration'.")
+
+    def set_bt_port_value(self, _, __):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'set_bt_port_values'.")
+
+    def set_bt_ports_values(self, _):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'set_bt_ports_values'.")
+
+    def _generate_ros_declarations_helper(self):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method "
+                           "'_generate_ros_declarations_helper'.")
+
+    def _check_valid_ros_declarations(self):
+        raise RuntimeError(
+            "Error: SCXML Action Thread: deleted method '_check_valid_ros_declarations': "
+            "use 'check_valid_ros_instantiations' instead (no underscore).")
+
+    def is_plain_scxml(self):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method 'is_plain_scxml'.")
+
+    def to_plain_scxml_and_declarations(self):
+        raise RuntimeError("Error: SCXML Action Thread: deleted method "
+                           "'to_plain_scxml_and_declarations'.")
 
 
 class RosActionHandleThreadStart(ScxmlTransition):

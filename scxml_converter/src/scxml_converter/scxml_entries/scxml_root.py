@@ -27,11 +27,11 @@ from scxml_converter.scxml_entries import (
     RosTimeRate, RosTopicPublisher, RosTopicSubscriber, ScxmlBase, ScxmlDataModel,
     ScxmlRosDeclarations, ScxmlRosDeclarationsContainer, ScxmlState)
 
-from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
-
 from scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class ScxmlRoot(ScxmlBase):
@@ -111,7 +111,7 @@ class ScxmlRoot(ScxmlBase):
 
     def set_name(self, name: str) -> None:
         """Rename the automaton represented by this SCXML model."""
-        assert isinstance(name, str) and len(name) > 0, "Error: SCXML root: invalid name."
+        assert is_non_empty_string(ScxmlRoot, "name", name)
         self._name = name
 
     def get_initial_state_id(self) -> str:
