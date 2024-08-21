@@ -27,7 +27,8 @@ from scxml_converter.scxml_entries import (
     RosTimeRate, RosTopicPublisher, RosTopicSubscriber, ScxmlBase, ScxmlDataModel,
     ScxmlRosDeclarations, ScxmlRosDeclarationsContainer, ScxmlState)
 
-from scxml_converter.scxml_entries.xml_utils import get_children_as_scxml
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
 
 from scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -44,15 +45,15 @@ class ScxmlRoot(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
-        assert xml_tree.tag == ScxmlRoot.get_tag_name(), \
-            f"Error: SCXML root: XML root tag {xml_tree.tag} is not {ScxmlRoot.get_tag_name()}."
-        assert "name" in xml_tree.attrib, \
-            "Error: SCXML root: 'name' attribute not found in input xml."
-        assert "version" in xml_tree.attrib and xml_tree.attrib["version"] == "1.0", \
-            "Error: SCXML root: 'version' attribute not found or invalid in input xml."
+        assert_xml_tag_ok(ScxmlRoot, xml_tree)
+        scxml_name = get_xml_argument(ScxmlRoot, xml_tree, "name")
+        scxml_version = get_xml_argument(ScxmlRoot, xml_tree, "version")
+        assert scxml_version == "1.0", \
+            f"Error: SCXML root: expected version 1.0, found {scxml_version}."
+        scxml_init_state = get_xml_argument(ScxmlRoot, xml_tree, "initial")
         # Data Model
-        datamodel_elements = xml_tree.findall(ScxmlDataModel.get_tag_name())
-        assert datamodel_elements is None or len(datamodel_elements) <= 1, \
+        datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        assert len(datamodel_elements) <= 1, \
             f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
         ros_declarations: List[ScxmlRosDeclarations] = get_children_as_scxml(
@@ -61,26 +62,21 @@ class ScxmlRoot(ScxmlBase):
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
             xml_tree, get_args(BtPortDeclarations))
         # States
-        assert "initial" in xml_tree.attrib, \
-            "Error: SCXML root: 'initial' attribute not found in input xml."
-        initial_state = xml_tree.attrib["initial"]
-        state_elements = xml_tree.findall(ScxmlState.get_tag_name())
-        assert state_elements is not None and len(state_elements) > 0, \
-            "Error: SCXML root: no state found in input xml."
+        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the ScxmlRoot object
-        scxml_root = ScxmlRoot(xml_tree.attrib["name"])
+        scxml_root = ScxmlRoot(scxml_name)
         # Data Model
-        if datamodel_elements is not None and len(datamodel_elements) > 0:
-            scxml_root.set_data_model(ScxmlDataModel.from_xml_tree(datamodel_elements[0]))
+        if len(datamodel_elements) > 0:
+            scxml_root.set_data_model(datamodel_elements[0])
         # ROS Declarations
         scxml_root._ros_declarations = ros_declarations
         # BT Declarations
         for bt_port_declaration in bt_port_declarations:
             scxml_root.add_bt_port_declaration(bt_port_declaration)
         # States
-        for state_element in state_elements:
-            scxml_state = ScxmlState.from_xml_tree(state_element)
-            is_initial = scxml_state.get_id() == initial_state
+        for scxml_state in scxml_states:
+            is_initial = scxml_state.get_id() == scxml_init_state
             scxml_root.add_state(scxml_state, initial=is_initial)
         return scxml_root
 
