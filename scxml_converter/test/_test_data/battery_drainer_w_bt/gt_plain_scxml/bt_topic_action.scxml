@@ -1,4 +1,4 @@
-<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="TopicAction" model_src="">
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="BtTopicAction" model_src="">
 
     <state id="initial">
         <transition event="bt_tick" target="initial">

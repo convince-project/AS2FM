@@ -1,4 +1,4 @@
-<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="TopicCondition" model_src="">
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="BtTopicCondition" model_src="">
 
     <datamodel>
         <data id="last_msg" expr="False" type="bool" />

@@ -258,25 +258,34 @@ class ScxmlRoot(ScxmlBase):
         # If this is a valid scxml object, checking the absence of declarations is enough
         return self._ros_declarations is None or len(self._ros_declarations) == 0
 
-    def to_plain_scxml_and_declarations(self) -> Tuple["ScxmlRoot", ScxmlRosDeclarationsContainer]:
+    def to_plain_scxml_and_declarations(self) -> Tuple[List["ScxmlRoot"],
+                                                       ScxmlRosDeclarationsContainer]:
         """
         Convert all internal ROS specific entries to plain SCXML.
 
         :return: A tuple with:
-            - a new ScxmlRoot object with all ROS specific entries converted to plain SCXML
-            - A list of timers with related rate in Hz
+            - a list of ScxmlRoot objects with all ROS specific entries converted to plain SCXML
+            - The Ros declarations contained in the original SCXML object
         """
         if self.is_plain_scxml():
-            return self, ScxmlRosDeclarationsContainer(self._name)
+            return [self], ScxmlRosDeclarationsContainer(self._name)
+        converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
-        plain_root = ScxmlRoot(self._name)
-        plain_root._data_model = deepcopy(self._data_model)
-        plain_root._initial_state = self._initial_state
+        main_scxml = ScxmlRoot(self._name)
+        main_scxml._data_model = deepcopy(self._data_model)
+        main_scxml._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
         assert ros_declarations is not None, "Error: SCXML root: invalid ROS declarations."
-        plain_root._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
-        assert plain_root.is_plain_scxml(), "SCXML root: conversion to plain SCXML failed."
-        return (plain_root, ros_declarations)
+        main_scxml._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
+        converted_scxmls.append(main_scxml)
+        for plain_scxml in converted_scxmls:
+            assert plain_scxml.check_validity(), \
+                f"The SCXML root object {plain_scxml.get_name()} is not valid: " \
+                "conversion to plain SCXML failed."
+            assert plain_scxml.is_plain_scxml(), \
+                f"The SCXML root object {plain_scxml.get_name()} is not plain SCXML: " \
+                "conversion to plain SCXML failed."
+        return (converted_scxmls, ros_declarations)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."

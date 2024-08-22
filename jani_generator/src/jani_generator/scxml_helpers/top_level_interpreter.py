@@ -141,7 +141,7 @@ def generate_plain_scxml_models_and_timers(
     all_timers: List[RosTimer] = []
     all_services: RosServices = {}
     for scxml_entry in ros_scxmls:
-        plain_scxml, ros_declarations = \
+        plain_scxmls, ros_declarations = \
             scxml_entry.to_plain_scxml_and_declarations()
         # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
@@ -153,13 +153,13 @@ def generate_plain_scxml_models_and_timers(
             if service_name not in all_services:
                 all_services[service_name] = RosService()
             all_services[service_name].append_service_client(
-                service_name, service_type, plain_scxml.get_name())
+                service_name, service_type, scxml_entry.get_name())
         for service_name, service_type in ros_declarations._service_servers.values():
             if service_name not in all_services:
                 all_services[service_name] = RosService()
             all_services[service_name].set_service_server(
-                service_name, service_type, plain_scxml.get_name())
-        plain_scxml_models.append(plain_scxml)
+                service_name, service_type, scxml_entry.get_name())
+        plain_scxml_models.extend(plain_scxmls)
     # Generate service sync SCXML models
     for service_info in all_services.values():
         plain_scxml_models.append(service_info.to_scxml())

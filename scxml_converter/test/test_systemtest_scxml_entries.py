@@ -131,7 +131,7 @@ def test_bt_action_with_ports_from_code():
             RosTopicPublish(topic_publisher, [RosField("data", "number")])
         ])
     ])
-    scxml_root = ScxmlRoot("TopicAction")
+    scxml_root = ScxmlRoot("BtTopicAction")
     scxml_root.set_data_model(data_model)
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))
