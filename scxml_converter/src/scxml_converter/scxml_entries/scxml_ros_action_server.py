@@ -30,7 +30,8 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_handle_event,
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
-    generate_action_thread_execution_start_event)
+    generate_action_thread_execution_start_event, generate_action_feedback_event,
+    generate_action_result_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 
@@ -292,6 +293,10 @@ class RosActionSendFeedback(RosTrigger):
             print(f"Error: SCXML {self.__class__}: "
                   f"invalid fields in feedback request {self._interface_name}.")
 
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_feedback_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0])
+
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
         xml_action_feedback = ET.Element(RosActionSendFeedback.get_tag_name(),
@@ -332,6 +337,10 @@ class RosActionSendResult(RosTrigger):
                                                                  self._fields, has_goal_id=True):
             print(f"Error: SCXML {self.__class__}: "
                   f"invalid fields in result request {self._interface_name}.")
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_result_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
