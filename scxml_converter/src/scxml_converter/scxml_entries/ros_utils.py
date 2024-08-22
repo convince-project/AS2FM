@@ -17,7 +17,7 @@
 
 from typing import Any, Dict, List, Tuple, Type
 
-from scxml_converter.scxml_entries.scxml_ros_field import RosField
+from scxml_converter.scxml_entries import ScxmlBase, RosField
 
 from scxml_converter.scxml_entries.utils import all_non_empty_strings
 
@@ -282,7 +282,54 @@ class ScxmlRosDeclarationsContainer:
         """Get name of the automaton that these declarations are defined in."""
         return self._automaton_name
 
-    def append_publisher(self, pub_name: str, topic_name: str, topic_type: str) -> None:
+    def append_ros_declaration(self, scxml_ros_declaration: ScxmlBase) -> None:
+        """
+        Add a ROS declaration to the container instance.
+
+        :param scxml_ros_declaration: The ROS declaration to add (inheriting from RosDeclaration).
+        """
+        from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+        from scxml_converter.scxml_entries.scxml_ros_timer import RosTimeRate
+        from scxml_converter.scxml_entries.scxml_ros_topic import (
+            RosTopicPublisher, RosTopicSubscriber)
+        from scxml_converter.scxml_entries.scxml_ros_service import (
+            RosServiceServer, RosServiceClient)
+        from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
+        from scxml_converter.scxml_entries.scxml_ros_action_client import RosActionClient
+        assert isinstance(scxml_ros_declaration, RosDeclaration), \
+            f"Error: SCXML ROS declarations: {type(scxml_ros_declaration)} isn't a ROS declaration."
+        if isinstance(scxml_ros_declaration, RosTimeRate):
+            self._append_timer(scxml_ros_declaration.get_name(),
+                               scxml_ros_declaration.get_rate())
+        elif isinstance(scxml_ros_declaration, RosTopicPublisher):
+            self._append_publisher(scxml_ros_declaration.get_name(),
+                                   scxml_ros_declaration.get_interface_name(),
+                                   scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosTopicSubscriber):
+            self._append_subscriber(scxml_ros_declaration.get_name(),
+                                    scxml_ros_declaration.get_interface_name(),
+                                    scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosServiceServer):
+            self._append_service_server(scxml_ros_declaration.get_name(),
+                                        scxml_ros_declaration.get_interface_name(),
+                                        scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosServiceClient):
+            self._append_service_client(scxml_ros_declaration.get_name(),
+                                        scxml_ros_declaration.get_interface_name(),
+                                        scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosActionServer):
+            self._append_action_server(scxml_ros_declaration.get_name(),
+                                       scxml_ros_declaration.get_interface_name(),
+                                       scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosActionClient):
+            self._append_action_client(scxml_ros_declaration.get_name(),
+                                       scxml_ros_declaration.get_interface_name(),
+                                       scxml_ros_declaration.get_interface_type())
+        else:
+            raise NotImplementedError(f"Error: SCXML ROS declaration type "
+                                      f"{type(scxml_ros_declaration)}.")
+
+    def _append_publisher(self, pub_name: str, topic_name: str, topic_type: str) -> None:
         """
         Add a publisher to the container.
 
@@ -296,7 +343,7 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: topic publisher {pub_name} already declared."
         self._publishers[pub_name] = (topic_name, topic_type)
 
-    def append_subscriber(self, sub_name: str, topic_name: str, topic_type: str) -> None:
+    def _append_subscriber(self, sub_name: str, topic_name: str, topic_type: str) -> None:
         """
         Add a subscriber to the container.
 
@@ -310,7 +357,8 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: topic subscriber {sub_name} already declared."
         self._subscribers[sub_name] = (topic_name, topic_type)
 
-    def append_service_client(self, client_name: str, service_name: str, service_type: str) -> None:
+    def _append_service_client(
+            self, client_name: str, service_name: str, service_type: str) -> None:
         """
         Add a service client to the container.
 
@@ -324,7 +372,8 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: service client {client_name} already declared."
         self._service_clients[client_name] = (service_name, service_type)
 
-    def append_service_server(self, server_name: str, service_name: str, service_type: str) -> None:
+    def _append_service_server(
+            self, server_name: str, service_name: str, service_type: str) -> None:
         """
         Add a service server to the container.
 
@@ -338,21 +387,21 @@ class ScxmlRosDeclarationsContainer:
             f"Error: ROS declarations: service server {server_name} already declared."
         self._service_servers[server_name] = (service_name, service_type)
 
-    def append_action_client(self, client_name: str, action_name: str, action_type: str) -> None:
+    def _append_action_client(self, client_name: str, action_name: str, action_type: str) -> None:
         assert all_non_empty_strings(client_name, action_name, action_type), \
             "Error: ROS declarations: client name, action name and type must be strings."
         assert client_name not in self._action_clients, \
             f"Error: ROS declarations: action client {client_name} already declared."
         self._action_clients[client_name] = (action_name, action_type)
 
-    def append_action_server(self, server_name: str, action_name: str, action_type: str) -> None:
+    def _append_action_server(self, server_name: str, action_name: str, action_type: str) -> None:
         assert all_non_empty_strings(server_name, action_name, action_type), \
             "Error: ROS declarations: server name, action name and type must be strings."
         assert server_name not in self._action_servers, \
             f"Error: ROS declarations: action server {server_name} already declared."
         self._action_servers[server_name] = (action_name, action_type)
 
-    def append_timer(self, timer_name: str, timer_rate: float) -> None:
+    def _append_timer(self, timer_name: str, timer_rate: float) -> None:
         assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
         assert isinstance(timer_rate, float) and timer_rate > 0, \
             "Error: ROS declarations: timer rate must be a positive number."

@@ -23,8 +23,7 @@ from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    BtInputPortDeclaration, BtOutputPortDeclaration, RosServiceClient, RosServiceServer,
-    RosTimeRate, RosTopicPublisher, RosTopicSubscriber, ScxmlBase, ScxmlDataModel,
+    BtInputPortDeclaration, BtOutputPortDeclaration, ScxmlBase, ScxmlDataModel,
     ScxmlRosDeclarationsContainer, ScxmlState)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
@@ -195,27 +194,7 @@ class ScxmlRoot(ScxmlBase):
                 if not (ros_declaration.check_validity() and
                         ros_declaration.check_valid_instantiation()):
                     return None
-                if isinstance(ros_declaration, RosTimeRate):
-                    ros_decl_container.append_timer(ros_declaration.get_name(),
-                                                    ros_declaration.get_rate())
-                elif isinstance(ros_declaration, RosTopicSubscriber):
-                    ros_decl_container.append_subscriber(ros_declaration.get_name(),
-                                                         ros_declaration.get_interface_name(),
-                                                         ros_declaration.get_interface_type())
-                elif isinstance(ros_declaration, RosTopicPublisher):
-                    ros_decl_container.append_publisher(ros_declaration.get_name(),
-                                                        ros_declaration.get_interface_name(),
-                                                        ros_declaration.get_interface_type())
-                elif isinstance(ros_declaration, RosServiceServer):
-                    ros_decl_container.append_service_server(ros_declaration.get_name(),
-                                                             ros_declaration.get_interface_name(),
-                                                             ros_declaration.get_interface_type())
-                elif isinstance(ros_declaration, RosServiceClient):
-                    ros_decl_container.append_service_client(ros_declaration.get_name(),
-                                                             ros_declaration.get_interface_name(),
-                                                             ros_declaration.get_interface_type())
-                else:
-                    raise ValueError("Error: SCXML root: invalid ROS declaration type.")
+                ros_decl_container.append_ros_declaration(ros_declaration)
         return ros_decl_container
 
     def check_validity(self) -> bool:
