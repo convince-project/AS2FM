@@ -23,7 +23,8 @@ from scxml_converter.scxml_entries import (
     valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
@@ -35,7 +36,31 @@ class RosDeclaration(ScxmlBase):
 
     @classmethod
     def get_tag_name(cls) -> str:
+        """The xml tag related to the ROS declaration."""
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+
+    @classmethod
+    def get_communication_interface(cls) -> str:
+        """
+        Which communication interface is used by the ROS declaration.
+
+        Expected values: "topic", "service", "action"
+        """
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_communication_interface.")
+
+    @classmethod
+    def get_xml_arg_interface_name(cls) -> str:
+        return f"{cls.get_communication_interface()}_name"
+
+    @classmethod
+    def from_xml_tree(cls: Type['RosDeclaration'], xml_tree: ET.Element) -> 'RosDeclaration':
+        """Create an instance of the class from an XML tree."""
+        assert_xml_tag_ok(cls, xml_tree)
+        interface_name = read_value_from_xml_arg_or_child(
+            cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str))
+        interface_type = get_xml_argument(cls, xml_tree, "type")
+        interface_alias = get_xml_argument(cls, xml_tree, "name", none_allowed=True)
+        return cls(interface_name, interface_type, interface_alias)
 
     def __init__(self, interface_name: Union[str, BtGetValueInputPort], interface_type: str,
                  interface_alias: Optional[str] = None):
@@ -94,6 +119,14 @@ class RosDeclaration(ScxmlBase):
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError(f"Error: SCXML {self.__class__} cannot be converted to plain SCXML.")
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_declaration = ET.Element(self.get_tag_name(),
+                                     {"name": self._interface_alias,
+                                      self.get_xml_arg_interface_name(): self._interface_name,
+                                      "type": self._interface_type})
+        return xml_declaration
 
 
 class RosCallback(ScxmlTransition):

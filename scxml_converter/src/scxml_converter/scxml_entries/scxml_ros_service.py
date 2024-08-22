@@ -24,15 +24,14 @@ from typing import List, Optional, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlRosDeclarationsContainer, BtGetValueInputPort, execution_body_from_xml)
+    RosField, ScxmlRosDeclarationsContainer, execution_body_from_xml)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
 from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, is_srv_type_known)
-from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+from scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok, get_xml_argument)
 
 
 class RosServiceServer(RosDeclaration):
@@ -43,29 +42,14 @@ class RosServiceServer(RosDeclaration):
         return "ros_service_server"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceServer":
-        """Create a RosServiceServer object from an XML tree."""
-        assert_xml_tag_ok(RosServiceServer, xml_tree)
-        service_name = read_value_from_xml_arg_or_child(RosServiceServer, xml_tree, "service_name",
-                                                        (BtGetValueInputPort, str))
-        service_type = get_xml_argument(RosServiceServer, xml_tree, "type")
-        service_alias = get_xml_argument(
-            RosServiceServer, xml_tree, "name", none_allowed=True)
-        return RosServiceServer(service_name, service_type, service_alias)
+    def get_communication_interface() -> str:
+        return "service"
 
     def check_valid_interface_type(self) -> bool:
         if not is_srv_type_known(self._interface_type):
             print("Error: SCXML RosServiceServer: service type is not valid.")
             return False
         return True
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML RosServiceServer: invalid parameters."
-        xml_srv_server = ET.Element(
-            RosServiceServer.get_tag_name(),
-            {"name": self._interface_alias,
-             "service_name": self._interface_name, "type": self._interface_type})
-        return xml_srv_server
 
 
 class RosServiceClient(RosDeclaration):
@@ -76,29 +60,14 @@ class RosServiceClient(RosDeclaration):
         return "ros_service_client"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosServiceClient":
-        """Create a RosServiceClient object from an XML tree."""
-        assert_xml_tag_ok(RosServiceClient, xml_tree)
-        service_name = read_value_from_xml_arg_or_child(RosServiceClient, xml_tree, "service_name",
-                                                        (BtGetValueInputPort, str))
-        service_type = get_xml_argument(RosServiceClient, xml_tree, "type")
-        service_alias = get_xml_argument(
-            RosServiceClient, xml_tree, "name", none_allowed=True)
-        return RosServiceClient(service_name, service_type, service_alias)
+    def get_communication_interface() -> str:
+        return "service"
 
     def check_valid_interface_type(self) -> bool:
         if not is_srv_type_known(self._interface_type):
             print("Error: SCXML RosServiceClient: service type is not valid.")
             return False
         return True
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML RosServiceClient: invalid parameters."
-        xml_srv_server = ET.Element(
-            RosServiceClient.get_tag_name(),
-            {"name": self._interface_alias,
-             "service_name": self._interface_name, "type": self._interface_type})
-        return xml_srv_server
 
 
 class RosServiceSendRequest(RosTrigger):
@@ -137,14 +106,6 @@ class RosServiceSendRequest(RosTrigger):
             ros_declarations.get_service_client_info(self._interface_name)[0],
             ros_declarations.get_automaton_name())
 
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Send Request: invalid parameters."
-        xml_srv_request = ET.Element(RosServiceSendRequest.get_tag_name(),
-                                     {"name": self._interface_name})
-        for field in self._fields:
-            xml_srv_request.append(field.as_xml())
-        return xml_srv_request
-
 
 class RosServiceHandleRequest(RosCallback):
     """SCXML object representing a ROS service callback on the server, acting upon a request."""
@@ -176,14 +137,6 @@ class RosServiceHandleRequest(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_server_request_event(
             ros_declarations.get_service_server_info(self._interface_name)[0])
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Handle Request: invalid parameters."
-        xml_srv_request = ET.Element(RosServiceHandleRequest.get_tag_name(),
-                                     {"name": self._interface_name, "target": self._target})
-        for body_elem in self._body:
-            xml_srv_request.append(body_elem.as_xml())
-        return xml_srv_request
 
 
 class RosServiceSendResponse(RosTrigger):
@@ -224,14 +177,6 @@ class RosServiceSendResponse(RosTrigger):
         return generate_srv_server_response_event(
             ros_declarations.get_service_server_info(self._interface_name)[0])
 
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Send Response: invalid parameters."
-        xml_srv_response = ET.Element(RosServiceSendResponse.get_tag_name(),
-                                      {"name": self._service_name})
-        for field in self._fields:
-            xml_srv_response.append(field.as_xml())
-        return xml_srv_response
-
 
 class RosServiceHandleResponse(RosCallback):
     """SCXML object representing the handler of a service response for a service client."""
@@ -264,11 +209,3 @@ class RosServiceHandleResponse(RosCallback):
         return generate_srv_response_event(
             ros_declarations.get_service_client_info(self._interface_name)[0],
             ros_declarations.get_automaton_name())
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
-        xml_srv_response = ET.Element(RosServiceHandleResponse.get_tag_name(),
-                                      {"name": self._service_name, "target": self._target})
-        for body_elem in self._body:
-            xml_srv_response.append(body_elem.as_xml())
-        return xml_srv_response

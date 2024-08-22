@@ -24,13 +24,12 @@ from typing import List, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, ScxmlRosDeclarationsContainer, ScxmlSend, BtGetValueInputPort,
-    execution_body_from_xml)
+    RosField, ScxmlRosDeclarationsContainer, ScxmlSend, execution_body_from_xml)
 from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger, RosDeclaration
 
 from scxml_converter.scxml_entries.ros_utils import (is_msg_type_known, generate_topic_event)
 from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml, read_value_from_xml_child)
+    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 
 
 class RosTopicPublisher(RosDeclaration):
@@ -41,30 +40,14 @@ class RosTopicPublisher(RosDeclaration):
         return "ros_topic_publisher"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicPublisher":
-        """Create a RosTopicPublisher object from an XML tree."""
-        assert_xml_tag_ok(RosTopicPublisher, xml_tree)
-        topic_name = get_xml_argument(RosTopicPublisher, xml_tree, "topic", none_allowed=True)
-        topic_type = get_xml_argument(RosTopicPublisher, xml_tree, "type")
-        pub_name = get_xml_argument(RosTopicPublisher, xml_tree, "name", none_allowed=True)
-        if topic_name is None:
-            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort, str))
-            assert topic_name is not None, "Error: SCXML topic publisher: topic name not found."
-        return RosTopicPublisher(topic_name, topic_type, pub_name)
+    def get_xml_arg_interface_name() -> str:
+        return "topic"
 
     def check_valid_interface_type(self) -> bool:
         if not is_msg_type_known(self._interface_type):
             print(f"Error: SCXML RosTopicPublisher: invalid msg type {self._interface_type}.")
             return False
         return True
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: RosTopicPublisher: invalid parameters."
-        xml_topic_publisher = ET.Element(
-            RosTopicPublisher.get_tag_name(),
-            {"name": self._interface_alias,
-             "topic": self._interface_name, "type": self._interface_type})
-        return xml_topic_publisher
 
 
 class RosTopicSubscriber(RosDeclaration):
@@ -75,30 +58,14 @@ class RosTopicSubscriber(RosDeclaration):
         return "ros_topic_subscriber"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicSubscriber":
-        """Create a RosTopicSubscriber object from an XML tree."""
-        assert_xml_tag_ok(RosTopicSubscriber, xml_tree)
-        topic_name = get_xml_argument(RosTopicSubscriber, xml_tree, "topic", none_allowed=True)
-        topic_type = get_xml_argument(RosTopicSubscriber, xml_tree, "type")
-        sub_name = get_xml_argument(RosTopicSubscriber, xml_tree, "name", none_allowed=True)
-        if topic_name is None:
-            topic_name = read_value_from_xml_child(xml_tree, "topic", (BtGetValueInputPort, str))
-            assert topic_name is not None, "Error: SCXML topic subscriber: topic name not found."
-        return RosTopicSubscriber(topic_name, topic_type, sub_name)
+    def get_xml_arg_interface_name() -> str:
+        return "topic"
 
     def check_valid_interface_type(self) -> bool:
         if not is_msg_type_known(self._interface_type):
             print(f"Error: SCXML RosTopicSubscriber: invalid msg type {self._interface_type}.")
             return False
         return True
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML RosTopicSubscriber: invalid parameters."
-        xml_topic_subscriber = ET.Element(
-            RosTopicSubscriber.get_tag_name(),
-            {"name": self._interface_alias,
-             "topic": self._interface_name, "type": self._interface_type})
-        return xml_topic_subscriber
 
 
 class RosTopicCallback(RosCallback):
@@ -130,15 +97,6 @@ class RosTopicCallback(RosCallback):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_topic_event(ros_declarations.get_subscriber_info(self._interface_name)[0])
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML topic callback: invalid parameters."
-        xml_topic_callback = ET.Element(RosTopicCallback.get_tag_name(),
-                                        {"name": self._interface_name, "target": self._target})
-        if self._body is not None:
-            for entry in self._body:
-                xml_topic_callback.append(entry.as_xml())
-        return xml_topic_callback
 
 
 class RosTopicPublish(RosTrigger):
@@ -173,12 +131,3 @@ class RosTopicPublish(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_topic_event(ros_declarations.get_publisher_info(self._interface_name)[0])
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML topic publish: invalid parameters."
-        xml_topic_publish = ET.Element(RosTopicPublish.get_tag_name(),
-                                       {"name": self._interface_name})
-        if self._fields is not None:
-            for field in self._fields:
-                xml_topic_publish.append(field.as_xml())
-        return xml_topic_publish
