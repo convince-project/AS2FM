@@ -19,11 +19,15 @@ from typing import Optional, List, Union, Type
 
 from scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlTransition, ScxmlSend, ScxmlExecutionBody, RosField, BtGetValueInputPort,
-    ScxmlRosDeclarationsContainer, as_plain_execution_body, valid_execution_body)
+    ScxmlRosDeclarationsContainer, execution_body_from_xml, as_plain_execution_body,
+    valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 from scxml_converter.scxml_entries.utils import is_non_empty_string
+
+from xml.etree import ElementTree as ET
 
 
 class RosDeclaration(ScxmlBase):
@@ -109,6 +113,15 @@ class RosCallback(ScxmlTransition):
         """
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_declaration_type.")
 
+    @classmethod
+    def from_xml_tree(cls: Type['RosCallback'], xml_tree: ET.Element) -> 'RosCallback':
+        """Create an instance of the class from an XML tree."""
+        assert_xml_tag_ok(cls, xml_tree)
+        interface_name = get_xml_argument(cls, xml_tree, "name")
+        target_state = get_xml_argument(cls, xml_tree, "target")
+        exec_body = execution_body_from_xml(xml_tree)
+        return cls(interface_name, target_state, exec_body)
+
     def __init__(self, interface_decl: Union[str, RosDeclaration], target_state: str,
                  exec_body: Optional[ScxmlExecutionBody] = None) -> None:
         """
@@ -118,13 +131,16 @@ class RosCallback(ScxmlTransition):
         :param target_state: Name of the state to transition to after the callback.
         :param exec_body: Executable body of the callback.
         """
+        if exec_body is None:
+            exec_body: ScxmlExecutionBody = []
+        self._interface_name: str = ""
         if isinstance(interface_decl, self.get_declaration_type()):
             self._interface_name = interface_decl.get_name()
         else:
             assert is_non_empty_string(self.__class__, "name", interface_decl)
             self._interface_name = interface_decl
-        self._target = target_state
-        self._body = exec_body
+        self._target: str = target_state
+        self._body: ScxmlExecutionBody = exec_body
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
 
     def check_validity(self) -> bool:
@@ -167,6 +183,15 @@ class RosCallback(ScxmlTransition):
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], None, body)
 
+    def as_xml(self) -> ET.Element:
+        """Convert the ROS callback to an XML element."""
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_callback = ET.Element(self.get_tag_name(),
+                                  {"name": self._interface_name, "target": self._target})
+        for body_elem in self._body:
+            xml_callback.append(body_elem.as_xml())
+        return xml_callback
+
 
 class RosTrigger(ScxmlSend):
     """Base class for ROS triggers in SCXML."""
@@ -185,6 +210,14 @@ class RosTrigger(ScxmlSend):
         """
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_declaration_type.")
 
+    @classmethod
+    def from_xml_tree(cls: Type['RosTrigger'], xml_tree: ET.Element) -> 'RosTrigger':
+        """Create an instance of the class from an XML tree."""
+        assert_xml_tag_ok(cls, xml_tree)
+        interface_name = get_xml_argument(cls, xml_tree, "name")
+        fields = [RosField.from_xml_tree(field) for field in xml_tree]
+        return cls(interface_name, fields)
+
     def __init__(self, interface_decl: Union[str, RosDeclaration],
                  fields: Optional[List[RosField]] = None) -> None:
         """
@@ -193,20 +226,19 @@ class RosTrigger(ScxmlSend):
         :param interface_decl: ROS interface declaration to be used in the trigger, or its name.
         :param fields: Name of fields that are sent together with the trigger.
         """
+        if fields is None:
+            fields = []
+        self._interface_name: str = ""
         if isinstance(interface_decl, self.get_declaration_type()):
             self._interface_name = interface_decl.get_name()
         else:
             assert is_non_empty_string(self.__class__, "name", interface_decl)
             self._interface_name = interface_decl
-        if fields is None:
-            fields = []
         self._fields: List[RosField] = fields
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
-        if self._fields is None:
-            self._fields = []
         self._fields.append(field)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
@@ -256,3 +288,10 @@ class RosTrigger(ScxmlSend):
         event_name = self.get_plain_scxml_event(ros_declarations)
         params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, params)
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_trigger = ET.Element(self.get_tag_name(), {"name": self._interface_name})
+        for field in self._fields:
+            xml_trigger.append(field.as_xml())
+        return xml_trigger
