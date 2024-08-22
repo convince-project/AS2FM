@@ -23,7 +23,7 @@ from typing import List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlRoot, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition,
+    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition,
     ScxmlRosDeclarationsContainer, as_plain_execution_body,
     execution_body_from_xml, valid_execution_body)
 from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
@@ -34,7 +34,7 @@ from scxml_converter.scxml_entries.xml_utils import (
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
-class RosActionThread(ScxmlRoot):
+class RosActionThread(ScxmlBase):
     """
     SCXML declaration of a set of threads for executing the action server code.
     """
@@ -78,15 +78,27 @@ class RosActionThread(ScxmlRoot):
         :param action_server: ActionServer declaration, or its alias name.
         :param n_threads: Max. n. of parallel action requests that can be handled.
         """
+        self._name: str = ""
         if isinstance(action_server, RosActionServer):
-            action_name = action_server.get_name()
+            self._name = action_server.get_name()
         else:
             assert is_non_empty_string(RosActionThread, "name", action_server)
-            action_name = action_server
+            self._name = action_server
         self._n_threads = n_threads
-        super().__init__(action_name)
-        del self._ros_declarations  # The ROS declarations should be externally provided
-        del self._bt_ports_handler  # The BT ports should be externally provided
+        self._initial_state: Optional[str] = None
+        self._datamodel: Optional[ScxmlDataModel] = None
+        self._states: List[Tuple[ScxmlState, bool]] = []
+
+    def add_state(self, state: ScxmlState, *, initial: bool = False):
+        """Append a state to the list of states. If initial is True, set it as the initial state."""
+        self._states.append(state)
+        if initial:
+            assert self._initial_state is None, "Error: SCXML root: Initial state already set"
+            self._initial_state = state.get_id()
+
+    def set_data_model(self, data_model: ScxmlDataModel):
+        assert self._data_model is None, "Data model already set"
+        self._data_model = data_model
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         # TODO
@@ -96,52 +108,25 @@ class RosActionThread(ScxmlRoot):
         # TODO
         pass
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(self, ros_declarations: ScxmlRosDeclarationsContainer
+                                       ) -> bool:
         # TODO
         pass
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlRoot]:
-        """Convert the ROS-specific entries to be plain SCXML"""
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlBase]:
+        """
+        Convert the ROS-specific entries to be plain SCXML.
+
+        This returns a list of ScxmlRoot objects, using ScxmlBase to avoid circular dependencies.
+        """
+        from scxml_converter.scxml_entries import ScxmlRoot
         # TODO
-        pass
+        return [ScxmlRoot("name")]
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."
         # TODO
         pass
-
-    # Disable a bunch of unneeded methods
-    def instantiate_bt_events(self, _) -> None:
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'instantiate_bt_events'.")
-
-    def add_ros_declaration(self, _):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'add_ros_declaration'.")
-
-    def add_bt_port_declaration(self, _):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'add_bt_port_declaration'.")
-
-    def set_bt_port_value(self, _, __):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'set_bt_port_values'.")
-
-    def set_bt_ports_values(self, _):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'set_bt_ports_values'.")
-
-    def _generate_ros_declarations_helper(self):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method "
-                           "'_generate_ros_declarations_helper'.")
-
-    def _check_valid_ros_declarations(self):
-        raise RuntimeError(
-            "Error: SCXML Action Thread: deleted method '_check_valid_ros_declarations': "
-            "use 'check_valid_ros_instantiations' instead (no underscore).")
-
-    def is_plain_scxml(self):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method 'is_plain_scxml'.")
-
-    def to_plain_scxml_and_declarations(self):
-        raise RuntimeError("Error: SCXML Action Thread: deleted method "
-                           "'to_plain_scxml_and_declarations'.")
 
 
 class RosActionHandleThreadStart(ScxmlTransition):
