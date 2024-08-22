@@ -26,9 +26,9 @@
                 <assign location="sequence__len" expr="0" />
             </onentry>
             <!-- This will check if the thread_id matches with the request -->
-            <ros_action_thread_handle_start name="act_srv" target="execute">
+            <ros_action_thread_start name="act_srv" target="execute">
                 <assign location="order" expr="_req.order" />
-            </ros_action_thread_handle_start>
+            </ros_action_thread_start>
         </state>
 
         <state id="execute">

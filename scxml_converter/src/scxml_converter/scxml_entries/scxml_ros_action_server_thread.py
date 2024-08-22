@@ -19,16 +19,17 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Optional, Tuple, Union, get_args
+from typing import List, Optional, Tuple, Type, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition,
-    ScxmlRosDeclarationsContainer, as_plain_execution_body,
-    execution_body_from_xml, valid_execution_body)
+    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlRosDeclarationsContainer,
+    execution_body_from_xml)
 from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
+from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.ros_utils import generate_action_thread_execution_start_event
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -129,76 +130,89 @@ class RosActionThread(ScxmlBase):
         pass
 
 
-class RosActionHandleThreadStart(ScxmlTransition):
-    """SCXML object representing the handler of am action result for a service client."""
+class RosActionHandleThreadStart(RosCallback):
+    """
+    SCXML object receiving a trigger from the action server to start a thread.
+
+    The selection of the thread is encoded in the event name.
+    The thread ID is set from the parent, via a dedicated method.
+    """
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_handle_result"
+        return "ros_action_thread_start"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleResult":
-        """Create a RosActionHandleResult object from an XML tree."""
-        assert_xml_tag_ok(RosActionHandleResult, xml_tree)
-        client_name = get_xml_argument(RosActionHandleResult, xml_tree, "name")
-        target_name = get_xml_argument(RosActionHandleResult, xml_tree, "target")
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosActionHandleResult(client_name, target_name, exec_body)
+    def get_declaration_type() -> Type[RosActionServer]:
+        return RosActionServer
 
-    def __init__(self, action_client: Union[str, RosActionClient], target: str,
-                 body: Optional[ScxmlExecutionBody] = None) -> None:
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleThreadStart":
+        """Create a RosActionHandleThreadStart object from an XML tree."""
+        assert_xml_tag_ok(RosActionHandleThreadStart, xml_tree)
+        server_alias = get_xml_argument(RosActionHandleThreadStart, xml_tree, "name")
+        target_state = get_xml_argument(RosActionHandleThreadStart, xml_tree, "target")
+        exec_body = execution_body_from_xml(xml_tree)
+        return RosActionHandleThreadStart(server_alias, target_state, exec_body)
+
+    def __init__(self, server_alias: Union[str, RosActionServer], target_state: str,
+                 exec_body: Optional[ScxmlExecutionBody] = None) -> None:
         """
         Initialize a new RosActionHandleResult object.
 
-        :param action_client: Action client used by this handler, or its name.
-        :param target: Target state to transition to after the feedback is received.
-        :param body: Execution body to be executed upon feedback reception (before transition).
+        :param server_alias: Action Server used by this handler, or its name.
+        :param target_state: Target state to transition to after the start trigger is received.
+        :param exec_body: Execution body to be executed upon thread start (before transition).
         """
-        if isinstance(action_client, RosActionClient):
-            self._client_name = action_client.get_name()
-        else:
-            assert is_non_empty_string(RosActionHandleResult, "name", action_client)
-            self._client_name = action_client
-        self._target = target
-        self._body = body
-        assert self.check_validity(), "Error: SCXML RosActionHandleResult: invalid parameters."
+        super().__init__(server_alias, target_state, exec_body)
+        # The thread ID depends on the plain scxml instance, so it is set later
+        self._thread_id: Optional[str] = None
 
-    def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(RosActionHandleResult, "name", self._client_name)
-        valid_target = is_non_empty_string(RosActionHandleResult, "target", self._target)
-        valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_body:
-            print("Error: SCXML RosActionHandleResult: body is not valid.")
-        return valid_name and valid_target and valid_body
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        """Check if the action server has been declared."""
+        return ros_declarations.is_action_server_defined(self._interface_name)
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML RosActionHandleResult: invalid ROS declarations container."
-        if not ros_declarations.is_action_client_defined(self._client_name):
-            print("Error: SCXML RosActionHandleResult: "
-                  f"action client {self._client_name} not declared.")
-            return False
-        if not super().check_valid_ros_instantiations(ros_declarations):
-            print("Error: SCXML RosActionHandleResult: invalid ROS instantiations in exec body.")
-            return False
-        return True
+    def set_thread_id(self, thread_id: str) -> None:
+        """Set the thread ID for this handler."""
+        assert self._thread_id is None, f"Error: SCXML {self.__class__}: thread ID set."
+        is_non_empty_string(self.__class__, "thread_id", thread_id)
+        self._thread_id = thread_id
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML service response handler: invalid ROS instantiations."
-        automaton_name = ros_declarations.get_automaton_name()
-        interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
-        event_name = generate_action_result_handle_event(interface_name, automaton_name)
-        target = self._target
-        body = as_plain_execution_body(self._body, ros_declarations)
-        return ScxmlTransition(target, [event_name], None, body)
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_thread_execution_start_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML RosActionHandleResult: invalid parameters."
-        xml_handle_feedback = ET.Element(RosActionHandleResult.get_tag_name(),
-                                         {"name": self._client_name, "target": self._target})
+        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        xml_thread_start = ET.Element(self.get_tag_name(),
+                                      {"name": self._interface_name, "target": self._target})
         if self._body is not None:
             for body_elem in self._body:
-                xml_handle_feedback.append(body_elem.as_xml())
-        return xml_handle_feedback
+                xml_thread_start.append(body_elem.as_xml())
+        return xml_thread_start
+
+
+class RosActionHandleThreadCancel(RosActionHandleThreadStart):
+    """
+    SCXML object receiving a trigger from the action server to stop a thread.
+
+    The selection of the thread is encoded in the event name.
+    The thread ID is set from the parent, via a dedicated method.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_thread_cancel"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleThreadCancel":
+        """Create a RosActionHandleThreadCancel object from an XML tree."""
+        assert_xml_tag_ok(RosActionHandleThreadCancel, xml_tree)
+        server_alias = get_xml_argument(RosActionHandleThreadCancel, xml_tree, "name")
+        target_state = get_xml_argument(RosActionHandleThreadCancel, xml_tree, "target")
+        exec_body = execution_body_from_xml(xml_tree)
+        return RosActionHandleThreadCancel(server_alias, target_state, exec_body)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_thread_execution_start_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
