@@ -23,8 +23,7 @@ from typing import List, Optional, Type, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlRosDeclarationsContainer,
-    execution_body_from_xml)
+    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlRosDeclarationsContainer)
 from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
 from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
 
@@ -186,15 +185,6 @@ class RosActionHandleThreadStart(RosCallback):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleThreadStart":
-        """Create a RosActionHandleThreadStart object from an XML tree."""
-        assert_xml_tag_ok(RosActionHandleThreadStart, xml_tree)
-        server_alias = get_xml_argument(RosActionHandleThreadStart, xml_tree, "name")
-        target_state = get_xml_argument(RosActionHandleThreadStart, xml_tree, "target")
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosActionHandleThreadStart(server_alias, target_state, exec_body)
-
     def __init__(self, server_alias: Union[str, RosActionServer], target_state: str,
                  exec_body: Optional[ScxmlExecutionBody] = None) -> None:
         """
@@ -224,15 +214,6 @@ class RosActionHandleThreadStart(RosCallback):
         return generate_action_thread_execution_start_event(
             ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
 
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
-        xml_thread_start = ET.Element(self.get_tag_name(),
-                                      {"name": self._interface_name, "target": self._target})
-        if self._body is not None:
-            for body_elem in self._body:
-                xml_thread_start.append(body_elem.as_xml())
-        return xml_thread_start
-
 
 class RosActionHandleThreadCancel(RosActionHandleThreadStart):
     """
@@ -245,15 +226,6 @@ class RosActionHandleThreadCancel(RosActionHandleThreadStart):
     @staticmethod
     def get_tag_name() -> str:
         return "ros_action_thread_cancel"
-
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleThreadCancel":
-        """Create a RosActionHandleThreadCancel object from an XML tree."""
-        assert_xml_tag_ok(RosActionHandleThreadCancel, xml_tree)
-        server_alias = get_xml_argument(RosActionHandleThreadCancel, xml_tree, "name")
-        target_state = get_xml_argument(RosActionHandleThreadCancel, xml_tree, "target")
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosActionHandleThreadCancel(server_alias, target_state, exec_body)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         assert self._thread_id is not None, f"Error: SCXML {self.__class__}: thread ID not set."

@@ -22,16 +22,14 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Union, Type
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
-    ScxmlTransition, BtGetValueInputPort, ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries import ScxmlTransition, ScxmlRosDeclarationsContainer
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_req_event,
     generate_action_goal_accepted_event, generate_action_goal_rejected_event,
     generate_action_feedback_handle_event, generate_action_result_handle_event)
-from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
@@ -43,29 +41,14 @@ class RosActionClient(RosDeclaration):
         return "ros_action_client"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionClient":
-        """Create a RosActionClient object from an XML tree."""
-        assert_xml_tag_ok(RosActionClient, xml_tree)
-        action_alias = get_xml_argument(RosActionClient, xml_tree, "name", none_allowed=True)
-        action_name = read_value_from_xml_arg_or_child(RosActionClient, xml_tree, "action_name",
-                                                       (BtGetValueInputPort, str))
-        action_type = get_xml_argument(RosActionClient, xml_tree, "type")
-        return RosActionClient(action_name, action_type, action_alias)
+    def get_communication_interface() -> str:
+        return "action"
 
     def check_valid_interface_type(self) -> bool:
         if not is_action_type_known(self._interface_type):
             print(f"Error: SCXML RosActionServer: invalid action type {self._interface_type}.")
             return False
         return True
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Action Client: invalid parameters."
-        xml_action_server = ET.Element(
-            RosActionClient.get_tag_name(),
-            {"name": self._interface_alias,
-             "action_name": self._interface_name,
-             "type": self._interface_type})
-        return xml_action_server
 
 
 class RosActionSendGoal(RosTrigger):
