@@ -34,15 +34,6 @@ class ScxmlState(ScxmlBase):
     def get_tag_name() -> str:
         return "state"
 
-    def __init__(self, id_: str, *,
-                 on_entry: ScxmlExecutionBody = None,
-                 on_exit: ScxmlExecutionBody = None,
-                 body: List[ScxmlTransition] = None):
-        self._id = id_
-        self._on_entry = on_entry if on_entry is not None else []
-        self._on_exit = on_exit if on_exit is not None else []
-        self._body: List[ScxmlTransition] = body if body is not None else []
-
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
@@ -77,6 +68,23 @@ class ScxmlState(ScxmlBase):
             scxml_state.add_transition(body_entry)
         return scxml_state
 
+    def __init__(self, state_id: str, *,
+                 on_entry: ScxmlExecutionBody = None,
+                 on_exit: ScxmlExecutionBody = None,
+                 body: List[ScxmlTransition] = None):
+        """
+        Initialize a new ScxmlState object.
+
+        :param state_id: The id of the state, unique in the ScxmlRoot object.
+        :param on_entry: The executable entries to be executed on entry.
+        :param on_exit: The executable entries to be executed on exit.
+        :param body: The transitions leaving the state.
+        """
+        self._id: str = state_id
+        self._on_entry: ScxmlExecutionBody = on_entry if on_entry is not None else []
+        self._on_exit: ScxmlExecutionBody = on_exit if on_exit is not None else []
+        self._body: List[ScxmlTransition] = body if body is not None else []
+
     def get_id(self) -> str:
         return self._id
 
@@ -89,6 +97,13 @@ class ScxmlState(ScxmlBase):
     def get_body(self) -> List[ScxmlTransition]:
         """Return the transitions leaving the state."""
         return self._body
+
+    def set_thread_id(self, thread_idx: int):
+        """Assign the thread ID to the thread-specific transitions in the body."""
+        for transition in self._body:
+            # Assign the thread only to thread specific transitions
+            if hasattr(transition, 'set_thread_id'):
+                transition.set_thread_id(thread_idx)
 
     def instantiate_bt_events(self, instance_id: str) -> None:
         """Instantiate the BT events in all entries belonging to a state."""
