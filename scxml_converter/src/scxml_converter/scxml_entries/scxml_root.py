@@ -24,7 +24,7 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
     BtInputPortDeclaration, BtOutputPortDeclaration, ScxmlBase, ScxmlDataModel,
-    ScxmlRosDeclarationsContainer, ScxmlState)
+    ScxmlRosDeclarationsContainer, ScxmlState, RosActionThread)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 
@@ -62,6 +62,8 @@ class ScxmlRoot(ScxmlBase):
         # BT Declarations
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
             xml_tree, get_args(BtPortDeclarations))
+        # Additional threads
+        additional_threads = get_children_as_scxml(xml_tree, (RosActionThread,))
         # States
         scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
@@ -75,6 +77,9 @@ class ScxmlRoot(ScxmlBase):
         # BT Declarations
         for bt_port_declaration in bt_port_declarations:
             scxml_root.add_bt_port_declaration(bt_port_declaration)
+        # Additional threads
+        for scxml_thread in additional_threads:
+            scxml_root.add_thread(scxml_thread)
         # States
         for scxml_state in scxml_states:
             is_initial = scxml_state.get_id() == scxml_init_state
@@ -105,6 +110,7 @@ class ScxmlRoot(ScxmlBase):
         self._data_model: Optional[ScxmlDataModel] = None
         self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
+        self._additional_threads: List[RosActionThread] = []
 
     def get_name(self) -> str:
         """Get the name of the automaton represented by this SCXML model."""
@@ -152,8 +158,6 @@ class ScxmlRoot(ScxmlBase):
         assert isinstance(ros_declaration, RosDeclaration), \
             "Error: SCXML root: invalid ROS declaration type."
         assert ros_declaration.check_validity(), "Error: SCXML root: invalid ROS declaration."
-        if self._ros_declarations is None:
-            self._ros_declarations = []
         self._ros_declarations.append(ros_declaration)
 
     def add_bt_port_declaration(self, bt_port_decl: BtPortDeclarations):
@@ -167,6 +171,11 @@ class ScxmlRoot(ScxmlBase):
         else:
             raise ValueError(
                 f"Error: SCXML root: invalid BT port declaration type {type(bt_port_decl)}.")
+
+    def add_action_thread(self, action_thread: RosActionThread):
+        assert isinstance(action_thread, RosActionThread), \
+            f"Error: SCXML root: invalid action thread type {type(action_thread)}."
+        self._additional_threads.append(action_thread)
 
     def set_bt_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
@@ -189,32 +198,28 @@ class ScxmlRoot(ScxmlBase):
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
         ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
-        if self._ros_declarations is not None:
-            for ros_declaration in self._ros_declarations:
-                if not (ros_declaration.check_validity() and
-                        ros_declaration.check_valid_instantiation()):
-                    return None
-                ros_decl_container.append_ros_declaration(ros_declaration)
+        for ros_declaration in self._ros_declarations:
+            if not (ros_declaration.check_validity() and
+                    ros_declaration.check_valid_instantiation()):
+                return None
+            ros_decl_container.append_ros_declaration(ros_declaration)
         return ros_decl_container
 
     def check_validity(self) -> bool:
-        valid_name = isinstance(self._name, str) and len(self._name) > 0
-        valid_initial_state = self._initial_state is not None
-        valid_states = isinstance(self._states, list) and len(self._states) > 0
-        if valid_states:
-            for state in self._states:
-                valid_states = isinstance(state, ScxmlState) and state.check_validity()
-                if not valid_states:
-                    break
+        valid_name = is_non_empty_string(ScxmlRoot, "name", self._name)
+        valid_initial_state = is_non_empty_string(ScxmlRoot, "initial state", self._initial_state)
         valid_data_model = self._data_model is None or self._data_model.check_validity()
-        if not valid_name:
-            print("Error: SCXML root: name is not valid.")
-        if not valid_initial_state:
-            print("Error: SCXML root: no initial state set.")
-        if not valid_states:
-            print("Error: SCXML root: states are not valid.")
+        valid_states = all(isinstance(state, ScxmlState) and state.check_validity()
+                           for state in self._states)
+        valid_threads = all(isinstance(scxml_thread, RosActionThread) and
+                            scxml_thread.check_validity() for scxml_thread in
+                            self._additional_threads)
         if not valid_data_model:
             print("Error: SCXML root: datamodel is not valid.")
+        if not valid_states:
+            print("Error: SCXML root: states are not valid.")
+        if not valid_threads:
+            print("Error: SCXML root: additional threads are not valid.")
         valid_ros = self._check_valid_ros_declarations()
         if not valid_ros:
             print("Error: SCXML root: ROS declarations are not valid.")
@@ -228,16 +233,19 @@ class ScxmlRoot(ScxmlBase):
         if ros_decl_container is None:
             return False
         # Check the ROS instantiations
-        for state in self._states:
-            if not state.check_valid_ros_instantiations(ros_decl_container):
-                return False
+        if not all(state.check_valid_ros_instantiations(ros_decl_container)
+                   for state in self._states):
+            return False
+        if not all(scxml_thread.check_valid_ros_instantiations(ros_decl_container)
+                   for scxml_thread in self._additional_threads):
+            return False
         return True
 
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS specific features or all entries are plain SCXML."""
         assert self.check_validity(), "SCXML: found invalid root object."
-        # If this is a valid scxml object, checking the absence of declarations is enough
-        return self._ros_declarations is None or len(self._ros_declarations) == 0
+        # If this is a valid scxml object, just check the absence of ROS and thread declarations
+        return len(self._ros_declarations) == 0 and len(self._additional_threads) == 0
 
     def to_plain_scxml_and_declarations(self) -> Tuple[List["ScxmlRoot"],
                                                        ScxmlRosDeclarationsContainer]:
@@ -259,6 +267,9 @@ class ScxmlRoot(ScxmlBase):
         assert ros_declarations is not None, "Error: SCXML root: invalid ROS declarations."
         main_scxml._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         converted_scxmls.append(main_scxml)
+        for scxml_thread in self._additional_threads:
+            # TODO: Append additional threads here
+            pass
         for plain_scxml in converted_scxmls:
             assert plain_scxml.check_validity(), \
                 f"The SCXML root object {plain_scxml.get_name()} is not valid: " \
@@ -282,9 +293,10 @@ class ScxmlRoot(ScxmlBase):
             data_model_xml = self._data_model.as_xml()
             assert data_model_xml is not None, "Error: SCXML root: invalid data model."
             xml_root.append(data_model_xml)
-        if self._ros_declarations is not None:
-            for ros_declaration in self._ros_declarations:
-                xml_root.append(ros_declaration.as_xml())
+        for ros_declaration in self._ros_declarations:
+            xml_root.append(ros_declaration.as_xml())
+        for scxml_thread in self._additional_threads:
+            xml_root.append(scxml_thread.as_xml())
         for state in self._states:
             xml_root.append(state.as_xml())
         ET.indent(xml_root, "    ")
