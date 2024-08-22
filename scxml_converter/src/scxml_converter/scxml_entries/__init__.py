@@ -22,7 +22,5 @@ from .scxml_ros_service import (                                                
     RosServiceServer, RosServiceClient, RosServiceHandleRequest,                # noqa: F401
     RosServiceHandleResponse, RosServiceSendRequest, RosServiceSendResponse)    # noqa: F401
 from .scxml_ros_timer import (RosTimeRate, RosRateCallback)                     # noqa: F401
-from .scxml_ros_entries import (                                                # noqa: F401
-    ScxmlRosDeclarations, ScxmlRosSends, ScxmlRosTransitions)                   # noqa: F401
 from .scxml_state import ScxmlState                                             # noqa: F401
 from .scxml_root import ScxmlRoot                                               # noqa: F401

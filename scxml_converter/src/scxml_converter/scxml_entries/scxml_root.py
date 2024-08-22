@@ -25,7 +25,9 @@ from xml.etree import ElementTree as ET
 from scxml_converter.scxml_entries import (
     BtInputPortDeclaration, BtOutputPortDeclaration, RosServiceClient, RosServiceServer,
     RosTimeRate, RosTopicPublisher, RosTopicSubscriber, ScxmlBase, ScxmlDataModel,
-    ScxmlRosDeclarations, ScxmlRosDeclarationsContainer, ScxmlState)
+    ScxmlRosDeclarationsContainer, ScxmlState)
+
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 
 from scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -56,8 +58,8 @@ class ScxmlRoot(ScxmlBase):
         assert len(datamodel_elements) <= 1, \
             f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
-        ros_declarations: List[ScxmlRosDeclarations] = get_children_as_scxml(
-            xml_tree, get_args(ScxmlRosDeclarations))
+        ros_declarations: List[RosDeclaration] = get_children_as_scxml(
+            xml_tree, RosDeclaration.__subclasses__())
         # BT Declarations
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
             xml_tree, get_args(BtPortDeclarations))
@@ -102,7 +104,7 @@ class ScxmlRoot(ScxmlBase):
         self._initial_state: Optional[str] = None
         self._states: List[ScxmlState] = []
         self._data_model: Optional[ScxmlDataModel] = None
-        self._ros_declarations: List[ScxmlRosDeclarations] = []
+        self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
 
     def get_name(self) -> str:
@@ -147,8 +149,8 @@ class ScxmlRoot(ScxmlBase):
         assert self._data_model is None, "Data model already set"
         self._data_model = data_model
 
-    def add_ros_declaration(self, ros_declaration: ScxmlRosDeclarations):
-        assert isinstance(ros_declaration, get_args(ScxmlRosDeclarations)), \
+    def add_ros_declaration(self, ros_declaration: RosDeclaration):
+        assert isinstance(ros_declaration, RosDeclaration), \
             "Error: SCXML root: invalid ROS declaration type."
         assert ros_declaration.check_validity(), "Error: SCXML root: invalid ROS declaration."
         if self._ros_declarations is None:

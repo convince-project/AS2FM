@@ -163,6 +163,12 @@ def sanitize_ros_interface_name(interface_name: str) -> str:
     return interface_name.replace("/", "__")
 
 
+def generate_rate_timer_event(timer_name: str) -> str:
+    """Generate the name of the event triggered by a rate timer."""
+    # TODO: Remove dot notation
+    return f"ros_time_rate.{timer_name}"
+
+
 def generate_topic_event(topic_name: str) -> str:
     """Generate the name of the event that triggers a message reception from a topic."""
     return f"topic_{sanitize_ros_interface_name(topic_name)}_msg"

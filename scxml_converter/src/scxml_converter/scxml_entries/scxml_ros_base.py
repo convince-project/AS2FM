@@ -44,7 +44,7 @@ class RosDeclaration(ScxmlBase):
         """
         Which communication interface is used by the ROS declaration.
 
-        Expected values: "topic", "service", "action"
+        Expected values: "service", "action"
         """
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_communication_interface.")
 

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Tuple, Type, Union
+from typing import List, Iterable, Optional, Union, Type
 
 from scxml_converter.scxml_entries import ScxmlBase
 from xml.etree.ElementTree import Element
@@ -39,7 +39,7 @@ def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: s
 
 
 def get_children_as_scxml(
-        xml_tree: Element, scxml_types: Tuple[Type[ScxmlBase]]) -> List[ScxmlBase]:
+        xml_tree: Element, scxml_types: Iterable[Type[ScxmlBase]]) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
 
@@ -56,7 +56,7 @@ def get_children_as_scxml(
 
 
 def read_value_from_xml_child(
-        xml_tree: Element, child_tag: str, valid_types: Tuple[Type[Union[ScxmlBase, str]]]
+        xml_tree: Element, child_tag: str, valid_types: Iterable[Type[Union[ScxmlBase, str]]]
         ) -> Optional[Union[str, ScxmlBase]]:
     """
     Try to read the value of a child tag from the xml tree. If the child is not found, return None.
@@ -90,7 +90,7 @@ def read_value_from_xml_child(
 
 def read_value_from_xml_arg_or_child(
         scxml_type: Type[ScxmlBase], xml_tree: Element, tag_name: str,
-        valid_types: Tuple[Type[Union[ScxmlBase, str]]],
+        valid_types: Iterable[Type[Union[ScxmlBase, str]]],
         none_allowed=False) -> Optional[Union[str, ScxmlBase]]:
     """
     Read a value from an xml attribute or, if not found, the child tag with the same name.

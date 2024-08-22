@@ -374,11 +374,11 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :param xml_tree: The XML tree to create the execution entry from
     :return: The execution entry
     """
-    # TODO: This is pretty bad, need to re-check how to break the circle
-    from .scxml_ros_entries import ScxmlRosSends
+    from scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
 
     # TODO: This should be generated only once, since it stays as it is
-    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
+    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry}
+    tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
     assert exec_tag in tag_to_cls, \
         f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
