@@ -23,7 +23,7 @@ from typing import List, Union, Type
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    RosField, BtGetValueInputPort, ScxmlRosDeclarationsContainer, execution_body_from_xml)
+    RosField, BtGetValueInputPort, ScxmlRosDeclarationsContainer)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
@@ -85,30 +85,12 @@ class RosActionHandleGoalRequest(RosCallback):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleGoalRequest":
-        """Create a RosActionHandleGoalRequest object from an XML tree."""
-        assert_xml_tag_ok(RosActionHandleGoalRequest, xml_tree)
-        server_name = get_xml_argument(RosActionHandleGoalRequest, xml_tree, "name")
-        target_name = get_xml_argument(RosActionHandleGoalRequest, xml_tree, "target")
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosActionHandleGoalRequest(server_name, target_name, exec_body)
-
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_handle_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
-        xml_goal_handler = ET.Element(RosActionHandleGoalRequest.get_tag_name(),
-                                      {"name": self._interface_name, "target": self._target})
-        if self._body is not None:
-            for entry in self._body:
-                xml_goal_handler.append(entry.as_xml())
-        return xml_goal_handler
 
 
 class RosActionAcceptGoal(RosTrigger):
@@ -124,16 +106,6 @@ class RosActionAcceptGoal(RosTrigger):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionAcceptGoal":
-        """Create a RosActionSendGoal object from an XML tree."""
-        assert_xml_tag_ok(RosActionAcceptGoal, xml_tree)
-        action_name = get_xml_argument(RosActionAcceptGoal, xml_tree, "name")
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionAcceptGoal(action_name, fields)
-
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
 
@@ -146,12 +118,8 @@ class RosActionAcceptGoal(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML action goal Request: invalid parameters."
-        assert self.check_fields_validity(None), "Error: SCXML action goal Request: invalid fields."
-        xml_goal_accepted = ET.Element(RosActionAcceptGoal.get_tag_name(),
-                                       {"name": self._interface_name})
-        xml_goal_accepted.append(self._fields[0].as_xml())
-        return xml_goal_accepted
+        assert self.check_fields_validity(None), "Error: SCXML RosActionAcceptGoal: invalid fields."
+        return super().as_xml()
 
 
 class RosActionRejectGoal(RosTrigger):
@@ -168,16 +136,6 @@ class RosActionRejectGoal(RosTrigger):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionRejectGoal":
-        """Create a RosActionSendGoal object from an XML tree."""
-        assert_xml_tag_ok(RosActionRejectGoal, xml_tree)
-        action_name = get_xml_argument(RosActionRejectGoal, xml_tree, "name")
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionRejectGoal(action_name, fields)
-
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
 
@@ -190,12 +148,8 @@ class RosActionRejectGoal(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML action goal Request: invalid parameters."
-        assert self.check_fields_validity(None), "Error: SCXML action goal Request: invalid fields."
-        xml_goal_accepted = ET.Element(RosActionRejectGoal.get_tag_name(),
-                                       {"name": self._interface_name})
-        xml_goal_accepted.append(self._fields[0].as_xml())
-        return xml_goal_accepted
+        assert self.check_fields_validity(None), "Error: SCXML RosActionRejectGoal: invalid fields."
+        return super().as_xml()
 
 
 class RosActionStartThread(RosTrigger):
@@ -252,13 +206,8 @@ class RosActionStartThread(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
-        xml_thread_start_req = ET.Element(RosActionStartThread.get_tag_name(),
-                                          {"name": self._interface_name,
-                                           "thread_id": self._thread_id})
-        if self._fields is not None:
-            for field in self._fields:
-                xml_thread_start_req.append(field.as_xml())
+        xml_thread_start_req = super().as_xml()
+        xml_thread_start_req.set("thread_id", self._thread_id)
         return xml_thread_start_req
 
 
@@ -272,16 +221,6 @@ class RosActionSendFeedback(RosTrigger):
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
-
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendFeedback":
-        """Create a RosActionSendFeedback object from an XML tree."""
-        assert_xml_tag_ok(RosActionSendFeedback, xml_tree)
-        action_name = get_xml_argument(RosActionSendFeedback, xml_tree, "name")
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionSendFeedback(action_name, fields)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
@@ -297,15 +236,6 @@ class RosActionSendFeedback(RosTrigger):
         return generate_action_feedback_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
-        xml_action_feedback = ET.Element(RosActionSendFeedback.get_tag_name(),
-                                         {"name": self._interface_name})
-        if self._fields is not None:
-            for field in self._fields:
-                xml_action_feedback.append(field.as_xml())
-        return xml_action_feedback
-
 
 class RosActionSendResult(RosTrigger):
     """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
@@ -317,16 +247,6 @@ class RosActionSendResult(RosTrigger):
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
-
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionSendResult":
-        """Create a RosActionSendResult object from an XML tree."""
-        assert_xml_tag_ok(RosActionSendResult, xml_tree)
-        action_name = get_xml_argument(RosActionSendResult, xml_tree, "name")
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionSendResult(action_name, fields)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
@@ -341,12 +261,3 @@ class RosActionSendResult(RosTrigger):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
-        xml_action_result = ET.Element(RosActionSendResult.get_tag_name(),
-                                       {"name": self._interface_name})
-        if self._fields is not None:
-            for field in self._fields:
-                xml_action_result.append(field.as_xml())
-        return xml_action_result
