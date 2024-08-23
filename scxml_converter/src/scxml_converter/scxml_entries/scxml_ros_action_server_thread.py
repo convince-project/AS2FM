@@ -30,7 +30,8 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
-    generate_action_thread_execution_start_event, generate_action_thread_free_event)
+    generate_action_thread_execution_start_event, generate_action_thread_free_event,
+    sanitize_ros_interface_name)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -148,7 +149,8 @@ class RosActionThread(ScxmlBase):
         """
         from scxml_converter.scxml_entries import ScxmlRoot
         thread_instances: List[ScxmlRoot] = []
-        action_name = ros_declarations.get_action_server_info(self._name)[0]
+        action_name = sanitize_ros_interface_name(
+            ros_declarations.get_action_server_info(self._name)[0])
         for thread_idx in range(self._n_threads):
             thread_name = f"{action_name}_thread_{thread_idx}"
             plain_thread_instance = ScxmlRoot(thread_name)
@@ -162,7 +164,7 @@ class RosActionThread(ScxmlBase):
                 "Error: SCXML RosActionThread: " \
                 f"failed to generate a plain-SCXML instance from thread '{self._name}'"
             thread_instances.append(plain_thread_instance)
-        return [thread_instances]
+        return thread_instances
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."
@@ -218,6 +220,7 @@ class RosActionHandleThreadStart(RosCallback):
         assert isinstance(thread_id, int) and thread_id >= 0, \
             f"Error: SCXML {self.__class__.__name__}: invalid thread ID ({thread_id})."
         self._thread_id = thread_id
+        super().set_thread_id(thread_id)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_execution_start_event(
@@ -269,6 +272,7 @@ class RosActionThreadFree(RosTrigger):
         # The thread ID is expected to be overwritten every time a new thread is generated.
         assert isinstance(thread_id, int) and thread_id >= 0, \
             f"Error: SCXML {self.__class__.__name__}: invalid thread ID ({thread_id})."
+        self._thread_id = thread_id
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_free_event(
@@ -279,5 +283,5 @@ class RosActionThreadFree(RosTrigger):
             f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         plain_trigger = super().as_plain_scxml(ros_declarations)
         # Add the thread id to the (empty) param list
-        plain_trigger.append_param(ScxmlParam("thread_id", str(self._thread_id)))
+        plain_trigger.append_param(ScxmlParam("thread_id", expr=str(self._thread_id)))
         return plain_trigger

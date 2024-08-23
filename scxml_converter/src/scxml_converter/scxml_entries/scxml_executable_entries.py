@@ -157,6 +157,17 @@ class ScxmlIf(ScxmlBase):
                     return False
         return True
 
+    def set_thread_id(self, thread_id: int) -> None:
+        """Set the thread ID for the executable entries contained in the if object."""
+        for _, exec_body in self._conditional_executions:
+            for entry in exec_body:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
+        if self._else_execution is not None:
+            for entry in self._else_execution:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
         for condition, execution in self._conditional_executions:

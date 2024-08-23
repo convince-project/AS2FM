@@ -100,10 +100,10 @@ class ScxmlState(ScxmlBase):
 
     def set_thread_id(self, thread_idx: int):
         """Assign the thread ID to the thread-specific transitions in the body."""
-        for transition in self._body:
-            # Assign the thread only to thread specific transitions
-            if hasattr(transition, 'set_thread_id'):
-                transition.set_thread_id(thread_idx)
+        for entry in self._on_entry + self._on_exit + self._body:
+            # Assign the thread only to the entries supporting it
+            if hasattr(entry, 'set_thread_id'):
+                entry.set_thread_id(thread_idx)
 
     def instantiate_bt_events(self, instance_id: str) -> None:
         """Instantiate the BT events in all entries belonging to a state."""

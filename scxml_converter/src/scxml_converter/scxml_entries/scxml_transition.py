@@ -141,6 +141,13 @@ class ScxmlTransition(ScxmlBase):
         return self._body is None or \
             all(entry.check_valid_ros_instantiations(ros_declarations) for entry in self._body)
 
+    def set_thread_id(self, thread_id: int) -> None:
+        """Set the thread ID for the executable entries of this transition."""
+        if self._body is not None:
+            for entry in self._body:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML transition: invalid ROS declarations container."
