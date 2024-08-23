@@ -123,7 +123,7 @@ class RosActionThread(ScxmlBase):
         if not valid_initial_state:
             print(f"Error: SCXML RosActionThread: {self._name} has no initial state.")
         if not valid_data_model:
-            print(f"Error: SCXML RosActionThread: {self._name} nas an invalid datamodel.")
+            print(f"Error: SCXML RosActionThread: {self._name} has an invalid datamodel.")
         if not valid_states:
             print(f"Error: SCXML RosActionThread: {self._name} has invalid states.")
         return valid_n_threads and valid_initial_state and valid_data_model and valid_states

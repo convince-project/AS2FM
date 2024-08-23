@@ -79,7 +79,7 @@ class ScxmlRoot(ScxmlBase):
             scxml_root.add_bt_port_declaration(bt_port_declaration)
         # Additional threads
         for scxml_thread in additional_threads:
-            scxml_root.add_thread(scxml_thread)
+            scxml_root.add_action_thread(scxml_thread)
         # States
         for scxml_state in scxml_states:
             is_initial = scxml_state.get_id() == scxml_init_state
