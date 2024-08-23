@@ -51,12 +51,14 @@
             <transition cond="sequence__len == order + 1" target="idle">
                 <!-- Results and feedback ROS tags need to add the thread_id to the fields, too. -->
                 <ros_action_succeed name="act_srv">
+                    <field name="goal_id" expr="goal_id" />
                     <field name="sequence" expr="sequence" />
                     <field name="sequence__len" expr="sequence__len" />
                 </ros_action_succeed>
             </transition>
             <transition target="execute">
                 <ros_action_feedback name="act_srv">
+                    <field name="goal_id" expr="goal_id" />
                     <field name="sequence" expr="sequence" />
                     <field name="sequence__len" expr="sequence__len" />
                 </ros_action_feedback>

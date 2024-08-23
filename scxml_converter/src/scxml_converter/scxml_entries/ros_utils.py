@@ -85,12 +85,16 @@ def extract_params_from_ros_type(ros_interface_type: Type[Any]) -> Dict[str, str
     Extract the data fields of a ROS message type as pairs of name and type objects.
     """
     fields = ros_interface_type.get_fields_and_field_types()
+    additional_fields = {}
     for key in fields.keys():
         assert fields[key] in BASIC_FIELD_TYPES, \
             f"Error: SCXML ROS declarations: {ros_interface_type} {key} field is " \
             f"of type {fields[key]}, that is not supported."
         fields[key] = MSG_TYPE_SUBSTITUTIONS.get(fields[key], fields[key])
-    return fields
+        # For array fields (or sequences), we append also a "<name>__len" entry
+        if fields[key].startswith("sequence<"):
+            additional_fields[key + "__len"] = "int32"
+    return fields | additional_fields
 
 
 def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, str]) -> bool:

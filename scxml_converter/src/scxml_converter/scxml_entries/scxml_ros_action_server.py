@@ -220,6 +220,8 @@ class RosActionSendFeedback(RosTrigger):
                                                                    self._fields, has_goal_id=True):
             print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid fields in feedback request {self._interface_name}.")
+            return False
+        return True
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_feedback_event(
@@ -246,6 +248,8 @@ class RosActionSendResult(RosTrigger):
                                                                  self._fields, has_goal_id=True):
             print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid fields in result request {self._interface_name}.")
+            return False
+        return True
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
