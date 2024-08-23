@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="server" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="goal_id" expr="0" type="int32" />
+        <data id="order" expr="0" type="int32" />
+        <data id="thread_0_busy" expr="False" type="bool" />
+        <data id="thread_1_busy" expr="False" type="bool" />
+        <data id="thread_to_start" expr="-1" type="int32" />
+    </datamodel>
+    <state id="idle">
+        <transition target="check_goal" event="action_fibonacci_goal_handle">
+            <assign location="goal_id" expr="_event.goal_id" />
+            <assign location="order" expr="_event.order" />
+        </transition>
+        <transition target="idle" event="action_fibonacci_thread_free">
+            <if cond="_event.thread_id == 0">
+                <assign location="thread_0_busy" expr="False" />
+                <elseif cond="_event.thread_id == 1" />
+                <assign location="thread_1_busy" expr="False" />
+            </if>
+        </transition>
+    </state>
+    <state id="check_goal">
+        <onentry>
+            <if cond="thread_0_busy == False">
+                <assign location="thread_0_busy" expr="True" />
+                <assign location="thread_to_start" expr="0" />
+                <elseif cond="thread_1_busy == False" />
+                <assign location="thread_1_busy" expr="True" />
+                <assign location="thread_to_start" expr="1" />
+                <else />
+                <assign location="thread_to_start" expr="-1" />
+            </if>
+        </onentry>
+        <transition target="idle" cond="thread_to_start &gt;= 0">
+            <send event="action_fibonacci_goal_accepted">
+                <param name="goal_id" expr="goal_id" />
+            </send>
+            <send event="action_fibonacci_thread_start">
+                <param name="goal_id" expr="goal_id" />
+                <param name="order" expr="order" />
+                <param name="thread_id" expr="thread_to_start" />
+            </send>
+        </transition>
+        <transition target="idle">
+            <send event="action_fibonacci_goal_rejected">
+                <param name="goal_id" expr="goal_id" />
+            </send>
+        </transition>
+    </state>
+</scxml>

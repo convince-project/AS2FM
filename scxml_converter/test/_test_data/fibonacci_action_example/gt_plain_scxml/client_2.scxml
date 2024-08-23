@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="client_2" version="1.0" model_src="" initial="send_req" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="fibonacci_result" expr="Array(50)" type="int32[]" />
+        <data id="counter" expr="0" type="int32" />
+    </datamodel>
+    <state id="send_req">
+        <onentry>
+            <send event="action_fibonacci_goal_req_client_client_2">
+                <param name="order" expr="7" />
+            </send>
+        </onentry>
+        <transition target="wait_result" event="action_fibonacci_goal_accept_client_client_2" />
+        <transition target="send_req" event="action_fibonacci_goal_reject_client_client_2" />
+    </state>
+    <state id="wait_result">
+        <transition target="wait_result" event="action_fibonacci_feedback_handle_client_client_2">
+            <assign location="counter" expr="counter + 1" />
+            <send event="topic_client_2_feedback_count_msg">
+                <param name="data" expr="counter" />
+            </send>
+        </transition>
+        <transition target="done" event="action_fibonacci_result_handle_client_client_2">
+            <assign location="fibonacci_result" expr="_event.sequence" />
+            <send event="topic_client_2_last_fibonacci_msg">
+                <param name="data" expr="fibonacci_result[6]" />
+            </send>
+        </transition>
+    </state>
+    <state id="done" />
+</scxml>

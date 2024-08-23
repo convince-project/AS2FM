@@ -63,7 +63,7 @@ class RosActionSendGoal(RosTrigger):
         return RosActionClient
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._client_name)
+        return ros_declarations.is_action_client_defined(self._interface_name)
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields)

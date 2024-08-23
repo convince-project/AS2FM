@@ -162,11 +162,11 @@ class ScxmlState(ScxmlBase):
         if not valid_id:
             print("Error: SCXML state: id is not valid.")
         if not valid_on_entry:
-            print("Error: SCXML state: on_entry is not valid.")
+            print(f"Error: SCXML state {self._id}: on_entry is not valid.")
         if not valid_on_exit:
-            print("Error: SCXML state: on_exit is not valid.")
+            print(f"Error: SCXML state {self._id}: on_exit is not valid.")
         if not valid_body:
-            print("Error: SCXML state: executable body is not valid.")
+            print(f"Error: SCXML state {self._id}: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
     def check_valid_ros_instantiations(self,
@@ -176,11 +176,11 @@ class ScxmlState(ScxmlBase):
         valid_exit = ScxmlState._check_valid_ros_instantiations(self._on_exit, ros_declarations)
         valid_body = ScxmlState._check_valid_ros_instantiations(self._body, ros_declarations)
         if not valid_entry:
-            print("Error: SCXML state: onentry has invalid ROS instantiations.")
+            print(f"Error: SCXML state {self._id}: onentry has invalid ROS instantiations.")
         if not valid_exit:
-            print("Error: SCXML state: onexit has invalid ROS instantiations.")
+            print(f"Error: SCXML state {self._id}: onexit has invalid ROS instantiations.")
         if not valid_body:
-            print("Error: SCXML state: found invalid transition in state body.")
+            print(f"Error: SCXML state {self._id}: found invalid transition in state body.")
         return valid_entry and valid_exit and valid_body
 
     @staticmethod
@@ -195,7 +195,18 @@ class ScxmlState(ScxmlBase):
         """Convert the ROS-specific entries to be plain SCXML"""
         plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
         plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
-        plain_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
+        plain_body: List[ScxmlTransition] = []
+        for entry in self._body:
+            plain_entries = entry.as_plain_scxml(ros_declarations)
+            if isinstance(plain_entries, ScxmlTransition):
+                plain_body.append(plain_entries)
+            elif isinstance(plain_entries, list) and \
+                    all(isinstance(e, ScxmlTransition) for e in plain_entries):
+                # Some special entries return multiple transitions
+                plain_body.extend(plain_entries)
+            else:
+                raise ValueError(f"Error: SCXML state {self._id}: found invalid transition in "
+                                 "state body after conversion to plain SCXML.")
         return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
     def as_xml(self) -> ET.Element:
