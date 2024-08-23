@@ -179,7 +179,7 @@ class RosActionHandleThreadStart(RosCallback):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_thread_start"
+        return "ros_action_handle_thread_start"
 
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
@@ -225,7 +225,7 @@ class RosActionHandleThreadCancel(RosActionHandleThreadStart):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_thread_cancel"
+        return "ros_action_handle_thread_cancel"
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         assert self._thread_id is not None, f"Error: SCXML {self.__class__}: thread ID not set."

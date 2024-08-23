@@ -192,6 +192,8 @@ class ScxmlRoot(ScxmlBase):
             self._data_model.update_bt_ports_values(self._bt_ports_handler)
         for ros_decl_scxml in self._ros_declarations:
             ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
+        for scxml_thread in self._additional_threads:
+            scxml_thread.update_bt_ports_values(self._bt_ports_handler)
         for state in self._states:
             state.update_bt_ports_values(self._bt_ports_handler)
 
@@ -268,9 +270,11 @@ class ScxmlRoot(ScxmlBase):
         main_scxml._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._additional_threads:
-            # TODO: Append additional threads here
-            pass
+            converted_scxmls.extend(scxml_thread.as_plain_scxml(ros_declarations))
         for plain_scxml in converted_scxmls:
+            assert isinstance(plain_scxml, ScxmlRoot), \
+                "Error: SCXML root: conversion to plain SCXML resulted in invalid object " \
+                f"(expected ScxmlRoot, obtained {type(plain_scxml)}."
             assert plain_scxml.check_validity(), \
                 f"The SCXML root object {plain_scxml.get_name()} is not valid: " \
                 "conversion to plain SCXML failed."

@@ -29,9 +29,10 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_handle_event,
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
-    generate_action_thread_execution_start_event, generate_action_feedback_event,
-    generate_action_result_event)
-from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+    generate_action_thread_execution_start_event, generate_action_thread_execution_cancel_event,
+    generate_action_feedback_event, generate_action_result_event)
+from scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 
 
 class RosActionServer(RosDeclaration):
@@ -148,16 +149,14 @@ class RosActionStartThread(RosTrigger):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionStartThread":
+    @classmethod
+    def from_xml_tree(cls: Type[RosTrigger], xml_tree: ET.Element) -> "RosActionStartThread":
         """Create a RosActionStartThread object from an XML tree."""
-        assert_xml_tag_ok(RosActionStartThread, xml_tree)
-        action_name = get_xml_argument(RosActionStartThread, xml_tree, "name")
-        thread_id = get_xml_argument(RosActionStartThread, xml_tree, "thread_id")
-        fields: List[RosField] = []
-        for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
-        return RosActionStartThread(action_name, thread_id, fields)
+        assert_xml_tag_ok(cls, xml_tree)
+        action_name = get_xml_argument(cls, xml_tree, "name")
+        thread_id = get_xml_argument(cls, xml_tree, "thread_id")
+        fields: List[RosField] = get_children_as_scxml(xml_tree, (RosField,))
+        return cls(action_name, thread_id, fields)
 
     def __init__(self, action_name: Union[str, RosActionServer], thread_id: str,
                  fields: List[RosField] = None) -> None:
@@ -192,6 +191,28 @@ class RosActionStartThread(RosTrigger):
         xml_thread_start_req = super().as_xml()
         xml_thread_start_req.set("thread_id", self._thread_id)
         return xml_thread_start_req
+
+
+class RosActionCancelThread(RosActionStartThread):
+    """
+    Object representing the request, from an action server, to cancel a running thread instance.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_start_thread"
+
+    def check_fields_validity(self, _) -> bool:
+        """Check if the goal_id and the request fields have been defined."""
+        n_fields = len(self._fields)
+        if n_fields > 0:
+            print(f"Error: SCXML {self.__class__}: no fields expected, found {n_fields}.")
+            return False
+        return True
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_thread_execution_cancel_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
 
 
 class RosActionSendFeedback(RosTrigger):
