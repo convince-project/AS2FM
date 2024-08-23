@@ -144,3 +144,10 @@ def test_ros_to_plain_scxml_bt_ports():
 
 def test_ros_to_plain_scxml_add_int_srv():
     ros_to_plain_scxml_test('add_int_srv_example', {}, {}, True)
+
+
+def test_ros_to_plain_scxml_fibonacci_action():
+    ros_to_plain_scxml_test(
+        'fibonacci_action_example', {},
+        {"server.scxml": ["server", "fibonacci_thread_0", "fibonacci_thread_1"]},
+        True)

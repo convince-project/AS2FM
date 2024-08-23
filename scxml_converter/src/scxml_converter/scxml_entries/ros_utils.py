@@ -229,6 +229,11 @@ def generate_action_thread_execution_start_event(action_name: str) -> str:
     return f"action_{sanitize_ros_interface_name(action_name)}_thread_start"
 
 
+def generate_action_thread_free_event(action_name: str) -> str:
+    """Generate the name of the event sent when an action thread becomes free."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_thread_free"
+
+
 def generate_action_feedback_event(action_name: str) -> str:
     """Generate the name of the event that sends a feedback from the action server."""
     return f"action_{sanitize_ros_interface_name(action_name)}_feedback"

@@ -23,14 +23,14 @@ from typing import List, Optional, Type, Union
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlRosDeclarationsContainer,
-    ScxmlTransition)
+    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition, ScxmlParam,
+    ScxmlRosDeclarationsContainer, RosField)
 from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
 from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import (
-    generate_action_thread_execution_start_event)
+    generate_action_thread_execution_start_event, generate_action_thread_free_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -53,12 +53,12 @@ class RosActionThread(ScxmlBase):
         n_threads = get_xml_argument(RosActionThread, xml_tree, "n_threads")
         n_threads = int(n_threads)
         assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
-        initial_state = get_xml_argument(RosActionThread, xml_tree, "initial_state")
+        initial_state = get_xml_argument(RosActionThread, xml_tree, "initial")
         datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
         scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
         assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
-        assert scxml_states > 0, "Error: SCXML Action Thread: no states defined."
+        assert len(scxml_states) > 0, "Error: SCXML Action Thread: no states defined."
         # The non-plain SCXML Action thread has the same name as the action
         scxml_action_thread = RosActionThread(action_alias, n_threads)
         # Fill the thread with the states and datamodel
@@ -88,7 +88,7 @@ class RosActionThread(ScxmlBase):
             self._name = action_server
         self._n_threads: int = n_threads
         self._initial_state: Optional[str] = None
-        self._datamodel: Optional[ScxmlDataModel] = None
+        self._data_model: Optional[ScxmlDataModel] = None
         self._states: List[ScxmlState] = []
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
@@ -103,8 +103,8 @@ class RosActionThread(ScxmlBase):
         self._data_model = data_model
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        if self._datamodel is not None:
-            self._datamodel.update_bt_ports_values(bt_ports_handler)
+        if self._data_model is not None:
+            self._data_model.update_bt_ports_values(bt_ports_handler)
         for state in self._states:
             state.update_bt_ports_values(bt_ports_handler)
 
@@ -112,7 +112,7 @@ class RosActionThread(ScxmlBase):
         valid_name = is_non_empty_string(RosActionThread, "name", self._name)
         valid_n_threads = isinstance(self._n_threads, int) and self._n_threads > 0
         valid_initial_state = self._initial_state is not None
-        valid_datamodel = self._datamodel is None or self._datamodel.check_validity()
+        valid_data_model = self._data_model is None or self._data_model.check_validity()
         valid_states = all(isinstance(state, ScxmlState) and state.check_validity()
                            for state in self._states)
         if not valid_name:
@@ -122,11 +122,11 @@ class RosActionThread(ScxmlBase):
                   f"{self._name} has invalid n_threads ({self._n_threads}).")
         if not valid_initial_state:
             print(f"Error: SCXML RosActionThread: {self._name} has no initial state.")
-        if not valid_datamodel:
+        if not valid_data_model:
             print(f"Error: SCXML RosActionThread: {self._name} nas an invalid datamodel.")
         if not valid_states:
             print(f"Error: SCXML RosActionThread: {self._name} has invalid states.")
-        return valid_n_threads and valid_initial_state and valid_datamodel and valid_states
+        return valid_n_threads and valid_initial_state and valid_data_model and valid_states
 
     def check_valid_ros_instantiations(self, ros_decls: ScxmlRosDeclarationsContainer) -> bool:
         assert isinstance(ros_decls, ScxmlRosDeclarationsContainer), \
@@ -152,7 +152,7 @@ class RosActionThread(ScxmlBase):
         for thread_idx in range(self._n_threads):
             thread_name = f"{action_name}_thread_{thread_idx}"
             plain_thread_instance = ScxmlRoot(thread_name)
-            plain_thread_instance.set_data_model(self._datamodel)
+            plain_thread_instance.set_data_model(self._data_model)
             for state in self._states:
                 initial_state = state.get_id() == self._initial_state
                 state.set_thread_id(thread_idx)
@@ -241,3 +241,41 @@ class RosActionThreadFree(RosTrigger):
     @staticmethod
     def get_tag_name() -> str:
         return "ros_action_thread_free"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionServer]:
+        return RosActionServer
+
+    def __init__(self, action_name: Union[str, RosActionServer],
+                 fields: Optional[List[RosField]] = None) -> None:
+        super().__init__(action_name, fields)
+        self._thread_id: Optional[int] = None
+
+    def check_validity(self) -> bool:
+        if len(self._fields) > 0:
+            print("Error: SCXML RosActionThreadFree: no fields expected.")
+            return False
+        return super().check_validity()
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_server_defined(self._interface_name)
+
+    def check_fields_validity(self, _) -> bool:
+        return len(self._fields) == 0
+
+    def set_thread_id(self, thread_id: int) -> None:
+        """Set the thread ID for this handler."""
+        # The thread ID is expected to be overwritten every time a new thread is generated.
+        assert isinstance(thread_id, int) and thread_id >= 0, \
+            f"Error: SCXML {self.__class__}: invalid thread ID ({thread_id})."
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_thread_free_event(
+            ros_declarations.get_action_server_info(self._interface_name)[0])
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self._thread_id is not None, f"Error: SCXML {self.__class__}: thread ID not set."
+        plain_trigger = super().as_plain_scxml(ros_declarations)
+        # Add the thread id to the (empty) param list
+        plain_trigger.append_param(ScxmlParam("thread_id", str(self._thread_id)))
+        return plain_trigger

@@ -14,28 +14,27 @@
     
     <ros_topic_publisher topic="/client_2_last_fibonacci" type="std_msgs/Int32" />
     <ros_topic_publisher topic="/client_2_feedback_count" type="std_msgs/Int32" />
-    <ros_action_client action_name="/fibonacci" type="example_interfaces/Fibonacci" />
+    <ros_action_client name="example_action" action_name="/fibonacci" type="example_interfaces/Fibonacci" />
 
     <state id="send_req">
         <onentry>
-            <ros_action_send_goal action_name="/fibonacci">
+            <ros_action_send_goal name="example_action">
                 <field name="order" expr="7" />
             </ros_action_send_goal>
         </onentry>
-        <ros_action_handle_goal_response action_name="/fibonacci" accept="wait_result" decline="send_req" />
+        <ros_action_handle_goal_response name="example_action" accept="wait_result" reject="send_req" />
     </state>
 
     <state id="wait_result">
-        <ros_action_handle_feedback action_name="/fibonacci" target="wait_result">
+        <ros_action_handle_feedback name="example_action" target="wait_result">
             <assign location="counter" expr="counter + 1" />
             <ros_topic_publish topic="/client_2_feedback_count">
                 <field name="data" expr="counter" />
             </ros_topic_publish>
         </ros_action_handle_feedback>
-        <ros_action_handle_result action_name="/fibonacci" target="done">
+        <ros_action_handle_result name="example_action" target="done">
             <assign location="fibonacci_result" expr="_res.sequence" />
             <ros_topic_publish topic="/client_2_last_fibonacci">
-                <!-- TODO: Shall we make it possible to retrieve the size of a "dynamic" vector? -->
                 <field name="data" expr="fibonacci_result[6]" />
             </ros_topic_publish>
         </ros_action_handle_result>
