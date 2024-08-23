@@ -216,7 +216,7 @@ class RosActionHandleThreadStart(RosCallback):
         """Set the thread ID for this handler."""
         # The thread ID is expected to be overwritten every time a new thread is generated.
         assert isinstance(thread_id, int) and thread_id >= 0, \
-            f"Error: SCXML {self.__class__}: invalid thread ID ({thread_id})."
+            f"Error: SCXML {self.__class__.__name__}: invalid thread ID ({thread_id})."
         self._thread_id = thread_id
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
@@ -224,7 +224,8 @@ class RosActionHandleThreadStart(RosCallback):
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self._thread_id is not None, f"Error: SCXML {self.__class__}: thread ID not set."
+        assert self._thread_id is not None, \
+            f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
         self._condition = "_req.thread_id == " + str(self._thread_id)
         return super().as_plain_scxml(ros_declarations)
@@ -267,14 +268,15 @@ class RosActionThreadFree(RosTrigger):
         """Set the thread ID for this handler."""
         # The thread ID is expected to be overwritten every time a new thread is generated.
         assert isinstance(thread_id, int) and thread_id >= 0, \
-            f"Error: SCXML {self.__class__}: invalid thread ID ({thread_id})."
+            f"Error: SCXML {self.__class__.__name__}: invalid thread ID ({thread_id})."
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_free_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self._thread_id is not None, f"Error: SCXML {self.__class__}: thread ID not set."
+        assert self._thread_id is not None, \
+            f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         plain_trigger = super().as_plain_scxml(ros_declarations)
         # Add the thread id to the (empty) param list
         plain_trigger.append_param(ScxmlParam("thread_id", str(self._thread_id)))

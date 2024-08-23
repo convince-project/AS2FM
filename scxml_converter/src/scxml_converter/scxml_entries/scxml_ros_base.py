@@ -79,7 +79,7 @@ class RosDeclaration(ScxmlBase):
             f"invalid type of interface_name {type(interface_name)}."
         if self._interface_alias is None:
             assert is_non_empty_string(self.__class__, "interface_name", self._interface_name), \
-                f"Error: SCXML {self.get_tag_name()}: " \
+                f"Error: SCXML {self.__class__.__name__}: " \
                 "an alias name is required for dynamic ROS interfaces."
             self._interface_alias = interface_name
 
@@ -118,10 +118,11 @@ class RosDeclaration(ScxmlBase):
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError(f"Error: SCXML {self.__class__} cannot be converted to plain SCXML.")
+        raise RuntimeError(
+            f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
         xml_declaration = ET.Element(self.get_tag_name(),
                                      {"name": self._interface_alias,
                                       self.get_xml_arg_interface_name(): self._interface_name,
@@ -178,7 +179,8 @@ class RosCallback(ScxmlTransition):
         self._target: str = target_state
         self._condition: Optional[str] = condition
         self._body: ScxmlExecutionBody = exec_body
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        assert self.check_validity(), \
+            f"Error: SCXML {self.__class__.__name__}: invalid parameters."
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(self.__class__, "name", self._interface_name)
@@ -187,7 +189,7 @@ class RosCallback(ScxmlTransition):
             is_non_empty_string(self.__class__, "cond", self._condition)
         valid_body = self._body is None or valid_execution_body(self._body)
         if not valid_body:
-            print(f"Error: SCXML {self.__class__}: invalid entries in executable body.")
+            print(f"Error: SCXML {self.__class__.__name__}: invalid entries in executable body.")
         return valid_name and valid_target and valid_condition and valid_body
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
@@ -204,19 +206,20 @@ class RosCallback(ScxmlTransition):
                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ROS entries in the callback are correctly defined."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            f"Error: SCXML {self.__class__}: invalid type of ROS declarations container."
+            f"Error: SCXML {self.__class__.__name__}: invalid type of ROS declarations container."
         if not self.check_interface_defined(ros_declarations):
-            print(f"Error: SCXML {self.__class__}: undefined ROS interface {self._interface_name}.")
+            print(f"Error: SCXML {self.__class__.__name__}: "
+                  f"undefined ROS interface {self._interface_name}.")
             return False
         valid_body = super().check_valid_ros_instantiations(ros_declarations)
         if not valid_body:
-            print(f"Error: SCXML {self.__class__}: "
+            print(f"Error: SCXML {self.__class__.__name__}: "
                   f"body of {self._interface_name} has invalid ROS instantiations.")
         return valid_body
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
-            f"Error: SCXML {self.__class__}: invalid ROS instantiations."
+            f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
         target = self._target
         condition = self._condition
@@ -225,7 +228,7 @@ class RosCallback(ScxmlTransition):
 
     def as_xml(self) -> ET.Element:
         """Convert the ROS callback to an XML element."""
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
         xml_callback = ET.Element(self.get_tag_name(),
                                   {"name": self._interface_name, "target": self._target})
         if self._condition is not None:
@@ -277,7 +280,7 @@ class RosTrigger(ScxmlSend):
             assert is_non_empty_string(self.__class__, "name", interface_decl)
             self._interface_name = interface_decl
         self._fields: List[RosField] = fields
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
@@ -292,7 +295,7 @@ class RosTrigger(ScxmlSend):
         valid_name = is_non_empty_string(self.__class__, "name", self._interface_name)
         valid_fields = all(isinstance(field, RosField) for field in self._fields)
         if not valid_fields:
-            print(f"Error: SCXML {self.__class__}: "
+            print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid entries in fields of {self._interface_name}.")
         return valid_name and valid_fields
 
@@ -315,24 +318,26 @@ class RosTrigger(ScxmlSend):
                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ROS entries in the trigger are correctly defined."""
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            f"Error: SCXML {self.__class__}: invalid type of ROS declarations container."
+            f"Error: SCXML {self.__class__.__name__}: invalid type of ROS declarations container."
         if not self.check_interface_defined(ros_declarations):
-            print(f"Error: SCXML {self.__class__}: undefined ROS interface {self._interface_name}.")
+            print(f"Error: SCXML {self.__class__.__name__}: "
+                  f"undefined ROS interface {self._interface_name}.")
             return False
         if not self.check_fields_validity(ros_declarations):
-            print(f"Error: SCXML {self.__class__}: invalid fields for {self._interface_name}.")
+            print(f"Error: SCXML {self.__class__.__name__}: "
+                  f"invalid fields for {self._interface_name}.")
             return False
         return True
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
-            f"Error: SCXML {self.__class__}: invalid ROS instantiations."
+            f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
         params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         return ScxmlSend(event_name, params)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
+        assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
         xml_trigger = ET.Element(self.get_tag_name(), {"name": self._interface_name})
         for field in self._fields:
             xml_trigger.append(field.as_xml())

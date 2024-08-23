@@ -179,7 +179,7 @@ class RosActionStartThread(RosTrigger):
         """Check if the goal_id and the request fields have been defined."""
         if not ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields,
                                                                has_goal_id=True):
-            print(f"Error: SCXML {self.__class__}: "
+            print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid fields in goal request {self._interface_name}.")
             return False
         return True
@@ -218,7 +218,7 @@ class RosActionSendFeedback(RosTrigger):
         """Check if the goal_id and the request fields have been defined."""
         if not ros_declarations.check_valid_action_feedback_fields(self._interface_name,
                                                                    self._fields, has_goal_id=True):
-            print(f"Error: SCXML {self.__class__}: "
+            print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid fields in feedback request {self._interface_name}.")
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
@@ -244,7 +244,7 @@ class RosActionSendResult(RosTrigger):
         """Check if the goal_id and the request fields have been defined."""
         if not ros_declarations.check_valid_action_result_fields(self._interface_name,
                                                                  self._fields, has_goal_id=True):
-            print(f"Error: SCXML {self.__class__}: "
+            print(f"Error: SCXML {self.__class__.__name__}: "
                   f"invalid fields in result request {self._interface_name}.")
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:

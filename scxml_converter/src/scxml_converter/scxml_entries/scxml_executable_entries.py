@@ -246,7 +246,7 @@ class ScxmlSend(ScxmlBase):
 
     def append_param(self, param: ScxmlParam) -> None:
         assert self.__class__ is ScxmlSend, \
-            f"Error: SCXML send: cannot append param to derived class {self.__class__}."
+            f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         self._params.append(param)
 
