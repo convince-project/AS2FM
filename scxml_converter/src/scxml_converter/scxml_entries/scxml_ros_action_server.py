@@ -22,7 +22,8 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Union, Type
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import RosField, ScxmlRosDeclarationsContainer
+from scxml_converter.scxml_entries import (
+    RosField, ScxmlSend, ScxmlParam, ScxmlRosDeclarationsContainer)
 
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
@@ -185,7 +186,13 @@ class RosActionStartThread(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_execution_start_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
+            ros_declarations.get_action_server_info(self._interface_name)[0])
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
+        plain_send = super().as_plain_scxml(ros_declarations)
+        # Append to the transition fields the thread ID
+        plain_send.append_param(ScxmlParam("thread_id", expr=self._thread_id))
+        return plain_send
 
     def as_xml(self) -> ET.Element:
         xml_thread_start_req = super().as_xml()

@@ -66,23 +66,18 @@
 
     <datamodel>
         <!-- Goal fields -->
+        <data id="goal_id" type="int32" expr="0" />
         <data id="order" type="int32" expr="0" />
-        <!-- ID of the goal_id to cancel -->
-        <data id="cancel_id" type="int32" expr="0" />
-        <!-- ID of the last thread that terminated -->
-        <data id="finished_thread_id" type="int32" expr="0" />
-        <!-- ID of the next goal to be sent -->
-        <data id="next_goal_id" type="int32" expr="0" />
-        <!-- TODO: Use array -->
         <!-- Keep track of which thread is in use -->
+        <!-- TODO: Use array -->
+        <data id="thread_0_busy" type="bool" expr="False" />
         <data id="thread_1_busy" type="bool" expr="False" />
-        <data id="thread_2_busy" type="bool" expr="False" />
-        <data id="thread_to_start" type="int32" expr="0" />
+        <data id="thread_to_start" type="int32" expr="-1" />
     </datamodel>
 
     <state id="idle">
         <ros_action_handle_goal name="act_srv" target="check_goal">
-            <assign location="next_goal_id" expr="_req.goal_id" />
+            <assign location="goal_id" expr="_req.goal_id" />
             <assign location="order" expr="_req.order" />
         </ros_action_handle_goal>
         <ros_action_handle_thread_free name="act_srv" target="idle">
@@ -96,61 +91,34 @@
 
     <state id="check_goal">
         <onentry>
-            <if cond="thread_1_busy == False">
+            <if cond="thread_0_busy == False">
+                <assign location="thread_0_busy" expr="True" />
+                <assign location="thread_to_start" expr="0" />
+            <elseif cond="thread_1_busy == False" />
                 <assign location="thread_1_busy" expr="True" />
                 <assign location="thread_to_start" expr="1" />
-            <elseif cond="thread_2_busy == False" />
-                <assign location="thread_2_busy" expr="True" />
-                <assign location="thread_to_start" expr="2" />
             <else />
                 <assign location="thread_to_start" expr="-1" />
             </if>
         </onentry>
-        <transition target="idle" cond="thread_to_start > 0">
+        <transition target="idle" cond="thread_to_start >= 0">
             <!-- Basically sending an event... -->
             <ros_action_accept_goal name="act_srv">
-                <field name="goal_id" expr="next_goal_id" />
-            <ros_action_accept_goal />
-            <!-- This send event could be wrapped in another method. Kept separated from 
-             ros_action_accept_goal for flexibility. -->
-            <!-- This should be expanded into multiple send events, one for each possible thread -->
+                <field name="goal_id" expr="goal_id" />
+            </ros_action_accept_goal>
+            <!-- The thread ID is appended as an additional param in the send event.
+            It will be handled on the thread side -->
             <ros_action_start_thread name="act_srv" thread_id="thread_to_start">
-                <param name="goal_id" expr="next_goal_id" />
-                <param name="order" expr="order" />
+                <field name="goal_id" expr="goal_id" />
+                <field name="order" expr="order" />
             </ros_action_start_thread>
         </transition>
-        <!-- In case the prev. transition condition is not holding, reject! -->
+        <!-- In case the prev. transition condition is not holding, no thread was started: reject! -->
         <transition target="idle">
             <ros_action_reject_goal name="act_srv">
-                <field name="goal_id" expr="next_goal_id" />
+                <field name="goal_id" expr="goal_id" />
             </ros_action_reject_goal>
         </transition>
-    </state>
-
-    <state id="cancel_goal">
-        <onentry>
-            <if cond="cancel_id == 1">
-                <ros_action_cancel_thread name="act_srv" thread_id="0" />
-                <assign location="thread_1_busy" expr="False" />
-            <elseif cond="cancel_id == 2" />
-                <ros_action_cancel_thread name="act_srv" thread_id="1" />
-                <assign location="thread_2_busy" expr="False" />
-            </if>
-        </onentry>
-        <transition target="idle">
-            <ros_action_cancel_goal name="act_srv" goal_id="cancel_id"/>
-        </transition>
-    </state>
-
-    <state id="reset_thread">
-        <onentry>
-            <if cond="finished_thread_id == 1">
-                <assign location="thread_1_busy" expr="False" />
-            <elseif cond="finished_thread_id == 2" />
-                <assign location="thread_2_busy" expr="False" />
-            </if>
-        </onentry>
-        <transition target="idle" />
     </state>
 
 </scxml>

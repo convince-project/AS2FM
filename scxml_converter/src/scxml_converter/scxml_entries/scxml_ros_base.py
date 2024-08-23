@@ -214,7 +214,7 @@ class RosCallback(ScxmlTransition):
                   f"body of {self._interface_name} has invalid ROS instantiations.")
         return valid_body
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlBase:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             f"Error: SCXML {self.__class__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
@@ -324,7 +324,7 @@ class RosTrigger(ScxmlSend):
             return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlBase:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             f"Error: SCXML {self.__class__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
