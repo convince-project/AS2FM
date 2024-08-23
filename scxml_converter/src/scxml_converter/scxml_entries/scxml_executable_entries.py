@@ -282,7 +282,6 @@ class ScxmlAssign(ScxmlBase):
     def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
         self._location = location
         self._expr = expr
-        print(f"ScxmlAssign: {location} = {expr}")
 
     def get_location(self) -> str:
         """Get the location to assign."""

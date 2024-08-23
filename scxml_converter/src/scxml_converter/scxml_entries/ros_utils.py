@@ -28,7 +28,8 @@ MSG_TYPE_SUBSTITUTIONS = {
 
 BASIC_FIELD_TYPES = ['boolean',
                      'int8', 'int16', 'int32', 'int64',
-                     'float', 'double']
+                     'float', 'double',
+                     'sequence<int32>']
 
 """List of prefixes for ROS-related event data in SCXML."""
 ROS_EVENT_PREFIXES = [
