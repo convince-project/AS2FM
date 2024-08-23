@@ -29,8 +29,8 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_handle_event,
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
-    generate_action_thread_execution_start_event, generate_action_thread_execution_cancel_event,
-    generate_action_feedback_event, generate_action_result_event)
+    generate_action_thread_execution_start_event, generate_action_feedback_event,
+    generate_action_result_event)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 
@@ -191,28 +191,6 @@ class RosActionStartThread(RosTrigger):
         xml_thread_start_req = super().as_xml()
         xml_thread_start_req.set("thread_id", self._thread_id)
         return xml_thread_start_req
-
-
-class RosActionCancelThread(RosActionStartThread):
-    """
-    Object representing the request, from an action server, to cancel a running thread instance.
-    """
-
-    @staticmethod
-    def get_tag_name() -> str:
-        return "ros_action_start_thread"
-
-    def check_fields_validity(self, _) -> bool:
-        """Check if the goal_id and the request fields have been defined."""
-        n_fields = len(self._fields)
-        if n_fields > 0:
-            print(f"Error: SCXML {self.__class__}: no fields expected, found {n_fields}.")
-            return False
-        return True
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_thread_execution_cancel_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0], self._thread_id)
 
 
 class RosActionSendFeedback(RosTrigger):

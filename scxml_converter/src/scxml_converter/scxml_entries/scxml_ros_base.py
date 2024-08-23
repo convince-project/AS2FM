@@ -152,16 +152,19 @@ class RosCallback(ScxmlTransition):
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_argument(cls, xml_tree, "name")
         target_state = get_xml_argument(cls, xml_tree, "target")
+        condition = get_xml_argument(cls, xml_tree, "cond", none_allowed=True)
         exec_body = execution_body_from_xml(xml_tree)
-        return cls(interface_name, target_state, exec_body)
+        return cls(interface_name, target_state, condition, exec_body)
 
     def __init__(self, interface_decl: Union[str, RosDeclaration], target_state: str,
-                 exec_body: Optional[ScxmlExecutionBody] = None) -> None:
+                 condition: Optional[str] = None, exec_body: Optional[ScxmlExecutionBody] = None
+                 ) -> None:
         """
         Constructor of ROS callback.
 
         :param interface_decl: ROS interface declaration to be used in the callback, or its name.
         :param target_state: Name of the state to transition to after the callback.
+        :param condition: Condition to be met for the callback to be executed.
         :param exec_body: Executable body of the callback.
         """
         if exec_body is None:
@@ -173,16 +176,19 @@ class RosCallback(ScxmlTransition):
             assert is_non_empty_string(self.__class__, "name", interface_decl)
             self._interface_name = interface_decl
         self._target: str = target_state
+        self._condition: Optional[str] = condition
         self._body: ScxmlExecutionBody = exec_body
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(self.__class__, "name", self._interface_name)
         valid_target = is_non_empty_string(self.__class__, "target", self._target)
+        valid_condition = self._condition is None or \
+            is_non_empty_string(self.__class__, "cond", self._condition)
         valid_body = self._body is None or valid_execution_body(self._body)
         if not valid_body:
             print(f"Error: SCXML {self.__class__}: invalid entries in executable body.")
-        return valid_name and valid_target and valid_body
+        return valid_name and valid_target and valid_condition and valid_body
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ROS interface used in the callback exists."""
@@ -213,14 +219,17 @@ class RosCallback(ScxmlTransition):
             f"Error: SCXML {self.__class__}: invalid ROS instantiations."
         event_name = self.get_plain_scxml_event(ros_declarations)
         target = self._target
+        condition = self._condition
         body = as_plain_execution_body(self._body, ros_declarations)
-        return ScxmlTransition(target, [event_name], None, body)
+        return ScxmlTransition(target, [event_name], condition, body)
 
     def as_xml(self) -> ET.Element:
         """Convert the ROS callback to an XML element."""
         assert self.check_validity(), f"Error: SCXML {self.__class__}: invalid parameters."
         xml_callback = ET.Element(self.get_tag_name(),
                                   {"name": self._interface_name, "target": self._target})
+        if self._condition is not None:
+            xml_callback.set("cond", self._condition)
         for body_elem in self._body:
             xml_callback.append(body_elem.as_xml())
         return xml_callback

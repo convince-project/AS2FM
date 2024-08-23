@@ -90,7 +90,7 @@ class RosTopicCallback(RosCallback):
                   "Use 'name' instead.")
         target = get_xml_argument(RosTopicCallback, xml_tree, "target")
         exec_body = execution_body_from_xml(xml_tree)
-        return RosTopicCallback(sub_name, target, exec_body)
+        return RosTopicCallback(sub_name, target, None, exec_body)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_subscriber_defined(self._interface_name)

@@ -15,12 +15,10 @@
 
 """Declaration of SCXML tags related to ROS Timers."""
 
-from typing import Optional, Type, Union
+from typing import Type
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
-    ScxmlExecutionBody, ScxmlRosDeclarationsContainer, ScxmlTransition,
-    as_plain_execution_body, execution_body_from_xml)
+from scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -97,50 +95,8 @@ class RosRateCallback(RosCallback):
     def get_declaration_type() -> Type[RosTimeRate]:
         return RosTimeRate
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosRateCallback":
-        """Create a RosRateCallback object from an XML tree."""
-        assert_xml_tag_ok(RosRateCallback, xml_tree)
-        timer_name = get_xml_argument(RosRateCallback, xml_tree, "name")
-        target = get_xml_argument(RosRateCallback, xml_tree, "target")
-        condition = get_xml_argument(RosRateCallback, xml_tree, "cond", none_allowed=True)
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosRateCallback(timer_name, target, condition, exec_body)
-
-    def __init__(self, timer: Union[RosTimeRate, str], target: str, condition: Optional[str] = None,
-                 body: Optional[ScxmlExecutionBody] = None):
-        """
-        Generate a new rate timer and callback.
-
-        Multiple rate callbacks can share the same timer name, but the rate must match.
-
-        :param timer: The RosTimeRate instance triggering the callback, or its name
-        :param body: The body of the callback
-        """
-        self._condition = condition
-        super().__init__(timer, target, body)
-
-    def check_validity(self) -> bool:
-        valid_parent = super().check_validity()
-        valid_condition = self._condition is None or \
-            is_non_empty_string(RosRateCallback, "cond", self._condition)
-        return valid_parent and valid_condition
-
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_timer_defined(self._interface_name)
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, _) -> str:
         return generate_rate_timer_event(self._interface_name)
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        event_name = self.get_plain_scxml_event(ros_declarations)
-        target = self._target
-        cond = self._condition
-        body = as_plain_execution_body(self._body, ros_declarations)
-        return ScxmlTransition(target, [event_name], cond, body)
-
-    def as_xml(self) -> ET.Element:
-        xml_rate_callback = super().as_xml()
-        if self._condition is not None:
-            xml_rate_callback.set("cond", self._condition)
-        return xml_rate_callback

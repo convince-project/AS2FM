@@ -31,5 +31,5 @@ from .scxml_ros_action_server import (                                          
     RosActionRejectGoal, RosActionStartThread, RosActionSendFeedback,           # noqa: F401
     RosActionSendResult)                                                        # noqa: F401
 from .scxml_ros_action_server_thread import (                                   # noqa: F401
-    RosActionThread, RosActionHandleThreadStart, RosActionHandleThreadCancel)   # noqa: F401
+    RosActionThread, RosActionHandleThreadStart)                                # noqa: F401
 from .scxml_root import ScxmlRoot                                               # noqa: F401

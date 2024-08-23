@@ -112,7 +112,8 @@ def test_battery_drainer_ros_from_code():
         RosRateCallback(ros_timer, "use_battery", None,
                         [ScxmlAssign("battery_percent", "battery_percent - 1")]))
     use_battery_state.add_transition(
-        RosTopicCallback(ros_topic_sub, "use_battery", [ScxmlAssign("battery_percent", "100")]))
+        RosTopicCallback(ros_topic_sub, "use_battery", None,
+                         [ScxmlAssign("battery_percent", "100")]))
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
     _test_scxml_from_code(battery_drainer_scxml, os.path.join(
         os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',

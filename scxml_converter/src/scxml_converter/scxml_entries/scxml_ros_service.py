@@ -129,7 +129,7 @@ class RosServiceHandleRequest(RosCallback):
                   "Use 'name' instead.")
         target_name = get_xml_argument(RosServiceHandleRequest, xml_tree, "target")
         exec_body = execution_body_from_xml(xml_tree)
-        return RosServiceHandleRequest(srv_name, target_name, exec_body)
+        return RosServiceHandleRequest(srv_name, target_name, None, exec_body)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_service_server_defined(self._interface_name)
@@ -200,7 +200,7 @@ class RosServiceHandleResponse(RosCallback):
                   "Use 'name' instead.")
         target_name = get_xml_argument(RosServiceHandleResponse, xml_tree, "target")
         exec_body = execution_body_from_xml(xml_tree)
-        return RosServiceHandleResponse(srv_name, target_name, exec_body)
+        return RosServiceHandleResponse(srv_name, target_name, None, exec_body)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_service_client_defined(self._interface_name)
