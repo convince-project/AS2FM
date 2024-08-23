@@ -41,7 +41,7 @@ class RosActionServer(RosDeclaration):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_client"
+        return "ros_action_server"
 
     @staticmethod
     def get_communication_interface() -> str:

@@ -53,7 +53,8 @@ def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     interface_ns, interface_type = type_definition.split("/")
     if len(interface_ns) == 0 or len(interface_type) == 0:
         return False
-    assert ros_interface in ["msg", "srv"], "Error: SCXML ROS declarations: unknown ROS interface."
+    assert ros_interface in ["msg", "srv", "action"], \
+        "Error: SCXML ROS declarations: unknown ROS interface."
     try:
         interface_importer = __import__(interface_ns + f'.{ros_interface}', fromlist=[''])
         _ = getattr(interface_importer, interface_type)
@@ -493,23 +494,28 @@ class ScxmlRosDeclarationsContainer:
         return True
 
     def check_valid_action_goal_fields(
-            self, client_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+            self, alias_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
         """
         Check if the provided fields match with the action type's goal entries.
 
-        :param client_name: Name of the action client.
+        :param alias_name: Name of the action client.
         :param ros_fields: List of fields to check.
         :param has_goal_id: Whether the goal_id shall be included among the fields.
         """
-        _, action_type = self.get_action_client_info(client_name)
-        goal_fields, _, _ = get_action_type_params(action_type)
+        if self.is_action_client_defined(alias_name):
+            action_type = self.get_action_client_info(alias_name)[1]
+        else:
+            assert self.is_action_server_defined(alias_name), \
+                f"Error: SCXML ROS declarations: unknown action {alias_name}."
+            action_type = self.get_action_server_info(alias_name)[1]
+        goal_fields = get_action_type_params(action_type)[0]
         # We use the goal ID as a reserved field for the action. Make sure it is available.
         assert "goal_id" not in goal_fields, \
             f"Error: SCXML ROS declarations: action {action_type} goal has the 'goal_id' field."
         if has_goal_id:
             goal_fields["goal_id"] = "int32"
         if not check_all_fields_known(ros_fields, goal_fields):
-            print(f"Error: SCXML ROS declarations: Action goal {client_name} has invalid fields.")
+            print(f"Error: SCXML ROS declarations: Action goal {alias_name} has invalid fields.")
             return False
         return True
 
