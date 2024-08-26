@@ -40,7 +40,7 @@ def parse_scxml_identifier(identifier: str) -> JaniExpression:
     :param identifier: The scxml identifier to parse.
     :return: The jani expression.
     """
-    return JaniExpression(identifier)
+    return JaniExpression(parse_ecmascript_to_jani_expression(identifier))
 
 
 def parse_ecmascript_to_jani_expression(
@@ -82,10 +82,21 @@ def _parse_ecmascript_to_jani_expression(
         # If it is an identifier, we do not need to expand further
         return JaniExpression(ast.name)
     elif ast.type == "MemberExpression":
-        # TODO: Handle array access
-        # A identifier in the style of object.property
-        name = f'{ast.object.name}.{ast.property.name}'
-        return JaniExpression(name)
+        if ast.computed:
+            # This is an array access, like array[0]
+            # For now, prevent nested arrays
+            assert ast.object.type == "Identifier", "Nested arrays are not supported."
+            array_name = ast.object.name
+            array_index = _parse_ecmascript_to_jani_expression(ast.property)
+            return JaniExpression({
+                "op": "aa",  # Array Access
+                "exp": array_name,
+                "index": array_index
+            })
+        else:
+            # A identifier in the style of object.property
+            name = f'{ast.object.name}.{ast.property.name}'
+            return JaniExpression(name)
     elif ast.type == "ExpressionStatement":
         return _parse_ecmascript_to_jani_expression(ast.expression)
     elif ast.type == "BinaryExpression":
