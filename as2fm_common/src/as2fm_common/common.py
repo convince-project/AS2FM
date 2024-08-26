@@ -17,7 +17,7 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import List, Union
+from typing import MutableSequence, Union
 
 """
 Set of basic types that are supported by the Jani language.
@@ -37,7 +37,7 @@ src https://docs.google.com/document/d/\
 
 Additionally, we support the array types from the array extension.
 """
-ValidTypes = Union[bool, int, float, List[int], List[float]]
+ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 
 def ros_type_name_to_python_type(type_str: str) -> type:

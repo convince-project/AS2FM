@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
@@ -29,7 +29,7 @@ from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import (
-    parse_ecmascript_to_jani_expression, parse_scxml_identifier)
+    ArrayInfo, parse_ecmascript_to_jani_expression, parse_scxml_identifier)
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
@@ -231,30 +231,39 @@ class BaseTag:
     @staticmethod
     def from_element(element: ScxmlBase,
                      call_trace: List[ScxmlBase],
-                     model: ModelTupleType) -> 'BaseTag':
+                     model: ModelTupleType,
+                     max_array_index: int) -> 'BaseTag':
         """Return the correct tag object based on the xml element.
 
         :param element: The xml element representing the tag.
+        :param call_trace: The call trace of the element, to access the parents.
+        :param model: The model to write the tag to.
+        :param max_array_index: The maximum index of the arrays in the model.
         :return: The corresponding tag object.
         """
         if type(element) not in CLASS_BY_TYPE:
             raise NotImplementedError(f"Support for SCXML type >{type(element)}< not implemented.")
-        return CLASS_BY_TYPE[type(element)](element, call_trace, model)
+        return CLASS_BY_TYPE[type(element)](element, call_trace, model, max_array_index)
 
     def __init__(self, element: ScxmlBase,
                  call_trace: List[ScxmlBase],
-                 model: ModelTupleType) -> None:
+                 model: ModelTupleType,
+                 max_array_index: int) -> None:
         """Initialize the ScxmlTag object from an xml element.
 
         :param element: The xml element representing the tag.
+        :param call_trace: The call trace of the element, to access the parents.
+        :param model: The model to write the tag to.
+        :param max_array_index: The maximum index of the arrays in the model.
         """
+        self.max_array_index = max_array_index
         self.element = element
         self.model = model
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
         self.children = [
-            BaseTag.from_element(child, call_trace + [element], model)
+            BaseTag.from_element(child, call_trace + [element], model, max_array_index)
             for child in scxml_children]
 
     def get_children(self) -> List[ScxmlBase]:
@@ -291,10 +300,18 @@ class DatamodelTag(BaseTag):
             assert scxml_data.check_validity(), "Found invalid data entry."
             # TODO: ScxmlData from scxml_helpers provide many more options.
             # It should be ported to scxml_entries.ScxmlDataModel
-            init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr())
+            expected_type = scxml_data.get_type()
+            array_info: Optional[ArrayInfo] = None
+            if expected_type is MutableSequence[int]:
+                array_info = ArrayInfo(int, self.max_array_index)
+                expected_type = list
+            elif expected_type is MutableSequence[float]:
+                array_info = ArrayInfo(float, self.max_array_index)
+                expected_type = list
+            init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
-            assert expr_type == scxml_data.get_type(), \
-                f"Expected type {scxml_data.get_type()}, got {expr_type}."
+            assert expr_type == expected_type, \
+                f"Expected type {expected_type}, got {expr_type}."
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
                 JaniVariable(scxml_data.get_name(), scxml_data.get_type(), init_value))

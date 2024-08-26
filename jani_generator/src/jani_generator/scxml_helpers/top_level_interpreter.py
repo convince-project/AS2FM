@@ -35,6 +35,7 @@ from scxml_converter.scxml_entries import ScxmlRoot
 @dataclass()
 class FullModel:
     max_time: Optional[int] = None
+    max_array_index: int = field(default=100)
     bt: Optional[str] = None
     plugins: List[str] = field(default_factory=list)
     skills: List[str] = field(default_factory=list)
@@ -86,6 +87,8 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 #     time_resolution = _parse_time_element(mc_parameter)
                 if remove_namespace(mc_parameter.tag) == "max_time":
                     model.max_time = _parse_time_element(mc_parameter)
+                elif remove_namespace(mc_parameter.tag) == "max_array_index":
+                    model.max_array_index = int(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -188,7 +191,7 @@ def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False)
                 f.write(scxml_model.as_xml_string())
 
     jani_model = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, all_timers, model.max_time)
+        plain_scxml_models, all_timers, model.max_time, model.max_array_index)
 
     jani_dict = jani_model.as_dict()
     assert len(model.properties) == 1, "Only one property is supported right now."

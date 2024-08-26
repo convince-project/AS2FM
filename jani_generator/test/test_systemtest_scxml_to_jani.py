@@ -52,7 +52,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 2)
@@ -71,7 +71,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
@@ -99,7 +99,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -132,12 +132,8 @@ class TestConversion(unittest.TestCase):
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
             scxml_battery_manager = f.read()
 
-        jani_model = convert_multiple_scxmls_to_jani([
-            scxml_battery_drainer,
-            scxml_battery_manager],
-            [],
-            0
-        )
+        jani_model = convert_multiple_scxmls_to_jani(
+            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 

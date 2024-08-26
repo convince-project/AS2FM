@@ -17,7 +17,7 @@
 Variables in Jani
 """
 
-from typing import List, Optional, Union, Type, get_args
+from typing import MutableSequence, Optional, Union, Type, get_args
 
 from as2fm_common.common import ValidTypes
 from jani_generator.jani_entries import JaniExpression, JaniValue
@@ -74,7 +74,7 @@ class JaniVariable:
             else:
                 raise ValueError(f"Type {self._type} needs an initial value")
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
-        if not self._transient and self._type in (float, List[float]):
+        if not self._transient and self._type in (float, MutableSequence[float]):
             print(f"Warning: Variable {self._name} is not transient and has type float."
                   "This is not supported by STORM.")
 
@@ -116,9 +116,9 @@ class JaniVariable:
             if json_type["kind"] == "array":
                 assert "base" in json_type, "Array type should contain a 'base' key"
                 if json_type["base"] == "int":
-                    return List[int]
+                    return MutableSequence[int]
                 if json_type["base"] == "real":
-                    return List[float]
+                    return MutableSequence[float]
         raise ValueError(f"Type {json_type} not supported by Jani")
 
     @staticmethod
@@ -144,9 +144,9 @@ class JaniVariable:
             return "int"
         elif v_type == float:
             return "real"
-        elif v_type == List[int]:
+        elif v_type == MutableSequence[int]:
             return {"kind": "array", "base": "int"}
-        elif v_type == List[float]:
+        elif v_type == MutableSequence[float]:
             return {"kind": "array", "base": "real"}
         else:
             raise ValueError(f"Type {v_type} not supported by Jani")
