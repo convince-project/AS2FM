@@ -29,6 +29,6 @@ def test_jani_file_loading():
     assert isinstance(jani_model, JaniModel)
     assert jani_model.get_name() == "example_arrays"
     assert "arrays" in jani_model.get_features()
-    assert len(jani_model.get_variables()) == 12
+    assert len(jani_model.get_variables()) == 11
     assert len(jani_model.get_constants()) == 0
     assert len(jani_model.get_automata()) == 14

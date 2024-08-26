@@ -33,6 +33,16 @@ class ArrayInfo:
     array_max_size: int
 
 
+def parse_scxml_identifier(identifier: str) -> JaniExpression:
+    """
+    Parse an scxml identifier to a jani expression.
+
+    :param identifier: The scxml identifier to parse.
+    :return: The jani expression.
+    """
+    return JaniExpression(identifier)
+
+
 def parse_ecmascript_to_jani_expression(
         ecmascript: str, array_info: Optional[ArrayInfo] = None) -> JaniExpression:
     """

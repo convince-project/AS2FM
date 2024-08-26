@@ -13,9 +13,9 @@
     <state id="send_next">
         <transition target="send_next">
             <if cond="msg_array.length == 0">
-                <assign location="msg_array" expr="msg_array.push(0)" />
+                <assign location="msg_array[0]" expr="0" />
             <else>
-                <assign location="msg_array" expr="msg_array.push(msg_array[msg_array.length - 1] + 1)" />
+                <assign location="msg_array[msg_array.length]" expr="msg_array[msg_array.length - 1] + 1" />
             </if>
             <send event="new_msg_array">
                 <param name="msg" expr="msg_array" />

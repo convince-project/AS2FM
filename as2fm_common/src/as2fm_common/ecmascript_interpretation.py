@@ -42,8 +42,9 @@ def interpret_ecma_script_expr(
     expr_result = context.result
     if isinstance(expr_result, BASIC_JS_TYPES):
         return expr_result
-    assert isinstance(expr_result, js2py.base.JsObjectWrapper), \
-        f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or JsObjectWrapper, " \
-        f"got '{type(expr_result)}'"
-    # For now, we expect everything that is not a base type to be a list
-    return expr_result.to_list()
+    elif isinstance(expr_result, js2py.base.JsObjectWrapper):
+        # For now, we expect everything that is not a base type to be a list
+        return expr_result.to_list()
+    else:
+        raise ValueError(f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or "
+                         f"JsObjectWrapper, got '{type(expr_result)}'")

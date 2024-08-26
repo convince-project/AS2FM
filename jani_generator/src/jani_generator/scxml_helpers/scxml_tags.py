@@ -28,8 +28,8 @@ from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator)
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
-from jani_generator.scxml_helpers.scxml_expression import \
-    parse_ecmascript_to_jani_expression
+from jani_generator.scxml_helpers.scxml_expression import (
+    parse_ecmascript_to_jani_expression, parse_scxml_identifier)
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlDataModel, ScxmlExecutionBody,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
@@ -65,12 +65,13 @@ def _interpret_scxml_assign(elem: ScxmlAssign, event_substitution: Optional[str]
     """
     assert isinstance(elem, ScxmlAssign), \
         f"Expected ScxmlAssign, got {type(elem)}"
+    assignment_target = parse_scxml_identifier(elem.get_location())
     assignment_value = parse_ecmascript_to_jani_expression(
         elem.get_expr())
     if isinstance(assignment_value, JaniExpression):
         assignment_value.replace_event(event_substitution)
     return JaniAssignment({
-        "ref": elem.get_location(),
+        "ref": assignment_target,
         "value": assignment_value,
         "index": assign_index
     })
