@@ -17,16 +17,20 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import js2py
 
 from as2fm_common.common import ValidTypes
 
 
+BASIC_JS_TYPES = Union[int, float, str, bool]
+
+
 def interpret_ecma_script_expr(
         expr: str, variables: Optional[Dict[str, ValidTypes]] = None) -> object:
-    """Interpret the ECMA script expression.
+    """
+    Interpret the ECMA script expression.
 
     :param expr: The ECMA script expression
     :return: The interpreted object
@@ -35,4 +39,11 @@ def interpret_ecma_script_expr(
         variables = {}
     context = js2py.EvalJs(variables)
     context.execute("result = " + expr)
-    return context.result
+    expr_result = context.result
+    if isinstance(expr_result, BASIC_JS_TYPES):
+        return expr_result
+    assert isinstance(expr_result, js2py.base.JsObjectWrapper), \
+        f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or JsObjectWrapper, " \
+        f"got '{type(expr_result)}'"
+    # For now, we expect everything that is not a base type to be a list
+    return expr_result.to_list()

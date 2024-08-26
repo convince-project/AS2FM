@@ -17,6 +17,8 @@
 Module producing jani expressions from ecmascript.
 """
 
+from typing import Optional, Type, Union
+from dataclasses import dataclass
 import esprima
 
 from jani_generator.jani_entries.jani_convince_expression_expansion import \
@@ -25,48 +27,65 @@ from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_value import JaniValue
 
 
-def parse_ecmascript_to_jani_expression(ecmascript: str) -> JaniExpression:
+@dataclass()
+class ArrayInfo:
+    array_type: Type[Union[int, float]]
+    array_max_size: int
+
+
+def parse_ecmascript_to_jani_expression(
+        ecmascript: str, array_info: Optional[ArrayInfo] = None) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
 
     :param ecmascript: The ecmascript to parse.
+    :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
     ast = esprima.parseScript(ecmascript)
     assert len(ast.body) == 1, "The ecmascript must contain exactly one expression."
     ast = ast.body[0]
-    return _parse_ecmascript_to_jani_expression(ast)
+    return _parse_ecmascript_to_jani_expression(ast, array_info)
 
 
-def _parse_ecmascript_to_jani_expression(ast: esprima.nodes.Script) -> JaniExpression:
+def _parse_ecmascript_to_jani_expression(
+        ast: esprima.nodes.Script, array_info: Optional[ArrayInfo] = None) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
 
     :param ecmascript: The ecmascript to parse.
+    :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
     if ast.type == "Literal":
         return JaniExpression(JaniValue(ast.value))
+    elif ast.type == "ArrayExpression":
+        assert array_info is not None, "Array info must be provided for ArrayExpressions."
+        assert len(ast.elements) == 0, "Array expressions with elements are not supported."
+        return JaniExpression({
+            "op": "ac",  # Array Constructor
+            "var": "__array_iterator",
+            "length": array_info.array_max_size,
+            "exp": JaniValue(array_info.array_type(0))
+        })
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
         return JaniExpression(ast.name)
     elif ast.type == "MemberExpression":
+        # TODO: Handle array access
         # A identifier in the style of object.property
         name = f'{ast.object.name}.{ast.property.name}'
         return JaniExpression(name)
     elif ast.type == "ExpressionStatement":
         return _parse_ecmascript_to_jani_expression(ast.expression)
-    else:
+    elif ast.type == "BinaryExpression":
         # It is a more complex expression
-        if ast.type == "BinaryExpression":
-            if ast.operator in BASIC_EXPRESSIONS_MAPPING:
-                operator = BASIC_EXPRESSIONS_MAPPING[ast.operator]
-            else:
-                operator = ast.operator
-            return JaniExpression({
-                "op": operator,
-                "left": _parse_ecmascript_to_jani_expression(ast.left),
-                "right": _parse_ecmascript_to_jani_expression(ast.right)
-            })
-        else:
-            raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")
+        assert ast.operator in BASIC_EXPRESSIONS_MAPPING, \
+            f"ecmascript to jani expression: unknown operator {ast.operator}"
+        return JaniExpression({
+            "op": BASIC_EXPRESSIONS_MAPPING[ast.operator],
+            "left": _parse_ecmascript_to_jani_expression(ast.left),
+            "right": _parse_ecmascript_to_jani_expression(ast.right)
+        })
+    else:
+        raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")
