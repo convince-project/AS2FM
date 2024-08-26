@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
+from as2fm_common.common import get_default_expression_for_type
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
@@ -153,7 +154,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 }))
                 variables = {}
                 for n, v in jani_automaton.get_variables().items():
-                    variables[n] = v.get_type()()
+                    variables[n] = get_default_expression_for_type(v.get_type())
                 # TODO: We should get the type explicitly: sometimes the expression is underdefined
                 print(f"Interpreting {expr} with {variables}")
                 # This might contain reference to event variables, that have no type specified

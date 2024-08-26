@@ -17,7 +17,7 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import MutableSequence, Union
+from typing import get_args, MutableSequence, Union, Type
 
 """
 Set of basic types that are supported by the Jani language.
@@ -40,29 +40,6 @@ Additionally, we support the array types from the array extension.
 ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 
-def ros_type_name_to_python_type(type_str: str) -> type:
-    """Convert a string representing a type to a python type.
-
-    Source: https://docs.ros.org/en/rolling/Concepts/Basic/\
-        About-Interfaces.html#field-types
-
-    :param type_str: The string representing the type
-    :return: The python type
-    """
-    if type_str in ['bool', 'boolean']:
-        return bool
-    if type_str in ['int8', 'int16', 'int32', 'int64',
-                    'uint8', 'uint16', 'uint32', 'uint64']:
-        return int
-    if type_str in ['float32', 'float64']:
-        return float
-    if type_str in ['sequence<int32>', 'sequence<int64>']:
-        return MutableSequence[int]
-    if type_str in ['sequence<float32>', 'sequence<float64>']:
-        return MutableSequence[float]
-    raise NotImplementedError(f"Type {type_str} not supported.")
-
-
 def remove_namespace(tag: str) -> str:
     """
     If a tag has a namespace, remove it.
@@ -77,3 +54,15 @@ def remove_namespace(tag: str) -> str:
     else:
         tag_wo_ns = tag
     return tag_wo_ns
+
+
+def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
+    """Generate a default expression for a field type."""
+    if field_type not in get_args(ValidTypes):
+        raise ValueError(f"Error: Unsupported data type {field_type}.")
+    elif field_type is MutableSequence[int]:
+        return "[]"
+    elif field_type is MutableSequence[float]:
+        return "[]"
+    else:
+        return str(field_type())

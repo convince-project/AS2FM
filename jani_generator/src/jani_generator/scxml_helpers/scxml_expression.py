@@ -87,7 +87,7 @@ def _parse_ecmascript_to_jani_expression(
             # For now, prevent nested arrays
             assert ast.object.type == "Identifier", "Nested arrays are not supported."
             array_name = ast.object.name
-            array_index = _parse_ecmascript_to_jani_expression(ast.property)
+            array_index = _parse_ecmascript_to_jani_expression(ast.property, array_info)
             return JaniExpression({
                 "op": "aa",  # Array Access
                 "exp": array_name,
@@ -98,15 +98,15 @@ def _parse_ecmascript_to_jani_expression(
             name = f'{ast.object.name}.{ast.property.name}'
             return JaniExpression(name)
     elif ast.type == "ExpressionStatement":
-        return _parse_ecmascript_to_jani_expression(ast.expression)
+        return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
     elif ast.type == "BinaryExpression":
         # It is a more complex expression
         assert ast.operator in BASIC_EXPRESSIONS_MAPPING, \
             f"ecmascript to jani expression: unknown operator {ast.operator}"
         return JaniExpression({
             "op": BASIC_EXPRESSIONS_MAPPING[ast.operator],
-            "left": _parse_ecmascript_to_jani_expression(ast.left),
-            "right": _parse_ecmascript_to_jani_expression(ast.right)
+            "left": _parse_ecmascript_to_jani_expression(ast.left, array_info),
+            "right": _parse_ecmascript_to_jani_expression(ast.right, array_info)
         })
     else:
         raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")

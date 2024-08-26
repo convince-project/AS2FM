@@ -23,7 +23,8 @@ from scxml_converter.scxml_entries.utils import all_non_empty_strings
 
 
 MSG_TYPE_SUBSTITUTIONS = {
-    "boolean": "bool",
+    'boolean': 'bool',
+    'sequence<int32>': 'int32[]'
 }
 
 BASIC_FIELD_TYPES = ['boolean',

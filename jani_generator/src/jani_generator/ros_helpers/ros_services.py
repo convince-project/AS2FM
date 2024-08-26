@@ -19,15 +19,16 @@ Representation of ROS Services.
 
 from typing import Dict, List, Optional
 
+from as2fm_common.common import get_default_expression_for_type
 from jani_generator.jani_entries import JaniModel
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData,
                                            ScxmlDataModel, ScxmlParam,
                                            ScxmlRoot, ScxmlSend, ScxmlState,
                                            ScxmlTransition)
-from scxml_converter.scxml_entries.utils import get_default_expression_for_type
 from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, get_srv_type_params, sanitize_ros_interface_name)
+from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 
 SRV_PREFIX = "srv_handler_"
 
@@ -105,7 +106,7 @@ class RosService:
         # Hack: Using support variables in the data model to avoid having _event in send params
         req_fields_as_data = []
         for field_name, field_type in req_params.items() | res_params.items():
-            default_expr = get_default_expression_for_type(field_type)
+            default_expr = get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type])
             req_fields_as_data.append(ScxmlData(field_name, default_expr, field_type))
         # Make sure the service name has no slashes and spaces
         scxml_root_name = SRV_PREFIX + sanitize_ros_interface_name(self._service_name)
