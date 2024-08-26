@@ -43,19 +43,11 @@ class ScxmlState(ScxmlBase):
         assert id_ is not None and len(id_) > 0, "Error: SCXML state: id is not valid."
         scxml_state = ScxmlState(id_)
         # Get the onentry and onexit execution bodies
-        on_entry_xml = xml_tree.findall("onentry")
-        if on_entry_xml is None:
-            on_entry = []
-        else:
-            on_entry = on_entry_xml
-        assert len(on_entry) == 0 or len(on_entry) == 1, \
+        on_entry = xml_tree.findall("onentry")
+        assert len(on_entry) <= 1, \
             f"Error: SCXML state: {len(on_entry)} onentry tags found, expected 0 or 1."
-        on_exit_xml = xml_tree.findall("onexit")
-        if on_exit_xml is None:
-            on_exit = []
-        else:
-            on_exit = on_exit_xml
-        assert len(on_exit) == 0 or len(on_exit) == 1, \
+        on_exit = xml_tree.findall("onexit")
+        assert len(on_exit) <= 1, \
             f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
             for exec_entry in execution_body_from_xml(on_entry[0]):
@@ -64,7 +56,7 @@ class ScxmlState(ScxmlBase):
             for exec_entry in execution_body_from_xml(on_exit[0]):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
-        for body_entry in ScxmlState._transitions_from_xml(xml_tree):
+        for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree):
             scxml_state.add_transition(body_entry)
         return scxml_state
 
@@ -122,18 +114,22 @@ class ScxmlState(ScxmlBase):
             entry.update_bt_ports_values(bt_ports_handler)
 
     @staticmethod
-    def _transitions_from_xml(xml_tree: ET.Element) -> List[ScxmlTransition]:
+    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
         from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
         transitions: List[ScxmlTransition] = []
         tag_to_cls = {cls.get_tag_name(): cls
                       for cls in ScxmlTransition.__subclasses__()
                       if cls != RosCallback}
-        # TODO: Temporary workaroud, to fix once all ROS callbacks are implemented
         tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
             if child.tag in tag_to_cls:
                 transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
+        expected_transitions = \
+            len(xml_tree) - len(xml_tree.findall("onentry")) - len(xml_tree.findall("onexit"))
+        assert len(transitions) == expected_transitions, \
+            f"Error: SCXML state {state_id}: Expected {expected_transitions} transitions, " \
+            f"found {len(transitions)}."
         return transitions
 
     def add_transition(self, transition: ScxmlTransition):

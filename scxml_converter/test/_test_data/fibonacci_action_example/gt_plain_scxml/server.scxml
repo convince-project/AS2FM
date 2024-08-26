@@ -32,20 +32,21 @@
                 <assign location="thread_to_start" expr="-1" />
             </if>
         </onentry>
-        <transition target="idle" cond="thread_to_start &gt;= 0">
-            <send event="action_fibonacci_goal_accepted">
-                <param name="goal_id" expr="goal_id" />
-            </send>
-            <send event="action_fibonacci_thread_start">
-                <param name="goal_id" expr="goal_id" />
-                <param name="order" expr="order" />
-                <param name="thread_id" expr="thread_to_start" />
-            </send>
-        </transition>
         <transition target="idle">
-            <send event="action_fibonacci_goal_rejected">
-                <param name="goal_id" expr="goal_id" />
-            </send>
+            <if cond="thread_to_start &gt;= 0">
+                <send event="action_fibonacci_goal_accepted">
+                    <param name="goal_id" expr="goal_id" />
+                </send>
+                <send event="action_fibonacci_thread_start">
+                    <param name="goal_id" expr="goal_id" />
+                    <param name="order" expr="order" />
+                    <param name="thread_id" expr="thread_to_start" />
+                </send>
+                <else />
+                <send event="action_fibonacci_goal_rejected">
+                    <param name="goal_id" expr="goal_id" />
+                </send>
+            </if>
         </transition>
     </state>
 </scxml>
