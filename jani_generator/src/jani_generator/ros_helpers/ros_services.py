@@ -19,7 +19,7 @@ Representation of ROS Services.
 
 from typing import Dict, List, Optional
 
-from as2fm_common.common import get_default_expression_for_type
+from as2fm_common.common import get_default_expression_for_type, value_to_string
 from jani_generator.jani_entries import JaniModel
 from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData,
                                            ScxmlDataModel, ScxmlParam,
@@ -106,7 +106,8 @@ class RosService:
         # Hack: Using support variables in the data model to avoid having _event in send params
         req_fields_as_data = []
         for field_name, field_type in req_params.items() | res_params.items():
-            default_expr = get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type])
+            default_expr = value_to_string(
+                get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
             req_fields_as_data.append(ScxmlData(field_name, default_expr, field_type))
         # Make sure the service name has no slashes and spaces
         scxml_root_name = SRV_PREFIX + sanitize_ros_interface_name(self._service_name)

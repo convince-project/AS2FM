@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
-from as2fm_common.common import get_default_expression_for_type
+from as2fm_common.common import get_default_expression_for_type, value_to_type
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
                                          JaniEdge, JaniExpression, JaniGuard,
@@ -143,7 +143,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                     "assignments": []
                 }]
             })
-            data_structure_for_event = {}
+            data_structure_for_event: Dict[str, type] = {}
             for param in ec.get_params():
                 expr = param.get_expr() if param.get_expr() is not None else \
                     param.get_location()
@@ -158,8 +158,8 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 # TODO: We should get the type explicitly: sometimes the expression is underdefined
                 print(f"Interpreting {expr} with {variables}")
                 # This might contain reference to event variables, that have no type specified
-                data_structure_for_event[param.get_name()] = \
-                    type(interpret_ecma_script_expr(expr, variables))
+                data_structure_for_event[param.get_name()] = value_to_type(
+                    interpret_ecma_script_expr(expr, variables))
             new_edge.destinations[0]['assignments'].append(JaniAssignment({
                 "ref": f'{ec.get_event()}.valid',
                 "value": True
@@ -259,7 +259,6 @@ class BaseTag:
         """
         self.max_array_size = max_array_size
         self.element = element
-        self.model = model
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()

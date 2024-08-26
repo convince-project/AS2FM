@@ -79,6 +79,6 @@ def convert_multiple_scxmls_to_jani(
     timer_automaton = make_global_timer_automaton(timers, max_time_ns)
     if timer_automaton is not None:
         base_model.add_jani_automaton(timer_automaton)
-    implement_scxml_events_as_jani_syncs(events_holder, timers, base_model)
+    implement_scxml_events_as_jani_syncs(events_holder, timers, max_array_size, base_model)
     remove_empty_self_loops_from_srv_handlers_in_jani(base_model)
     return base_model

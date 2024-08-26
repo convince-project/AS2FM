@@ -18,6 +18,7 @@ Common functionalities used throughout the toolchain.
 """
 
 from typing import get_args, MutableSequence, Union, Type
+from array import array
 
 """
 Set of basic types that are supported by the Jani language.
@@ -58,11 +59,38 @@ def remove_namespace(tag: str) -> str:
 
 def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
     """Generate a default expression for a field type."""
-    if field_type not in get_args(ValidTypes):
-        raise ValueError(f"Error: Unsupported data type {field_type}.")
-    elif field_type is MutableSequence[int]:
-        return "[]"
+    assert field_type in get_args(ValidTypes), f"Error: Unsupported data type {field_type}."
+    if field_type is MutableSequence[int]:
+        return array('i')
     elif field_type is MutableSequence[float]:
-        return "[]"
+        return array('d')
     else:
-        return str(field_type())
+        return field_type()
+
+
+def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
+    """Convert a value to a type."""
+    if isinstance(value, array):
+        if value.typecode == 'i':
+            return MutableSequence[int]
+        elif value.typecode == 'd':
+            return MutableSequence[float]
+        else:
+            raise ValueError(f"Type of array '{value.typecode}' not supported.")
+    elif isinstance(value, (int, float, bool)):
+        return type(value)
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def value_to_string(value: ValidTypes) -> str:
+    """Convert a value to a string."""
+    if isinstance(value, MutableSequence):
+        # Expect value to be an array
+        return f'[{",".join(str(v) for v in value)}]'
+    elif isinstance(value, bool):
+        return str(value).lower()
+    elif isinstance(value, (int, float)):
+        return str(value)
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")

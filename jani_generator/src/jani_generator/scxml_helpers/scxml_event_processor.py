@@ -17,12 +17,13 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import List
+from typing import List, MutableSequence
 
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_composition import JaniComposition
 from jani_generator.jani_entries.jani_edge import JaniEdge
+from jani_generator.jani_entries.jani_expression_generator import array_create_operator
 from jani_generator.ros_helpers.ros_timer import RosTimer
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
@@ -31,6 +32,7 @@ from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 def implement_scxml_events_as_jani_syncs(
         events_holder: EventsHolder,
         timers: List[RosTimer],
+        max_array_size: int,
         jani_model: JaniModel) -> List[str]:
     """
     Implement the scxml events as jani syncs.
@@ -120,12 +122,28 @@ def implement_scxml_events_as_jani_syncs(
                 sender.automaton_name: action_name}
             jc.add_sync(action_name, senders_syncs)
         # Add the global data, if needed
-        for p_name, p_type_str in event.get_data_structure().items():
+        for p_name, p_type in event.get_data_structure().items():
+            init_value = None
+            is_array = False
+            if p_type is MutableSequence[int]:
+                init_value = array_create_operator("__array_iterator", max_array_size, 0)
+                is_array = True
+            elif p_type is MutableSequence[float]:
+                init_value = array_create_operator("__array_iterator", max_array_size, 0.0)
+                is_array = True
             # TODO: Dots are likely to create problems in the future. Consider replacing them
             jani_model.add_variable(
                 variable_name=f"{event_name}.{p_name}",
-                variable_type=p_type_str
+                variable_type=p_type,
+                variable_init_expression=init_value
             )
+            # In case of arrays, add a variable representing the array size, too
+            if is_array:
+                jani_model.add_variable(
+                    variable_name=f"{event_name}.{p_name}.length",
+                    variable_type=int,
+                    variable_init_expression=0
+                )
         # For each event, we add an extra boolean flag for data validity
         jani_model.add_variable(
             variable_name=f"{event_name}.valid",

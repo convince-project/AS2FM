@@ -24,6 +24,8 @@ import esprima
 from jani_generator.jani_entries.jani_convince_expression_expansion import \
     BASIC_EXPRESSIONS_MAPPING
 from jani_generator.jani_entries.jani_expression import JaniExpression
+from jani_generator.jani_entries.jani_expression_generator import (
+    array_access_operator, array_create_operator)
 from jani_generator.jani_entries.jani_value import JaniValue
 
 
@@ -72,12 +74,8 @@ def _parse_ecmascript_to_jani_expression(
     elif ast.type == "ArrayExpression":
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         assert len(ast.elements) == 0, "Array expressions with elements are not supported."
-        return JaniExpression({
-            "op": "ac",  # Array Constructor
-            "var": "__array_iterator",
-            "length": array_info.array_max_size,
-            "exp": JaniValue(array_info.array_type(0))
-        })
+        return array_create_operator("__array_iterator", array_info.array_max_size,
+                                     JaniValue(array_info.array_type(0)))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
         return JaniExpression(ast.name)
@@ -88,11 +86,7 @@ def _parse_ecmascript_to_jani_expression(
             assert ast.object.type == "Identifier", "Nested arrays are not supported."
             array_name = ast.object.name
             array_index = _parse_ecmascript_to_jani_expression(ast.property, array_info)
-            return JaniExpression({
-                "op": "aa",  # Array Access
-                "exp": array_name,
-                "index": array_index
-            })
+            return array_access_operator(array_name, array_index)
         else:
             # A identifier in the style of object.property
             name = f'{ast.object.name}.{ast.property.name}'

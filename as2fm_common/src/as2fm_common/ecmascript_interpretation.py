@@ -18,6 +18,7 @@ Module for interpreting ecmascript.
 """
 
 from typing import Dict, Optional, Union
+from array import array
 
 import js2py
 
@@ -45,6 +46,8 @@ def interpret_ecma_script_expr(
     elif isinstance(expr_result, js2py.base.JsObjectWrapper):
         # For now, we expect everything that is not a base type to be a list
         return expr_result.to_list()
+    elif isinstance(expr_result, array):
+        return expr_result
     else:
         raise ValueError(f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or "
                          f"JsObjectWrapper, got '{type(expr_result)}'")

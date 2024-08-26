@@ -72,7 +72,8 @@ class JaniVariable:
             elif self._type == float:
                 self._init_expr = JaniExpression(0.0)
             else:
-                raise ValueError(f"Type {self._type} needs an initial value")
+                raise ValueError(
+                    f"JaniVariable {self._name} of type {self._type} needs an initial value")
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
         if not self._transient and self._type in (float, MutableSequence[float]):
             print(f"Warning: Variable {self._name} is not transient and has type float."
