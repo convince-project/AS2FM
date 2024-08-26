@@ -25,27 +25,11 @@ from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE, is_non_empty_string
+from scxml_converter.scxml_entries.utils import (
+    SCXML_DATA_STR_TO_TYPE, convert_string_to_type, is_non_empty_string)
 
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]
-
-
-def get_valid_entry_data_type(
-        value: Optional[Union[str, int, float]], data_type: str) -> Optional[Any]:
-    """
-    Convert a value to the provided data type. Raise if impossible.
-    """
-    if value is None:
-        return None
-    assert data_type in SCXML_DATA_STR_TO_TYPE, \
-        f"Error: SCXML conversion of data entry: Unknown data type {data_type}."
-    if isinstance(value, str):
-        assert len(value) > 0, "Error: SCXML conversion of data bounds: Empty string."
-        return SCXML_DATA_STR_TO_TYPE[data_type](value)
-    assert isinstance(value, SCXML_DATA_STR_TO_TYPE[data_type]), \
-        f"Error: SCXML conversion of data entry: Expected {data_type}, but got {type(value)}."
-    return value
 
 
 def valid_bound(bound_value: Any) -> bool:
@@ -81,11 +65,11 @@ class ScxmlData(ScxmlBase):
     def __init__(
             self, id_: str, expr: ValidExpr, data_type: str,
             lower_bound: Optional[ValidExpr] = None, upper_bound: Optional[ValidExpr] = None):
-        self._id = id_
-        self._expr = expr
-        self._data_type = data_type
-        self._lower_bound = lower_bound
-        self._upper_bound = upper_bound
+        self._id: str = id_
+        self._expr: str = expr
+        self._data_type: str = data_type
+        self._lower_bound: str = lower_bound
+        self._upper_bound: str = upper_bound
 
     def get_name(self) -> str:
         return self._id
@@ -96,23 +80,37 @@ class ScxmlData(ScxmlBase):
     def get_expr(self) -> str:
         return self._expr
 
+    def check_valid_bounds(self) -> bool:
+        if all(bound is None for bound in [self._lower_bound, self._upper_bound]):
+            # Nothing to check
+            return True
+        python_type = SCXML_DATA_STR_TO_TYPE[self._data_type]
+        if python_type not in (float, int):
+            print(f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
+                  "not a number.")
+            return False
+        lower_bound = None
+        upper_bound = None
+        if self._lower_bound is not None:
+            lower_bound = convert_string_to_type(self._lower_bound, self._data_type)
+        if self._upper_bound is not None:
+            upper_bound = convert_string_to_type(self._upper_bound, self._data_type)
+        if all(bound is not None for bound in [lower_bound, upper_bound]):
+            if lower_bound > upper_bound:
+                print(f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
+                      f"than 'upper_bound_incl' {upper_bound}.")
+                return False
+        return True
+
     def check_validity(self) -> bool:
         valid_id = is_non_empty_string(ScxmlData, "id", self._id)
+        valid_type = is_non_empty_string(ScxmlData, "type", self._data_type)
+        if valid_type:
+            if self._data_type not in SCXML_DATA_STR_TO_TYPE:
+                print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
+                return False
         valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
-        valid_type = is_non_empty_string(ScxmlData, "type", self._data_type) and \
-            self._data_type in SCXML_DATA_STR_TO_TYPE
-        if not (valid_bound(self._lower_bound) and valid_bound(self._upper_bound)):
-            print("Error: SCXML data: invalid lower_bound_incl or upper_bound_incl. "
-                  f"lower_bound_incl: {self._lower_bound}, upper_bound_incl: {self._upper_bound}")
-            return False
-        lower_bound = get_valid_entry_data_type(self._lower_bound, self._data_type)
-        upper_bound = get_valid_entry_data_type(self._upper_bound, self._data_type)
-        valid_bounds = True
-        if lower_bound is not None and upper_bound is not None:
-            valid_bounds = lower_bound <= upper_bound
-        if not valid_bounds:
-            print(f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
-                  f"than 'upper_bound_incl' {upper_bound}.")
+        valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_type and valid_bounds
 
     def as_xml(self) -> ET.Element:

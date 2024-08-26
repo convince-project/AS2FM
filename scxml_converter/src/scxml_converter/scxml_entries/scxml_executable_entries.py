@@ -60,6 +60,42 @@ def update_exec_body_bt_ports_values(
 class ScxmlIf(ScxmlBase):
     """This class represents SCXML conditionals."""
 
+    @staticmethod
+    def get_tag_name() -> str:
+        return "if"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
+        """Create a ScxmlIf object from an XML tree."""
+        assert_xml_tag_ok(ScxmlIf, xml_tree)
+        conditions: List[str] = []
+        exec_bodies: List[ScxmlExecutionBody] = []
+        conditions.append(xml_tree.attrib["cond"])
+        current_body: ScxmlExecutionBody = []
+        else_tag_found = False
+        for child in xml_tree:
+            if child.tag == "elseif":
+                assert not else_tag_found, "Error: SCXML if: 'elseif' tag found after 'else' tag."
+                conditions.append(child.attrib["cond"])
+                exec_bodies.append(current_body)
+                current_body = []
+            elif child.tag == "else":
+                assert not else_tag_found, "Error: SCXML if: multiple 'else' tags found."
+                else_tag_found = True
+                exec_bodies.append(current_body)
+                current_body = []
+            else:
+                current_body.append(execution_entry_from_xml(child))
+        else_body: Optional[ScxmlExecutionBody] = None
+        if else_tag_found:
+            else_body = current_body
+        else:
+            exec_bodies.append(current_body)
+        assert len(conditions) == len(exec_bodies), \
+            "Error: SCXML if: number of conditions and bodies do not match " \
+            f"({len(conditions)} != {len(exec_bodies)}). Conditions: {conditions}."
+        return ScxmlIf(list(zip(conditions, exec_bodies)), else_body)
+
     def __init__(self,
                  conditional_executions: List[ConditionalExecutionBody],
                  else_execution: Optional[ScxmlExecutionBody] = None):
@@ -71,36 +107,7 @@ class ScxmlIf(ScxmlBase):
         """
         self._conditional_executions = conditional_executions
         self._else_execution = else_execution
-
-    @staticmethod
-    def get_tag_name() -> str:
-        return "if"
-
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
-        """Create a ScxmlIf object from an XML tree."""
-        assert xml_tree.tag == ScxmlIf.get_tag_name(), \
-            f"Error: SCXML if: XML tag name is not {ScxmlIf.get_tag_name()}."
-        conditions: List[str] = []
-        exec_bodies: List[ScxmlExecutionBody] = []
-        conditions.append(xml_tree.attrib["cond"])
-        current_body: Optional[ScxmlExecutionBody] = []
-        assert current_body is not None, "Error: SCXML if: current body is not valid."
-        for child in xml_tree:
-            if child.tag == "elseif":
-                conditions.append(child.attrib["cond"])
-                exec_bodies.append(current_body)
-                current_body = []
-            elif child.tag == "else":
-                exec_bodies.append(current_body)
-                current_body = []
-            else:
-                current_body.append(execution_entry_from_xml(child))
-        assert len(conditions) == len(exec_bodies), \
-            "Error: SCXML if: number of conditions and bodies do not match."
-        if len(current_body) == 0:
-            current_body = None
-        return ScxmlIf(list(zip(conditions, exec_bodies)), current_body)
+        assert self.check_validity(), "Error: SCXML if: invalid if object."
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
@@ -122,25 +129,14 @@ class ScxmlIf(ScxmlBase):
         update_exec_body_bt_ports_values(self._else_execution, bt_ports_handler)
 
     def check_validity(self) -> bool:
-        valid_conditional_executions = len(self._conditional_executions) > 0
+        valid_conditional_executions = len(self._conditional_executions) > 0 and \
+            all(isinstance(condition, str) and len(body) > 0 and valid_execution_body(body)
+                for condition, body in self._conditional_executions)
         if not valid_conditional_executions:
-            print("Error: SCXML if: no conditional executions found.")
-        for condition_execution in self._conditional_executions:
-            valid_tuple = isinstance(condition_execution, tuple) and len(condition_execution) == 2
-            if not valid_tuple:
-                print("Error: SCXML if: invalid conditional execution found.")
-            condition, execution = condition_execution
-            valid_condition = isinstance(condition, str) and len(condition) > 0
-            valid_execution = valid_execution_body(execution)
-            if not valid_condition:
-                print("Error: SCXML if: invalid condition found.")
-            if not valid_execution:
-                print("Error: SCXML if: invalid execution body found.")
-            valid_conditional_executions = valid_tuple and valid_condition and valid_execution
-            if not valid_conditional_executions:
-                break
+            print("Error: SCXML if: Found invalid entries in conditional executions.")
         valid_else_execution = \
-            self._else_execution is None or valid_execution_body(self._else_execution)
+            self._else_execution is None or \
+            (len(self._else_execution) > 0 and valid_execution_body(self._else_execution))
         if not valid_else_execution:
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
@@ -160,6 +156,17 @@ class ScxmlIf(ScxmlBase):
                 if not exec_entry.check_valid_ros_instantiations(ros_declarations):
                     return False
         return True
+
+    def set_thread_id(self, thread_id: int) -> None:
+        """Set the thread ID for the executable entries contained in the if object."""
+        for _, exec_body in self._conditional_executions:
+            for entry in exec_body:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
+        if self._else_execution is not None:
+            for entry in self._else_execution:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
@@ -249,6 +256,8 @@ class ScxmlSend(ScxmlBase):
         return True
 
     def append_param(self, param: ScxmlParam) -> None:
+        assert self.__class__ is ScxmlSend, \
+            f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         self._params.append(param)
 
@@ -284,7 +293,6 @@ class ScxmlAssign(ScxmlBase):
     def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
         self._location = location
         self._expr = expr
-        print(f"ScxmlAssign: {location} = {expr}")
 
     def get_location(self) -> str:
         """Get the location to assign."""
@@ -372,11 +380,11 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :param xml_tree: The XML tree to create the execution entry from
     :return: The execution entry
     """
-    # TODO: This is pretty bad, need to re-check how to break the circle
-    from .scxml_ros_entries import ScxmlRosSends
+    from scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
 
     # TODO: This should be generated only once, since it stays as it is
-    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry + ScxmlRosSends}
+    tag_to_cls = {cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry}
+    tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
     assert exec_tag in tag_to_cls, \
         f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."

@@ -59,11 +59,11 @@ def test_battery_drainer_from_code():
         ScxmlData("battery_percent", "100", "int16")]))
     use_battery_state = ScxmlState(
         "use_battery",
-        on_entry=[ScxmlSend("ros_topic.level",
+        on_entry=[ScxmlSend("topic_level_msg",
                             [ScxmlParam("data", expr="battery_percent")])],
         body=[ScxmlTransition("use_battery", ["ros_time_rate.my_timer"],
                               body=[ScxmlAssign("battery_percent", "battery_percent - 1")]),
-              ScxmlTransition("use_battery", ["ros_topic.charge"],
+              ScxmlTransition("use_battery", ["topic_charge_msg"],
                               body=[ScxmlAssign("battery_percent", "100")])])
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
     _test_scxml_from_code(battery_drainer_scxml, os.path.join(
@@ -112,7 +112,8 @@ def test_battery_drainer_ros_from_code():
         RosRateCallback(ros_timer, "use_battery", None,
                         [ScxmlAssign("battery_percent", "battery_percent - 1")]))
     use_battery_state.add_transition(
-        RosTopicCallback(ros_topic_sub, "use_battery", [ScxmlAssign("battery_percent", "100")]))
+        RosTopicCallback(ros_topic_sub, "use_battery", None,
+                         [ScxmlAssign("battery_percent", "100")]))
     battery_drainer_scxml.add_state(use_battery_state, initial=True)
     _test_scxml_from_code(battery_drainer_scxml, os.path.join(
         os.path.dirname(__file__), '_test_data', 'battery_drainer_w_bt',
@@ -131,7 +132,7 @@ def test_bt_action_with_ports_from_code():
             RosTopicPublish(topic_publisher, [RosField("data", "number")])
         ])
     ])
-    scxml_root = ScxmlRoot("TopicAction")
+    scxml_root = ScxmlRoot("BtTopicAction")
     scxml_root.set_data_model(data_model)
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))

@@ -1,0 +1,193 @@
+# Copyright (c) 2024 - for information on the respective copyright owner
+# see the NOTICE file
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Declaration of SCXML tags related to ROS Action Clients.
+
+Based loosely on https://design.ros2.org/articles/actions.html
+"""
+
+from typing import List, Union, Type
+from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import ScxmlTransition, ScxmlRosDeclarationsContainer
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
+
+from scxml_converter.scxml_entries.ros_utils import (
+    is_action_type_known, generate_action_goal_req_event,
+    generate_action_goal_accepted_event, generate_action_goal_rejected_event,
+    generate_action_feedback_handle_event, generate_action_result_handle_event)
+from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from scxml_converter.scxml_entries.utils import is_non_empty_string
+
+
+class RosActionClient(RosDeclaration):
+    """Object used in SCXML root to declare a new action client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_client"
+
+    @staticmethod
+    def get_communication_interface() -> str:
+        return "action"
+
+    def check_valid_interface_type(self) -> bool:
+        if not is_action_type_known(self._interface_type):
+            print(f"Error: SCXML RosActionServer: invalid action type {self._interface_type}.")
+            return False
+        return True
+
+
+class RosActionSendGoal(RosTrigger):
+    """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_send_goal"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_client_defined(self._interface_name)
+
+    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_goal_req_event(
+            ros_declarations.get_action_client_info(self._interface_name)[0],
+            ros_declarations.get_automaton_name())
+
+
+class RosActionHandleGoalResponse(ScxmlTransition):
+    """
+    SCXML object representing the handler of an action response upon a goal request.
+
+    A server might accept or refuse a goal request, based on its internal state.
+    This handler is meant to handle both acceptance or refusal of a request.
+    Translating this to plain-SCXML, it results to two conditional transitions.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_goal_response"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleGoalResponse":
+        """Create a RosServiceServer object from an XML tree."""
+        assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
+        action_name = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "name")
+        accept_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "accept")
+        reject_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "reject")
+        return RosActionHandleGoalResponse(action_name, accept_target, reject_target)
+
+    def __init__(self, action_client: Union[str, RosActionClient],
+                 accept_target: str, reject_target: str) -> None:
+        """
+        Initialize a new RosActionHandleGoalResponse object.
+
+        :param action_client: Action client used by this handler, or its name.
+        :param accept_target: State to transition to, in case of goal acceptance.
+        :param reject_target: State to transition to, in case of goal refusal.
+        """
+        if isinstance(action_client, RosActionClient):
+            self._client_name = action_client.get_name()
+        else:
+            assert is_non_empty_string(RosActionHandleGoalResponse, "name", action_client)
+            self._client_name = action_client
+        self._accept_target = accept_target
+        self._reject_target = reject_target
+        assert self.check_validity(), "Error: SCXML RosActionHandleGoalResponse: invalid params."
+
+    def check_validity(self) -> bool:
+        valid_name = is_non_empty_string(RosActionHandleGoalResponse, "name", self._client_name)
+        valid_accept = is_non_empty_string(RosActionHandleGoalResponse, "accept",
+                                           self._accept_target)
+        valid_reject = is_non_empty_string(RosActionHandleGoalResponse, "reject",
+                                           self._reject_target)
+        return valid_name and valid_accept and valid_reject
+
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML Service Handle Response: invalid ROS declarations container."
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
+            "Error: SCXML action goal request: invalid ROS declarations container."
+        if not ros_declarations.is_action_client_defined(self._client_name):
+            print("Error: SCXML action goal request: "
+                  f"action client {self._client_name} not declared.")
+            return False
+        return True
+
+    def as_plain_scxml(self,
+                       ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlTransition]:
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML service response handler: invalid ROS instantiations."
+        automaton_name = ros_declarations.get_automaton_name()
+        interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
+        accept_event = generate_action_goal_accepted_event(interface_name, automaton_name)
+        reject_event = generate_action_goal_rejected_event(interface_name, automaton_name)
+        accept_transition = ScxmlTransition(self._accept_target, [accept_event])
+        reject_transition = ScxmlTransition(self._reject_target, [reject_event])
+        return [accept_transition, reject_transition]
+
+    def as_xml(self) -> ET.Element:
+        assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
+        return ET.Element(RosActionHandleGoalResponse.get_tag_name(),
+                          {"name": self._client_name,
+                           "accept": self._accept_target, "reject": self._reject_target})
+
+
+class RosActionHandleFeedback(RosCallback):
+    """SCXML object representing the handler of an action feedback."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_feedback"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_client_defined(self._interface_name)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_feedback_handle_event(
+            ros_declarations.get_action_client_info(self._interface_name)[0],
+            ros_declarations.get_automaton_name())
+
+
+class RosActionHandleResult(RosCallback):
+    """SCXML object representing the handler of am action result for a service client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_result"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_client_defined(self._interface_name)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_result_handle_event(
+            ros_declarations.get_action_client_info(self._interface_name)[0],
+            ros_declarations.get_automaton_name())

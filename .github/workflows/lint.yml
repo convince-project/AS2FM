@@ -71,7 +71,7 @@ jobs:
           use-pydocstyle: false
           extra-pylint-options: ""
           extra-pycodestyle-options: ""
-          extra-flake8-options: ""
+          extra-flake8-options: "--max-line-length=100"
           extra-black-options: ""
           extra-mypy-options: "--ignore-missing-imports"
           extra-isort-options: ""

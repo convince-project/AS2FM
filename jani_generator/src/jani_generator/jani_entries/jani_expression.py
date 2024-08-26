@@ -49,8 +49,8 @@ class JaniExpression:
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
-            if (not isinstance(expression, SupportedExp)):  # type: ignore
-                raise RuntimeError(f"Unexpected expression type: {type(expression)} should be a dict or a base type.")
+            assert isinstance(expression, SupportedExp), \
+                f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
@@ -100,6 +100,17 @@ class JaniExpression:
                 "if": JaniExpression(expression_dict["if"]),
                 "then": JaniExpression(expression_dict["then"]),
                 "else": JaniExpression(expression_dict["else"])}
+        # Array-specific expressions
+        if (self.op == "ac"):
+            return {
+                "var": JaniExpression(expression_dict["var"]),
+                "length": JaniExpression(expression_dict["length"]),
+                "exp": JaniExpression(expression_dict["exp"])}
+        if (self.op == "aa"):
+            return {
+                "exp": JaniExpression(expression_dict["exp"]),
+                "index": JaniExpression(expression_dict["index"])}
+        # Convince specific expressions
         if (self.op in ("norm2d")):
             return {
                 "x": JaniExpression(expression_dict["x"]),

@@ -95,12 +95,10 @@ def make_global_timer_automaton(timers: List[RosTimer],
     try:
         max_time = _convert_time_between_units(
             max_time_ns, "ns", global_timer_period_unit)
-    except AssertionError as exc:
-        # TODO what to do with exc?
+    except AssertionError:
         raise ValueError(
-            f"Max time {max_time_ns} cannot be converted to " +\
-            f"{global_timer_period_unit}. The max_time must have a unit " +\
-            "that is the same or larger than the smallest timer period.")
+            f"Max time {max_time_ns} cannot be converted to {global_timer_period_unit}. "
+            "The max_time must have a unit that is greater or equal to the smallest timer period.")
 
     # Automaton
     LOC_NAME = "loc"

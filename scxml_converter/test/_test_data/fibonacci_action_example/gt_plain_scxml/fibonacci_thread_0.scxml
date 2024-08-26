@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="fibonacci_thread_0" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="goal_id" expr="0" type="int32" />
+        <data id="order" expr="0" type="int32" />
+        <data id="sequence" expr="Array(50)" type="int32[]" />
+        <data id="sequence__len" expr="0" type="int32" />
+    </datamodel>
+    <state id="idle">
+        <onentry>
+            <assign location="sequence__len" expr="0" />
+            <assign location="goal_id" expr="0" />
+            <send event="action_fibonacci_thread_free">
+                <param name="thread_id" expr="0" />
+            </send>
+        </onentry>
+        <transition target="execute" event="action_fibonacci_thread_start" cond="_req.thread_id == 0">
+            <assign location="order" expr="_event.order" />
+        </transition>
+    </state>
+    <state id="execute">
+        <onentry>
+            <if cond="sequence__len == 0">
+                <assign location="sequence[0]" expr="0" />
+                <elseif cond="sequence__len == 1" />
+                <assign location="sequence[1]" expr="1" />
+                <else />
+                <assign location="sequence[sequence__len]" expr="sequence[sequence__len - 1] + sequence[sequence__len - 2]" />
+            </if>
+            <assign location="sequence__len" expr="sequence__len + 1" />
+        </onentry>
+        <transition target="idle" cond="sequence__len == order + 1">
+            <send event="action_fibonacci_result">
+                <param name="goal_id" expr="goal_id" />
+                <param name="sequence" expr="sequence" />
+                <param name="sequence__len" expr="sequence__len" />
+            </send>
+        </transition>
+        <transition target="execute">
+            <send event="action_fibonacci_feedback">
+                <param name="goal_id" expr="goal_id" />
+                <param name="sequence" expr="sequence" />
+                <param name="sequence__len" expr="sequence__len" />
+            </send>
+        </transition>
+    </state>
+</scxml>

@@ -20,13 +20,10 @@ This module provides functionalities to convert the ROS-specific macros
 into generic SCXML code.
 """
 
-import xml.etree.ElementTree as ET
-from typing import Dict, Tuple, Union
+from typing import Dict, Union
 
 from as2fm_common.common import ros_type_name_to_python_type
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from scxml_converter.scxml_entries import (ScxmlRoot,
-                                           ScxmlRosDeclarationsContainer)
 
 BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']
 

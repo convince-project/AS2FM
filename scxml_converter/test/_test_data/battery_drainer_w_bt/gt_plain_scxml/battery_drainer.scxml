@@ -12,14 +12,14 @@
 
     <state id="use_battery">
         <onentry>
-            <send event="ros_topic.level">
+            <send event="topic_level_msg">
                 <param name="data" expr="battery_percent" />
             </send>
         </onentry>
         <transition event="ros_time_rate.my_timer" target="use_battery">
             <assign location="battery_percent" expr="battery_percent - 1" />
         </transition>
-        <transition event="ros_topic.charge" target="use_battery">
+        <transition event="topic_charge_msg" target="use_battery">
             <assign location="battery_percent" expr="100" />
         </transition>
     </state>

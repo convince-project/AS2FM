@@ -15,7 +15,8 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Dict, Type
+from typing import Any, Dict, Type, MutableSequence
+from array import array
 
 from scxml_converter.scxml_entries import ScxmlBase
 
@@ -28,7 +29,8 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int8": int,
     "int16": int,
     "int32": int,
-    "int64": int
+    "int64": int,
+    "int32[]": MutableSequence[int],  # array.array('i): https://stackoverflow.com/a/67775675
 }
 
 
@@ -56,11 +58,36 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     """
     valid_str = isinstance(arg_value, str) and len(arg_value) > 0
     if not valid_str:
-        print(f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
+        print(f"Error: SCXML entry from {scxml_type.__name__}: "
               f"Expected non-empty argument {arg_name}.")
     return valid_str
 
 
 def get_default_expression_for_type(field_type: str) -> str:
     """Generate a default expression for a field type."""
+    if field_type not in SCXML_DATA_STR_TO_TYPE:
+        raise ValueError(f"Error: SCXML conversion of data entry: Unknown data type {field_type}.")
+    if '[' in field_type:
+        # array type, special handling
+        if field_type.startswith('int'):
+            return array('i')
+        elif field_type.startswith('float'):
+            return array('f')
+        else:
+            raise ValueError(
+                f"Error: SCXML conversion of data entry: unhandled array type {field_type}.")
     return str(SCXML_DATA_STR_TO_TYPE[field_type]())
+
+
+def convert_string_to_type(value: str, data_type: str) -> Any:
+    """
+    Convert a value to the provided data type. Raise if impossible.
+    """
+    assert data_type in SCXML_DATA_STR_TO_TYPE, \
+        f"Error: SCXML conversion of data entry: Unknown data type {data_type}."
+    assert isinstance(value, str), \
+        f"Error: SCXML conversion of data entry: expected a string, got {type(value)}."
+    assert len(value) > 0, "Error: SCXML conversion of data entry: Empty string."
+    assert '[' not in data_type, \
+        f"Error: SCXML conversion of data entry: Cannot convert array type {data_type}."
+    return SCXML_DATA_STR_TO_TYPE[data_type](value)

@@ -15,9 +15,9 @@
 
 """Collection of SCXML utilities related to ROS functionalities."""
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple, Type
 
-from scxml_converter.scxml_entries.scxml_ros_field import RosField
+from scxml_converter.scxml_entries import ScxmlBase, RosField
 
 from scxml_converter.scxml_entries.utils import all_non_empty_strings
 
@@ -28,7 +28,16 @@ MSG_TYPE_SUBSTITUTIONS = {
 
 BASIC_FIELD_TYPES = ['boolean',
                      'int8', 'int16', 'int32', 'int64',
-                     'float', 'double']
+                     'float', 'double',
+                     'sequence<int32>']
+
+"""List of prefixes for ROS-related event data in SCXML."""
+ROS_EVENT_PREFIXES = [
+    "_msg.",                            # Topic-related
+    "_req.", "_res.",                   # Service-related
+    "_goal.", "_feedback.", "_result."  # Action-related
+]
+
 
 """Container for the ROS interface (e.g. topic or service) name and the related type"""
 RosInterfaceAndType = Tuple[str, str]
@@ -45,7 +54,8 @@ def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     interface_ns, interface_type = type_definition.split("/")
     if len(interface_ns) == 0 or len(interface_type) == 0:
         return False
-    assert ros_interface in ["msg", "srv"], "Error: SCXML ROS declarations: unknown ROS interface."
+    assert ros_interface in ["msg", "srv", "action"], \
+        "Error: SCXML ROS declarations: unknown ROS interface."
     try:
         interface_importer = __import__(interface_ns + f'.{ros_interface}', fromlist=[''])
         _ = getattr(interface_importer, interface_type)
@@ -65,9 +75,48 @@ def is_srv_type_known(service_definition: str) -> bool:
     return is_ros_type_known(service_definition, "srv")
 
 
+def is_action_type_known(action_definition: str) -> bool:
+    """Check if python can import the provided action definition."""
+    return is_ros_type_known(action_definition, "action")
+
+
+def extract_params_from_ros_type(ros_interface_type: Type[Any]) -> Dict[str, str]:
+    """
+    Extract the data fields of a ROS message type as pairs of name and type objects.
+    """
+    fields = ros_interface_type.get_fields_and_field_types()
+    additional_fields = {}
+    for key in fields.keys():
+        assert fields[key] in BASIC_FIELD_TYPES, \
+            f"Error: SCXML ROS declarations: {ros_interface_type} {key} field is " \
+            f"of type {fields[key]}, that is not supported."
+        fields[key] = MSG_TYPE_SUBSTITUTIONS.get(fields[key], fields[key])
+        # For array fields (or sequences), we append also a "<name>__len" entry
+        if fields[key].startswith("sequence<"):
+            additional_fields[key + "__len"] = "int32"
+    return fields | additional_fields
+
+
+def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, str]) -> bool:
+    """
+    Check that all fields from ros_fields are in field_types, and that no field is missing.
+    """
+    for ros_field in ros_fields:
+        if ros_field.get_name() not in field_types:
+            print(f"Error: SCXML ROS declarations: unknown field {ros_field.get_name()}.")
+            return False
+        field_types.pop(ros_field.get_name())
+    if len(field_types) > 0:
+        print("Error: SCXML ROS declarations: there are missing fields:")
+        for field_key in field_types.keys():
+            print(f"\t-{field_key}.")
+        return False
+    return True
+
+
 def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[str, str]]:
     """
-    Get the data fields of a service request and response type as pairs of name and type objects.
+    Get the fields of a service request and response as pairs of name and type objects.
     """
     assert is_srv_type_known(service_definition), \
         f"Error: SCXML ROS declarations: service type {service_definition} not found."
@@ -76,27 +125,33 @@ def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[s
     srv_class = getattr(srv_module, interface_type)
 
     # TODO: Fields can be nested. Look AS2FM/scxml_converter/src/scxml_converter/scxml_converter.py
-    req = srv_class.Request.get_fields_and_field_types()
-    for key in req.keys():
-        # TODO: Support nested fields
-        assert req[key] in BASIC_FIELD_TYPES, \
-            f"Error: SCXML ROS declarations: service request type {req[key]} isn't a basic field."
-        req[key] = MSG_TYPE_SUBSTITUTIONS.get(req[key], req[key])
+    req_fields = extract_params_from_ros_type(srv_class.Request)
+    res_fields = extract_params_from_ros_type(srv_class.Response)
 
-    res = srv_class.Response.get_fields_and_field_types()
-    for key in res.keys():
-        assert res[key] in BASIC_FIELD_TYPES, \
-            "Error: SCXML ROS declarations: service response type contains non-basic fields."
-        res[key] = MSG_TYPE_SUBSTITUTIONS.get(res[key], res[key])
+    return req_fields, res_fields
 
-    return req, res
+
+def get_action_type_params(action_definition: str
+                           ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+    """
+    Get the fields of an action goal, feedback and result as pairs of name and type objects.
+    """
+    assert is_action_type_known(action_definition), \
+        f"Error: SCXML ROS declarations: action type {action_definition} not found."
+    interface_ns, interface_type = action_definition.split("/")
+    action_module = __import__(interface_ns + '.action', fromlist=[''])
+    action_class = getattr(action_module, interface_type)
+    action_goal_fields = extract_params_from_ros_type(action_class.Goal)
+    action_feedback_fields = extract_params_from_ros_type(action_class.Feedback)
+    action_result_fields = extract_params_from_ros_type(action_class.Result)
+    return action_goal_fields, action_feedback_fields, action_result_fields
 
 
 def replace_ros_interface_expression(msg_expr: str) -> str:
-    """Convert a ROS interface expression (msg, req, res) to plain SCXML (event)."""
+    """Convert all ROS interface expressions (in ROS_EVENT_PREFIXES) to plain SCXML events."""
     scxml_prefix = "_event."
     # TODO: Use regex and ensure no other valid character exists before the initial underscore
-    for ros_prefix in ["_msg.", "_req.", "_res."]:
+    for ros_prefix in ROS_EVENT_PREFIXES:
         msg_expr = msg_expr.replace(ros_prefix, scxml_prefix)
     return msg_expr
 
@@ -112,6 +167,17 @@ def sanitize_ros_interface_name(interface_name: str) -> str:
     assert interface_name.count(" ") == 0, \
         "Error: ROS interface sanitizer: interface name must not contain spaces."
     return interface_name.replace("/", "__")
+
+
+def generate_rate_timer_event(timer_name: str) -> str:
+    """Generate the name of the event triggered by a rate timer."""
+    # TODO: Remove dot notation
+    return f"ros_time_rate.{timer_name}"
+
+
+def generate_topic_event(topic_name: str) -> str:
+    """Generate the name of the event that triggers a message reception from a topic."""
+    return f"topic_{sanitize_ros_interface_name(topic_name)}_msg"
 
 
 def generate_srv_request_event(service_name: str, automaton_name: str) -> str:
@@ -134,6 +200,68 @@ def generate_srv_server_response_event(service_name: str) -> str:
     return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
+def generate_action_goal_req_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that sends an action goal from a client to the server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_req_client_{client_name}"
+
+
+def generate_action_goal_accepted_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal acceptance to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accept_client_{client_name}"
+
+
+def generate_action_goal_rejected_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal rejection to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_reject_client_{client_name}"
+
+
+def generate_action_goal_handle_event(action_name: str) -> str:
+    """Generate the name of the event that triggers an action goal handling in the server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
+
+
+def generate_action_goal_handle_accepted_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal acceptance."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accepted"
+
+
+def generate_action_goal_handle_rejected_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal rejection."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_rejected"
+
+
+def generate_action_thread_execution_start_event(action_name: str) -> str:
+    """Generate the name of the event that triggers the start of an action thread execution."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_thread_start"
+
+
+def generate_action_thread_free_event(action_name: str) -> str:
+    """Generate the name of the event sent when an action thread becomes free."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_thread_free"
+
+
+def generate_action_feedback_event(action_name: str) -> str:
+    """Generate the name of the event that sends a feedback from the action server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_feedback"
+
+
+def generate_action_feedback_handle_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that handles a feedback in an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_" \
+           f"feedback_handle_client_{automaton_name}"
+
+
+def generate_action_result_event(action_name: str) -> str:
+    """Generate the name of the event that sends a result from the action server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_result"
+
+
+def generate_action_result_handle_event(action_name: str, automaton_name: str) -> str:
+    """Generate the name of the event that handles a result in an action client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_" \
+           f"result_handle_client_{automaton_name}"
+
+
 class ScxmlRosDeclarationsContainer:
     """Object that contains a description of the ROS declarations in the SCXML root."""
 
@@ -143,46 +271,143 @@ class ScxmlRosDeclarationsContainer:
         :automaton_name: Name of the automaton these declarations belong to.
         """
         self._automaton_name: str = automaton_name
-        # Dict of publishers and subscribers: topic name -> type
+        # Dictionaries relating an interface ref. name to the comm. channel name and data type
+        # ROS Topics
         self._publishers: Dict[str, RosInterfaceAndType] = {}
         self._subscribers: Dict[str, RosInterfaceAndType] = {}
+        # ROS Services
         self._service_servers: Dict[str, RosInterfaceAndType] = {}
         self._service_clients: Dict[str, RosInterfaceAndType] = {}
+        # ROS Actions
+        self._action_servers: Dict[str, RosInterfaceAndType] = {}
+        self._action_clients: Dict[str, RosInterfaceAndType] = {}
+        # ROS Timers
         self._timers: Dict[str, float] = {}
 
     def get_automaton_name(self) -> str:
         """Get name of the automaton that these declarations are defined in."""
         return self._automaton_name
 
-    def append_publisher(self, pub_name: str, topic_name: str, topic_type: str) -> None:
+    def append_ros_declaration(self, scxml_ros_declaration: ScxmlBase) -> None:
+        """
+        Add a ROS declaration to the container instance.
+
+        :param scxml_ros_declaration: The ROS declaration to add (inheriting from RosDeclaration).
+        """
+        from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+        from scxml_converter.scxml_entries.scxml_ros_timer import RosTimeRate
+        from scxml_converter.scxml_entries.scxml_ros_topic import (
+            RosTopicPublisher, RosTopicSubscriber)
+        from scxml_converter.scxml_entries.scxml_ros_service import (
+            RosServiceServer, RosServiceClient)
+        from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
+        from scxml_converter.scxml_entries.scxml_ros_action_client import RosActionClient
+        assert isinstance(scxml_ros_declaration, RosDeclaration), \
+            f"Error: SCXML ROS declarations: {type(scxml_ros_declaration)} isn't a ROS declaration."
+        if isinstance(scxml_ros_declaration, RosTimeRate):
+            self._append_timer(scxml_ros_declaration.get_name(),
+                               scxml_ros_declaration.get_rate())
+        elif isinstance(scxml_ros_declaration, RosTopicPublisher):
+            self._append_publisher(scxml_ros_declaration.get_name(),
+                                   scxml_ros_declaration.get_interface_name(),
+                                   scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosTopicSubscriber):
+            self._append_subscriber(scxml_ros_declaration.get_name(),
+                                    scxml_ros_declaration.get_interface_name(),
+                                    scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosServiceServer):
+            self._append_service_server(scxml_ros_declaration.get_name(),
+                                        scxml_ros_declaration.get_interface_name(),
+                                        scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosServiceClient):
+            self._append_service_client(scxml_ros_declaration.get_name(),
+                                        scxml_ros_declaration.get_interface_name(),
+                                        scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosActionServer):
+            self._append_action_server(scxml_ros_declaration.get_name(),
+                                       scxml_ros_declaration.get_interface_name(),
+                                       scxml_ros_declaration.get_interface_type())
+        elif isinstance(scxml_ros_declaration, RosActionClient):
+            self._append_action_client(scxml_ros_declaration.get_name(),
+                                       scxml_ros_declaration.get_interface_name(),
+                                       scxml_ros_declaration.get_interface_type())
+        else:
+            raise NotImplementedError(f"Error: SCXML ROS declaration type "
+                                      f"{type(scxml_ros_declaration)}.")
+
+    def _append_publisher(self, pub_name: str, topic_name: str, topic_type: str) -> None:
+        """
+        Add a publisher to the container.
+
+        :param pub_name: Name of the publisher (alias, user-defined).
+        :param topic_name: Name of the topic to publish to.
+        :param topic_type: Type of the message to publish.
+        """
         assert all_non_empty_strings(pub_name, topic_name, topic_type), \
             "Error: ROS declarations: publisher name, topic name and type must be strings."
         assert pub_name not in self._publishers, \
             f"Error: ROS declarations: topic publisher {pub_name} already declared."
         self._publishers[pub_name] = (topic_name, topic_type)
 
-    def append_subscriber(self, sub_name: str, topic_name: str, topic_type: str) -> None:
+    def _append_subscriber(self, sub_name: str, topic_name: str, topic_type: str) -> None:
+        """
+        Add a subscriber to the container.
+
+        :param sub_name: Name of the subscriber (alias, user-defined).
+        :param topic_name: Name of the topic to subscribe to.
+        :param topic_type: Type of the message to subscribe to.
+        """
         assert all_non_empty_strings(sub_name, topic_name, topic_type), \
             "Error: ROS declarations: subscriber name, topic name and type must be strings."
         assert sub_name not in self._subscribers, \
             f"Error: ROS declarations: topic subscriber {sub_name} already declared."
         self._subscribers[sub_name] = (topic_name, topic_type)
 
-    def append_service_client(self, client_name: str, service_name: str, service_type: str) -> None:
+    def _append_service_client(
+            self, client_name: str, service_name: str, service_type: str) -> None:
+        """
+        Add a service client to the container.
+
+        :param client_name: Name of the service client (alias, user-defined).
+        :param service_name: Name of the service to call.
+        :param service_type: Type of data used in the service communication.
+        """
         assert all_non_empty_strings(client_name, service_name, service_type), \
             "Error: ROS declarations: client name, service name and type must be strings."
         assert client_name not in self._service_clients, \
             f"Error: ROS declarations: service client {client_name} already declared."
         self._service_clients[client_name] = (service_name, service_type)
 
-    def append_service_server(self, server_name: str, service_name: str, service_type: str) -> None:
+    def _append_service_server(
+            self, server_name: str, service_name: str, service_type: str) -> None:
+        """
+        Add a service server to the container.
+
+        :param server_name: Name of the service server (alias, user-defined).
+        :param service_name: Name of the provided service (what the client needs to call).
+        :param service_type: Type of data used in the service communication.
+        """
         assert all_non_empty_strings(server_name, service_name, service_type), \
             "Error: ROS declarations: server name, service name and type must be strings."
         assert server_name not in self._service_servers, \
             f"Error: ROS declarations: service server {server_name} already declared."
         self._service_servers[server_name] = (service_name, service_type)
 
-    def append_timer(self, timer_name: str, timer_rate: float) -> None:
+    def _append_action_client(self, client_name: str, action_name: str, action_type: str) -> None:
+        assert all_non_empty_strings(client_name, action_name, action_type), \
+            "Error: ROS declarations: client name, action name and type must be strings."
+        assert client_name not in self._action_clients, \
+            f"Error: ROS declarations: action client {client_name} already declared."
+        self._action_clients[client_name] = (action_name, action_type)
+
+    def _append_action_server(self, server_name: str, action_name: str, action_type: str) -> None:
+        assert all_non_empty_strings(server_name, action_name, action_type), \
+            "Error: ROS declarations: server name, action name and type must be strings."
+        assert server_name not in self._action_servers, \
+            f"Error: ROS declarations: action server {server_name} already declared."
+        self._action_servers[server_name] = (action_name, action_type)
+
+    def _append_timer(self, timer_name: str, timer_rate: float) -> None:
         assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
         assert isinstance(timer_rate, float) and timer_rate > 0, \
             "Error: ROS declarations: timer rate must be a positive number."
@@ -196,11 +421,20 @@ class ScxmlRosDeclarationsContainer:
     def is_subscriber_defined(self, sub_name: str) -> bool:
         return sub_name in self._subscribers
 
+    def is_service_client_defined(self, client_name: str) -> bool:
+        return client_name in self._service_clients
+
+    def is_service_server_defined(self, server_name: str) -> bool:
+        return server_name in self._service_servers
+
+    def is_action_client_defined(self, client_name: str) -> bool:
+        return client_name in self._action_clients
+
+    def is_action_server_defined(self, server_name: str) -> bool:
+        return server_name in self._action_servers
+
     def is_timer_defined(self, timer_name: str) -> bool:
         return timer_name in self._timers
-
-    def get_timers(self) -> Dict[str, float]:
-        return self._timers
 
     def get_publisher_info(self, pub_name: str) -> Tuple[str, str]:
         """Provide a publisher topic name and type"""
@@ -229,60 +463,106 @@ class ScxmlRosDeclarationsContainer:
             f"Error: SCXML ROS declarations: unknown service client {client_name}."
         return client_info
 
-    def is_service_client_defined(self, client_name: str) -> bool:
-        return client_name in self._service_clients
+    def get_action_server_info(self, server_name: str) -> Tuple[str, str]:
+        """Given an action server name, provide the related action name and type."""
+        server_info = self._action_servers.get(server_name)
+        assert server_info is not None, \
+            f"Error: SCXML ROS declarations: unknown action server {server_name}."
+        return server_info
 
-    def is_service_server_defined(self, server_name: str) -> bool:
-        return server_name in self._service_servers
+    def get_action_client_info(self, client_name: str) -> Tuple[str, str]:
+        """Given an action client name, provide the related action name and type."""
+        client_info = self._action_clients.get(client_name)
+        assert client_info is not None, \
+            f"Error: SCXML ROS declarations: unknown action client {client_name}."
+        return client_info
 
-    def get_service_client_type(self, client_name: str) -> Optional[str]:
-        client_definition = self._service_clients.get(client_name, None)
-        if client_definition is None:
-            return None
-        return client_definition[1]
-
-    def get_service_server_type(self, server_name: str) -> Optional[str]:
-        server_definition = self._service_servers.get(server_name, None)
-        if server_definition is None:
-            return None
-        return server_definition[1]
+    def get_timers(self) -> Dict[str, float]:
+        return self._timers
 
     def check_valid_srv_req_fields(self, client_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service request type."""
-        req_type = self.get_service_client_type(client_name)
-        if req_type is None:
-            print(f"Error: SCXML ROS declarations: unknown service client {client_name}.")
-            return False
-        req_fields, _ = get_srv_type_params(req_type)
-        for ros_field in ros_fields:
-            if ros_field.get_name() not in req_fields:
-                print("Error: SCXML ROS declarations: "
-                      f"unknown field {ros_field.get_name()} in service request.")
-                return False
-            req_fields.pop(ros_field.get_name())
-        if len(req_fields) > 0:
-            print("Error: SCXML ROS declarations: missing fields in service request.")
-            for req_field in req_fields.keys():
-                print(f"\t-{req_field}.")
+        _, service_type = self.get_service_client_info(client_name)
+        req_fields, _ = get_srv_type_params(service_type)
+        if not check_all_fields_known(ros_fields, req_fields):
+            print(f"Error: SCXML ROS declarations: Srv request {client_name} has invalid fields.")
             return False
         return True
 
     def check_valid_srv_res_fields(self, server_name: str, ros_fields: List[RosField]) -> bool:
         """Check if the provided fields match the service response type."""
-        res_type = self.get_service_server_type(server_name)
-        if res_type is None:
-            print(f"Error: SCXML ROS declarations: unknown service server {server_name}.")
-            return False
+        _, res_type = self.get_service_server_info(server_name)
         _, res_fields = get_srv_type_params(res_type)
-        for ros_field in ros_fields:
-            if ros_field.get_name() not in res_fields:
-                print("Error: SCXML ROS declarations: "
-                      f"unknown field {ros_field.get_name()} in service response.")
-                return False
-            res_fields.pop(ros_field.get_name())
-        if len(res_fields) > 0:
-            print("Error: SCXML ROS declarations: missing fields in service response.")
-            for res_field in res_fields.keys():
-                print(f"\t-{res_field}.")
+        if not check_all_fields_known(ros_fields, res_fields):
+            print(f"Error: SCXML ROS declarations: Srv response {server_name} has invalid fields.")
+            return False
+        return True
+
+    def check_valid_action_goal_fields(
+            self, alias_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+        """
+        Check if the provided fields match with the action type's goal entries.
+
+        :param alias_name: Name of the action client.
+        :param ros_fields: List of fields to check.
+        :param has_goal_id: Whether the goal_id shall be included among the fields.
+        """
+        if self.is_action_client_defined(alias_name):
+            action_type = self.get_action_client_info(alias_name)[1]
+        else:
+            assert self.is_action_server_defined(alias_name), \
+                f"Error: SCXML ROS declarations: unknown action {alias_name}."
+            action_type = self.get_action_server_info(alias_name)[1]
+        goal_fields = get_action_type_params(action_type)[0]
+        # We use the goal ID as a reserved field for the action. Make sure it is available.
+        assert "goal_id" not in goal_fields, \
+            f"Error: SCXML ROS declarations: action {action_type} goal has the 'goal_id' field."
+        if has_goal_id:
+            goal_fields["goal_id"] = "int32"
+        if not check_all_fields_known(ros_fields, goal_fields):
+            print(f"Error: SCXML ROS declarations: Action goal {alias_name} has invalid fields.")
+            return False
+        return True
+
+    def check_valid_action_feedback_fields(
+            self, server_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+        """
+        Check if the provided fields match with the action type's feedback entries.
+
+        :param client_name: Name of the action client.
+        :param ros_fields: List of fields to check.
+        :param has_goal_id: Whether the goal_id shall be included among the fields.
+        """
+        _, action_type = self.get_action_server_info(server_name)
+        _, feedback_fields, _ = get_action_type_params(action_type)
+        # We use the goal ID as a reserved field for the action. Make sure it is available.
+        assert "goal_id" not in feedback_fields, \
+            f"Error: SCXML ROS declarations: action {action_type} feedback has the 'goal_id' field."
+        if has_goal_id:
+            feedback_fields["goal_id"] = "int32"
+        if not check_all_fields_known(ros_fields, feedback_fields):
+            print(f"Error: SCXML ROS declarations: Action feedback {server_name} "
+                  "has invalid fields.")
+            return False
+        return True
+
+    def check_valid_action_result_fields(
+            self, server_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+        """
+        Check if the provided fields match with the action type's result entries.
+
+        :param client_name: Name of the action client.
+        :param ros_fields: List of fields to check.
+        :param has_goal_id: Whether the goal_id shall be included among the fields.
+        """
+        _, action_type = self.get_action_server_info(server_name)
+        _, _, result_fields = get_action_type_params(action_type)
+        # We use the goal ID as a reserved field for the action. Make sure it is available.
+        assert "goal_id" not in result_fields, \
+            f"Error: SCXML ROS declarations: action {action_type} feedback has the 'goal_id' field."
+        if has_goal_id:
+            result_fields["goal_id"] = "int32"
+        if not check_all_fields_known(ros_fields, result_fields):
+            print(f"Error: SCXML ROS declarations: Action result {server_name} has invalid fields.")
             return False
         return True
