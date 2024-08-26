@@ -34,7 +34,7 @@ from scxml_converter.scxml_entries import ScxmlRoot
 
 def convert_scxml_root_to_jani_automaton(
         scxml_root: ScxmlRoot, jani_automaton: JaniAutomaton, events_holder: EventsHolder,
-        max_array_index: int
+        max_array_size: int
 ) -> None:
     """
     Convert an SCXML element to a Jani automaton.
@@ -42,17 +42,17 @@ def convert_scxml_root_to_jani_automaton(
     :param element: The SCXML element to convert (Must be the root scxml tag of the file).
     :param jani_automaton: The Jani automaton to write the converted element to.
     :param events_holder: The holder for the events to be implemented as Jani syncs.
-    :param max_array_index: The max size of the arrays in the model.
+    :param max_array_size: The max size of the arrays in the model.
     """
     BaseTag.from_element(scxml_root, [], (jani_automaton,
-                         events_holder), max_array_index).write_model()
+                         events_holder), max_array_size).write_model()
 
 
 def convert_multiple_scxmls_to_jani(
         scxmls: List[Union[str, ScxmlRoot]],
         timers: List[RosTimer],
         max_time_ns: int,
-        max_array_index: int
+        max_array_size: int
 ) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
@@ -60,7 +60,7 @@ def convert_multiple_scxmls_to_jani(
     :param scxmls: List of SCXML Root objects (or file paths) to be included in the Jani model.
     :param timers: List of ROS timers to be included in the Jani model.
     :param max_time_ns: The maximum time in nanoseconds.
-    :param max_array_index: The max size of the arrays in the model.
+    :param max_array_size: The max size of the arrays in the model.
     :return: The Jani model containing the converted automata.
     """
     base_model = JaniModel()
@@ -74,7 +74,7 @@ def convert_multiple_scxmls_to_jani(
         assert scxml_root.is_plain_scxml(), \
             f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
         automaton = JaniAutomaton()
-        convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_index)
+        convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
     timer_automaton = make_global_timer_automaton(timers, max_time_ns)
     if timer_automaton is not None:

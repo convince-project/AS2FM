@@ -232,38 +232,38 @@ class BaseTag:
     def from_element(element: ScxmlBase,
                      call_trace: List[ScxmlBase],
                      model: ModelTupleType,
-                     max_array_index: int) -> 'BaseTag':
+                     max_array_size: int) -> 'BaseTag':
         """Return the correct tag object based on the xml element.
 
         :param element: The xml element representing the tag.
         :param call_trace: The call trace of the element, to access the parents.
         :param model: The model to write the tag to.
-        :param max_array_index: The maximum index of the arrays in the model.
+        :param max_array_size: The maximum index of the arrays in the model.
         :return: The corresponding tag object.
         """
         if type(element) not in CLASS_BY_TYPE:
             raise NotImplementedError(f"Support for SCXML type >{type(element)}< not implemented.")
-        return CLASS_BY_TYPE[type(element)](element, call_trace, model, max_array_index)
+        return CLASS_BY_TYPE[type(element)](element, call_trace, model, max_array_size)
 
     def __init__(self, element: ScxmlBase,
                  call_trace: List[ScxmlBase],
                  model: ModelTupleType,
-                 max_array_index: int) -> None:
+                 max_array_size: int) -> None:
         """Initialize the ScxmlTag object from an xml element.
 
         :param element: The xml element representing the tag.
         :param call_trace: The call trace of the element, to access the parents.
         :param model: The model to write the tag to.
-        :param max_array_index: The maximum index of the arrays in the model.
+        :param max_array_size: The maximum index of the arrays in the model.
         """
-        self.max_array_index = max_array_index
+        self.max_array_size = max_array_size
         self.element = element
         self.model = model
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
         self.children = [
-            BaseTag.from_element(child, call_trace + [element], model, max_array_index)
+            BaseTag.from_element(child, call_trace + [element], model, max_array_size)
             for child in scxml_children]
 
     def get_children(self) -> List[ScxmlBase]:
@@ -303,10 +303,10 @@ class DatamodelTag(BaseTag):
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
             if expected_type is MutableSequence[int]:
-                array_info = ArrayInfo(int, self.max_array_index)
+                array_info = ArrayInfo(int, self.max_array_size)
                 expected_type = list
             elif expected_type is MutableSequence[float]:
-                array_info = ArrayInfo(float, self.max_array_index)
+                array_info = ArrayInfo(float, self.max_array_size)
                 expected_type = list
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))

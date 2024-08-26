@@ -57,9 +57,9 @@ def ros_type_name_to_python_type(type_str: str) -> type:
     if type_str in ['float32', 'float64']:
         return float
     if type_str in ['sequence<int32>', 'sequence<int64>']:
-        return List[int]
+        return MutableSequence[int]
     if type_str in ['sequence<float32>', 'sequence<float64>']:
-        return List[float]
+        return MutableSequence[float]
     raise NotImplementedError(f"Type {type_str} not supported.")
 
 
