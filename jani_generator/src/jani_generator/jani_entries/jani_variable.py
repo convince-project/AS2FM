@@ -57,9 +57,9 @@ class JaniVariable:
                  v_transient: bool = False):
         assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), \
             "Init value should be a JaniExpression or a JaniValue"
-        self._name = v_name
-        self._type = v_type
-        self._transient = v_transient
+        self._name: str = v_name
+        self._type: Type[ValidTypes] = v_type
+        self._transient: bool = v_transient
         self._init_expr: Optional[JaniExpression] = None
         if init_value is not None:
             self._init_expr = JaniExpression(init_value)

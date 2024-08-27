@@ -43,6 +43,9 @@ class TestConversion(unittest.TestCase):
           version="1.0"
           name="BasicExample"
           initial="Initial">
+            <datamodel>
+                <data id="x" expr="0" type="int32" />
+            </datamodel>
             <state id="Initial">
                 <onentry>
                     <assign location="x" expr="42" />

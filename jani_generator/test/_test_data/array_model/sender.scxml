@@ -13,6 +13,8 @@
     <state id="send_next">
         <transition target="send_next">
             <if cond="msg_array.length == 0">
+                <!-- Below assign is valid in JavaScript: arrays are resized dynamically, and None is assigned to the unassigned entries.
+                For our use-case, we can enforce that the max. resize extent is 1, since we cannot support None entries. -->
                 <assign location="msg_array[0]" expr="0" />
             <else />
                 <assign location="msg_array[msg_array.length]" expr="msg_array[msg_array.length - 1] + 1" />
