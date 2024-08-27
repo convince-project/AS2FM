@@ -1,0 +1,145 @@
+{
+  "jani-version": 1,
+  "name": "",
+  "type": "mdp",
+  "features": [
+    "arrays"
+  ],
+  "variables": [
+    {
+      "name": "normal_array",
+      "type": {
+        "kind": "array",
+        "base": "int"
+      },
+      "transient": false,
+      "initial-value": {
+        "op": "ac",
+        "var": "__array_iterator",
+        "length": 15,
+        "exp": 0
+      }
+    },
+    {
+      "name": "next_id",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    }
+  ],
+  "constants": [],
+  "actions": [
+    {
+      "name": "step"
+    }
+  ],
+  "automata": [
+    {
+      "name": "array_writer",
+      "locations": [
+        {
+          "name": "step"
+        }
+      ],
+      "initial-locations": [
+        "step"
+      ],
+      "edges": [
+        {
+          "location": "step",
+          "destinations": [
+            {
+              "location": "step",
+              "assignments": [
+                {
+                  "ref": {
+                    "op": "aa",
+                    "exp": "normal_array",
+                    "index": "next_id"
+                  },
+                  "value": "next_id",
+                  "index": 0
+                },
+                {
+                  "ref": "next_id",
+                  "value": {
+                    "op": "+",
+                    "left": "next_id",
+                    "right": 1
+                  },
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "action": "step"
+        }
+      ],
+      "variables": []
+    }
+  ],
+  "system": {
+    "elements": [
+      {
+        "automaton": "array_writer"
+      }
+    ],
+    "syncs": [
+      {
+        "result": "step",
+        "synchronise": [
+          "step"
+        ]
+      }
+    ]
+  },
+  "properties": [
+    {
+      "name": "array_check_ok",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": {
+              "op": "=",
+              "left": "next_id",
+              "right": 10
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    },
+    {
+      "name": "array_check_fail",
+      "comment": "Not working due to array access not supported in properties",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": {
+              "op": "=",
+              "left": {
+                "op": "aa",
+                "exp": "normal_array",
+                "index": 10
+              },
+              "right": 10
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    }
+  ]
+}
