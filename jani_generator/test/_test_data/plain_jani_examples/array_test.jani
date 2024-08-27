@@ -1,6 +1,6 @@
 {
   "jani-version": 1,
-  "name": "",
+  "name": "array_example",
   "type": "mdp",
   "features": [
     "arrays"
@@ -95,7 +95,7 @@
   },
   "properties": [
     {
-      "name": "array_check_ok",
+      "name": "property_no_array_access",
       "expression": {
         "op": "filter",
         "fun": "values",
@@ -116,7 +116,7 @@
       }
     },
     {
-      "name": "array_check_fail",
+      "name": "property_with_array_access",
       "comment": "Not working due to array access not supported in properties",
       "expression": {
         "op": "filter",
