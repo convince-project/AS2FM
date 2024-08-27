@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <scxml name="client_1" version="1.0" model_src="" initial="send_req" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
-        <data id="fibonacci_result" expr="Array(50)" type="int32[]" />
+        <data id="fibonacci_result" expr="[]" type="int32[]" />
         <data id="counter" expr="0" type="int32" />
     </datamodel>
     <state id="send_req">

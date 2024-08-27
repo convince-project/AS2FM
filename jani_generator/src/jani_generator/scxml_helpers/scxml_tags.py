@@ -231,28 +231,26 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             interm_loc_after = f"{source}_{i}_after_if"
             new_edges[-1].destinations[0]['location'] = interm_loc_before
             previous_conditions: List[JaniExpression] = []
-            for cond_str, conditional_body in ec.get_conditional_executions():
-                print(f"Condition: {cond_str}")
-                print(f"Body: {conditional_body}")
+            for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
                 current_cond = parse_ecmascript_to_jani_expression(cond_str)
                 jani_cond = _merge_conditions(
                     previous_conditions, current_cond).replace_event(trigger_event)
                 sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                     jani_automaton, events_holder, conditional_body, interm_loc_before,
-                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), cond_str]),
+                    interm_loc_after, '-'.join([hash_str, _hash_element(ec), str(if_idx)]),
                     JaniGuard(jani_cond), None)
                 new_edges.extend(sub_edges)
                 new_locations.extend(sub_locs)
                 previous_conditions.append(current_cond)
             # Add else branch: if no else is provided, we assume an empty else body!
             else_execution_body = ec.get_else_execution()
+            else_execution_id = str(len(ec.get_conditional_executions()))
             else_execution_body = [] if else_execution_body is None else else_execution_body
-            print(f"Else: {ec.get_else_execution()}")
             jani_cond = _merge_conditions(
                 previous_conditions).replace_event(trigger_event)
             sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                 jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
-                interm_loc_after, '-'.join([hash_str, _hash_element(ec), 'else']),
+                interm_loc_after, '-'.join([hash_str, _hash_element(ec), else_execution_id]),
                 JaniGuard(jani_cond), None)
             new_edges.extend(sub_edges)
             new_locations.extend(sub_locs)

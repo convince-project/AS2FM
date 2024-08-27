@@ -1,28 +1,7 @@
 {
     "properties": [
-        {
-            "name": "array_check",
-            "expression": {
-              "op": "filter",
-              "fun": "values",
-              "values": {
-                "op": "Pmin",
-                "exp": {
-                  "op": "F",
-                  "exp": {
-                    "op": "=",
-                    "left": "new_msg_array.msg.length",
-                    "right": 10
-                  }
-                }
-              },
-              "states": {
-                "op": "initial"
-              }
-            }
-          },
           {
-            "name": "array_check_bak",
+            "name": "array_check",
             "comment": "Not working due to array access not supported in properties",
             "expression": {
               "op": "filter",
@@ -32,13 +11,21 @@
                 "exp": {
                   "op": "F",
                   "exp": {
-                    "op": "=",
+                    "op": "∧",
                     "left": {
-                      "op": "aa",
-                      "exp": "new_msg_array.msg",
-                      "index": 10
+                      "op": "=",
+                      "left": 11,
+                      "right": "new_msg_array.msg.length"
                     },
-                    "right": 10
+                    "right": {
+                      "op": "=",
+                      "left": {
+                        "op": "aa",
+                        "exp": "new_msg_array.msg",
+                        "index": 10
+                      },
+                      "right": 10
+                    }
                   }
                 }
               },
