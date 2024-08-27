@@ -82,7 +82,8 @@ def _interpret_scxml_assign(
         assignment_identifier = assignment_target.as_identifier()
         # If this is an identifier, we can get the type from the automaton
         variable = jani_automaton.get_variables().get(assignment_identifier)
-        assert variable is not None, f"Variable '{assignment_identifier}' not found in {jani_automaton.get_variables()}."
+        assert variable is not None, \
+            f"Variable '{assignment_identifier}' not found in {jani_automaton.get_variables()}."
         if variable.get_type() in (MutableSequence[int], MutableSequence[float]):
             # We are dealing with an array, so we need to ensure:
             # 1. The assignment_value is another identifier (and it is an array)

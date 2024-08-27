@@ -64,6 +64,7 @@ def convert_multiple_scxmls_to_jani(
     :return: The Jani model containing the converted automata.
     """
     base_model = JaniModel()
+    base_model.add_feature("arrays")
     events_holder = EventsHolder()
     for input_scxml in scxmls:
         if isinstance(input_scxml, str):
