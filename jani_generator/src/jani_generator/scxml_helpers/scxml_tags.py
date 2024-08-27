@@ -180,13 +180,24 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             })
             data_structure_for_event: Dict[str, type] = {}
             for param in ec.get_params():
+                param_assign_name = f'{ec.get_event()}.{param.get_name()}'
                 expr = param.get_expr() if param.get_expr() is not None else \
                     param.get_location()
+                jani_expr = parse_ecmascript_to_jani_expression(expr).replace_event(trigger_event)
                 new_edge.destinations[0]['assignments'].append(JaniAssignment({
-                    "ref": f'{ec.get_event()}.{param.get_name()}',
-                    "value": parse_ecmascript_to_jani_expression(
-                        expr).replace_event(trigger_event)
+                    "ref": param_assign_name,
+                    "value": jani_expr
                 }))
+                # If we are sending an array, set the length as well
+                if jani_expr.get_expression_type() == JaniExpressionType.IDENTIFIER:
+                    variable_name = jani_expr.as_identifier()
+                    variable_type = jani_automaton.get_variables().get(variable_name)
+                    assert variable_type is not None, \
+                        f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
+                    if variable_type.get_type() in (MutableSequence[int], MutableSequence[float]):
+                        new_edge.destinations[0]['assignments'].append(JaniAssignment({
+                            "ref": f'{param_assign_name}.length',
+                            "value": f"{variable_name}.length"}))
                 variables = {}
                 for n, v in jani_automaton.get_variables().items():
                     variables[n] = get_default_expression_for_type(v.get_type())
