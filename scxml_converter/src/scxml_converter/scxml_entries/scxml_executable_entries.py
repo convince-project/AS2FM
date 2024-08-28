@@ -74,6 +74,8 @@ class ScxmlIf(ScxmlBase):
         current_body: ScxmlExecutionBody = []
         else_tag_found = False
         for child in xml_tree:
+            if child.tag is ET.Comment:
+                continue
             if child.tag == "elseif":
                 assert not else_tag_found, "Error: SCXML if: 'elseif' tag found after 'else' tag."
                 conditions.append(child.attrib["cond"])
@@ -209,6 +211,8 @@ class ScxmlSend(ScxmlBase):
         params: List[ScxmlParam] = []
         assert params is not None, "Error: SCXML send: params is not valid."
         for param_xml in xml_tree:
+            if param_xml.tag is ET.Comment:
+                continue
             params.append(ScxmlParam.from_xml_tree(param_xml))
         return ScxmlSend(event, params)
 
@@ -400,7 +404,8 @@ def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
     """
     exec_body: ScxmlExecutionBody = []
     for exec_elem_xml in xml_tree:
-        exec_body.append(execution_entry_from_xml(exec_elem_xml))
+        if exec_elem_xml.tag is not ET.Comment:
+            exec_body.append(execution_entry_from_xml(exec_elem_xml))
     return exec_body
 
 

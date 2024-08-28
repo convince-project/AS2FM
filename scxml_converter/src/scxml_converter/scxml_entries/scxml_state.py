@@ -123,13 +123,13 @@ class ScxmlState(ScxmlBase):
         tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
-            if child.tag in tag_to_cls:
+            if child.tag is ET.Comment:
+                continue
+            elif child.tag in tag_to_cls:
                 transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
-        expected_transitions = \
-            len(xml_tree) - len(xml_tree.findall("onentry")) - len(xml_tree.findall("onexit"))
-        assert len(transitions) == expected_transitions, \
-            f"Error: SCXML state {state_id}: Expected {expected_transitions} transitions, " \
-            f"found {len(transitions)}."
+            else:
+                assert child.tag in ("onentry", "onexit"), \
+                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
         return transitions
 
     def add_transition(self, transition: ScxmlTransition):

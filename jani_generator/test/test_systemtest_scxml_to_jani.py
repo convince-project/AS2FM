@@ -43,6 +43,9 @@ class TestConversion(unittest.TestCase):
           version="1.0"
           name="BasicExample"
           initial="Initial">
+            <datamodel>
+                <data id="x" expr="0" type="int32" />
+            </datamodel>
             <state id="Initial">
                 <onentry>
                     <assign location="x" expr="42" />
@@ -52,7 +55,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 2)
@@ -71,7 +74,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
@@ -99,7 +102,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -132,12 +135,8 @@ class TestConversion(unittest.TestCase):
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
             scxml_battery_manager = f.read()
 
-        jani_model = convert_multiple_scxmls_to_jani([
-            scxml_battery_drainer,
-            scxml_battery_manager],
-            [],
-            0
-        )
+        jani_model = convert_multiple_scxmls_to_jani(
+            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -266,6 +265,10 @@ class TestConversion(unittest.TestCase):
         """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
         self._test_with_main('multiple_senders_same_event', 'seq_check', True)
+
+    def test_array_model(self):
+        """Test the array model."""
+        self._test_with_main('array_model', 'array_check', True)
 
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""

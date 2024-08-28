@@ -43,7 +43,7 @@ def _run_smc_storm(args: str):
 
 def test_run_smc_storm():
     """Testing if it is possible to run smc_storm."""
-    result =_run_smc_storm("-v")
+    result = _run_smc_storm("-v")
     assert result, "smc_storm failed to run"
 
 

@@ -260,7 +260,8 @@ class RosTrigger(ScxmlSend):
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_argument(cls, xml_tree, "name")
-        fields = [RosField.from_xml_tree(field) for field in xml_tree]
+        fields = [RosField.from_xml_tree(field) for field in xml_tree
+                  if field.tag is not ET.Comment]
         return cls(interface_name, fields)
 
     def __init__(self, interface_decl: Union[str, RosDeclaration],

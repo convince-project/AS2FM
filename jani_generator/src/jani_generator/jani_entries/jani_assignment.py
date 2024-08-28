@@ -31,7 +31,7 @@ class JaniAssignment:
 
     def __init__(self, assignment_dict: dict):
         """Initialize the assignment from a dictionary"""
-        self._var_name = assignment_dict["ref"]
+        self._var_name = JaniExpression(assignment_dict["ref"])
         self._value = JaniExpression(assignment_dict["value"])
         self._index = 0
         if "index" in assignment_dict:
@@ -41,7 +41,7 @@ class JaniAssignment:
         """Transform the assignment to a dictionary"""
         expanded_value = expand_expression(self._value, constants)
         return {
-            "ref": self._var_name,
+            "ref": self._var_name.as_dict(),
             "value": expanded_value.as_dict(),
             "index": self._index
         }

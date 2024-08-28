@@ -17,7 +17,9 @@
 Container for a single variable definition in SCXML. In XML, it has the tag `data`.
 """
 
-from typing import Any, Union, Optional
+import re
+
+from typing import Any, Union, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
@@ -49,17 +51,40 @@ class ScxmlData(ScxmlBase):
         return "data"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlData":
+    def _interpret_type_from_comment_above(
+            comment_above: Optional[str]) -> Optional[Tuple[str, str]]:
+        """Interpret the type of the data from the comment above the data tag.
+
+        :param comment_above: The comment above the data tag (optional)
+        :return: The type of the data, None if not found
+        """
+        if comment_above is None:
+            return None
+        # match string inside xml comment brackets
+        type_match = re.search(r'TYPE\ (.+):(.+)', comment_above.strip())
+        if type_match is None:
+            return None
+        return type_match.group(1), type_match.group(2)
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element, comment_above: Optional[str] = None) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
         assert_xml_tag_ok(ScxmlData, xml_tree)
         data_id = get_xml_argument(ScxmlData, xml_tree, "id")
-        data_type = get_xml_argument(ScxmlData, xml_tree, "type")
-        data_expr = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "expr",
-                                                     (BtGetValueInputPort, str))
-        lower_bound = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "lower_bound_incl",
-                                                       (BtGetValueInputPort, str), True)
-        upper_bound = read_value_from_xml_arg_or_child(ScxmlData, xml_tree, "upper_bound_incl",
-                                                       (BtGetValueInputPort, str), True)
+        data_type = get_xml_argument(ScxmlData, xml_tree, "type", none_allowed=True)
+        if data_type is None:
+            comment_tuple = ScxmlData._interpret_type_from_comment_above(comment_above)
+            assert comment_tuple is not None, f"Error: SCXML data: type of {data_id} not found."
+            assert comment_tuple[0] == data_id, \
+                "Error: SCXML data: unexpected ID in type in comment " \
+                f"({comment_tuple[0]}!={data_id})."
+            data_type = comment_tuple[1]
+        data_expr = read_value_from_xml_arg_or_child(
+            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str))
+        lower_bound = read_value_from_xml_arg_or_child(
+            ScxmlData, xml_tree, "lower_bound_incl", (BtGetValueInputPort, str), none_allowed=True)
+        upper_bound = read_value_from_xml_arg_or_child(
+            ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True)
         return ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
 
     def __init__(
