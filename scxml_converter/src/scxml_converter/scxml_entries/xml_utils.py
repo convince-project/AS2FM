@@ -16,16 +16,16 @@
 from typing import List, Iterable, Optional, Union, Type
 
 from scxml_converter.scxml_entries import ScxmlBase
-from xml.etree.ElementTree import Element
+from xml.etree import ElementTree as ET
 
 
-def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: Element):
+def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
     """Ensures the xml_tree we are trying to parse has the expected name."""
     assert xml_tree.tag == scxml_type.get_tag_name(), \
         f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}"
 
 
-def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: str, *,
+def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: ET.Element, arg_name: str, *,
                      none_allowed=False, empty_allowed=False) -> Optional[str]:
     """Load an argument from the xml tree's root tag."""
     arg_value = xml_tree.get(arg_name)
@@ -39,7 +39,7 @@ def get_xml_argument(scxml_type: Type[ScxmlBase], xml_tree: Element, arg_name: s
 
 
 def get_children_as_scxml(
-        xml_tree: Element, scxml_types: Iterable[Type[ScxmlBase]]) -> List[ScxmlBase]:
+        xml_tree: ET.Element, scxml_types: Iterable[Type[ScxmlBase]]) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
 
@@ -50,13 +50,15 @@ def get_children_as_scxml(
     scxml_list = []
     tag_to_type = {scxml_type.get_tag_name(): scxml_type for scxml_type in scxml_types}
     for child in xml_tree:
+        if child.tag is ET.Comment:
+            continue
         if child.tag in tag_to_type:
             scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
     return scxml_list
 
 
 def read_value_from_xml_child(
-        xml_tree: Element, child_tag: str, valid_types: Iterable[Type[Union[ScxmlBase, str]]], *,
+        xml_tree: ET.Element, child_tag: str, valid_types: Iterable[Type[Union[ScxmlBase, str]]], *,
         none_allowed: bool = False) -> Optional[Union[str, ScxmlBase]]:
     """
     Try to read the value of a child tag from the xml tree. If the child is not found, return None.
@@ -90,7 +92,7 @@ def read_value_from_xml_child(
 
 
 def read_value_from_xml_arg_or_child(
-        scxml_type: Type[ScxmlBase], xml_tree: Element, tag_name: str,
+        scxml_type: Type[ScxmlBase], xml_tree: ET.Element, tag_name: str,
         valid_types: Iterable[Type[Union[ScxmlBase, str]]],
         none_allowed: bool = False) -> Optional[Union[str, ScxmlBase]]:
     """

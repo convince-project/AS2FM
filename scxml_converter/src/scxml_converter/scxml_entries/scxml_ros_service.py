@@ -92,7 +92,8 @@ class RosServiceSendRequest(RosTrigger):
                   "Use 'name' instead.")
         fields: List[RosField] = []
         for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
+            if field_xml.tag is not ET.Comment:
+                fields.append(RosField.from_xml_tree(field_xml))
         return RosServiceSendRequest(srv_name, fields)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
@@ -162,7 +163,8 @@ class RosServiceSendResponse(RosTrigger):
         fields: Optional[List[RosField]] = []
         assert fields is not None, "Error: SCXML service response: fields is not valid."
         for field_xml in xml_tree:
-            fields.append(RosField.from_xml_tree(field_xml))
+            if field_xml.tag is not ET.Comment:
+                fields.append(RosField.from_xml_tree(field_xml))
         if len(fields) == 0:
             fields = None
         return RosServiceSendResponse(srv_name, fields)

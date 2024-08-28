@@ -90,15 +90,18 @@ class ScxmlRoot(ScxmlBase):
     def from_scxml_file(xml_file: str) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         if isfile(xml_file):
-            xml_element = ET.parse(xml_file).getroot()
+            # Custom parser to include comments
+            xml_parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
+            xml_element = ET.parse(xml_file, xml_parser).getroot()
         elif xml_file.startswith("<?xml"):
             xml_element = ET.fromstring(xml_file)
         else:
             raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' isn't a file / xml string.")
         # Remove the namespace from all tags in the XML file
         for child in xml_element.iter():
-            if "{" in child.tag:
-                child.tag = child.tag.split("}")[1]
+            if child.tag is not ET.Comment:
+                if "{" in child.tag:
+                    child.tag = child.tag.split("}")[1]
         # Do the conversion
         return ScxmlRoot.from_xml_tree(xml_element)
 

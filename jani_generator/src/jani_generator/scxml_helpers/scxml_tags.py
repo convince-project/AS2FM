@@ -57,6 +57,20 @@ def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
     return sha256(s.encode()).hexdigest()[:8]
 
 
+def _is_variable_array(jani_automaton: JaniAutomaton, variable_name: Optional[str]) -> bool:
+    """Check if a variable is an array.
+
+    :param jani_automaton: The Jani automaton to check the variable in.
+    :param variable_name: The name of the variable to check.
+    :return: True if the variable is an array, False otherwise.
+    """
+    assert variable_name is not None, "Variable name must be provided."
+    variable = jani_automaton.get_variables().get(variable_name)
+    assert variable is not None, \
+        f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
+    return variable.get_type() in (MutableSequence[int], MutableSequence[float])
+
+
 def _interpret_scxml_assign(
         elem: ScxmlAssign, jani_automaton: JaniAutomaton, event_substitution: Optional[str] = None,
         assign_index: int = 0) -> List[JaniAssignment]:
@@ -80,11 +94,7 @@ def _interpret_scxml_assign(
     target_expr_type = assignment_target.get_expression_type()
     if target_expr_type == JaniExpressionType.IDENTIFIER:
         assignment_identifier = assignment_target.as_identifier()
-        # If this is an identifier, we can get the type from the automaton
-        variable = jani_automaton.get_variables().get(assignment_identifier)
-        assert variable is not None, \
-            f"Variable '{assignment_identifier}' not found in {jani_automaton.get_variables()}."
-        if variable.get_type() in (MutableSequence[int], MutableSequence[float]):
+        if _is_variable_array(jani_automaton, assignment_identifier):
             # We are dealing with an array, so we need to ensure:
             # 1. The assignment_value is another identifier (and it is an array)
             source_array_id = assignment_value.as_identifier()
@@ -191,10 +201,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 # If we are sending an array, set the length as well
                 if jani_expr.get_expression_type() == JaniExpressionType.IDENTIFIER:
                     variable_name = jani_expr.as_identifier()
-                    variable_type = jani_automaton.get_variables().get(variable_name)
-                    assert variable_type is not None, \
-                        f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
-                    if variable_type.get_type() in (MutableSequence[int], MutableSequence[float]):
+                    if _is_variable_array(jani_automaton, variable_name):
                         new_edge.destinations[0]['assignments'].append(JaniAssignment({
                             "ref": f'{param_assign_name}.length',
                             "value": f"{variable_name}.length"}))
