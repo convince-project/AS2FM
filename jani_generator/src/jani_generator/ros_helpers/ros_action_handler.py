@@ -17,7 +17,7 @@
 Helper to create an orchestrator out of ROS Actions declarations.
 """
 
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
