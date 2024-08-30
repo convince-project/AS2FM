@@ -29,7 +29,7 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_handle_event,
-    generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
+    generate_action_goal_accepted_event, generate_action_goal_rejected_event,
     generate_action_thread_execution_start_event, generate_action_feedback_event,
     generate_action_result_event, generate_action_thread_free_event)
 from scxml_converter.scxml_entries.xml_utils import (
@@ -99,7 +99,7 @@ class RosActionAcceptGoal(RosTrigger):
         return len(self._fields) == 1 and self._fields[0].get_name() == "goal_id"
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_goal_handle_accepted_event(
+        return generate_action_goal_accepted_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:
@@ -129,7 +129,7 @@ class RosActionRejectGoal(RosTrigger):
         return len(self._fields) == 1 and self._fields[0].get_name() == "goal_id"
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_goal_handle_rejected_event(
+        return generate_action_goal_rejected_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
     def as_xml(self) -> ET.Element:

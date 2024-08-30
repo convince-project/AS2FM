@@ -207,14 +207,14 @@ def generate_action_goal_req_event(action_name: str, client_name: str) -> str:
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_req_client_{client_name}"
 
 
-def generate_action_goal_accepted_event(action_name: str, client_name: str) -> str:
-    """Generate the name of the event that reports goal acceptance to a client."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accept_client_{client_name}"
+def generate_action_goal_accepted_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal acceptance."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accepted"
 
 
-def generate_action_goal_rejected_event(action_name: str, client_name: str) -> str:
-    """Generate the name of the event that reports goal rejection to a client."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_goal_reject_client_{client_name}"
+def generate_action_goal_rejected_event(action_name: str) -> str:
+    """Generate the name of the event sent from the server in case of goal rejection."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_rejected"
 
 
 def generate_action_goal_handle_event(action_name: str) -> str:
@@ -222,14 +222,14 @@ def generate_action_goal_handle_event(action_name: str) -> str:
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
 
 
-def generate_action_goal_handle_accepted_event(action_name: str) -> str:
-    """Generate the name of the event sent from the server in case of goal acceptance."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accepted"
+def generate_action_goal_handle_accepted_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal acceptance to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_accept_client_{client_name}"
 
 
-def generate_action_goal_handle_rejected_event(action_name: str) -> str:
-    """Generate the name of the event sent from the server in case of goal rejection."""
-    return f"action_{sanitize_ros_interface_name(action_name)}_goal_rejected"
+def generate_action_goal_handle_rejected_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that reports goal rejection to a client."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_reject_client_{client_name}"
 
 
 def generate_action_thread_execution_start_event(action_name: str) -> str:

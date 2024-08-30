@@ -29,8 +29,9 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_action_goal_handle_event, generate_action_goal_req_event,
     generate_action_goal_accepted_event, generate_action_goal_handle_accepted_event,
     generate_action_goal_rejected_event, generate_action_goal_handle_rejected_event,
-    get_action_goal_id_definition,
-    sanitize_ros_interface_name)
+    generate_action_feedback_event, generate_action_feedback_handle_event,
+    generate_action_result_event, generate_action_result_handle_event,
+    get_action_goal_id_definition, sanitize_ros_interface_name)
 
 
 class RosActionHandler(RosCommunicationHandler):
@@ -44,6 +45,13 @@ class RosActionHandler(RosCommunicationHandler):
 
     def _generate_goal_request_transition(
             self, client_id: str, goal_id: int, req_params: Dict[str, str]) -> ScxmlTransition:
+        """
+        Generate a scxml transition that, given a client request, sends an event to the server.
+
+        :param client_id: Id of the client that sent the request.
+        :param goal_id: Id of the goal associated with the client.
+        :param req_params: Dictionary of the parameters of the request.
+        """
         goal_id_name = get_action_goal_id_definition()[0]
         action_client_req_event = generate_action_goal_req_event(self._interface_name, client_id)
         action_srv_handle_event = generate_action_goal_handle_event(self._interface_name)
@@ -59,50 +67,83 @@ class RosActionHandler(RosCommunicationHandler):
             ScxmlSend(action_srv_handle_event, send_params))
         return goal_req_transition
 
-    def _generate_conditional_send_to_bodies(
-            self, client_to_goal_id: List[Tuple[str, int]], send_params: Optional[List[ScxmlParam]],
-            client_event_function: Callable[[str, str], str]) -> ScxmlIf:
+    def _generate_srv_event_transition(
+            self, client_to_goal_id: List[Tuple[str, int]], event_fields: Optional[Dict[str, str]],
+            srv_event_function: Callable[[str], str],
+            client_event_function: Callable[[str, str], str]) -> ScxmlTransition:
+        """
+        Generate a scxml transition that triggers the client related to the input event's goal_id.
+
+        :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
+        :param event_fields: Dictionary of the parameters of the event.
+        :param srv_event_function: Function to generate the server (input) event name.
+        :param client_event_function: Function to generate the client (output) event name.
+        """
         goal_id_name = get_action_goal_id_definition()[0]
+        srv_event_name = srv_event_function(self._interface_name)
+        scxml_transition = ScxmlTransition("waiting", [srv_event_name])
+        scxml_transition.append_body_executable_entry(
+            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
+        out_params: List[ScxmlParam] = []
+        for field_name in event_fields:
+            scxml_transition.append_body_executable_entry(
+                ScxmlAssign(field_name, f"_event.{field_name}"))
+            out_params.append(ScxmlParam(field_name, field_name))
         condition_send_pairs: List[Tuple[str, ScxmlSend]] = []
         for client_id, goal_id in client_to_goal_id:
             client_event = client_event_function(self._interface_name, client_id)
             condition_send_pairs.append((f"{goal_id_name} == {goal_id}",
-                                         ScxmlSend(client_event, send_params)))
-        return ScxmlIf(condition_send_pairs)
+                                         ScxmlSend(client_event, out_params)))
+        scxml_transition.append_body_executable_entry(ScxmlIf(condition_send_pairs))
+        return scxml_transition
 
     def _generate_goal_accept_transition(
             self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
-        goal_id_name = get_action_goal_id_definition()[0]
-        accepted_event_srv = generate_action_goal_handle_accepted_event(self._interface_name)
-        accepted_transition = ScxmlTransition("waiting", [accepted_event_srv])
-        accepted_transition.append_body_executable_entry(
-            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
-        accepted_transition.append_body_executable_entry(
-            self._generate_conditional_send_to_bodies(
-                client_to_goal_id, None, generate_action_goal_accepted_event))
-        return accepted_transition
+        """
+        Generate a scxml transition that sends an event to the client to report an accepted goal.
+
+        :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
+        """
+        return self._generate_srv_event_transition(
+            client_to_goal_id, None, generate_action_goal_accepted_event,
+            generate_action_goal_handle_accepted_event)
 
     def _generate_goal_reject_transition(
             self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
-        goal_id_name = get_action_goal_id_definition()[0]
-        rejected_event_srv = generate_action_goal_handle_rejected_event(self._interface_name)
-        rejected_transition = ScxmlTransition("waiting", [rejected_event_srv])
-        rejected_transition.append_body_executable_entry(
-            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
-        rejected_transition.append_body_executable_entry(
-            self._generate_conditional_send_to_bodies(
-                client_to_goal_id, None, generate_action_goal_rejected_event))
-        return rejected_transition
+        """
+        Generate a scxml transition that sends an event to the client to report a rejected goal.
+
+        :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
+        """
+        return self._generate_srv_event_transition(
+            client_to_goal_id, None, generate_action_goal_rejected_event,
+            generate_action_goal_handle_rejected_event)
 
     def _generate_feedback_response_transition(
             self, client_to_goal_id: List[Tuple[str, int]], feedback_params: Dict[str, str]
             ) -> ScxmlTransition:
-        pass
+        """
+        Generate a scxml transition that sends an event to the client to report feedback.
+
+        :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
+        :param feedback_params: Dictionary of the parameters of the feedback.
+        """
+        return self._generate_srv_event_transition(
+            client_to_goal_id, feedback_params, generate_action_feedback_event,
+            generate_action_feedback_handle_event)
 
     def _generate_result_response_transition(
             self, client_to_goal_id: List[Tuple[str, int]], result_params: Dict[str, str]
             ) -> ScxmlTransition:
-        pass
+        """
+        Generate a scxml transition that sends an event to the client to report the result.
+
+        :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
+        :param result_params: Dictionary of the parameters of the result.
+        """
+        return self._generate_srv_event_transition(
+            client_to_goal_id, result_params, generate_action_result_event,
+            generate_action_result_handle_event)
 
     def to_scxml(self) -> ScxmlRoot:
         """
