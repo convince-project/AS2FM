@@ -11,8 +11,8 @@
         <data id="counter" type="int32" expr="0" />
     </datamodel>
     
-    <ros_topic_publisher topic="/client_1_last_fibonacci" type="std_msgs/Int32" />
-    <ros_topic_publisher topic="/client_1_feedback_count" type="std_msgs/Int32" />
+    <ros_topic_publisher name="result_pub" topic="/client_1_last_fibonacci" type="std_msgs/Int32" />
+    <ros_topic_publisher name="counter_pub" topic="/client_1_feedback_count" type="std_msgs/Int32" />
     <ros_action_client name="example_action" action_name="/fibonacci" type="example_interfaces/Fibonacci" />
 
     <state id="send_req">

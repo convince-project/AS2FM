@@ -24,7 +24,7 @@ from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
-from jani_generator.ros_helpers.ros_services import RosService, RosServices
+from jani_generator.ros_helpers.ros_service_handler import RosServiceHandler, RosServices
 from jani_generator.ros_helpers.ros_timer import RosTimer
 from jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
@@ -154,13 +154,13 @@ def generate_plain_scxml_models_and_timers(
         # Handle ROS Services
         for service_name, service_type in ros_declarations._service_clients.values():
             if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].append_service_client(
+                all_services[service_name] = RosServiceHandler()
+            all_services[service_name].add_client(
                 service_name, service_type, scxml_entry.get_name())
         for service_name, service_type in ros_declarations._service_servers.values():
             if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].set_service_server(
+                all_services[service_name] = RosServiceHandler()
+            all_services[service_name].set_server(
                 service_name, service_type, scxml_entry.get_name())
         plain_scxml_models.extend(plain_scxmls)
     # Generate service sync SCXML models

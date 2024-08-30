@@ -30,6 +30,7 @@
             </onentry>
             <!-- This will check if the thread_id matches with the request -->
             <ros_action_handle_thread_start name="act_srv" target="execute">
+                <assign location="goal_id" expr="_req.goal_id" />
                 <assign location="order" expr="_req.order" />
             </ros_action_handle_thread_start>
         </state>
