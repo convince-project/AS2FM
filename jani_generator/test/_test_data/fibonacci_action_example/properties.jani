@@ -1,0 +1,41 @@
+{
+    "properties": [
+        {
+            "name": "clients_ok",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "client_1_last_fibonacci.data",
+                                    "right": "5"
+                                },
+                                "right": "topic_client_1_res_msg.valid"
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "client_2_last_fibonacci.data",
+                                    "right": "13"
+                                },
+                                "right": "topic_client_2_res_msg.valid"
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

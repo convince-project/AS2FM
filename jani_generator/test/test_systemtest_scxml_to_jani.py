@@ -274,6 +274,10 @@ class TestConversion(unittest.TestCase):
         """Test the services are properly handled in Jani."""
         self._test_with_main('ros_add_int_srv_example', 'happy_clients', True, True)
 
+    def test_ros_fibonacci_action_example(self):
+        """Test the actions are properly handled in Jani."""
+        self._test_with_main('fibonacci_action_example', 'clients_ok', True, True)
+
 
 if __name__ == '__main__':
     pytest.main(['-s', '-v', __file__])
