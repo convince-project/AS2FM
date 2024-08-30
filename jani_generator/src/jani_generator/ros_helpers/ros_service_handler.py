@@ -19,16 +19,11 @@ Representation of ROS Services.
 
 from typing import Dict
 
-from as2fm_common.common import get_default_expression_for_type, value_to_string
-
-from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData,
-                                           ScxmlDataModel, ScxmlParam,
-                                           ScxmlRoot, ScxmlSend, ScxmlState,
-                                           ScxmlTransition)
+from scxml_converter.scxml_entries import (
+    ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition)
 from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, get_srv_type_params, sanitize_ros_interface_name)
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
@@ -54,11 +49,7 @@ class RosServiceHandler(RosCommunicationHandler):
         self._assert_validity()
         req_params, res_params = get_srv_type_params(self._interface_type)
         # Hack: Using support variables in the data model to avoid having _event in send params
-        req_fields_as_data = []
-        for field_name, field_type in req_params.items() | res_params.items():
-            default_expr = value_to_string(
-                get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
-            req_fields_as_data.append(ScxmlData(field_name, default_expr, field_type))
+        req_fields_as_data = self._generate_datamodel_from_ros_fields(req_params | res_params)
         # Make sure the service name has no slashes and spaces
         scxml_root_name = \
             self.get_interface_prefix() + sanitize_ros_interface_name(self._interface_name)
@@ -99,5 +90,5 @@ class RosServiceHandler(RosCommunicationHandler):
         return scxml_root
 
 
-# Mapping from RosService name and their handler instance
+# Mapping from Ros Service name and their handler instance
 RosServices = Dict[str, RosServiceHandler]

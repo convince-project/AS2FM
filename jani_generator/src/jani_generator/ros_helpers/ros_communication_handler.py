@@ -17,10 +17,12 @@
 Generic class for generators of SCXML state machine for specific ROS communication interfaces.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
+from as2fm_common.common import get_default_expression_for_type, value_to_string
+from scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
+from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 from jani_generator.jani_entries import JaniModel
-from scxml_converter.scxml_entries import ScxmlRoot
 
 
 class RosCommunicationHandler:
@@ -72,11 +74,11 @@ class RosCommunicationHandler:
 
     def set_server(self, interface_name: str, interface_type: str, automaton_name: str) -> None:
         """
-        Set the server of the service.
+        Set the server of the ROS interface.
         There must be exactly one.
 
-        :interface_name: The name of the ROS service.
-        :interface_type: The type of the ROS service (e.g. std_srvs/SetBool).
+        :interface_name: The name of the ROS interface.
+        :interface_type: The type of the ROS interface (e.g. std_srvs/SetBool).
         :automaton_name: The name of the JANI automaton that implements this server.
         """
         self._set_name_and_type(interface_name, interface_type)
@@ -89,8 +91,8 @@ class RosCommunicationHandler:
         Set the client of the service.
         There must be one or more.
 
-        :interface_name: The name of the ROS service.
-        :interface_type: The type of the ROS service (e.g. std_srvs/SetBool).
+        :interface_name: The name of the ROS interface.
+        :interface_type: The type of the ROS interface (e.g. std_srvs/SetBool).
         :automaton_name: The name of the JANI automaton that implements this client.
         """
         self._set_name_and_type(interface_name, interface_type)
@@ -108,6 +110,20 @@ class RosCommunicationHandler:
         :return: Scxml object representing the necessary file content.
         """
         NotImplementedError("Method to_scxml must be implemented.")
+
+    def _generate_datamodel_from_ros_fields(self, fields: Dict[str, str]) -> List[ScxmlData]:
+        """
+        Generate the ScxmlDataModel object from the ROS fields.
+
+        :param fields: The field names and types of the ROS interface.
+        :return: A list of ScxmlData object.
+        """
+        scxml_fields: List[ScxmlData] = []
+        for field_name, field_type in fields.items():
+            default_expr = value_to_string(
+                get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
+            scxml_fields.append(ScxmlData(field_name, default_expr, field_type))
+        return scxml_fields
 
 
 def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniModel) -> None:
