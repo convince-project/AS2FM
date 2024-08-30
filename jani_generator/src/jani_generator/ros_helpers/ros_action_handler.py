@@ -185,7 +185,3 @@ class RosActionHandler(RosCommunicationHandler):
         scxml_root.add_state(wait_state, initial=True)
         assert scxml_root.is_plain_scxml(), "Generated SCXML for srv sync is not plain SCXML."
         return scxml_root
-
-
-# Mapping from Ros Action name and their handler instance
-RosActions = Dict[str, RosActionHandler]

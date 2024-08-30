@@ -40,7 +40,7 @@ ROS_EVENT_PREFIXES = [
 ]
 
 
-"""Container for the ROS interface (e.g. topic or service) name and the related type"""
+"""Container for the ROS interface name (e.g. topic or service name) and the related type"""
 RosInterfaceAndType = Tuple[str, str]
 
 

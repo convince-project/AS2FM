@@ -17,8 +17,6 @@
 Representation of ROS Services.
 """
 
-from typing import Dict
-
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 from scxml_converter.scxml_entries import (
@@ -88,7 +86,3 @@ class RosServiceHandler(RosCommunicationHandler):
             scxml_root.add_state(processing_state)
         assert scxml_root.is_plain_scxml(), "Generated SCXML for srv sync is not plain SCXML."
         return scxml_root
-
-
-# Mapping from Ros Service name and their handler instance
-RosServices = Dict[str, RosServiceHandler]

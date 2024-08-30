@@ -17,7 +17,7 @@
 Generic class for generators of SCXML state machine for specific ROS communication interfaces.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Type
 
 from as2fm_common.common import get_default_expression_for_type, value_to_string
 from jani_generator.jani_entries import JaniModel
@@ -124,6 +124,31 @@ class RosCommunicationHandler:
                 get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
             scxml_fields.append(ScxmlData(field_name, default_expr, field_type))
         return scxml_fields
+
+
+def update_ros_communication_handlers(
+        automaton_name: str, handler_class: Type[RosCommunicationHandler],
+        handlers_dict: Dict[str, RosCommunicationHandler],
+        servers_dict: Dict[str, tuple], clients_dict: Dict[str, tuple]):
+    """
+    Update the ROS communication handlers with the given clients and servers.
+
+    :param automaton_name: The name of the automaton where the interfaces are declared.
+    :param handlers_dict: The dictionary of ROS communication handlers to update.
+    :param servers_dict: The dictionary of servers to add.
+    :param clients_dict: The dictionary of clients to add.
+    """
+    assert issubclass(handler_class, RosCommunicationHandler), \
+        f"The handler class {handler_class} must be a subclass of RosCommunicationHandler."
+    for service_name, service_type in servers_dict.values():
+        if service_name not in handlers_dict:
+            handlers_dict[service_name] = handler_class()
+        handlers_dict[service_name].set_server(service_name, service_type, automaton_name)
+    for service_name, service_type in clients_dict.values():
+        if service_name not in handlers_dict:
+            handlers_dict[service_name] = handler_class()
+        handlers_dict[service_name].add_client(
+            service_name, service_type, automaton_name)
 
 
 def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniModel) -> None:
