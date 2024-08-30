@@ -17,7 +17,7 @@
 Generic class for generators of SCXML state machine for specific ROS communication interfaces.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, Iterator, List, Optional, Type
 
 from as2fm_common.common import get_default_expression_for_type, value_to_string
 from jani_generator.jani_entries import JaniModel
@@ -149,6 +149,18 @@ def update_ros_communication_handlers(
             handlers_dict[service_name] = handler_class()
         handlers_dict[service_name].add_client(
             service_name, service_type, automaton_name)
+
+
+def generate_plain_scxml_from_handlers(
+        handlers_dict: Dict[str, RosCommunicationHandler]) -> Iterator[ScxmlRoot]:
+    """
+    Generate the plain SCXML models from the ROS communication handlers.
+
+    :param handlers_dict: The dictionary of ROS communication handlers.
+    :return: A generator of ScxmlRoot objects.
+    """
+    for handler in handlers_dict.values():
+        yield handler.to_scxml()
 
 
 def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniModel) -> None:

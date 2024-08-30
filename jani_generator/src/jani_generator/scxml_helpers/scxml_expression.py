@@ -57,7 +57,11 @@ def parse_ecmascript_to_jani_expression(
     ast = esprima.parseScript(ecmascript)
     assert len(ast.body) == 1, "The ecmascript must contain exactly one expression."
     ast = ast.body[0]
-    return _parse_ecmascript_to_jani_expression(ast, array_info)
+    try:
+        jani_expression = _parse_ecmascript_to_jani_expression(ast, array_info)
+    except NotImplementedError:
+        raise RuntimeError(f"Unsupported ecmascript: {ecmascript}")
+    return jani_expression
 
 
 def _parse_ecmascript_to_jani_expression(
@@ -71,6 +75,13 @@ def _parse_ecmascript_to_jani_expression(
     """
     if ast.type == "Literal":
         return JaniExpression(JaniValue(ast.value))
+    elif ast.type == "UnaryExpression":
+        assert ast.prefix is True and ast.operator == "-", "Only unary minus is supported."
+        return JaniExpression({
+            "op": BASIC_EXPRESSIONS_MAPPING[ast.operator],
+            "left": JaniValue(0),
+            "right": _parse_ecmascript_to_jani_expression(ast.argument, array_info)
+        })
     elif ast.type == "ArrayExpression":
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         assert len(ast.elements) == 0, "Array expressions with elements are not supported."
@@ -78,6 +89,9 @@ def _parse_ecmascript_to_jani_expression(
                                      JaniValue(array_info.array_type(0)))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
+        assert ast.name != ("True", "False"), \
+            f"Boolean {ast.name} mistaken for an identifier. "\
+            "Did you mean to use 'true' or 'false' instead?"
         return JaniExpression(ast.name)
     elif ast.type == "MemberExpression":
         if ast.computed:

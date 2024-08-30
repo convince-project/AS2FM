@@ -56,19 +56,19 @@ class RosActionHandler(RosCommunicationHandler):
         action_client_req_event = generate_action_goal_req_event(self._interface_name, client_id)
         action_srv_handle_event = generate_action_goal_handle_event(self._interface_name)
         goal_req_transition = ScxmlTransition("waiting", [action_client_req_event])
-        send_params = [ScxmlParam(goal_id_name, str(goal_id))]
+        send_params = [ScxmlParam(goal_id_name, expr=str(goal_id))]
         for field_name in req_params:
             # Add preliminary assignments (part of the hack mentioned in self.to_scxml())
             goal_req_transition.append_body_executable_entry(
                 ScxmlAssign(field_name, f"_event.{field_name}"))
-            send_params.append(ScxmlParam(field_name, field_name))
+            send_params.append(ScxmlParam(field_name, expr=field_name))
         # Add the send to the server
         goal_req_transition.append_body_executable_entry(
             ScxmlSend(action_srv_handle_event, send_params))
         return goal_req_transition
 
     def _generate_srv_event_transition(
-            self, client_to_goal_id: List[Tuple[str, int]], event_fields: Optional[Dict[str, str]],
+            self, client_to_goal_id: List[Tuple[str, int]], event_fields: Dict[str, str],
             srv_event_function: Callable[[str], str],
             client_event_function: Callable[[str, str], str]) -> ScxmlTransition:
         """
@@ -88,12 +88,12 @@ class RosActionHandler(RosCommunicationHandler):
         for field_name in event_fields:
             scxml_transition.append_body_executable_entry(
                 ScxmlAssign(field_name, f"_event.{field_name}"))
-            out_params.append(ScxmlParam(field_name, field_name))
-        condition_send_pairs: List[Tuple[str, ScxmlSend]] = []
+            out_params.append(ScxmlParam(field_name, expr=field_name))
+        condition_send_pairs: List[Tuple[str, List[ScxmlSend]]] = []
         for client_id, goal_id in client_to_goal_id:
             client_event = client_event_function(self._interface_name, client_id)
             condition_send_pairs.append((f"{goal_id_name} == {goal_id}",
-                                         ScxmlSend(client_event, out_params)))
+                                         [ScxmlSend(client_event, out_params)]))
         scxml_transition.append_body_executable_entry(ScxmlIf(condition_send_pairs))
         return scxml_transition
 
@@ -105,7 +105,7 @@ class RosActionHandler(RosCommunicationHandler):
         :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
         """
         return self._generate_srv_event_transition(
-            client_to_goal_id, None, generate_action_goal_accepted_event,
+            client_to_goal_id, {}, generate_action_goal_accepted_event,
             generate_action_goal_handle_accepted_event)
 
     def _generate_goal_reject_transition(
@@ -116,7 +116,7 @@ class RosActionHandler(RosCommunicationHandler):
         :param client_to_goal_id: List of tuples (client_id, goal_id) relating clients to goal ids.
         """
         return self._generate_srv_event_transition(
-            client_to_goal_id, None, generate_action_goal_rejected_event,
+            client_to_goal_id, {}, generate_action_goal_rejected_event,
             generate_action_goal_handle_rejected_event)
 
     def _generate_feedback_response_transition(

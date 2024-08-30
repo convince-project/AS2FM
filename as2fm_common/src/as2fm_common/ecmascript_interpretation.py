@@ -39,7 +39,13 @@ def interpret_ecma_script_expr(
     if variables is None:
         variables = {}
     context = js2py.EvalJs(variables)
-    context.execute("result = " + expr)
+    try:
+        context.execute("result = " + expr)
+    except js2py.base.PyJsException:
+        msg_addition = ""
+        if expr in ("True", "False"):
+            msg_addition = "Did you mean to use 'true' or 'false' instead?"
+        raise RuntimeError(f"Failed to interpret JS expression: 'result = {expr}'. {msg_addition}")
     expr_result = context.result
     if isinstance(expr_result, BASIC_JS_TYPES):
         return expr_result
