@@ -146,7 +146,7 @@ def _merge_conditions(
 
 def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_holder: EventsHolder,
                                          body: ScxmlExecutionBody, source: str, target: str,
-                                         hash_str: str, guard: Optional[JaniGuard],
+                                         hash_str: str, guard_exp: Optional[JaniExpression],
                                          trigger_event: Optional[str]) \
         -> Tuple[List[JaniEdge], List[str]]:
     """
@@ -159,11 +159,13 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
         edge_action_name if trigger_event is None else f"{trigger_event}_on_receive"
     new_edges = []
     new_locations = []
+    if guard_exp is not None:
+        guard_exp.replace_event(trigger_event)
     # First edge. Has to evaluate guard and trigger event of original transition.
     new_edges.append(JaniEdge({
         "location": source,
         "action": trigger_event_action,
-        "guard": JaniGuard(guard),
+        "guard": JaniGuard(guard_exp),
         "destinations": [{
             "location": None,
             "assignments": []
@@ -250,7 +252,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                     jani_automaton, events_holder, conditional_body, interm_loc_before,
                     interm_loc_after, '-'.join([hash_str, _hash_element(ec), str(if_idx)]),
-                    JaniGuard(jani_cond), None)
+                    jani_cond, None)
                 new_edges.extend(sub_edges)
                 new_locations.extend(sub_locs)
                 previous_conditions.append(current_cond)
@@ -263,7 +265,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                 jani_automaton, events_holder, ec.get_else_execution(), interm_loc_before,
                 interm_loc_after, '-'.join([hash_str, _hash_element(ec), else_execution_id]),
-                JaniGuard(jani_cond), None)
+                jani_cond, None)
             new_edges.extend(sub_edges)
             new_locations.extend(sub_locs)
             # Prepare the edge from the end of the if-else block
@@ -456,7 +458,7 @@ class StateTag(BaseTag):
             transition_events.add(event_name)
         return transition_events
 
-    def get_guard_for_prev_conditions(self, event_name: str) -> Optional[JaniGuard]:
+    def get_guard_exp_for_prev_conditions(self, event_name: str) -> Optional[JaniExpression]:
         """Return the guard negating all previous conditions for a specific event.
 
         This is required to make sure each event is processed, even in case of conditionals like:
@@ -470,7 +472,7 @@ class StateTag(BaseTag):
             parse_ecmascript_to_jani_expression(cond) for
             cond in self._event_to_conditions.get(event_name, [])]
         if len(previous_expressions) > 0:
-            return JaniGuard(_merge_conditions(previous_expressions))
+            return _merge_conditions(previous_expressions)
         else:
             return None
 
@@ -479,10 +481,10 @@ class StateTag(BaseTag):
         for event_name in transitions_set:
             if event_name in self._events_no_condition or len(event_name) == 0:
                 continue
-            guard = self.get_guard_for_prev_conditions(event_name)
+            guard_exp = self.get_guard_exp_for_prev_conditions(event_name)
             edges, locations = _append_scxml_body_to_jani_automaton(
                 self.automaton, self.events_holder, [], self.element.get_id(),
-                self.element.get_id(), "", guard, event_name)
+                self.element.get_id(), "", guard_exp, event_name)
             assert len(locations) == 0 and len(edges) == 1, \
                 f"Expected one edge for self-loops, got {len(edges)} edges."
             self.automaton.add_edge(edges[0])
@@ -568,10 +570,10 @@ class TransitionTag(BaseTag):
                 current_expression.replace_event(transition_trigger_event)
             # If there are multiple transitions for an event, consider the previous conditions
             merged_expression = _merge_conditions(previous_expressions, current_expression)
-            guard = JaniGuard(merged_expression)
+            guard = merged_expression
         else:
             if len(previous_expressions) > 0:
-                guard = JaniGuard(_merge_conditions(previous_expressions))
+                guard = _merge_conditions(previous_expressions)
             else:
                 guard = None
 

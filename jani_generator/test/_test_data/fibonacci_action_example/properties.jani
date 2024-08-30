@@ -15,19 +15,19 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "client_1_last_fibonacci.data",
-                                    "right": "5"
+                                    "left": "topic_client_1_last_fibonacci_msg.data",
+                                    "right": 5
                                 },
-                                "right": "topic_client_1_res_msg.valid"
+                                "right": "topic_client_1_last_fibonacci_msg.valid"
                             },
                             "right": {
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "client_2_last_fibonacci.data",
-                                    "right": "13"
+                                    "left": "topic_client_2_last_fibonacci_msg.data",
+                                    "right": 13
                                 },
-                                "right": "topic_client_2_res_msg.valid"
+                                "right": "topic_client_2_last_fibonacci_msg.valid"
                             }
                         }
                     }

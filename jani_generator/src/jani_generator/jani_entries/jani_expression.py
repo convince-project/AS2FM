@@ -155,8 +155,8 @@ class JaniExpression:
         if replacement is None:
             # No replacement needed!
             return self
-        if self.identifier is not None:
-            self.identifier = self.identifier.replace("_event", replacement)
+        if self.identifier is not None and self.identifier.startswith("_event."):
+            self.identifier = f"{replacement}.{self.identifier.removeprefix('_event.')}"
             return self
         if self.value is not None:
             return self
