@@ -144,6 +144,11 @@ def get_action_type_params(action_definition: str
     return action_goal_fields, action_feedback_fields, action_result_fields
 
 
+def get_action_goal_id_definition() -> Tuple[str, str]:
+    """Provide the definition of the goal_id field in ROS actions."""
+    return "goal_id", "int32"
+
+
 def replace_ros_interface_expression(msg_expr: str) -> str:
     """Convert all ROS interface expressions (in ROS_EVENT_PREFIXES) to plain SCXML events."""
     scxml_prefix = "_event."
@@ -512,10 +517,13 @@ class ScxmlRosDeclarationsContainer:
             action_type = self.get_action_server_info(alias_name)[1]
         goal_fields = get_action_type_params(action_type)[0]
         # We use the goal ID as a reserved field for the action. Make sure it is available.
-        assert "goal_id" not in goal_fields, \
-            f"Error: SCXML ROS declarations: action {action_type} goal has the 'goal_id' field."
+        goal_id_name, goal_id_type = get_action_goal_id_definition()
+        assert goal_id_name not in goal_fields, \
+            "Error: SCXML ROS declarations: "\
+            f"found reserved '{goal_id_name}' field in action {action_type} goal."
         if has_goal_id:
-            goal_fields["goal_id"] = "int32"
+            # Add the goal_id to the expected fields
+            goal_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, goal_fields):
             print(f"Error: SCXML ROS declarations: Action goal {alias_name} has invalid fields.")
             return False
@@ -533,10 +541,13 @@ class ScxmlRosDeclarationsContainer:
         _, action_type = self.get_action_server_info(server_name)
         _, feedback_fields, _ = get_action_type_params(action_type)
         # We use the goal ID as a reserved field for the action. Make sure it is available.
-        assert "goal_id" not in feedback_fields, \
-            f"Error: SCXML ROS declarations: action {action_type} feedback has the 'goal_id' field."
+        goal_id_name, goal_id_type = get_action_goal_id_definition()
+        assert goal_id_name not in feedback_fields, \
+            "Error: SCXML ROS declarations: "\
+            f"found reserved '{goal_id_name}' field in action {action_type} feedback."
         if has_goal_id:
-            feedback_fields["goal_id"] = "int32"
+            # Add the goal_id to the expected fields
+            feedback_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, feedback_fields):
             print(f"Error: SCXML ROS declarations: Action feedback {server_name} "
                   "has invalid fields.")
@@ -555,10 +566,13 @@ class ScxmlRosDeclarationsContainer:
         _, action_type = self.get_action_server_info(server_name)
         _, _, result_fields = get_action_type_params(action_type)
         # We use the goal ID as a reserved field for the action. Make sure it is available.
-        assert "goal_id" not in result_fields, \
-            f"Error: SCXML ROS declarations: action {action_type} feedback has the 'goal_id' field."
+        goal_id_name, goal_id_type = get_action_goal_id_definition()
+        assert goal_id_name not in result_fields, \
+            "Error: SCXML ROS declarations: "\
+            f"found reserved '{goal_id_name}' field in action {action_type} result."
         if has_goal_id:
-            result_fields["goal_id"] = "int32"
+            # Add the goal_id to the expected fields
+            result_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, result_fields):
             print(f"Error: SCXML ROS declarations: Action result {server_name} has invalid fields.")
             return False

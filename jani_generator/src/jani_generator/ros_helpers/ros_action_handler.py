@@ -19,12 +19,15 @@ Helper to create an orchestrator out of ROS Actions declarations.
 
 from typing import Dict, List, Tuple
 
+from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
+
 from scxml_converter.scxml_entries import (
     ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition)
 from scxml_converter.scxml_entries.ros_utils import (
-    get_action_type_params, sanitize_ros_interface_name)
-
-from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
+    get_action_type_params,
+    generate_action_goal_handle_event, generate_action_goal_req_event,
+    get_action_goal_id_definition,
+    sanitize_ros_interface_name)
 
 
 class RosActionHandler(RosCommunicationHandler):
@@ -36,31 +39,38 @@ class RosActionHandler(RosCommunicationHandler):
     def get_interface_prefix() -> str:
         return "action_handler_"
 
-    @staticmethod
     def _generate_goal_request_transition(
-            client_id: str, goal_id: int, req_params: Dict[str, str]) -> ScxmlTransition:
-        pass
+            self, client_id: str, goal_id: int, req_params: Dict[str, str]) -> ScxmlTransition:
+        action_client_req_event = generate_action_goal_req_event(self._interface_name, client_id)
+        action_srv_handle_event = generate_action_goal_handle_event(self._interface_name)
+        goal_req_transition = ScxmlTransition("waiting", [action_client_req_event])
+        send_params = [ScxmlParam("goal_id", str(goal_id))]
+        for field_name in req_params:
+            # Add preliminary assignments (part of the hack mentioned in self.to_scxml())
+            goal_req_transition.append_body_executable_entry(
+                ScxmlAssign(field_name, f"_event.{field_name}"))
+            send_params.append(ScxmlParam(field_name, field_name))
+        # Add the send to the server
+        goal_req_transition.append_body_executable_entry(
+            ScxmlSend(action_srv_handle_event, send_params))
+        return goal_req_transition
 
-    @staticmethod
     def _generate_goal_accept_transition(
-            client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
+            self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
         pass
 
-    @staticmethod
     def _generate_goal_reject_transition(
-            client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
+            self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
         pass
 
-    @staticmethod
     def _generate_feedback_response_transition(
-            client_to_goal_id: List[Tuple[str, int]],
-            feedback_params: Dict[str, str]) -> ScxmlTransition:
+            self, client_to_goal_id: List[Tuple[str, int]], feedback_params: Dict[str, str]
+            ) -> ScxmlTransition:
         pass
 
-    @staticmethod
     def _generate_result_response_transition(
-            client_to_goal_id: List[Tuple[str, int]],
-            result_params: Dict[str, str]) -> ScxmlTransition:
+            self, client_to_goal_id: List[Tuple[str, int]], result_params: Dict[str, str]
+            ) -> ScxmlTransition:
         pass
 
     def to_scxml(self) -> ScxmlRoot:
@@ -82,8 +92,9 @@ class RosActionHandler(RosCommunicationHandler):
         goal_params, feedback_params, result_params = get_action_type_params(self._interface_type)
 
         # Hack: Using support variables in the data model to avoid having _event in send params
+        goal_id_def = get_action_goal_id_definition()
         req_fields_as_data = self._generate_datamodel_from_ros_fields(
-            goal_params | feedback_params | result_params)
+            goal_params | feedback_params | result_params | {goal_id_def[0]: goal_id_def[1]})
         # Make sure the service name has no slashes and spaces
         scxml_root_name = \
             self.get_interface_prefix() + sanitize_ros_interface_name(self._interface_name)

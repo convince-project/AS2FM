@@ -20,9 +20,9 @@ Generic class for generators of SCXML state machine for specific ROS communicati
 from typing import Dict, List, Optional
 
 from as2fm_common.common import get_default_expression_for_type, value_to_string
+from jani_generator.jani_entries import JaniModel
 from scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
 from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
-from jani_generator.jani_entries import JaniModel
 
 
 class RosCommunicationHandler:
