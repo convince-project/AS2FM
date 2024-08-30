@@ -61,6 +61,8 @@ def parse_ecmascript_to_jani_expression(
         jani_expression = _parse_ecmascript_to_jani_expression(ast, array_info)
     except NotImplementedError:
         raise RuntimeError(f"Unsupported ecmascript: {ecmascript}")
+    except AssertionError:
+        raise RuntimeError(f"Assertion from ecmascript: {ecmascript}")
     return jani_expression
 
 
@@ -89,7 +91,7 @@ def _parse_ecmascript_to_jani_expression(
                                      JaniValue(array_info.array_type(0)))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
-        assert ast.name != ("True", "False"), \
+        assert ast.name not in ("True", "False"), \
             f"Boolean {ast.name} mistaken for an identifier. "\
             "Did you mean to use 'true' or 'false' instead?"
         return JaniExpression(ast.name)

@@ -36,7 +36,7 @@ from scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
                                            ScxmlIf, ScxmlRoot, ScxmlSend,
                                            ScxmlState, ScxmlTransition)
 
-# The type to be exctended by parsing the scxml file
+# The resulting types from the SCXML conversion to Jani
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
 
@@ -205,9 +205,14 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                         new_edge.destinations[0]['assignments'].append(JaniAssignment({
                             "ref": f'{param_assign_name}.length',
                             "value": f"{variable_name}.length"}))
+                # TODO: get the expected type from a jani expression, w/o setting dummy def. values
                 variables = {}
                 for n, v in jani_automaton.get_variables().items():
                     variables[n] = get_default_expression_for_type(v.get_type())
+                    # Hack to solve issue for expressions with explicit access to array entries
+                    if isinstance(variables[n], MutableSequence):
+                        for _ in range(50):
+                            variables[n].append(0)
                 # TODO: We should get the type explicitly: sometimes the expression is underdefined
                 print(f"Interpreting {expr} with {variables}")
                 # This might contain reference to event variables, that have no type specified

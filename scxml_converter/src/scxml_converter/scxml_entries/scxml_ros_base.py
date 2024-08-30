@@ -23,6 +23,7 @@ from scxml_converter.scxml_entries import (
     valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 
@@ -223,6 +224,8 @@ class RosCallback(ScxmlTransition):
         event_name = self.get_plain_scxml_event(ros_declarations)
         target = self._target
         condition = self._condition
+        if condition is not None:
+            condition = replace_ros_interface_expression(condition)
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], condition, body)
 

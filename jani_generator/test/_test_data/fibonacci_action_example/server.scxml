@@ -91,10 +91,10 @@
 
     <state id="check_goal">
         <onentry>
-            <if cond="thread_0_busy == False">
+            <if cond="thread_0_busy == false">
                 <assign location="thread_0_busy" expr="true" />
                 <assign location="thread_to_start" expr="0" />
-            <elseif cond="thread_1_busy == False" />
+            <elseif cond="thread_1_busy == false" />
                 <assign location="thread_1_busy" expr="true" />
                 <assign location="thread_to_start" expr="1" />
             <else />
