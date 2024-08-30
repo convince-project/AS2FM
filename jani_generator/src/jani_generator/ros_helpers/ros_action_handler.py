@@ -17,15 +17,18 @@
 Helper to create an orchestrator out of ROS Actions declarations.
 """
 
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 from scxml_converter.scxml_entries import (
-    ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition)
+    ScxmlAssign, ScxmlDataModel, ScxmlIf, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState,
+    ScxmlTransition)
 from scxml_converter.scxml_entries.ros_utils import (
     get_action_type_params,
     generate_action_goal_handle_event, generate_action_goal_req_event,
+    generate_action_goal_accepted_event, generate_action_goal_handle_accepted_event,
+    generate_action_goal_rejected_event, generate_action_goal_handle_rejected_event,
     get_action_goal_id_definition,
     sanitize_ros_interface_name)
 
@@ -41,10 +44,11 @@ class RosActionHandler(RosCommunicationHandler):
 
     def _generate_goal_request_transition(
             self, client_id: str, goal_id: int, req_params: Dict[str, str]) -> ScxmlTransition:
+        goal_id_name = get_action_goal_id_definition()[0]
         action_client_req_event = generate_action_goal_req_event(self._interface_name, client_id)
         action_srv_handle_event = generate_action_goal_handle_event(self._interface_name)
         goal_req_transition = ScxmlTransition("waiting", [action_client_req_event])
-        send_params = [ScxmlParam("goal_id", str(goal_id))]
+        send_params = [ScxmlParam(goal_id_name, str(goal_id))]
         for field_name in req_params:
             # Add preliminary assignments (part of the hack mentioned in self.to_scxml())
             goal_req_transition.append_body_executable_entry(
@@ -55,13 +59,40 @@ class RosActionHandler(RosCommunicationHandler):
             ScxmlSend(action_srv_handle_event, send_params))
         return goal_req_transition
 
+    def _generate_conditional_send_to_bodies(
+            self, client_to_goal_id: List[Tuple[str, int]], send_params: Optional[List[ScxmlParam]],
+            client_event_function: Callable[[str, str], str]) -> ScxmlIf:
+        goal_id_name = get_action_goal_id_definition()[0]
+        condition_send_pairs: List[Tuple[str, ScxmlSend]] = []
+        for client_id, goal_id in client_to_goal_id:
+            client_event = client_event_function(self._interface_name, client_id)
+            condition_send_pairs.append((f"{goal_id_name} == {goal_id}",
+                                         ScxmlSend(client_event, send_params)))
+        return ScxmlIf(condition_send_pairs)
+
     def _generate_goal_accept_transition(
             self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
-        pass
+        goal_id_name = get_action_goal_id_definition()[0]
+        accepted_event_srv = generate_action_goal_handle_accepted_event(self._interface_name)
+        accepted_transition = ScxmlTransition("waiting", [accepted_event_srv])
+        accepted_transition.append_body_executable_entry(
+            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
+        accepted_transition.append_body_executable_entry(
+            self._generate_conditional_send_to_bodies(
+                client_to_goal_id, None, generate_action_goal_accepted_event))
+        return accepted_transition
 
     def _generate_goal_reject_transition(
             self, client_to_goal_id: List[Tuple[str, int]]) -> ScxmlTransition:
-        pass
+        goal_id_name = get_action_goal_id_definition()[0]
+        rejected_event_srv = generate_action_goal_handle_rejected_event(self._interface_name)
+        rejected_transition = ScxmlTransition("waiting", [rejected_event_srv])
+        rejected_transition.append_body_executable_entry(
+            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
+        rejected_transition.append_body_executable_entry(
+            self._generate_conditional_send_to_bodies(
+                client_to_goal_id, None, generate_action_goal_rejected_event))
+        return rejected_transition
 
     def _generate_feedback_response_transition(
             self, client_to_goal_id: List[Tuple[str, int]], feedback_params: Dict[str, str]
