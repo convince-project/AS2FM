@@ -276,7 +276,7 @@ class TestConversion(unittest.TestCase):
 
     def test_ros_fibonacci_action_example(self):
         """Test the actions are properly handled in Jani."""
-        self._test_with_main('fibonacci_action_example', 'clients_ok', True, True)
+        self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
 
 
 if __name__ == '__main__':
