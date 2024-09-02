@@ -15,7 +15,7 @@
         <datamodel>
             <!-- ID of the thread instance -->
             <!-- Goal fields -->
-            <data id="goal_id" type="int32" expr="0" />
+            <data id="goal_id" type="int32" expr="-1" />
             <data id="order" type="int32" expr="0" />
             <!-- Exec fields -->
             <data id="sequence" type="int32[]" expr="[]" />
@@ -24,7 +24,7 @@
         <state id="idle">
             <onentry>
                 <assign location="sequence.length" expr="0" />
-                <assign location="goal_id" expr="0" />
+                <assign location="goal_id" expr="-1" />
                 <!-- Signal meant to tell the server the thread is now available -->
                 <ros_action_thread_free name="act_srv" />
             </onentry>
@@ -76,6 +76,9 @@
     </datamodel>
 
     <state id="idle">
+        <onentry>
+            <assign location="thread_to_start" expr="-1" />
+        </onentry>
         <ros_action_handle_goal name="act_srv" target="check_goal">
             <assign location="goal_id" expr="_req.goal_id" />
             <assign location="order" expr="_req.order" />
