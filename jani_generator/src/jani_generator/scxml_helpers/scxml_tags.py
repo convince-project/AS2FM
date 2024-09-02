@@ -241,8 +241,9 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
             new_edges.append(new_edge)
             new_locations.append(interm_loc)
         elif isinstance(ec, ScxmlIf):
-            interm_loc_before = f"{source}_{i}_before_if"
-            interm_loc_after = f"{source}_{i}_after_if"
+            if_prefix = f"{source}_{hash_str}_{i}"
+            interm_loc_before = f"{if_prefix}_before_if"
+            interm_loc_after = f"{if_prefix}_after_if"
             new_edges[-1].destinations[0]['location'] = interm_loc_before
             previous_conditions: List[JaniExpression] = []
             for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
