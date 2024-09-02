@@ -70,8 +70,8 @@
         <data id="order" type="int32" expr="0" />
         <!-- Keep track of which thread is in use -->
         <!-- TODO: Use array -->
-        <data id="thread_0_busy" type="bool" expr="false" />
-        <data id="thread_1_busy" type="bool" expr="false" />
+        <data id="thread_0_busy" type="bool" expr="true" />
+        <data id="thread_1_busy" type="bool" expr="true" />
         <data id="thread_to_start" type="int32" expr="-1" />
     </datamodel>
 
