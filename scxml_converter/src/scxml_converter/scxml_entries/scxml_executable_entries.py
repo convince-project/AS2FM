@@ -107,8 +107,10 @@ class ScxmlIf(ScxmlBase):
         :param conditional_executions: List of (condition - exec. body) pairs. Min n. pairs is one.
         :param else_execution: Execution to be done if no condition is met.
         """
-        self._conditional_executions = conditional_executions
-        self._else_execution = else_execution
+        self._conditional_executions: List[ConditionalExecutionBody] = conditional_executions
+        self._else_execution: ScxmlExecutionBody = []
+        if else_execution is not None:
+            self._else_execution = else_execution
         assert self.check_validity(), "Error: SCXML if: invalid if object."
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
@@ -136,9 +138,7 @@ class ScxmlIf(ScxmlBase):
                 for condition, body in self._conditional_executions)
         if not valid_conditional_executions:
             print("Error: SCXML if: Found invalid entries in conditional executions.")
-        valid_else_execution = \
-            self._else_execution is None or \
-            (len(self._else_execution) > 0 and valid_execution_body(self._else_execution))
+        valid_else_execution = valid_execution_body(self._else_execution)
         if not valid_else_execution:
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
@@ -153,10 +153,9 @@ class ScxmlIf(ScxmlBase):
             for exec_entry in exec_body:
                 if not exec_entry.check_valid_ros_instantiations(ros_declarations):
                     return False
-        if self._else_execution is not None:
-            for exec_entry in self._else_execution:
-                if not exec_entry.check_valid_ros_instantiations(ros_declarations):
-                    return False
+        for exec_entry in self._else_execution:
+            if not exec_entry.check_valid_ros_instantiations(ros_declarations):
+                return False
         return True
 
     def set_thread_id(self, thread_id: int) -> None:
@@ -165,10 +164,9 @@ class ScxmlIf(ScxmlBase):
             for entry in exec_body:
                 if hasattr(entry, "set_thread_id"):
                     entry.set_thread_id(thread_id)
-        if self._else_execution is not None:
-            for entry in self._else_execution:
-                if hasattr(entry, "set_thread_id"):
-                    entry.set_thread_id(thread_id)
+        for entry in self._else_execution:
+            if hasattr(entry, "set_thread_id"):
+                entry.set_thread_id(thread_id)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         condional_executions = []
@@ -189,7 +187,7 @@ class ScxmlIf(ScxmlBase):
         for condition, execution in self._conditional_executions[1:]:
             xml_if.append(ET.Element('elseif', {"cond": condition}))
             append_execution_body_to_xml(xml_if, execution)
-        if self._else_execution is not None:
+        if len(self._else_execution) > 0:
             xml_if.append(ET.Element('else'))
             append_execution_body_to_xml(xml_if, self._else_execution)
         return xml_if

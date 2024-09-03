@@ -20,11 +20,14 @@ Module reading the top level xml file containing the whole model to check.
 import json
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
-from jani_generator.ros_helpers.ros_services import RosService, RosServices
+from jani_generator.ros_helpers.ros_communication_handler import (
+    generate_plain_scxml_from_handlers, update_ros_communication_handlers)
+from jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
+from jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from jani_generator.ros_helpers.ros_timer import RosTimer
 from jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
@@ -142,7 +145,8 @@ def generate_plain_scxml_models_and_timers(
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
-    all_services: RosServices = {}
+    all_services: Dict[str, RosServiceHandler] = {}
+    all_actions: Dict[str, RosActionHandler] = {}
     for scxml_entry in ros_scxmls:
         plain_scxmls, ros_declarations = \
             scxml_entry.to_plain_scxml_and_declarations()
@@ -152,20 +156,17 @@ def generate_plain_scxml_models_and_timers(
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
         # Handle ROS Services
-        for service_name, service_type in ros_declarations._service_clients.values():
-            if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].append_service_client(
-                service_name, service_type, scxml_entry.get_name())
-        for service_name, service_type in ros_declarations._service_servers.values():
-            if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].set_service_server(
-                service_name, service_type, scxml_entry.get_name())
+        update_ros_communication_handlers(
+            scxml_entry.get_name(), RosServiceHandler, all_services,
+            ros_declarations._service_servers, ros_declarations._service_clients)
+        # Handle ROS Actions
+        update_ros_communication_handlers(
+            scxml_entry.get_name(), RosActionHandler, all_actions,
+            ros_declarations._action_servers, ros_declarations._action_clients)
         plain_scxml_models.extend(plain_scxmls)
-    # Generate service sync SCXML models
-    for service_info in all_services.values():
-        plain_scxml_models.append(service_info.to_scxml())
+    # Generate sync SCXML models for services and actions
+    for plain_scxml in generate_plain_scxml_from_handlers(all_services | all_actions):
+        plain_scxml_models.append(plain_scxml)
     return plain_scxml_models, all_timers
 
 

@@ -27,7 +27,7 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 
 from scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_req_event,
-    generate_action_goal_accepted_event, generate_action_goal_rejected_event,
+    generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
     generate_action_feedback_handle_event, generate_action_result_handle_event)
 from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 from scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -140,8 +140,8 @@ class RosActionHandleGoalResponse(ScxmlTransition):
             "Error: SCXML service response handler: invalid ROS instantiations."
         automaton_name = ros_declarations.get_automaton_name()
         interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
-        accept_event = generate_action_goal_accepted_event(interface_name, automaton_name)
-        reject_event = generate_action_goal_rejected_event(interface_name, automaton_name)
+        accept_event = generate_action_goal_handle_accepted_event(interface_name, automaton_name)
+        reject_event = generate_action_goal_handle_rejected_event(interface_name, automaton_name)
         accept_transition = ScxmlTransition(self._accept_target, [accept_event])
         reject_transition = ScxmlTransition(self._reject_target, [reject_event])
         return [accept_transition, reject_transition]

@@ -15,7 +15,7 @@
         <datamodel>
             <!-- ID of the thread instance -->
             <!-- Goal fields -->
-            <data id="goal_id" type="int32" expr="0" />
+            <data id="goal_id" type="int32" expr="-1" />
             <data id="order" type="int32" expr="0" />
             <!-- Exec fields -->
             <data id="sequence" type="int32[]" expr="[]" />
@@ -24,7 +24,7 @@
         <state id="idle">
             <onentry>
                 <assign location="sequence.length" expr="0" />
-                <assign location="goal_id" expr="0" />
+                <assign location="goal_id" expr="-1" />
                 <!-- Signal meant to tell the server the thread is now available -->
                 <ros_action_thread_free name="act_srv" />
             </onentry>
@@ -70,32 +70,44 @@
         <data id="order" type="int32" expr="0" />
         <!-- Keep track of which thread is in use -->
         <!-- TODO: Use array -->
-        <data id="thread_0_busy" type="bool" expr="False" />
-        <data id="thread_1_busy" type="bool" expr="False" />
+        <data id="thread_0_busy" type="bool" expr="true" />
+        <data id="thread_1_busy" type="bool" expr="true" />
         <data id="thread_to_start" type="int32" expr="-1" />
+        <data id="free_thread_id" type="int32" expr="-1" />
     </datamodel>
 
     <state id="idle">
+        <onentry>
+            <assign location="thread_to_start" expr="-1" />
+        </onentry>
         <ros_action_handle_goal name="act_srv" target="check_goal">
             <assign location="goal_id" expr="_req.goal_id" />
             <assign location="order" expr="_req.order" />
         </ros_action_handle_goal>
         <ros_action_handle_thread_free name="act_srv" target="idle">
-            <if cond="_event.thread_id == 0">
-                <assign location="thread_0_busy" expr="False" />
-            <elseif cond="_event.thread_id == 1" />
-                <assign location="thread_1_busy" expr="False" />
+            <!-- Store a local copy of the received ID, to prevent it being changed while evaluating the if -->
+            <!-- TODO:
+            It might make sense to enforce the pattern of assigning event variables to local variables and
+            evaluate them afterwards, preventing event variables from being used after the intial assignment block.
+            This could solve problems with the event variables being changed by other actions in the meantime and
+            evaluating the type of event variables at conversion time.
+            -->
+            <assign location="free_thread_id" expr="_event.thread_id" />
+            <if cond="free_thread_id == 0">
+                <assign location="thread_0_busy" expr="false" />
+            <elseif cond="free_thread_id == 1" />
+                <assign location="thread_1_busy" expr="false" />
             </if>
         </ros_action_handle_thread_free>
     </state>
 
     <state id="check_goal">
         <onentry>
-            <if cond="thread_0_busy == False">
-                <assign location="thread_0_busy" expr="True" />
+            <if cond="thread_0_busy == false">
+                <assign location="thread_0_busy" expr="true" />
                 <assign location="thread_to_start" expr="0" />
-            <elseif cond="thread_1_busy == False" />
-                <assign location="thread_1_busy" expr="True" />
+            <elseif cond="thread_1_busy == false" />
+                <assign location="thread_1_busy" expr="true" />
                 <assign location="thread_to_start" expr="1" />
             <else />
                 <assign location="thread_to_start" expr="-1" />
