@@ -228,30 +228,34 @@ class TestConversion(unittest.TestCase):
         # if os.path.exists(ouput_path):
         #     os.remove(ouput_path)
 
-    def test_with_main_success(self):
+    def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
         self._test_with_main('ros_example', 'battery_depleted', True)
 
-    def test_with_main_fail(self):
+    def test_battery_ros_example_over_depleted_fail(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main('ros_example', 'battery_over_depleted', False)
 
-    def test_with_w_bt_main_battery_depleted(self):
+    def test_battery_ros_example_alarm_on(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main('ros_example', 'alarm_on', False)
+
+    def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
         self._test_with_main('ros_example_w_bt', 'battery_depleted', False, True)
 
-    def test_with_w_bt_main_battery_under_twenty(self):
+    def test_battery_example_w_bt_main_battery_under_twenty(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
         self._test_with_main('ros_example_w_bt', 'battery_below_20', False)
 
-    def test_with_w_bt_main_alarm_and_charge(self):
+    def test_battery_example_w_bt_main_alarm_and_charge(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
 
-    def test_with_w_bt_main_charged_after_time(self):
+    def test_battery_example_w_bt_main_charged_after_time(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main('ros_example_w_bt', 'battery_charged', True)

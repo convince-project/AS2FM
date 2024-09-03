@@ -51,6 +51,39 @@
                     "op": "initial"
                 }
             }
+        },
+        {
+            "name": "alarm_on",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "U",
+                        "left": {
+                            "op": "∨",
+                            "left": {
+                                "op": "¬",
+                                "exp": "topic_level_msg.valid"
+                            },
+                            "right": {
+                                "op": "≥",
+                                "left": "topic_level_msg.data",
+                                "right": 29
+                            }
+                        },
+                        "right": {
+                            "op": "∧",
+                            "left": "topic_alarm_msg.data",
+                            "right": "topic_alarm_msg.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
         }
     ]
 }

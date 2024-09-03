@@ -9,6 +9,6 @@
     </node_models>
 
     <properties>
-        <input type="jani" src="./battery_depleted.jani" />
+        <input type="jani" src="./battery_properties.jani" />
     </properties>
 </convince_mc_tc>
