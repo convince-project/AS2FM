@@ -106,7 +106,6 @@ def implement_scxml_events_as_jani_syncs(
         if event.has_receivers():
             receivers_syncs = {event_name: event_name_on_receive}
             for receiver in event.get_receivers():
-                print(receiver)
                 action_name = receiver.edge_action_name
                 assert action_name == event_name_on_receive, \
                     f"Action name {action_name} must be {event_name_on_receive}."
