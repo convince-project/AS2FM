@@ -170,6 +170,10 @@ class JaniProperty:
         # TODO: For now copy as it is. Later we might expand it to support more functionalities
         self._expression = FilterProperty(expression)
 
+    def substitute_real_variable(
+            self, variable_real_name: str, variable_int_name: str, discretization_digits: int):
+        pass
+
     def as_dict(self, constants: Dict[str, JaniConstant]):
         return {
             "name": self._name,

@@ -129,6 +129,13 @@ class JaniAutomaton:
         self._local_variables.update(other._local_variables)
         self._edges.extend(other._edges)
 
+    def substitute_non_transient_real_variables(self, discretization_digits: int):
+        pass
+
+    def substitute_real_variable(
+            self, variable_real_name: str, variable_int_name: str, discretization_digits: int):
+        pass
+
     def as_dict(self, constant: Dict[str, JaniConstant]):
         automaton_dict = {
             "name": self._name,

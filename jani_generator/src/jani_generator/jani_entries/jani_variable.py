@@ -17,10 +17,11 @@
 Variables in Jani
 """
 
-from typing import MutableSequence, Optional, Union, Type, get_args
+from typing import Any, Dict, MutableSequence, Optional, Union, Type, get_args
 
 from as2fm_common.common import ValidTypes
 from jani_generator.jani_entries import JaniExpression, JaniValue
+from jani_generator.jani_entries.jani_expression_generator import to_int_expression
 
 
 class JaniVariable:
@@ -76,7 +77,7 @@ class JaniVariable:
                 raise ValueError(
                     f"JaniVariable {self._name} of type {self._type} needs an initial value")
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
-        if not self._transient and self._type in (float, MutableSequence[float]):
+        if self.has_not_transient_real_type():
             print(f"Warning: Variable {self._name} is not transient and has type float."
                   "This is not supported by STORM.")
 
@@ -88,7 +89,33 @@ class JaniVariable:
         """Get type."""
         return self._type
 
-    def as_dict(self):
+    def has_not_transient_real_type(self):
+        """Check if the variable is transient and has type real or array of real."""
+        return (not self._transient) and (self._type in (float, MutableSequence[float]))
+
+    def substitute_real(self, discretization_digits: int):
+        """
+        In place substitution of non-transient real variables.
+
+        :param discretization_digits: Number of digits to discretize the init value.
+        """
+        # Make sure not doing it for variables that are not required to be converted
+        assert self.has_not_transient_real_type(), \
+            f"Trying to convert variable {self._name} to int, but not required."
+        self._name = f"{self._name}_int"
+        if self._type == float:
+            self._type = int
+            self._init_expr = to_int_expression(self._init_expr, discretization_digits)
+
+            return JaniVariable(f"{self._name}_int", int,
+                                to_int_expression(self._init_expr, discretization_digits), False)
+        elif self._type == MutableSequence[float]:
+            raise NotImplementedError("Converting array of floats not implemented yet.")
+            # new_type = MutableSequence[int]
+        else:
+            raise ValueError(f"JaniVariable {self._name} of type {self._type} can't be converted.")
+
+    def as_dict(self) -> Dict[str, Any]:
         """Return the variable as a dictionary."""
         d = {
             "name": self._name,

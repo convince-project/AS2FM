@@ -81,6 +81,9 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
         description="Convert SCXML robot system models to JANI model.")
     parser.add_argument(
         "main_xml", type=str, help="The path to the main XML file to interpret.")
+    parser.add_argument(
+        "--remove-real-variables", action="store_true",
+        help="Remove real variables from the JANI model.")
     args = parser.parse_args(_args)
 
-    interpret_top_level_xml(args.main_xml)
+    interpret_top_level_xml(args.main_xml, remove_real_variables=args.remove_real_variables)

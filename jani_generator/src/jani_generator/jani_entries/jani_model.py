@@ -125,13 +125,39 @@ class JaniModel:
         self._generate_missing_syncs()
 
     def remove_edges_with_action(self, action: str):
-        """Remove the edges in all automaton with the action name provided.
+        """Remove all edges with the provided action name from every automaton in the model.
 
         :param action: The name of the action to remove.
         """
         assert isinstance(action, str), "Action name must be a string"
         for automaton in self._automata:
             automaton.remove_edges_with_action_name(action)
+
+    def substitute_non_transient_real_variables(self, discretization_digits: int):
+        """
+        Replace all non-transient real variables in the model with integers, and adds conversions.
+
+        x_int = int(x_real * 10^discretization_digits)
+        x_real = x_int * 10^(-discretization_digits)
+
+        :param discretization_digits: N. of digits after the decimal point to keep.
+        """
+        # Process all global variables
+        for variable in self._variables.values():
+            if variable.has_not_transient_real_type():
+                # This global variable needs to be converted to an integer
+                variable_real_name = variable.name()
+                variable.substitute_real(discretization_digits)
+                variable_int_name = variable.name()
+                for automaton in self._automata:
+                    automaton.substitute_real_variable(
+                        variable_real_name, variable_int_name, discretization_digits)
+                for property in self._properties:
+                    property.substitute_real_variable(
+                        variable_real_name, variable_int_name, discretization_digits)
+        # Process local variables
+        for automaton in self._automata:
+            automaton.substitute_non_transient_real_variables(discretization_digits)
 
     def _generate_missing_syncs(self):
         """Automatically generate the syncs that are not explicitly defined."""

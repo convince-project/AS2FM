@@ -170,13 +170,17 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False):
+def interpret_top_level_xml(xml_path: str, *,
+                            store_generated_scxmls: bool = False,
+                            remove_real_variables: bool = False):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
     The generated Jani model is written to the same directory as the input XML file under the
     name `main.jani`.
 
     :param xml_path: The path to the XML file to interpret.
+    :param store_generated_scxmls: If True, store all generated plain SCXML models.
+    :param remove_real_variables: If True, convert all non-transient real variables to integers.
     """
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
@@ -193,6 +197,11 @@ def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False)
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, model.max_time, model.max_array_size)
+
+    if remove_real_variables:
+        # TODO: An additional argument can be provided
+        discretization_digits = 3
+        jani_model.substitute_non_transient_real_variables(discretization_digits)
 
     jani_dict = jani_model.as_dict()
     assert len(model.properties) == 1, "Only one property is supported right now."

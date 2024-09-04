@@ -206,7 +206,7 @@ class TestConversion(unittest.TestCase):
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
-        interpret_top_level_xml(xml_main_path, store_generated_scxmls)
+        interpret_top_level_xml(xml_main_path, store_generated_scxmls=store_generated_scxmls)
         self.assertTrue(os.path.exists(ouput_path))
         # ground_truth = os.path.join(
         #     test_data_dir,

@@ -143,3 +143,27 @@ def array_access_operator(exp, index) -> JaniExpression:
     :param index: The index to access on exp
     """
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
+
+
+# Additional helpers to handle conversion from real to integer and back
+def to_int_expression(real_expression: JaniExpression,
+                      discretization_digits: int) -> JaniExpression:
+    """
+    Convert a real expression to an integer expression
+
+    :param real_expression: The expression to convert
+    :param discretization_digits: The number of digits to discretize the expression
+    """
+    return floor_operator(multiply_operator(real_expression,
+                                            pow_operator(10, discretization_digits)))
+
+
+def to_real_expression(int_expression: JaniExpression,
+                       discretization_digits: int) -> JaniExpression:
+    """
+    Convert an integer expression to a real expression
+
+    :param int_expression: The expression to convert
+    :param discretization_digits: The number of digits to discretize the expression
+    """
+    return divide_operator(int_expression, pow_operator(10, discretization_digits))
