@@ -21,7 +21,8 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
-from as2fm_common.common import get_default_expression_for_type, value_to_type
+from as2fm_common.common import (
+    check_value_type_compatible, get_default_expression_for_type, value_to_type)
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniExpressionType, JaniGuard,
@@ -369,7 +370,9 @@ class DatamodelTag(BaseTag):
                 expected_type = list
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
-            assert expr_type == expected_type, \
+            assert check_value_type_compatible(
+                    interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
+                f"Invalid value for {scxml_data.get_name()}: " \
                 f"Expected type {expected_type}, got {expr_type}."
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
