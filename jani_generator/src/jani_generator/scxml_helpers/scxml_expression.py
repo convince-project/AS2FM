@@ -17,12 +17,12 @@
 Module producing jani expressions from ecmascript.
 """
 
-from typing import Optional, Type, Union
+from typing import Optional, List, Type, Union
 from dataclasses import dataclass
 import esprima
 
-from jani_generator.jani_entries.jani_convince_expression_expansion import \
-    BASIC_EXPRESSIONS_MAPPING
+from jani_generator.jani_entries.jani_convince_expression_expansion import (
+    OPERATORS_TO_JANI_MAP, CALLABLE_OPERATORS_MAP)
 from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_expression_generator import (
     array_access_operator, array_create_operator)
@@ -80,7 +80,7 @@ def _parse_ecmascript_to_jani_expression(
     elif ast.type == "UnaryExpression":
         assert ast.prefix is True and ast.operator == "-", "Only unary minus is supported."
         return JaniExpression({
-            "op": BASIC_EXPRESSIONS_MAPPING[ast.operator],
+            "op": OPERATORS_TO_JANI_MAP[ast.operator],
             "left": JaniValue(0),
             "right": _parse_ecmascript_to_jani_expression(ast.argument, array_info)
         })
@@ -111,12 +111,20 @@ def _parse_ecmascript_to_jani_expression(
         return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
     elif ast.type == "BinaryExpression":
         # It is a more complex expression
-        assert ast.operator in BASIC_EXPRESSIONS_MAPPING, \
+        assert ast.operator in OPERATORS_TO_JANI_MAP, \
             f"ecmascript to jani expression: unknown operator {ast.operator}"
         return JaniExpression({
-            "op": BASIC_EXPRESSIONS_MAPPING[ast.operator],
+            "op": OPERATORS_TO_JANI_MAP[ast.operator],
             "left": _parse_ecmascript_to_jani_expression(ast.left, array_info),
             "right": _parse_ecmascript_to_jani_expression(ast.right, array_info)
         })
+    elif ast.type == "CallExpression":
+        assert ast.callee.type == "Identifier", "Only function calls with identifiers supported."
+        assert ast.callee.name in CALLABLE_OPERATORS_MAP, \
+            f"Unsupported function call {ast.callee.name}."
+        expression_args: List[JaniExpression] = []
+        for arg in ast.arguments:
+            expression_args.append(_parse_ecmascript_to_jani_expression(arg, array_info))
+        return CALLABLE_OPERATORS_MAP[ast.callee.name](*expression_args)
     else:
         raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")

@@ -95,6 +95,15 @@ def not_equal_operator(left, right) -> JaniExpression:
     return JaniExpression({"op": "≠", "left": left, "right": right})
 
 
+# Trigonometry operators
+def sin_operator(exp) -> JaniExpression:
+    return JaniExpression({"op": "sin", "exp": exp})
+
+
+def cos_operator(exp) -> JaniExpression:
+    return JaniExpression({"op": "cos", "exp": exp})
+
+
 # Logic operators
 def not_operator(exp) -> JaniExpression:
     return JaniExpression({"op": "¬", "exp": exp})
