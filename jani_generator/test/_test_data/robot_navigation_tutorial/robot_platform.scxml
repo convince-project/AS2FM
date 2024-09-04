@@ -17,7 +17,7 @@
 
     <ros_topic_publisher name="pose" topic="/robot_pose" type="geometry_msgs/Pose2D" />
     <ros_topic_subscriber name="cmd_vel" topic="/cmd_vel" type="geometry_msgs/Twist" />
-    <ros_time_rate name="sample_timer" rate_hz="0.5" />
+    <ros_time_rate name="sample_timer" rate_hz="1.0" />
 
     <state id="current">
         <onentry>
@@ -28,8 +28,8 @@
             </ros_topic_publish>
         </onentry>
         <ros_topic_callback name="cmd_vel" target="current">
-            <assign location="last_cmd_lin" expr="max(_msg.linear.x, 0.5)" />
-            <assign location="last_cmd_ang" expr="max(_msg.angular.z, 0.5)" />
+            <assign location="last_cmd_lin" expr="max(min(_msg.linear.x, 0.5), -0.5)" />
+            <assign location="last_cmd_ang" expr="max(min(_msg.angular.z, 0.5), -0.5)" />
         </ros_topic_callback>
         <ros_rate_callback name="sample_timer" target="current">
             <assign location="robot_x_pose" expr="robot_x_pose + last_cmd_lin * cos(robot_theta_pose)" />

@@ -19,15 +19,11 @@ Representation of ROS timers.
 
 from typing import List, Optional, Tuple
 
-from jani_generator.jani_entries.jani_assignment import JaniAssignment
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
-from jani_generator.jani_entries.jani_edge import JaniEdge
-from jani_generator.jani_entries.jani_expression import JaniExpression
-from jani_generator.jani_entries.jani_guard import JaniGuard
-from jani_generator.jani_entries.jani_variable import JaniVariable
-from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
+from jani_generator.jani_entries import (
+    JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
+from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 TIME_UNITS = {
     "s": 1,
@@ -35,6 +31,9 @@ TIME_UNITS = {
     "us": 1e-6,
     "ns": 1e-9,
 }
+
+GLOBAL_TIMER_NAME = "global_timer"
+GLOBAL_TIMER_TICK_ACTION = "global_timer_tick"
 
 
 def _convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
@@ -105,7 +104,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
     # Automaton
     LOC_NAME = "loc"
     timer_automaton = JaniAutomaton()
-    timer_automaton.set_name("global_timer")
+    timer_automaton.set_name(GLOBAL_TIMER_NAME)
     timer_automaton.add_location(LOC_NAME, is_initial=True)
 
     # Check iif timers are correctly defined
@@ -154,6 +153,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
             "location": LOC_NAME,
             "assignments": assignments
         }],
+        "action": GLOBAL_TIMER_TICK_ACTION
     }
     )
     timer_automaton.add_edge(iterator_edge)
