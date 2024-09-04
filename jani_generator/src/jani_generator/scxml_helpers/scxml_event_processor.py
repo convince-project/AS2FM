@@ -49,7 +49,8 @@ def implement_scxml_events_as_jani_syncs(
         jc.add_element(automaton.get_name())
     add_timer_syncs = len(timers) > 0
     if add_timer_syncs:
-        timer_syncs: Dict[str, str] = {GLOBAL_TIMER_NAME: GLOBAL_TIMER_TICK_ACTION}
+        # Collect all event automatons that take priority over all kinds of timer actions
+        timer_enable_syncs: Dict[str, str] = {}
     for event_name, event in events_holder.get_events().items():
         # Sender and receiver event names
         event_name_on_send = f"{event_name}_on_send"
@@ -75,9 +76,9 @@ def implement_scxml_events_as_jani_syncs(
                     "probability": {"exp": 1.0},
                     "assignments": []
                 }],
-                "action": GLOBAL_TIMER_TICK_ACTION
+                "action": "global_timer_enable"
             }))
-            timer_syncs.update({event_name: GLOBAL_TIMER_TICK_ACTION})
+            timer_enable_syncs.update({event_name: "global_timer_enable"})
         # Add the event handling automaton
         jc.add_element(event_name)
         if event.has_receivers():
@@ -164,7 +165,9 @@ def implement_scxml_events_as_jani_syncs(
         )
     # Add syncs for global timer
     if add_timer_syncs:
-        jc.add_sync(GLOBAL_TIMER_TICK_ACTION, timer_syncs)
+        # Add sync action for global timer tick
+        jc.add_sync(GLOBAL_TIMER_TICK_ACTION,
+                    timer_enable_syncs | {GLOBAL_TIMER_NAME: GLOBAL_TIMER_TICK_ACTION})
     # Add syncs for rate timers
     for timer in timers:
         name = timer.name
@@ -177,8 +180,12 @@ def implement_scxml_events_as_jani_syncs(
                 f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}.") from e
         action_name_receiver = f"{event_name}_on_receive"
         automaton_name = event.get_receivers()[0].automaton_name
-        jc.add_sync(action_name_receiver, {
-            automaton_name: action_name_receiver,
-            'global_timer': action_name_receiver})
+        timer_trigger_syncs = {
+            GLOBAL_TIMER_NAME: action_name_receiver,
+            automaton_name: action_name_receiver
+            }
+        # Make sure that all other events are processed before starting the timer callback
+        timer_trigger_syncs.update(timer_enable_syncs)
+        jc.add_sync(action_name_receiver, timer_trigger_syncs)
     jani_model.add_system_sync(jc)
     return events_without_receivers
