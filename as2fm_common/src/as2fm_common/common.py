@@ -94,3 +94,10 @@ def value_to_string(value: ValidTypes) -> str:
         return str(value)
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
+    """Check if the value is compatible with the field type."""
+    if field_type is float:
+        return isinstance(value, (int, float))
+    return isinstance(value, field_type)

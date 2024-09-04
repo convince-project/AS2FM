@@ -10,8 +10,8 @@
         <data id="battery_alarm" expr="false" type="bool" />
     </datamodel>
 
-    <ros_topic_subscriber topic="level" type="std_msgs/Int32" />
-    <ros_topic_publisher topic="alarm" type="std_msgs/Bool" />
+    <ros_topic_subscriber name="level" topic="level" type="std_msgs/Int32" />
+    <ros_topic_publisher name="alarm" topic="alarm" type="std_msgs/Bool" />
 
     <state id="check_battery">
         <onentry>

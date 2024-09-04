@@ -17,14 +17,15 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import List, MutableSequence
+from typing import Dict, List, MutableSequence
 
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_composition import JaniComposition
 from jani_generator.jani_entries.jani_edge import JaniEdge
 from jani_generator.jani_entries.jani_expression_generator import array_create_operator
-from jani_generator.ros_helpers.ros_timer import RosTimer
+from jani_generator.ros_helpers.ros_timer import (
+    RosTimer, GLOBAL_TIMER_NAME, GLOBAL_TIMER_TICK_ACTION)
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
@@ -43,15 +44,18 @@ def implement_scxml_events_as_jani_syncs(
     :return: The list of events having only senders.
     """
     jc = JaniComposition()
-    event_action_names = []
     events_without_receivers = []
     for automaton in jani_model.get_automata():
         jc.add_element(automaton.get_name())
+    add_timer_syncs = len(timers) > 0
+    if add_timer_syncs:
+        # Collect all event automatons that take priority over all kinds of timer actions
+        timer_enable_syncs: Dict[str, str] = {}
     for event_name, event in events_holder.get_events().items():
         # Sender and receiver event names
         event_name_on_send = f"{event_name}_on_send"
         event_name_on_receive = f"{event_name}_on_receive"
-        # Special case handling for events that must be skipped
+        # Special case handling for events that must be skipped, e.g. BT responses and timers
         if event.must_be_skipped_in_jani_conversion():
             # if this is a bt event, we have to get rid of all edges receiving that event
             if event.is_bt_response_event():
@@ -62,13 +66,23 @@ def implement_scxml_events_as_jani_syncs(
         event_automaton = JaniAutomaton()
         event_automaton.set_name(event_name)
         event_automaton.add_location("waiting", is_initial=True)
-        event_action_names.append(event_name_on_send)
+        if add_timer_syncs:
+            # Additional self-loop in the waiting state, allowing the global timer to tick
+            # only if all events have been processed
+            event_automaton.add_edge(JaniEdge({
+                "location": "waiting",
+                "destinations": [{
+                    "location": "waiting",
+                    "probability": {"exp": 1.0},
+                    "assignments": []
+                }],
+                "action": "global_timer_enable"
+            }))
+            timer_enable_syncs.update({event_name: "global_timer_enable"})
         # Add the event handling automaton
         jc.add_element(event_name)
         if event.has_receivers():
-            # Add the receiver event as well
-            event_action_names.append(event_name_on_receive)
-            # Prepare the automaton
+            # Add a "received" state and related transitions
             event_automaton.add_location("received")
             event_automaton.add_edge(JaniEdge({
                 "location": "waiting",
@@ -106,7 +120,6 @@ def implement_scxml_events_as_jani_syncs(
         if event.has_receivers():
             receivers_syncs = {event_name: event_name_on_receive}
             for receiver in event.get_receivers():
-                print(receiver)
                 action_name = receiver.edge_action_name
                 assert action_name == event_name_on_receive, \
                     f"Action name {action_name} must be {event_name_on_receive}."
@@ -150,6 +163,11 @@ def implement_scxml_events_as_jani_syncs(
             variable_type=bool,
             variable_init_expression=False
         )
+    # Add syncs for global timer
+    if add_timer_syncs:
+        # Add sync action for global timer tick
+        jc.add_sync(GLOBAL_TIMER_TICK_ACTION,
+                    timer_enable_syncs | {GLOBAL_TIMER_NAME: GLOBAL_TIMER_TICK_ACTION})
     # Add syncs for rate timers
     for timer in timers:
         name = timer.name
@@ -162,8 +180,12 @@ def implement_scxml_events_as_jani_syncs(
                 f"{ROS_TIMER_RATE_EVENT_PREFIX}{name}.") from e
         action_name_receiver = f"{event_name}_on_receive"
         automaton_name = event.get_receivers()[0].automaton_name
-        jc.add_sync(action_name_receiver, {
-            automaton_name: action_name_receiver,
-            'global_timer': action_name_receiver})
+        timer_trigger_syncs = {
+            GLOBAL_TIMER_NAME: action_name_receiver,
+            automaton_name: action_name_receiver
+            }
+        # Make sure that all other events are processed before starting the timer callback
+        timer_trigger_syncs.update(timer_enable_syncs)
+        jc.add_sync(action_name_receiver, timer_trigger_syncs)
     jani_model.add_system_sync(jc)
     return events_without_receivers

@@ -21,7 +21,8 @@ import xml.etree.ElementTree as ET
 from hashlib import sha256
 from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
-from as2fm_common.common import get_default_expression_for_type, value_to_type
+from as2fm_common.common import (
+    check_value_type_compatible, get_default_expression_for_type, value_to_type)
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniExpressionType, JaniGuard,
@@ -215,8 +216,10 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                     if isinstance(variables[n], MutableSequence):
                         for _ in range(50):
                             variables[n].append(0)
-                # TODO: We should get the type explicitly: sometimes the expression is underdefined
-                print(f"Interpreting {expr} with {variables}")
+                    # Another hack, since javascript interprets 0.0 as int...
+                    if isinstance(variables[n], float):
+                        variables[n] = 0.1
+                # TODO: We should get the type explicitly: sometimes the expression is under-defined
                 # This might contain reference to event variables, that have no type specified
                 data_structure_for_event[param.get_name()] = value_to_type(
                     interpret_ecma_script_expr(expr, variables))
@@ -369,7 +372,9 @@ class DatamodelTag(BaseTag):
                 expected_type = list
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
-            assert expr_type == expected_type, \
+            assert check_value_type_compatible(
+                    interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
+                f"Invalid value for {scxml_data.get_name()}: " \
                 f"Expected type {expected_type}, got {expr_type}."
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
