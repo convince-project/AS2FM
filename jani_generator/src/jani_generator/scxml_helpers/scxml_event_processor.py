@@ -163,7 +163,8 @@ def implement_scxml_events_as_jani_syncs(
             variable_init_expression=False
         )
     # Add syncs for global timer
-    jc.add_sync(GLOBAL_TIMER_TICK_ACTION, timer_syncs)
+    if add_timer_syncs:
+        jc.add_sync(GLOBAL_TIMER_TICK_ACTION, timer_syncs)
     # Add syncs for rate timers
     for timer in timers:
         name = timer.name
