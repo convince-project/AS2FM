@@ -20,7 +20,7 @@
                         "exp": {
                           "op": "-",
                           "left": "topic_robot_pose_msg.x",
-                          "right": "15.0"
+                          "right": 15.0
                         }
                       },
                       "right": 0.5
@@ -32,16 +32,16 @@
                         "exp": {
                           "op": "-",
                           "left": "topic_robot_pose_msg.y",
-                          "right": "-2.0"
+                          "right": -2.0
                         }
                       },
                       "right": 0.5
                   }
                 }
-              },
-              "states": {
-                "op": "initial"
               }
+            },
+            "states": {
+              "op": "initial"
             }
           }
         }

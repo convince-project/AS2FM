@@ -29,9 +29,9 @@
 
     <state id="current">
         <ros_topic_callback name="pose" target="current">
-            <assign location="tf_world_robot_x" expr="_msg.pose.x" />
-            <assign location="tf_world_robot_y" expr="_msg.pose.y" />
-            <assign location="tf_world_robot_theta" expr="_msg.pose.theta" />
+            <assign location="tf_world_robot_x" expr="_msg.x" />
+            <assign location="tf_world_robot_y" expr="_msg.y" />
+            <assign location="tf_world_robot_theta" expr="_msg.theta" />
             <assign location="tf_robot_world_theta" expr="-tf_world_robot_theta" />
             <!-- (tf_rob_w_x,  tf_rob_w_y)^T = R(tf_rob_w_theta) * (-(tf_w_rob_x, tf_w_rob_y)^T) -->
             <assign location="tf_robot_world_x"

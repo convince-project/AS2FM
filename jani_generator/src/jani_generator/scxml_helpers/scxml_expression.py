@@ -96,17 +96,21 @@ def _parse_ecmascript_to_jani_expression(
             "Did you mean to use 'true' or 'false' instead?"
         return JaniExpression(ast.name)
     elif ast.type == "MemberExpression":
+        object_expr = _parse_ecmascript_to_jani_expression(ast.object, array_info)
         if ast.computed:
             # This is an array access, like array[0]
-            # For now, prevent nested arrays
-            assert ast.object.type == "Identifier", "Nested arrays are not supported."
-            array_name = ast.object.name
             array_index = _parse_ecmascript_to_jani_expression(ast.property, array_info)
-            return array_access_operator(array_name, array_index)
+            return array_access_operator(object_expr, array_index)
         else:
-            # A identifier in the style of object.property
-            name = f'{ast.object.name}.{ast.property.name}'
-            return JaniExpression(name)
+            # Access to the member of an object through dot notation
+            # Check the object_expr is an identifier
+            object_expr_str = object_expr.as_identifier()
+            assert object_expr_str is not None, \
+                "Only identifiers can be accessed through dot notation."
+            assert ast.property.type == "Identifier", \
+                "Dot notation can be used only to access object's members."
+            field_complete_name = f'{object_expr_str}.{ast.property.name}'
+            return JaniExpression(field_complete_name)
     elif ast.type == "ExpressionStatement":
         return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
     elif ast.type == "BinaryExpression":
