@@ -26,6 +26,8 @@ from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_guard import JaniGuard
 from jani_generator.jani_entries.jani_variable import JaniVariable
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
+from jani_generator.jani_entries.jani_expression_generator import (
+    lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
 
 TIME_UNITS = {
     "s": 1,
@@ -106,6 +108,9 @@ def make_global_timer_automaton(timers: List[RosTimer],
     timer_automaton.set_name("global_timer")
     timer_automaton.add_location(LOC_NAME, is_initial=True)
 
+    # Check iif timers are correctly defined
+    assert len(timers) > 0, "At least one timer is required."
+
     # variables
     variable_names = [f"{timer.name}_needed" for timer in timers]
     timer_automaton.add_variable(
@@ -119,46 +124,27 @@ def make_global_timer_automaton(timers: List[RosTimer],
     # timer assignments
     timer_assignments = []
     for i, (timer, variable_name) in enumerate(zip(timers, variable_names)):
-        period_in_gloabl_unit = timer_periods_in_smallest_unit[timer.name]
+        period_in_global_unit = timer_periods_in_smallest_unit[timer.name]
         timer_assignments.append(JaniAssignment({
             "ref": variable_name,
-            # t % {period_in_gloabl_unit} == 0
-            "value": JaniExpression({
-                "op": "=",
-                "left": JaniExpression({
-                    "op": "%",
-                    "left": JaniExpression("t"),
-                    "right": JaniExpression(period_in_gloabl_unit)
-                }),
-                "right": JaniExpression(0)
-            }),
+            # t % {period_in_global_unit} == 0
+            "value": equal_operator(modulo_operator("t", period_in_global_unit), 0),
             "index": i+1}))  # 1, because t is at index 0
     # guard for main edge
-    guard_exp = JaniExpression({
-        "op": "<",
-        "left": JaniExpression("t"),
-        "right": JaniExpression(max_time)
-    })
+    # Max time not reached yet
+    guard_exp = lower_operator("t", max_time)
     assert len(variable_names) > 0, "At least one timer is required."
+    # No unprocessed timer callbacks present
     for variable_name in variable_names:
-        singular_exp = JaniExpression({
-            "op": "¬",
-            "exp": JaniExpression(variable_name)
-        })
-        guard_exp = JaniExpression({
-            "op": "∧",
-            "left": guard_exp,
-            "right": singular_exp
-        })  # TODO: write test case for this
+        unprocessed_timer_exp = not_operator(variable_name)
+        # Append this expression to the guard using the and operator
+        guard_exp = and_operator(guard_exp, unprocessed_timer_exp)
+        # TODO: write test case for this
     assignments = [
         # t = t + global_timer_period
         JaniAssignment({
             "ref": "t",
-            "value": JaniExpression({
-                "op": "+",
-                "left": JaniExpression("t"),
-                "right": JaniExpression(global_timer_period)
-            }),
+            "value": plus_operator("t", global_timer_period),
             "index": 0})
     ] + timer_assignments
     iterator_edge = JaniEdge({

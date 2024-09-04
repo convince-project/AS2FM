@@ -65,6 +65,7 @@ def convert_multiple_scxmls_to_jani(
     """
     base_model = JaniModel()
     base_model.add_feature("arrays")
+    base_model.add_feature("trigonometric-functions")
     events_holder = EventsHolder()
     for input_scxml in scxmls:
         if isinstance(input_scxml, str):
