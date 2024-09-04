@@ -16,7 +16,7 @@
         <data id="tf_robot_world_y" expr="0.0" type="float32" />
         <data id="tf_robot_world_theta" expr="0.0" type="float32" />
         <!-- The goal pose in the world frame -->
-        <data id="goal_x_world" expr="15.0" type="float32" />
+        <data id="goal_x_world" expr="5.0" type="float32" />
         <data id="goal_y_world" expr="-2.0" type="float32" />
         <!-- The goal pose in the robot frame -->
         <data id="goal_x_robot" expr="0.0" type="float32" />

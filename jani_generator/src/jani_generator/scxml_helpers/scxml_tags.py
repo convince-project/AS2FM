@@ -216,6 +216,9 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                     if isinstance(variables[n], MutableSequence):
                         for _ in range(50):
                             variables[n].append(0)
+                    # Another hack, since javascript interprets 0.0 as int...
+                    if isinstance(variables[n], float):
+                        variables[n] = 0.1
                 # TODO: We should get the type explicitly: sometimes the expression is under-defined
                 # This might contain reference to event variables, that have no type specified
                 data_structure_for_event[param.get_name()] = value_to_type(

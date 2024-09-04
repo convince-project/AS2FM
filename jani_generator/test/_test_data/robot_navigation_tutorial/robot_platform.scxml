@@ -17,7 +17,7 @@
 
     <ros_topic_publisher name="pose" topic="/robot_pose" type="geometry_msgs/Pose2D" />
     <ros_topic_subscriber name="cmd_vel" topic="/cmd_vel" type="geometry_msgs/Twist" />
-    <ros_time_rate name="sample_timer" rate_hz="1" />
+    <ros_time_rate name="sample_timer" rate_hz="0.5" />
 
     <state id="current">
         <onentry>
