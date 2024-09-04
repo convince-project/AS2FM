@@ -49,8 +49,8 @@
             <!-- Control law: v = 0.5 * goal_x_robot, w = 0.5 * goal_y_robot -->
             <ros_topic_publish name="cmd_vel">
                 <!-- We have only sin / cos, no atan. Make simpler approach -->
-                <field name="linear.x" expr="0.5 * goal_x_robot" />
-                <field name="angular.z" expr="0.5 * goal_y_robot" />
+                <field name="linear.x" expr="0.1 * goal_x_robot" />
+                <field name="angular.z" expr="0.1 * goal_y_robot" />
                 <!-- Additional fields are set to 0 -->
                 <field name="linear.y" expr="0.0" />
                 <field name="linear.z" expr="0.0" />
