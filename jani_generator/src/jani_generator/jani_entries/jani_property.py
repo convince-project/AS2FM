@@ -29,14 +29,16 @@ class FilterProperty:
     """All Property operators must occur in a FilterProperty object."""
     def __init__(self, property_filter_exp: Dict[str, Any]):
         assert isinstance(property_filter_exp, dict), "Unexpected FilterProperty initialization"
-        assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", "Unexpected FilterProperty initialization"
+        assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", \
+            "Unexpected FilterProperty initialization"
         self._fun = property_filter_exp["fun"]
         raw_states = property_filter_exp["states"]
         assert isinstance(raw_states, dict) and raw_states["op"] == "initial"
         self._process_values(property_filter_exp["values"])
 
     def _process_values(self, prop_values: Dict[str, Any]) -> None:
-        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = ProbabilityProperty(prop_values)
+        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = \
+            ProbabilityProperty(prop_values)
         if self._values.is_valid():
             return
         self._values = RewardProperty(prop_values)
@@ -100,12 +102,20 @@ class PathProperty:
     """Mainly Until properties. Need to check support of Next and Global properties in Jani."""
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
-        for entry in ("op", "left", "right"):
-            if entry not in prop_values:
-                return
-        self._op = prop_values["op"]
-        self._left = JaniExpression(prop_values["left"])
-        self._right = JaniExpression(prop_values["right"])
+        if "op" not in prop_values:
+            return
+        self._op: str = prop_values["op"]
+        self._operands: Dict[str, JaniExpression] = {}
+        if self._op == "F":
+            self._operands = {"exp": JaniExpression(prop_values["exp"])}
+        elif self._op in ("U", "W"):
+            self._operands = {
+                "left": JaniExpression(prop_values["left"]),
+                "right": JaniExpression(prop_values["right"])
+            }
+        else:
+            print(f"Warning: Unsupported PathProperty operator {self._op}")
+            return
         self._bounds = None
         if "step-bounds" in prop_values:
             self._bounds = PathPropertyStepBounds(prop_values["step-bounds"])
@@ -118,11 +128,9 @@ class PathProperty:
         return self._valid
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        ret_dict = {
-            "op": self._op,
-            "left": expand_expression(self._left, constants).as_dict(),
-            "right": expand_expression(self._right, constants).as_dict()
-        }
+        ret_dict = {"op": self._op}
+        ret_dict.update({operand: expand_expression(expr, constants).as_dict() for
+                         operand, expr in self._operands.items()})
         if self._bounds is not None:
             ret_dict["step-bounds"] = self._bounds.as_dict(constants)
         return ret_dict
@@ -153,6 +161,10 @@ class PathPropertyStepBounds:
 
 
 class JaniProperty:
+    @staticmethod
+    def from_dict(property_dict: dict) -> "JaniProperty":
+        return JaniProperty(property_dict["name"], property_dict["expression"])
+
     def __init__(self, name, expression):
         self._name = name
         # TODO: For now copy as it is. Later we might expand it to support more functionalities

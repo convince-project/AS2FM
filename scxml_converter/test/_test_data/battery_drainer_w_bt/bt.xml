@@ -1,0 +1,10 @@
+<root BTCPP_format="4">
+    <BehaviorTree>
+        <Sequence>
+            <Inverter>
+                <Condition ID="BtTopicCondition" name="alarm" />
+            </Inverter>
+            <Action ID="BtTopicAction" name="charge" />
+        </Sequence>
+    </BehaviorTree>
+</root>

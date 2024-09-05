@@ -17,16 +17,21 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
+from array import array
 
 import js2py
 
 from as2fm_common.common import ValidTypes
 
 
+BASIC_JS_TYPES = Union[int, float, bool]
+
+
 def interpret_ecma_script_expr(
         expr: str, variables: Optional[Dict[str, ValidTypes]] = None) -> object:
-    """Interpret the ECMA script expression.
+    """
+    Interpret the ECMA script expression.
 
     :param expr: The ECMA script expression
     :return: The interpreted object
@@ -34,5 +39,24 @@ def interpret_ecma_script_expr(
     if variables is None:
         variables = {}
     context = js2py.EvalJs(variables)
-    context.execute("result = " + expr)
-    return context.result
+    try:
+        context.execute("result = " + expr)
+    except js2py.base.PyJsException:
+        msg_addition = ""
+        if expr in ("True", "False"):
+            msg_addition = "Did you mean to use 'true' or 'false' instead?"
+        raise RuntimeError(f"Failed to interpret JS expression: 'result = {expr}'. {msg_addition}")
+    expr_result = context.result
+    if isinstance(expr_result, BASIC_JS_TYPES):
+        return expr_result
+    elif isinstance(expr_result, js2py.base.JsObjectWrapper):
+        if isinstance(expr_result._obj, js2py.base.PyJsArray):
+            return expr_result.to_list()
+        else:
+            raise ValueError(f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or "
+                             f"an array, got '{type(expr_result._obj)}'")
+    elif isinstance(expr_result, array):
+        return expr_result
+    else:
+        raise ValueError(f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or "
+                         f"JsObjectWrapper, got '{type(expr_result)}'")

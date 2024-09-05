@@ -16,16 +16,18 @@
 """Expand expressions into jani."""
 
 from math import pi
-from typing import Dict, Union
+from typing import Callable, Dict, Union
 
 from jani_generator.jani_entries import JaniConstant, JaniExpression, JaniValue
 from jani_generator.jani_entries.jani_expression_generator import (
-    abs_operator, and_operator, divide_operator, equal_operator,
-    floor_operator, greater_equal_operator, if_operator, lower_operator,
+    abs_operator, and_operator, ceil_operator, cos_operator, divide_operator, equal_operator,
+    floor_operator, greater_equal_operator, if_operator, log_operator, lower_operator,
     max_operator, min_operator, minus_operator, modulo_operator,
-    multiply_operator, or_operator, plus_operator, pow_operator)
+    multiply_operator, or_operator, plus_operator, pow_operator, sin_operator)
 
-BASIC_EXPRESSIONS_MAPPING = {
+
+# Map each operator to the corresponding one in Jani
+OPERATORS_TO_JANI_MAP: Dict[str, str] = {
     "-": "-",
     "+": "+",
     "*": "*",
@@ -59,6 +61,8 @@ BASIC_EXPRESSIONS_MAPPING = {
     "ite": "ite",
     "⇒": "⇒",
     "=>": "⇒",
+    "aa": "aa",
+    "ac": "ac",
 }
 
 
@@ -384,14 +388,15 @@ def __expression_distance_to_point(
 
 def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
     assert isinstance(expression, JaniExpression), "The input must be a JaniExpression"
-    assert expression.op in BASIC_EXPRESSIONS_MAPPING, \
+    assert expression.op in OPERATORS_TO_JANI_MAP, \
         f"The operator {expression.op} is not supported"
-    expression.op = BASIC_EXPRESSIONS_MAPPING[expression.op]
+    expression.op = OPERATORS_TO_JANI_MAP[expression.op]
     return expression
 
 
 def expand_expression(
-        expression: Union[JaniExpression, JaniValue], jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
+        expression: Union[JaniExpression, JaniValue],
+        jani_constants: Dict[str, JaniConstant]) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
     assert isinstance(expression, JaniExpression), \
         f"The expression should be a JaniExpression instance, found {type(expression)} instead."
@@ -425,3 +430,17 @@ def expand_expression(
         return to_rad_operator(exp=expression)
     # The remaining operators are the basic ones, and they only need the operand to be substituted
     return __substitute_expression_op(expression)
+
+
+# Map each function name to the corresponding Expression generator
+CALLABLE_OPERATORS_MAP: Dict[str, Callable] = {
+    "abs": abs_operator,
+    "floor": floor_operator,
+    "ceil": ceil_operator,
+    "cos": cos_operator,
+    "sin": sin_operator,
+    "log": log_operator,
+    "pow": pow_operator,
+    "min": min_operator,
+    "max": max_operator
+}

@@ -14,6 +14,12 @@
 # limitations under the License.
 
 from xml.etree import ElementTree as ET
+import re
+
+
+def to_snake_case(text: str) -> str:
+    """Convert a string to snake case."""
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', text).lower()
 
 
 def canonicalize_xml(xml: str) -> str:

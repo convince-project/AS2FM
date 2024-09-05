@@ -20,13 +20,7 @@ This module provides functionalities to convert the ROS-specific macros
 into generic SCXML code.
 """
 
-import xml.etree.ElementTree as ET
-from typing import Dict, Tuple, Union
-
-from as2fm_common.common import ros_type_name_to_python_type
-from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from scxml_converter.scxml_entries import (ScxmlRoot,
-                                           ScxmlRosDeclarationsContainer)
+from typing import Dict, Union
 
 BASIC_FIELD_TYPES = ['boolean', 'int32', 'int16', 'float', 'double']
 
@@ -72,31 +66,31 @@ def _ros_type_fields(type_str: str) -> Dict[str, Union[str, dict]]:
     return msg_fields
 
 
-# TODO: Unused, keeping as reference to output types in low level SCXML
-def _check_topic_type(
-        name: str,
-        type_dict: dict,
-        this_topic: str,
-        cb_topic: str,
-        expr: str):
-    """Check if the field type is correct.
+# # TODO: Unused, keeping as reference to output types in low level SCXML
+# def _check_topic_type(
+#         name: str,
+#         type_dict: dict,
+#         this_topic: str,
+#         cb_topic: str,
+#         expr: str):
+#     """Check if the field type is correct.
 
-    It matches the expression type with the type declared for the given
-    publisher or subscriber.
+#     It matches the expression type with the type declared for the given
+#     publisher or subscriber.
 
-    :param name: The name of the field.
-    :param type_dict: The type dictionary of the topic.
-    :param expr: The ecmascript expression to check.
-    :throws: ConversionStaticAnalysisError if the type is incorrect.
-    """
-    if name not in type_dict:
-        raise ConversionStaticAnalysisError(
-            f"Field {name} not found in the type dictionary {type_dict}")
-    expected_ros_type = type_dict[this_topic][name]
-    expected_python_type = ros_type_name_to_python_type(expected_ros_type)
-    expression_value = interpret_ecma_script_expr(expr)
-    expression_type = type(expression_value)
-    if expression_type != expected_python_type:
-        raise ConversionStaticAnalysisError(
-            f"Field {name} has type {expression_type}, " +
-            f"expected {expected_python_type}")
+#     :param name: The name of the field.
+#     :param type_dict: The type dictionary of the topic.
+#     :param expr: The ecmascript expression to check.
+#     :throws: ConversionStaticAnalysisError if the type is incorrect.
+#     """
+#     if name not in type_dict:
+#         raise ConversionStaticAnalysisError(
+#             f"Field {name} not found in the type dictionary {type_dict}")
+#     expected_ros_type = type_dict[this_topic][name]
+#     expected_python_type = ros_type_name_to_python_type(expected_ros_type)
+#     expression_value = interpret_ecma_script_expr(expr)
+#     expression_type = type(expression_value)
+#     if expression_type != expected_python_type:
+#         raise ConversionStaticAnalysisError(
+#             f"Field {name} has type {expression_type}, " +
+#             f"expected {expected_python_type}")
