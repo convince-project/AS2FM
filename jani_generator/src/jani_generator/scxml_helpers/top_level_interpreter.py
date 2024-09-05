@@ -20,12 +20,14 @@ Module reading the top level xml file containing the whole model to check.
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from as2fm_common.common import remove_namespace
-from jani_generator.jani_entries import JaniModel
-from jani_generator.ros_helpers.ros_services import RosService, RosServices
+from jani_generator.ros_helpers.ros_communication_handler import (
+    generate_plain_scxml_from_handlers, update_ros_communication_handlers)
+from jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
+from jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from jani_generator.ros_helpers.ros_timer import RosTimer
 from jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
@@ -36,6 +38,7 @@ from scxml_converter.scxml_entries import ScxmlRoot
 @dataclass()
 class FullModel:
     max_time: Optional[int] = None
+    max_array_size: int = field(default=100)
     bt: Optional[str] = None
     plugins: List[str] = field(default_factory=list)
     skills: List[str] = field(default_factory=list)
@@ -87,6 +90,8 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 #     time_resolution = _parse_time_element(mc_parameter)
                 if remove_namespace(mc_parameter.tag) == "max_time":
                     model.max_time = _parse_time_element(mc_parameter)
+                elif remove_namespace(mc_parameter.tag) == "max_array_size":
+                    model.max_array_size = int(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -129,42 +134,39 @@ def generate_plain_scxml_models_and_timers(
     """
     Generate plain SCXML models and ROS timers from the full model dictionary.
     """
-    # Convert behavior tree and plugins to ROS-scxml
+    # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
+    ros_scxmls: List[ScxmlRoot] = []
+    for fname in scxml_files_to_convert:
+        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
+    # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        bt_out_dir = os.path.join(os.path.dirname(model.bt), "generated_bt_scxml")
-        os.makedirs(bt_out_dir, exist_ok=True)
-        expanded_bt_plugin_scxmls = bt_converter(
-            model.bt, model.plugins, bt_out_dir)
-        scxml_files_to_convert.extend(expanded_bt_plugin_scxmls)
-
-    # Convert ROS-SCXML FSMs to plain SCXML
+        ros_scxmls.extend(bt_converter(model.bt, model.plugins))
+    # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
-    all_services: RosServices = {}
-    for fname in scxml_files_to_convert:
-        plain_scxml, ros_declarations = \
-            ScxmlRoot.from_scxml_file(fname).to_plain_scxml_and_declarations()
+    all_services: Dict[str, RosServiceHandler] = {}
+    all_actions: Dict[str, RosActionHandler] = {}
+    for scxml_entry in ros_scxmls:
+        plain_scxmls, ros_declarations = \
+            scxml_entry.to_plain_scxml_and_declarations()
         # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, \
                 f"Timer {timer_name} already exists."
             all_timers.append(RosTimer(timer_name, timer_rate))
         # Handle ROS Services
-        for service_name, service_type in ros_declarations._service_clients.items():
-            if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].append_service_client(
-                service_name, service_type, plain_scxml.get_name())
-        for service_name, service_type in ros_declarations._service_servers.items():
-            if service_name not in all_services:
-                all_services[service_name] = RosService()
-            all_services[service_name].set_service_server(
-                service_name, service_type, plain_scxml.get_name())
+        update_ros_communication_handlers(
+            scxml_entry.get_name(), RosServiceHandler, all_services,
+            ros_declarations._service_servers, ros_declarations._service_clients)
+        # Handle ROS Actions
+        update_ros_communication_handlers(
+            scxml_entry.get_name(), RosActionHandler, all_actions,
+            ros_declarations._action_servers, ros_declarations._action_clients)
+        plain_scxml_models.extend(plain_scxmls)
+    # Generate sync SCXML models for services and actions
+    for plain_scxml in generate_plain_scxml_from_handlers(all_services | all_actions):
         plain_scxml_models.append(plain_scxml)
-    # Generate service sync SCXML models
-    for service_info in all_services.values():
-        plain_scxml_models.append(service_info.to_scxml())
     return plain_scxml_models, all_timers
 
 
@@ -190,7 +192,7 @@ def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False)
                 f.write(scxml_model.as_xml_string())
 
     jani_model = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, all_timers, model.max_time)
+        plain_scxml_models, all_timers, model.max_time, model.max_array_size)
 
     jani_dict = jani_model.as_dict()
     assert len(model.properties) == 1, "Only one property is supported right now."

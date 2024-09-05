@@ -17,41 +17,28 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import Union
+from typing import get_args, MutableSequence, Union, Type
+from array import array
 
-ValidTypes = Union[bool, int, float]
-"""We define the basic types that are supported by the Jani language:
+"""
+Set of basic types that are supported by the Jani language.
 
-// Types
-// We cover only the most basic types at the moment.
-// In the remainder of the specification, all requirements like "y must be of type x" are to be interpreted
-// as "type x must be assignable from y's type".
+Basic types (from Jani docs):
+Types
+We cover only the most basic types at the moment.
+In the remainder of the specification, all requirements like "y must be of type x" are to be
+interpreted as "type x must be assignable from y's type".
 var BasicType = schema([
 "bool", // assignable from bool
 "int", // numeric; assignable from int and bounded int
 "real" // numeric; assignable from all numeric types
 ]);
 src https://docs.google.com/document/d/\
-    1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit"""
+    1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
 
-
-def ros_type_name_to_python_type(type_str: str) -> type:
-    """Convert a string representing a type to a python type.
-
-    Source: https://docs.ros.org/en/rolling/Concepts/Basic/\
-        About-Interfaces.html#field-types
-
-    :param type_str: The string representing the type
-    :return: The python type
-    """
-    if type_str in ['bool', 'boolean']:
-        return bool
-    if type_str in ['int8', 'int16', 'int32', 'int64',
-                    'uint8', 'uint16', 'uint32', 'uint64']:
-        return int
-    if type_str in ['float32', 'float64']:
-        return float
-    raise NotImplementedError(f"Type {type_str} not supported.")
+Additionally, we support the array types from the array extension.
+"""
+ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 
 def remove_namespace(tag: str) -> str:
@@ -68,3 +55,49 @@ def remove_namespace(tag: str) -> str:
     else:
         tag_wo_ns = tag
     return tag_wo_ns
+
+
+def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
+    """Generate a default expression for a field type."""
+    assert field_type in get_args(ValidTypes), f"Error: Unsupported data type {field_type}."
+    if field_type is MutableSequence[int]:
+        return array('i')
+    elif field_type is MutableSequence[float]:
+        return array('d')
+    else:
+        return field_type()
+
+
+def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
+    """Convert a value to a type."""
+    if isinstance(value, array):
+        if value.typecode == 'i':
+            return MutableSequence[int]
+        elif value.typecode == 'd':
+            return MutableSequence[float]
+        else:
+            raise ValueError(f"Type of array '{value.typecode}' not supported.")
+    elif isinstance(value, (int, float, bool)):
+        return type(value)
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def value_to_string(value: ValidTypes) -> str:
+    """Convert a value to a string."""
+    if isinstance(value, MutableSequence):
+        # Expect value to be an array
+        return f'[{",".join(str(v) for v in value)}]'
+    elif isinstance(value, bool):
+        return str(value).lower()
+    elif isinstance(value, (int, float)):
+        return str(value)
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
+    """Check if the value is compatible with the field type."""
+    if field_type is float:
+        return isinstance(value, (int, float))
+    return isinstance(value, field_type)

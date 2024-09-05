@@ -1,0 +1,29 @@
+{
+    "properties": [
+        {
+            "name": "client1_ok",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "topic_client_1_last_fibonacci_msg.data",
+                                "right": 5
+                            },
+                            "right": "topic_client_1_last_fibonacci_msg.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

@@ -43,6 +43,9 @@ class TestConversion(unittest.TestCase):
           version="1.0"
           name="BasicExample"
           initial="Initial">
+            <datamodel>
+                <data id="x" expr="0" type="int32" />
+            </datamodel>
             <state id="Initial">
                 <onentry>
                     <assign location="x" expr="42" />
@@ -52,7 +55,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 2)
@@ -71,7 +74,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
@@ -99,7 +102,7 @@ class TestConversion(unittest.TestCase):
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -132,12 +135,8 @@ class TestConversion(unittest.TestCase):
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
             scxml_battery_manager = f.read()
 
-        jani_model = convert_multiple_scxmls_to_jani([
-            scxml_battery_drainer,
-            scxml_battery_manager],
-            [],
-            0
-        )
+        jani_model = convert_multiple_scxmls_to_jani(
+            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -229,30 +228,34 @@ class TestConversion(unittest.TestCase):
         # if os.path.exists(ouput_path):
         #     os.remove(ouput_path)
 
-    def test_with_main_success(self):
+    def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
         self._test_with_main('ros_example', 'battery_depleted', True)
 
-    def test_with_main_fail(self):
+    def test_battery_ros_example_over_depleted_fail(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main('ros_example', 'battery_over_depleted', False)
 
-    def test_with_w_bt_main_battery_depleted(self):
+    def test_battery_ros_example_alarm_on(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main('ros_example', 'alarm_on', False)
+
+    def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('ros_example_w_bt', 'battery_depleted', False)
+        self._test_with_main('ros_example_w_bt', 'battery_depleted', False, True)
 
-    def test_with_w_bt_main_battery_under_twenty(self):
+    def test_battery_example_w_bt_main_battery_under_twenty(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
         self._test_with_main('ros_example_w_bt', 'battery_below_20', False)
 
-    def test_with_w_bt_main_alarm_and_charge(self):
+    def test_battery_example_w_bt_main_alarm_and_charge(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
 
-    def test_with_w_bt_main_charged_after_time(self):
+    def test_battery_example_w_bt_main_charged_after_time(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main('ros_example_w_bt', 'battery_charged', True)
@@ -267,9 +270,21 @@ class TestConversion(unittest.TestCase):
         being sent in different orders without deadlocks."""
         self._test_with_main('multiple_senders_same_event', 'seq_check', True)
 
+    def test_array_model(self):
+        """Test the array model."""
+        self._test_with_main('array_model', 'array_check', True)
+
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
         self._test_with_main('ros_add_int_srv_example', 'happy_clients', True, True)
+
+    def test_ros_fibonacci_action_example(self):
+        """Test the actions are properly handled in Jani."""
+        self._test_with_main('fibonacci_action_example', 'clients_ok', True, True)
+
+    def test_ros_fibonacci_action_single_client_example(self):
+        """Test the actions are properly handled in Jani."""
+        self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
 
 
 if __name__ == '__main__':

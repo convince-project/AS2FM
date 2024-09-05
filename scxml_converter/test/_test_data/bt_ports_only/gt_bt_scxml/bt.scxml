@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="bt" version="1.0" model_src="" initial="wait_for_tick" xmlns="http://www.w3.org/2005/07/scxml">
+    <ros_time_rate rate_hz="1.0" name="bt_tick" />
+    <state id="tick">
+        <transition target="1000_BtTopicAction" />
+    </state>
+    <state id="success">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="failure">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="running">
+        <transition target="wait_for_tick" />
+    </state>
+    <state id="1000_BtTopicAction">
+        <onentry>
+            <send event="bt_1000_tick" />
+        </onentry>
+        <transition target="failure" event="bt_1000_failure" />
+        <transition target="running" event="bt_1000_running" />
+        <transition target="1001_BtTopicAction" event="bt_1000_success" />
+    </state>
+    <state id="1001_BtTopicAction">
+        <onentry>
+            <send event="bt_1001_tick" />
+        </onentry>
+        <transition target="success" event="bt_1001_success" />
+        <transition target="failure" event="bt_1001_failure" />
+        <transition target="running" event="bt_1001_running" />
+    </state>
+    <state id="wait_for_tick">
+        <ros_rate_callback name="bt_tick" target="tick" />
+    </state>
+</scxml>

@@ -13,11 +13,11 @@
                         "right": {
                             "left": {
                                 "op": "≤",
-                                "left": "ros_topic.level.data",
+                                "left": "topic_level_msg.data",
                                 "right": 0
                             },
                             "op": "∧",
-                            "right": "ros_topic.level.valid"
+                            "right": "topic_level_msg.valid"
                         }
                     }
                 },
@@ -39,11 +39,11 @@
                         "right": {
                             "left": {
                                 "op": "<",
-                                "left": "ros_topic.level.data",
+                                "left": "topic_level_msg.data",
                                 "right": 20
                             },
                             "op": "∧",
-                            "right": "ros_topic.level.valid"
+                            "right": "topic_level_msg.valid"
                         }
                     }
                 },
@@ -64,8 +64,8 @@
                         "op": "U",
                         "right": {
                             "op": "∧",
-                            "left": "ros_topic.alarm.data",
-                            "right": "ros_topic.charge.valid"
+                            "left": "topic_alarm_msg.data",
+                            "right": "topic_charge_msg.valid"
                         }
                     }
                 },
@@ -90,11 +90,11 @@
                         "right": {
                             "left": {
                                 "op": "=",
-                                "left": "ros_topic.level.data",
+                                "left": "topic_level_msg.data",
                                 "right": 100
                             },
                             "op": "∧",
-                            "right": "ros_topic.level.valid"
+                            "right": "topic_level_msg.valid"
                         }
                     }
                 },

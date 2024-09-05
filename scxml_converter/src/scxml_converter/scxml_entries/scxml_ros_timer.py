@@ -15,23 +15,20 @@
 
 """Declaration of SCXML tags related to ROS Timers."""
 
-from typing import Optional, Union
+from typing import Type
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody,
-                                           ScxmlRosDeclarationsContainer,
-                                           ScxmlTransition,
-                                           as_plain_execution_body,
-                                           execution_body_from_xml,
-                                           valid_execution_body)
+from scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
+from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback
+
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
+from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
-class RosTimeRate(ScxmlBase):
+class RosTimeRate(RosDeclaration):
     """Object used in the SCXML root to declare a new timer with its related tick rate."""
-
-    def __init__(self, name: str, rate_hz: float):
-        self._name = name
-        self._rate_hz = float(rate_hz)
 
     @staticmethod
     def get_tag_name() -> str:
@@ -40,26 +37,24 @@ class RosTimeRate(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
-        assert xml_tree.tag == RosTimeRate.get_tag_name(), \
-            f"Error: SCXML rate timer: XML tag name is not {RosTimeRate.get_tag_name()}"
-        timer_name = xml_tree.attrib.get("name")
-        timer_rate_str = xml_tree.attrib.get("rate_hz")
-        assert timer_name is not None and timer_rate_str is not None, \
-            "Error: SCXML rate timer: 'name' or 'rate_hz' attribute not found in input xml."
+        assert_xml_tag_ok(RosTimeRate, xml_tree)
+        timer_name = get_xml_argument(RosTimeRate, xml_tree, "name")
+        timer_rate_str = get_xml_argument(RosTimeRate, xml_tree, "rate_hz")
         try:
             timer_rate = float(timer_rate_str)
         except ValueError as e:
             raise ValueError("Error: SCXML rate timer: rate is not a number.") from e
         return RosTimeRate(timer_name, timer_rate)
 
-    def check_validity(self) -> bool:
-        valid_name = isinstance(self._name, str) and len(self._name) > 0
-        valid_rate = isinstance(self._rate_hz, float) and self._rate_hz > 0
-        if not valid_name:
-            print("Error: SCXML rate timer: name is not valid.")
-        if not valid_rate:
-            print("Error: SCXML rate timer: rate is not valid.")
-        return valid_name and valid_rate
+    def __init__(self, name: str, rate_hz: float):
+        self._name = name
+        self._rate_hz = float(rate_hz)
+
+    def get_interface_name(self) -> str:
+        raise RuntimeError("Error: SCXML rate timer: deleted method 'get_interface_name'.")
+
+    def get_interface_type(self) -> str:
+        raise RuntimeError("Error: SCXML rate timer: deleted method 'get_interface_type'.")
 
     def get_name(self) -> str:
         return self._name
@@ -67,9 +62,20 @@ class RosTimeRate(ScxmlBase):
     def get_rate(self) -> float:
         return self._rate_hz
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
-        # This is discarded in the as_plain_scxml method from ScxmlRoot
-        raise RuntimeError("Error: SCXML ROS declarations cannot be converted to plain SCXML.")
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        pass
+
+    def check_validity(self) -> bool:
+        valid_name = is_non_empty_string(RosTimeRate, "name", self._name)
+        valid_rate = isinstance(self._rate_hz, float) and self._rate_hz > 0
+        if not valid_rate:
+            print("Error: SCXML rate timer: rate is not valid.")
+        return valid_name and valid_rate
+
+    def check_valid_instantiation(self) -> bool:
+        """Check if the timer has undefined entries (i.e. from BT ports)."""
+        return True
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
@@ -78,7 +84,7 @@ class RosTimeRate(ScxmlBase):
         return xml_time_rate
 
 
-class RosRateCallback(ScxmlTransition):
+class RosRateCallback(RosCallback):
     """Callback that triggers each time the associated timer ticks."""
 
     @staticmethod
@@ -86,85 +92,11 @@ class RosRateCallback(ScxmlTransition):
         return "ros_rate_callback"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosRateCallback":
-        """Create a RosRateCallback object from an XML tree."""
-        assert xml_tree.tag == RosRateCallback.get_tag_name(), \
-            f"Error: SCXML rate callback: XML tag name is not {RosRateCallback.get_tag_name()}"
-        timer_name = xml_tree.attrib.get("name")
-        target = xml_tree.attrib.get("target")
-        assert timer_name is not None and target is not None, \
-            "Error: SCXML rate callback: 'name' or 'target' attribute not found in input xml."
-        condition = xml_tree.get("cond")
-        condition = condition if condition is not None and len(condition) > 0 else None
-        exec_body = execution_body_from_xml(xml_tree)
-        exec_body = exec_body if exec_body is not None else None
-        return RosRateCallback(timer_name, target, condition, exec_body)
+    def get_declaration_type() -> Type[RosTimeRate]:
+        return RosTimeRate
 
-    def __init__(self, timer: Union[RosTimeRate, str], target: str, condition: Optional[str] = None,
-                 body: Optional[ScxmlExecutionBody] = None):
-        """
-        Generate a new rate timer and callback.
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_timer_defined(self._interface_name)
 
-        Multiple rate callbacks can share the same timer name, but the rate must match.
-
-        :param timer: The RosTimeRate instance triggering the callback, or its name
-        :param body: The body of the callback
-        """
-        if isinstance(timer, RosTimeRate):
-            self._timer_name = timer.get_name()
-        else:
-            # Used for generating ROS entries from xml file
-            assert isinstance(timer, str), "Error: SCXML rate callback: invalid timer type."
-            self._timer_name = timer
-        self._target = target
-        self._condition = condition
-        self._body = body
-        assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
-
-    def check_validity(self) -> bool:
-        valid_timer = isinstance(self._timer_name, str) and len(self._timer_name) > 0
-        valid_target = isinstance(self._target, str) and len(self._target) > 0
-        valid_cond = self._condition is None or (
-            isinstance(self._condition, str) and len(self._condition) > 0)
-        valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_timer:
-            print("Error: SCXML rate callback: timer name is not valid.")
-        if not valid_target:
-            print("Error: SCXML rate callback: target is not valid.")
-        if not valid_cond:
-            print("Error: SCXML rate callback: condition is not valid.")
-        if not valid_body:
-            print("Error: SCXML rate callback: body is not valid.")
-        return valid_timer and valid_target and valid_cond and valid_body
-
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the ros instantiations have been declared."""
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML rate callback: invalid ROS declarations container."
-        timer_cb_declared = ros_declarations.is_timer_defined(self._timer_name)
-        if not timer_cb_declared:
-            print(f"Error: SCXML rate callback: timer {self._timer_name} not declared.")
-            return False
-        valid_body = super().check_valid_ros_instantiations(ros_declarations)
-        if not valid_body:
-            print("Error: SCXML rate callback: body has invalid ROS instantiations.")
-        return valid_body
-
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        event_name = "ros_time_rate." + self._timer_name
-        target = self._target
-        cond = self._condition
-        body = as_plain_execution_body(self._body, ros_declarations)
-        return ScxmlTransition(target, [event_name], cond, body)
-
-    def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML rate callback: invalid parameters."
-        xml_rate_callback = ET.Element(
-            "ros_rate_callback", {"name": self._timer_name, "target": self._target})
-        if self._condition is not None:
-            xml_rate_callback.set("cond", self._condition)
-        if self._body is not None:
-            for entry in self._body:
-                xml_rate_callback.append(entry.as_xml())
-        return xml_rate_callback
+    def get_plain_scxml_event(self, _) -> str:
+        return generate_rate_timer_event(self._interface_name)

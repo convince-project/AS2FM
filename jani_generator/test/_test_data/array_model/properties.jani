@@ -1,0 +1,38 @@
+{
+    "properties": [
+          {
+            "name": "array_check",
+            "comment": "Not working due to array access not supported in properties",
+            "expression": {
+              "op": "filter",
+              "fun": "values",
+              "values": {
+                "op": "Pmin",
+                "exp": {
+                  "op": "F",
+                  "exp": {
+                    "op": "∧",
+                    "left": {
+                      "op": "=",
+                      "left": 11,
+                      "right": "new_msg_array.msg.length"
+                    },
+                    "right": {
+                      "op": "=",
+                      "left": {
+                        "op": "aa",
+                        "exp": "new_msg_array.msg",
+                        "index": 10
+                      },
+                      "right": 10
+                    }
+                  }
+                }
+              },
+              "states": {
+                "op": "initial"
+              }
+            }
+          }
+    ]
+}

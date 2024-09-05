@@ -21,6 +21,8 @@ from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import ScxmlBase, ScxmlData
+from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 
 
 class ScxmlDataModel(ScxmlBase):
@@ -37,32 +39,37 @@ class ScxmlDataModel(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
-        assert xml_tree.tag == ScxmlDataModel.get_tag_name(), \
-            f"Error: SCXML datamodel: XML tag name is not {ScxmlDataModel.get_tag_name()}."
-        data_entries_xml = xml_tree.findall("data")
-        assert data_entries_xml is not None, "Error: SCXML datamodel: No data entries found."
+        assert_xml_tag_ok(ScxmlDataModel, xml_tree)
         data_entries = []
-        for data_entry_xml in data_entries_xml:
-            data_entries.append(ScxmlData.from_xml_tree(data_entry_xml))
+        prev_xml_comment: Optional[str] = None
+        for data_entry_xml in xml_tree:
+            if data_entry_xml.tag is ET.Comment:
+                prev_xml_comment = data_entry_xml.text
+            else:
+                data_entries.append(ScxmlData.from_xml_tree(data_entry_xml, prev_xml_comment))
+                prev_xml_comment = None
         return ScxmlDataModel(data_entries)
 
     def get_data_entries(self) -> Optional[List[ScxmlData]]:
         return self._data_entries
 
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
+        for data_entry in self._data_entries:
+            data_entry.update_bt_ports_values(bt_ports_handler)
+
     def check_validity(self) -> bool:
-        valid_data_entries = True
         if self._data_entries is not None:
-            valid_data_entries = isinstance(self._data_entries, list)
-            if valid_data_entries:
-                for data_entry in self._data_entries:
-                    valid_data_entry = isinstance(data_entry, ScxmlData) and \
-                        data_entry.check_validity()
-                    if not valid_data_entry:
-                        valid_data_entries = False
-                        break
-        if not valid_data_entries:
-            print("Error: SCXML datamodel: data entries are not valid.")
-        return valid_data_entries
+            if not isinstance(self._data_entries, list):
+                print("Error: SCXML datamodel: data entries are not a list.")
+                return False
+            for data_entry in self._data_entries:
+                if not isinstance(data_entry, ScxmlData):
+                    print(f"Error: SCXML datamodel: invalid data entry type {type(data_entry)}.")
+                    return False
+                if not data_entry.check_validity():
+                    print(f"Error: SCXML datamodel: invalid data entry '{data_entry.get_name()}'.")
+                    return False
+        return True
 
     def as_xml(self) -> Optional[ET.Element]:
         assert self.check_validity(), "SCXML: found invalid datamodel object."

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="send_next" 
+    version="1.0" 
+    name="sender"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+    
+    <datamodel>
+        <data id="msg_array" expr="[]" type="int32[]" />
+    </datamodel>
+
+    <state id="send_next">
+        <transition target="send_next">
+            <if cond="msg_array.length == 0">
+                <!-- Below assign is valid in JavaScript: arrays are resized dynamically, and None is assigned to the unassigned entries.
+                For our use-case, we can enforce that the max. resize extent is 1, since we cannot support None entries. -->
+                <assign location="msg_array[0]" expr="0" />
+            <else />
+                <assign location="msg_array[msg_array.length]" expr="msg_array[msg_array.length - 1] + 1" />
+            </if>
+            <send event="new_msg_array">
+                <param name="msg" expr="msg_array" />
+            </send>
+        </transition>
+    </state>
+
+</scxml>
