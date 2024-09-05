@@ -36,7 +36,7 @@ BASIC_FIELD_TYPES = ['boolean',
 ROS_EVENT_PREFIXES = [
     "_msg.",                            # Topic-related
     "_req.", "_res.",                   # Service-related
-    "_goal.", "_feedback.", "_result."  # Action-related
+    "_goal.", "_feedback.", "_wrapped_result."  # Action-related
 ]
 
 
