@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="idle" 
+    version="1.0" 
+    name="world"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- 
+    loc
+    0 .. pantry
+    1 .. table
+
+    obj
+    0 .. snacks0
+    -->
+
+    <ros_action_server name="act_nav" action_name="/navigate" type="tbd/Navigate" />
+    <ros_action_server name="act_pick" action_name="/pick" type="tbd/Pick" />
+    <ros_action_server name="act_place" action_name="/place" type="tbd/Place" />
+    <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
+
+    <datamodel>
+        <data id="obj_locs" type="int32[1]" expr="[0]" />
+        <data id="robot_loc" type="int32" expr="1" />
+        <data id="robot_holding" type="int32" expr="-1" />
+    </datamodel>
+
+    <state id="idle">
+        <onentry>
+            <ros_topic_publish name="pub_snacks0">
+                <field name="data" expr="obj_locs[0]" />
+            </ros_topic_publish>
+        </onentry>
+
+        <ros_action_handle_goal name="act_nav" target="idle">
+            <assign location="robot_loc" expr="_req.target" />
+            <ros_action_succeed name="act_nav" />
+        </ros_action_handle_goal>
+        
+        <ros_action_handle_goal name="act_pick" target="idle">
+            <if cond="obj_locs[_req.target] == robot_loc">
+                <assign location="robot_holding" expr="_req.target" />
+                <assign location="obj_locs[_req.target]" expr="-1" />
+                <ros_action_succeed name="act_pick" />
+            <else/>
+                <ros_action_abort name="act_pick" />
+            </if>
+        </ros_action_handle_goal>
+
+        <ros_action_handle_goal name="act_nav" target="idle">
+            <if cond="robot_holding != -1">
+                <assign location="obj_locs[robot_holding]" expr="robot_loc" />
+                <assign location="robot_holding" expr="-1" />
+                <ros_action_succeed name="act_nav" />
+            <else/>
+                <ros_action_abort name="act_nav" />
+            </if>
+        </ros_action_handle_goal>
+    </state>
+
+</scxml>
