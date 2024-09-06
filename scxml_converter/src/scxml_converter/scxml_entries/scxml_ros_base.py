@@ -260,7 +260,7 @@ class RosTrigger(ScxmlSend):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_declaration_type.")
 
     @staticmethod
-    def get_additional_args() -> List[str]:
+    def get_additional_arguments() -> List[str]:
         """Get the names of additional arguments in the SCXML-ROS tag."""
         return []
 
@@ -276,7 +276,7 @@ class RosTrigger(ScxmlSend):
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_argument(cls, xml_tree, "name")
         additional_arg_values: Dict[str, str] = {}
-        for arg_name in cls.get_additional_args():
+        for arg_name in cls.get_additional_arguments():
             additional_arg_values[arg_name] = get_xml_argument(cls, xml_tree, arg_name)
         fields = [RosField.from_xml_tree(field) for field in xml_tree
                   if field.tag is not ET.Comment]

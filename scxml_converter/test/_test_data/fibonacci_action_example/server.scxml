@@ -105,7 +105,7 @@
                 <ros_action_accept_goal name="act_srv" goal_id="goal_id" />
                 <!-- The thread ID is appended as an additional param in the send event.
                 It will be handled on the thread side -->
-                <ros_action_start_thread name="act_srv" thread_id="thread_to_start" goal_id="goal_id" />
+                <ros_action_start_thread name="act_srv" thread_id="thread_to_start" goal_id="goal_id">
                     <field name="order" expr="order" />
                 </ros_action_start_thread>
             <else />

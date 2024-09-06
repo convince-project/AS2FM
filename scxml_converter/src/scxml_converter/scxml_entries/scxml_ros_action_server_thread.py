@@ -251,7 +251,7 @@ class RosActionThreadFree(RosTrigger):
         return RosActionServer
 
     def __init__(self, action_name: Union[str, RosActionServer],
-                 fields: Optional[List[RosField]] = None) -> None:
+                 fields: Optional[List[RosField]] = None, _=None) -> None:
         super().__init__(action_name, fields)
         self._thread_id: Optional[int] = None
 
