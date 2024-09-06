@@ -29,7 +29,7 @@ from .scxml_ros_action_client import (                                          
 from .scxml_ros_action_server import (                                          # noqa: F401
     RosActionServer, RosActionHandleGoalRequest, RosActionAcceptGoal,           # noqa: F401
     RosActionRejectGoal, RosActionStartThread, RosActionSendFeedback,           # noqa: F401
-    RosActionSendResult)                                                        # noqa: F401
+    RosActionSendSuccessResult)                                                 # noqa: F401
 from .scxml_ros_action_server_thread import (                                   # noqa: F401
     RosActionThread, RosActionHandleThreadStart)                                # noqa: F401
 from .scxml_root import ScxmlRoot                                               # noqa: F401

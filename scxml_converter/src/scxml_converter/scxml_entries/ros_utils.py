@@ -39,6 +39,8 @@ ROS_EVENT_PREFIXES = [
     "_goal.", "_feedback.", "_wrapped_result."  # Action-related
 ]
 
+ROS_BODY_PREFIX: str = "ros_fields"
+
 
 """Container for the ROS interface name (e.g. topic or service name) and the related type"""
 RosInterfaceAndType = Tuple[str, str]
@@ -151,7 +153,7 @@ def get_action_goal_id_definition() -> Tuple[str, str]:
 
 def replace_ros_interface_expression(msg_expr: str) -> str:
     """Convert all ROS interface expressions (in ROS_EVENT_PREFIXES) to plain SCXML events."""
-    scxml_prefix = "_event."
+    scxml_prefix = f"_event.{ROS_BODY_PREFIX}."
     # TODO: Use regex and ensure no other valid character exists before the initial underscore
     for ros_prefix in ROS_EVENT_PREFIXES:
         msg_expr = msg_expr.replace(ros_prefix, scxml_prefix)

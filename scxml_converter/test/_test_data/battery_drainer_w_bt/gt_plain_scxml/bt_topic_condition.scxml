@@ -6,7 +6,7 @@
 
     <state id="initial">
         <transition target="initial" event="topic_alarm_msg">
-            <assign location="last_msg" expr="_event.data" />
+            <assign location="last_msg" expr="_event.ros_fields.data" />
         </transition>
         <transition event="bt_tick" target="initial">
             <if cond="last_msg">

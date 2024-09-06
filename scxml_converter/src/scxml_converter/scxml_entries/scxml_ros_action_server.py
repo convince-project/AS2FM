@@ -35,6 +35,8 @@ from scxml_converter.scxml_entries.ros_utils import (
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
 
+from action_msgs.msg import GoalStatus
+
 
 class RosActionServer(RosDeclaration):
     """Object used in SCXML root to declare a new action client."""
@@ -228,7 +230,7 @@ class RosActionSendFeedback(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0])
 
 
-class RosActionSendResult(RosTrigger):
+class RosActionSendSuccessResult(RosTrigger):
     """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
 
     @staticmethod
@@ -254,6 +256,11 @@ class RosActionSendResult(RosTrigger):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
             ros_declarations.get_action_server_info(self._interface_name)[0])
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
+        plain_send = super().as_plain_scxml(ros_declarations)
+        plain_send.append_param(ScxmlParam("status", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
+        return super().as_plain_scxml(ros_declarations)
 
 
 class RosActionHandleThreadFree(RosCallback):

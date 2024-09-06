@@ -58,8 +58,11 @@ class RosField(ScxmlParam):
             self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlParam:
-        from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
-        return ScxmlParam(self._name, expr=replace_ros_interface_expression(self._expr))
+        from scxml_converter.scxml_entries.ros_utils import (
+            replace_ros_interface_expression, ROS_BODY_PREFIX)
+        # In order to distinguish the message body from additional entries, add a prefix to the name
+        plain_field_name = f"{ROS_BODY_PREFIX}.{self._name}"
+        return ScxmlParam(plain_field_name, expr=replace_ros_interface_expression(self._expr))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

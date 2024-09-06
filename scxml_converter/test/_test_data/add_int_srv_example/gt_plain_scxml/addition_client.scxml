@@ -6,14 +6,14 @@
     <state id="send_req">
         <onentry>
             <send event="srv_adder_req_client_addition_client">
-                <param name="a" expr="10" />
-                <param name="b" expr="32" />
+                <param name="ros_fields.a" expr="10" />
+                <param name="ros_fields.b" expr="32" />
             </send>
         </onentry>
         <transition target="done" event="srv_adder_response_client_addition_client">
-            <assign location="temp_sum" expr="_event.sum" />
+            <assign location="temp_sum" expr="_event.ros_fields.sum" />
             <send event="topic_client_1_res_msg">
-                <param name="data" expr="temp_sum == 42" />
+                <param name="ros_fields.data" expr="temp_sum == 42" />
             </send>
         </transition>
     </state>
