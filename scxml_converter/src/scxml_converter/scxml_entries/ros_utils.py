@@ -503,13 +503,12 @@ class ScxmlRosDeclarationsContainer:
         return True
 
     def check_valid_action_goal_fields(
-            self, alias_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+            self, alias_name: str, ros_fields: List[RosField]) -> bool:
         """
         Check if the provided fields match with the action type's goal entries.
 
         :param alias_name: Name of the action client.
         :param ros_fields: List of fields to check.
-        :param has_goal_id: Whether the goal_id shall be included among the fields.
         """
         if self.is_action_client_defined(alias_name):
             action_type = self.get_action_client_info(alias_name)[1]
@@ -523,22 +522,18 @@ class ScxmlRosDeclarationsContainer:
         assert goal_id_name not in goal_fields, \
             "Error: SCXML ROS declarations: "\
             f"found reserved '{goal_id_name}' field in action {action_type} goal."
-        if has_goal_id:
-            # Add the goal_id to the expected fields
-            goal_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, goal_fields):
             print(f"Error: SCXML ROS declarations: Action goal {alias_name} has invalid fields.")
             return False
         return True
 
     def check_valid_action_feedback_fields(
-            self, server_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+            self, server_name: str, ros_fields: List[RosField]) -> bool:
         """
         Check if the provided fields match with the action type's feedback entries.
 
         :param client_name: Name of the action client.
         :param ros_fields: List of fields to check.
-        :param has_goal_id: Whether the goal_id shall be included among the fields.
         """
         _, action_type = self.get_action_server_info(server_name)
         _, feedback_fields, _ = get_action_type_params(action_type)
@@ -547,9 +542,6 @@ class ScxmlRosDeclarationsContainer:
         assert goal_id_name not in feedback_fields, \
             "Error: SCXML ROS declarations: "\
             f"found reserved '{goal_id_name}' field in action {action_type} feedback."
-        if has_goal_id:
-            # Add the goal_id to the expected fields
-            feedback_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, feedback_fields):
             print(f"Error: SCXML ROS declarations: Action feedback {server_name} "
                   "has invalid fields.")
@@ -557,13 +549,12 @@ class ScxmlRosDeclarationsContainer:
         return True
 
     def check_valid_action_result_fields(
-            self, server_name: str, ros_fields: List[RosField], has_goal_id: bool = False) -> bool:
+            self, server_name: str, ros_fields: List[RosField]) -> bool:
         """
         Check if the provided fields match with the action type's result entries.
 
         :param client_name: Name of the action client.
         :param ros_fields: List of fields to check.
-        :param has_goal_id: Whether the goal_id shall be included among the fields.
         """
         _, action_type = self.get_action_server_info(server_name)
         _, _, result_fields = get_action_type_params(action_type)
@@ -572,9 +563,6 @@ class ScxmlRosDeclarationsContainer:
         assert goal_id_name not in result_fields, \
             "Error: SCXML ROS declarations: "\
             f"found reserved '{goal_id_name}' field in action {action_type} result."
-        if has_goal_id:
-            # Add the goal_id to the expected fields
-            result_fields[goal_id_name] = goal_id_type
         if not check_all_fields_known(ros_fields, result_fields):
             print(f"Error: SCXML ROS declarations: Action result {server_name} has invalid fields.")
             return False
