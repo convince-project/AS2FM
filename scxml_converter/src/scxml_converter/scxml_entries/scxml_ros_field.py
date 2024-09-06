@@ -59,9 +59,9 @@ class RosField(ScxmlParam):
 
     def as_plain_scxml(self, _) -> ScxmlParam:
         from scxml_converter.scxml_entries.ros_utils import (
-            replace_ros_interface_expression, ROS_BODY_PREFIX)
+            replace_ros_interface_expression, ROS_FIELD_PREFIX)
         # In order to distinguish the message body from additional entries, add a prefix to the name
-        plain_field_name = f"{ROS_BODY_PREFIX}.{self._name}"
+        plain_field_name = f"{ROS_FIELD_PREFIX}.{self._name}"
         return ScxmlParam(plain_field_name, expr=replace_ros_interface_expression(self._expr))
 
     def as_xml(self) -> ET.Element:
