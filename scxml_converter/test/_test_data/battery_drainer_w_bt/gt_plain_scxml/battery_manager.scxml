@@ -9,7 +9,7 @@
     <state id="check_battery">
         <transition event="topic_level_msg" target="check_battery">
             <send event="topic_alarm_msg">
-                <param name="data" expr="_event.data &lt; 30" />
+                <param name="ros_fields.data" expr="_event.ros_fields.data &lt; 30" />
             </send>
         </transition>
     </state>
