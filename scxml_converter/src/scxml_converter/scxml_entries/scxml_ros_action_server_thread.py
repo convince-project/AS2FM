@@ -34,7 +34,7 @@ from scxml_converter.scxml_entries.ros_utils import (
     sanitize_ros_interface_name)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class RosActionThread(ScxmlBase):
@@ -187,6 +187,11 @@ class RosActionHandleThreadStart(RosCallback):
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        # The thread is started upon a goal request, so use the action goal type
+        return CallbackType.ROS_ACTION_GOAL
 
     def __init__(self, server_alias: Union[str, RosActionServer], target_state: str,
                  condition: Optional[str] = None, exec_body: Optional[ScxmlExecutionBody] = None

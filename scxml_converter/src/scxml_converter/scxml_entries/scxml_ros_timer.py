@@ -24,7 +24,7 @@ from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCall
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
 from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class RosTimeRate(RosDeclaration):
@@ -90,6 +90,10 @@ class RosRateCallback(RosCallback):
     @staticmethod
     def get_tag_name() -> str:
         return "ros_rate_callback"
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_TIMER
 
     @staticmethod
     def get_declaration_type() -> Type[RosTimeRate]:

@@ -33,6 +33,8 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_action_thread_execution_start_event, generate_action_feedback_event,
     generate_action_result_event, generate_action_thread_free_event)
 
+from scxml_converter.scxml_entries.utils import CallbackType
+
 from action_msgs.msg import GoalStatus
 
 
@@ -69,6 +71,10 @@ class RosActionHandleGoalRequest(RosCallback):
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_ACTION_GOAL
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_server_defined(self._interface_name)
@@ -306,6 +312,11 @@ class RosActionHandleThreadFree(RosCallback):
     @staticmethod
     def get_tag_name() -> str:
         return "ros_action_handle_thread_free"
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        # No ROS-specific fields are expected within this callback
+        return CallbackType.TRANSITION
 
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
