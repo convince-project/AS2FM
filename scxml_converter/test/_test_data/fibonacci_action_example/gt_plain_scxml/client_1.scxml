@@ -20,7 +20,7 @@
                 <param name="ros_fields__data" expr="counter" />
             </send>
         </transition>
-        <transition target="done" event="action_fibonacci_result_handle_client_client_1">
+        <transition target="done" cond="_event.code == 4" event="action_fibonacci_result_handle_client_client_1">
             <assign location="fibonacci_result" expr="_event.ros_fields__sequence" />
             <send event="topic_client_1_last_fibonacci_msg">
                 <param name="ros_fields__data" expr="fibonacci_result[4]" />

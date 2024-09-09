@@ -32,6 +32,8 @@ from scxml_converter.scxml_entries.ros_utils import (
 from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
+from action_msgs.msg import GoalStatus
+
 
 class RosActionClient(RosDeclaration):
     """Object used in SCXML root to declare a new action client."""
@@ -177,12 +179,12 @@ class RosActionHandleFeedback(RosCallback):
             ros_declarations.get_automaton_name())
 
 
-class RosActionHandleResult(RosCallback):
+class RosActionHandleSuccessResult(RosCallback):
     """SCXML object representing the handler of am action result for a service client."""
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_handle_result"
+        return "ros_action_handle_success_result"
 
     @staticmethod
     def get_declaration_type() -> Type[RosActionClient]:
@@ -199,3 +201,69 @@ class RosActionHandleResult(RosCallback):
         return generate_action_result_handle_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
             ros_declarations.get_automaton_name())
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self._condition is None, \
+            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_SUCCEEDED}"
+        return super().as_plain_scxml(ros_declarations)
+
+
+class RosActionHandleCanceledResult(RosCallback):
+    """SCXML object representing the handler of am action result for a service client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_canceled_result"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_ACTION_RESULT
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_client_defined(self._interface_name)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_result_handle_event(
+            ros_declarations.get_action_client_info(self._interface_name)[0],
+            ros_declarations.get_automaton_name())
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self._condition is None, \
+            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_CANCELED}"
+        return super().as_plain_scxml(ros_declarations)
+
+
+class RosActionHandleAbortedResult(RosCallback):
+    """SCXML object representing the handler of am action result for a service client."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_aborted_result"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_ACTION_RESULT
+
+    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        return ros_declarations.is_action_client_defined(self._interface_name)
+
+    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+        return generate_action_result_handle_event(
+            ros_declarations.get_action_client_info(self._interface_name)[0],
+            ros_declarations.get_automaton_name())
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+        assert self._condition is None, \
+            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_ABORTED}"
+        return super().as_plain_scxml(ros_declarations)

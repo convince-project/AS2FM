@@ -32,6 +32,7 @@
             <send event="action_fibonacci_result">
                 <param name="ros_fields__sequence" expr="sequence" />
                 <param name="goal_id" expr="goal_id" />
+                <param expr="4" name="code" />
             </send>
         </transition>
         <transition target="execute">
