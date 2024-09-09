@@ -24,7 +24,7 @@ from scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class ScxmlParam(ScxmlBase):
@@ -35,16 +35,16 @@ class ScxmlParam(ScxmlBase):
         return "param"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
+    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_argument(ScxmlParam, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(ScxmlParam, xml_tree, "expr",
                                                 (BtGetValueInputPort, str), True)
         location = get_xml_argument(ScxmlParam, xml_tree, "location", none_allowed=True)
-        return ScxmlParam(name, expr=expr, location=location)
+        return ScxmlParam(name, cb_type, expr=expr, location=location)
 
-    def __init__(self, name: str, *,
+    def __init__(self, name: str, cb_type: CallbackType, *,
                  expr: Optional[Union[BtGetValueInputPort, str]] = None,
                  location: Optional[str] = None):
         """
@@ -60,6 +60,7 @@ class ScxmlParam(ScxmlBase):
         self._name = name
         self._expr = expr
         self._location = location
+        self._cb_type = cb_type
 
     def get_name(self) -> str:
         return self._name

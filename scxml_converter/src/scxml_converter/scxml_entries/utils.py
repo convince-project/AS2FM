@@ -15,9 +15,22 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Any, Dict, Type, MutableSequence
+import re
+from enum import Enum
+from typing import Any, Dict, List, Optional, Type, MutableSequence
 
 from scxml_converter.scxml_entries import ScxmlBase
+
+
+# Constants related to the conversion of expression from ROS to plain SCXML
+ROS_FIELD_PREFIX: str = "ros_fields"
+
+ROS_EVENT_PREFIXES = [
+    "_msg.",                                                # Topic-related
+    "_req.", "_res.",                                       # Service-related
+    "_goal.", "_feedback.", "_wrapped_result.", "_action."  # Action-related
+]
+
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
@@ -33,6 +46,104 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
 }
 
 
+# ------------ Expression-conversion functionalities ------------
+class CallbackType(Enum):
+    """Enumeration of the different types of callbacks containing a body."""
+    STATE = 0                   # No callback (e.g. state entry/exit)
+    TRANSITION = 1              # Transition callback
+    ROS_TIMER = 2               # Timer callback
+    ROS_TOPIC = 3               # Topic callback
+    ROS_SERVICE_REQUEST = 4     # Service callback
+    ROS_SERVICE_RESULT = 5      # Service callback
+    ROS_ACTION_GOAL = 6         # Action callback
+    ROS_ACTION_RESULT = 7       # Action callback
+    ROS_ACTION_FEEDBACK = 8     # Action callback
+
+    @staticmethod
+    def get_expected_prefixes(cb_type: 'CallbackType') -> Optional[List[str]]:
+        if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
+            return None
+        elif cb_type == CallbackType.TRANSITION:
+            return ["_event."]
+        elif cb_type == CallbackType.ROS_TOPIC:
+            return ["_msg."]
+        elif cb_type == CallbackType.ROS_SERVICE_REQUEST:
+            return ["_req."]
+        elif cb_type == CallbackType.ROS_SERVICE_RESULT:
+            return ["_res."]
+        elif cb_type == CallbackType.ROS_ACTION_GOAL:
+            return ["_action.code", "_goal."]
+        elif cb_type == CallbackType.ROS_ACTION_RESULT:
+            return ["_action.code", "_wrapped_result.code", "_wrapped_result.result."]
+        elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
+            return ["_action.code", "_feedback."]
+
+    @staticmethod
+    def get_plain_callback(cb_type: 'CallbackType') -> 'CallbackType':
+        """Convert ROS-specific transitions to plain ones."""
+        if cb_type == CallbackType.STATE:
+            return CallbackType.STATE
+        else:
+            return CallbackType.TRANSITION
+
+
+def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str]) -> str:
+    """
+    Given an expression with the ROS entries from a list, it generates a plain SCXML expression.
+
+    :param msg_expr: The expression to convert.
+    :param expected_prefixes: The list of (ROS) prefixes that are expected in the expression.
+    """
+    expected_prefixes.remove("_event.")
+    for prefix in expected_prefixes:
+        assert prefix.startswith("_"), \
+            f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
+        if prefix.endswith("."):
+            # Generic field substitution, add the ROS_FIELD_PREFIX
+            substitution = f"_event.{ROS_FIELD_PREFIX}."
+            prefix_reg = prefix.replace(".", r"\.")
+            msg_expr = re.sub(
+                rf"(^|[^a-zA-Z0-9_.]){prefix_reg}([a-zA-Z0-9_.])",
+                rf"\g<1>{substitution}\g<2>", msg_expr)
+        else:
+            # Special fields substitution, no need to add the ROS_FIELD_PREFIX
+            split_prefix = prefix.split(".", maxsplit=1)
+            assert len(split_prefix) == 2, \
+                f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
+            substitution = f"_event.{split_prefix[1]}"
+            prefix_reg = prefix.replace(".", r"\.")
+            msg_expr = re.sub(
+                rf"(^|[^a-zA-Z0-9_.]){prefix_reg}($|[^a-zA-Z0-9_.])",
+                rf"\g<1>{substitution}\g<2>", msg_expr)
+    return msg_expr
+
+
+def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
+    # TODO: Make this more precise with regex
+    for prefix in prefixes:
+        if prefix in msg_expr:
+            return True
+    return False
+
+
+def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
+    """
+    Convert a ROS interface expressions (using ROS-specific PREFIXES) to plain SCXML.
+
+    :param msg_expr: The expression to convert.
+    :param cb_type: The type of callback the expression is used in.
+    """
+    expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
+    forbidden_prefixes = ROS_EVENT_PREFIXES
+    if expected_prefixes is None:
+        forbidden_prefixes.append("_event.")
+    new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
+    assert not _contains_prefixes(new_expr, forbidden_prefixes), \
+        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr. {msg_expr}."
+    return new_expr
+
+
+# ------------ String-related utilities ------------
 def all_non_empty_strings(*in_args) -> bool:
     """
     Check if all the arguments are non-empty strings.

@@ -26,7 +26,7 @@ from scxml_converter.scxml_entries import (
     instantiate_exec_body_bt_events)
 
 from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
+from scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
 
 
 class ScxmlTransition(ScxmlBase):
@@ -158,7 +158,7 @@ class ScxmlTransition(ScxmlBase):
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         if self._condition is not None:
-            self._condition = replace_ros_interface_expression(self._condition)
+            self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
         return ScxmlTransition(self._target, self._events, self._condition, new_body)
 
     def as_xml(self) -> ET.Element:

@@ -22,11 +22,11 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer, BtGetValueInputPort)
-from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
 from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import (
+    CallbackType, get_plain_expression, is_non_empty_string)
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -65,8 +65,13 @@ class ScxmlIf(ScxmlBase):
         return "if"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
-        """Create a ScxmlIf object from an XML tree."""
+    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "ScxmlIf":
+        """
+        Create a ScxmlIf object from an XML tree.
+
+        :param xml_tree: The XML tree to create the object from.
+        :param cb_type: The kind of callback executing this SCXML entry.
+        """
         assert_xml_tag_ok(ScxmlIf, xml_tree)
         conditions: List[str] = []
         exec_bodies: List[ScxmlExecutionBody] = []
@@ -87,7 +92,7 @@ class ScxmlIf(ScxmlBase):
                 exec_bodies.append(current_body)
                 current_body = []
             else:
-                current_body.append(execution_entry_from_xml(child))
+                current_body.append(execution_entry_from_xml(child, cb_type))
         else_body: Optional[ScxmlExecutionBody] = None
         if else_tag_found:
             else_body = current_body
@@ -96,21 +101,23 @@ class ScxmlIf(ScxmlBase):
         assert len(conditions) == len(exec_bodies), \
             "Error: SCXML if: number of conditions and bodies do not match " \
             f"({len(conditions)} != {len(exec_bodies)}). Conditions: {conditions}."
-        return ScxmlIf(list(zip(conditions, exec_bodies)), else_body)
+        return ScxmlIf(list(zip(conditions, exec_bodies)), else_body, cb_type)
 
     def __init__(self,
                  conditional_executions: List[ConditionalExecutionBody],
-                 else_execution: Optional[ScxmlExecutionBody] = None):
+                 else_execution: Optional[ScxmlExecutionBody], cb_type: CallbackType):
         """
         Class representing a conditional execution in SCXML.
 
         :param conditional_executions: List of (condition - exec. body) pairs. Min n. pairs is one.
         :param else_execution: Execution to be done if no condition is met.
+        :param cb_type: The kind of callback executing this SCXML entry.
         """
         self._conditional_executions: List[ConditionalExecutionBody] = conditional_executions
         self._else_execution: ScxmlExecutionBody = []
         if else_execution is not None:
             self._else_execution = else_execution
+        self._cb_type = CallbackType
         assert self.check_validity(), "Error: SCXML if: invalid if object."
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
@@ -173,10 +180,11 @@ class ScxmlIf(ScxmlBase):
         for condition, execution in self._conditional_executions:
             execution_body = as_plain_execution_body(execution, ros_declarations)
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
-            condional_executions.append((replace_ros_interface_expression(condition),
+            condional_executions.append((get_plain_expression(condition, self._cb_type),
                                          execution_body))
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
-        return ScxmlIf(condional_executions, else_execution)
+        return ScxmlIf(condional_executions, else_execution,
+                       CallbackType.get_plain_callback(self._cb_type))
 
     def as_xml(self) -> ET.Element:
         # Based on example in https://www.w3.org/TR/scxml/#if
@@ -201,8 +209,13 @@ class ScxmlSend(ScxmlBase):
         return "send"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
-        """Create a ScxmlSend object from an XML tree."""
+    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "ScxmlSend":
+        """
+        Create a ScxmlSend object from an XML tree.
+
+        :param xml_tree: The XML tree to create the object from.
+        :param cb_type: The kind of callback executing this SCXML entry.
+        """
         assert xml_tree.tag == ScxmlSend.get_tag_name(), \
             f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
         event = xml_tree.attrib["event"]
@@ -211,14 +224,20 @@ class ScxmlSend(ScxmlBase):
         for param_xml in xml_tree:
             if param_xml.tag is ET.Comment:
                 continue
-            params.append(ScxmlParam.from_xml_tree(param_xml))
-        return ScxmlSend(event, params)
+            params.append(ScxmlParam.from_xml_tree(param_xml, cb_type))
+        return ScxmlSend(event, params, cb_type)
 
-    def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
-        if params is None:
-            params = []
+    def __init__(self, event: str, params: List[ScxmlParam], cb_type: CallbackType):
+        """
+        Construct a new ScxmlSend object.
+
+        :param event: The name of the event sent when executing this entry.
+        :param params: The parameters to send as part of the event.
+        :param cb_type: The kind of callback executing this SCXML entry.
+        """
         self._event = event
         self._params = params
+        self._cb_type = cb_type
 
     def get_event(self) -> str:
         """Get the event to send."""
@@ -264,7 +283,8 @@ class ScxmlSend(ScxmlBase):
         self._params.append(param)
 
     def as_plain_scxml(self, _) -> "ScxmlSend":
-        return self
+        # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
+        return ScxmlSend(self._event, self._params, CallbackType.get_plain_callback(self._cb_type))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
@@ -282,19 +302,25 @@ class ScxmlAssign(ScxmlBase):
         return "assign"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
-        """Create a ScxmlAssign object from an XML tree."""
+    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "ScxmlAssign":
+        """
+        Create a ScxmlAssign object from an XML tree.
+
+        :param xml_tree: The XML tree to create the object from.
+        :param cb_type: The kind of callback executing this SCXML entry.
+        """
         assert_xml_tag_ok(ScxmlAssign, xml_tree)
         location = get_xml_argument(ScxmlAssign, xml_tree, "location")
         expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
         if expr is None:
             expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
             assert expr is not None, "Error: SCXML assign: expr is not valid."
-        return ScxmlAssign(location, expr)
+        return ScxmlAssign(location, expr, cb_type)
 
-    def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
+    def __init__(self, location: str, expr: Union[str, BtGetValueInputPort], cb_type: CallbackType):
         self._location = location
         self._expr = expr
+        self._cb_type = cb_type
 
     def get_location(self) -> str:
         """Get the location to assign."""
@@ -326,8 +352,8 @@ class ScxmlAssign(ScxmlBase):
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
-        expr = replace_ros_interface_expression(self._expr)
-        return ScxmlAssign(self._location, expr)
+        expr = get_plain_expression(self._expr, self._cb_type)
+        return ScxmlAssign(self._location, expr, CallbackType.get_plain_callback(self._cb_type))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
@@ -375,11 +401,12 @@ def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     return False
 
 
-def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
+def execution_entry_from_xml(xml_tree: ET.Element, cb_type: CallbackType) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
 
-    :param xml_tree: The XML tree to create the execution entry from
+    :param xml_tree: The XML tree to create the execution entry from.
+    :param cb_type: The kind of callback executing this SCXML entry.
     :return: The execution entry
     """
     from scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
@@ -393,17 +420,18 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 
-def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
+def execution_body_from_xml(xml_tree: ET.Element, cb_type: CallbackType) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
-    :param xml_tree: The XML tree to create the execution body from
+    :param xml_tree: The XML tree to create the execution body from.
+    :param cb_type: The kind of callback executing this SCXML entry.
     :return: The execution body
     """
     exec_body: ScxmlExecutionBody = []
     for exec_elem_xml in xml_tree:
         if exec_elem_xml.tag is not ET.Comment:
-            exec_body.append(execution_entry_from_xml(exec_elem_xml))
+            exec_body.append(execution_entry_from_xml(exec_elem_xml, cb_type))
     return exec_body
 
 
