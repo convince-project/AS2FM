@@ -123,11 +123,6 @@ class ScxmlIf(ScxmlBase):
     def set_callback_type(self, cb_type: CallbackType) -> None:
         """Set the cb type for this entry and its children."""
         self._cb_type = cb_type
-        for _, exec_body in self._conditional_executions:
-            for entry in exec_body:
-                entry.set_callback_type(cb_type)
-        for entry in self._else_execution:
-            entry.set_callback_type(cb_type)
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
@@ -186,15 +181,16 @@ class ScxmlIf(ScxmlBase):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
-        condional_executions = []
+        conditional_executions = []
         for condition, execution in self._conditional_executions:
+            set_execution_body_callback_type(execution, self._cb_type)
             execution_body = as_plain_execution_body(execution, ros_declarations)
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
-            condional_executions.append((get_plain_expression(condition, self._cb_type),
-                                         execution_body))
+            conditional_executions.append(
+                (get_plain_expression(condition, self._cb_type), execution_body))
+        set_execution_body_callback_type(self._else_execution, self._cb_type)
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
-        return ScxmlIf(condional_executions, else_execution,
-                       CallbackType.get_plain_callback(self._cb_type))
+        return ScxmlIf(conditional_executions, else_execution)
 
     def as_xml(self) -> ET.Element:
         # Based on example in https://www.w3.org/TR/scxml/#if
@@ -237,7 +233,7 @@ class ScxmlSend(ScxmlBase):
             params.append(ScxmlParam.from_xml_tree(param_xml))
         return ScxmlSend(event, params)
 
-    def __init__(self, event: str, params: List[ScxmlParam]):
+    def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
         """
         Construct a new ScxmlSend object.
 
@@ -245,6 +241,8 @@ class ScxmlSend(ScxmlBase):
         :param params: The parameters to send as part of the event.
         :param cb_type: The kind of callback executing this SCXML entry.
         """
+        if params is None:
+            params = []
         self._event = event
         self._params = params
         self._cb_type: Optional[CallbackType] = None
@@ -252,8 +250,6 @@ class ScxmlSend(ScxmlBase):
     def set_callback_type(self, cb_type: CallbackType) -> None:
         """Set the cb type for this entry and its children."""
         self._cb_type = cb_type
-        for param in self._params:
-            param.set_callback_type(cb_type)
 
     def get_event(self) -> str:
         """Get the event to send."""
@@ -301,7 +297,11 @@ class ScxmlSend(ScxmlBase):
     def as_plain_scxml(self, _) -> "ScxmlSend":
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
-        return ScxmlSend(self._event, self._params, CallbackType.get_plain_callback(self._cb_type))
+        for param in self._params:
+            param.set_callback_type(self._cb_type)
+        # For now, no conversion to plain scxml is expected for params
+        # param.as_plain_scxml()
+        return ScxmlSend(self._event, self._params)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
@@ -375,7 +375,7 @@ class ScxmlAssign(ScxmlBase):
         # TODO: Might make sense to check if the assignment happens in a topic callback
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
         expr = get_plain_expression(self._expr, self._cb_type)
-        return ScxmlAssign(self._location, expr, CallbackType.get_plain_callback(self._cb_type))
+        return ScxmlAssign(self._location, expr)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
