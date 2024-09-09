@@ -75,7 +75,7 @@ class CallbackType(Enum):
         elif cb_type == CallbackType.ROS_SERVICE_RESULT:
             return ["_res."]
         elif cb_type == CallbackType.ROS_ACTION_GOAL:
-            return ["_action.goal_id", "_goal."]
+            return ["_action.goal_id", "_goal.", PLAIN_SCXML_EVENT_PREFIX]
         elif cb_type == CallbackType.ROS_ACTION_RESULT:
             return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
         elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
@@ -100,6 +100,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
 
     if PLAIN_SCXML_EVENT_PREFIX in expected_prefixes:
         expected_prefixes.remove(PLAIN_SCXML_EVENT_PREFIX)
+    msg_expr.strip()
     for prefix in expected_prefixes:
         assert prefix.startswith("_"), \
             f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
@@ -123,9 +124,9 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
 
 
 def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
-    # TODO: Make this more precise with regex
     for prefix in prefixes:
-        if prefix in msg_expr:
+        prefix_reg = prefix.replace(".", r"\.")
+        if re.search(rf"(^|[^a-zA-Z0-9_.]){prefix_reg}", msg_expr) is not None:
             return True
     return False
 
@@ -138,6 +139,11 @@ def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
     :param cb_type: The type of callback the expression is used in.
     """
     expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
+    # pre-check over the expression
+    if PLAIN_SCXML_EVENT_PREFIX not in expected_prefixes:
+        assert not _contains_prefixes(msg_expr, [PLAIN_SCXML_EVENT_PREFIX]), \
+            "Error: SCXML ROS conversion: "\
+            f"unexpected {PLAIN_SCXML_EVENT_PREFIX} prefix in expr. {msg_expr}"
     forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
     if len(expected_prefixes) == 0:
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_PREFIX)
