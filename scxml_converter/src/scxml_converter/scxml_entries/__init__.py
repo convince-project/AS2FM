@@ -1,6 +1,7 @@
 # isort: skip_file
 # Skipping file to avoid circular import problem
 from .scxml_base import ScxmlBase                                               # noqa: F401
+from .utils import CallbackType                                                 # noqa: F401
 from .bt_utils import RESERVED_BT_PORT_NAMES                                    # noqa: F401
 from .scxml_bt import (                                                         # noqa: F401
     BtInputPortDeclaration, BtOutputPortDeclaration, BtGetValueInputPort)       # noqa: F401

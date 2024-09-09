@@ -15,7 +15,7 @@
 
 """Declaration of the ROS Field SCXML tag extension."""
 
-from typing import Union
+from typing import Optional, Union
 
 from xml.etree import ElementTree as ET
 
@@ -35,18 +35,18 @@ class RosField(ScxmlParam):
         return "field"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "RosField":
+    def from_xml_tree(xml_tree: ET.Element) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_argument(RosField, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(RosField, xml_tree, "expr",
                                                 (BtGetValueInputPort, str))
-        return RosField(name, expr, cb_type)
+        return RosField(name, expr)
 
-    def __init__(self, name: str, expr: Union[BtGetValueInputPort, str], cb_type: CallbackType):
+    def __init__(self, name: str, expr: Union[BtGetValueInputPort, str]):
         self._name = name
         self._expr = expr
-        self._cb_type = cb_type
+        self._cb_type: Optional[CallbackType] = None
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
 
     def check_validity(self) -> bool:
@@ -61,6 +61,8 @@ class RosField(ScxmlParam):
 
     def as_plain_scxml(self, _) -> ScxmlParam:
         # In order to distinguish the message body from additional entries, add a prefix to the name
+        assert self._cb_type is not None, \
+            f"Error: SCXML ROS field: {self._name} has not callback type set."
         plain_field_name = f"{ROS_FIELD_PREFIX}.{self._name}"
         return ScxmlParam(plain_field_name, CallbackType.get_plain_callback(self._cb_type),
                           expr=get_plain_expression(self._expr, self._cb_type))

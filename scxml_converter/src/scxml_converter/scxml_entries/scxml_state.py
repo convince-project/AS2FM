@@ -22,8 +22,10 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-    ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
-    instantiate_exec_body_bt_events)
+    ScxmlTransition)
+from scxml_converter.scxml_entries.scxml_executable_entries import (
+    as_plain_execution_body, execution_body_from_xml, instantiate_exec_body_bt_events,
+    set_execution_body_callback_type, valid_execution_body)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.utils import CallbackType
 
@@ -70,10 +72,10 @@ class ScxmlState(ScxmlBase):
         assert len(on_exit) <= 1, \
             f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
-            for exec_entry in execution_body_from_xml(on_entry[0], CallbackType.STATE):
+            for exec_entry in execution_body_from_xml(on_entry[0]):
                 scxml_state.append_on_entry(exec_entry)
         if len(on_exit) > 0:
-            for exec_entry in execution_body_from_xml(on_exit[0], CallbackType.STATE):
+            for exec_entry in execution_body_from_xml(on_exit[0]):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
         for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree):
@@ -190,6 +192,8 @@ class ScxmlState(ScxmlBase):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
+        set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
+        set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
         plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
         plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
         plain_body: List[ScxmlTransition] = []
