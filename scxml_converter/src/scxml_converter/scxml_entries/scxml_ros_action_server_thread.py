@@ -235,7 +235,7 @@ class RosActionHandleThreadStart(RosCallback):
         assert self._thread_id is not None, \
             f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
-        self._condition = "_req.thread_id == " + str(self._thread_id)
+        self._condition = "_event.thread_id == " + str(self._thread_id)
         return super().as_plain_scxml(ros_declarations)
 
 
