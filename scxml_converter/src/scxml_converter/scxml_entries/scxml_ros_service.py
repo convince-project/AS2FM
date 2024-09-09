@@ -103,7 +103,7 @@ class RosServiceHandleRequest(RosCallback):
         return RosServiceServer
 
     @staticmethod
-    def get_callback_type(cls) -> CallbackType:
+    def get_callback_type() -> CallbackType:
         return CallbackType.ROS_SERVICE_REQUEST
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:

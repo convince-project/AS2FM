@@ -64,7 +64,7 @@ class RosField(ScxmlParam):
         assert self._cb_type is not None, \
             f"Error: SCXML ROS field: {self._name} has not callback type set."
         plain_field_name = f"{ROS_FIELD_PREFIX}.{self._name}"
-        return ScxmlParam(plain_field_name, CallbackType.get_plain_callback(self._cb_type),
+        return ScxmlParam(plain_field_name,
                           expr=get_plain_expression(self._expr, self._cb_type))
 
     def as_xml(self) -> ET.Element:

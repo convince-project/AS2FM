@@ -17,11 +17,12 @@
 
 import re
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, MutableSequence
+from typing import Any, Dict, List, Type, MutableSequence
 
 from scxml_converter.scxml_entries import ScxmlBase
 
 
+PLAIN_SCXML_PREFIX: str = "_event."
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields"
 
@@ -60,11 +61,11 @@ class CallbackType(Enum):
     ROS_ACTION_FEEDBACK = 8     # Action callback
 
     @staticmethod
-    def get_expected_prefixes(cb_type: 'CallbackType') -> Optional[List[str]]:
+    def get_expected_prefixes(cb_type: 'CallbackType') -> List[str]:
         if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
-            return None
+            return []
         elif cb_type == CallbackType.TRANSITION:
-            return ["_event."]
+            return [PLAIN_SCXML_PREFIX]
         elif cb_type == CallbackType.ROS_TOPIC:
             return ["_msg."]
         elif cb_type == CallbackType.ROS_SERVICE_REQUEST:
@@ -94,13 +95,15 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
     :param msg_expr: The expression to convert.
     :param expected_prefixes: The list of (ROS) prefixes that are expected in the expression.
     """
-    expected_prefixes.remove("_event.")
+
+    if PLAIN_SCXML_PREFIX in expected_prefixes:
+        expected_prefixes.remove(PLAIN_SCXML_PREFIX)
     for prefix in expected_prefixes:
         assert prefix.startswith("_"), \
             f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
         if prefix.endswith("."):
             # Generic field substitution, add the ROS_FIELD_PREFIX
-            substitution = f"_event.{ROS_FIELD_PREFIX}."
+            substitution = f"{PLAIN_SCXML_PREFIX}{ROS_FIELD_PREFIX}."
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}([a-zA-Z0-9_.])",
@@ -110,7 +113,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
             split_prefix = prefix.split(".", maxsplit=1)
             assert len(split_prefix) == 2, \
                 f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
-            substitution = f"_event.{split_prefix[1]}"
+            substitution = f"{PLAIN_SCXML_PREFIX}{split_prefix[1]}"
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}($|[^a-zA-Z0-9_.])",
@@ -134,12 +137,13 @@ def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
     :param cb_type: The type of callback the expression is used in.
     """
     expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
-    forbidden_prefixes = ROS_EVENT_PREFIXES
-    if expected_prefixes is None:
-        forbidden_prefixes.append("_event.")
+    forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
+    if len(expected_prefixes) == 0:
+        forbidden_prefixes.append(PLAIN_SCXML_PREFIX)
     new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), \
-        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr. {msg_expr}."
+        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.\n\t{msg_expr}." \
+        f"Converted expr:\n\t{new_expr}"
     return new_expr
 
 

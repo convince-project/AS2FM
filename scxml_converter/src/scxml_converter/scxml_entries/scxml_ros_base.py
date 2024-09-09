@@ -377,10 +377,9 @@ class RosTrigger(ScxmlSend):
             f"Error: SCXML {self.__class__.__name__}: {self._interface_name} has no callback type."
         event_name = self.get_plain_scxml_event(ros_declarations)
         params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
-        plain_cb_type = CallbackType.get_plain_callback(self._cb_type)
         for param_name, param_value in self._additional_args.items():
-            params.append(ScxmlParam(param_name, plain_cb_type, expr=param_value))
-        return ScxmlSend(event_name, params, plain_cb_type)
+            params.append(ScxmlParam(param_name, expr=param_value))
+        return ScxmlSend(event_name, params)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
