@@ -20,8 +20,10 @@ from typing import Dict, Optional, List, Union, Type
 from scxml_converter.scxml_entries import (
     BtGetValueInputPort, RosField, ScxmlBase, ScxmlExecutionBody, ScxmlParam,
     ScxmlRosDeclarationsContainer, ScxmlSend, ScxmlTransition)
-from scxml_converter.scxml_entries import (
-    as_plain_execution_body, execution_body_from_xml, valid_execution_body)
+from scxml_converter.scxml_entries.scxml_executable_entries import (
+    as_plain_execution_body, execution_body_from_xml, set_execution_body_callback_type,
+    valid_execution_body)
+
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
@@ -160,7 +162,7 @@ class RosCallback(ScxmlTransition):
         interface_name = get_xml_argument(cls, xml_tree, "name")
         target_state = get_xml_argument(cls, xml_tree, "target")
         condition = get_xml_argument(cls, xml_tree, "cond", none_allowed=True)
-        exec_body = execution_body_from_xml(xml_tree, cls.get_callback_type())
+        exec_body = execution_body_from_xml(xml_tree)
         return cls(interface_name, target_state, condition, exec_body)
 
     def __init__(self, interface_decl: Union[str, RosDeclaration], target_state: str,
@@ -226,6 +228,7 @@ class RosCallback(ScxmlTransition):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
+        set_execution_body_callback_type(self._body, self.get_callback_type())
         event_name = self.get_plain_scxml_event(ros_declarations)
         target = self._target
         condition = self._condition
@@ -269,8 +272,7 @@ class RosTrigger(ScxmlSend):
         return []
 
     @classmethod
-    def from_xml_tree(cls: Type['RosTrigger'],
-                      xml_tree: ET.Element, cb_type: CallbackType) -> 'RosTrigger':
+    def from_xml_tree(cls: Type['RosTrigger'], xml_tree: ET.Element) -> 'RosTrigger':
         """
         Create an instance of the class from an XML tree.
 
@@ -284,18 +286,16 @@ class RosTrigger(ScxmlSend):
             additional_arg_values[arg_name] = get_xml_argument(cls, xml_tree, arg_name)
         fields = [RosField.from_xml_tree(field) for field in xml_tree
                   if field.tag is not ET.Comment]
-        return cls(interface_name, fields, cb_type, additional_arg_values)
+        return cls(interface_name, fields, additional_arg_values)
 
     def __init__(self, interface_decl: Union[str, RosDeclaration],
                  fields: List[RosField],
-                 cb_type: CallbackType,
                  additional_args: Optional[Dict[str, str]] = None) -> None:
         """
         Constructor of a generic ROS trigger.
 
         :param interface_decl: ROS interface declaration to be used in the trigger, or its name.
         :param fields: Name of fields that are sent together with the trigger.
-        :param cb_type: Type of of callback executing this ROS trigger.
         :param additional_args: Additional arguments in the SCXML-ROS tag.
         """
         if additional_args is None:
@@ -308,11 +308,18 @@ class RosTrigger(ScxmlSend):
             self._interface_name = interface_decl
         self._fields: List[RosField] = fields
         self._additional_args: Dict[str, str] = additional_args
-        self._cb_type: CallbackType = cb_type
+        self._cb_type: Optional[CallbackType] = None
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
+
+    def set_callback_type(self, cb_type: CallbackType):
+        """Set the callback executing this trigger for this instance and its children."""
+        self._cb_type = cb_type
+        for field in self._fields:
+            field.set_callback_type(cb_type)
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), "Error: SCXML topic publish: invalid field."
+        field.set_callback_type(self._cb_type)
         self._fields.append(field)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
@@ -366,6 +373,8 @@ class RosTrigger(ScxmlSend):
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         assert self.check_valid_ros_instantiations(ros_declarations), \
             f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
+        assert self._cb_type is not None, \
+            f"Error: SCXML {self.__class__.__name__}: {self._interface_name} has no callback type."
         event_name = self.get_plain_scxml_event(ros_declarations)
         params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
         plain_cb_type = CallbackType.get_plain_callback(self._cb_type)

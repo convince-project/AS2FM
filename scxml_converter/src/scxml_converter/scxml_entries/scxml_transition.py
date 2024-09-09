@@ -21,9 +21,10 @@ from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-    execution_body_from_xml, valid_execution_body, valid_execution_body_entry_types,
-    instantiate_exec_body_bt_events)
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries.scxml_executable_entries import (
+    execution_body_from_xml, instantiate_exec_body_bt_events, set_execution_body_callback_type,
+    valid_execution_body, valid_execution_body_entry_types)
 
 from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
 from scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
@@ -155,6 +156,7 @@ class ScxmlTransition(ScxmlBase):
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML transition: invalid ROS instantiations in transition body."
         new_body = None
+        set_execution_body_callback_type(self._body, CallbackType.TRANSITION)
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         if self._condition is not None:
