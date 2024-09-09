@@ -25,6 +25,7 @@ from scxml_converter.scxml_entries import (
     ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
     instantiate_exec_body_bt_events)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.utils import CallbackType
 
 
 class ScxmlState(ScxmlBase):
@@ -33,6 +34,25 @@ class ScxmlState(ScxmlBase):
     @staticmethod
     def get_tag_name() -> str:
         return "state"
+
+    @staticmethod
+    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
+        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
+        transitions: List[ScxmlTransition] = []
+        tag_to_cls = {cls.get_tag_name(): cls
+                      for cls in ScxmlTransition.__subclasses__()
+                      if cls != RosCallback}
+        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
+        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
+        for child in xml_tree:
+            if child.tag is ET.Comment:
+                continue
+            elif child.tag in tag_to_cls:
+                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
+            else:
+                assert child.tag in ("onentry", "onexit"), \
+                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
+        return transitions
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
@@ -50,10 +70,10 @@ class ScxmlState(ScxmlBase):
         assert len(on_exit) <= 1, \
             f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
-            for exec_entry in execution_body_from_xml(on_entry[0]):
+            for exec_entry in execution_body_from_xml(on_entry[0], CallbackType.STATE):
                 scxml_state.append_on_entry(exec_entry)
         if len(on_exit) > 0:
-            for exec_entry in execution_body_from_xml(on_exit[0]):
+            for exec_entry in execution_body_from_xml(on_exit[0], CallbackType.STATE):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
         for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree):
@@ -112,25 +132,6 @@ class ScxmlState(ScxmlBase):
             entry.update_bt_ports_values(bt_ports_handler)
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
-
-    @staticmethod
-    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
-        transitions: List[ScxmlTransition] = []
-        tag_to_cls = {cls.get_tag_name(): cls
-                      for cls in ScxmlTransition.__subclasses__()
-                      if cls != RosCallback}
-        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
-        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
-        for child in xml_tree:
-            if child.tag is ET.Comment:
-                continue
-            elif child.tag in tag_to_cls:
-                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
-            else:
-                assert child.tag in ("onentry", "onexit"), \
-                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
-        return transitions
 
     def add_transition(self, transition: ScxmlTransition):
         self._body.append(transition)

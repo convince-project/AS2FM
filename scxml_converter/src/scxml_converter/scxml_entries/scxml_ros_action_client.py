@@ -30,7 +30,7 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
     generate_action_feedback_handle_event, generate_action_result_handle_event)
 from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class RosActionClient(RosDeclaration):
@@ -164,6 +164,10 @@ class RosActionHandleFeedback(RosCallback):
     def get_declaration_type() -> Type[RosActionClient]:
         return RosActionClient
 
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_ACTION_FEEDBACK
+
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_client_defined(self._interface_name)
 
@@ -183,6 +187,10 @@ class RosActionHandleResult(RosCallback):
     @staticmethod
     def get_declaration_type() -> Type[RosActionClient]:
         return RosActionClient
+
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_ACTION_RESULT
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_action_client_defined(self._interface_name)
