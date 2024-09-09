@@ -61,18 +61,22 @@ class ScxmlTransition(ScxmlBase):
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
+        if events is None:
+            events = []
+        if body is None:
+            body = []
         assert isinstance(target, str) and len(
             target) > 0, "Error SCXML transition: target must be a non-empty string."
-        assert events is None or (isinstance(events, list) and
-                                  all((isinstance(ev, str) and len(ev) > 0) for ev in events)), \
-            f"Error SCXML transition: events must be a list of non-empty strings. Found {events}."
+        assert isinstance(events, list) and \
+               all((isinstance(ev, str) and len(ev) > 0) for ev in events), \
+               f"Error SCXML transition: events must be a list of filled strings. Found {events}."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
-        assert body is None or valid_execution_body_entry_types(body), \
+        assert valid_execution_body_entry_types(body), \
             "Error SCXML transition: invalid body provided."
-        self._target = target
-        self._body = body
-        self._events = events if events is not None else []
+        self._target: str = target
+        self._body: ScxmlExecutionBody = body
+        self._events: List[str] = events
         self._condition = condition
 
     def get_target_state_id(self) -> str:

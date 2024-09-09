@@ -14,9 +14,9 @@
     <ros_topic_subscriber topic="/trigger" type="std_msgs/Empty" />
 
     <state id="receive_msg">
-        <ros_topic_callback topic="/trigger" target="receive_msg">
+        <ros_topic_callback name="/trigger" target="receive_msg">
             <assign location="counter" expr="counter + 1" />
-            <ros_topic_publish topic="/receiver_counter">
+            <ros_topic_publish name="/receiver_counter">
                 <field name="data" expr="counter" />
             </ros_topic_publish>
         </ros_topic_callback>
