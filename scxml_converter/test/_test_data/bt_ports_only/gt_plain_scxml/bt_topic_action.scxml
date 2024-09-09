@@ -7,7 +7,7 @@
         <transition target="initial" event="bt_tick">
             <assign location="number" expr="123" />
             <send event="topic_out_msg">
-                <param name="ros_fields.data" expr="number" />
+                <param name="ros_fields__data" expr="number" />
             </send>
         </transition>
     </state>
