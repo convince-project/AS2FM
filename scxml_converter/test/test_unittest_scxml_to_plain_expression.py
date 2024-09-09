@@ -54,13 +54,15 @@ def test_topic_good_expressions():
         "_msg.data == 1",
         "cos(_msg.data) == 1.0",
         "some_msg.data + _msg.count",
-        "_msg.x < 1 && sin(_msg.angle.x+_msg.angle.y) > 2",
+        "_msg.x<1 && sin(_msg.angle.x+_msg.angle.y)>2",
+        "_msg.array_entry[_msg.index] == _msg.index"
     ]
     expected_expressions: List[str] = [
         "_event.ros_fields__data == 1",
         "cos(_event.ros_fields__data) == 1.0",
         "some_msg.data + _event.ros_fields__count",
-        "_event.ros_fields__x < 1 && sin(_event.ros_fields__angle.x+_event.ros_fields__angle.y) > 2"
+        "_event.ros_fields__x<1 && sin(_event.ros_fields__angle.x+_event.ros_fields__angle.y)>2",
+        "_event.ros_fields__array_entry[_event.ros_fields__index] == _event.ros_fields__index"
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC)
