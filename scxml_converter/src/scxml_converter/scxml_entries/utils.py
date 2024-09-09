@@ -73,11 +73,11 @@ class CallbackType(Enum):
         elif cb_type == CallbackType.ROS_SERVICE_RESULT:
             return ["_res."]
         elif cb_type == CallbackType.ROS_ACTION_GOAL:
-            return ["_action.code", "_goal."]
+            return ["_action.goal_id", "_goal."]
         elif cb_type == CallbackType.ROS_ACTION_RESULT:
-            return ["_action.code", "_wrapped_result.code", "_wrapped_result.result."]
+            return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
         elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
-            return ["_action.code", "_feedback."]
+            return ["_action.goal_id", "_feedback."]
 
     @staticmethod
     def get_plain_callback(cb_type: 'CallbackType') -> 'CallbackType':
@@ -142,8 +142,8 @@ def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
         forbidden_prefixes.append(PLAIN_SCXML_PREFIX)
     new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), \
-        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.\n\t{msg_expr}." \
-        f"Converted expr:\n\t{new_expr}"
+        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.\n\t{msg_expr}" \
+        f"\nConverted expr:\n\t{new_expr}"
     return new_expr
 
 

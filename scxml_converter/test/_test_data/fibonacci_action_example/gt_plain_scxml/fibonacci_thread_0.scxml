@@ -30,14 +30,14 @@
         </onentry>
         <transition target="idle" cond="sequence.length == order + 1">
             <send event="action_fibonacci_result">
-                <param name="goal_id" expr="goal_id" />
                 <param name="ros_fields.sequence" expr="sequence" />
+                <param name="goal_id" expr="goal_id" />
             </send>
         </transition>
         <transition target="execute">
             <send event="action_fibonacci_feedback">
-                <param name="goal_id" expr="goal_id" />
                 <param name="ros_fields.sequence" expr="sequence" />
+                <param name="goal_id" expr="goal_id" />
             </send>
         </transition>
     </state>

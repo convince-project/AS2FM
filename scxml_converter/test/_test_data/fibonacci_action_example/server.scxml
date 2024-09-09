@@ -30,8 +30,8 @@
             </onentry>
             <!-- This will check if the thread_id matches with the request -->
             <ros_action_handle_thread_start name="act_srv" target="execute">
-                <assign location="goal_id" expr="_req.goal_id" />
-                <assign location="order" expr="_req.order" />
+                <assign location="goal_id" expr="_action.goal_id" />
+                <assign location="order" expr="_goal.order" />
             </ros_action_handle_thread_start>
         </state>
 
@@ -75,8 +75,8 @@
 
     <state id="idle">
         <ros_action_handle_goal name="act_srv" target="check_goal">
-            <assign location="goal_id" expr="_req.goal_id" />
-            <assign location="order" expr="_req.order" />
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="order" expr="_goal.order" />
         </ros_action_handle_goal>
         <ros_action_handle_thread_free name="act_srv" target="idle">
             <if cond="_event.thread_id == 0">

@@ -38,9 +38,9 @@
                     <param name="goal_id" expr="goal_id" />
                 </send>
                 <send event="action_fibonacci_thread_start">
+                    <param name="ros_fields.order" expr="order" />
                     <param name="goal_id" expr="goal_id" />
                     <param name="thread_id" expr="thread_to_start" />
-                    <param name="ros_fields.order" expr="order" />
                 </send>
                 <else />
                 <send event="action_fibonacci_goal_rejected">
