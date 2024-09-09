@@ -105,7 +105,7 @@ class ScxmlIf(ScxmlBase):
 
     def __init__(self,
                  conditional_executions: List[ConditionalExecutionBody],
-                 else_execution: Optional[ScxmlExecutionBody]):
+                 else_execution: Optional[ScxmlExecutionBody] = None):
         """
         Class representing a conditional execution in SCXML.
 

@@ -63,7 +63,7 @@ class RosField(ScxmlParam):
         # In order to distinguish the message body from additional entries, add a prefix to the name
         assert self._cb_type is not None, \
             f"Error: SCXML ROS field: {self._name} has not callback type set."
-        plain_field_name = f"{ROS_FIELD_PREFIX}.{self._name}"
+        plain_field_name = ROS_FIELD_PREFIX + self._name
         return ScxmlParam(plain_field_name,
                           expr=get_plain_expression(self._expr, self._cb_type))
 

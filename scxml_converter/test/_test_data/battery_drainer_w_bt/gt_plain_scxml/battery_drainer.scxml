@@ -13,7 +13,7 @@
     <state id="use_battery">
         <onentry>
             <send event="topic_level_msg">
-                <param name="ros_fields.data" expr="battery_percent" />
+                <param name="ros_fields__data" expr="battery_percent" />
             </send>
         </onentry>
         <transition event="ros_time_rate.my_timer" target="use_battery">

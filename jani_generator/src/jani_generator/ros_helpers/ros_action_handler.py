@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, Tuple
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 from scxml_converter.scxml_entries import (
-    ScxmlAssign, ScxmlDataModel, ScxmlIf, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState,
+    ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlIf, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState,
     ScxmlTransition)
 from scxml_converter.scxml_entries.ros_utils import (
     get_action_type_params,
@@ -32,6 +32,9 @@ from scxml_converter.scxml_entries.ros_utils import (
     generate_action_feedback_event, generate_action_feedback_handle_event,
     generate_action_result_event, generate_action_result_handle_event,
     get_action_goal_id_definition, sanitize_ros_interface_name)
+
+from scxml_converter.scxml_entries.utils import (
+    PLAIN_SCXML_EVENT_PREFIX, PLAIN_FIELD_EVENT_PREFIX, ROS_FIELD_PREFIX)
 
 
 class RosActionHandler(RosCommunicationHandler):
@@ -60,9 +63,10 @@ class RosActionHandler(RosCommunicationHandler):
         send_params = [ScxmlParam(goal_id_name, expr=str(goal_id))]
         for field_name in req_params:
             # Add preliminary assignments (part of the hack mentioned in self.to_scxml())
+            field_w_pref = ROS_FIELD_PREFIX + field_name
             goal_req_transition.append_body_executable_entry(
-                ScxmlAssign(field_name, f"_event.{field_name}"))
-            send_params.append(ScxmlParam(field_name, expr=field_name))
+                ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
+            send_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         # Add the send to the server
         goal_req_transition.append_body_executable_entry(
             ScxmlSend(action_srv_handle_event, send_params))
@@ -84,12 +88,13 @@ class RosActionHandler(RosCommunicationHandler):
         srv_event_name = srv_event_function(self._interface_name)
         scxml_transition = ScxmlTransition(goal_state.get_id(), [srv_event_name])
         scxml_transition.append_body_executable_entry(
-            ScxmlAssign(goal_id_name, f"_event.{goal_id_name}"))
+            ScxmlAssign(goal_id_name, PLAIN_SCXML_EVENT_PREFIX + goal_id_name))
         out_params: List[ScxmlParam] = []
         for field_name in event_fields:
+            field_w_pref = ROS_FIELD_PREFIX + field_name
             scxml_transition.append_body_executable_entry(
-                ScxmlAssign(field_name, f"_event.{field_name}"))
-            out_params.append(ScxmlParam(field_name, expr=field_name))
+                ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
+            out_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         condition_send_pairs: List[Tuple[str, List[ScxmlSend]]] = []
         for client_id, goal_id in client_to_goal_id:
             client_event = client_event_function(self._interface_name, client_id)
@@ -169,7 +174,8 @@ class RosActionHandler(RosCommunicationHandler):
         # Hack: Using support variables in the data model to avoid having _event in send params
         goal_id_def = get_action_goal_id_definition()
         req_fields_as_data = self._generate_datamodel_from_ros_fields(
-            goal_params | feedback_params | result_params | {goal_id_def[0]: goal_id_def[1]})
+            goal_params | feedback_params | result_params)
+        req_fields_as_data.append(ScxmlData(goal_id_def[0], "0", goal_id_def[1]))
         # Make sure the service name has no slashes and spaces
         scxml_root_name = \
             self.get_interface_prefix() + sanitize_ros_interface_name(self._interface_name)
