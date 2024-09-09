@@ -15,14 +15,14 @@
 
     <state id="send_req">
         <onentry>
-            <ros_service_send_request service_name="/adder">
+            <ros_service_send_request name="/adder">
                 <field name="a" expr="10" />
                 <field name="b" expr="32" />
             </ros_service_send_request>
         </onentry>
-        <ros_service_handle_response service_name="/adder" target="done">
+        <ros_service_handle_response name="/adder" target="done">
             <assign location="temp_sum" expr="_res.sum" />
-            <ros_topic_publish topic="/client_1_res">
+            <ros_topic_publish name="/client_1_res">
                 <field name="data" expr="temp_sum == 42" />
             </ros_topic_publish>
         </ros_service_handle_response>
