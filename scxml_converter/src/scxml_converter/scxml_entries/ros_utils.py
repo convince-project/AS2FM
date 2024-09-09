@@ -18,8 +18,6 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from functools import partial
-
 from enum import Enum
 
 from scxml_converter.scxml_entries import ScxmlBase, RosField
@@ -82,12 +80,13 @@ class CallbackType(Enum):
             return ["_action.code", "_feedback."]
 
 
-def _group_replacement(group_to_replace: int, replacement: str, match: re.Match) -> str:
-    """Support function to replace specific group entries in regexes."""
-    return match.group(0).replace(match.group(group_to_replace), replacement)
-
-
 def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str]) -> str:
+    """
+    Given an expression with the ROS entries from a list, it generates a plain SCXML expression.
+
+    :param msg_expr: The expression to convert.
+    :param expected_prefixes: The list of (ROS) prefixes that are expected in the expression.
+    """
     expected_prefixes.remove("_event.")
     for prefix in expected_prefixes:
         assert prefix.startswith("_"), \
@@ -95,15 +94,20 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
         if prefix.endswith("."):
             # Generic field substitution, add the ROS_FIELD_PREFIX
             substitution = f"_event.{ROS_FIELD_PREFIX}."
-            sub_fun = partial(_group_replacement, 2, substitution)
-            msg_expr = re.sub(rf"(^|[^a-zA-Z0-9_.])({prefix})[a-zA-Z0-9_.]", sub_fun, msg_expr)
+            prefix_reg = prefix.replace(".", r"\.")
+            msg_expr = re.sub(
+                rf"(^|[^a-zA-Z0-9_.]){prefix_reg}([a-zA-Z0-9_.])",
+                rf"\g<1>{substitution}\g<2>", msg_expr)
         else:
             # Special fields substitution, no need to add the ROS_FIELD_PREFIX
             split_prefix = prefix.split(".", maxsplit=1)
             assert len(split_prefix) == 2, \
                 f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
-            substitution = f"_event.{split_prefix[1]}."
-            # TODO
+            substitution = f"_event.{split_prefix[1]}"
+            prefix_reg = prefix.replace(".", r"\.")
+            msg_expr = re.sub(
+                rf"(^|[^a-zA-Z0-9_.]){prefix_reg}($|[^a-zA-Z0-9_.])",
+                rf"\g<1>{substitution}\g<2>", msg_expr)
     return msg_expr
 
 
