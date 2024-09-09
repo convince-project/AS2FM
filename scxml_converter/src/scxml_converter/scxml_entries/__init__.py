@@ -26,7 +26,8 @@ from .scxml_ros_service import (                                                
     RosServiceHandleResponse, RosServiceSendRequest, RosServiceSendResponse)    # noqa: F401
 from .scxml_ros_action_client import (                                          # noqa: F401
     RosActionClient, RosActionSendGoal, RosActionHandleGoalResponse,            # noqa: F401
-    RosActionHandleFeedback, RosActionHandleResult)                             # noqa: F401
+    RosActionHandleFeedback, RosActionHandleSuccessResult,                      # noqa: F401
+    RosActionHandleCanceledResult, RosActionHandleAbortedResult)                # noqa: F401
 from .scxml_ros_action_server import (                                          # noqa: F401
     RosActionServer, RosActionHandleGoalRequest, RosActionAcceptGoal,           # noqa: F401
     RosActionRejectGoal, RosActionStartThread, RosActionSendFeedback,           # noqa: F401

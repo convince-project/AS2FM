@@ -236,8 +236,8 @@ class RosActionSendSuccessResult(RosTrigger):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("status", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
-        return super().as_plain_scxml(ros_declarations)
+        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
+        return plain_send
 
 
 class RosActionSendCanceledResult(RosTrigger):
@@ -268,8 +268,8 @@ class RosActionSendCanceledResult(RosTrigger):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("status", expr=f"{GoalStatus.STATUS_CANCELED}"))
-        return super().as_plain_scxml(ros_declarations)
+        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_CANCELED}"))
+        return plain_send
 
 
 class RosActionSendAbortedResult(RosTrigger):
@@ -300,8 +300,8 @@ class RosActionSendAbortedResult(RosTrigger):
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("status", expr=f"{GoalStatus.STATUS_ABORTED}"))
-        return super().as_plain_scxml(ros_declarations)
+        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_ABORTED}"))
+        return plain_send
 
 
 class RosActionHandleThreadFree(RosCallback):

@@ -499,11 +499,6 @@ class ScxmlRosDeclarationsContainer:
                 f"Error: SCXML ROS declarations: unknown action {alias_name}."
             action_type = self.get_action_server_info(alias_name)[1]
         goal_fields = get_action_type_params(action_type)[0]
-        # We use the goal ID as a reserved field for the action. Make sure it is available.
-        goal_id_name, goal_id_type = get_action_goal_id_definition()
-        assert goal_id_name not in goal_fields, \
-            "Error: SCXML ROS declarations: "\
-            f"found reserved '{goal_id_name}' field in action {action_type} goal."
         if not check_all_fields_known(ros_fields, goal_fields):
             print(f"Error: SCXML ROS declarations: Action goal {alias_name} has invalid fields.")
             return False
@@ -519,11 +514,6 @@ class ScxmlRosDeclarationsContainer:
         """
         _, action_type = self.get_action_server_info(server_name)
         _, feedback_fields, _ = get_action_type_params(action_type)
-        # We use the goal ID as a reserved field for the action. Make sure it is available.
-        goal_id_name, goal_id_type = get_action_goal_id_definition()
-        assert goal_id_name not in feedback_fields, \
-            "Error: SCXML ROS declarations: "\
-            f"found reserved '{goal_id_name}' field in action {action_type} feedback."
         if not check_all_fields_known(ros_fields, feedback_fields):
             print(f"Error: SCXML ROS declarations: Action feedback {server_name} "
                   "has invalid fields.")
@@ -540,11 +530,6 @@ class ScxmlRosDeclarationsContainer:
         """
         _, action_type = self.get_action_server_info(server_name)
         _, _, result_fields = get_action_type_params(action_type)
-        # We use the goal ID as a reserved field for the action. Make sure it is available.
-        goal_id_name, goal_id_type = get_action_goal_id_definition()
-        assert goal_id_name not in result_fields, \
-            "Error: SCXML ROS declarations: "\
-            f"found reserved '{goal_id_name}' field in action {action_type} result."
         if not check_all_fields_known(ros_fields, result_fields):
             print(f"Error: SCXML ROS declarations: Action result {server_name} has invalid fields.")
             return False
