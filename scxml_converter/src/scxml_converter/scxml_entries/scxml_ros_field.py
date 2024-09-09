@@ -15,7 +15,7 @@
 
 """Declaration of the ROS Field SCXML tag extension."""
 
-from typing import Optional, Union
+from typing import Union
 
 from xml.etree import ElementTree as ET
 
@@ -23,7 +23,8 @@ from scxml_converter.scxml_entries import ScxmlParam, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import (
+    CallbackType, get_plain_expression, is_non_empty_string, ROS_FIELD_PREFIX)
 
 
 class RosField(ScxmlParam):
@@ -34,17 +35,18 @@ class RosField(ScxmlParam):
         return "field"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosField":
+    def from_xml_tree(xml_tree: ET.Element, cb_type: CallbackType) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_argument(RosField, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(RosField, xml_tree, "expr",
                                                 (BtGetValueInputPort, str))
-        return RosField(name, expr)
+        return RosField(name, expr, cb_type)
 
-    def __init__(self, name: str, expr: Optional[Union[BtGetValueInputPort, str]]):
+    def __init__(self, name: str, expr: Union[BtGetValueInputPort, str], cb_type: CallbackType):
         self._name = name
         self._expr = expr
+        self._cb_type = cb_type
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
 
     def check_validity(self) -> bool:
@@ -58,11 +60,10 @@ class RosField(ScxmlParam):
             self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlParam:
-        from scxml_converter.scxml_entries.ros_utils import (
-            replace_ros_interface_expression, ROS_FIELD_PREFIX)
         # In order to distinguish the message body from additional entries, add a prefix to the name
         plain_field_name = f"{ROS_FIELD_PREFIX}.{self._name}"
-        return ScxmlParam(plain_field_name, expr=replace_ros_interface_expression(self._expr))
+        return ScxmlParam(plain_field_name, CallbackType.get_plain_callback(self._cb_type),
+                          expr=get_plain_expression(self._expr, self._cb_type))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

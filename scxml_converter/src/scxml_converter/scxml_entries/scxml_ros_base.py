@@ -24,11 +24,10 @@ from scxml_converter.scxml_entries import (
     as_plain_execution_body, execution_body_from_xml, valid_execution_body)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import (
+    CallbackType, get_plain_expression, is_non_empty_string)
 
 from xml.etree import ElementTree as ET
 
@@ -150,6 +149,11 @@ class RosCallback(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_declaration_type.")
 
     @classmethod
+    def get_callback_type(cls) -> CallbackType:
+        """Return the callback type of a specific ROS Callback subclass"""
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_callback_type.")
+
+    @classmethod
     def from_xml_tree(cls: Type['RosCallback'], xml_tree: ET.Element) -> 'RosCallback':
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
@@ -226,7 +230,7 @@ class RosCallback(ScxmlTransition):
         target = self._target
         condition = self._condition
         if condition is not None:
-            condition = replace_ros_interface_expression(condition)
+            condition = get_plain_expression(condition, self.get_callback_type())
         body = as_plain_execution_body(self._body, ros_declarations)
         return ScxmlTransition(target, [event_name], condition, body)
 
