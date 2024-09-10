@@ -25,9 +25,8 @@ from jani_generator.jani_entries.jani_composition import JaniComposition
 from jani_generator.jani_entries.jani_edge import JaniEdge
 from jani_generator.jani_entries.jani_expression_generator import array_create_operator
 from jani_generator.ros_helpers.ros_timer import (
-    RosTimer, GLOBAL_TIMER_NAME, GLOBAL_TIMER_TICK_ACTION)
+    RosTimer, GLOBAL_TIMER_NAME, GLOBAL_TIMER_TICK_ACTION, ROS_TIMER_RATE_EVENT_PREFIX)
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
 def implement_scxml_events_as_jani_syncs(
