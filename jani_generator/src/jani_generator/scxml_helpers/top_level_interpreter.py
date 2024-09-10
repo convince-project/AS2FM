@@ -39,6 +39,7 @@ from scxml_converter.scxml_entries import ScxmlRoot
 class FullModel:
     max_time: Optional[int] = None
     max_array_size: int = field(default=100)
+    bt_tick_rate: float = field(default=1.0)
     bt: Optional[str] = None
     plugins: List[str] = field(default_factory=list)
     skills: List[str] = field(default_factory=list)
@@ -92,6 +93,8 @@ def parse_main_xml(xml_path: str) -> FullModel:
                     model.max_time = _parse_time_element(mc_parameter)
                 elif remove_namespace(mc_parameter.tag) == "max_array_size":
                     model.max_array_size = int(mc_parameter.attrib["value"])
+                elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
+                    model.bt_tick_rate = float(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -141,7 +144,7 @@ def generate_plain_scxml_models_and_timers(
         ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        ros_scxmls.extend(bt_converter(model.bt, model.plugins))
+        ros_scxmls.extend(bt_converter(model.bt, model.plugins, model.bt_tick_rate))
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []

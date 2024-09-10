@@ -23,7 +23,6 @@ from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
-from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 TIME_UNITS = {
     "s": 1,
@@ -34,6 +33,7 @@ TIME_UNITS = {
 
 GLOBAL_TIMER_NAME = "global_timer"
 GLOBAL_TIMER_TICK_ACTION = "global_timer_tick"
+ROS_TIMER_RATE_EVENT_PREFIX = "ros_time_rate."
 
 
 def _convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
