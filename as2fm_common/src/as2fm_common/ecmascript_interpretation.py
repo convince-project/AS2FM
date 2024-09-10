@@ -17,7 +17,8 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, Optional, Union
+import re
+from typing import Dict, List, Optional, Union
 from array import array
 
 import js2py
@@ -26,6 +27,16 @@ from as2fm_common.common import ValidTypes
 
 
 BASIC_JS_TYPES = Union[int, float, bool]
+
+# Functions that, if found in the expression, should be interpreted as math functions (Math.fun())
+MATH_FUNCTIONS: List[str] = ["abs", "floor", "ceil", "cos", "sin", "log", "pow", "min", "max"]
+
+
+def prepend_math_functions(expr: str) -> str:
+    """Append 'Math.' to the functions in the provided expression and return a copy."""
+    for fun in MATH_FUNCTIONS:
+        expr = re.sub(rf"(^|[^a-zA-Z0-9_]){fun}\(", rf"\g<1>Math.{fun}(", expr)
+    return expr
 
 
 def interpret_ecma_script_expr(
@@ -36,6 +47,7 @@ def interpret_ecma_script_expr(
     :param expr: The ECMA script expression
     :return: The interpreted object
     """
+    expr = prepend_math_functions(expr)
     if variables is None:
         variables = {}
     context = js2py.EvalJs(variables)
