@@ -71,7 +71,8 @@ def read_value_from_xml_child(
     if len(xml_child) > 1:
         print(f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
         return None
-    n_tag_children = len(xml_child[0])
+    tag_children = [child for child in xml_child[0] if child.tag is not ET.Comment]
+    n_tag_children = len(tag_children)
     if n_tag_children == 0 and str in valid_types:
         # Try to read the text value
         text_value = xml_child[0].text
@@ -80,7 +81,9 @@ def read_value_from_xml_child(
             return None
         return text_value
     if n_tag_children > 1:
-        print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children.")
+        print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children:")
+        for child in tag_children:
+            print(f"\t- {child.tag}")
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
