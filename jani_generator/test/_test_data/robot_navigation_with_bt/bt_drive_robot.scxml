@@ -29,11 +29,11 @@
     <state id="init">
         <transition target="wait_for_tick">
             <if cond="control_type == 0">
-                <assign location="x_vel" expr="0.5" />
+                <assign location="x_vel" expr="2.0" />
                 <assign location="theta_vel" expr="0.0" />
             <else />
                 <assign location="x_vel" expr="0.0" />
-                <assign location="theta_vel" expr="0.5" />
+                <assign location="theta_vel" expr="2.0" />
             </if>
         </transition>
     </state>
