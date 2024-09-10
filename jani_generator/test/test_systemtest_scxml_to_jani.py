@@ -270,9 +270,13 @@ class TestConversion(unittest.TestCase):
         being sent in different orders without deadlocks."""
         self._test_with_main('multiple_senders_same_event', 'seq_check', True)
 
-    def test_array_model(self):
+    def test_array_model_basic(self):
         """Test the array model."""
-        self._test_with_main('array_model', 'array_check', True)
+        self._test_with_main('array_model_basic', 'array_check', True)
+
+    def test_array_model_additional(self):
+        """Test the array model."""
+        self._test_with_main('array_model_additional', 'array_check', True)
 
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
