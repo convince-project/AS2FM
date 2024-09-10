@@ -19,6 +19,7 @@ Representation of ROS timers.
 
 from typing import List, Optional, Tuple
 
+from math import gcd, floor
 from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
@@ -54,9 +55,14 @@ def _to_best_int_period(period: float) -> Tuple[int, str, float]:
     """Choose the best time unit for a given period.
     Such that the period is an integer and the unit is the largest possible."""
     for unit, factor in TIME_UNITS.items():
-        if int(period / factor) == period / factor:
-            period_int = int(period / factor)
-            return period_int, unit, factor
+        period_in_unit = period / factor
+        int_period_in_unit = floor(period_in_unit)
+        if int_period_in_unit == period_in_unit:
+            # This period exactly fits into the unit
+            return int(period_in_unit), unit, factor
+        elif int_period_in_unit > 100:
+            # We do not want to have too large numbers
+            return int_period_in_unit, unit, factor
     raise ValueError(f"Period {period} cannot be converted to an integer.")
 
 
@@ -89,8 +95,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
             timer.period_int, timer.unit, smallest_unit)
         for timer in timers
     }
-    # TODO: Should be greatest-common-divisor instead
-    global_timer_period = min(timer_periods_in_smallest_unit.values())
+    global_timer_period = gcd(*timer_periods_in_smallest_unit.values())
     global_timer_period_unit = smallest_unit
 
     try:
