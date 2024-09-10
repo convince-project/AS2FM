@@ -32,6 +32,7 @@
 
     <state id="current">
         <ros_topic_callback name="cmd_vel" target="current">
+            <!-- We assume the robot has a maximum lin. / ang. velocity of +-0.5  -->
             <assign location="last_cmd_lin" expr="max(min(_msg.linear.x, 0.5), -0.5)" />
             <assign location="last_cmd_ang" expr="max(min(_msg.angular.z, 0.5), -0.5)" />
         </ros_topic_callback>

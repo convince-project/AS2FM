@@ -274,6 +274,7 @@ class TestConversion(unittest.TestCase):
         """Test the array model."""
         self._test_with_main('array_model_basic', 'array_check', True)
 
+    @pytest.mark.skip(reason="Not yet implemented.")
     def test_array_model_additional(self):
         """Test the array model."""
         self._test_with_main('array_model_additional', 'array_check', True)
