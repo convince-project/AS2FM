@@ -40,7 +40,7 @@
 
     <state id="wait_for_tick">
         <transition event="bt_tick" target="wait_for_tick">
-            <ros_topic_publish name="cmd_vel">
+            <ros_topic_publish name="cmd_pub">
                 <!-- 2D robots require only x and theta controls -->
                 <field name="linear.x" expr="x_vel" />
                 <field name="angular.z" expr="theta_vel" />
