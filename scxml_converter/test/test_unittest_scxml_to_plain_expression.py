@@ -80,3 +80,56 @@ def test_topic_bad_expressions():
         with pytest.raises(AssertionError):
             get_plain_expression(expr, CallbackType.ROS_TOPIC)
             print(f"Expression '{expr}' should raise.")
+
+
+def test_action_goal_good_expressions():
+    """Test expressions that have events related to actions."""
+    ok_expressions: List[str] = [
+        "some_action.goal_id",
+        "_action.goal_id",
+        "_goal.x < 1"
+    ]
+    expected_expressions: List[str] = [
+        "some_action.goal_id",
+        "_event.goal_id",
+        "_event.ros_fields__x < 1"
+    ]
+    for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL)
+        assert conv_expr == gt_expr
+
+
+def test_action_feedback_good_expressions():
+    """Test expressions that have events related to actions."""
+    ok_expressions: List[str] = [
+        "cos(_feedback.angle.x) == 1.0",
+        "some_action.goal_id",
+        "_action.goal_id",
+    ]
+    expected_expressions: List[str] = [
+        "cos(_event.ros_fields__angle.x) == 1.0",
+        "some_action.goal_id",
+        "_event.goal_id",
+    ]
+    for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK)
+        assert conv_expr == gt_expr
+
+
+def test_action_result_good_expressions():
+    """Test expressions that have events related to actions."""
+    ok_expressions: List[str] = [
+        "_wrapped_result.code == 1",
+        "cos(_wrapped_result.result.angle) == 0.0",
+        "some_action.goal_id",
+        "_action.goal_id",
+    ]
+    expected_expressions: List[str] = [
+        "_event.code == 1",
+        "cos(_event.ros_fields__angle) == 0.0",
+        "some_action.goal_id",
+        "_event.goal_id",
+    ]
+    for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT)
+        assert conv_expr == gt_expr
