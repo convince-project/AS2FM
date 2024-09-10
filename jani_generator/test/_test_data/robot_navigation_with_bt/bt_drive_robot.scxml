@@ -13,7 +13,7 @@
         <topic>
             <bt_get_input key="topic" />
         </topic>
-    </ros_topic_subscriber>
+    </ros_topic_publisher>
 
     <datamodel>
         <data id="control_type" type="int8">
