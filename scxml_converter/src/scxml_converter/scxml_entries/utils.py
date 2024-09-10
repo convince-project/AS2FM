@@ -183,6 +183,9 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     return valid_str
 
 
+# ------------ Datatype-related utilities ------------
+
+
 def convert_string_to_type(value: str, data_type: str) -> Any:
     """
     Convert a value to the provided data type. Raise if impossible.
