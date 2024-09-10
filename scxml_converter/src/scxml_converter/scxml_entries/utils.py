@@ -149,8 +149,7 @@ def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_PREFIX)
     new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), \
-        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.\n\t{msg_expr}" \
-        f"\nConverted expr:\n\t{new_expr}"
+        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.: {msg_expr}"
     return new_expr
 
 
