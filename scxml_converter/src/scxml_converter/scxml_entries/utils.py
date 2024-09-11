@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Collection of various utilities for scxml entries."""
+"""Collection of various utilities for SCXML entries."""
 
 import re
 from enum import Enum
-from typing import Any, Dict, List, Type, MutableSequence
+from typing import Any, Dict, List, Optional, Type, MutableSequence
 
 from scxml_converter.scxml_entries import ScxmlBase
 
@@ -184,17 +184,50 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
 
 
 # ------------ Datatype-related utilities ------------
+def get_data_type_from_string(data_type: str) -> Optional[Type]:
+    """
+    Convert a data type string description to the matching python type.
+
+    :param data_type: The data type to check.
+    :return: the type matching the string, if that is valid. None otherwise.
+    """
+    data_type = data_type.strip()
+    # If the data type is an array, remove the bound value
+    if '[' in data_type:
+        data_type = re.sub(r"(^[a-z0-9]\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
+    return SCXML_DATA_STR_TO_TYPE.get(data_type, None)
+
+
+def is_array_type(py_type: Type) -> bool:
+    """
+    Check if a type is an array type.
+
+    :param py_type: The type to check.
+    :return: True if the type is an array type, False otherwise.
+    """
+    return py_type in (MutableSequence[int], MutableSequence[float])
 
 
 def convert_string_to_type(value: str, data_type: str) -> Any:
     """
-    Convert a value to the provided data type. Raise if impossible.
+    Convert a value to the provided data type.
     """
-    assert data_type in SCXML_DATA_STR_TO_TYPE, \
-        f"Error: SCXML conversion of data entry: Unknown data type {data_type}."
+    python_type = get_data_type_from_string(data_type)
+    assert python_type in (bool, int, float), \
+        f"Error: SCXML conversion of data entry: Unsupported data type {data_type}."
     assert isinstance(value, str), \
         f"Error: SCXML conversion of data entry: expected a string, got {type(value)}."
     assert len(value) > 0, "Error: SCXML conversion of data entry: Empty string."
-    assert '[' not in data_type, \
-        f"Error: SCXML conversion of data entry: Cannot convert array type {data_type}."
     return SCXML_DATA_STR_TO_TYPE[data_type](value)
+
+
+def get_array_max_size(data_type: str) -> Optional[int]:
+    """
+    Get the maximum size of an array, if the data type is an array.
+    """
+    assert is_array_type(get_data_type_from_string(data_type)), \
+        f"Error: SCXML data: '{data_type}' is not an array."
+    match_obj = re.search(r"\[([0-9]+)\]", data_type)
+    if match_obj is not None:
+        return int(match_obj.group(1))
+    return None
