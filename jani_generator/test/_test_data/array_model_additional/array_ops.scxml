@@ -26,6 +26,7 @@
                 <param name="bound_array" expr="bound_array" />
                 <param name="filled_bound_array" expr="filled_bound_array" />
                 <param name="filled_unbound_array" expr="filled_unbound_array" />
+                <!-- param name="expl_array_in_event" expr="[1,2,3,4]" -->
             </send>
         </transition>
     </state>

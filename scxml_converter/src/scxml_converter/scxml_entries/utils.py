@@ -18,6 +18,7 @@
 import re
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, MutableSequence
+from typing import get_origin
 
 from as2fm_common.common import string_to_value
 from scxml_converter.scxml_entries import ScxmlBase
@@ -200,7 +201,7 @@ def get_data_type_from_string(data_type: str) -> Optional[Type]:
     data_type = data_type.strip()
     # If the data type is an array, remove the bound value
     if '[' in data_type:
-        data_type = re.sub(r"(^[a-z0-9]\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
+        data_type = re.sub(r"(^[a-z0-9]*\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
     return SCXML_DATA_STR_TO_TYPE.get(data_type, None)
 
 
@@ -211,7 +212,7 @@ def is_array_type(py_type: Type) -> bool:
     :param py_type: The type to check.
     :return: True if the type is an array type, False otherwise.
     """
-    return py_type in (MutableSequence[int], MutableSequence[float])
+    return get_origin(py_type) == get_origin(MutableSequence)
 
 
 def convert_string_to_type(value: str, data_type: str) -> Any:

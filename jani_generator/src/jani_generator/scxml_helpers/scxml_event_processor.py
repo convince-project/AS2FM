@@ -17,7 +17,7 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import Dict, List, MutableSequence
+from typing import get_args, get_origin, Dict, List, MutableSequence
 
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
@@ -137,11 +137,9 @@ def implement_scxml_events_as_jani_syncs(
         for p_name, p_type in event.get_data_structure().items():
             init_value = None
             is_array = False
-            if p_type is MutableSequence[int]:
-                init_value = array_create_operator("__array_iterator", max_array_size, 0)
-                is_array = True
-            elif p_type is MutableSequence[float]:
-                init_value = array_create_operator("__array_iterator", max_array_size, 0.0)
+            if get_origin(p_type) == get_origin(MutableSequence):
+                ar_type = get_args(p_type)[0]
+                init_value = array_create_operator("__array_iterator", max_array_size, ar_type(0))
                 is_array = True
             # TODO: Dots are likely to create problems in the future. Consider replacing them
             jani_model.add_variable(

@@ -15,8 +15,9 @@
 
 """"Test the SCXML data conversion from all possible declaration types"""
 
-from typing import List
-from scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
+from typing import List, MutableSequence
+from scxml_converter.scxml_entries.utils import (
+    CallbackType, get_plain_expression, get_data_type_from_string)
 
 import pytest
 
@@ -133,3 +134,22 @@ def test_action_result_good_expressions():
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT)
         assert conv_expr == gt_expr
+
+
+def test_type_string_conversion():
+    """Test the various types string are converted to the expected value."""
+    type_strings = [
+        ("float64", float),
+        ("int32", int),
+        ("bool", bool),
+        ("float64[]", MutableSequence[float]),
+        ("int32[]", MutableSequence[int]),
+        ("int8[]", MutableSequence[int]),
+        ("float64[4]", MutableSequence[float]),
+        ("int32[10]", MutableSequence[int]),
+        ("int8[01]", MutableSequence[int]),
+        ("float64[-4]", None),
+    ]
+    for type_str, gt_type in type_strings:
+        conv_type = get_data_type_from_string(type_str)
+        assert conv_type == gt_type
