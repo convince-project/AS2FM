@@ -19,7 +19,7 @@ Module defining SCXML tags to match against.
 
 import xml.etree.ElementTree as ET
 from hashlib import sha256
-from typing import get_args, get_origin, Dict, List, MutableSequence, Optional, Set, Tuple, Union
+from typing import get_args, Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
 from as2fm_common.common import (
     check_value_type_compatible, get_default_expression_for_type, string_to_value, value_to_type)
@@ -29,6 +29,8 @@ from jani_generator.jani_entries import (
     JaniValue, JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     and_operator, not_operator, max_operator, plus_operator)
+from jani_generator.jani_entries.jani_utils import (
+    get_variable_type, get_array_type_and_size, is_variable_array)
 from jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo, parse_ecmascript_to_jani_expression)
@@ -58,58 +60,6 @@ def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
     return sha256(s.encode()).hexdigest()[:8]
 
 
-def _get_variable_type(jani_automaton: JaniAutomaton, variable_name: Optional[str]) -> type:
-    """
-    Retrieve the variable type from the Jani automaton.
-
-    :param jani_automaton: The Jani automaton to check the variable in.
-    :param variable_name: The name of the variable to check.
-    :return: The retrieved type.
-    """
-    assert variable_name is not None, "Variable name must be provided."
-    variable = jani_automaton.get_variables().get(variable_name)
-    assert variable is not None, \
-        f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
-    return variable.get_type()
-
-
-def _is_variable_array(jani_automaton: JaniAutomaton, variable_name: Optional[str]) -> bool:
-    """Check if a variable is an array.
-
-    :param jani_automaton: The Jani automaton to check the variable in.
-    :param variable_name: The name of the variable to check.
-    :return: True if the variable is an array, False otherwise.
-    """
-    return get_origin(_get_variable_type(jani_automaton, variable_name)) == \
-        get_origin(MutableSequence)
-
-
-def _get_array_info(jani_automaton: JaniAutomaton, var_name: str) -> ArrayInfo:
-    """
-    Generate the ArrayInfo obj. related to the provided variable.
-
-    :param jani_automaton: The Jani automaton to get the variable from.
-    :param var_name: The name of the variable to generate the info from.
-    :return: The ArrayInfo obj. with array type and max size.
-    """
-    assert var_name is not None, "Variable name must be provided."
-    variable = jani_automaton.get_variables().get(var_name)
-    var_type = variable.get_type()
-    assert get_origin(var_type) == get_origin(MutableSequence), \
-        f"Variable {var_name} not an array, cannot extract array info."
-    array_type = get_args(var_type)[0]
-    assert array_type in (int, float), f"Array type {array_type} not supported."
-    init_operator = variable.get_init_expr().as_operator()
-    assert init_operator is not None, f"Expected init expr of {var_name} to be an operator expr."
-    if init_operator[0] == "av":
-        max_size = len(init_operator[1]['elements'].as_literal().value())
-    elif init_operator[0] == "ac":
-        max_size = init_operator[1]['length'].as_literal().value()
-    else:
-        raise ValueError(f"Unexpected operator {init_operator[0]} for {var_name} init expr.")
-    return ArrayInfo(array_type, max_size)
-
-
 def _interpret_scxml_assign(
         elem: ScxmlAssign, jani_automaton: JaniAutomaton, event_substitution: Optional[str] = None,
         assign_index: int = 0) -> List[JaniAssignment]:
@@ -125,10 +75,11 @@ def _interpret_scxml_assign(
     assignment_target = parse_ecmascript_to_jani_expression(elem.get_location())
     target_expr_type = assignment_target.get_expression_type()
     is_target_array = target_expr_type == JaniExpressionType.IDENTIFIER and \
-        _is_variable_array(jani_automaton, assignment_target.as_identifier())
+        is_variable_array(jani_automaton, assignment_target.as_identifier())
     array_info = None
     if is_target_array:
-        array_info = _get_array_info(jani_automaton, assignment_target.as_identifier())
+        var_info = get_array_type_and_size(jani_automaton, assignment_target.as_identifier())
+        array_info = ArrayInfo(*var_info)
     # Check if the target is an array, in case copy the length too
     assignment_value = parse_ecmascript_to_jani_expression(
         elem.get_expr(), array_info).replace_event(event_substitution)
@@ -155,7 +106,7 @@ def _interpret_scxml_assign(
             assert op_type == "av", \
                 f"Array assignment expects an array value (av) operator, found {op_type}."
             array_length = len(string_to_value(
-                elem.get_expr(), _get_variable_type(jani_automaton, target_identifier)))
+                elem.get_expr(), get_variable_type(jani_automaton, target_identifier)))
             assignments.append(JaniAssignment({
                 "ref": f"{target_identifier}.length",
                 "value": JaniValue(array_length),
@@ -264,7 +215,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 # If we are sending an array, set the length as well
                 if jani_expr.get_expression_type() == JaniExpressionType.IDENTIFIER:
                     variable_name = jani_expr.as_identifier()
-                    if _is_variable_array(jani_automaton, variable_name):
+                    if is_variable_array(jani_automaton, variable_name):
                         new_edge.destinations[0]['assignments'].append(JaniAssignment({
                             "ref": f'{param_assign_name}.length',
                             "value": f"{variable_name}.length"}))
