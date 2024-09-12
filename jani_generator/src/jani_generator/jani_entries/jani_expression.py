@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from jani_generator.jani_entries import JaniValue
 
-SupportedExp = Union[str, int, float, bool, dict]
+SupportedExp = Union[str, int, float, bool, dict, list]
 
 
 class JaniExpressionType(Enum):
@@ -118,6 +118,9 @@ class JaniExpression:
             return {
                 "exp": JaniExpression(expression_dict["exp"]),
                 "index": JaniExpression(expression_dict["index"])}
+        if (self.op == "av"):
+            return {
+                "elements": JaniExpression(expression_dict["elements"])}
         # Convince specific expressions
         if (self.op in ("norm2d")):
             return {

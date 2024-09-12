@@ -19,6 +19,7 @@ import re
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, MutableSequence
 
+from as2fm_common.common import string_to_value
 from scxml_converter.scxml_entries import ScxmlBase
 
 
@@ -218,12 +219,7 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     Convert a value to the provided data type.
     """
     python_type = get_data_type_from_string(data_type)
-    assert python_type in (bool, int, float), \
-        f"Error: SCXML conversion of data entry: Unsupported data type {data_type}."
-    assert isinstance(value, str), \
-        f"Error: SCXML conversion of data entry: expected a string, got {type(value)}."
-    assert len(value) > 0, "Error: SCXML conversion of data entry: Empty string."
-    return SCXML_DATA_STR_TO_TYPE[data_type](value)
+    return string_to_value(value, python_type)
 
 
 def get_array_max_size(data_type: str) -> Optional[int]:

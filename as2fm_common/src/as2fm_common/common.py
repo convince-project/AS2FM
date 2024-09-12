@@ -96,6 +96,29 @@ def value_to_string(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
+def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
+    """Convert a string to a value of the desired type."""
+    value_str = value_str.strip()
+    assert isinstance(value_str, str), \
+        f"Error: provided value is of type {type(value_str)}, expected a string."
+    assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
+    is_array_value = value_str.startswith('[') and value_str.endswith(']')
+    if not is_array_value:
+        assert value_type in (bool, int, float), \
+            f"Error: the value {value_str} shall be converted to a base type."
+        return value_type(value_str)
+    else:
+        str_entries = value_str.strip('[]').split(',')
+        if str_entries == ['']:
+            str_entries = []
+        if value_type is MutableSequence[int]:
+            return array('i', [int(v) for v in str_entries])
+        elif value_type is MutableSequence[float]:
+            return array('d', [float(v) for v in str_entries])
+        else:
+            raise ValueError(f"Unsupported value type {value_type}.")
+
+
 def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
     """Check if the value is compatible with the field type."""
     if field_type is float:

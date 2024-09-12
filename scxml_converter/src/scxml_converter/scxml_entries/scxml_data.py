@@ -28,7 +28,8 @@ from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import (
-    convert_string_to_type, get_data_type_from_string, is_array_type, is_non_empty_string)
+    convert_string_to_type, get_array_max_size, get_data_type_from_string,
+    is_array_type, is_non_empty_string)
 
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]
@@ -108,6 +109,7 @@ class ScxmlData(ScxmlBase):
     def get_array_max_size(self) -> Optional[int]:
         assert is_array_type(self.get_type()), \
             f"Error: SCXML data: '{self._id}' type is not an array."
+        return get_array_max_size(self._data_type)
 
     def get_expr(self) -> str:
         return self._expr

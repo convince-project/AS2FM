@@ -22,7 +22,7 @@ from hashlib import sha256
 from typing import Dict, List, MutableSequence, Optional, Set, Tuple, Union
 
 from as2fm_common.common import (
-    check_value_type_compatible, get_default_expression_for_type, value_to_type)
+    check_value_type_compatible, get_default_expression_for_type, string_to_value, value_to_type)
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniExpressionType, JaniGuard,
@@ -364,12 +364,16 @@ class DatamodelTag(BaseTag):
             # It should be ported to scxml_entries.ScxmlDataModel
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
-            if expected_type is MutableSequence[int]:
-                array_info = ArrayInfo(int, self.max_array_size)
+            if expected_type not in (int, float, bool):
+                # Not a basic type: we are dealing with an array
+                array_type = int if expected_type is MutableSequence[int] else float if \
+                    expected_type is MutableSequence[float] else None
+                assert array_type is not None, f"Type {expected_type} not supported."
+                max_array_size = scxml_data.get_array_max_size()
+                if max_array_size is None:
+                    max_array_size = self.max_array_size
                 expected_type = list
-            elif expected_type is MutableSequence[float]:
-                array_info = ArrayInfo(float, self.max_array_size)
-                expected_type = list
+                array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
             assert check_value_type_compatible(
@@ -382,9 +386,10 @@ class DatamodelTag(BaseTag):
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
             if expected_type is list:
+                init_expr = string_to_value(scxml_data.get_expr(), scxml_data.get_type())
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
-                    JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(0)))
+                    JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr))))
 
 
 class ScxmlTag(BaseTag):

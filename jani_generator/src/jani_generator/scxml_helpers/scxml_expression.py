@@ -25,7 +25,7 @@ from jani_generator.jani_entries.jani_convince_expression_expansion import (
     OPERATORS_TO_JANI_MAP, CALLABLE_OPERATORS_MAP)
 from jani_generator.jani_entries.jani_expression import JaniExpression
 from jani_generator.jani_entries.jani_expression_generator import (
-    array_access_operator, array_create_operator)
+    array_access_operator, array_create_operator, array_value_operator)
 from jani_generator.jani_entries.jani_value import JaniValue
 
 
@@ -86,9 +86,21 @@ def _parse_ecmascript_to_jani_expression(
         })
     elif ast.type == "ArrayExpression":
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
-        assert len(ast.elements) == 0, "Array expressions with elements are not supported."
-        return array_create_operator("__array_iterator", array_info.array_max_size,
-                                     JaniValue(array_info.array_type(0)))
+        entry_type: Type = array_info.array_type
+        if len(ast.elements) == 0:
+            return array_create_operator("__array_iterator", array_info.array_max_size,
+                                         entry_type(0))
+        else:
+            elements_to_add = array_info.array_max_size - len(ast.elements)
+            assert elements_to_add >= 0, \
+                "Array size must be less than or equal to the recipient max size."
+            elements_list = []
+            for element in ast.elements:
+                assert element.type == "Literal", "Array elements must be literals."
+                elements_list.append(entry_type(element.value))
+            # Add dummy elements to make sure the full array is assigned
+            elements_list.extend([entry_type(0)] * elements_to_add)
+            return array_value_operator(elements_list)
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
         assert ast.name not in ("True", "False"), \
