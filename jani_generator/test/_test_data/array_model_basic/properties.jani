@@ -2,7 +2,6 @@
     "properties": [
           {
             "name": "array_check",
-            "comment": "Not working due to array access not supported in properties",
             "expression": {
               "op": "filter",
               "fun": "values",

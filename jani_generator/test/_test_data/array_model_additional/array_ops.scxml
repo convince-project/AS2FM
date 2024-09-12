@@ -17,7 +17,7 @@
         <onentry>
             <assign location="unbound_array" expr="[1,2,3]" />
             <assign location="bound_array" expr="unbound_array" />
-            <assign location="bound_array[bound_array.length]" expr="4" />
+            <assign location="bound_array[bound_array.length]" expr="7" />
             <assign location="filled_unbound_array[filled_unbound_array.length]" expr="8" />
         </onentry>
         <transition target="finish">

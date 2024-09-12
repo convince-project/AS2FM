@@ -145,7 +145,8 @@ def _interpret_scxml_assign(
             value_identifier = assignment_value.as_identifier()
             assignments.append(JaniAssignment({
                 "ref": f"{target_identifier}.length",
-                "value": JaniExpression(f"{value_identifier}.length")
+                "value": JaniExpression(f"{value_identifier}.length"),
+                "index": assign_index
             }))
         elif value_expr_type == JaniExpressionType.OPERATOR:
             # Explicit array assignment: set the new length of the variable, too
@@ -157,7 +158,8 @@ def _interpret_scxml_assign(
                 elem.get_expr(), _get_variable_type(jani_automaton, target_identifier)))
             assignments.append(JaniAssignment({
                 "ref": f"{target_identifier}.length",
-                "value": JaniValue(array_length)
+                "value": JaniValue(array_length),
+                "index": assign_index
             }))
         else:
             raise ValueError(
@@ -175,7 +177,8 @@ def _interpret_scxml_assign(
             new_length = max_operator(plus_operator(array_idx, 1), array_length_id)
             assignments.append(JaniAssignment({
                 "ref": array_length_id,
-                "value": new_length
+                "value": new_length,
+                "index": assign_index
             }))
     return assignments
 

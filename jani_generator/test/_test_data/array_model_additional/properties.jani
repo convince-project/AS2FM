@@ -2,7 +2,6 @@
     "properties": [
           {
             "name": "array_check",
-            "comment": "Not working due to array access not supported in properties",
             "expression": {
               "op": "filter",
               "fun": "values",
@@ -13,18 +12,80 @@
                   "exp": {
                     "op": "∧",
                     "left": {
-                      "op": "=",
-                      "left": 11,
-                      "right": "new_msg_array.msg.length"
+                      "comment": "Check for all_data.unbound_array and all_data.bound_array",
+                      "op": "∧",
+                      "left": {
+                        "op": "∧",
+                        "left": {
+                          "op": "=",
+                          "left": "all_data.unbound_array.length",
+                          "right": 3
+                        },
+                        "right": {
+                          "op": "=",
+                          "left": {
+                            "op": "aa",
+                            "exp": "all_data.unbound_array",
+                            "index": 2
+                          },
+                          "right": 3
+                        }
+                      },
+                      "right": {
+                        "op": "∧",
+                        "left": {
+                          "op": "=",
+                          "left": "all_data.bound_array.length",
+                          "right": 4
+                        },
+                        "right": {
+                          "op": "=",
+                          "left": {
+                            "op": "aa",
+                            "exp": "all_data.bound_array",
+                            "index": 3
+                          },
+                          "right": 7
+                        }
+                      }
                     },
                     "right": {
-                      "op": "=",
+                      "comment": "Check for filled_array (bounded and not)",
+                      "op": "∧",
                       "left": {
-                        "op": "aa",
-                        "exp": "new_msg_array.msg",
-                        "index": 10
+                        "op": "∧",
+                        "left": {
+                          "op": "=",
+                          "left": "all_data.filled_bound_array.length",
+                          "right": 6
+                        },
+                        "right": {
+                          "op": "=",
+                          "left": {
+                            "op": "aa",
+                            "exp": "all_data.filled_bound_array",
+                            "index": 5
+                          },
+                          "right": 11
+                        }
                       },
-                      "right": 10
+                      "right": {
+                        "op": "∧",
+                        "left": {
+                          "op": "=",
+                          "left": "all_data.filled_unbound_array.length",
+                          "right": 7
+                        },
+                        "right": {
+                          "op": "=",
+                          "left": {
+                            "op": "aa",
+                            "exp": "all_data.filled_unbound_array",
+                            "index": 6
+                          },
+                          "right": 8
+                        }
+                      }
                     }
                   }
                 }
