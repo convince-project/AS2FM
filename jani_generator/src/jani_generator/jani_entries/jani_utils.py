@@ -15,7 +15,8 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Optional, MutableSequence, Tuple, Type, get_origin, get_args
+from typing import Any, Dict, Optional, MutableSequence, Tuple, Type, get_origin, get_args
+from as2fm_common.common import get_default_expression_for_type
 from jani_generator.jani_entries import JaniAutomaton
 
 
@@ -69,3 +70,23 @@ def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tup
     else:
         raise ValueError(f"Unexpected operator {init_operator[0]} for {var_name} init expr.")
     return (array_type, max_size)
+
+
+def get_all_variables_and_instantiations(jani_automaton: JaniAutomaton) -> Dict[str, Any]:
+    """
+    Retrieve all variables and their instantiations from the Jani automaton.
+
+    :param jani_automaton: The Jani automaton to retrieve the variables from.
+    :return: A dictionary mapping each variable to a dummy value
+    """
+    variables: Dict[str, Any] = {}
+    for n, v in jani_automaton.get_variables().items():
+        variables[n] = get_default_expression_for_type(v.get_type())
+        # Hack to solve issue for expressions with explicit access to array entries
+        if isinstance(variables[n], MutableSequence):
+            for _ in range(50):
+                variables[n].append(0)
+        # Another hack, since javascript interprets 0.0 as int...
+        if isinstance(variables[n], float):
+            variables[n] = 0.1
+    return variables
