@@ -38,14 +38,19 @@ ROS_EVENT_PREFIXES = [
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
 SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
-    "bool": bool,
-    "float32": float,
-    "float64": float,
-    "int8": int,
-    "int16": int,
-    "int32": int,
-    "int64": int,
-    "int32[]": MutableSequence[int],  # array.array('i): https://stackoverflow.com/a/67775675
+    "bool":         bool,
+    "float32":      float,
+    "float64":      float,
+    "int8":         int,
+    "int16":        int,
+    "int32":        int,
+    "int64":        int,
+    "int8[]":       MutableSequence[int],    # array('i'): https://stackoverflow.com/a/67775675
+    "int16[]":      MutableSequence[int],
+    "int32[]":      MutableSequence[int],
+    "int64[]":      MutableSequence[int],
+    "float32[]":    MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
+    "float64[]":    MutableSequence[float]
 }
 
 

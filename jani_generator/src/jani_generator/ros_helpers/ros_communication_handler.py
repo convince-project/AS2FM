@@ -22,7 +22,7 @@ from typing import Dict, Iterator, List, Optional, Type
 from as2fm_common.common import get_default_expression_for_type, value_to_string
 from jani_generator.jani_entries import JaniModel
 from scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE, ROS_FIELD_PREFIX
+from scxml_converter.scxml_entries.utils import get_data_type_from_string, ROS_FIELD_PREFIX
 
 
 class RosCommunicationHandler:
@@ -121,8 +121,8 @@ class RosCommunicationHandler:
         scxml_fields: List[ScxmlData] = []
         for field_name, field_type in fields.items():
             field_w_pref = ROS_FIELD_PREFIX + field_name
-            default_expr = value_to_string(
-                get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
+            field_py_type = get_data_type_from_string(field_type)
+            default_expr = value_to_string(get_default_expression_for_type(field_py_type))
             scxml_fields.append(ScxmlData(field_w_pref, default_expr, field_type))
         return scxml_fields
 
