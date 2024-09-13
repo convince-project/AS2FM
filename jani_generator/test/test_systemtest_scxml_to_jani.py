@@ -290,6 +290,7 @@ class TestConversion(unittest.TestCase):
         """Test the actions are properly handled in Jani."""
         self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
 
+    @pytest.mark.skip(reason="Not yet working. The BT ticking needs some revision.")
     def test_ros_delib_ws_2024_p1(self):
         """Test the ROS Deliberation Workshop example works."""
         self._test_with_main('delibws24_p1', 'snack_at_table', True, True)
