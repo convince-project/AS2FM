@@ -2,7 +2,7 @@
 
 ## Summary overview
 
-This package provides tools to convert the high level representation of an autonomous system (implemented using a combination of BT xml + a ROS flavoured set of scxml (also called ros-scxml) files) to a formal model (i.e. jani).
+This package provides tools to convert the high level representation of an autonomous system (implemented using a combination of BT XML + a ROS flavoured set of SCXML (also called ROS-SCXML) files) to a formal model (i.e. JANI).
 
 ## Documentation
 
@@ -20,4 +20,4 @@ Feedback is highly appreciated. Please open issues on new ideas, bugs, etc. here
 
 ### License
 
-as2fm comes under the Apache-2.0 license, see [LICENSE](./LICENSE).
+AS2FM comes under the Apache-2.0 license, see [LICENSE](./LICENSE).

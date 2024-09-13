@@ -9,10 +9,10 @@ How To Guides
 (ROS) SCXML Model Implementation
 ---------------------------------
 
-SCXML is the language of choice to model the autonomous systems that we will be processed by AS2FM.
+SCXML is the language of choice to model the autonomous systems that are processed by AS2FM.
 
 It relies on multiple SCXML files, each one representing a different state-based automaton, to represent a complete system.
-Those automaton can exchange data and synchronize their execution through the use of **events**.
+Those automata can exchange data and synchronize their execution through the use of **events**.
 
 A simple, exemplary SCXML model is shown below:
 
@@ -42,19 +42,19 @@ A simple, exemplary SCXML model is shown below:
         </state>
     </scxml>
 
-In this example, the SCXML model consists of three states, `s0`, `s1`, and `s2`, and three transitions, triggered by the events `e1`, `e2` and `e3`, respectively. Each transition will advance the automaton state to the next one.
+In this example, the SCXML model consists of three states, `s0`, `s1`, and `s2`, and three transitions, triggered by the events `e1`, `e2` and `e3`, respectively. Each transition advances the automaton's current state to the next one.
 Additionally, on each transition, a counter is incremented.
 
-The events are expected to be sent by another scxml model, similarly to how it is done in the `s2` state.
+The events are expected to be sent by another SCXML model, similarly to how it is done in the `s2` state.
 
-In order to make SCXML fit more the typical robotics tech-stack, we extended the default SCXML language to support ROS specific specific features and Behavior Trees.
+In order to make SCXML fit more to the typical robotics tech-stack, we extended the default SCXML language to support ROS specific features and Behavior Trees.
 
-The following sections will guide you through the process of :ref:`creating a SCXML model of a ROS node <ros_node_scxml>` and of a :ref:`BT plugin <bt_plugin_scxml>` that can be processed by AS2FM.
+The following sections guide you through the process of :ref:`creating a SCXML model of a ROS node <ros_node_scxml>` and of a :ref:`BT plugin <bt_plugin_scxml>` that can be processed by AS2FM.
 
 
 .. _ros_node_scxml:
 
-Creating a SCXML model of a ROS node
+Creating an SCXML model of a ROS node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In AS2FM, we extended the SCXML language with some additional functionalities, to support the following ROS specific features:
@@ -65,7 +65,7 @@ In AS2FM, we extended the SCXML language with some additional functionalities, t
 * :ref:`ROS Actions <ros_actions>`: to call a ROS action and implement action servers (under development)
 
 All functionalities require the interface to be declared before being used, similarly to how ROS requires the interfaces to be declared in a node.
-In (ROS) SCXML, this is done similarly to how variables are defined in the datamodel.
+In (ROS) SCXML, this is done similarly to how variables are defined in the data model.
 
 .. _ros_timers:
 
@@ -78,7 +78,7 @@ ROS Timers are used to trigger callbacks (behaving like an SCXML transition) at 
 
     <ros_time_rate rate_hz="1" name="my_timer" />
 
-This will create a ROS Timer that triggers the related callbacks at a rate of 1 Hz, w.r.t. the internal, simulated time.
+This will create a ROS timer that triggers the related callbacks at a rate of 1 Hz, w.r.t. the internal, simulated time.
 
 The timer callbacks can be used similarly to SCXML transitions, and are specified as follows:
 
@@ -99,7 +99,7 @@ Additionally, the internal variable `internal_var` will be updated with the valu
 ROS Topics
 ___________
 
-ROS Topics are used to publish (via a ROS Publisher) and receive (via a ROS Subscriber) messages via a ROS topic across different automata. They can be declared as follows:
+ROS topics are used to publish (via a ROS Publisher) and receive (via a ROS Subscriber) messages via a ROS topic across different automata. They can be declared as follows:
 
 .. code-block:: xml
 
@@ -149,10 +149,10 @@ Executable content within it can use `_msg` to access the message content.
 ROS Services
 ____________
 
-ROS Services are used to provide, for a given service name, one server and, possibly, multiple clients.
-The clients makes a request and the server provides a response to that request only to the client that made the request.
+ROS services are used to provide, for a given service name, one server and, possibly, multiple clients.
+The clients make a request and the server provides a response to that request only to the client that made the request.
 
-The declaration of a ROS Service server and the one of a client can be achieved like this:
+The declaration of a ROS service server and the one of a client can be achieved like this:
 
 .. code-block:: xml
 
@@ -161,7 +161,7 @@ The declaration of a ROS Service server and the one of a client can be achieved 
     <!-- ROS Service Client -->
     <ros_service_client name="the_client" service_name="/service2" type="std_srvs/Trigger" />
 
-Once created, servers and clients can be referenced using the provided `name` (i.e. `the_srv` and `the_client`), and can be used in the states of a SCXML model to provide and request services.
+Once created, servers and clients can be referenced using the provided `name` (i.e., `the_srv` and `the_client`), and can be used in the states of an SCXML model to provide and request services.
 In the following, an exemplary client is provided:
 
 .. code-block:: xml
@@ -181,10 +181,10 @@ In the following, an exemplary client is provided:
     </state>
 
 To send a request, the `ros_service_send_request` can be used where any other executable content may be used.
-After the server has processed the service, `ros_service_handle_response`, can be used similarly to a SCXML transition and is triggered when a response from the server is received.
+After the server has processed the service, `ros_service_handle_response` can be used similarly to an SCXML transition and is triggered when a response from the server is received.
 The data of the request can be accessed with the `_res` field.
 
-And here, an example of a server:
+And here comes an example of a server:
 
 .. code-block:: xml
 
@@ -220,7 +220,7 @@ Creating a SCXML model of a BT plugin
 
 SCXML models of BT plugins can be done similarly to the ones for ROS nodes. However, in BT plugins there are a few special functionalities that are provided:
 
-* :ref:`BT communication <bt_communication>`: A set of special events that are used in each BT plugins for starting a BT Node and provide results.
+* :ref:`BT communication <bt_communication>`: A set of special events that are used in each BT plugin for starting a BT node and providing results.
 * :ref:`BT Ports <bt_ports>`: A special BT interface to parametrize a specific plugin instance.
 
 
@@ -237,9 +237,9 @@ TODO: describe `bt_tick`, `bt_running`, `bt_success`, `bt_failure`.
 BT Ports
 ________
 
-Additionally, when loading a BT plugin in the BT XML Tree, it is possible to configure a specific plugin instance by means of the BT ports.
+Additionally, when loading a BT plugin in the BT XML tree, it is possible to configure a specific plugin instance by means of the BT ports.
 
-As in the case of ROS functionalities, BT Ports need to be declared before being used, to provide the port name and expected type.
+As in the case of ROS functionalities, BT ports need to be declared before being used, to provide the port name and expected type.
 
 .. code-block:: xml
 
@@ -271,7 +271,7 @@ Or we can use `start_value` to define the initial value of a variable.
     </datamodel>
 
 
-BT ports can also be linked to variables in the `BT Blackboard` by wrapping the variable name in curly braces in the BT xml file. However, this feature is not yet supported.
+BT ports can also be linked to variables in the `BT Blackboard` by wrapping the variable name in curly braces in the BT XML file. However, this feature is not yet supported.
 
 
 .. _additional_params_howto:
