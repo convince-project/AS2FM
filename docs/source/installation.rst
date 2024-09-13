@@ -3,7 +3,7 @@
 Installation
 --------------
 
-Pre-requisites
+Prerequisites
 ^^^^^^^^^^^^^^
 
 The scripts have been tested with Python 3.10 and pip version 24.0.
@@ -14,7 +14,7 @@ Additionally, the following dependencies are required to be installed:
 * `bt_tools <https://github.com/boschresearch/bt_tools>`_
 
 
-AS2FM packages installation
+AS2FM Package Installations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Before installing the AS2FM packages, make sure to source the ROS workspace containing the `bt_tools` package by executing ``source <path_to_ws>/install/setup.bash``.
