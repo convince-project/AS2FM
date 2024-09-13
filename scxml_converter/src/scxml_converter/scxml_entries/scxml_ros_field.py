@@ -51,7 +51,8 @@ class RosField(ScxmlParam):
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(RosField, "name", self._name)
-        valid_expr = is_non_empty_string(RosField, "expr", self._expr)
+        valid_expr = isinstance(self._expr, BtGetValueInputPort) or \
+            is_non_empty_string(RosField, "expr", self._expr)
         return valid_name and valid_expr
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):

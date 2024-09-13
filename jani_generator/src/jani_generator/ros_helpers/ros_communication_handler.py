@@ -65,8 +65,8 @@ class RosCommunicationHandler:
         """
         Make sure service_name and service_type are set and a server and at least one client exist.
         """
-        assert self._interface_name is not None, "Service name not set."
-        assert self._interface_type is not None, "Service type not set."
+        assert self._interface_name is not None, "Interface name not set."
+        assert self._interface_type is not None, "Interface type not set."
         assert self._server_automaton is not None, \
             f"ROS server not provided for {self._interface_name}."
         assert len(self._clients_automata) > 0, \
@@ -83,7 +83,7 @@ class RosCommunicationHandler:
         """
         self._set_name_and_type(interface_name, interface_type)
         assert self._server_automaton is None, \
-            f"Found more than one server for service {interface_name}."
+            f"Found more than one server for interface {interface_name}."
         self._server_automaton = automaton_name
 
     def add_client(self, interface_name: str, interface_type: str, automaton_name: str) -> None:

@@ -290,6 +290,10 @@ class TestConversion(unittest.TestCase):
         """Test the actions are properly handled in Jani."""
         self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
 
+    def test_ros_delib_ws_2024_p1(self):
+        """Test the ROS Deliberation Workshop example works."""
+        self._test_with_main('delibws24_p1', 'snack_at_table', True, True)
+
 
 if __name__ == '__main__':
     pytest.main(['-s', '-v', __file__])

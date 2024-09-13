@@ -277,7 +277,7 @@ class RosActionSendAbortedResult(RosTrigger):
 
     @staticmethod
     def get_tag_name() -> str:
-        return "ros_action_canceled"
+        return "ros_action_aborted"
 
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:
