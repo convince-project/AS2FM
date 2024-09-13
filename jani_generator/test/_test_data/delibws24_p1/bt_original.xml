@@ -1,7 +1,6 @@
 <root BTCPP_format="4">
     <BehaviorTree>
-        <!-- For now use a normal sequence, since failures aren't expected yet -->
-        <Sequence>
+        <SequenceWithMemory>
             <!-- 
             loc
             0 .. pantry
@@ -15,6 +14,6 @@
             <Action ID="PickAction" name="pick" data="0" />
             <Action ID="NavigateAction" name="navigate" data="1" />
             <Action ID="PlaceAction" name="place" />
-        </Sequence>
+        </SequenceWithMemory>
     </BehaviorTree>
 </root>

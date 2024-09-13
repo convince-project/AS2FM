@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "name": "clients_ok",
+            "name": "snack_at_table",
             "expression": {
                 "op": "filter",
                 "fun": "values",

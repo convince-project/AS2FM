@@ -6,7 +6,7 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_action_client name="act" action_name="place_object" type="tbd/Place" />
+    <ros_action_client name="act" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
 
     <datamodel>
         <data id="tmp_result" type="bool" expr="false" />
@@ -27,9 +27,12 @@
         <transition event="bt_tick" target="wait_result">
             <send event="bt_running" />
         </transition>
-        <ros_action_handle_result name="act" target="result_available">
-            <assign location="tmp_result" expr="_wrapped_result.code == ROS_ACTION_SUCCEDED" />
-        </ros_action_handle_result>
+        <ros_action_handle_success_result name="act" target="result_available">
+            <assign location="tmp_result" expr="true" />
+        </ros_action_handle_success_result>
+        <ros_action_handle_aborted_result name="act" target="result_available">
+            <assign location="tmp_result" expr="false" />
+        </ros_action_handle_aborted_result>
     </state>
 
     <state id="result_available">
