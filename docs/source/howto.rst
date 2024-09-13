@@ -140,7 +140,7 @@ Once created, subscribers and publishers can be referenced using their names (`b
         <transition target="src_state" />
     </state>
 
-Note that the `ros_topic_publish` can be used where one would normally use executable content in SCXML: in `transition`s, in `onentry` and `onexit` tags.
+Note that the `ros_topic_publish` can be used where one would normally use executable content in SCXML: in `transition`, in `onentry` and `onexit` tags.
 The `ros_topic_callback` tag is similarly to the `ros_rate_callback` used like a transition and will transition the state machine to the state declared in `target` upon receiving a message.
 Executable content within it can use `_msg` to access the message content.
 
@@ -215,7 +215,7 @@ TODO
 
 .. _bt_plugin_scxml:
 
-Creating a SCXML model of a BT plugin
+Creating an SCXML model of a BT plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SCXML models of BT plugins can be done similarly to the ones for ROS nodes. However, in BT plugins there are a few special functionalities that are provided:
