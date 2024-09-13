@@ -17,6 +17,7 @@
 Module to hold scxml even information to convert to jani syncs later.
 """
 
+import re
 from typing import Dict, List, Optional
 from jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
 
@@ -90,13 +91,13 @@ class Event:
     def must_be_skipped_in_jani_conversion(self):
         """Indicate whether this must be considered in the conversion to jani."""
         return (
-            self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
+            self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX) or
             # If the event is a timer event, there is only a receiver
             # It is the edge that the user declared with the
             # `ros_rate_callback` tag. It will be handled in the
             # `scxml_event_processor` module differently.
-            or
-            self.is_bt_response_event() and len(self.senders) == 0
+            self.is_bt_response_event() and len(self.senders) == 0 or
+            self.is_optional_action_event() and len(self.senders) == 0
         )
 
     def is_bt_response_event(self):
@@ -106,6 +107,17 @@ class Event:
             self.name.endswith("_running") or
             self.name.endswith("_success") or
             self.name.endswith("_failure"))
+
+    def is_optional_action_event(self):
+        return (self.is_action_feedback_event() or self.is_action_rejected_event())
+
+    def is_action_feedback_event(self):
+        """Check if the event is an action feedback event."""
+        return re.match(r"^action_.*_feedback$", self.name) is not None
+
+    def is_action_rejected_event(self):
+        """Check if the event is an action rejected event."""
+        return re.match(r"^action_.*_goal_rejected$", self.name) is not None
 
 
 class EventsHolder:

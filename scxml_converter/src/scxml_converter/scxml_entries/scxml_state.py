@@ -187,8 +187,8 @@ class ScxmlState(ScxmlBase):
             body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
             ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
-        return len(body) == 0 or \
-            all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body)
+        return (len(body) == 0 or
+                all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body))
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""

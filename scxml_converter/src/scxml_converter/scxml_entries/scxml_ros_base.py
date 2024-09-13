@@ -193,8 +193,8 @@ class RosCallback(ScxmlTransition):
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(self.__class__, "name", self._interface_name)
         valid_target = is_non_empty_string(self.__class__, "target", self._target)
-        valid_condition = self._condition is None or \
-            is_non_empty_string(self.__class__, "cond", self._condition)
+        valid_condition = (self._condition is None or
+                           is_non_empty_string(self.__class__, "cond", self._condition))
         valid_body = self._body is None or valid_execution_body(self._body)
         if not valid_body:
             print(f"Error: SCXML {self.__class__.__name__}: invalid entries in executable body.")
