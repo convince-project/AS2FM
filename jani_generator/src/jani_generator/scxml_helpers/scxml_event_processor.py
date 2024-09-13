@@ -17,8 +17,9 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import get_args, get_origin, Dict, List, MutableSequence
+from typing import get_args, Dict, List
 
+from as2fm_common.common import is_array_type
 from jani_generator.jani_entries import JaniModel
 from jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from jani_generator.jani_entries.jani_composition import JaniComposition
@@ -56,8 +57,8 @@ def implement_scxml_events_as_jani_syncs(
         event_name_on_receive = f"{event_name}_on_receive"
         # Special case handling for events that must be skipped, e.g. BT responses and timers
         if event.must_be_skipped_in_jani_conversion():
-            # if this is a bt event, we have to get rid of all edges receiving that event
-            if event.is_bt_response_event():
+            # if this is a bt or an action event, we have to get rid of all edges receiving it
+            if event.is_bt_response_event() or event.is_optional_action_event():
                 jani_model.remove_edges_with_action(event_name_on_receive)
             continue
         assert event.has_senders(), f"Event {event_name} must have at least one sender"
@@ -136,11 +137,10 @@ def implement_scxml_events_as_jani_syncs(
         # Add the global data, if needed
         for p_name, p_type in event.get_data_structure().items():
             init_value = None
-            is_array = False
-            if get_origin(p_type) == get_origin(MutableSequence):
+            is_array = is_array_type(p_type)
+            if is_array:
                 ar_type = get_args(p_type)[0]
                 init_value = array_create_operator("__array_iterator", max_array_size, ar_type(0))
-                is_array = True
             # TODO: Dots are likely to create problems in the future. Consider replacing them
             jani_model.add_variable(
                 variable_name=f"{event_name}.{p_name}",

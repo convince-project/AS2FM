@@ -22,14 +22,15 @@ import re
 from typing import Any, Union, Optional, Tuple
 from xml.etree import ElementTree as ET
 
+from as2fm_common.common import is_array_type
+
 from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import (
-    convert_string_to_type, get_array_max_size, get_data_type_from_string,
-    is_array_type, is_non_empty_string)
+    convert_string_to_type, get_array_max_size, get_data_type_from_string, is_non_empty_string)
 
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]

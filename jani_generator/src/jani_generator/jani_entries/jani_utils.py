@@ -15,8 +15,8 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Any, Dict, Optional, MutableSequence, Tuple, Type, get_origin, get_args
-from as2fm_common.common import get_default_expression_for_type
+from typing import Any, Dict, Optional, MutableSequence, Tuple, Type, get_args
+from as2fm_common.common import get_default_expression_for_type, is_array_type
 from jani_generator.jani_entries import JaniAutomaton
 
 
@@ -42,8 +42,7 @@ def is_variable_array(jani_automaton: JaniAutomaton, variable_name: Optional[str
     :param variable_name: The name of the variable to check.
     :return: True if the variable is an array, False otherwise.
     """
-    return get_origin(get_variable_type(jani_automaton, variable_name)) == \
-        get_origin(MutableSequence)
+    return is_array_type(get_variable_type(jani_automaton, variable_name))
 
 
 def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tuple[Type, int]:
@@ -57,8 +56,7 @@ def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tup
     assert var_name is not None, "Variable name must be provided."
     variable = jani_automaton.get_variables().get(var_name)
     var_type = variable.get_type()
-    assert get_origin(var_type) == get_origin(MutableSequence), \
-        f"Variable {var_name} not an array, cannot extract array info."
+    assert is_array_type(var_type), f"Variable {var_name} not an array, cannot extract array info."
     array_type = get_args(var_type)[0]
     assert array_type in (int, float), f"Array type {array_type} not supported."
     init_operator = variable.get_init_expr().as_operator()

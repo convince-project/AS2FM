@@ -17,7 +17,7 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import get_args, MutableSequence, Union, Type
+from typing import get_args, get_origin, MutableSequence, Union, Type
 from array import array
 
 """
@@ -124,3 +124,8 @@ def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes])
     if field_type is float:
         return isinstance(value, (int, float))
     return isinstance(value, field_type)
+
+
+def is_array_type(field_type: Type[ValidTypes]) -> bool:
+    """Check if the field type is an array type."""
+    return get_origin(field_type) == get_origin(MutableSequence)

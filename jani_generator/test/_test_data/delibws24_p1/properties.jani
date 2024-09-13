@@ -13,7 +13,7 @@
                             "op": "∧",
                             "left": {
                                 "op": "=",
-                                "left": "topic_snacks0_loc_msg.data",
+                                "left": "topic_snacks0_loc_msg.ros_fields__data",
                                 "right": 1
                             },
                             "right": "topic_snacks0_loc_msg.valid"
