@@ -173,21 +173,24 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False):
+def interpret_top_level_xml(xml_path: str, jani_file: str,
+                            generated_scxmls_dir: Optional[str] = None):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
     The generated Jani model is written to the same directory as the input XML file under the
     name `main.jani`.
 
     :param xml_path: The path to the XML file to interpret.
+    :param jani_file: The path to the output Jani file.
+    :param generated_scxmls_dir: The directory to store the generated plain SCXML files.
     """
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
     assert model.max_time is not None, f"Max time must be defined in {xml_path}."
     plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(model)
 
-    if store_generated_scxmls:
-        plain_scxml_dir = os.path.join(model_dir, "generated_plain_scxml")
+    if generated_scxmls_dir is not None:
+        plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
         os.makedirs(plain_scxml_dir, exist_ok=True)
         for scxml_model in plain_scxml_models:
             with open(os.path.join(plain_scxml_dir, f"{scxml_model.get_name()}.scxml"), "w",
@@ -202,6 +205,6 @@ def interpret_top_level_xml(xml_path: str, store_generated_scxmls: bool = False)
     with open(model.properties[0], "r", encoding='utf-8') as f:
         jani_dict["properties"] = json.load(f)["properties"]
 
-    output_path = os.path.join(model_dir, "main.jani")
+    output_path = os.path.join(model_dir, jani_file)
     with open(output_path, "w", encoding='utf-8') as f:
         json.dump(jani_dict, f, indent=2, ensure_ascii=False)

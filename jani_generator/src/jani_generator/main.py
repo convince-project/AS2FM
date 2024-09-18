@@ -79,8 +79,20 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     """
     parser = argparse.ArgumentParser(
         description="Convert SCXML robot system models to JANI model.")
+    parser.add_argument("--scxml-out-dir", type=str, default="",
+                        help="Path to the folder containing the generated plain-jani files.")
+    parser.add_argument("--jani-out-file", type=str, default="main.jani",
+                        help="Path to the generated jani file.")
     parser.add_argument(
         "main_xml", type=str, help="The path to the main XML file to interpret.")
     args = parser.parse_args(_args)
 
-    interpret_top_level_xml(args.main_xml)
+    main_xml_file = args.main_xml
+    scxml_out_dir = args.scxml_out_dir
+    scxml_out_dir = None if len(scxml_out_dir) == 0 else scxml_out_dir
+    jani_out_file = args.jani_out_file
+    # Very basic input args checks
+    assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
+    assert len(jani_out_file) > 0, "Output file not provided."
+
+    interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
