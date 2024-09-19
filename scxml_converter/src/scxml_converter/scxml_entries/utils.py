@@ -16,7 +16,7 @@
 """Collection of various utilities for SCXML entries."""
 
 import re
-from enum import Enum
+from enum import auto, Enum
 from typing import Any, Dict, List, Optional, Type, MutableSequence
 
 from as2fm_common.common import is_array_type, string_to_value
