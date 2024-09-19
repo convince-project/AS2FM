@@ -37,7 +37,7 @@ GLOBAL_TIMER_TICK_ACTION = "global_timer_tick"
 ROS_TIMER_RATE_EVENT_PREFIX = "ros_time_rate."
 
 
-def _convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
+def convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
     """Convert time from one unit to another."""
     assert from_unit in TIME_UNITS, f"Unit {from_unit} not supported."
     assert to_unit in TIME_UNITS, f"Unit {to_unit} not supported."
@@ -75,6 +75,25 @@ class RosTimer(object):
             self.period)
 
 
+def get_common_time_step(timers: List[RosTimer]) -> Tuple[int, str]:
+    """
+    Get the common time step of a list of ROS timers.
+
+    :param timers: The list of ROS timers.
+    :return: The common time step and time unit.
+    """
+    if len(timers) == 0:
+        raise ValueError("At least one timer is required.")
+    common_unit = "s"
+    for timer in timers:
+        if TIME_UNITS[timer.unit] < TIME_UNITS[common_unit]:
+            common_unit = timer.unit
+    timer_periods = [
+        convert_time_between_units(timer.period_int, timer.unit, common_unit) for timer in timers]
+    common_period = gcd(*timer_periods)
+    return common_period, common_unit
+
+
 def make_global_timer_automaton(timers: List[RosTimer],
                                 max_time_ns: int) -> Optional[JaniAutomaton]:
     """
@@ -85,13 +104,14 @@ def make_global_timer_automaton(timers: List[RosTimer],
     """
     if len(timers) == 0:
         return None
+    
     # Calculate the period of the global timer
     smallest_unit: str = "s"
     for timer in timers:
         if TIME_UNITS[timer.unit] < TIME_UNITS[smallest_unit]:
             smallest_unit = timer.unit
     timer_periods_in_smallest_unit = {
-        timer.name: _convert_time_between_units(
+        timer.name: convert_time_between_units(
             timer.period_int, timer.unit, smallest_unit)
         for timer in timers
     }
@@ -99,7 +119,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
     global_timer_period_unit = smallest_unit
 
     try:
-        max_time = _convert_time_between_units(
+        max_time = convert_time_between_units(
             max_time_ns, "ns", global_timer_period_unit)
     except AssertionError:
         raise ValueError(
