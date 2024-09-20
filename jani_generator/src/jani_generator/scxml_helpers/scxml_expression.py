@@ -126,11 +126,16 @@ def _parse_ecmascript_to_jani_expression(
         })
     elif ast.type == "CallExpression":
         assert ast.callee.type == "Identifier", "Only function calls with identifiers supported."
-        assert ast.callee.name in CALLABLE_OPERATORS_MAP, \
-            f"Unsupported function call {ast.callee.name}."
+        # All CallExpressions are expected to be part of "Math." namespace (JavaScript)
+        function_name: str = ast.callee.name
+        assert function_name.startswith("Math."), \
+            f"Functions are expected to start with 'Math.'. Found {function_name}."
+        function_name = function_name.removeprefix("Math.")
+        assert function_name in CALLABLE_OPERATORS_MAP, \
+            f"Unsupported function call {function_name}."
         expression_args: List[JaniExpression] = []
         for arg in ast.arguments:
             expression_args.append(_parse_ecmascript_to_jani_expression(arg, array_info))
-        return CALLABLE_OPERATORS_MAP[ast.callee.name](*expression_args)
+        return CALLABLE_OPERATORS_MAP[function_name](*expression_args)
     else:
         raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")

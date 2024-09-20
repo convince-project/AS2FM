@@ -58,15 +58,15 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
 # ------------ Expression-conversion functionalities ------------
 class CallbackType(Enum):
     """Enumeration of the different types of callbacks containing a body."""
-    STATE = 0                   # No callback (e.g. state entry/exit)
-    TRANSITION = 1              # Transition callback
-    ROS_TIMER = 2               # Timer callback
-    ROS_TOPIC = 3               # Topic callback
-    ROS_SERVICE_REQUEST = 4     # Service callback
-    ROS_SERVICE_RESULT = 5      # Service callback
-    ROS_ACTION_GOAL = 6         # Action callback
-    ROS_ACTION_RESULT = 7       # Action callback
-    ROS_ACTION_FEEDBACK = 8     # Action callback
+    STATE = auto()                  # No callback (e.g. state entry/exit)
+    TRANSITION = auto()             # Transition callback
+    ROS_TIMER = auto()              # Timer callback
+    ROS_TOPIC = auto()              # Topic callback
+    ROS_SERVICE_REQUEST = auto()    # Service callback
+    ROS_SERVICE_RESULT = auto()     # Service callback
+    ROS_ACTION_GOAL = auto()        # Action callback
+    ROS_ACTION_RESULT = auto()      # Action callback
+    ROS_ACTION_FEEDBACK = auto()    # Action callback
 
     @staticmethod
     def get_expected_prefixes(cb_type: 'CallbackType') -> List[str]:
