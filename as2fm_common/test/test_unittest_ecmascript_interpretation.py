@@ -17,6 +17,7 @@
 
 import unittest
 import pytest
+from array import array
 
 from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 
@@ -34,7 +35,7 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertEqual(interpret_ecma_script_expr("1.1"), 1.1)
         self.assertEqual(interpret_ecma_script_expr("true"), True)
         self.assertEqual(interpret_ecma_script_expr("false"), False)
-        self.assertEqual(interpret_ecma_script_expr("[1,2,3]"), [1, 2, 3])
+        self.assertEqual(interpret_ecma_script_expr("[1,2,3]"), array('i', [1, 2, 3]))
 
     def test_ecmascript_unsupported(self):
         """

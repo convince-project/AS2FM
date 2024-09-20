@@ -16,10 +16,10 @@
     </ros_service_server>
 
     <state id="idle">
-        <ros_service_handle_request service_name="the_srv" target="idle">
+        <ros_service_handle_request name="the_srv" target="idle">
             <assign location="temp_a" expr="_req.a" />
             <assign location="temp_b" expr="_req.b" />
-            <ros_service_send_response service_name="the_srv">
+            <ros_service_send_response name="the_srv">
                 <field name="sum" expr="temp_a + temp_b" />
             </ros_service_send_response>
         </ros_service_handle_request>

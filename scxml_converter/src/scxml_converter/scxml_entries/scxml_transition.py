@@ -21,12 +21,13 @@ from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-    execution_body_from_xml, valid_execution_body, valid_execution_body_entry_types,
-    instantiate_exec_body_bt_events)
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer)
+from scxml_converter.scxml_entries.scxml_executable_entries import (
+    execution_body_from_xml, instantiate_exec_body_bt_events, set_execution_body_callback_type,
+    valid_execution_body, valid_execution_body_entry_types)
 
 from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
-from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
+from scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
 
 
 class ScxmlTransition(ScxmlBase):
@@ -60,18 +61,22 @@ class ScxmlTransition(ScxmlBase):
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
+        if events is None:
+            events = []
+        if body is None:
+            body = []
         assert isinstance(target, str) and len(
             target) > 0, "Error SCXML transition: target must be a non-empty string."
-        assert events is None or (isinstance(events, list) and
-                                  all((isinstance(ev, str) and len(ev) > 0) for ev in events)), \
-            f"Error SCXML transition: events must be a list of non-empty strings. Found {events}."
+        assert isinstance(events, list) and \
+               all((isinstance(ev, str) and len(ev) > 0) for ev in events), \
+               f"Error SCXML transition: events must be a list of filled strings. Found {events}."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
-        assert body is None or valid_execution_body_entry_types(body), \
+        assert valid_execution_body_entry_types(body), \
             "Error SCXML transition: invalid body provided."
-        self._target = target
-        self._body = body
-        self._events = events if events is not None else []
+        self._target: str = target
+        self._body: ScxmlExecutionBody = body
+        self._events: List[str] = events
         self._condition = condition
 
     def get_target_state_id(self) -> str:
@@ -155,10 +160,11 @@ class ScxmlTransition(ScxmlBase):
         assert self.check_valid_ros_instantiations(ros_declarations), \
             "Error: SCXML transition: invalid ROS instantiations in transition body."
         new_body = None
+        set_execution_body_callback_type(self._body, CallbackType.TRANSITION)
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         if self._condition is not None:
-            self._condition = replace_ros_interface_expression(self._condition)
+            self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
         return ScxmlTransition(self._target, self._events, self._condition, new_body)
 
     def as_xml(self) -> ET.Element:

@@ -21,6 +21,7 @@ from scxml_converter.scxml_entries import (
     RosField, RosRateCallback, RosTimeRate, RosTopicCallback, RosTopicPublish, RosTopicPublisher,
     RosTopicSubscriber, ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend,
     ScxmlState, ScxmlTransition, BtInputPortDeclaration, BtGetValueInputPort)
+from scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
 
 def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):
@@ -60,7 +61,7 @@ def test_battery_drainer_from_code():
     use_battery_state = ScxmlState(
         "use_battery",
         on_entry=[ScxmlSend("topic_level_msg",
-                            [ScxmlParam("data", expr="battery_percent")])],
+                            [ScxmlParam(f"{ROS_FIELD_PREFIX}data", expr="battery_percent")])],
         body=[ScxmlTransition("use_battery", ["ros_time_rate.my_timer"],
                               body=[ScxmlAssign("battery_percent", "battery_percent - 1")]),
               ScxmlTransition("use_battery", ["topic_charge_msg"],

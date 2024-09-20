@@ -30,8 +30,8 @@
             </onentry>
             <!-- This will check if the thread_id matches with the request -->
             <ros_action_handle_thread_start name="act_srv" target="execute">
-                <assign location="goal_id" expr="_req.goal_id" />
-                <assign location="order" expr="_req.order" />
+                <assign location="goal_id" expr="_action.goal_id" />
+                <assign location="order" expr="_goal.order" />
             </ros_action_handle_thread_start>
         </state>
 
@@ -50,14 +50,12 @@
             <!-- <ros_action_handle_cancel name="act_srv" target="idle" cond="_event.goal_id == goal_id" /> -->
             <transition cond="sequence.length == order + 1" target="idle">
                 <!-- Results and feedback ROS tags need to add the thread_id to the fields, too. -->
-                <ros_action_succeed name="act_srv">
-                    <field name="goal_id" expr="goal_id" />
+                <ros_action_succeed name="act_srv" goal_id="goal_id">
                     <field name="sequence" expr="sequence" />
                 </ros_action_succeed>
             </transition>
             <transition target="execute">
-                <ros_action_feedback name="act_srv">
-                    <field name="goal_id" expr="goal_id" />
+                <ros_action_feedback name="act_srv" goal_id="goal_id">
                     <field name="sequence" expr="sequence" />
                 </ros_action_feedback>
             </transition>
@@ -81,8 +79,8 @@
             <assign location="thread_to_start" expr="-1" />
         </onentry>
         <ros_action_handle_goal name="act_srv" target="check_goal">
-            <assign location="goal_id" expr="_req.goal_id" />
-            <assign location="order" expr="_req.order" />
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="order" expr="_goal.order" />
         </ros_action_handle_goal>
         <ros_action_handle_thread_free name="act_srv" target="idle">
             <!-- Store a local copy of the received ID, to prevent it being changed while evaluating the if -->
@@ -116,19 +114,14 @@
         <transition target="idle">
             <if cond="thread_to_start >= 0">
                 <!-- Basically sending an event... -->
-                <ros_action_accept_goal name="act_srv">
-                    <field name="goal_id" expr="goal_id" />
-                </ros_action_accept_goal>
+                <ros_action_accept_goal name="act_srv" goal_id="goal_id"/>
                 <!-- The thread ID is appended as an additional param in the send event.
                 It will be handled on the thread side -->
-                <ros_action_start_thread name="act_srv" thread_id="thread_to_start">
-                    <field name="goal_id" expr="goal_id" />
+                <ros_action_start_thread name="act_srv" thread_id="thread_to_start" goal_id="goal_id">
                     <field name="order" expr="order" />
                 </ros_action_start_thread>
             <else />
-                <ros_action_reject_goal name="act_srv">
-                    <field name="goal_id" expr="goal_id" />
-                </ros_action_reject_goal>
+                <ros_action_reject_goal name="act_srv" goal_id="goal_id"/>
             </if>
         </transition>
     </state>

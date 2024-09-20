@@ -17,6 +17,7 @@
 Representation of ROS Services.
 """
 
+from typing import Dict, List
 from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 from scxml_converter.scxml_entries import (
@@ -24,6 +25,8 @@ from scxml_converter.scxml_entries import (
 from scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, get_srv_type_params, sanitize_ros_interface_name)
+
+from scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, PLAIN_FIELD_EVENT_PREFIX
 
 
 class RosServiceHandler(RosCommunicationHandler):
@@ -34,6 +37,43 @@ class RosServiceHandler(RosCommunicationHandler):
     @staticmethod
     def get_interface_prefix() -> str:
         return "srv_handler_"
+
+    def generate_transition_to_processing_state(self, client_id: str,
+                                                req_fields: Dict[str, str]) -> ScxmlTransition:
+        """
+        Generate a transition from the waiting state to the processing state for a given client.
+
+        :param client_id: The id of the client to generate the transition for.
+        :param req_fields: The fields of the request to be assigned to the data model.
+        :return: The generated transition.
+        """
+        assignments: List[ScxmlAssign] = []
+        event_params: List[ScxmlParam] = []
+        for field_name in req_fields:
+            field_w_pref = ROS_FIELD_PREFIX + field_name
+            assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
+            event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
+        return ScxmlTransition(
+            f"processing_client_{client_id}",
+            [generate_srv_request_event(self._interface_name, client_id)],
+            body=assignments + [ScxmlSend(
+                generate_srv_server_request_event(self._interface_name), event_params)])
+
+    def generate_transition_from_processing_state(self, client_id: str,
+                                                  res_fields: Dict[str, str]) -> ScxmlTransition:
+        """
+        Generate a transition from the processing state to the waiting state for a given client.
+        """
+        assignments: List[ScxmlAssign] = []
+        event_params: List[ScxmlParam] = []
+        for field_name in res_fields:
+            field_w_pref = ROS_FIELD_PREFIX + field_name
+            assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
+            event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
+        return ScxmlTransition(
+            "waiting", [generate_srv_server_response_event(self._interface_name)],
+            body=assignments + [ScxmlSend(
+                generate_srv_response_event(self._interface_name, client_id), event_params)])
 
     def to_scxml(self) -> ScxmlRoot:
         """
@@ -53,30 +93,12 @@ class RosServiceHandler(RosCommunicationHandler):
             self.get_interface_prefix() + sanitize_ros_interface_name(self._interface_name)
         wait_state = ScxmlState("waiting",
                                 body=[
-                                    ScxmlTransition(
-                                        f"processing_client_{client_id}",
-                                        [generate_srv_request_event(self._interface_name,
-                                                                    client_id)],
-                                        body=[ScxmlAssign(field_name, f"_event.{field_name}") for
-                                              field_name in req_params] + [
-                                            ScxmlSend(generate_srv_server_request_event(
-                                                      self._interface_name),
-                                                      [ScxmlParam(field_name, expr=field_name) for
-                                                       field_name in req_params])])
+                                    self.generate_transition_to_processing_state(
+                                        client_id, req_params)
                                     for client_id in self._clients_automata])
         processing_states = [
             ScxmlState(f"processing_client_{client_id}",
-                       body=[
-                           ScxmlTransition(
-                               "waiting", [
-                                   generate_srv_server_response_event(self._interface_name)],
-                               body=[
-                                   ScxmlAssign(field_name, f"_event.{field_name}") for
-                                   field_name in res_params] + [
-                                       ScxmlSend(generate_srv_response_event(
-                                           self._interface_name, client_id),
-                                           [ScxmlParam(field_name, expr=field_name) for
-                                            field_name in res_params])])])
+                       body=[self.generate_transition_from_processing_state(client_id, res_params)])
             for client_id in self._clients_automata]
         # Prepare the ScxmlRoot object and return it
         scxml_root = ScxmlRoot(scxml_root_name)

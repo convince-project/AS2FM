@@ -31,12 +31,12 @@
                 <field name="data" expr="counter" />
             </ros_topic_publish>
         </ros_action_handle_feedback>
-        <ros_action_handle_result name="example_action" target="done">
-            <assign location="fibonacci_result" expr="_res.sequence" />
+        <ros_action_handle_success_result name="example_action" target="done">
+            <assign location="fibonacci_result" expr="_wrapped_result.result.sequence" />
             <ros_topic_publish name="result_pub">
                 <field name="data" expr="fibonacci_result[5]" />
             </ros_topic_publish>
-        </ros_action_handle_result>
+        </ros_action_handle_success_result>
     </state>
 
     <state id="done" />
