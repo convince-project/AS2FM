@@ -294,6 +294,14 @@ class TestConversion(unittest.TestCase):
         """Test the ROS Deliberation Workshop example works."""
         self._test_with_main('delibws24_p1', True, 'snack_at_table', True)
 
+    def test_robot_navigation_demo(self):
+        """Test the robot demo."""
+        self._test_with_main('robot_navigation_tutorial', True, 'goal_reached', True, skip_smc=True)
+
+    def test_robot_navigation_with_bt_demo(self):
+        """Test the robot demo."""
+        self._test_with_main('robot_navigation_with_bt', True, 'goal_reached', True, skip_smc=True)
+
 
 if __name__ == '__main__':
     pytest.main(['-s', '-v', __file__])

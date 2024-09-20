@@ -34,7 +34,7 @@
 
     <state id="ready_to_check">
         <transition event="bt_tick" target="ready_to_check">
-            <if cond="goal_x > abs(goal_y)">
+            <if cond="goal_x > Math.abs(goal_y)">
                 <send event="bt_success" />
             <else />
                 <send event="bt_failure" />

@@ -29,6 +29,9 @@ from jani_generator.jani_entries.jani_expression_generator import (
 from jani_generator.jani_entries.jani_value import JaniValue
 
 
+JS_CALLABLE_PREFIX = "Math"
+
+
 @dataclass()
 class ArrayInfo:
     array_type: Type[Union[int, float]]
@@ -125,12 +128,17 @@ def _parse_ecmascript_to_jani_expression(
             "right": _parse_ecmascript_to_jani_expression(ast.right, array_info)
         })
     elif ast.type == "CallExpression":
-        assert ast.callee.type == "Identifier", "Only function calls with identifiers supported."
-        # All CallExpressions are expected to be part of "Math." namespace (JavaScript)
-        function_name: str = ast.callee.name
-        assert function_name.startswith("Math."), \
-            f"Functions are expected to start with 'Math.'. Found {function_name}."
-        function_name = function_name.removeprefix("Math.")
+        # We expect function calls to be of the form Math.function_name(args) (JavaScript-like)
+        # The "." operator is represented as a MemberExpression
+        assert ast.callee.type == "MemberExpression", \
+            f"Functions callee is expected to be MemberExpressions, found {ast.callee}."
+        assert ast.callee.object.type == "Identifier", \
+            f"Callee object is expected to be an Identifier, found {ast.callee.object}."
+        assert ast.callee.property.type == "Identifier", \
+            f"Callee property is expected to be an Identifier, found {ast.callee.property}."
+        assert ast.callee.object.name == JS_CALLABLE_PREFIX, \
+            f"Function calls prefix is expected to be 'Math', found {ast.callee.object.name}."
+        function_name: str = ast.callee.property.name
         assert function_name in CALLABLE_OPERATORS_MAP, \
             f"Unsupported function call {function_name}."
         expression_args: List[JaniExpression] = []
