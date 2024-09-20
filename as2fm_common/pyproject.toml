@@ -17,7 +17,7 @@ classifiers = [
 ]
 keywords = []
 dependencies = [
-    
+    "js2py"
 ]
 requires-python = ">=3.10"
 

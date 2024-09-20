@@ -7,7 +7,7 @@
     <state id="send_req">
         <onentry>
             <send event="action_fibonacci_goal_req_client_client_1">
-                <param name="order" expr="5" />
+                <param name="ros_fields__order" expr="5" />
             </send>
         </onentry>
         <transition target="wait_result" event="action_fibonacci_goal_accept_client_client_1" />
@@ -17,13 +17,13 @@
         <transition target="wait_result" event="action_fibonacci_feedback_handle_client_client_1">
             <assign location="counter" expr="counter + 1" />
             <send event="topic_client_1_feedback_count_msg">
-                <param name="data" expr="counter" />
+                <param name="ros_fields__data" expr="counter" />
             </send>
         </transition>
-        <transition target="done" event="action_fibonacci_result_handle_client_client_1">
-            <assign location="fibonacci_result" expr="_event.sequence" />
+        <transition target="done" cond="_event.code == 4" event="action_fibonacci_result_handle_client_client_1">
+            <assign location="fibonacci_result" expr="_event.ros_fields__sequence" />
             <send event="topic_client_1_last_fibonacci_msg">
-                <param name="data" expr="fibonacci_result[4]" />
+                <param name="ros_fields__data" expr="fibonacci_result[4]" />
             </send>
         </transition>
     </state>

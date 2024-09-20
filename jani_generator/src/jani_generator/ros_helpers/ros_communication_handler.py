@@ -22,7 +22,7 @@ from typing import Dict, Iterator, List, Optional, Type
 from as2fm_common.common import get_default_expression_for_type, value_to_string
 from jani_generator.jani_entries import JaniModel
 from scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from scxml_converter.scxml_entries.utils import get_data_type_from_string, ROS_FIELD_PREFIX
 
 
 class RosCommunicationHandler:
@@ -65,8 +65,8 @@ class RosCommunicationHandler:
         """
         Make sure service_name and service_type are set and a server and at least one client exist.
         """
-        assert self._interface_name is not None, "Service name not set."
-        assert self._interface_type is not None, "Service type not set."
+        assert self._interface_name is not None, "Interface name not set."
+        assert self._interface_type is not None, "Interface type not set."
         assert self._server_automaton is not None, \
             f"ROS server not provided for {self._interface_name}."
         assert len(self._clients_automata) > 0, \
@@ -83,7 +83,7 @@ class RosCommunicationHandler:
         """
         self._set_name_and_type(interface_name, interface_type)
         assert self._server_automaton is None, \
-            f"Found more than one server for service {interface_name}."
+            f"Found more than one server for interface {interface_name}."
         self._server_automaton = automaton_name
 
     def add_client(self, interface_name: str, interface_type: str, automaton_name: str) -> None:
@@ -120,9 +120,10 @@ class RosCommunicationHandler:
         """
         scxml_fields: List[ScxmlData] = []
         for field_name, field_type in fields.items():
-            default_expr = value_to_string(
-                get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[field_type]))
-            scxml_fields.append(ScxmlData(field_name, default_expr, field_type))
+            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_py_type = get_data_type_from_string(field_type)
+            default_expr = value_to_string(get_default_expression_for_type(field_py_type))
+            scxml_fields.append(ScxmlData(field_w_pref, default_expr, field_type))
         return scxml_fields
 
 

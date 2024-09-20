@@ -15,7 +15,7 @@
         </onentry>
         <transition target="execute" event="action_fibonacci_thread_start" cond="_event.thread_id == 0">
             <assign location="goal_id" expr="_event.goal_id" />
-            <assign location="order" expr="_event.order" />
+            <assign location="order" expr="_event.ros_fields__order" />
         </transition>
     </state>
     <state id="execute">
@@ -30,14 +30,15 @@
         </onentry>
         <transition target="idle" cond="sequence.length == order + 1">
             <send event="action_fibonacci_result">
+                <param name="ros_fields__sequence" expr="sequence" />
                 <param name="goal_id" expr="goal_id" />
-                <param name="sequence" expr="sequence" />
+                <param expr="4" name="code" />
             </send>
         </transition>
         <transition target="execute">
             <send event="action_fibonacci_feedback">
+                <param name="ros_fields__sequence" expr="sequence" />
                 <param name="goal_id" expr="goal_id" />
-                <param name="sequence" expr="sequence" />
             </send>
         </transition>
     </state>

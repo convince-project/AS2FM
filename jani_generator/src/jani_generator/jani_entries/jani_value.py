@@ -32,7 +32,8 @@ class JaniValue:
                 assert self._value["constant"] in ("e", "π"), \
                     f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
-            return False
+        elif isinstance(self._value, list):
+            return all(JaniValue(v).is_valid() for v in self._value)
         return isinstance(self._value, (int, float, bool))
 
     def value(self) -> Union[int, float, bool]:
@@ -45,6 +46,6 @@ class JaniValue:
                 return pi
         return self._value
 
-    def as_dict(self) -> Union[dict, int, float, bool]:
+    def as_dict(self) -> Union[dict, int, float, bool, list]:
         # Note: this might be a value or a dictionary
         return self._value

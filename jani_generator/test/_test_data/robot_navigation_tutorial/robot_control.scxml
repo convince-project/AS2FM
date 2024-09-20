@@ -35,14 +35,14 @@
             <assign location="tf_robot_world_theta" expr="-tf_world_robot_theta" />
             <!-- (tf_rob_w_x,  tf_rob_w_y)^T = R(tf_rob_w_theta) * (-(tf_w_rob_x, tf_w_rob_y)^T) -->
             <assign location="tf_robot_world_x"
-                    expr="(-tf_world_robot_x * cos(tf_robot_world_theta)) + (tf_world_robot_y * sin(tf_robot_world_theta))" />
+                    expr="(-tf_world_robot_x * Math.cos(tf_robot_world_theta)) + (tf_world_robot_y * Math.sin(tf_robot_world_theta))" />
             <assign location="tf_robot_world_y"
-                    expr="(-tf_world_robot_x * sin(tf_robot_world_theta)) + (-tf_world_robot_y * cos(tf_robot_world_theta))" />
+                    expr="(-tf_world_robot_x * Math.sin(tf_robot_world_theta)) + (-tf_world_robot_y * Math.cos(tf_robot_world_theta))" />
             <!-- g_robot = tf_robot_world * g_world -->
             <assign location="goal_x_robot"
-                    expr="goal_x_world * cos(tf_robot_world_theta) - goal_y_world * sin(tf_robot_world_theta) + tf_robot_world_x" />
+                    expr="goal_x_world * Math.cos(tf_robot_world_theta) - goal_y_world * Math.sin(tf_robot_world_theta) + tf_robot_world_x" />
             <assign location="goal_y_robot"
-                    expr="goal_x_world * sin(tf_robot_world_theta) + goal_y_world * cos(tf_robot_world_theta) + tf_robot_world_y" />
+                    expr="goal_x_world * Math.sin(tf_robot_world_theta) + goal_y_world * Math.cos(tf_robot_world_theta) + tf_robot_world_y" />
         </ros_topic_callback>
         <ros_rate_callback name="control_timer" target="current">
             <!-- We do not have atan2, make the control law very basic -->

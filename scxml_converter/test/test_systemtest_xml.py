@@ -49,7 +49,7 @@ def bt_to_scxml_test(
     test_data_path = os.path.join(os.path.dirname(__file__), '_test_data', test_folder)
     bt_file = os.path.join(test_data_path, bt_file)
     plugin_files = [os.path.join(test_data_path, f) for f in bt_plugins]
-    scxml_objs = bt_converter(bt_file, plugin_files)
+    scxml_objs = bt_converter(bt_file, plugin_files, 1.0)
     assert len(scxml_objs) == 3, \
         f"Expecting 3 scxml objects, found {len(scxml_objs)}."
     if store_generated:

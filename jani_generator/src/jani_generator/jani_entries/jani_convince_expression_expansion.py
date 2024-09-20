@@ -63,6 +63,7 @@ OPERATORS_TO_JANI_MAP: Dict[str, str] = {
     "=>": "⇒",
     "aa": "aa",
     "ac": "ac",
+    "av": "av",
 }
 
 

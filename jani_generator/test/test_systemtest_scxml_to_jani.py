@@ -196,10 +196,18 @@ class TestConversion(unittest.TestCase):
 
     # Tests using main.xml ...
 
-    def _test_with_main(self,
-                        folder: str, property_name: str, success: bool,
-                        store_generated_scxmls: bool = False):
-        """Testing the conversion of the main.xml file with the entrypoint."""
+    def _test_with_main(
+            self, folder: str, store_generated_scxmls: bool = False,
+            property_name: str = "", success: bool = False, skip_smc: bool = False):
+        """
+        Testing the conversion of the main.xml file with the entrypoint.
+
+        :param folder: The folder containing the test data.
+        :param store_generated_scxmls: If the generated SCXMLs should be stored.
+        :param property_name: The property name to test.
+        :param success: If the property is expected to be always satisfied of always not satisfied.
+        :param skip_smc: If the model shall be executed using SMC (uses smc_storm).
+        """
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
         xml_main_path = os.path.join(test_data_dir, 'main.xml')
@@ -208,83 +216,91 @@ class TestConversion(unittest.TestCase):
             os.remove(ouput_path)
         interpret_top_level_xml(xml_main_path, store_generated_scxmls)
         self.assertTrue(os.path.exists(ouput_path))
-        # ground_truth = os.path.join(
-        #     test_data_dir,
-        #     'jani_model_GROUND_TRUTH.jani')
-        # with open(ouput_path, "r", encoding='utf-8') as f:
-        #     jani_dict = json.load(f)
-        # with open(ground_truth, "r", encoding='utf-8') as f:
-        #     ground_truth = json.load(f)
-        # self.maxDiff = None
-        # self.assertEqual(jani_dict, ground_truth)
-        pos_res = "Result: 1" if success else "Result: 0"
-        neg_res = "Result: 0" if success else "Result: 1"
-        run_smc_storm_with_output(
-            f"--model {ouput_path} --properties-names {property_name}",
-            [property_name,
-             ouput_path,
-             pos_res],
-            [neg_res])
+        if not skip_smc:
+            assert len(property_name) > 0, "Property name must be provided for SMC."
+            pos_res = "Result: 1" if success else "Result: 0"
+            neg_res = "Result: 0" if success else "Result: 1"
+            run_smc_storm_with_output(
+                f"--model {ouput_path} --properties-names {property_name}",
+                [property_name, ouput_path, pos_res],
+                [neg_res])
         # if os.path.exists(ouput_path):
         #     os.remove(ouput_path)
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
-        self._test_with_main('ros_example', 'battery_depleted', True)
+        self._test_with_main('ros_example', False, 'battery_depleted', True)
 
     def test_battery_ros_example_over_depleted_fail(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main('ros_example', 'battery_over_depleted', False)
+        self._test_with_main('ros_example', False, 'battery_over_depleted', False)
 
     def test_battery_ros_example_alarm_on(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main('ros_example', 'alarm_on', False)
+        self._test_with_main('ros_example', False, 'alarm_on', False)
 
     def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('ros_example_w_bt', 'battery_depleted', False, True)
+        self._test_with_main('ros_example_w_bt', True, 'battery_depleted', False)
 
     def test_battery_example_w_bt_main_battery_under_twenty(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main('ros_example_w_bt', 'battery_below_20', False)
+        self._test_with_main('ros_example_w_bt', False, 'battery_below_20', False)
 
     def test_battery_example_w_bt_main_alarm_and_charge(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
-        self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
+        self._test_with_main('ros_example_w_bt', False, 'battery_alarm_on', True)
 
     def test_battery_example_w_bt_main_charged_after_time(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
-        self._test_with_main('ros_example_w_bt', 'battery_charged', True)
+        self._test_with_main('ros_example_w_bt', False, 'battery_charged', True)
 
     def test_events_sync_handling(self):
         """Here we make sure, the synchronization can handle events
         being sent in different orders without deadlocks."""
-        self._test_with_main('events_sync_examples', 'seq_check', True)
+        self._test_with_main('events_sync_examples', False, 'seq_check', True)
 
     def test_multiple_senders_same_event(self):
         """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
-        self._test_with_main('multiple_senders_same_event', 'seq_check', True)
+        self._test_with_main('multiple_senders_same_event', False, 'seq_check', True)
 
-    def test_array_model(self):
+    def test_array_model_basic(self):
         """Test the array model."""
-        self._test_with_main('array_model', 'array_check', True)
+        self._test_with_main('array_model_basic', False, 'array_check', True)
+
+    def test_array_model_additional(self):
+        """Test the array model."""
+        self._test_with_main('array_model_additional', False, 'array_check', True)
 
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
-        self._test_with_main('ros_add_int_srv_example', 'happy_clients', True, True)
+        self._test_with_main('ros_add_int_srv_example', True, 'happy_clients', True)
 
     def test_ros_fibonacci_action_example(self):
         """Test the actions are properly handled in Jani."""
-        self._test_with_main('fibonacci_action_example', 'clients_ok', True, True)
+        self._test_with_main('fibonacci_action_example', True, 'clients_ok', True)
 
     def test_ros_fibonacci_action_single_client_example(self):
         """Test the actions are properly handled in Jani."""
-        self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
+        self._test_with_main('fibonacci_action_single_thread', True, 'client1_ok', True)
+
+    @pytest.mark.skip(reason="Not yet working. The BT ticking needs some revision.")
+    def test_ros_delib_ws_2024_p1(self):
+        """Test the ROS Deliberation Workshop example works."""
+        self._test_with_main('delibws24_p1', True, 'snack_at_table', True)
+
+    def test_robot_navigation_demo(self):
+        """Test the robot demo."""
+        self._test_with_main('robot_navigation_tutorial', True, 'goal_reached', True, skip_smc=True)
+
+    def test_robot_navigation_with_bt_demo(self):
+        """Test the robot demo."""
+        self._test_with_main('robot_navigation_with_bt', True, 'goal_reached', True, skip_smc=True)
 
 
 if __name__ == '__main__':

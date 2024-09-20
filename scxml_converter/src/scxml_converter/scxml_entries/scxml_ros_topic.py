@@ -20,16 +20,13 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html
 """
 
-from typing import List, Type
-from xml.etree import ElementTree as ET
+from typing import Type
 
-from scxml_converter.scxml_entries import (
-    RosField, ScxmlRosDeclarationsContainer, ScxmlSend, execution_body_from_xml)
+from scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger, RosDeclaration
 
-from scxml_converter.scxml_entries.ros_utils import (is_msg_type_known, generate_topic_event)
-from scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
+from scxml_converter.scxml_entries.ros_utils import is_msg_type_known, generate_topic_event
+from scxml_converter.scxml_entries.utils import CallbackType
 
 
 class RosTopicPublisher(RosDeclaration):
@@ -80,17 +77,8 @@ class RosTopicCallback(RosCallback):
         return RosTopicSubscriber
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTopicCallback":
-        """Create a RosTopicCallback object from an XML tree."""
-        assert_xml_tag_ok(RosTopicCallback, xml_tree)
-        sub_name = get_xml_argument(RosTopicCallback, xml_tree, "name", none_allowed=True)
-        if sub_name is None:
-            sub_name = get_xml_argument(RosTopicCallback, xml_tree, "topic")
-            print("Warning: SCXML topic callback: the 'topic' argument is deprecated. "
-                  "Use 'name' instead.")
-        target = get_xml_argument(RosTopicCallback, xml_tree, "target")
-        exec_body = execution_body_from_xml(xml_tree)
-        return RosTopicCallback(sub_name, target, None, exec_body)
+    def get_callback_type() -> CallbackType:
+        return CallbackType.ROS_TOPIC
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_subscriber_defined(self._interface_name)
@@ -109,18 +97,6 @@ class RosTopicPublish(RosTrigger):
     @staticmethod
     def get_declaration_type() -> Type[RosTopicPublisher]:
         return RosTopicPublisher
-
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> ScxmlSend:
-        """Create a RosTopicPublish object from an XML tree."""
-        assert_xml_tag_ok(RosTopicPublish, xml_tree)
-        pub_name = get_xml_argument(RosTopicPublish, xml_tree, "name", none_allowed=True)
-        if pub_name is None:
-            pub_name = get_xml_argument(RosTopicSubscriber, xml_tree, "topic")
-            print("Warning: SCXML topic publisher: the 'topic' argument is deprecated. "
-                  "Use 'name' instead.")
-        fields: List[RosField] = get_children_as_scxml(xml_tree, (RosField,))
-        return RosTopicPublish(pub_name, fields)
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         return ros_declarations.is_publisher_defined(self._interface_name)

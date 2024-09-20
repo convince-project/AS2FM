@@ -22,9 +22,12 @@ from xml.etree import ElementTree as ET
 
 from scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
-    ScxmlTransition, as_plain_execution_body, execution_body_from_xml, valid_execution_body,
-    instantiate_exec_body_bt_events)
+    ScxmlTransition)
+from scxml_converter.scxml_entries.scxml_executable_entries import (
+    as_plain_execution_body, execution_body_from_xml, instantiate_exec_body_bt_events,
+    set_execution_body_callback_type, valid_execution_body)
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from scxml_converter.scxml_entries.utils import CallbackType
 
 
 class ScxmlState(ScxmlBase):
@@ -33,6 +36,25 @@ class ScxmlState(ScxmlBase):
     @staticmethod
     def get_tag_name() -> str:
         return "state"
+
+    @staticmethod
+    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
+        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
+        transitions: List[ScxmlTransition] = []
+        tag_to_cls = {cls.get_tag_name(): cls
+                      for cls in ScxmlTransition.__subclasses__()
+                      if cls != RosCallback}
+        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
+        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
+        for child in xml_tree:
+            if child.tag is ET.Comment:
+                continue
+            elif child.tag in tag_to_cls:
+                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
+            else:
+                assert child.tag in ("onentry", "onexit"), \
+                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
+        return transitions
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
@@ -113,25 +135,6 @@ class ScxmlState(ScxmlBase):
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
 
-    @staticmethod
-    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
-        transitions: List[ScxmlTransition] = []
-        tag_to_cls = {cls.get_tag_name(): cls
-                      for cls in ScxmlTransition.__subclasses__()
-                      if cls != RosCallback}
-        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
-        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
-        for child in xml_tree:
-            if child.tag is ET.Comment:
-                continue
-            elif child.tag in tag_to_cls:
-                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
-            else:
-                assert child.tag in ("onentry", "onexit"), \
-                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
-        return transitions
-
     def add_transition(self, transition: ScxmlTransition):
         self._body.append(transition)
 
@@ -184,11 +187,13 @@ class ScxmlState(ScxmlBase):
             body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
             ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared in the body."""
-        return len(body) == 0 or \
-            all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body)
+        return (len(body) == 0 or
+                all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body))
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
+        set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
+        set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
         plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
         plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
         plain_body: List[ScxmlTransition] = []
