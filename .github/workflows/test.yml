@@ -65,7 +65,7 @@ jobs:
             # workaround python 3.12 issue
             - name: Install special fork of js2py
               run: |
-                pip install --break-system-packages git+https://github.com/felixonmars/Js2Py.git:py3.12
+                pip install --break-system-packages git+https://github.com/felixonmars/Js2Py.git@py3.12
               if: ${{ matrix.os == 'ubuntu-24.04' }}
             # install the packages
             - name: Install packages
