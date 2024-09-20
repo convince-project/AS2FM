@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml 
+    initial="receive_msg" 
+    version="1.0" 
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+    
+    <datamodel>
+        <data id="counter" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_topic_publisher topic="/receiver_counter" type="std_msgs/Int32" />
+    <ros_topic_subscriber topic="/trigger" type="std_msgs/Empty" />
+
+    <state id="receive_msg">
+        <ros_topic_callback topic="/trigger" target="receive_msg">
+            <assign location="counter" expr="counter + 1" />
+            <ros_topic_publish topic="/receiver_counter">
+                <field name="data" expr="counter" />
+            </ros_topic_publish>
+        </ros_topic_callback>
+    </state>
+
+</scxml>

@@ -15,12 +15,18 @@
 
 """An automaton for jani."""
 
-from typing import List, Dict, Set, Optional
-from jani_generator.jani_entries import JaniEdge, JaniConstant, JaniVariable, JaniExpression
+from typing import Any, Dict, List, Optional, Set
+
+from jani_generator.jani_entries import (JaniConstant, JaniEdge,
+                                         JaniExpression, JaniVariable)
 
 
 class JaniAutomaton:
-    def __init__(self, *, automaton_dict: Optional[dict] = None):
+    @staticmethod
+    def from_dict(automaton_dict: dict) -> "JaniAutomaton":
+        return JaniAutomaton(automaton_dict=automaton_dict)
+
+    def __init__(self, *, automaton_dict: Optional[Dict[str, Any]] = None):
         self._locations: Set[str] = set()
         self._initial_locations: Set[str] = set()
         self._local_variables: Dict[str, JaniVariable] = {}
@@ -32,7 +38,7 @@ class JaniAutomaton:
         self._name = automaton_dict["name"]
         self._generate_locations(
             automaton_dict["locations"], automaton_dict["initial-locations"])
-        self._generate_variables(automaton_dict["variables"])
+        self._generate_variables(automaton_dict.get("variables", []))
         self._generate_edges(automaton_dict["edges"])
 
     def get_name(self):
@@ -76,7 +82,16 @@ class JaniAutomaton:
     def get_edges(self) -> List[JaniEdge]:
         return self._edges
 
-    def _generate_locations(self, location_list: List[str], initial_locations: List[str]):
+    def remove_edges_with_action_name(self, action_name: str):
+        assert isinstance(action_name, str), "Action name must be a string"
+        self._edges = [edge for edge in self._edges if edge.get_action() != action_name]
+
+    def remove_empty_self_loop_edges(self):
+        """Remove all self-loop edges from the automaton."""
+        self._edges = [edge for edge in self._edges if not edge.is_empty_self_loop()]
+
+    def _generate_locations(self,
+                            location_list: List[Dict[str, Any]], initial_locations: List[str]):
         for location in location_list:
             self._locations.add(location["name"])
         for init_location in initial_locations:
@@ -90,20 +105,21 @@ class JaniAutomaton:
             is_transient = False
             if "transient" in variable:
                 is_transient = variable["transient"]
-            var_type = JaniVariable.jani_type_from_string(variable["type"])
+            var_type = JaniVariable.python_type_from_json(variable["type"])
             self._local_variables.update({variable["name"]: JaniVariable(
                 variable["name"], var_type, init_expr, is_transient)})
 
     def _generate_edges(self, edge_list: List[dict]):
-        # TODO: Proposal -> Edges might require support variables? In case we want to provide standard ones...
         for edge in edge_list:
             jani_edge = JaniEdge(edge)
             self.add_edge(jani_edge)
 
-    def get_actions(self) -> Set[JaniEdge]:
+    def get_actions(self) -> Set[str]:
         actions = set()
         for edge in self._edges:
-            actions.add(edge.get_action())
+            action = edge.get_action()
+            if action is not None:
+                actions.add(action)
         return actions
 
     def merge(self, other: 'JaniAutomaton'):

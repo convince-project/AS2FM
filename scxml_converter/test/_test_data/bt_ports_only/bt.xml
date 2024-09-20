@@ -1,0 +1,8 @@
+<root BTCPP_format="4" >
+    <BehaviorTree ID="MainTree">
+        <Sequence name="root_sequence">
+            <Action ID="BtTopicAction" name="answer" data="42" />
+            <Action ID="BtTopicAction" name="answer_incremented" data="43" />
+        </Sequence>
+    </BehaviorTree>
+</root>

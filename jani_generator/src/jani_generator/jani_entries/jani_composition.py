@@ -15,10 +15,14 @@
 
 """This allows the composition of multiple automata in jani."""
 
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class JaniComposition:
+    @staticmethod
+    def from_dict(composition_dict: dict) -> "JaniComposition":
+        return JaniComposition(composition_dict=composition_dict)
+
     def __init__(self, composition_dict: Optional[Dict[str, Any]] = None):
         if composition_dict is None:
             self._elements = []
@@ -33,25 +37,35 @@ class JaniComposition:
 
     def add_element(self, element: str):
         """Append a new automaton name in the composition."""
-        assert element not in self._elements, f"Element {element} already exists in the composition"
+        assert element not in self._elements, \
+            f"Element {element} already exists in the composition"
         self._elements.append(element)
         self._element_to_id[element] = len(self._elements) - 1
+        for sync in self._syncs:
+            assert len(sync["synchronise"]) == len(self._elements) - 1, \
+                "Unexpected number of syncs found in the composition during the update"
+            sync["synchronise"].append(None)
 
     def get_elements(self):
         """Get the elements of the composition."""
         return self._elements
 
     def add_sync(self, sync_name: str, syncs: Dict[str, str]):
-        """Add a new synchronisation between the elements."""
-        new_sync = {
-            "result": sync_name,
-            "synchronise": [None] * len(self._elements)
-        }
+        """Add a new synchronization between the elements.
+
+        :param sync_name: The name of the synchronization action
+        :param syncs: A dictionary relating each automaton to the action to be executed in the sync
+        """
         # Generate the synchronize list
+        sync_list: List[Optional[str]] = [None] * len(self._elements)
         for automata, action in syncs.items():
-            assert automata in self._element_to_id, f"Automaton {automata} does not exist in the composition"
-            new_sync["synchronise"][self._element_to_id[automata]] = action
-        self._syncs.append(new_sync)
+            assert automata in self._element_to_id, \
+                f"Automaton {automata} does not exist in the composition"
+            sync_list[self._element_to_id[automata]] = action
+        self._syncs.append({
+            "result": sync_name,
+            "synchronise": sync_list
+        })
 
     def get_syncs_for_element(self, element: str) -> List[str]:
         """Get the existing syncs for a specific element (=automaton)."""
@@ -92,6 +106,8 @@ class JaniComposition:
         return generated_syncs
 
     def as_dict(self):
+        # Sort the syncs before return
+        self._syncs = sorted(self._syncs, key=lambda x: x["result"])
         return {
             "elements": [{"automaton": element} for element in self._elements],
             "syncs": self._syncs

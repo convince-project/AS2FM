@@ -18,15 +18,36 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from scxml_converter.scxml_entries import (ScxmlBase, ScxmlExecutionBody, ScxmlExecutableEntry,
-                                           HelperRosDeclarations, valid_execution_body,
-                                           execution_body_from_xml)
-
 from xml.etree import ElementTree as ET
+
+from scxml_converter.scxml_entries import (
+    ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
+    execution_body_from_xml, valid_execution_body, valid_execution_body_entry_types,
+    instantiate_exec_body_bt_events)
+
+from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
+from scxml_converter.scxml_entries.ros_utils import replace_ros_interface_expression
 
 
 class ScxmlTransition(ScxmlBase):
     """This class represents a single scxml state."""
+    @staticmethod
+    def get_tag_name() -> str:
+        return "transition"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
+        """Create a ScxmlTransition object from an XML tree."""
+        assert xml_tree.tag == ScxmlTransition.get_tag_name(), \
+            f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
+        target = xml_tree.get("target")
+        assert target is not None, "Error: SCXML transition: target attribute not found."
+        events_str = xml_tree.get("event")
+        events = events_str.split(" ") if events_str is not None else []
+        condition = xml_tree.get("cond")
+        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = exec_body if exec_body is not None else None
+        return ScxmlTransition(target, events, condition, exec_body)
 
     def __init__(self,
                  target: str, events: Optional[List[str]] = None, condition: Optional[str] = None,
@@ -43,43 +64,57 @@ class ScxmlTransition(ScxmlBase):
             target) > 0, "Error SCXML transition: target must be a non-empty string."
         assert events is None or (isinstance(events, list) and
                                   all((isinstance(ev, str) and len(ev) > 0) for ev in events)), \
-            "Error SCXML transition: events must be a list of non-empty strings."
+            f"Error SCXML transition: events must be a list of non-empty strings. Found {events}."
         assert condition is None or (isinstance(condition, str) and len(condition) > 0), \
             "Error SCXML transition: condition must be a non-empty string."
-        assert body is None or valid_execution_body(
-            body), "Error SCXML transition: invalid body provided."
+        assert body is None or valid_execution_body_entry_types(body), \
+            "Error SCXML transition: invalid body provided."
         self._target = target
         self._body = body
-        self._events = events
+        self._events = events if events is not None else []
         self._condition = condition
 
-    def get_tag_name() -> str:
-        return "transition"
+    def get_target_state_id(self) -> str:
+        """Return the ID of the target state of this transition."""
+        return self._target
 
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
-        """Create a ScxmlTransition object from an XML tree."""
-        assert xml_tree.tag == ScxmlTransition.get_tag_name(), \
-            f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
-        target = xml_tree.get("target")
-        assert target is not None, "Error: SCXML transition: target attribute not found."
-        events = xml_tree.get("event")
-        events = events.split(" ") if events is not None else None
-        condition = xml_tree.get("cond")
-        exec_body = execution_body_from_xml(xml_tree)
-        exec_body = exec_body if exec_body is not None else None
-        return ScxmlTransition(target, events, condition, exec_body)
+    def get_events(self) -> Optional[List[str]]:
+        """Return the events that trigger this transition (if any)."""
+        return self._events
+
+    def get_condition(self) -> Optional[str]:
+        """Return the condition required to execute this transition (if any)."""
+        return self._condition
+
+    def get_executable_body(self) -> ScxmlExecutionBody:
+        """Return the executable content of this transition."""
+        return self._body if self._body is not None else []
+
+    def instantiate_bt_events(self, instance_id: str):
+        """Instantiate the BT events of this transition."""
+        # Make sure to replace received events only for ScxmlTransition objects.
+        if type(self) is ScxmlTransition:
+            for event_id, event_str in enumerate(self._events):
+                # Those are expected to be only ticks
+                if is_bt_event(event_str):
+                    self._events[event_id] = replace_bt_event(event_str, instance_id)
+        # The body of a transition is needs to be replaced on derived classes, too
+        instantiate_exec_body_bt_events(self._body, instance_id)
+
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        for entry in self._body:
+            entry.update_bt_ports_values(bt_ports_handler)
 
     def add_event(self, event: str):
-        if self._events is None:
-            self._events = []
         self._events.append(event)
 
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
         if self._body is None:
             self._body = []
         self._body.append(exec_entry)
-        assert valid_execution_body(self._body), \
-            "Error SCXML transition: invalid body after extension."
+        assert valid_execution_body_entry_types(self._body), \
+            "Error SCXML transition: invalid body entry found after extension."
 
     def check_validity(self) -> bool:
         valid_target = isinstance(self._target, str) and len(self._target) > 0
@@ -100,38 +135,36 @@ class ScxmlTransition(ScxmlBase):
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body
 
-    def check_valid_ros_instantiations(self, ros_declarations: HelperRosDeclarations) -> bool:
+    def check_valid_ros_instantiations(self,
+                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the ros instantiations have been declared."""
-        # Check the executable content
-        valid_body = self._check_valid_ros_instantiations_exec_body(ros_declarations)
-        if not valid_body:
-            print("Error: SCXML transition: executable content has invalid ROS instantiations.")
-        return valid_body
+        # For SCXML transitions, ROS interfaces can be found only in the exec body
+        return self._body is None or \
+            all(entry.check_valid_ros_instantiations(ros_declarations) for entry in self._body)
 
-    def _check_valid_ros_instantiations_exec_body(self,
-                                                  ros_declarations: HelperRosDeclarations) -> bool:
-        """Check if the ros instantiations have been declared in the executable body."""
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
-            "Error: SCXML transition: invalid ROS declarations container."
-        if self._body is None:
-            return True
-        for entry in self._body:
-            if not entry.check_valid_ros_instantiations(ros_declarations):
-                return False
-        return True
+    def set_thread_id(self, thread_id: int) -> None:
+        """Set the thread ID for the executable entries of this transition."""
+        if self._body is not None:
+            for entry in self._body:
+                if hasattr(entry, "set_thread_id"):
+                    entry.set_thread_id(thread_id)
 
-    def as_plain_scxml(self, ros_declarations: HelperRosDeclarations) -> "ScxmlTransition":
-        assert isinstance(ros_declarations, HelperRosDeclarations), \
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
+        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
             "Error: SCXML transition: invalid ROS declarations container."
+        assert self.check_valid_ros_instantiations(ros_declarations), \
+            "Error: SCXML transition: invalid ROS instantiations in transition body."
         new_body = None
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
+        if self._condition is not None:
+            self._condition = replace_ros_interface_expression(self._condition)
         return ScxmlTransition(self._target, self._events, self._condition, new_body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(ScxmlTransition.get_tag_name(), {"target": self._target})
-        if self._events is not None:
+        if len(self._events) > 0:
             xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:
             xml_transition.set("cond", self._condition)

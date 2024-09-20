@@ -19,15 +19,17 @@ import json
 import os
 import unittest
 import xml.etree.ElementTree as ET
-from pprint import pprint
 
 import pytest
-from jani_generator.jani_entries import JaniModel
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
+
+from jani_generator.jani_entries import JaniAutomaton
 from jani_generator.scxml_helpers.scxml_event import EventsHolder
 from jani_generator.scxml_helpers.scxml_to_jani import (
-    convert_multiple_scxmls_to_jani, convert_scxml_element_to_jani_automaton,
-    interpret_top_level_xml)
+    convert_multiple_scxmls_to_jani, convert_scxml_root_to_jani_automaton)
+from jani_generator.scxml_helpers.top_level_interpreter import \
+    interpret_top_level_xml
+from scxml_converter.scxml_entries import ScxmlRoot
+
 from .test_utilities_smc_storm import run_smc_storm_with_output
 
 
@@ -39,23 +41,27 @@ class TestConversion(unittest.TestCase):
         basic_scxml = """
         <scxml
           version="1.0"
+          name="BasicExample"
           initial="Initial">
+            <datamodel>
+                <data id="x" expr="0" type="int32" />
+            </datamodel>
             <state id="Initial">
                 <onentry>
                     <assign location="x" expr="42" />
                 </onentry>
             </state>
         </scxml>"""
-        basic_scxml = ET.fromstring(basic_scxml)
+        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
-        self.assertEqual(len(automaton["locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertIn("Initial", init_location["name"])
-        self.assertIn("Initial", automaton["initial-locations"])
+        self.assertEqual(len(automaton["locations"]), 2)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn("Initial-first-exec", locations)
+        self.assertIn("Initial-first-exec", automaton["initial-locations"])
 
     def test_battery_drainer(self):
         """
@@ -64,21 +70,19 @@ class TestConversion(unittest.TestCase):
         scxml_battery_drainer = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_drainer.scxml')
-        with open(scxml_battery_drainer, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
-        self.assertEqual(len(automaton["locations"]), 2)
+        self.assertEqual(len(automaton["locations"]), 4)
         self.assertEqual(len(automaton["initial-locations"]), 1)
-        init_location = automaton["locations"][0]
-        self.assertEqual(init_location['name'],
-                         automaton.get("initial-locations")[0])
-        self.assertEqual(len(automaton["edges"]), 2)
+        locations = [loc['name'] for loc in automaton["locations"]]
+        self.assertIn(automaton.get("initial-locations")[0], locations)
+        self.assertEqual(len(automaton["edges"]), 4)
 
         # Variables
         self.assertEqual(len(automaton["variables"]), 1)
@@ -94,12 +98,11 @@ class TestConversion(unittest.TestCase):
         scxml_battery_manager = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example',
             'battery_manager.scxml')
-        with open(scxml_battery_manager, 'r', encoding='utf-8') as f:
-            basic_scxml = ET.parse(f).getroot()
 
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
         jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_element_to_jani_automaton(basic_scxml, jani_a, eh)
+        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
 
         automaton = jani_a.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
@@ -132,12 +135,8 @@ class TestConversion(unittest.TestCase):
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
             scxml_battery_manager = f.read()
 
-        jani_model = convert_multiple_scxmls_to_jani([
-            scxml_battery_drainer,
-            scxml_battery_manager],
-            [],
-            0
-        )
+        jani_model = convert_multiple_scxmls_to_jani(
+            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -155,7 +154,7 @@ class TestConversion(unittest.TestCase):
         self.assertIn({"automaton": "BatteryManager"}, elements)
         self.assertIn({"automaton": "level"}, elements)
         syncs = jani_dict["system"]["syncs"]
-        self.assertEqual(len(syncs), 3)
+        self.assertEqual(len(syncs), 4)
         self.assertIn({'result': 'level_on_send',
                        'synchronise': [
                            'level_on_send', None, 'level_on_send']},
@@ -195,15 +194,19 @@ class TestConversion(unittest.TestCase):
         if os.path.exists(TEST_FILE):
             os.remove(TEST_FILE)
 
-    def _test_with_entrypoint(self, main_xml: str, folder: str, property_name: str, success: bool):
+    # Tests using main.xml ...
+
+    def _test_with_main(self,
+                        folder: str, property_name: str, success: bool,
+                        store_generated_scxmls: bool = False):
         """Testing the conversion of the main.xml file with the entrypoint."""
         test_data_dir = os.path.join(
             os.path.dirname(__file__), '_test_data', folder)
-        xml_main_path = os.path.join(test_data_dir, main_xml)
+        xml_main_path = os.path.join(test_data_dir, 'main.xml')
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
-        interpret_top_level_xml(xml_main_path)
+        interpret_top_level_xml(xml_main_path, store_generated_scxmls)
         self.assertTrue(os.path.exists(ouput_path))
         # ground_truth = os.path.join(
         #     test_data_dir,
@@ -217,7 +220,7 @@ class TestConversion(unittest.TestCase):
         pos_res = "Result: 1" if success else "Result: 0"
         neg_res = "Result: 0" if success else "Result: 1"
         run_smc_storm_with_output(
-            f"--model {ouput_path} --property-name {property_name}",
+            f"--model {ouput_path} --properties-names {property_name}",
             [property_name,
              ouput_path,
              pos_res],
@@ -225,33 +228,63 @@ class TestConversion(unittest.TestCase):
         # if os.path.exists(ouput_path):
         #     os.remove(ouput_path)
 
-    def test_with_entrypoint_main_success(self):
-        """Test the main.xml file with the entrypoint.
-        Here we expect the property to be satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example', 'battery_depleted', True)
+    def test_battery_ros_example_depleted_success(self):
+        """Test the battery_depleted property is satisfied."""
+        self._test_with_main('ros_example', 'battery_depleted', True)
 
-    def test_with_entrypoint_main_fail(self):
-        """Test the main_failing.xml file with the entrypoint.
-        Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint(
-            'main_failing_prop.xml', 'ros_example', 'battery_depleted', False)
+    def test_battery_ros_example_over_depleted_fail(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main('ros_example', 'battery_over_depleted', False)
 
-    def test_with_entrypoint_w_bt_main_battery_depleted(self):
-        """Test the main.xml file with the entrypoint.
-        Here we expect the property to be satisfied."""
+    def test_battery_ros_example_alarm_on(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main('ros_example', 'alarm_on', False)
+
+    def test_battery_example_w_bt_battery_depleted(self):
+        """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_depleted', False)
+        self._test_with_main('ros_example_w_bt', 'battery_depleted', False, True)
 
-    def test_with_entrypoint_w_bt_main_battery_under_twenty(self):
-        """Test the main.xml file with the entrypoint.
-        Here we expect the property to be satisfied."""
+    def test_battery_example_w_bt_main_battery_under_twenty(self):
+        """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_below_20', False)
+        self._test_with_main('ros_example_w_bt', 'battery_below_20', False)
 
-    def test_with_entrypoint_w_bt_main_alarm_and_charge(self):
-        """Test the main_failing.xml file with the entrypoint.
-        Here we expect the property to be *not* satisfied."""
-        self._test_with_entrypoint('main.xml', 'ros_example_w_bt', 'battery_alarm_on', True)
+    def test_battery_example_w_bt_main_alarm_and_charge(self):
+        """Here we expect the property to be satisfied in a battery example
+        with charging feature."""
+        self._test_with_main('ros_example_w_bt', 'battery_alarm_on', True)
+
+    def test_battery_example_w_bt_main_charged_after_time(self):
+        """Here we expect the property to be satisfied in a battery example
+        with charging feature."""
+        self._test_with_main('ros_example_w_bt', 'battery_charged', True)
+
+    def test_events_sync_handling(self):
+        """Here we make sure, the synchronization can handle events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('events_sync_examples', 'seq_check', True)
+
+    def test_multiple_senders_same_event(self):
+        """Test topic synchronization, handling events
+        being sent in different orders without deadlocks."""
+        self._test_with_main('multiple_senders_same_event', 'seq_check', True)
+
+    def test_array_model(self):
+        """Test the array model."""
+        self._test_with_main('array_model', 'array_check', True)
+
+    def test_ros_add_int_srv_example(self):
+        """Test the services are properly handled in Jani."""
+        self._test_with_main('ros_add_int_srv_example', 'happy_clients', True, True)
+
+    def test_ros_fibonacci_action_example(self):
+        """Test the actions are properly handled in Jani."""
+        self._test_with_main('fibonacci_action_example', 'clients_ok', True, True)
+
+    def test_ros_fibonacci_action_single_client_example(self):
+        """Test the actions are properly handled in Jani."""
+        self._test_with_main('fibonacci_action_single_thread', 'client1_ok', True, True)
 
 
 if __name__ == '__main__':

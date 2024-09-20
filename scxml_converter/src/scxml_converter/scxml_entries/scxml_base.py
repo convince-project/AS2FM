@@ -17,20 +17,28 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from xml.etree import ElementTree as ET
+
 
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
 
+    @staticmethod
     def get_tag_name() -> str:
         """Get the tag name of the XML element."""
         raise NotImplementedError
 
-    def from_xml_tree(xml_tree) -> "ScxmlBase":
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlBase":
         """Create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
     def check_validity(self) -> bool:
         """Check if the object is valid."""
+        raise NotImplementedError
+
+    def update_bt_ports_values(self, bt_ports_handler):
+        """Update the values of potential entries making use of BT ports."""
         raise NotImplementedError
 
     def as_plain_scxml(self, ros_declarations) -> "ScxmlBase":

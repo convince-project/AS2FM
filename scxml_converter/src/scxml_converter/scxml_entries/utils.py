@@ -15,54 +15,62 @@
 
 """Collection of various utilities for scxml entries."""
 
-from typing import Dict
+from typing import Any, Dict, Type, MutableSequence
+
+from scxml_converter.scxml_entries import ScxmlBase
+
+# TODO: add lower and upper bounds depending on the n. of bits used.
+# TODO: add support to uint
+SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
+    "bool": bool,
+    "float32": float,
+    "float64": float,
+    "int8": int,
+    "int16": int,
+    "int32": int,
+    "int64": int,
+    "int32[]": MutableSequence[int],  # array.array('i): https://stackoverflow.com/a/67775675
+}
 
 
-def as_plain_scxml_msg_expression(msg_expr: str) -> str:
-    """Convert a ROS message expression (referring to ROS msg entries) to plain SCXML."""
-    prefix = "_event." if msg_expr.startswith("_msg.") else ""
-    return prefix + msg_expr.removeprefix("_msg.")
+def all_non_empty_strings(*in_args) -> bool:
+    """
+    Check if all the arguments are non-empty strings.
+
+    :param kwargs: The arguments to be checked.
+    :return: True if all the arguments are non-empty strings, False otherwise.
+    """
+    for arg_value in in_args:
+        if not isinstance(arg_value, str) or len(arg_value) == 0:
+            return False
+    return True
 
 
-class HelperRosDeclarations:
-    """Object that contains a description of the ROS declarations in the SCXML root."""
+def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> bool:
+    """
+    Check if a string is non-empty.
 
-    def __init__(self):
-        # Dict of publishers and subscribers: topic name -> type
-        self._publishers: Dict[str, str] = {}
-        self._subscribers: Dict[str, str] = {}
-        self._timers: Dict[str, float] = {}
+    :param scxml_type: The scxml entry where this function is called, to write error msgs.
+    :param arg_name: The name of the argument, to write error msgs.
+    :param arg_value: The value of the argument to be checked.
+    :return: True if the string is non-empty, False otherwise.
+    """
+    valid_str = isinstance(arg_value, str) and len(arg_value) > 0
+    if not valid_str:
+        print(f"Error: SCXML entry from {scxml_type.__name__}: "
+              f"Expected non-empty argument {arg_name}.")
+    return valid_str
 
-    def append_publisher(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._publishers, \
-            f"Error: ROS declarations: topic publisher {topic_name} already declared."
-        self._publishers[topic_name] = topic_type
 
-    def append_subscriber(self, topic_name: str, topic_type: str) -> None:
-        assert isinstance(topic_name, str) and isinstance(topic_type, str), \
-            "Error: ROS declarations: topic name and type must be strings."
-        assert topic_name not in self._subscribers, \
-            f"Error: ROS declarations: topic subscriber {topic_name} already declared."
-        self._subscribers[topic_name] = topic_type
-
-    def append_timer(self, timer_name: str, timer_rate: float) -> None:
-        assert isinstance(timer_name, str), "Error: ROS declarations: timer name must be a string."
-        assert isinstance(timer_rate, float) and timer_rate > 0, \
-            "Error: ROS declarations: timer rate must be a positive number."
-        assert timer_name not in self._timers, \
-            f"Error: ROS declarations: timer {timer_name} already declared."
-        self._timers[timer_name] = timer_rate
-
-    def is_publisher_defined(self, topic_name: str) -> bool:
-        return topic_name in self._publishers
-
-    def is_subscriber_defined(self, topic_name: str) -> bool:
-        return topic_name in self._subscribers
-
-    def is_timer_defined(self, timer_name: str) -> bool:
-        return timer_name in self._timers
-
-    def get_timers(self) -> Dict[str, float]:
-        return self._timers
+def convert_string_to_type(value: str, data_type: str) -> Any:
+    """
+    Convert a value to the provided data type. Raise if impossible.
+    """
+    assert data_type in SCXML_DATA_STR_TO_TYPE, \
+        f"Error: SCXML conversion of data entry: Unknown data type {data_type}."
+    assert isinstance(value, str), \
+        f"Error: SCXML conversion of data entry: expected a string, got {type(value)}."
+    assert len(value) > 0, "Error: SCXML conversion of data entry: Empty string."
+    assert '[' not in data_type, \
+        f"Error: SCXML conversion of data entry: Cannot convert array type {data_type}."
+    return SCXML_DATA_STR_TO_TYPE[data_type](value)

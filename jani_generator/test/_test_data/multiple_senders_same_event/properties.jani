@@ -1,0 +1,59 @@
+{
+    "properties": [
+        {
+            "name": "seq_check",
+            "expression": {
+              "op": "filter",
+              "fun": "values",
+              "values": {
+                "op": "Pmin",
+                "exp": {
+                  "op": "U",
+                  "left": {
+                    "op": "∧",
+                    "left": {
+                      "op": "<",
+                      "left": "topic_sender_a_counter_msg.data",
+                      "right": 100
+                    },
+                    "right": {
+                      "op": "∧",
+                      "left": {
+                        "op": "<",
+                        "left": "topic_sender_b_counter_msg.data",
+                        "right": 100
+                      },
+                      "right": {
+                        "op": "<",
+                        "left": "topic_receiver_counter_msg.data",
+                        "right": 100
+                      }
+                    }
+                  },
+                  "right": {
+                    "comment": "Ensure no message is skipped. Leave some buffer since some message ca be sent during callback evaluation",
+                    "op": "∧",
+                    "left": {
+                      "op": ">",
+                      "left": "topic_receiver_counter_msg.data",
+                      "right": 48
+                    },
+                    "right": {
+                      "op": "=",
+                      "left": 50,
+                      "right": {
+                        "op": "+",
+                        "left": "topic_sender_a_counter_msg.data",
+                        "right": "topic_sender_b_counter_msg.data"
+                      }
+                    }
+                  }
+                }
+              },
+              "states": {
+                "op": "initial"
+              }
+            }
+          }
+    ]
+}

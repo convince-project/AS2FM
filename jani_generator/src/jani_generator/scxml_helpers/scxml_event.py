@@ -19,14 +19,11 @@ Module to hold scxml even information to convert to jani syncs later.
 
 from typing import Dict, List, Optional
 
-from jani_generator.jani_entries.jani_assignment import JaniAssignment
 from scxml_converter.scxml_converter import ROS_TIMER_RATE_EVENT_PREFIX
 
 
 class EventSender:
-    def __init__(self, automaton_name: str,
-                 edge_action_name: str,
-                 assignments: List[JaniAssignment]):
+    def __init__(self, automaton_name: str, edge_action_name: str):
         """
         Initialize the event sender.
 
@@ -36,16 +33,11 @@ class EventSender:
         """
         self.automaton_name = automaton_name
         self.edge_action_name = edge_action_name
-        self._assignments = assignments
-
-    def get_assignments(self) -> List[JaniAssignment]:
-        return self._assignments
 
 
 class EventReceiver:
-    def __init__(self, automaton_name: str, location_name: str, edge_action_name: str):
+    def __init__(self, automaton_name: str, edge_action_name: str):
         self.automaton_name = automaton_name
-        self.location_name = location_name
         self.edge_action_name = edge_action_name
 
 
@@ -55,42 +47,49 @@ class Event:
                  data_struct: Optional[Dict[str, type]] = None):
         self.name = name
         self.data_struct = data_struct
-        self.senders: List[EventSender] = []
-        self.receivers: List[EventReceiver] = []
+        # Map automaton -> event name
+        # TODO: EventSender and EventReceiver are only containers for the automaton-action name pair
+        # In the future, this could be a Dict[str, str] or even a Set, if we assume the action name
+        # always matches with the event name.
+        self.senders: Dict[str, EventSender] = {}
+        self.receivers: Dict[str, EventReceiver] = {}
 
-    def add_sender_edge(self, automaton_name: str, edge_action_name: str,
-                        assignments: List[JaniAssignment]):
+    def add_sender_edge(self, automaton_name: str, edge_action_name: str):
         """Add information about the edge sending the event."""
-        self.senders.append(EventSender(automaton_name, edge_action_name, assignments))
+        self.senders.update({automaton_name: EventSender(automaton_name, edge_action_name)})
 
-    def add_receiver(self, automaton_name: str, location_name: str, edge_action_name: str):
+    def add_receiver(self, automaton_name: str, edge_action_name: str):
         """Add information about the edges triggered by the event."""
-        self.receivers.append(EventReceiver(
-            automaton_name, location_name, edge_action_name))
+        self.receivers.update({automaton_name: EventReceiver(automaton_name, edge_action_name)})
 
     def get_senders(self) -> List[EventSender]:
         """Get the senders of the event."""
-        return self.senders
+        return [sender for sender in self.senders.values()]
 
     def get_receivers(self) -> List[EventReceiver]:
         """Get the receivers of the event."""
-        return self.receivers
+        return [receiver for receiver in self.receivers.values()]
 
     def get_data_structure(self) -> Dict[str, type]:
         """Get the data structure of the event."""
+        if self.data_struct is None:
+            return {}
         return self.data_struct
 
     def set_data_structure(self, data_struct: Dict[str, type]):
         """Set the data structure of the event."""
         self.data_struct = data_struct
 
-    def is_valid(self):
-        """Check if the event is valid."""
-        assert len(self.senders) > 0, f"Event {self.name} must have at least one sender."
-        assert len(self.receivers) > 0, f"Event {self.name} must have at least one receiver."
+    def has_senders(self) -> bool:
+        """Check if the event has one or more senders."""
+        return len(self.senders) > 0
 
-    def must_be_skipped(self):
-        """Indicate whether this must be considered in the conversion."""
+    def has_receivers(self) -> bool:
+        """Check if the event has one or more receivers."""
+        return len(self.receivers) > 0
+
+    def must_be_skipped_in_jani_conversion(self):
+        """Indicate whether this must be considered in the conversion to jani."""
         return (
             self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
             # If the event is a timer event, there is only a receiver
@@ -98,11 +97,11 @@ class Event:
             # `ros_rate_callback` tag. It will be handled in the
             # `scxml_event_processor` module differently.
             or
-            self._is_bt_event() and len(self.senders) == 0
+            self.is_bt_response_event() and len(self.senders) == 0
         )
 
-    def _is_bt_event(self):
-        """Check if the event is a behavior tree event.
+    def is_bt_response_event(self):
+        """Check if the event is a behavior tree response event (running, success, failure).
         They may have no sender if the plugin does not implement it."""
         return self.name.startswith("bt_") and (
             self.name.endswith("_running") or

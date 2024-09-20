@@ -1,0 +1,77 @@
+name: Lint
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  build: 
+    name: ${{ matrix.package }} ⏩ ${{ matrix.linter }}
+    strategy:
+      fail-fast: false
+      matrix:
+        linter: [ 
+          "pylint", 
+          "pycodestyle", 
+          "flake8", 
+          "mypy", 
+          "isort" 
+          ]
+        package: [ "jani_generator", "as2fm_common", "scxml_converter" ]
+        include:
+            # (for humble):
+          - python-version: "3.10" 
+            # os: "ubuntu-latest"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: szenius/set-timezone@v1.0
+        with:
+          timezoneLinux: "Europe/Berlin"
+      - uses: actions/checkout@v3
+      # Get bt_tools TODO: remove after the release of bt_tools
+      - name: Checkout bt_tools
+        uses: actions/checkout@v2
+        with:
+          repository: boschresearch/bt_tools
+          ref: main
+          path: bt_tools
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: |
+          pip install --upgrade pip
+          pip install setuptools_rust
+      # Install btlib TODO: remove after the release of bt_tools
+      - name: Install btlib
+        run: |
+          cd bt_tools
+          pip install -e btlib/.
+      - name: Install packages
+        run: |
+          pip install jani_generator/.[dev]
+          pip install as2fm_common/.[dev]
+          pip install scxml_converter/.[dev]
+      - uses: marian-code/python-lint-annotate@v4
+        with:
+          python-root-list: ${{ matrix.package }}/src/${{ matrix.package }}
+          python-version: ${{ matrix.python-version }}
+          use-pylint: ${{ matrix.linter == 'pylint' }}
+          use-pycodestyle: ${{ matrix.linter == 'pycodestyle' }}
+          use-flake8: ${{ matrix.linter == 'flake8' }}
+          use-black: false
+          use-mypy: ${{ matrix.linter == 'mypy' }}
+          use-isort: ${{ matrix.linter == 'isort' }}
+          use-vulture: false
+          use-pydocstyle: false
+          extra-pylint-options: ""
+          extra-pycodestyle-options: ""
+          extra-flake8-options: "--max-line-length=100"
+          extra-black-options: ""
+          extra-mypy-options: "--ignore-missing-imports"
+          extra-isort-options: ""
