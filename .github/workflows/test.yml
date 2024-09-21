@@ -72,7 +72,7 @@ jobs:
               run: | 
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
                 pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} jani_generator/.[dev]
-                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} mc_toolchain_jani_common/.[dev]
+                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} as2fm_common/.[dev]
                 pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} scxml_converter/.[dev]
             # lint packages
             # TODO: add linting    
