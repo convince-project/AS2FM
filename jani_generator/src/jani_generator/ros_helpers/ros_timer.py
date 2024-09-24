@@ -104,20 +104,12 @@ def make_global_timer_automaton(timers: List[RosTimer],
     """
     if len(timers) == 0:
         return None
-    
-    # Calculate the period of the global timer
-    smallest_unit: str = "s"
-    for timer in timers:
-        if TIME_UNITS[timer.unit] < TIME_UNITS[smallest_unit]:
-            smallest_unit = timer.unit
-    timer_periods_in_smallest_unit = {
-        timer.name: convert_time_between_units(
-            timer.period_int, timer.unit, smallest_unit)
+    global_timer_period, global_timer_period_unit = get_common_time_step(timers)
+    timers_map = {
+        timer.name: convert_time_between_units(timer.period_int, timer.unit,
+                                               global_timer_period_unit)
         for timer in timers
     }
-    global_timer_period = gcd(*timer_periods_in_smallest_unit.values())
-    global_timer_period_unit = smallest_unit
-
     try:
         max_time = convert_time_between_units(
             max_time_ns, "ns", global_timer_period_unit)
@@ -148,7 +140,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
     # timer assignments
     timer_assignments = []
     for i, (timer, variable_name) in enumerate(zip(timers, variable_names)):
-        period_in_global_unit = timer_periods_in_smallest_unit[timer.name]
+        period_in_global_unit = timers_map[timer.name]
         timer_assignments.append(JaniAssignment({
             "ref": variable_name,
             # t % {period_in_global_unit} == 0
