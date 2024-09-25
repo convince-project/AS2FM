@@ -29,5 +29,11 @@ dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpve
 [project.scripts]
 trace_to_png = "trace_visualizer.main:main_trace_to_png"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+trace_visualizer = ["data/slkscr.ttf"]
+
 [isort]
 profile = "google"
