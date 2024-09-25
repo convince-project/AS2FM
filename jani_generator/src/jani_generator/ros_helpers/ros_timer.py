@@ -24,6 +24,10 @@ from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
+from scxml_converter.scxml_entries import (
+    ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlExecutionBody, ScxmlIf, ScxmlRoot, ScxmlSend,
+    ScxmlState, ScxmlTransition)
+
 
 TIME_UNITS = {
     "s": 1,
@@ -155,7 +159,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
         unprocessed_timer_exp = not_operator(variable_name)
         # Append this expression to the guard using the and operator
         guard_exp = and_operator(guard_exp, unprocessed_timer_exp)
-        # TODO: write test case for this
+        # TODO: write test case for this (and switch to not(t1 or t2 or ... or tN) guard)
     assignments = [
         # t = t + global_timer_period
         JaniAssignment({
@@ -193,5 +197,43 @@ def make_global_timer_automaton(timers: List[RosTimer],
             }]
         })
         timer_automaton.add_edge(timer_edge)
-
     return timer_automaton
+
+
+def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optional[ScxmlRoot]:
+    """
+    Create a global timer SCXML from a list of ROS timers.
+
+    :param timers: The list of ROS timers.
+    :return: The global timer SCXML.
+    """
+    """
+    Generate an SCXML model containing the timers.
+    """
+    if len(timers) == 0:
+        return None
+    global_timer_period, global_timer_period_unit = get_common_time_step(timers)
+    timers_map = {
+        timer.name: convert_time_between_units(timer.period_int, timer.unit,
+                                               global_timer_period_unit)
+        for timer in timers
+    }
+    try:
+        max_time = convert_time_between_units(
+            max_time_ns, "ns", global_timer_period_unit)
+    except AssertionError:
+        raise ValueError(
+            f"Max time {max_time_ns} cannot be converted to {global_timer_period_unit}. "
+            "The max_time must have a unit that is greater or equal to the smallest timer period.")
+    scxml_root = ScxmlRoot("global_timer_automata")
+    scxml_root.set_data_model()
+    idle_state = ScxmlState("idle")
+    global_timer_tick_body: ScxmlExecutionBody = []
+    global_timer_tick_body.append(ScxmlAssign("current_time",
+                                              f"current_time + {global_timer_period}"))
+    for timer_name, timer_period in timers_map.items():
+        global_timer_tick_body.append(ScxmlIf([f"(current_time % {timer_period}) == 0",
+                                               ScxmlSend(f"ros_time_rate.{timer_name}")]))
+    idle_state.add_transition()
+    scxml_root.add_state()
+    return scxml_root

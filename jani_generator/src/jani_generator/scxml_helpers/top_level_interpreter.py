@@ -28,7 +28,7 @@ from jani_generator.ros_helpers.ros_communication_handler import (
     generate_plain_scxml_from_handlers, update_ros_communication_handlers)
 from jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from jani_generator.ros_helpers.ros_action_handler import RosActionHandler
-from jani_generator.ros_helpers.ros_timer import RosTimer
+from jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
 from scxml_converter.bt_converter import bt_converter
@@ -173,15 +173,6 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
-def generate_timers_scxml(ros_timers: List[RosTimer]) -> ScxmlRoot:
-    """
-    Generate an SCXML model containing the timers.
-    """
-    scxml_root = ScxmlRoot("global_timer_automata")
-    # TODO
-    return scxml_root
-
-
 def interpret_top_level_xml(xml_path: str, jani_file: str,
                             generated_scxmls_dir: Optional[str] = None):
     """
@@ -206,10 +197,11 @@ def interpret_top_level_xml(xml_path: str, jani_file: str,
                       encoding='utf-8') as f:
                 f.write(scxml_model.as_xml_string())
         # Additionally, write the timers SCXML model
-        global_timer_scxml = generate_timers_scxml(all_timers)
-        with open(os.path.join(plain_scxml_dir, global_timer_scxml.get_name() + ".scxml"), "w",
-                  encoding='utf-8') as f:
-            f.write(global_timer_scxml.as_xml_string())
+        global_timer_scxml = make_global_timer_scxml(all_timers)
+        if global_timer_scxml is not None:
+            with open(os.path.join(plain_scxml_dir, global_timer_scxml.get_name() + ".scxml"), "w",
+                      encoding='utf-8') as f:
+                f.write(global_timer_scxml.as_xml_string())
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, model.max_time, model.max_array_size)
