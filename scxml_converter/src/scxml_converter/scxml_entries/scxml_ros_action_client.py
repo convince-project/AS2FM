@@ -124,6 +124,15 @@ class RosActionHandleGoalResponse(ScxmlTransition):
                                            self._reject_target)
         return valid_name and valid_accept and valid_reject
 
+    def instantiate_bt_events(self, _: str):
+        # We do not expect a body with BT ports to be substituted
+        pass
+
+    def update_bt_ports_values(self, _) -> None:
+        """Update the values of potential entries making use of BT ports."""
+        # We do not expect a body with BT ports to be substituted
+        pass
+
     def check_valid_ros_instantiations(self,
                                        ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
