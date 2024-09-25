@@ -34,7 +34,7 @@ from scxml_converter.scxml_entries.ros_utils import (
     sanitize_ros_interface_name)
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class RosActionThread(ScxmlBase):
@@ -188,6 +188,11 @@ class RosActionHandleThreadStart(RosCallback):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
+    @staticmethod
+    def get_callback_type() -> CallbackType:
+        # The thread is started upon a goal request, so use the action goal type
+        return CallbackType.ROS_ACTION_GOAL
+
     def __init__(self, server_alias: Union[str, RosActionServer], target_state: str,
                  condition: Optional[str] = None, exec_body: Optional[ScxmlExecutionBody] = None
                  ) -> None:
@@ -230,7 +235,7 @@ class RosActionHandleThreadStart(RosCallback):
         assert self._thread_id is not None, \
             f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
-        self._condition = "_req.thread_id == " + str(self._thread_id)
+        self._condition = "_event.thread_id == " + str(self._thread_id)
         return super().as_plain_scxml(ros_declarations)
 
 
@@ -251,7 +256,7 @@ class RosActionThreadFree(RosTrigger):
         return RosActionServer
 
     def __init__(self, action_name: Union[str, RosActionServer],
-                 fields: Optional[List[RosField]] = None) -> None:
+                 fields: Optional[List[RosField]] = None, _=None) -> None:
         super().__init__(action_name, fields)
         self._thread_id: Optional[int] = None
 

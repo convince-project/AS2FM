@@ -84,9 +84,13 @@ class JaniVariable:
         """Get name."""
         return self._name
 
-    def get_type(self):
+    def get_type(self) -> Type[ValidTypes]:
         """Get type."""
         return self._type
+
+    def get_init_expr(self) -> Optional[JaniExpression]:
+        """Get initial expression.  if available. None otherwise."""
+        return self._init_expr
 
     def as_dict(self):
         """Return the variable as a dictionary."""

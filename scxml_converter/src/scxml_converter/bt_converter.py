@@ -55,6 +55,7 @@ def bt_event_name(node_id: str, event_type: BT_EVENT_TYPE) -> str:
 def bt_converter(
     bt_xml_path: str,
     bt_plugins_scxml_paths: List[str],
+    bt_tick_rate: float
 ) -> List[ScxmlRoot]:
     """
     Convert a Behavior Tree (BT) in XML format to SCXML.
@@ -62,6 +63,7 @@ def bt_converter(
     Args:
         bt_xml_path: The path to the Behavior Tree in XML format.
         bt_plugins_scxml_paths: The paths to the SCXML files of BT plugins.
+        bt_tick_rate: The rate at which the BT should tick.
 
     Returns:
         A list of the generated SCXML objects.
@@ -133,7 +135,7 @@ def bt_converter(
             state.add_transition(ScxmlTransition("wait_for_tick"))
         bt_scxml_root.add_state(state)
     # TODO: Make BT rate configurable, e.g. from main.xml
-    rtr = RosTimeRate("bt_tick", 1.0)
+    rtr = RosTimeRate("bt_tick", bt_tick_rate)
     bt_scxml_root.add_ros_declaration(rtr)
 
     wait_for_tick = ScxmlState("wait_for_tick")

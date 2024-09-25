@@ -143,3 +143,12 @@ def array_access_operator(exp, index) -> JaniExpression:
     :param index: The index to access on exp
     """
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
+
+
+def array_value_operator(elements) -> JaniExpression:
+    """
+    Generate an array value expression
+
+    :param elements: The elements of the array
+    """
+    return JaniExpression({"op": "av", "elements": elements})

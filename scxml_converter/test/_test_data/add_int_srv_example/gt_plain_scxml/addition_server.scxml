@@ -6,10 +6,10 @@
     </datamodel>
     <state id="idle">
         <transition target="idle" event="srv_adder_request">
-            <assign location="temp_a" expr="_event.a" />
-            <assign location="temp_b" expr="_event.b" />
+            <assign location="temp_a" expr="_event.ros_fields__a" />
+            <assign location="temp_b" expr="_event.ros_fields__b" />
             <send event="srv_adder_response">
-                <param name="sum" expr="temp_a + temp_b" />
+                <param name="ros_fields__sum" expr="temp_a + temp_b" />
             </send>
         </transition>
     </state>

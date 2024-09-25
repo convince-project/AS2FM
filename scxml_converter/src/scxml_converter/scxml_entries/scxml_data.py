@@ -22,13 +22,15 @@ import re
 from typing import Any, Union, Optional, Tuple
 from xml.etree import ElementTree as ET
 
+from as2fm_common.common import is_array_type
+
 from scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
 
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
 from scxml_converter.scxml_entries.utils import (
-    SCXML_DATA_STR_TO_TYPE, convert_string_to_type, is_non_empty_string)
+    convert_string_to_type, get_array_max_size, get_data_type_from_string, is_non_empty_string)
 
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]
@@ -100,7 +102,15 @@ class ScxmlData(ScxmlBase):
         return self._id
 
     def get_type(self) -> type:
-        return SCXML_DATA_STR_TO_TYPE[self._data_type]
+        python_type = get_data_type_from_string(self._data_type)
+        assert python_type is not None, \
+            f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'."
+        return python_type
+
+    def get_array_max_size(self) -> Optional[int]:
+        assert is_array_type(self.get_type()), \
+            f"Error: SCXML data: '{self._id}' type is not an array."
+        return get_array_max_size(self._data_type)
 
     def get_expr(self) -> str:
         return self._expr
@@ -109,8 +119,7 @@ class ScxmlData(ScxmlBase):
         if all(bound is None for bound in [self._lower_bound, self._upper_bound]):
             # Nothing to check
             return True
-        python_type = SCXML_DATA_STR_TO_TYPE[self._data_type]
-        if python_type not in (float, int):
+        if self.get_type() not in (float, int):
             print(f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
                   "not a number.")
             return False
@@ -129,14 +138,12 @@ class ScxmlData(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_id = is_non_empty_string(ScxmlData, "id", self._id)
-        valid_type = is_non_empty_string(ScxmlData, "type", self._data_type)
-        if valid_type:
-            if self._data_type not in SCXML_DATA_STR_TO_TYPE:
-                print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
-                return False
+        if get_data_type_from_string(self._data_type) is None:
+            print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
+            return False
         valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
         valid_bounds = self.check_valid_bounds()
-        return valid_id and valid_expr and valid_type and valid_bounds
+        return valid_id and valid_expr and valid_bounds
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid data object."

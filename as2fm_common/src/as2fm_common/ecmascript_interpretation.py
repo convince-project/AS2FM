@@ -51,7 +51,11 @@ def interpret_ecma_script_expr(
         return expr_result
     elif isinstance(expr_result, js2py.base.JsObjectWrapper):
         if isinstance(expr_result._obj, js2py.base.PyJsArray):
-            return expr_result.to_list()
+            res_as_list = expr_result.to_list()
+            if all(isinstance(x, int) for x in res_as_list):
+                return array("i", res_as_list)
+            else:
+                return array('d', res_as_list)
         else:
             raise ValueError(f"Expected expr. {expr} to be of type {BASIC_JS_TYPES} or "
                              f"an array, got '{type(expr_result._obj)}'")

@@ -24,7 +24,7 @@ from scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
 from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import is_non_empty_string
+from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class ScxmlParam(ScxmlBase):
@@ -60,6 +60,10 @@ class ScxmlParam(ScxmlBase):
         self._name = name
         self._expr = expr
         self._location = location
+        self._cb_type: Optional[CallbackType] = None
+
+    def set_callback_type(self, cb_type: CallbackType):
+        self._cb_type = cb_type
 
     def get_name(self) -> str:
         return self._name

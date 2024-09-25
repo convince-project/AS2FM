@@ -15,7 +15,7 @@
 
 """Collection of SCXML utilities related to BT functionalities."""
 
-from typing import Dict, Tuple, Any, Type
+from typing import Dict, Tuple, Type
 
 import re
 
@@ -93,7 +93,7 @@ class BtPortsHandler:
             f"Error: Unsupported output port type {port_type}."
         self._out_ports[port_name] = (port_type, None)
 
-    def get_port_value(self, port_name: str) -> Any:
+    def get_port_value(self, port_name: str) -> str:
         """Get the value of a port."""
         if self.in_port_exists(port_name):
             return self.get_in_port_value(port_name)
@@ -114,7 +114,7 @@ class BtPortsHandler:
         """Get the value of an output port."""
         raise NotImplementedError("Error: Output ports are not supported yet.")
 
-    def set_port_value(self, port_name: str, port_value: Any) -> None:
+    def set_port_value(self, port_name: str, port_value: str) -> None:
         """Set the value of a port."""
         if self.in_port_exists(port_name):
             self._set_in_port_value(port_name, port_value)
@@ -139,6 +139,6 @@ class BtPortsHandler:
                 "This is not yet supported.")
         self._in_ports[port_name] = (port_type, port_value)
 
-    def _set_out_port_value(self, port_name: str, port_value: Any):
+    def _set_out_port_value(self, port_name: str, port_value: str):
         """Set the value of an output port."""
         raise NotImplementedError("Error: Output ports are not supported yet.")

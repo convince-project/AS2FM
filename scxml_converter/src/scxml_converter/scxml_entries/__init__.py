@@ -1,6 +1,7 @@
 # isort: skip_file
 # Skipping file to avoid circular import problem
 from .scxml_base import ScxmlBase                                               # noqa: F401
+from .utils import CallbackType                                                 # noqa: F401
 from .bt_utils import RESERVED_BT_PORT_NAMES                                    # noqa: F401
 from .scxml_bt import (                                                         # noqa: F401
     BtInputPortDeclaration, BtOutputPortDeclaration, BtGetValueInputPort)       # noqa: F401
@@ -25,11 +26,12 @@ from .scxml_ros_service import (                                                
     RosServiceHandleResponse, RosServiceSendRequest, RosServiceSendResponse)    # noqa: F401
 from .scxml_ros_action_client import (                                          # noqa: F401
     RosActionClient, RosActionSendGoal, RosActionHandleGoalResponse,            # noqa: F401
-    RosActionHandleFeedback, RosActionHandleResult)                             # noqa: F401
+    RosActionHandleFeedback, RosActionHandleSuccessResult,                      # noqa: F401
+    RosActionHandleCanceledResult, RosActionHandleAbortedResult)                # noqa: F401
 from .scxml_ros_action_server import (                                          # noqa: F401
     RosActionServer, RosActionHandleGoalRequest, RosActionAcceptGoal,           # noqa: F401
     RosActionRejectGoal, RosActionStartThread, RosActionSendFeedback,           # noqa: F401
-    RosActionSendResult)                                                        # noqa: F401
+    RosActionSendSuccessResult)                                                 # noqa: F401
 from .scxml_ros_action_server_thread import (                                   # noqa: F401
     RosActionThread, RosActionHandleThreadStart)                                # noqa: F401
 from .scxml_root import ScxmlRoot                                               # noqa: F401
