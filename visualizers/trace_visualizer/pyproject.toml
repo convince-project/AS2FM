@@ -17,8 +17,8 @@ classifiers = [
 ]
 keywords = []
 dependencies = [
-    "webcolors",
-    "plantuml",
+    "pandas",
+    "Pillow"
 ]
 
 requires-python = ">=3.7"
