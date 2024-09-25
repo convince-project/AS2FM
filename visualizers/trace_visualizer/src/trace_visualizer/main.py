@@ -16,20 +16,27 @@
 # limitations under the License.
 
 import argparse
-import os
-import json
-import plantuml
 
 from trace_visualizer.visualizer import Traces
 
+
 def main_trace_to_png():
     parser = argparse.ArgumentParser(
-        description='Converts a trace file produced by smc_storm into an image.')
-    parser.add_argument('input_fname', type=str, help='The input csv file.')
-    parser.add_argument('output_png_fname', type=str, help='The output png file.')
+        description='Converts a trace file produced by smc_storm into two' +
+        ' images. One image for the first verified trace (if any) and one' +
+        ' image for the first falsified trace (if any).')
+    parser.add_argument('input_fname', type=str, help='The trace as csv file.')
+    parser.add_argument(
+        'output_png_prefix', type=str,
+        help='Prefix for the output png file. ' +
+        'The output will be saved as <prefix>_<verdict>.png')
     args = parser.parse_args()
 
     traces = Traces(args.input_fname)
-    traces.write_trace_to_img(0, args.output_png_fname)
-
-    
+    ver, fal = traces.print_info_about_result()
+    if ver is not None:
+        traces.write_trace_to_img(
+            ver, args.output_png_prefix + "_verified.png")
+    if fal is not None:
+        traces.write_trace_to_img(
+            fal, args.output_png_prefix + "_falsified.png")
