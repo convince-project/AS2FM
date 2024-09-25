@@ -16,9 +16,10 @@
 # limitations under the License.
 
 import pandas
-from PIL import Image, ImageDraw
-from typing import Dict, List
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from typing import Dict, List, Tuple
 from colorsys import hsv_to_rgb
+import random
 
 
 LOC_PREFIX = '_loc_'
@@ -26,7 +27,7 @@ TRACE_NUMBER = 'Trace number'
 RESULT = 'Result'
 
 PIXELS_BORDER = 2
-PIXELS_BETWEEN_COLUMNS = 1
+PIXELS_INTERNAL_BORDER = 1
 
 
 def _hsv_to_rgb(h, s, v):
@@ -50,6 +51,8 @@ class Traces:
     """A class to represent a trace csv file produced by smc_storm."""
 
     def __init__(self, fname):
+        self.rng = random.Random(0)
+
         # Preparing data
         self.df = pandas.read_csv(fname, sep=';')
         self.columns = self.df.columns.values
@@ -78,13 +81,33 @@ class Traces:
 
     def write_trace_to_img(self, trace_no: int, fname: str):
         """Write one trace to image file."""
+        # Calculate the height of the image
+        texts, max_width, max_height = self._precompute_text()
+        text_height = max_width
         trace = self.traces[trace_no]
-        height = len(trace.df.index)
-        image = Image.new('RGB', (self.width, height), color='black')
+        data_height = len(trace.df.index)
+        img_height = text_height + data_height \
+            + 2 * PIXELS_BORDER + PIXELS_INTERNAL_BORDER
+        image = Image.new('RGB', (self.width, img_height), color='black')
         draw = ImageDraw.Draw(image)
+
+        # Draw the automata names
+        for a in self.automata:
+            x = self.start_per_column[f'{LOC_PREFIX}{a}']
+            y = PIXELS_BORDER
+            bbox = texts[a].getbbox()
+            this_text_height = bbox[3] - bbox[1]
+            this_text_width = bbox[2] - bbox[0]
+            print(f'{a=}, {x=}, {y=}, {this_text_width=}, {this_text_height=}')
+            image.paste(texts[a],
+                        box=(x - 2, y),
+                        mask=texts[a])
+
+        # Draw the data
+        y_data_start = PIXELS_BORDER + text_height + PIXELS_INTERNAL_BORDER
         for a in self.automata:
             for col in [f'{LOC_PREFIX}{a}'] + self.data_per_automaton[a]:
-                start = self.start_per_column[col]
+                x_start = self.start_per_column[col]
                 width = self.width_per_col[col]
                 scale = self.scale_per_col[col]
                 if col.startswith(LOC_PREFIX):
@@ -94,24 +117,51 @@ class Traces:
                     bg_col = 'white'
                     fr_col = self.color_per_automaton[a][1]
                 draw.rectangle(
-                    [start, 0, start + width - 1, height],
+                    [x_start, y_data_start, x_start + width - 1, img_height],
                     fill=bg_col
                 )
-                for i, row in trace.df[col].items():
+                for y, row in trace.df[col].items():
                     if pandas.isna(row):
                         continue
                     x = int(row * scale)
                     # assert x >= 0, f'{x=} must be positive.'
                     # assert x < width, f'{x=} must be smaller than {width=}.'
                     draw.point(
-                        (start + x, i),
+                        (x_start + x, y_data_start + y),
                         fill=fr_col
                     )
         image.save(fname)
 
+    def _precompute_text(self):
+        """Create the header of the image."""
+        texts = {}
+        masks = {}
+        max_height = 0
+        max_width = 0
+        # contrast increaser
+        enhancer = ImageEnhance.Contrast
+        for automaton in self.automata:
+            f = ImageFont.truetype('visualizers/trace_visualizer/data/slkscr.ttf', 7)
+            bbox = f.getbbox(automaton)
+            width = bbox[2] - bbox[0]
+            max_width = max(max_width, width)
+            height = bbox[3] - bbox[1]
+            max_height = max(max_height, height)
+            # print(f'{automaton=}, {bbox=}, {width=}, {height=}')
+            txt = Image.new('L', (width, height), color=0)
+            d = ImageDraw.Draw(txt)
+            d.text((0, 0), automaton, font=f, fill=255)
+            txt = enhancer(txt).enhance(10.0)
+            hist = txt.histogram()
+            
+            txt_rot = txt.rotate(90, expand=1)
+            texts[automaton] = txt_rot
+        return texts, max_width, max_height
+
     def _separate_traces(self) -> List[Trace]:
-        """Separates the traces in the dataframe into individual Trace objects."""
-        assert TRACE_NUMBER in self.columns, f'Must have a column named "{TRACE_NUMBER}"'
+        """Separates the traces in the dataframe into Trace objects."""
+        assert TRACE_NUMBER in self.columns, \
+            f'Must have a column named "{TRACE_NUMBER}"'
         unique_traces = self.df[TRACE_NUMBER].unique()
         unique_traces.sort()
         traces = []
@@ -127,14 +177,22 @@ class Traces:
             if x.startswith(LOC_PREFIX)
         ])
 
-    def _get_color_per_automaton(self) -> Dict[str, str]:
+    def _get_color_per_automaton(self) -> Dict[
+            str, Tuple[
+                Tuple[int, int, int],
+                Tuple[int, int, int],
+                Tuple[int, int, int]]
+    ]:
         """Returns a dictionary with the color of each automaton."""
         colors = {}
-        for i in range(len(self.automata)):
+        random_automata_i = list(range(len(self.automata)))
+        self.rng.shuffle(random_automata_i)
+        for i, _ in enumerate(self.automata):
+            i_color = random_automata_i[i]
             colors[self.automata[i]] = (
-                _hsv_to_rgb(i / len(self.automata), 1, .5),  # dark
-                _hsv_to_rgb(i / len(self.automata), 1, .7),  # mid
-                _hsv_to_rgb(i / len(self.automata), .2, 1)    # light
+                _hsv_to_rgb(i_color / len(self.automata), 1, .5),  # dark
+                _hsv_to_rgb(i_color / len(self.automata), 1, .7),  # mid
+                _hsv_to_rgb(i_color / len(self.automata), .2, 1)    # light
             )
         return colors
 
@@ -142,8 +200,8 @@ class Traces:
         """Returns a dictionary with the data column names that can be
         somhow related to that automaton. This is only done by comparing
         the name, so it is not perfect."""
-        data_per_automaton = {
-            automaton: []  # type: List[str]
+        data_per_automaton: Dict[str, List[str]] = {
+            automaton: []
             for automaton in self.automata
         }
         for col in self.columns:
@@ -191,7 +249,7 @@ class Traces:
     def _get_img_width(self) -> int:
         """Calculate the width of the image."""
         return (
-            (len(self.width_per_col) - 1) * PIXELS_BETWEEN_COLUMNS +  # spaces between columns
+            (len(self.width_per_col) - 1) * PIXELS_INTERNAL_BORDER +  # spaces between columns
             sum(self.width_per_col.values()) +  # pixels for data
             2 * PIXELS_BORDER  # border (left and right)
         )
@@ -214,5 +272,5 @@ class Traces:
             for col in [f'{LOC_PREFIX}{a}'] + self.data_per_automaton[a]:
                 start_per_col[col] = current_loc
                 this_width = self.width_per_col[col]
-                current_loc += (this_width + PIXELS_BETWEEN_COLUMNS)
+                current_loc += (this_width + PIXELS_INTERNAL_BORDER)
         return start_per_col
