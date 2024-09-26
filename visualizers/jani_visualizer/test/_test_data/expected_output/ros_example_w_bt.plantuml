@@ -1,11 +1,11 @@
 @startuml
 scale 500 width
 package BatteryDrainer {
-    usecase "use_battery" as BatteryDrainer_use_battery
-    usecase "use_battery-1-5789cc21" as BatteryDrainer_use_battery_1_5789cc21
-    usecase "use_battery-1-c00ac01e" as BatteryDrainer_use_battery_1_c00ac01e
-    usecase "use_battery-first-exec" as BatteryDrainer_use_battery_first_exec
-    usecase "use_battery-first-exec-0-766fa6e4" as BatteryDrainer_use_battery_first_exec_0_766fa6e4
+    usecase "(0) use_battery" as BatteryDrainer_use_battery
+    usecase "(1) use_battery-1-5789cc21" as BatteryDrainer_use_battery_1_5789cc21
+    usecase "(2) use_battery-1-c00ac01e" as BatteryDrainer_use_battery_1_c00ac01e
+    usecase "(3) use_battery-first-exec" as BatteryDrainer_use_battery_first_exec
+    usecase "(4) use_battery-first-exec-0-766fa6e4" as BatteryDrainer_use_battery_first_exec_0_766fa6e4
     BatteryDrainer_use_battery -[#0048cc]-> BatteryDrainer_use_battery_1_c00ac01e : ⏬battery_percent=(battery_percent - 1)  \n\
 💂(battery_percent > 0)  \n\
 🔗ros_time_rate.my_timer_on_receive  \n\
@@ -32,10 +32,10 @@ topic_level_msg.valid=(True)  \n\
 
 }
 package BatteryManager {
-    usecase "check_battery" as BatteryManager_check_battery
-    usecase "check_battery-1-5025d146" as BatteryManager_check_battery_1_5025d146
-    usecase "check_battery-first-exec" as BatteryManager_check_battery_first_exec
-    usecase "check_battery-first-exec-0-a449c803" as BatteryManager_check_battery_first_exec_0_a449c803
+    usecase "(0) check_battery" as BatteryManager_check_battery
+    usecase "(1) check_battery-1-5025d146" as BatteryManager_check_battery_1_5025d146
+    usecase "(2) check_battery-first-exec" as BatteryManager_check_battery_first_exec
+    usecase "(3) check_battery-first-exec-0-a449c803" as BatteryManager_check_battery_first_exec_0_a449c803
     BatteryManager_check_battery -[#cc0083]-> BatteryManager_check_battery_1_5025d146 : ⏬battery_alarm=(topic_level_msg.ros_fields__data < 30)  \n\
 🔗topic_level_msg_on_receive  \n\
 
@@ -51,11 +51,11 @@ topic_alarm_msg.valid=(True)  \n\
 
 }
 package 1000_TopicCondition {
-    usecase "initial" as 1000_TopicCondition_initial
-    usecase "initial_5eebea38_0_after_if" as 1000_TopicCondition_initial_5eebea38_0_after_if
-    usecase "initial_5eebea38_0_before_if" as 1000_TopicCondition_initial_5eebea38_0_before_if
-    usecase "initial_5eebea38_0_before_if-0-5eebea38-860ebf50-0" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_0
-    usecase "initial_5eebea38_0_before_if-0-5eebea38-860ebf50-1" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_1
+    usecase "(0) initial" as 1000_TopicCondition_initial
+    usecase "(1) initial_5eebea38_0_after_if" as 1000_TopicCondition_initial_5eebea38_0_after_if
+    usecase "(2) initial_5eebea38_0_before_if" as 1000_TopicCondition_initial_5eebea38_0_before_if
+    usecase "(3) initial_5eebea38_0_before_if-0-5eebea38-860ebf50-0" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_0
+    usecase "(4) initial_5eebea38_0_before_if-0-5eebea38-860ebf50-1" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_1
     1000_TopicCondition_initial -[#6600cc]-> 1000_TopicCondition_initial : ⏬last_msg=(topic_alarm_msg.ros_fields__data)  \n\
 🔗topic_alarm_msg_on_receive  \n\
 
@@ -77,9 +77,9 @@ package 1000_TopicCondition {
 
 }
 package 1001_TopicAction {
-    usecase "initial" as 1001_TopicAction_initial
-    usecase "initial-0-dd921629" as 1001_TopicAction_initial_0_dd921629
-    usecase "initial-1-dd921629" as 1001_TopicAction_initial_1_dd921629
+    usecase "(0) initial" as 1001_TopicAction_initial
+    usecase "(1) initial-0-dd921629" as 1001_TopicAction_initial_0_dd921629
+    usecase "(2) initial-1-dd921629" as 1001_TopicAction_initial_1_dd921629
     1001_TopicAction_initial -[#3acc00]-> 1001_TopicAction_initial_0_dd921629 : 🔗bt_1001_tick_on_receive  \n\
 
     1001_TopicAction_initial_0_dd921629 -[#cc00ae]-> 1001_TopicAction_initial_1_dd921629 : ⏬topic_charge_msg.valid=(True)  \n\
@@ -90,15 +90,15 @@ package 1001_TopicAction {
 
 }
 package bt {
-    usecase "1000_TopicCondition" as bt_1000_TopicCondition
-    usecase "1000_TopicCondition-0-28dfb6ec" as bt_1000_TopicCondition_0_28dfb6ec
-    usecase "1001_TopicAction" as bt_1001_TopicAction
-    usecase "failure" as bt_failure
-    usecase "running" as bt_running
-    usecase "success" as bt_success
-    usecase "tick" as bt_tick
-    usecase "tick-0-c82a22b7" as bt_tick_0_c82a22b7
-    usecase "wait_for_tick" as bt_wait_for_tick
+    usecase "(0) 1000_TopicCondition" as bt_1000_TopicCondition
+    usecase "(1) 1000_TopicCondition-0-28dfb6ec" as bt_1000_TopicCondition_0_28dfb6ec
+    usecase "(2) 1001_TopicAction" as bt_1001_TopicAction
+    usecase "(3) failure" as bt_failure
+    usecase "(4) running" as bt_running
+    usecase "(5) success" as bt_success
+    usecase "(6) tick" as bt_tick
+    usecase "(7) tick-0-c82a22b7" as bt_tick_0_c82a22b7
+    usecase "(8) wait_for_tick" as bt_wait_for_tick
     bt_tick -[#3a00cc]-> bt_tick_0_c82a22b7 : 🔗tick-1000_TopicCondition-c82a22b7  \n\
 
     bt_tick_0_c82a22b7 -[#bdcc00]-> bt_1000_TopicCondition : ⏬bt_1000_tick.valid=(True)  \n\
@@ -171,7 +171,7 @@ package bt {
 
 }
 package global_timer {
-    usecase "loc" as global_timer_loc
+    usecase "(0) loc" as global_timer_loc
     global_timer_loc -[#00cc74]-> global_timer_loc : ⏬t=(t + 1)  \n\
 my_timer_needed=(t % 1 = 0)  \n\
 bt_tick_needed=(t % 1 = 0)  \n\
@@ -188,8 +188,8 @@ bt_tick_needed=(t % 1 = 0)  \n\
 
 }
 package topic_level_msg {
-    usecase "received" as topic_level_msg_received
-    usecase "waiting" as topic_level_msg_waiting
+    usecase "(0) received" as topic_level_msg_received
+    usecase "(1) waiting" as topic_level_msg_waiting
     topic_level_msg_waiting -[#0048cc]-> topic_level_msg_waiting : 🔗global_timer_enable  \n\
 
     topic_level_msg_waiting -[#cc0057]-> topic_level_msg_received : 🔗topic_level_msg_on_send  \n\
@@ -198,8 +198,8 @@ package topic_level_msg {
 
 }
 package topic_charge_msg {
-    usecase "received" as topic_charge_msg_received
-    usecase "waiting" as topic_charge_msg_waiting
+    usecase "(0) received" as topic_charge_msg_received
+    usecase "(1) waiting" as topic_charge_msg_waiting
     topic_charge_msg_waiting -[#0048cc]-> topic_charge_msg_waiting : 🔗global_timer_enable  \n\
 
     topic_charge_msg_waiting -[#cc00ae]-> topic_charge_msg_received : 🔗topic_charge_msg_on_send  \n\
@@ -208,8 +208,8 @@ package topic_charge_msg {
 
 }
 package topic_alarm_msg {
-    usecase "received" as topic_alarm_msg_received
-    usecase "waiting" as topic_alarm_msg_waiting
+    usecase "(0) received" as topic_alarm_msg_received
+    usecase "(1) waiting" as topic_alarm_msg_waiting
     topic_alarm_msg_waiting -[#0048cc]-> topic_alarm_msg_waiting : 🔗global_timer_enable  \n\
 
     topic_alarm_msg_waiting -[#9100cc]-> topic_alarm_msg_received : 🔗topic_alarm_msg_on_send  \n\
@@ -218,8 +218,8 @@ package topic_alarm_msg {
 
 }
 package bt_1000_tick {
-    usecase "received" as bt_1000_tick_received
-    usecase "waiting" as bt_1000_tick_waiting
+    usecase "(0) received" as bt_1000_tick_received
+    usecase "(1) waiting" as bt_1000_tick_waiting
     bt_1000_tick_waiting -[#0048cc]-> bt_1000_tick_waiting : 🔗global_timer_enable  \n\
 
     bt_1000_tick_waiting -[#bdcc00]-> bt_1000_tick_received : 🔗bt_1000_tick_on_send  \n\
@@ -228,8 +228,8 @@ package bt_1000_tick {
 
 }
 package bt_1000_success {
-    usecase "received" as bt_1000_success_received
-    usecase "waiting" as bt_1000_success_waiting
+    usecase "(0) received" as bt_1000_success_received
+    usecase "(1) waiting" as bt_1000_success_waiting
     bt_1000_success_waiting -[#0048cc]-> bt_1000_success_waiting : 🔗global_timer_enable  \n\
 
     bt_1000_success_waiting -[#cc8300]-> bt_1000_success_received : 🔗bt_1000_success_on_send  \n\
@@ -238,8 +238,8 @@ package bt_1000_success {
 
 }
 package bt_1000_failure {
-    usecase "received" as bt_1000_failure_received
-    usecase "waiting" as bt_1000_failure_waiting
+    usecase "(0) received" as bt_1000_failure_received
+    usecase "(1) waiting" as bt_1000_failure_waiting
     bt_1000_failure_waiting -[#0048cc]-> bt_1000_failure_waiting : 🔗global_timer_enable  \n\
 
     bt_1000_failure_waiting -[#cc2b00]-> bt_1000_failure_received : 🔗bt_1000_failure_on_send  \n\
@@ -248,8 +248,8 @@ package bt_1000_failure {
 
 }
 package bt_1001_tick {
-    usecase "received" as bt_1001_tick_received
-    usecase "waiting" as bt_1001_tick_waiting
+    usecase "(0) received" as bt_1001_tick_received
+    usecase "(1) waiting" as bt_1001_tick_waiting
     bt_1001_tick_waiting -[#0048cc]-> bt_1001_tick_waiting : 🔗global_timer_enable  \n\
 
     bt_1001_tick_waiting -[#0ecc00]-> bt_1001_tick_received : 🔗bt_1001_tick_on_send  \n\
@@ -258,8 +258,8 @@ package bt_1001_tick {
 
 }
 package bt_1001_success {
-    usecase "received" as bt_1001_success_received
-    usecase "waiting" as bt_1001_success_waiting
+    usecase "(0) received" as bt_1001_success_received
+    usecase "(1) waiting" as bt_1001_success_waiting
     bt_1001_success_waiting -[#0048cc]-> bt_1001_success_waiting : 🔗global_timer_enable  \n\
 
     bt_1001_success_waiting -[#66cc00]-> bt_1001_success_received : 🔗bt_1001_success_on_send  \n\
