@@ -58,8 +58,6 @@ class Traces:
     def __init__(self, fname: str, left_to_right: bool = False):
         self.rng = random.Random(0)
         self.ltr: bool = left_to_right
-        if self.ltr:
-            raise NotImplementedError('Left to right is not implemented (yet).')
 
         # Preparing data
         self.df = pandas.read_csv(fname, sep=';')
@@ -195,6 +193,13 @@ class Traces:
             fill=color
         )
 
+        # If the image is to be left-to-right, flip it such that the leftmost
+        # column is on the bottom. Then data that was plotted from left to 
+        # right (increasing) will be plotted from bottom to top.
+        if self.ltr:
+            image = image.transpose(
+                Image.Transpose.ROTATE_90)
+
         # Write the image to file
         image.save(fname)
 
@@ -226,7 +231,11 @@ class Traces:
             #         f'This should be pure black or white. {i=} {hist[i]=}'
             bbox = txt.getbbox()
             txt = txt.crop(bbox)
-            txt_rot = txt.rotate(90, expand=1)
+            if self.ltr:
+                # text is upside down
+                txt_rot = txt.rotate(-90, expand=1)
+            else:
+                txt_rot = txt.rotate(90, expand=1)
             texts[automaton] = txt_rot
         return texts, max_width, max_height
 
@@ -252,6 +261,9 @@ class Traces:
         if GLOBAL_TIMER in all_automata:
             all_automata.remove(GLOBAL_TIMER)
             return [GLOBAL_TIMER] + all_automata
+        if self.ltr:
+            # alphabetically from top to bottom
+            all_automata.reverse()
         return all_automata
 
     def _get_color_per_automaton(self) -> Dict[
