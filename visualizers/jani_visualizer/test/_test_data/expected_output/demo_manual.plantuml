@@ -1,0 +1,29 @@
+@startuml
+scale 500 width
+package BatteryDrainer {
+    usecase "use_battery_on_entry" as BatteryDrainer_use_battery_on_entry
+    usecase "use_battery" as BatteryDrainer_use_battery
+    BatteryDrainer_use_battery -[#0000cc]-> BatteryDrainer_use_battery_on_entry : ⏬battery_percent=(battery_percent - 1)  \n\
+💂(battery_percent ≥ 0)  \n\
+🔗action_0  \n\
+
+    BatteryDrainer_use_battery_on_entry -[#cc0000]-> BatteryDrainer_use_battery : ⏬level.data=(battery_percent)  \n\
+🔗level_on_send  \n\
+
+}
+package BatteryManager {
+    usecase "check_battery" as BatteryManager_check_battery
+    BatteryManager_check_battery -[#00cc00]-> BatteryManager_check_battery : ⏬battery_alarm=(level.data < 30)  \n\
+🔗level_on_receive  \n\
+
+}
+package level {
+    usecase "received" as level_received
+    usecase "waiting" as level_waiting
+    level_waiting -[#cc0000]-> level_received : 🔗level_on_send  \n\
+
+    level_received -[#cc0000]-> level_received : 🔗level_on_send  \n\
+
+    level_received -[#00cc00]-> level_waiting : 🔗level_on_receive  \n\
+
+}

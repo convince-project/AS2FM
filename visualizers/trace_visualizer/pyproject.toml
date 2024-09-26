@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel", "pip>=24.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trace_visualizer"
+version = "0.0.1"
+description = ""
+readme = "README.md"
+authors = [
+    {name = "Christian Henkel", email = "christian.henkel2@de.bosch.com"},
+    {name = "Marco Lampacrescia", email = "marco.lampacrescia@de.bosch.com"}
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = []
+dependencies = [
+    "pandas",
+    "Pillow"
+]
+
+requires-python = ">=3.7"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
+
+[project.scripts]
+trace_to_png = "trace_visualizer.main:main_trace_to_png"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+trace_visualizer = ["data/slkscr.ttf"]
+
+[isort]
+profile = "google"

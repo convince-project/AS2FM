@@ -71,9 +71,17 @@ jobs:
             - name: Install packages
               run: | 
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
-                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} jani_generator/.[dev]
                 pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} as2fm_common/.[dev]
+                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} jani_generator/.[dev]
                 pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} scxml_converter/.[dev]
+                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} visualizers/jani_visualizer/.[dev]
+                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} visualizers/trace_visualizer/.[dev]
+            # this solves
+            # E   ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+            - name: Downgrade numpy, networkx to match
+              run: | 
+                pip install numpy==1.26.4 networkx==2.8.8
+              if: ${{ matrix.os == 'ubuntu-22.04' }}
             # lint packages
             # TODO: add linting    
             # run the tests
@@ -82,4 +90,4 @@ jobs:
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 # source /opt/ros/${{ matrix.ros-distro }}/setup.bash
                 source colcon_ws/install/setup.bash  # TODO: remove after the release of bt_tools
-                pytest-3 -vs as2fm_common jani_generator scxml_converter
+                pytest-3 -vs as2fm_common jani_generator scxml_converter visualizers/jani_visualizer visualizers/trace_visualizer
