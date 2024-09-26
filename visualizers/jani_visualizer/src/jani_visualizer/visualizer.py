@@ -114,9 +114,9 @@ class PlantUMLAutomata:
             # add a box for the automaton
             automaton_name = automaton['name']
             puml += f"package {automaton_name} {{\n"
-            for location in automaton['locations']:
+            for i_l, location in enumerate(automaton['locations']):
                 loc_name = _unique_name(automaton_name, location['name'])
-                puml += f"    usecase \"{location['name']}\" as {loc_name}\n"
+                puml += f"    usecase \"({i_l}) {location['name']}\" as {loc_name}\n"
             for edge in automaton['edges']:
                 source = _unique_name(automaton_name, edge['location'])
                 assert len(edge['destinations']) == 1, \
