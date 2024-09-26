@@ -55,8 +55,11 @@ class Trace:
 class Traces:
     """A class to represent a trace csv file produced by smc_storm."""
 
-    def __init__(self, fname):
+    def __init__(self, fname: str, left_to_right: bool = False):
         self.rng = random.Random(0)
+        self.ltr: bool = left_to_right
+        if self.ltr:
+            raise NotImplementedError('Left to right is not implemented (yet).')
 
         # Preparing data
         self.df = pandas.read_csv(fname, sep=';')
@@ -104,8 +107,14 @@ class Traces:
         print(f'{verified=}, {falsified=}')
         return verified, falsified
 
-    def write_trace_to_img(self, trace_no: int, fname: str):
-        """Write one trace to image file."""
+    def write_trace_to_img(
+            self, trace_no: int, fname: str):
+        """Write one trace to image file.
+
+        Args:
+            trace_no: The index of the trace to write.
+            fname: The name of the file to write to.
+        """
         # Calculate the height of the image
         text_height = self.titles_max_height
         trace = self.traces[trace_no]
