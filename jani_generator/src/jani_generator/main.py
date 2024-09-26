@@ -79,8 +79,8 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     """
     parser = argparse.ArgumentParser(
         description="Convert SCXML robot system models to JANI model.")
-    parser.add_argument("--scxml-out-dir", type=str, default="",
-                        help="Path to the folder containing the generated plain-jani files.")
+    parser.add_argument("--generated-scxml-dir", type=str, default="",
+                        help="Path to the folder containing the generated plain-SCXML files.")
     parser.add_argument("--jani-out-file", type=str, default="main.jani",
                         help="Path to the generated jani file.")
     parser.add_argument(
