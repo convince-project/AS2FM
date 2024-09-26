@@ -22,7 +22,7 @@ import plantuml
 
 from jani_visualizer.visualizer import PlantUMLAutomata
 
-def main_to_plantuml():
+def main_jani_to_plantuml():
     parser = argparse.ArgumentParser(
         description='Converts a `*.jani` file to a `*.plantuml` file.')
     parser.add_argument('input_fname', type=str, help='The input jani file.')

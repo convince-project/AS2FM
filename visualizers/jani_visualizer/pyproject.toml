@@ -28,7 +28,7 @@ requires-python = ">=3.7"
 dev = ["pytest", "pytest-cov", "pycodestyle", "flake8", "mypy", "isort", "bumpver"]
 
 [project.scripts]
-to_plantuml = "jani_visualizer.main:main_to_plantuml"
+jani_to_plantuml = "jani_visualizer.main:main_jani_to_plantuml"
 
 [isort]
 profile = "google"
