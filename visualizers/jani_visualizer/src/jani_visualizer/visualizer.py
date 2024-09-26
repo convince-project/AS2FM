@@ -142,7 +142,6 @@ class PlantUMLAutomata:
                 ):
                     guard_str = _compact_assignments(edge['guard']).strip()
                     edge_label += f"💂{guard_str}\n"
-                edge_label = '  \\n\\\n'.join(edge_label.split('\n'))
 
                 # Syncs
                 if (
@@ -152,7 +151,9 @@ class PlantUMLAutomata:
                     action = edge['action']
                     if automaton['name'] in colors_per_action and action in colors_per_action[automaton['name']]:
                         color = colors_per_action[automaton['name']][action]
+                    edge_label += f"🔗{action}\n"
 
+                edge_label = '  \\n\\\n'.join(edge_label.split('\n'))
                 if len(edge_label.strip()) > 0:
                     puml += f"    {source} -[{color}]-> {target} : {edge_label}\n"
                 else:
