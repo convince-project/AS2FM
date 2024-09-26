@@ -234,7 +234,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
     for timer_name, timer_period in timers_map.items():
         global_timer_tick_body.append(ScxmlIf([(f"(current_time % {timer_period}) == 0",
                                                [ScxmlSend(f"ros_time_rate.{timer_name}")])]))
-    timer_step_transition = ScxmlTransition("idle", [], f"current_time &lt {max_time}",
+    timer_step_transition = ScxmlTransition("idle", [], f"current_time < {max_time}",
                                             global_timer_tick_body)
     idle_state.add_transition(timer_step_transition)
     scxml_root.add_state(idle_state, initial=True)
