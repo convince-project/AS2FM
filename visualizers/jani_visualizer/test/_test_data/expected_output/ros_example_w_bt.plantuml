@@ -1,0 +1,269 @@
+@startuml
+scale 500 width
+package BatteryDrainer {
+    usecase "use_battery" as BatteryDrainer_use_battery
+    usecase "use_battery-1-5789cc21" as BatteryDrainer_use_battery_1_5789cc21
+    usecase "use_battery-1-c00ac01e" as BatteryDrainer_use_battery_1_c00ac01e
+    usecase "use_battery-first-exec" as BatteryDrainer_use_battery_first_exec
+    usecase "use_battery-first-exec-0-766fa6e4" as BatteryDrainer_use_battery_first_exec_0_766fa6e4
+    BatteryDrainer_use_battery -[#0048cc]-> BatteryDrainer_use_battery_1_c00ac01e : ⏬battery_percent=(battery_percent - 1)  \n\
+💂(battery_percent > 0)  \n\
+🔗ros_time_rate.my_timer_on_receive  \n\
+
+    BatteryDrainer_use_battery_1_c00ac01e -[#cc0057]-> BatteryDrainer_use_battery : ⏬topic_level_msg.ros_fields__data=(battery_percent)  \n\
+topic_level_msg.valid=(True)  \n\
+🔗topic_level_msg_on_send  \n\
+
+    BatteryDrainer_use_battery -[#bd00cc]-> BatteryDrainer_use_battery_1_5789cc21 : ⏬battery_percent=(100)  \n\
+🔗topic_charge_msg_on_receive  \n\
+
+    BatteryDrainer_use_battery_1_5789cc21 -[#cc0057]-> BatteryDrainer_use_battery : ⏬topic_level_msg.ros_fields__data=(battery_percent)  \n\
+topic_level_msg.valid=(True)  \n\
+🔗topic_level_msg_on_send  \n\
+
+    BatteryDrainer_use_battery -[#0048cc]-> BatteryDrainer_use_battery : 💂(True ∧ ¬(battery_percent > 0))  \n\
+🔗ros_time_rate.my_timer_on_receive  \n\
+
+    BatteryDrainer_use_battery_first_exec -[#cc002b]-> BatteryDrainer_use_battery_first_exec_0_766fa6e4 : 🔗use_battery-first-exec-use_battery-766fa6e4  \n\
+
+    BatteryDrainer_use_battery_first_exec_0_766fa6e4 -[#cc0057]-> BatteryDrainer_use_battery : ⏬topic_level_msg.ros_fields__data=(battery_percent)  \n\
+topic_level_msg.valid=(True)  \n\
+🔗topic_level_msg_on_send  \n\
+
+}
+package BatteryManager {
+    usecase "check_battery" as BatteryManager_check_battery
+    usecase "check_battery-1-5025d146" as BatteryManager_check_battery_1_5025d146
+    usecase "check_battery-first-exec" as BatteryManager_check_battery_first_exec
+    usecase "check_battery-first-exec-0-a449c803" as BatteryManager_check_battery_first_exec_0_a449c803
+    BatteryManager_check_battery -[#cc0083]-> BatteryManager_check_battery_1_5025d146 : ⏬battery_alarm=(topic_level_msg.ros_fields__data < 30)  \n\
+🔗topic_level_msg_on_receive  \n\
+
+    BatteryManager_check_battery_1_5025d146 -[#9100cc]-> BatteryManager_check_battery : ⏬topic_alarm_msg.ros_fields__data=(battery_alarm)  \n\
+topic_alarm_msg.valid=(True)  \n\
+🔗topic_alarm_msg_on_send  \n\
+
+    BatteryManager_check_battery_first_exec -[#00cc1d]-> BatteryManager_check_battery_first_exec_0_a449c803 : 🔗check_battery-first-exec-check_battery-a449c803  \n\
+
+    BatteryManager_check_battery_first_exec_0_a449c803 -[#9100cc]-> BatteryManager_check_battery : ⏬topic_alarm_msg.ros_fields__data=(battery_alarm)  \n\
+topic_alarm_msg.valid=(True)  \n\
+🔗topic_alarm_msg_on_send  \n\
+
+}
+package 1000_TopicCondition {
+    usecase "initial" as 1000_TopicCondition_initial
+    usecase "initial_5eebea38_0_after_if" as 1000_TopicCondition_initial_5eebea38_0_after_if
+    usecase "initial_5eebea38_0_before_if" as 1000_TopicCondition_initial_5eebea38_0_before_if
+    usecase "initial_5eebea38_0_before_if-0-5eebea38-860ebf50-0" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_0
+    usecase "initial_5eebea38_0_before_if-0-5eebea38-860ebf50-1" as 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_1
+    1000_TopicCondition_initial -[#6600cc]-> 1000_TopicCondition_initial : ⏬last_msg=(topic_alarm_msg.ros_fields__data)  \n\
+🔗topic_alarm_msg_on_receive  \n\
+
+    1000_TopicCondition_initial -[#ccae00]-> 1000_TopicCondition_initial_5eebea38_0_before_if : 🔗bt_1000_tick_on_receive  \n\
+
+    1000_TopicCondition_initial_5eebea38_0_before_if -[#00cccc]-> 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_0 : 💂(last_msg)  \n\
+🔗initial_5eebea38_0_before_if-initial_5eebea38_0_after_if-5eebea38-860ebf50-0  \n\
+
+    1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_0 -[#cc8300]-> 1000_TopicCondition_initial_5eebea38_0_after_if : ⏬bt_1000_success.valid=(True)  \n\
+🔗bt_1000_success_on_send  \n\
+
+    1000_TopicCondition_initial_5eebea38_0_before_if -[#00a0cc]-> 1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_1 : 💂(True ∧ ¬(last_msg))  \n\
+🔗initial_5eebea38_0_before_if-initial_5eebea38_0_after_if-5eebea38-860ebf50-1  \n\
+
+    1000_TopicCondition_initial_5eebea38_0_before_if_0_5eebea38_860ebf50_1 -[#cc2b00]-> 1000_TopicCondition_initial_5eebea38_0_after_if : ⏬bt_1000_failure.valid=(True)  \n\
+🔗bt_1000_failure_on_send  \n\
+
+    1000_TopicCondition_initial_5eebea38_0_after_if -[#00cca0]-> 1000_TopicCondition_initial : 🔗initial-initial-5eebea38  \n\
+
+}
+package 1001_TopicAction {
+    usecase "initial" as 1001_TopicAction_initial
+    usecase "initial-0-dd921629" as 1001_TopicAction_initial_0_dd921629
+    usecase "initial-1-dd921629" as 1001_TopicAction_initial_1_dd921629
+    1001_TopicAction_initial -[#3acc00]-> 1001_TopicAction_initial_0_dd921629 : 🔗bt_1001_tick_on_receive  \n\
+
+    1001_TopicAction_initial_0_dd921629 -[#cc00ae]-> 1001_TopicAction_initial_1_dd921629 : ⏬topic_charge_msg.valid=(True)  \n\
+🔗topic_charge_msg_on_send  \n\
+
+    1001_TopicAction_initial_1_dd921629 -[#66cc00]-> 1001_TopicAction_initial : ⏬bt_1001_success.valid=(True)  \n\
+🔗bt_1001_success_on_send  \n\
+
+}
+package bt {
+    usecase "1000_TopicCondition" as bt_1000_TopicCondition
+    usecase "1000_TopicCondition-0-28dfb6ec" as bt_1000_TopicCondition_0_28dfb6ec
+    usecase "1001_TopicAction" as bt_1001_TopicAction
+    usecase "failure" as bt_failure
+    usecase "running" as bt_running
+    usecase "success" as bt_success
+    usecase "tick" as bt_tick
+    usecase "tick-0-c82a22b7" as bt_tick_0_c82a22b7
+    usecase "wait_for_tick" as bt_wait_for_tick
+    bt_tick -[#3a00cc]-> bt_tick_0_c82a22b7 : 🔗tick-1000_TopicCondition-c82a22b7  \n\
+
+    bt_tick_0_c82a22b7 -[#bdcc00]-> bt_1000_TopicCondition : ⏬bt_1000_tick.valid=(True)  \n\
+🔗bt_1000_tick_on_send  \n\
+
+    bt_success -[#0e00cc]-> bt_wait_for_tick : 🔗success-wait_for_tick-2f2fb40b  \n\
+
+    bt_failure -[#00cc48]-> bt_wait_for_tick : 🔗failure-wait_for_tick-db319117  \n\
+
+    bt_running -[#001dcc]-> bt_wait_for_tick : 🔗running-wait_for_tick-ec2688c1  \n\
+
+    bt_1000_TopicCondition -[#cc0000]-> bt_failure : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_1000_TopicCondition -[#cc5700]-> bt_1000_TopicCondition_0_28dfb6ec : 🔗bt_1000_success_on_receive  \n\
+
+    bt_1000_TopicCondition_0_28dfb6ec -[#0ecc00]-> bt_1001_TopicAction : ⏬bt_1001_tick.valid=(True)  \n\
+🔗bt_1001_tick_on_send  \n\
+
+    bt_1001_TopicAction -[#91cc00]-> bt_success : 🔗bt_1001_success_on_receive  \n\
+
+    bt_wait_for_tick -[#0074cc]-> bt_tick : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_tick -[#91cc00]-> bt_tick : 🔗bt_1001_success_on_receive  \n\
+
+    bt_tick -[#cc5700]-> bt_tick : 🔗bt_1000_success_on_receive  \n\
+
+    bt_tick -[#0074cc]-> bt_tick : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_tick -[#cc0000]-> bt_tick : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_success -[#91cc00]-> bt_success : 🔗bt_1001_success_on_receive  \n\
+
+    bt_success -[#cc5700]-> bt_success : 🔗bt_1000_success_on_receive  \n\
+
+    bt_success -[#0074cc]-> bt_success : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_success -[#cc0000]-> bt_success : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_failure -[#91cc00]-> bt_failure : 🔗bt_1001_success_on_receive  \n\
+
+    bt_failure -[#cc5700]-> bt_failure : 🔗bt_1000_success_on_receive  \n\
+
+    bt_failure -[#0074cc]-> bt_failure : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_failure -[#cc0000]-> bt_failure : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_running -[#91cc00]-> bt_running : 🔗bt_1001_success_on_receive  \n\
+
+    bt_running -[#cc5700]-> bt_running : 🔗bt_1000_success_on_receive  \n\
+
+    bt_running -[#0074cc]-> bt_running : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_running -[#cc0000]-> bt_running : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_1000_TopicCondition -[#91cc00]-> bt_1000_TopicCondition : 🔗bt_1001_success_on_receive  \n\
+
+    bt_1000_TopicCondition -[#0074cc]-> bt_1000_TopicCondition : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_1001_TopicAction -[#cc5700]-> bt_1001_TopicAction : 🔗bt_1000_success_on_receive  \n\
+
+    bt_1001_TopicAction -[#0074cc]-> bt_1001_TopicAction : 🔗ros_time_rate.bt_tick_on_receive  \n\
+
+    bt_1001_TopicAction -[#cc0000]-> bt_1001_TopicAction : 🔗bt_1000_failure_on_receive  \n\
+
+    bt_wait_for_tick -[#91cc00]-> bt_wait_for_tick : 🔗bt_1001_success_on_receive  \n\
+
+    bt_wait_for_tick -[#cc5700]-> bt_wait_for_tick : 🔗bt_1000_success_on_receive  \n\
+
+    bt_wait_for_tick -[#cc0000]-> bt_wait_for_tick : 🔗bt_1000_failure_on_receive  \n\
+
+}
+package global_timer {
+    usecase "loc" as global_timer_loc
+    global_timer_loc -[#00cc74]-> global_timer_loc : ⏬t=(t + 1)  \n\
+my_timer_needed=(t % 1 = 0)  \n\
+bt_tick_needed=(t % 1 = 0)  \n\
+💂(t < 100 ∧ ¬(my_timer_needed) ∧ ¬(bt_tick_needed))  \n\
+🔗global_timer_tick  \n\
+
+    global_timer_loc -[#0048cc]-> global_timer_loc : ⏬my_timer_needed=(False)  \n\
+💂(my_timer_needed)  \n\
+🔗ros_time_rate.my_timer_on_receive  \n\
+
+    global_timer_loc -[#0074cc]-> global_timer_loc : ⏬bt_tick_needed=(False)  \n\
+💂(bt_tick_needed)  \n\
+🔗ros_time_rate.bt_tick_on_receive  \n\
+
+}
+package topic_level_msg {
+    usecase "received" as topic_level_msg_received
+    usecase "waiting" as topic_level_msg_waiting
+    topic_level_msg_waiting -[#0048cc]-> topic_level_msg_waiting : 🔗global_timer_enable  \n\
+
+    topic_level_msg_waiting -[#cc0057]-> topic_level_msg_received : 🔗topic_level_msg_on_send  \n\
+
+    topic_level_msg_received -[#cc0083]-> topic_level_msg_waiting : 🔗topic_level_msg_on_receive  \n\
+
+}
+package topic_charge_msg {
+    usecase "received" as topic_charge_msg_received
+    usecase "waiting" as topic_charge_msg_waiting
+    topic_charge_msg_waiting -[#0048cc]-> topic_charge_msg_waiting : 🔗global_timer_enable  \n\
+
+    topic_charge_msg_waiting -[#cc00ae]-> topic_charge_msg_received : 🔗topic_charge_msg_on_send  \n\
+
+    topic_charge_msg_received -[#bd00cc]-> topic_charge_msg_waiting : 🔗topic_charge_msg_on_receive  \n\
+
+}
+package topic_alarm_msg {
+    usecase "received" as topic_alarm_msg_received
+    usecase "waiting" as topic_alarm_msg_waiting
+    topic_alarm_msg_waiting -[#0048cc]-> topic_alarm_msg_waiting : 🔗global_timer_enable  \n\
+
+    topic_alarm_msg_waiting -[#9100cc]-> topic_alarm_msg_received : 🔗topic_alarm_msg_on_send  \n\
+
+    topic_alarm_msg_received -[#6600cc]-> topic_alarm_msg_waiting : 🔗topic_alarm_msg_on_receive  \n\
+
+}
+package bt_1000_tick {
+    usecase "received" as bt_1000_tick_received
+    usecase "waiting" as bt_1000_tick_waiting
+    bt_1000_tick_waiting -[#0048cc]-> bt_1000_tick_waiting : 🔗global_timer_enable  \n\
+
+    bt_1000_tick_waiting -[#bdcc00]-> bt_1000_tick_received : 🔗bt_1000_tick_on_send  \n\
+
+    bt_1000_tick_received -[#ccae00]-> bt_1000_tick_waiting : 🔗bt_1000_tick_on_receive  \n\
+
+}
+package bt_1000_success {
+    usecase "received" as bt_1000_success_received
+    usecase "waiting" as bt_1000_success_waiting
+    bt_1000_success_waiting -[#0048cc]-> bt_1000_success_waiting : 🔗global_timer_enable  \n\
+
+    bt_1000_success_waiting -[#cc8300]-> bt_1000_success_received : 🔗bt_1000_success_on_send  \n\
+
+    bt_1000_success_received -[#cc5700]-> bt_1000_success_waiting : 🔗bt_1000_success_on_receive  \n\
+
+}
+package bt_1000_failure {
+    usecase "received" as bt_1000_failure_received
+    usecase "waiting" as bt_1000_failure_waiting
+    bt_1000_failure_waiting -[#0048cc]-> bt_1000_failure_waiting : 🔗global_timer_enable  \n\
+
+    bt_1000_failure_waiting -[#cc2b00]-> bt_1000_failure_received : 🔗bt_1000_failure_on_send  \n\
+
+    bt_1000_failure_received -[#cc0000]-> bt_1000_failure_waiting : 🔗bt_1000_failure_on_receive  \n\
+
+}
+package bt_1001_tick {
+    usecase "received" as bt_1001_tick_received
+    usecase "waiting" as bt_1001_tick_waiting
+    bt_1001_tick_waiting -[#0048cc]-> bt_1001_tick_waiting : 🔗global_timer_enable  \n\
+
+    bt_1001_tick_waiting -[#0ecc00]-> bt_1001_tick_received : 🔗bt_1001_tick_on_send  \n\
+
+    bt_1001_tick_received -[#3acc00]-> bt_1001_tick_waiting : 🔗bt_1001_tick_on_receive  \n\
+
+}
+package bt_1001_success {
+    usecase "received" as bt_1001_success_received
+    usecase "waiting" as bt_1001_success_waiting
+    bt_1001_success_waiting -[#0048cc]-> bt_1001_success_waiting : 🔗global_timer_enable  \n\
+
+    bt_1001_success_waiting -[#66cc00]-> bt_1001_success_received : 🔗bt_1001_success_on_send  \n\
+
+    bt_1001_success_received -[#91cc00]-> bt_1001_success_waiting : 🔗bt_1001_success_on_receive  \n\
+
+}
