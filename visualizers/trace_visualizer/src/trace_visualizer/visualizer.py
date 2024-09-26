@@ -29,7 +29,7 @@ RESULT = 'Result'
 GLOBAL_TIMER = 'global_timer'
 VERIFIED = 'Verified'
 
-PIXELS_BORDER = 2
+PIXELS_EXTERNAL_BORDER = 2
 PIXELS_INTERNAL_BORDER = 1
 
 
@@ -55,8 +55,9 @@ class Trace:
 class Traces:
     """A class to represent a trace csv file produced by smc_storm."""
 
-    def __init__(self, fname):
+    def __init__(self, fname: str, left_to_right: bool = False):
         self.rng = random.Random(0)
+        self.ltr: bool = left_to_right
 
         # Preparing data
         self.df = pandas.read_csv(fname, sep=';')
@@ -104,8 +105,14 @@ class Traces:
         print(f'{verified=}, {falsified=}')
         return verified, falsified
 
-    def write_trace_to_img(self, trace_no: int, fname: str):
-        """Write one trace to image file."""
+    def write_trace_to_img(
+            self, trace_no: int, fname: str):
+        """Write one trace to image file.
+
+        Args:
+            trace_no: The index of the trace to write.
+            fname: The name of the file to write to.
+        """
         # Calculate the height of the image
         text_height = self.titles_max_height
         trace = self.traces[trace_no]
@@ -113,7 +120,7 @@ class Traces:
         data_height = len(trace.df().index)
         print(f'{data_height=}')
         self.img_height = text_height + data_height \
-            + 2 * PIXELS_BORDER + PIXELS_INTERNAL_BORDER
+            + 2 * PIXELS_EXTERNAL_BORDER + PIXELS_INTERNAL_BORDER
         image = Image.new(
             'RGB', (self.img_width, self.img_height), color='black')
         draw = ImageDraw.Draw(image)
@@ -121,7 +128,7 @@ class Traces:
         # Draw the automata names
         for a in self.automata:
             x = self.start_per_column[f'{LOC_PREFIX}{a}']
-            y = PIXELS_BORDER
+            y_start = PIXELS_EXTERNAL_BORDER
             bbox = self.titles[a].getbbox()
             # this_text_height = bbox[3] - bbox[1]
             # this_text_width = bbox[2] - bbox[0]
@@ -130,11 +137,26 @@ class Traces:
                 self.titles[a], black='black',
                 white=self.color_per_automaton[a][2])
             image.paste(colorized_text,
-                        box=(x, y))
+                        box=(x, y_start))
             # mask=self.titles[a])
 
+        # Add line from end of text to data
+        y_data_start = PIXELS_EXTERNAL_BORDER + text_height + \
+            PIXELS_INTERNAL_BORDER
+        for a in self.automata:
+            x = self.start_per_column[f'{LOC_PREFIX}{a}']
+            bbox = self.titles[a].getbbox()
+            y_start = PIXELS_EXTERNAL_BORDER + \
+                bbox[3] - bbox[1] + PIXELS_EXTERNAL_BORDER
+            y_end = y_data_start - 1 - PIXELS_EXTERNAL_BORDER
+            if y_start >= y_end:
+                continue
+            draw.line(
+                [x, y_start, x, y_end],
+                fill=self.color_per_automaton[a][2]
+            )
+
         # Draw the data
-        y_data_start = PIXELS_BORDER + text_height + PIXELS_INTERNAL_BORDER
         y_data_end = y_data_start + data_height
         for a in self.automata:
             for col in [f'{LOC_PREFIX}{a}'] + self.data_per_automaton[a]:
@@ -155,7 +177,7 @@ class Traces:
                 for y_data, row in trace.df()[col].items():
                     if y_0 is None:
                         y_0 = y_data
-                    y = y_data - y_0
+                    y_start = y_data - y_0
                     if pandas.isna(row):
                         continue
                     if isinstance(row, str):
@@ -170,7 +192,7 @@ class Traces:
                         f'{x=} must be smaller than {width=}. ({scale=},' + \
                         f' {type(row)=}, {row=})'
                     draw.point(
-                        (x_start + x, y_data_start + y),
+                        (x_start + x, y_data_start + y_start),
                         fill=fr_col
                     )
 
@@ -179,12 +201,19 @@ class Traces:
         result: bool = trace.is_verified()
         color = 'green' if result else 'red'
         draw.rectangle(
-            [PIXELS_BORDER,
-             self.img_height - PIXELS_BORDER - 1,
-             self.img_width - PIXELS_BORDER - 1,
-             self.img_height - PIXELS_BORDER - 1],
+            [PIXELS_EXTERNAL_BORDER,
+             self.img_height - PIXELS_EXTERNAL_BORDER - 1,
+             self.img_width - PIXELS_EXTERNAL_BORDER - 1,
+             self.img_height - PIXELS_EXTERNAL_BORDER - 1],
             fill=color
         )
+
+        # If the image is to be left-to-right, flip it such that the leftmost
+        # column is on the bottom. Then data that was plotted from left to 
+        # right (increasing) will be plotted from bottom to top.
+        if self.ltr:
+            image = image.transpose(
+                Image.Transpose.ROTATE_90)
 
         # Write the image to file
         image.save(fname)
@@ -217,7 +246,11 @@ class Traces:
             #         f'This should be pure black or white. {i=} {hist[i]=}'
             bbox = txt.getbbox()
             txt = txt.crop(bbox)
-            txt_rot = txt.rotate(90, expand=1)
+            if self.ltr:
+                # text is upside down
+                txt_rot = txt.rotate(-90, expand=1)
+            else:
+                txt_rot = txt.rotate(90, expand=1)
             texts[automaton] = txt_rot
         return texts, max_width, max_height
 
@@ -243,6 +276,9 @@ class Traces:
         if GLOBAL_TIMER in all_automata:
             all_automata.remove(GLOBAL_TIMER)
             return [GLOBAL_TIMER] + all_automata
+        if self.ltr:
+            # alphabetically from top to bottom
+            all_automata.reverse()
         return all_automata
 
     def _get_color_per_automaton(self) -> Dict[
@@ -339,7 +375,7 @@ class Traces:
         """Calculate where each of the column areas should start,
         taking widths and boders into account. (Width only)"""
         start_per_col = {}
-        current_loc = PIXELS_BORDER
+        current_loc = PIXELS_EXTERNAL_BORDER
         start_last_automaton: Optional[int] = None
         for a in self.automata:
             if start_last_automaton is not None:
@@ -359,5 +395,5 @@ class Traces:
         last_col = self.data_per_automaton[self.automata[-1]][-1]
         return (
             self.start_per_column[last_col] + self.width_per_col[last_col]
-            + PIXELS_BORDER
+            + PIXELS_EXTERNAL_BORDER
         )

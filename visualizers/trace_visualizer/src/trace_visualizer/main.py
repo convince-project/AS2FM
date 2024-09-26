@@ -24,15 +24,23 @@ def main_trace_to_png():
     parser = argparse.ArgumentParser(
         description='Converts a trace file produced by smc_storm into two' +
         ' images. One image for the first verified trace (if any) and one' +
-        ' image for the first falsified trace (if any).')
+        ' image for the first falsified trace (if any).'
+    )
     parser.add_argument('input_fname', type=str, help='The trace as csv file.')
     parser.add_argument(
         'output_png_prefix', type=str,
         help='Prefix for the output png file. ' +
-        'The output will be saved as <prefix>_<verdict>.png')
+        'The output will be saved as <prefix>_<verdict>.png'
+    )
+    parser.add_argument(
+        '-l', '--left-to-right', action='store_true',
+        help='If set, the trace will be visualized from left to right. ' +
+        'Otherwise, the trace will be visualized from top to bottom. ' +
+        '(default: top to bottom)'
+    )
     args = parser.parse_args()
 
-    traces = Traces(args.input_fname)
+    traces = Traces(args.input_fname, args.left_to_right)
     ver, fal = traces.print_info_about_result()
     if ver is not None:
         traces.write_trace_to_img(
