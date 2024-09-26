@@ -197,7 +197,7 @@ def interpret_top_level_xml(xml_path: str, jani_file: str,
                       encoding='utf-8') as f:
                 f.write(scxml_model.as_xml_string())
         # Additionally, write the timers SCXML model
-        global_timer_scxml = make_global_timer_scxml(all_timers)
+        global_timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
         if global_timer_scxml is not None:
             with open(os.path.join(plain_scxml_dir, global_timer_scxml.get_name() + ".scxml"), "w",
                       encoding='utf-8') as f:

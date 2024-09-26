@@ -141,14 +141,20 @@ class ScxmlData(ScxmlBase):
         if get_data_type_from_string(self._data_type) is None:
             print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
             return False
-        valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
+        if isinstance(self._expr, str):
+            valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
+        else:
+            valid_expr = isinstance(self._expr, (int, float))
+            if not valid_expr:
+                print(f"Error: SCXML data: '{self._id}' ",
+                      "default type is invalid: '{type(self._expr)}'.")
         valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_bounds
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid data object."
         xml_data = ET.Element(ScxmlData.get_tag_name(),
-                              {"id": self._id, "expr": self._expr, "type": self._data_type})
+                              {"id": self._id, "expr": str(self._expr), "type": self._data_type})
         if self._lower_bound is not None:
             xml_data.set("lower_bound_incl", str(self._lower_bound))
         if self._upper_bound is not None:

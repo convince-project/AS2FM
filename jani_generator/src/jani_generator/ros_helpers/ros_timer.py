@@ -226,14 +226,16 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
             f"Max time {max_time_ns} cannot be converted to {global_timer_period_unit}. "
             "The max_time must have a unit that is greater or equal to the smallest timer period.")
     scxml_root = ScxmlRoot("global_timer_automata")
-    scxml_root.set_data_model()
+    scxml_root.set_data_model(ScxmlDataModel([ScxmlData("current_time", 0, "int64")]))
     idle_state = ScxmlState("idle")
     global_timer_tick_body: ScxmlExecutionBody = []
     global_timer_tick_body.append(ScxmlAssign("current_time",
                                               f"current_time + {global_timer_period}"))
     for timer_name, timer_period in timers_map.items():
-        global_timer_tick_body.append(ScxmlIf([f"(current_time % {timer_period}) == 0",
-                                               ScxmlSend(f"ros_time_rate.{timer_name}")]))
-    idle_state.add_transition()
-    scxml_root.add_state()
+        global_timer_tick_body.append(ScxmlIf([(f"(current_time % {timer_period}) == 0",
+                                               [ScxmlSend(f"ros_time_rate.{timer_name}")])]))
+    timer_step_transition = ScxmlTransition("idle", [], f"current_time &lt {max_time}",
+                                            global_timer_tick_body)
+    idle_state.add_transition(timer_step_transition)
+    scxml_root.add_state(idle_state, initial=True)
     return scxml_root
