@@ -88,7 +88,7 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     args = parser.parse_args(_args)
 
     main_xml_file = args.main_xml
-    scxml_out_dir = args.scxml_out_dir
+    scxml_out_dir = args.generated_scxml_dir
     scxml_out_dir = None if len(scxml_out_dir) == 0 else scxml_out_dir
     jani_out_file = args.jani_out_file
     # Very basic input args checks
