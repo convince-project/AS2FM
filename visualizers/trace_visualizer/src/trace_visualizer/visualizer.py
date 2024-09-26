@@ -29,7 +29,7 @@ RESULT = 'Result'
 GLOBAL_TIMER = 'global_timer'
 VERIFIED = 'Verified'
 
-PIXELS_BORDER = 2
+PIXELS_EXTERNAL_BORDER = 2
 PIXELS_INTERNAL_BORDER = 1
 
 
@@ -120,7 +120,7 @@ class Traces:
         data_height = len(trace.df().index)
         print(f'{data_height=}')
         self.img_height = text_height + data_height \
-            + 2 * PIXELS_BORDER + PIXELS_INTERNAL_BORDER
+            + 2 * PIXELS_EXTERNAL_BORDER + PIXELS_INTERNAL_BORDER
         image = Image.new(
             'RGB', (self.img_width, self.img_height), color='black')
         draw = ImageDraw.Draw(image)
@@ -128,7 +128,7 @@ class Traces:
         # Draw the automata names
         for a in self.automata:
             x = self.start_per_column[f'{LOC_PREFIX}{a}']
-            y = PIXELS_BORDER
+            y_start = PIXELS_EXTERNAL_BORDER
             bbox = self.titles[a].getbbox()
             # this_text_height = bbox[3] - bbox[1]
             # this_text_width = bbox[2] - bbox[0]
@@ -137,11 +137,26 @@ class Traces:
                 self.titles[a], black='black',
                 white=self.color_per_automaton[a][2])
             image.paste(colorized_text,
-                        box=(x, y))
+                        box=(x, y_start))
             # mask=self.titles[a])
 
+        # Add line from end of text to data
+        y_data_start = PIXELS_EXTERNAL_BORDER + text_height + \
+            PIXELS_INTERNAL_BORDER
+        for a in self.automata:
+            x = self.start_per_column[f'{LOC_PREFIX}{a}']
+            bbox = self.titles[a].getbbox()
+            y_start = PIXELS_EXTERNAL_BORDER + \
+                bbox[3] - bbox[1] + PIXELS_EXTERNAL_BORDER
+            y_end = y_data_start - 1 - PIXELS_EXTERNAL_BORDER
+            if y_start >= y_end:
+                continue
+            draw.line(
+                [x, y_start, x, y_end],
+                fill=self.color_per_automaton[a][2]
+            )
+
         # Draw the data
-        y_data_start = PIXELS_BORDER + text_height + PIXELS_INTERNAL_BORDER
         y_data_end = y_data_start + data_height
         for a in self.automata:
             for col in [f'{LOC_PREFIX}{a}'] + self.data_per_automaton[a]:
@@ -162,7 +177,7 @@ class Traces:
                 for y_data, row in trace.df()[col].items():
                     if y_0 is None:
                         y_0 = y_data
-                    y = y_data - y_0
+                    y_start = y_data - y_0
                     if pandas.isna(row):
                         continue
                     if isinstance(row, str):
@@ -177,7 +192,7 @@ class Traces:
                         f'{x=} must be smaller than {width=}. ({scale=},' + \
                         f' {type(row)=}, {row=})'
                     draw.point(
-                        (x_start + x, y_data_start + y),
+                        (x_start + x, y_data_start + y_start),
                         fill=fr_col
                     )
 
@@ -186,10 +201,10 @@ class Traces:
         result: bool = trace.is_verified()
         color = 'green' if result else 'red'
         draw.rectangle(
-            [PIXELS_BORDER,
-             self.img_height - PIXELS_BORDER - 1,
-             self.img_width - PIXELS_BORDER - 1,
-             self.img_height - PIXELS_BORDER - 1],
+            [PIXELS_EXTERNAL_BORDER,
+             self.img_height - PIXELS_EXTERNAL_BORDER - 1,
+             self.img_width - PIXELS_EXTERNAL_BORDER - 1,
+             self.img_height - PIXELS_EXTERNAL_BORDER - 1],
             fill=color
         )
 
@@ -360,7 +375,7 @@ class Traces:
         """Calculate where each of the column areas should start,
         taking widths and boders into account. (Width only)"""
         start_per_col = {}
-        current_loc = PIXELS_BORDER
+        current_loc = PIXELS_EXTERNAL_BORDER
         start_last_automaton: Optional[int] = None
         for a in self.automata:
             if start_last_automaton is not None:
@@ -380,5 +395,5 @@ class Traces:
         last_col = self.data_per_automaton[self.automata[-1]][-1]
         return (
             self.start_per_column[last_col] + self.width_per_col[last_col]
-            + PIXELS_BORDER
+            + PIXELS_EXTERNAL_BORDER
         )
