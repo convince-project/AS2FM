@@ -17,7 +17,7 @@
 Module handling the conversion from SCXML to Jani.
 """
 
-from typing import List, Union
+from typing import List
 
 from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from as2fm.jani_generator.jani_entries.jani_model import JaniModel

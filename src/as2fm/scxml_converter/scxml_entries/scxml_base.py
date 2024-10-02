@@ -49,7 +49,7 @@ class ScxmlBase:
         """Convert the object to an XML element."""
         raise NotImplementedError
 
-    def get_body(self) -> "List[ScxmlTransition]":
+    def get_body(self):
         """Get the body of the object."""
         raise NotImplementedError
 

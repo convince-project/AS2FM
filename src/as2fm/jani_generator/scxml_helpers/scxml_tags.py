@@ -162,16 +162,16 @@ def _merge_conditions(
 
 
 def _append_scxml_body_to_jani_automaton(
-        jani_automaton: JaniAutomaton,
-        events_holder: EventsHolder,
-        body: ScxmlExecutionBody,
-        source: str,
-        target: str,
-        hash_str: str,
-        guard_exp: Optional[JaniExpression],
-        trigger_event: Optional[str],
-        max_array_size: int
-    ) -> Tuple[List[JaniEdge], List[str]]:
+    jani_automaton: JaniAutomaton,
+    events_holder: EventsHolder,
+    body: ScxmlExecutionBody,
+    source: str,
+    target: str,
+    hash_str: str,
+    guard_exp: Optional[JaniExpression],
+    trigger_event: Optional[str],
+    max_array_size: int
+) -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
