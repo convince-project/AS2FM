@@ -23,8 +23,8 @@ from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from as2fm.jani_generator.jani_entries.jani_model import JaniModel
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import \
     remove_empty_self_loops_from_interface_handlers_in_jani
-from as2fm.jani_generator.ros_helpers.ros_timer import (RosTimer,
-                                                  make_global_timer_automaton)
+from as2fm.jani_generator.ros_helpers.ros_timer import (
+    RosTimer, make_global_timer_automaton)
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs

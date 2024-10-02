@@ -19,9 +19,11 @@ SCXML entries related to Behavior Trees.
 
 from typing import Union
 from xml.etree import ElementTree as ET
+
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
+                                                           get_xml_argument)
 
 
 class BtInputPortDeclaration(ScxmlBase):

@@ -21,8 +21,9 @@ Complete Jani Model
 from typing import Dict, List, Optional, Type, Union
 
 from as2fm.jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
-                                         JaniConstant, JaniExpression,
-                                         JaniProperty, JaniValue, JaniVariable)
+                                               JaniConstant, JaniExpression,
+                                               JaniProperty, JaniValue,
+                                               JaniVariable)
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 

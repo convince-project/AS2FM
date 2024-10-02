@@ -18,13 +18,14 @@
 from math import pi
 from typing import Callable, Dict, Union
 
-from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression, JaniValue
+from as2fm.jani_generator.jani_entries import (JaniConstant, JaniExpression,
+                                               JaniValue)
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    abs_operator, and_operator, ceil_operator, cos_operator, divide_operator, equal_operator,
-    floor_operator, greater_equal_operator, if_operator, log_operator, lower_operator,
-    max_operator, min_operator, minus_operator, modulo_operator,
-    multiply_operator, or_operator, plus_operator, pow_operator, sin_operator)
-
+    abs_operator, and_operator, ceil_operator, cos_operator, divide_operator,
+    equal_operator, floor_operator, greater_equal_operator, if_operator,
+    log_operator, lower_operator, max_operator, min_operator, minus_operator,
+    modulo_operator, multiply_operator, or_operator, plus_operator,
+    pow_operator, sin_operator)
 
 # Map each operator to the corresponding one in Jani
 OPERATORS_TO_JANI_MAP: Dict[str, str] = {

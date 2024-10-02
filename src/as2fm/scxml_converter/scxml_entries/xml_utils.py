@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Iterable, Optional, Union, Type
+from typing import Iterable, List, Optional, Type, Union
+from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
-from xml.etree import ElementTree as ET
 
 
 def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):

@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pprint
-from typing import Union
 from colorsys import hsv_to_rgb
+from typing import Union
+
 from webcolors import rgb_to_hex
 
 
@@ -30,7 +30,8 @@ def _compact_assignments(assignments: Union[dict, list, str, int]) -> str:
             out += f"{assignments['ref']}=({_compact_assignments(assignments['value'])})\n"
         elif 'op' in assignments:
             if 'left' in assignments and 'right' in assignments:
-                out += f"{_compact_assignments(assignments['left'])} {assignments['op']} {_compact_assignments(assignments['right'])}"
+                out += f"{_compact_assignments(assignments['left'])} {assignments['op']} "
+                out += f"{_compact_assignments(assignments['right'])}"
             elif 'exp' in assignments:
                 out += f"{assignments['op']}({_compact_assignments(assignments['exp'])})"
             else:
@@ -93,7 +94,7 @@ class PlantUMLAutomata:
             assert len(synchronise) == len(automata), \
                 "The synchronisation must have the same number of elements as the automata."
             for action, automaton in zip(synchronise, automata):
-                if action == None:
+                if action is None:
                     continue
                 if automaton not in colors_per_action:
                     colors_per_action[automaton] = {}
@@ -149,7 +150,8 @@ class PlantUMLAutomata:
                     'action' in edge
                 ):
                     action = edge['action']
-                    if automaton['name'] in colors_per_action and action in colors_per_action[automaton['name']]:
+                    if (automaton['name'] in colors_per_action and
+                            action in colors_per_action[automaton['name']]):
                         color = colors_per_action[automaton['name']][action]
                     edge_label += f"🔗{action}\n"
 

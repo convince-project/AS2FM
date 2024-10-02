@@ -17,8 +17,8 @@
 Common functionalities used throughout the toolchain.
 """
 
-from typing import get_args, get_origin, MutableSequence, Union, Type
 from array import array
+from typing import MutableSequence, Type, Union, get_args, get_origin
 
 """
 Set of basic types that are supported by the Jani language.

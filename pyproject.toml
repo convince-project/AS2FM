@@ -65,6 +65,3 @@ dev = [
 [isort]
 profile = "google"
 line_length = 100
-
-[flake8]
-max_line_length = 100

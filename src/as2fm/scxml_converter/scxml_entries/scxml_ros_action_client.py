@@ -19,20 +19,25 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Union, Type
+from typing import List, Type, Union
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import ScxmlTransition, ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
-
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    is_action_type_known, generate_action_goal_req_event,
-    generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
-    generate_action_feedback_handle_event, generate_action_result_handle_event)
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-
 from action_msgs.msg import GoalStatus
+
+from as2fm.scxml_converter.scxml_entries import (ScxmlRosDeclarationsContainer,
+                                                 ScxmlTransition)
+from as2fm.scxml_converter.scxml_entries.ros_utils import (
+    generate_action_feedback_handle_event,
+    generate_action_goal_handle_accepted_event,
+    generate_action_goal_handle_rejected_event, generate_action_goal_req_event,
+    generate_action_result_handle_event, is_action_type_known)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
+                                                                RosDeclaration,
+                                                                RosTrigger)
+from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
+                                                       is_non_empty_string)
+from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
+                                                           get_xml_argument)
 
 
 class RosActionClient(RosDeclaration):

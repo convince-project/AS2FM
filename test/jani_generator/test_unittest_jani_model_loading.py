@@ -15,8 +15,9 @@
 
 """"Test the SCXML data conversion"""
 
-import os
 import json
+import os
+
 from as2fm.jani_generator.jani_entries import JaniModel
 
 

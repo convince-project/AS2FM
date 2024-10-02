@@ -15,8 +15,10 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Any, Dict, Optional, MutableSequence, Tuple, Type, get_args
-from as2fm.as2fm_common.common import get_default_expression_for_type, is_array_type
+from typing import Any, Dict, MutableSequence, Optional, Tuple, Type, get_args
+
+from as2fm.as2fm_common.common import (get_default_expression_for_type,
+                                       is_array_type)
 from as2fm.jani_generator.jani_entries import JaniAutomaton
 
 

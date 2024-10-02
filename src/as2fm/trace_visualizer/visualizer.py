@@ -238,7 +238,7 @@ class Traces:
             d = ImageDraw.Draw(txt)
             d.text((0, 0), automaton, font=f, fill=255)
             txt = enhancer(txt).enhance(10.0)
-            hist = txt.histogram()
+            # hist = txt.histogram()
             # for i in range(256):
             #     if hist[i] == 0:
             #         continue

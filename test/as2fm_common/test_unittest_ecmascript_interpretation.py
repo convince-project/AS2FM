@@ -16,10 +16,12 @@
 """"Test the SCXML data conversion"""
 
 import unittest
-import pytest
 from array import array
 
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+import pytest
+
+from as2fm.as2fm_common.ecmascript_interpretation import \
+    interpret_ecma_script_expr
 
 
 class TestEcmascriptInterpreter(unittest.TestCase):

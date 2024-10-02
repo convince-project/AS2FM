@@ -15,12 +15,13 @@
 
 """"Test the SCXML data conversion from all possible declaration types"""
 
-from typing import MutableSequence
 import unittest
 import xml.etree.ElementTree as ET
-from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
+from typing import MutableSequence
 
 import pytest
+
+from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
 
 
 class TestScxmlData(unittest.TestCase):

@@ -18,20 +18,17 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 """
 
 import re
-
-from typing import Any, Union, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 from as2fm.as2fm_common.common import is_array_type
-
-from as2fm.scxml_converter.scxml_entries import (ScxmlBase, BtGetValueInputPort)
-
+from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.utils import (
+    convert_string_to_type, get_array_max_size, get_data_type_from_string,
+    is_non_empty_string)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from as2fm.scxml_converter.scxml_entries.utils import (
-    convert_string_to_type, get_array_max_size, get_data_type_from_string, is_non_empty_string)
-
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]
 

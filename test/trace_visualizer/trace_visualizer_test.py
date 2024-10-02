@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from as2fm.trace_visualizer.visualizer import Traces
-
 import os
+
+from as2fm.trace_visualizer.visualizer import Traces
 
 
 def test_traces():

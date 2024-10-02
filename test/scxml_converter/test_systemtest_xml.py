@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-
 from typing import Dict, List, Tuple
 
 from test_utils import canonicalize_xml, remove_empty_lines, to_snake_case

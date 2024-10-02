@@ -17,13 +17,12 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, Optional, Union
 from array import array
+from typing import Dict, Optional, Union
 
 import js2py
 
 from as2fm.as2fm_common.common import ValidTypes
-
 
 BASIC_JS_TYPES = Union[int, float, bool]
 

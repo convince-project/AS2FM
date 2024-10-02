@@ -18,28 +18,31 @@ Module defining SCXML tags to match against.
 """
 
 import xml.etree.ElementTree as ET
-from hashlib import sha256
-from typing import get_args, Dict, List, Optional, Set, Tuple, Union
 from array import ArrayType
+from hashlib import sha256
+from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
-from as2fm.as2fm_common.common import (
-    check_value_type_compatible, string_to_value, value_to_type)
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.jani_generator.jani_entries import (
-    JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniExpressionType, JaniGuard,
-    JaniValue, JaniVariable)
+from as2fm.as2fm_common.common import (check_value_type_compatible,
+                                       string_to_value, value_to_type)
+from as2fm.as2fm_common.ecmascript_interpretation import \
+    interpret_ecma_script_expr
+from as2fm.jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
+                                               JaniEdge, JaniExpression,
+                                               JaniExpressionType, JaniGuard,
+                                               JaniValue, JaniVariable)
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    and_operator, not_operator, max_operator, plus_operator)
+    and_operator, max_operator, not_operator, plus_operator)
 from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_all_variables_and_instantiations, get_array_type_and_size, get_variable_type,
-    is_variable_array)
+    get_all_variables_and_instantiations, get_array_type_and_size,
+    get_variable_type, is_variable_array)
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo, parse_ecmascript_to_jani_expression)
-from as2fm.scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
-                                           ScxmlDataModel, ScxmlExecutionBody,
-                                           ScxmlIf, ScxmlRoot, ScxmlSend,
-                                           ScxmlState, ScxmlTransition)
+from as2fm.scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
+                                                 ScxmlData, ScxmlDataModel,
+                                                 ScxmlExecutionBody, ScxmlIf,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 
 # The resulting types from the SCXML conversion to Jani
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]

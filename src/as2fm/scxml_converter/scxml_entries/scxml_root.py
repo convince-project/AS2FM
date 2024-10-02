@@ -22,17 +22,18 @@ from os.path import isfile
 from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (
-    BtInputPortDeclaration, BtOutputPortDeclaration, ScxmlBase, ScxmlDataModel,
-    ScxmlRosDeclarationsContainer, ScxmlState, RosActionThread)
-
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
-
-from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
+from as2fm.scxml_converter.scxml_entries import (BtInputPortDeclaration,
+                                                 BtOutputPortDeclaration,
+                                                 RosActionThread, ScxmlBase,
+                                                 ScxmlDataModel,
+                                                 ScxmlRosDeclarationsContainer,
+                                                 ScxmlState)
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
-from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class ScxmlRoot(ScxmlBase):

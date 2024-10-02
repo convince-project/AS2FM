@@ -22,7 +22,8 @@ from as2fm.jani_generator.jani_entries import JaniModel
 
 
 def test_convince_to_plain_jani():
-    test_file = os.path.join(os.path.dirname(__file__), '_test_data', 'convince_jani', 'first-model-mc-version.jani')
+    test_file = os.path.join(os.path.dirname(__file__), '_test_data', 'convince_jani',
+                             'first-model-mc-version.jani')
     jani_model = JaniModel()
     assert os.path.isfile(test_file), f"File {test_file} does not exist."
     convince_jani_parser(jani_model, test_file)

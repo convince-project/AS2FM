@@ -17,10 +17,17 @@ import os
 
 from test_utils import canonicalize_xml, remove_empty_lines
 
-from as2fm.scxml_converter.scxml_entries import (
-    RosField, RosRateCallback, RosTimeRate, RosTopicCallback, RosTopicPublish, RosTopicPublisher,
-    RosTopicSubscriber, ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend,
-    ScxmlState, ScxmlTransition, BtInputPortDeclaration, BtGetValueInputPort)
+from as2fm.scxml_converter.scxml_entries import (BtGetValueInputPort,
+                                                 BtInputPortDeclaration,
+                                                 RosField, RosRateCallback,
+                                                 RosTimeRate, RosTopicCallback,
+                                                 RosTopicPublish,
+                                                 RosTopicPublisher,
+                                                 RosTopicSubscriber,
+                                                 ScxmlAssign, ScxmlData,
+                                                 ScxmlDataModel, ScxmlParam,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
 
