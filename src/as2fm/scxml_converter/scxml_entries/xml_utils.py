@@ -58,8 +58,11 @@ def get_children_as_scxml(
 
 
 def read_value_from_xml_child(
-        xml_tree: ET.Element, child_tag: str, valid_types: Iterable[Type[Union[ScxmlBase, str]]], *,
-        none_allowed: bool = False) -> Optional[Union[str, ScxmlBase]]:
+        xml_tree: ET.Element,
+        child_tag: str,
+        valid_types: Iterable[Type[Union[ScxmlBase, str]]], *,
+        none_allowed: bool = False
+) -> Optional[Union[str, ScxmlBase]]:
     """
     Try to read the value of a child tag from the xml tree. If the child is not found, return None.
     """
@@ -69,7 +72,8 @@ def read_value_from_xml_child(
             print(f"Error: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
         return None
     if len(xml_child) > 1:
-        print(f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
+        print(
+            f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
         return None
     tag_children = [child for child in xml_child[0] if child.tag is not ET.Comment]
     n_tag_children = len(tag_children)
