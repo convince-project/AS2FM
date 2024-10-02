@@ -18,15 +18,15 @@ Representation of ROS Services.
 """
 
 from typing import Dict, List
-from jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
+from as2fm.jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition)
-from scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
     generate_srv_server_response_event, get_srv_type_params, sanitize_ros_interface_name)
 
-from scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, PLAIN_FIELD_EVENT_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, PLAIN_FIELD_EVENT_PREFIX
 
 
 class RosServiceHandler(RosCommunicationHandler):

@@ -20,11 +20,11 @@ Container for a single parameter, sent within an event. In XML, it has the tag `
 from typing import Optional, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import (
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, BtGetValueInputPort
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 
 class ScxmlParam(ScxmlBase):

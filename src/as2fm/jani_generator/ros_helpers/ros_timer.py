@@ -20,11 +20,11 @@ Representation of ROS timers.
 from typing import List, Optional, Tuple
 
 from math import gcd, floor
-from jani_generator.jani_entries import (
+from as2fm.jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
-from jani_generator.jani_entries.jani_expression_generator import (
+from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlExecutionBody, ScxmlIf, ScxmlRoot, ScxmlSend,
     ScxmlState, ScxmlTransition)
 

@@ -22,13 +22,13 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from jani_generator.jani_entries import JaniAutomaton
-from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from jani_generator.scxml_helpers.scxml_to_jani import (
+from as2fm.jani_generator.jani_entries import JaniAutomaton
+from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani, convert_scxml_root_to_jani_automaton)
-from jani_generator.scxml_helpers.top_level_interpreter import \
+from as2fm.jani_generator.scxml_helpers.top_level_interpreter import \
     interpret_top_level_xml
-from scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 from .test_utilities_smc_storm import run_smc_storm_with_output
 

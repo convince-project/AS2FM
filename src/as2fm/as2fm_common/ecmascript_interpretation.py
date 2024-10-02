@@ -22,7 +22,7 @@ from array import array
 
 import js2py
 
-from as2fm_common.common import ValidTypes
+from as2fm.as2fm_common.common import ValidTypes
 
 
 BASIC_JS_TYPES = Union[int, float, bool]

@@ -19,7 +19,7 @@ from typing import Dict, Tuple, Type
 
 import re
 
-from scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string": str}

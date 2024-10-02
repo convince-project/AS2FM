@@ -21,9 +21,9 @@ import os
 import timeit
 from typing import Optional, Sequence
 
-from jani_generator.convince_jani_helpers import convince_jani_parser
-from jani_generator.jani_entries import JaniModel
-from jani_generator.scxml_helpers.top_level_interpreter import \
+from as2fm.jani_generator.convince_jani_helpers import convince_jani_parser
+from as2fm.jani_generator.jani_entries import JaniModel
+from as2fm.jani_generator.scxml_helpers.top_level_interpreter import \
     interpret_top_level_xml
 
 

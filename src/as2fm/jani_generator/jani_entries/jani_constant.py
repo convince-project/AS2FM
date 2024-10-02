@@ -17,7 +17,7 @@
 
 from typing import Type, Optional, Union, get_args
 
-from jani_generator.jani_entries import JaniExpression
+from as2fm.jani_generator.jani_entries import JaniExpression
 
 ValidTypes = Union[bool, int, float]
 

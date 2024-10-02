@@ -20,14 +20,14 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Sequence, Union
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer,
     ScxmlTransition)
-from scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body, execution_body_from_xml, instantiate_exec_body_bt_events,
     set_execution_body_callback_type, valid_execution_body)
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.utils import CallbackType
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
 class ScxmlState(ScxmlBase):
@@ -39,7 +39,7 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from scxml_converter.scxml_entries.scxml_ros_base import RosCallback
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback
         transitions: List[ScxmlTransition] = []
         tag_to_cls = {cls.get_tag_name(): cls
                       for cls in ScxmlTransition.__subclasses__()

@@ -17,18 +17,18 @@
 
 from typing import Dict, Optional, List, Union, Type
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort, RosField, ScxmlBase, ScxmlExecutionBody, ScxmlParam,
     ScxmlRosDeclarationsContainer, ScxmlSend, ScxmlTransition)
-from scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body, execution_body_from_xml, set_execution_body_callback_type,
     valid_execution_body)
 
 
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import (
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import (
+from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType, get_plain_expression, is_non_empty_string)
 
 from xml.etree import ElementTree as ET

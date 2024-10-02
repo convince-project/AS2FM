@@ -20,7 +20,7 @@ Complete Jani Model
 
 from typing import Dict, List, Optional, Type, Union
 
-from jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
+from as2fm.jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
                                          JaniConstant, JaniExpression,
                                          JaniProperty, JaniValue, JaniVariable)
 

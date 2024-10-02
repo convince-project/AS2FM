@@ -22,15 +22,15 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Union, Type
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlTransition, ScxmlRosDeclarationsContainer
-from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
+from as2fm.scxml_converter.scxml_entries import ScxmlTransition, ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
 
-from scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.scxml_entries.ros_utils import (
     is_action_type_known, generate_action_goal_req_event,
     generate_action_goal_handle_accepted_event, generate_action_goal_handle_rejected_event,
     generate_action_feedback_handle_event, generate_action_result_handle_event)
-from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
-from scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 
 from action_msgs.msg import GoalStatus
 

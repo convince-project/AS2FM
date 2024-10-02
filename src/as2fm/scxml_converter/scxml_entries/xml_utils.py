@@ -15,7 +15,7 @@
 
 from typing import List, Iterable, Optional, Union, Type
 
-from scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from xml.etree import ElementTree as ET
 
 

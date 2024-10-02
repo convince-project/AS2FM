@@ -20,8 +20,8 @@ Properties in Jani
 
 from typing import Any, Dict, Union
 
-from jani_generator.jani_entries import JaniConstant, JaniExpression
-from jani_generator.jani_entries.jani_convince_expression_expansion import \
+from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import \
     expand_expression
 
 

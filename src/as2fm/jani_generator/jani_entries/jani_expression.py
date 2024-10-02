@@ -20,7 +20,7 @@ Expressions in Jani
 from enum import Enum
 from typing import Any, Dict, Optional, Tuple, Union
 
-from jani_generator.jani_entries import JaniValue
+from as2fm.jani_generator.jani_entries import JaniValue
 
 SupportedExp = Union[str, int, float, bool, dict, list]
 

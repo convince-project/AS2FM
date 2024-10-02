@@ -19,7 +19,7 @@ import unittest
 import pytest
 from array import array
 
-from as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 
 
 class TestEcmascriptInterpreter(unittest.TestCase):

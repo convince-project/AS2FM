@@ -20,14 +20,14 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlExecutableEntry, ScxmlExecutionBody, ScxmlRosDeclarationsContainer)
-from scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml, instantiate_exec_body_bt_events, set_execution_body_callback_type,
     valid_execution_body, valid_execution_body_entry_types)
 
-from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
-from scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
+from as2fm.scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
 
 
 class ScxmlTransition(ScxmlBase):

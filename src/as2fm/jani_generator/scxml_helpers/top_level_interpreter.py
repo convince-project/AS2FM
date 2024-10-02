@@ -23,16 +23,16 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
-from as2fm_common.common import remove_namespace
-from jani_generator.ros_helpers.ros_communication_handler import (
+from as2fm.as2fm_common.common import remove_namespace
+from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     generate_plain_scxml_from_handlers, update_ros_communication_handlers)
-from jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
-from jani_generator.ros_helpers.ros_action_handler import RosActionHandler
-from jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
-from jani_generator.scxml_helpers.scxml_to_jani import \
+from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
+from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
+from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
-from scxml_converter.bt_converter import bt_converter
-from scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.bt_converter import bt_converter
+from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
 @dataclass()

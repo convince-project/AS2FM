@@ -17,7 +17,7 @@
 
 import os
 import json
-from jani_generator.jani_entries import JaniModel
+from as2fm.jani_generator.jani_entries import JaniModel
 
 
 def test_jani_file_loading():

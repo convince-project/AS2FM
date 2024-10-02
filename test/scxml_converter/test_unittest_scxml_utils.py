@@ -16,7 +16,7 @@
 """"Test the SCXML data conversion from all possible declaration types"""
 
 from typing import List, MutableSequence
-from scxml_converter.scxml_entries.utils import (
+from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType, get_plain_expression, get_data_type_from_string)
 
 import pytest

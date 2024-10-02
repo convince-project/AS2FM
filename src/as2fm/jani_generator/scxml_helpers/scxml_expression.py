@@ -21,12 +21,12 @@ from typing import Optional, List, Type, Union
 from dataclasses import dataclass
 import esprima
 
-from jani_generator.jani_entries.jani_convince_expression_expansion import (
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     OPERATORS_TO_JANI_MAP, CALLABLE_OPERATORS_MAP)
-from jani_generator.jani_entries.jani_expression import JaniExpression
-from jani_generator.jani_entries.jani_expression_generator import (
+from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
+from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_access_operator, array_create_operator, array_value_operator)
-from jani_generator.jani_entries.jani_value import JaniValue
+from as2fm.jani_generator.jani_entries.jani_value import JaniValue
 
 
 JS_CALLABLE_PREFIX = "Math"

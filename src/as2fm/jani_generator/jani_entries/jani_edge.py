@@ -17,9 +17,9 @@
 
 from typing import Dict, Optional
 
-from jani_generator.jani_entries import (JaniAssignment, JaniConstant,
+from as2fm.jani_generator.jani_entries import (JaniAssignment, JaniConstant,
                                          JaniExpression, JaniGuard)
-from jani_generator.jani_entries.jani_convince_expression_expansion import \
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import \
     expand_expression
 
 

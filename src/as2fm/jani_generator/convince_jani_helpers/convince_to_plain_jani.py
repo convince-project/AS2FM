@@ -22,7 +22,7 @@ from math import degrees
 from os import path
 from typing import List
 
-from jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
+from as2fm.jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
                                          JaniModel, JaniProperty)
 
 

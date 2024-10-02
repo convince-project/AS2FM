@@ -17,11 +17,11 @@ import os
 
 from test_utils import canonicalize_xml, remove_empty_lines
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     RosField, RosRateCallback, RosTimeRate, RosTopicCallback, RosTopicPublish, RosTopicPublisher,
     RosTopicSubscriber, ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend,
     ScxmlState, ScxmlTransition, BtInputPortDeclaration, BtGetValueInputPort)
-from scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
 
 def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):

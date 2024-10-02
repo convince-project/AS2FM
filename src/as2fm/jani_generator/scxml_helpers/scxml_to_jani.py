@@ -19,17 +19,17 @@ Module handling the conversion from SCXML to Jani.
 
 from typing import List, Union
 
-from jani_generator.jani_entries.jani_automaton import JaniAutomaton
-from jani_generator.jani_entries.jani_model import JaniModel
-from jani_generator.ros_helpers.ros_communication_handler import \
+from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
+from as2fm.jani_generator.jani_entries.jani_model import JaniModel
+from as2fm.jani_generator.ros_helpers.ros_communication_handler import \
     remove_empty_self_loops_from_interface_handlers_in_jani
-from jani_generator.ros_helpers.ros_timer import (RosTimer,
+from as2fm.jani_generator.ros_helpers.ros_timer import (RosTimer,
                                                   make_global_timer_automaton)
-from jani_generator.scxml_helpers.scxml_event import EventsHolder
-from jani_generator.scxml_helpers.scxml_event_processor import \
+from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_event_processor import \
     implement_scxml_events_as_jani_syncs
-from jani_generator.scxml_helpers.scxml_tags import BaseTag
-from scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.jani_generator.scxml_helpers.scxml_tags import BaseTag
+from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
 def convert_scxml_root_to_jani_automaton(

@@ -20,12 +20,12 @@ Definition of SCXML Tags that can be part of executable content
 from typing import Dict, List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer, BtGetValueInputPort)
-from scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import (
+from as2fm.scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
-from scxml_converter.scxml_entries.utils import (
+from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType, get_plain_expression, is_non_empty_string)
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
@@ -430,7 +430,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :param xml_tree: The XML tree to create the execution entry from.
     :return: The execution entry
     """
-    from scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
+    from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
 
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {

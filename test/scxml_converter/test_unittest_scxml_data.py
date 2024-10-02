@@ -18,7 +18,7 @@
 from typing import MutableSequence
 import unittest
 import xml.etree.ElementTree as ET
-from scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
+from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
 
 import pytest
 

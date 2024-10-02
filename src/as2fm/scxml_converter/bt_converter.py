@@ -27,7 +27,7 @@ from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
 
-from scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.scxml_entries import (
     RosRateCallback, RosTimeRate, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
     RESERVED_BT_PORT_NAMES)
 

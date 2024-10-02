@@ -17,7 +17,7 @@
 Generate full expressions in Jani
 """
 
-from jani_generator.jani_entries import JaniExpression
+from as2fm.jani_generator.jani_entries import JaniExpression
 
 
 # Math operators

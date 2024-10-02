@@ -20,9 +20,9 @@ Container for the variables defined in the SCXML model. In XML, it has the tag `
 from typing import List, Optional
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlBase, ScxmlData
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 
 
 class ScxmlDataModel(ScxmlBase):

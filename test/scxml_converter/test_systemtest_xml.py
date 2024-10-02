@@ -19,8 +19,8 @@ from typing import Dict, List, Tuple
 
 from test_utils import canonicalize_xml, remove_empty_lines, to_snake_case
 
-from scxml_converter.bt_converter import bt_converter
-from scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.bt_converter import bt_converter
+from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
 def get_output_folder(test_folder: str):

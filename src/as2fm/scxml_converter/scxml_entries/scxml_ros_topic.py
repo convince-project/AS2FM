@@ -22,11 +22,11 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 
 from typing import Type
 
-from scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
-from scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger, RosDeclaration
+from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger, RosDeclaration
 
-from scxml_converter.scxml_entries.ros_utils import is_msg_type_known, generate_topic_event
-from scxml_converter.scxml_entries.utils import CallbackType
+from as2fm.scxml_converter.scxml_entries.ros_utils import is_msg_type_known, generate_topic_event
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
 class RosTopicPublisher(RosDeclaration):

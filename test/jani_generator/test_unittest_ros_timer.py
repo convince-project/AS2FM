@@ -16,8 +16,8 @@
 """Test the ROS timer conversion"""
 
 from typing import List
-from jani_generator.jani_entries import JaniAutomaton
-from jani_generator.ros_helpers.ros_timer import (
+from as2fm.jani_generator.jani_entries import JaniAutomaton
+from as2fm.jani_generator.ros_helpers.ros_timer import (
     RosTimer, make_global_timer_automaton, GLOBAL_TIMER_TICK_ACTION)
 
 

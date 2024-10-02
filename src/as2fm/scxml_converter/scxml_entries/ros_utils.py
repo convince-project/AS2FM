@@ -17,9 +17,9 @@
 
 from typing import Any, Dict, List, Tuple, Type
 
-from scxml_converter.scxml_entries import ScxmlBase, RosField
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, RosField
 
-from scxml_converter.scxml_entries.utils import all_non_empty_strings
+from as2fm.scxml_converter.scxml_entries.utils import all_non_empty_strings
 
 
 MSG_TYPE_SUBSTITUTIONS = {
@@ -280,14 +280,14 @@ class ScxmlRosDeclarationsContainer:
 
         :param scxml_ros_declaration: The ROS declaration to add (inheriting from RosDeclaration).
         """
-        from scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
-        from scxml_converter.scxml_entries.scxml_ros_timer import RosTimeRate
-        from scxml_converter.scxml_entries.scxml_ros_topic import (
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_timer import RosTimeRate
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_topic import (
             RosTopicPublisher, RosTopicSubscriber)
-        from scxml_converter.scxml_entries.scxml_ros_service import (
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_service import (
             RosServiceServer, RosServiceClient)
-        from scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
-        from scxml_converter.scxml_entries.scxml_ros_action_client import RosActionClient
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_action_client import RosActionClient
         assert isinstance(scxml_ros_declaration, RosDeclaration), \
             f"Error: SCXML ROS declarations: {type(scxml_ros_declaration)} isn't a ROS declaration."
         if isinstance(scxml_ros_declaration, RosTimeRate):

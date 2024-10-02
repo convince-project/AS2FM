@@ -20,7 +20,7 @@ Guards in Jani
 
 from typing import Optional, Union
 
-from jani_generator.jani_entries.jani_expression import JaniExpression
+from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
 
 
 class JaniGuard:

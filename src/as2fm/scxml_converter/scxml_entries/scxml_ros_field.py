@@ -19,11 +19,11 @@ from typing import Optional, Union
 
 from xml.etree import ElementTree as ET
 
-from scxml_converter.scxml_entries import ScxmlParam, BtGetValueInputPort
-from scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from scxml_converter.scxml_entries.xml_utils import (
+from as2fm.scxml_converter.scxml_entries import ScxmlParam, BtGetValueInputPort
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
-from scxml_converter.scxml_entries.utils import (
+from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType, get_plain_expression, is_non_empty_string, ROS_FIELD_PREFIX)
 
 
