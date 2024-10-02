@@ -20,7 +20,13 @@ jobs:
           "mypy", 
           "isort" 
           ]
-        package: [ "jani_generator", "as2fm_common", "scxml_converter" ]
+        package: [ 
+          "as2fm_common", 
+          "jani_generator", 
+          "jani_visualizer",
+          "scxml_converter",
+          "trace_visualizer"
+          ]
         include:
             # (for humble):
           - python-version: "3.10" 
@@ -54,12 +60,10 @@ jobs:
           pip install -e btlib/.
       - name: Install packages
         run: |
-          pip install jani_generator/.[dev]
-          pip install as2fm_common/.[dev]
-          pip install scxml_converter/.[dev]
+          pip install .
       - uses: marian-code/python-lint-annotate@v4
         with:
-          python-root-list: ${{ matrix.package }}/src/${{ matrix.package }}
+          python-root-list: src/${{ matrix.package }}
           python-version: ${{ matrix.python-version }}
           use-pylint: ${{ matrix.linter == 'pylint' }}
           use-pycodestyle: ${{ matrix.linter == 'pycodestyle' }}
