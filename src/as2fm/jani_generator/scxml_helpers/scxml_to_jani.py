@@ -49,7 +49,7 @@ def convert_scxml_root_to_jani_automaton(
 
 
 def convert_multiple_scxmls_to_jani(
-        scxmls: List[Union[str, ScxmlRoot]],
+        scxmls: List[ScxmlRoot],
         timers: List[RosTimer],
         max_time_ns: int,
         max_array_size: int
@@ -68,11 +68,8 @@ def convert_multiple_scxmls_to_jani(
     base_model.add_feature("trigonometric-functions")
     events_holder = EventsHolder()
     for input_scxml in scxmls:
-        if isinstance(input_scxml, str):
-            scxml_root = ScxmlRoot.from_scxml_file(input_scxml)
-        else:
-            assert isinstance(input_scxml, ScxmlRoot)
-            scxml_root = input_scxml
+        assert isinstance(input_scxml, ScxmlRoot)
+        scxml_root = input_scxml
         assert scxml_root.is_plain_scxml(), \
             f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
         automaton = JaniAutomaton()

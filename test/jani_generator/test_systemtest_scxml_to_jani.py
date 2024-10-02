@@ -131,9 +131,9 @@ class TestConversion(unittest.TestCase):
         scxml_battery_manager_path = os.path.join(
             TEST_DATA_FOLDER, 'battery_manager.scxml')
         with open(scxml_battery_drainer_path, 'r', encoding='utf-8') as f:
-            scxml_battery_drainer = f.read()
+            scxml_battery_drainer = ScxmlRoot.from_scxml_file(f.read())
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
-            scxml_battery_manager = f.read()
+            scxml_battery_manager = ScxmlRoot.from_scxml_file(f.read())
 
         jani_model = convert_multiple_scxmls_to_jani(
             [scxml_battery_drainer, scxml_battery_manager], [], 0, 100)
