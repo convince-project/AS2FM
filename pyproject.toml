@@ -22,7 +22,7 @@ dependencies = [
     "js2py",
     # jani_generator
     "jsonschema",
-    "esprima"
+    "esprima",
     # jani_visualizer
     "webcolors",
     "plantuml",
@@ -35,14 +35,24 @@ dependencies = [
 ]
 requires-python = ">=3.10"
 
-[tool.setuptools.packages]
-find = {}
+[tool.setuptools]
+packages = [
+    "as2fm",
+    "as2fm.as2fm_common",
+    "as2fm.jani_generator",
+    "as2fm.jani_visualizer",
+    "as2fm.scxml_converter",
+    "as2fm.trace_visualizer"
+]
+
+[tool.setuptools.package-dir]
+as2fm = "src/as2fm"
 
 [project.scripts]
-as2fm_convince_to_plain_jani = "jani_generator.main:main_convince_to_plain_jani"
-as2fm_scxml_to_jani = "jani_generator.main:main_scxml_to_jani"
-as2fm_jani_to_plantuml = "jani_visualizer.main:main_jani_to_plantuml"
-as2fm_trace_to_png = "trace_visualizer.main:main_trace_to_png"
+as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"
+as2fm_scxml_to_jani = "as2fm.jani_generator.main:main_scxml_to_jani"
+as2fm_jani_to_plantuml = "as2fm.jani_visualizer.main:main_jani_to_plantuml"
+as2fm_trace_to_png = "as2fm.trace_visualizer.main:main_trace_to_png"
 
 [project.optional-dependencies]
 dev = [
