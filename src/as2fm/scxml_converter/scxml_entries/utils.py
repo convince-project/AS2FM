@@ -185,7 +185,7 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     valid_str = isinstance(arg_value, str) and len(arg_value) > 0
     if not valid_str:
         print(f"Error: SCXML entry from {scxml_type.__name__}: "
-              f"Expected non-empty argument {arg_name}.")
+              f"Expected non-empty argument {arg_name}, got >{arg_value}<.")
     return valid_str
 
 
