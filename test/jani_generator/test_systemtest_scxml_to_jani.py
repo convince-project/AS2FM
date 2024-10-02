@@ -30,7 +30,7 @@ from as2fm.jani_generator.scxml_helpers.top_level_interpreter import \
     interpret_top_level_xml
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
-from .test_utilities_smc_storm import run_smc_storm_with_output
+from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 
 
 class TestConversion(unittest.TestCase):

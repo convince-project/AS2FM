@@ -53,7 +53,7 @@ class RosActionClient(RosDeclaration):
 
     def check_valid_interface_type(self) -> bool:
         if not is_action_type_known(self._interface_type):
-            print(f"Error: SCXML RosActionServer: invalid action type {self._interface_type}.")
+            print(f"Error: SCXML RosActionClient: invalid action type {self._interface_type}.")
             return False
         return True
 

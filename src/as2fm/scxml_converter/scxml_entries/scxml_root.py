@@ -148,10 +148,12 @@ class ScxmlRoot(ScxmlBase):
             state.instantiate_bt_events(instance_id)
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
-        """Append a state to the list of states. If initial is True, set it as the initial state."""
+        """Append a state to the list of states in the SCXML model.
+        If initial is True, set it as the initial state."""
         self._states.append(state)
         if initial:
-            assert self._initial_state is None, "Error: SCXML root: Initial state already set"
+            assert self._initial_state is None, \
+                "Error: SCXML root: Initial state already set"
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):

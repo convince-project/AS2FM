@@ -98,14 +98,16 @@ class RosActionThread(ScxmlBase):
         self._states: List[ScxmlState] = []
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
-        """Append a state to the list of states. If initial is True, set it as the initial state."""
+        """Append a state to the list of states of the thread.
+        If initial is True, set it as the initial state."""
         self._states.append(state)
         if initial:
-            assert self._initial_state is None, "Error: SCXML root: Initial state already set"
+            assert self._initial_state is None, \
+                'Error: RosActionThread: Initial state already set'
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):
-        assert self._data_model is None, "Data model already set"
+        assert self._data_model is None, 'Data model already set'
         self._data_model = data_model
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
