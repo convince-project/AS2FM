@@ -1,10 +1,28 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
-    hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.6.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-added-large-files
+    # same as lint.yml
+    - repo: https://github.com/pycqa/pylint
+      rev: v3.3.1
+      hooks:
+          - id: pylint
+    # TODO: add pycodestyle
+    - repo: https://github.com/pycqa/flake8
+      rev: 3.9.2
+      hooks:
+          - id: flake8
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: main
+      hooks:
+          - id: mypy
+    - repo: https://github.com/pycqa/isort
+      rev: 5.13.2
+      hooks:
+          - id: isort
