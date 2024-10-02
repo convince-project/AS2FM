@@ -1,8 +1,0 @@
-<root BTCPP_format="4" >
-    <BehaviorTree ID="MainTree">
-        <Sequence name="root_sequence">
-            <GetNumber in="42" out="{the_answer}"/>
-            <TopicAction name="answer" data="{the_answer}" />
-        </Sequence>
-    </BehaviorTree>
-</root>

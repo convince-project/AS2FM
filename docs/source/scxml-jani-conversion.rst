@@ -103,7 +103,7 @@ The first state machine sends `event_a` out at each loop, the second state machi
 If we use the event_sync automaton strategy as exemplified in the :ref:`Simple Overview<simple_overview>`, i.e., we make an automaton for syncing `event_a` and one for syncing `event_b` without any further handling, we will reach a deadlock situation where the `event_a` is waiting to be processed by the receiver before being able to send out `event_b`, but the receiver is waiting for `event_b` to be available before processing `event_a`.
 
 In order to overcome such a situation, we need to introduce a mechanism that allows a receiver to discard an event it is not expecting, such that the senders can continue their execution.
-This is achieved by tracking all events that an automaton can receive during its execution and, for each of its states, introducing a self loop transition processing the events that aren't explicitly handled. 
+This is achieved by tracking all events that an automaton can receive during its execution and, for each of its states, introducing a self loop transition processing the events that aren't explicitly handled.
 
 An additional functionality to keep in mind during the conversion is the synchronization of the senders: if both senders are in a state where they can send out `event_a`, it is important that only one of them does it at a time: this will result in having one line for each automaton sending a specific event in the JANI composition table.
 

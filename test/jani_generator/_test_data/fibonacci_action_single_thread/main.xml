@@ -1,0 +1,16 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <max_array_size value="10" />
+    </mc_parameters>
+
+    <node_models>
+        <input type="ros-scxml" src="./server.scxml" />
+        <input type="ros-scxml" src="./client_1.scxml" />
+        <!-- <input type="ros-scxml" src="./client_2.scxml" /> -->
+    </node_models>
+
+    <properties>
+        <input type="jani" src="./properties.jani" />
+    </properties>
+</convince_mc_tc>

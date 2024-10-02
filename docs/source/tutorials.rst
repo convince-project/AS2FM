@@ -51,7 +51,7 @@ In this case, it calculates the minimal probability that the battery level will 
 
 In the `main.xml file <https://github.com/convince-project/as2fm/tree/main/jani_generator/test/_test_data/ros_example/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this concept can be found in the :ref:`related section <max_time_tag>` of the :ref:`How-To page <howto>`.
 
-In addition, in this main file, all the components of the example are put together, and the property to use is indicated. 
+In addition, in this main file, all the components of the example are put together, and the property to use is indicated.
 
 
 Structure of Inputs
@@ -71,7 +71,7 @@ The `scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.
 
         <input type="ros-scxml" src="./battery_drainer.scxml" />
 
-* the behavior tree in XML, 
+* the behavior tree in XML,
 * the plugins of the behavior tree leaf nodes in SCXML,
 * the property to check in temporal logic, currently given in JANI, later support for XML will be added:
 
@@ -82,7 +82,7 @@ The `scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.
         </properties>
 
 * additionally, commonly shared variables for synchronization between the components are specified in the main file:
-  
+
     .. code-block:: xml
 
         <mc_parameters>
@@ -135,7 +135,7 @@ Let's convert a first simple robotic JANI model. An example can be found in `her
     :width: 200
     :alt: An image illustrating the room's shape.
 
-The lower left corner is at coordinates (0,0) and the upper right corner at coordinates (3,5). Lengths are given in meters, which means that the room has a dimension of 3x5m with a corner of 0.5m at the top left. 
+The lower left corner is at coordinates (0,0) and the upper right corner at coordinates (3,5). Lengths are given in meters, which means that the room has a dimension of 3x5m with a corner of 0.5m at the top left.
 The robot is placed at coordinates (0.5, 0.5) initially, and has a round shape with a radius of 0.3 m and a height of 0.2m. In the small and simple example there are no further obstacles and the robot drives with a linear and angular velocity of 0.5 m/s and 0.5 rad/s, respectively.
 
 The behavior describing how the robot drives around in the room is modeled as a Deterministic Markov Chain (DTMC) shown in the picture below. In each step, the robot moves forward in 50% of the cases and rotates in 50% of the cases. In case it bumps into a wall, it just stops at the collision point and continues operating from there. What is omitted in the picture is the calculation of this collision point and the conversion to and from floats to integers. The latter is only necessary to make the example run in STORM because the tool currently does not support transient floats.

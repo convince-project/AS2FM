@@ -56,7 +56,3 @@ html_style = 'css/custom.css'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
-
-# autodoc2_packages = [
-#     "../../jani_generator/src/jani_generator",
-# ]

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="idle"
+    version="1.0"
+    name="addition_server"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="temp_a" type="int64" expr="0" />
+        <data id="temp_b" type="int64" expr="0" />
+    </datamodel>
+
+    <ros_service_server name="the_srv" type="example_interfaces/AddTwoInts">
+        <service_name>/adder</service_name>
+    </ros_service_server>
+
+    <state id="idle">
+        <ros_service_handle_request name="the_srv" target="idle">
+            <assign location="temp_a" expr="_req.a" />
+            <assign location="temp_b" expr="_req.b" />
+            <ros_service_send_response name="the_srv">
+                <field name="sum" expr="temp_a + temp_b" />
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+</scxml>
