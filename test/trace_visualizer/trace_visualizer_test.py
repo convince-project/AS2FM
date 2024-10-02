@@ -13,12 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Tests for the trace_visualizer
+"""
+
 import os
 
 from as2fm.trace_visualizer.visualizer import Traces
 
 
 def test_traces():
+    """
+    Regression test to see if the traces are correctly read and the images
+    are correctly generated.
+    """
     data_prefix: str = 'ros_example_w_bt_battery_below_20_p_0_0107'
     test_data_folder = os.path.join(
         os.path.dirname(__file__),

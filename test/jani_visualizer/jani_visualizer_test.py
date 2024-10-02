@@ -20,6 +20,9 @@ from as2fm.jani_visualizer.visualizer import PlantUMLAutomata
 
 
 def test_plantumlautomata():
+    """
+    Regression test to see if the PlantUML automata are correctly generated.
+    """
     for data_prefix in ['demo_manual', 'ros_example_w_bt']:
         test_data_folder = os.path.join(
             os.path.dirname(__file__),

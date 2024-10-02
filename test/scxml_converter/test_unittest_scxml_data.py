@@ -25,6 +25,9 @@ from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
 
 
 class TestScxmlData(unittest.TestCase):
+    """
+    Test the correct parsing of the SCXML data tags.
+    """
 
     def test_no_type_information(self):
         """
@@ -38,11 +41,17 @@ class TestScxmlData(unittest.TestCase):
         self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
 
     def test_no_expr_information(self):
+        """
+        Test with no expr information should raise a AssertionError.
+        """
         tag = ET.fromstring(
             '<data id="level" type="int32" />')
         self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
 
     def test_no_id_information(self):
+        """
+        Test with no id information should raise a AssertionError.
+        """
         tag = ET.fromstring(
             '<data type="int32" expr="0" />')
         self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)

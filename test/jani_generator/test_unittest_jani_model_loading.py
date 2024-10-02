@@ -22,6 +22,9 @@ from as2fm.jani_generator.jani_entries import JaniModel
 
 
 def test_jani_file_loading():
+    """
+    Test the loading of a Jani file.
+    """
     jani_file = os.path.join(os.path.dirname(__file__),
                              '_test_data', 'plain_jani_examples', 'array_test.jani')
     with open(jani_file, "r", encoding='utf-8') as file:

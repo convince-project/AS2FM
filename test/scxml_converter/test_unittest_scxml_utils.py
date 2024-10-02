@@ -72,6 +72,7 @@ def test_topic_good_expressions():
 
 
 def test_topic_bad_expressions():
+    """Test expressions that have events in them, which are not allowed in topic entries."""
     bad_expressions: List[str] = [
         "_event.data",
         "x + _res.y + z == _msg.data",

@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Utilities used to compare XML.
+"""
+
 import re
 from xml.etree import ElementTree as ET
 

@@ -155,21 +155,25 @@ def test_bt_action_with_ports_from_code():
 
 
 def test_xml_parsing_battery_drainer():
+    """Test the parsing of the battery drainer scxml file."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'battery_drainer_w_bt', 'battery_drainer.scxml'))
 
 
 def test_xml_parsing_bt_topic_condition():
+    """Test the parsing of the bt topic condition scxml file."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'battery_drainer_w_bt', 'bt_topic_condition.scxml'))
 
 
 def test_xml_parsing_invalid_battery_drainer_xml():
+    """Test the parsing of the battery drainer scxml file with invalid xml."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'battery_drainer.scxml'), valid_xml=False)
 
 
 def test_xml_parsing_invalid_bt_topic_action_xml():
+    """Test the parsing of the bt topic action scxml file with invalid xml."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'bt_topic_action.scxml'), valid_xml=False)
 

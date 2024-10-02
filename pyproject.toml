@@ -68,5 +68,8 @@ line_length = 100
 
 [tool.pylint.main]
 disable = [
+    "C0114",  # Missing module docstring
+    "E0401",  # Unable to import
     "R0401",  # Cyclic import
+    "W0511",  # TODO comments (we need them)
 ]
