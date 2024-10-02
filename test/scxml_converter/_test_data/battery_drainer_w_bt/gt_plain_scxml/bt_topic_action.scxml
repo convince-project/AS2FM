@@ -3,7 +3,7 @@
     <state id="initial">
         <transition event="bt_tick" target="initial">
             <send event="topic_charge_msg" />
-            
+
             <send event="bt_success" />
         </transition>
     </state>

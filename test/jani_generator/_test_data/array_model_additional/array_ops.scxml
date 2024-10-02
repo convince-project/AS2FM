@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="init" 
-    version="1.0" 
+<scxml
+    initial="init"
+    version="1.0"
     name="sender"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
-    
+
     <datamodel>
         <data id="unbound_array" expr="[]" type="int32[]" />
         <data id="bound_array" expr="[]" type="int32[15]" />

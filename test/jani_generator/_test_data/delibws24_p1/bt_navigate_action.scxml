@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="initial" 
-    version="1.0" 
+<scxml
+    initial="initial"
+    version="1.0"
     name="NavigateAction"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
@@ -41,7 +41,7 @@
         <ros_action_handle_aborted_result name="act" target="result_available">
             <assign location="tmp_result" expr="false" />
         </ros_action_handle_aborted_result>
-        
+
     </state>
 
     <state id="result_available">

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="send_a_1" 
-    version="1.0" 
+<scxml
+    initial="send_a_1"
+    version="1.0"
     name="sender"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
-    
+
     <datamodel>
         <data id="msg_a_seq" expr="0" type="int16" />
         <data id="msg_b_seq" expr="0" type="int16" />

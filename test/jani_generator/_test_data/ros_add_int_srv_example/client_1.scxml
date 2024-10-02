@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="send_req" 
+<scxml
+    initial="send_req"
     version="1.0"
     name="client_1"
     model_src=""
@@ -9,7 +9,7 @@
     <datamodel>
         <data id="temp_sum" type="int64" expr="0" />
     </datamodel>
-    
+
     <ros_topic_publisher topic="/client_1_res" type="std_msgs/Bool" />
     <ros_service_client service_name="/adder" type="example_interfaces/AddTwoInts" />
 

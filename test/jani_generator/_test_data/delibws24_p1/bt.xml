@@ -2,7 +2,7 @@
     <BehaviorTree>
         <!-- For now use a normal sequence, since failures aren't expected yet -->
         <Sequence>
-            <!-- 
+            <!--
             loc
             0 .. pantry
             1 .. table

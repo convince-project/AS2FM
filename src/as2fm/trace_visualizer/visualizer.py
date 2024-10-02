@@ -209,7 +209,7 @@ class Traces:
         )
 
         # If the image is to be left-to-right, flip it such that the leftmost
-        # column is on the bottom. Then data that was plotted from left to 
+        # column is on the bottom. Then data that was plotted from left to
         # right (increasing) will be plotted from bottom to top.
         if self.ltr:
             image = image.transpose(

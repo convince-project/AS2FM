@@ -7,7 +7,7 @@
     <behavior_tree>
         <input type="bt.cpp-xml" src="./bt.xml" />
         <input type="bt-plugin-ros-scxml" src="./bt_goal_check.scxml" />
-        <input type="bt-plugin-ros-scxml" src="./bt_drive_robot.scxml" /> 
+        <input type="bt-plugin-ros-scxml" src="./bt_drive_robot.scxml" />
     </behavior_tree>
 
     <node_models>

@@ -28,7 +28,7 @@ def main_jani_to_plantuml():
     parser.add_argument('input_fname', type=str, help='The input jani file.')
     parser.add_argument('output_plantuml_fname', type=str, help='The output plantuml file.')
     parser.add_argument('output_svg_fname', type=str, help='The output svg file.')
-    parser.add_argument('--no-syncs', action='store_true', 
+    parser.add_argument('--no-syncs', action='store_true',
                         help='Don\'t connects transitions that are synchronized.')
     parser.add_argument('--no-assignments', action='store_true',
                         help='Don\'t show assignments on the edges.')
@@ -42,13 +42,13 @@ def main_jani_to_plantuml():
             jani_dict = json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Error while reading the input file {args.input_fname}") from e
-    
+
     assert not os.path.isfile(args.output_plantuml_fname), \
         f"File {args.output_plantuml_fname} must not exist."
-    
+
     assert not os.path.isfile(args.output_svg_fname), \
         f"File {args.output_svg_fname} must not exist."
-    
+
     pua = PlantUMLAutomata(jani_dict)
     puml_str = pua.to_plantuml(
             with_assignments=not args.no_assignments,

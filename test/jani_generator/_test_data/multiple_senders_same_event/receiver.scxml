@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="receive_msg" 
-    version="1.0" 
+<scxml
+    initial="receive_msg"
+    version="1.0"
     name="receiver"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
-    
+
     <datamodel>
         <data id="counter" expr="0" type="int16" />
     </datamodel>

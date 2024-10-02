@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml 
-    initial="send_req" 
+<scxml
+    initial="send_req"
     version="1.0"
     name="client_1"
     model_src=""
@@ -10,7 +10,7 @@
         <data id="fibonacci_result" type="int32[]" expr="[]" />
         <data id="counter" type="int32" expr="0" />
     </datamodel>
-    
+
     <ros_topic_publisher name="result_pub" topic="/client_1_last_fibonacci" type="std_msgs/Int32" />
     <ros_topic_publisher name="counter_pub" topic="/client_1_feedback_count" type="std_msgs/Int32" />
     <ros_action_client name="example_action" action_name="/fibonacci" type="example_interfaces/Fibonacci" />

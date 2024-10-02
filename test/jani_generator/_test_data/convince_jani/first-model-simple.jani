@@ -1,16 +1,16 @@
-{    
+{
     "name": "r2d2_in_test_room",
     "features": ["convince_extensions"],
     "type": "mdp",
-    
+
     "metadata": {
         "description": "Example of CONVINCE-Jani with a round robot in a square room with a small niche. The robot can randomly drive straight or rotate.",
         "version": "0.0.1",
         "author": "Bosch CR"
     },
-   
+
     "rob_env_model":
-    { 
+    {
         "comment": "Distances are in meters, time (e.g. sim_step) is in seconds.",
         "name": "test_room",
         "sim_step": 0.1,
@@ -114,7 +114,7 @@
 					"action": "drive",
 					"destinations": [ {
 						"location": "alive",
-                        "assignments": [ 
+                        "assignments": [
                             {
                                 "comment": "goal_x = cos(theta) * v * time_step + curr_x",
                                 "index": 0,
@@ -157,7 +157,7 @@
                                     }
                                 }
                             },
-                            {  
+                            {
                                 "comment": "intersect_backup = 1 if robot needs to stay at start, 0 if it reaches the goal",
                                 "index": 1,
                                 "ref": "intersect_backup",
@@ -209,7 +209,7 @@
                     "action": "rotate",
                     "destinations": [ {
                         "location": "alive",
-                        "assignments": [ 
+                        "assignments": [
                             {
                                 "ref": "robots.r2d2.pose.theta",
                                 "value": {
@@ -254,7 +254,7 @@
                                                 }
                                             }
                                         }
-                                    }     
+                                    }
                                 }
                             }
                         ]
