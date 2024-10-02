@@ -17,7 +17,7 @@
 
 import argparse
 
-from trace_visualizer.visualizer import Traces
+from as2fm.trace_visualizer.visualizer import Traces
 
 
 def main_trace_to_png():

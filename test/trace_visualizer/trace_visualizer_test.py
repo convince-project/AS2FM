@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from trace_visualizer.visualizer import Traces
+from as2fm.trace_visualizer.visualizer import Traces
 
 import os
 

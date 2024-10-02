@@ -20,7 +20,7 @@ import os
 import json
 import plantuml
 
-from jani_visualizer.visualizer import PlantUMLAutomata
+from as2fm.jani_visualizer.visualizer import PlantUMLAutomata
 
 def main_jani_to_plantuml():
     parser = argparse.ArgumentParser(
