@@ -29,46 +29,51 @@ ROS_FIELD_PREFIX: str = "ros_fields__"
 PLAIN_FIELD_EVENT_PREFIX: str = f"{PLAIN_SCXML_EVENT_PREFIX}{ROS_FIELD_PREFIX}"
 
 ROS_EVENT_PREFIXES = [
-    "_msg.",                                                # Topic-related
-    "_req.", "_res.",                                       # Service-related
-    "_goal.", "_feedback.", "_wrapped_result.", "_action."  # Action-related
+    "_msg.",  # Topic-related
+    "_req.",
+    "_res.",  # Service-related
+    "_goal.",
+    "_feedback.",
+    "_wrapped_result.",
+    "_action.",  # Action-related
 ]
 
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
 SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
-    "bool":         bool,
-    "float32":      float,
-    "float64":      float,
-    "int8":         int,
-    "int16":        int,
-    "int32":        int,
-    "int64":        int,
-    "int8[]":       MutableSequence[int],    # array('i'): https://stackoverflow.com/a/67775675
-    "int16[]":      MutableSequence[int],
-    "int32[]":      MutableSequence[int],
-    "int64[]":      MutableSequence[int],
-    "float32[]":    MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
-    "float64[]":    MutableSequence[float]
+    "bool": bool,
+    "float32": float,
+    "float64": float,
+    "int8": int,
+    "int16": int,
+    "int32": int,
+    "int64": int,
+    "int8[]": MutableSequence[int],  # array('i'): https://stackoverflow.com/a/67775675
+    "int16[]": MutableSequence[int],
+    "int32[]": MutableSequence[int],
+    "int64[]": MutableSequence[int],
+    "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
+    "float64[]": MutableSequence[float],
 }
 
 
 # ------------ Expression-conversion functionalities ------------
 class CallbackType(Enum):
     """Enumeration of the different types of callbacks containing a body."""
-    STATE = auto()                  # No callback (e.g. state entry/exit)
-    TRANSITION = auto()             # Transition callback
-    ROS_TIMER = auto()              # Timer callback
-    ROS_TOPIC = auto()              # Topic callback
-    ROS_SERVICE_REQUEST = auto()    # Service callback
-    ROS_SERVICE_RESULT = auto()     # Service callback
-    ROS_ACTION_GOAL = auto()        # Action callback
-    ROS_ACTION_RESULT = auto()      # Action callback
-    ROS_ACTION_FEEDBACK = auto()    # Action callback
+
+    STATE = auto()  # No callback (e.g. state entry/exit)
+    TRANSITION = auto()  # Transition callback
+    ROS_TIMER = auto()  # Timer callback
+    ROS_TOPIC = auto()  # Topic callback
+    ROS_SERVICE_REQUEST = auto()  # Service callback
+    ROS_SERVICE_RESULT = auto()  # Service callback
+    ROS_ACTION_GOAL = auto()  # Action callback
+    ROS_ACTION_RESULT = auto()  # Action callback
+    ROS_ACTION_FEEDBACK = auto()  # Action callback
 
     @staticmethod
-    def get_expected_prefixes(cb_type: 'CallbackType') -> List[str]:
+    def get_expected_prefixes(cb_type: "CallbackType") -> List[str]:
         if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
             return []
         elif cb_type == CallbackType.TRANSITION:
@@ -82,12 +87,16 @@ class CallbackType(Enum):
         elif cb_type == CallbackType.ROS_ACTION_GOAL:
             return ["_action.goal_id", "_goal.", PLAIN_SCXML_EVENT_PREFIX]
         elif cb_type == CallbackType.ROS_ACTION_RESULT:
-            return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
+            return [
+                "_action.goal_id",
+                "_wrapped_result.code",
+                "_wrapped_result.result.",
+            ]
         elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
             return ["_action.goal_id", "_feedback."]
 
     @staticmethod
-    def get_plain_callback(cb_type: 'CallbackType') -> 'CallbackType':
+    def get_plain_callback(cb_type: "CallbackType") -> "CallbackType":
         """Convert ROS-specific transitions to plain ones."""
         if cb_type == CallbackType.STATE:
             return CallbackType.STATE
@@ -107,24 +116,30 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
         expected_prefixes.remove(PLAIN_SCXML_EVENT_PREFIX)
     msg_expr.strip()
     for prefix in expected_prefixes:
-        assert prefix.startswith("_"), \
-            f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
+        assert prefix.startswith(
+            "_"
+        ), f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
         if prefix.endswith("."):
             # Generic field substitution, adding the ROS_FIELD_PREFIX
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}([a-zA-Z0-9_.])",
-                rf"\g<1>{PLAIN_FIELD_EVENT_PREFIX}\g<2>", msg_expr)
+                rf"\g<1>{PLAIN_FIELD_EVENT_PREFIX}\g<2>",
+                msg_expr,
+            )
         else:
             # Special fields substitution, no need to add the ROS_FIELD_PREFIX
             split_prefix = prefix.split(".", maxsplit=1)
-            assert len(split_prefix) == 2, \
-                f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
+            assert (
+                len(split_prefix) == 2
+            ), f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
             substitution = f"{PLAIN_SCXML_EVENT_PREFIX}{split_prefix[1]}"
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}($|[^a-zA-Z0-9_.])",
-                rf"\g<1>{substitution}\g<2>", msg_expr)
+                rf"\g<1>{substitution}\g<2>",
+                msg_expr,
+            )
     return msg_expr
 
 
@@ -146,15 +161,17 @@ def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
     expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
     # pre-check over the expression
     if PLAIN_SCXML_EVENT_PREFIX not in expected_prefixes:
-        assert not _contains_prefixes(msg_expr, [PLAIN_SCXML_EVENT_PREFIX]), \
-            "Error: SCXML ROS conversion: "\
+        assert not _contains_prefixes(msg_expr, [PLAIN_SCXML_EVENT_PREFIX]), (
+            "Error: SCXML ROS conversion: "
             f"unexpected {PLAIN_SCXML_EVENT_PREFIX} prefix in expr. {msg_expr}"
+        )
     forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
     if len(expected_prefixes) == 0:
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_PREFIX)
     new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
-    assert not _contains_prefixes(new_expr, forbidden_prefixes), \
-        f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.: {msg_expr}"
+    assert not _contains_prefixes(
+        new_expr, forbidden_prefixes
+    ), f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.: {msg_expr}"
     return new_expr
 
 
@@ -183,8 +200,10 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     """
     valid_str = isinstance(arg_value, str) and len(arg_value) > 0
     if not valid_str:
-        print(f"Error: SCXML entry from {scxml_type.__name__}: "
-              f"Expected non-empty argument {arg_name}, got >{arg_value}<.")
+        print(
+            f"Error: SCXML entry from {scxml_type.__name__}: "
+            f"Expected non-empty argument {arg_name}, got >{arg_value}<."
+        )
     return valid_str
 
 
@@ -198,7 +217,7 @@ def get_data_type_from_string(data_type: str) -> Optional[Type]:
     """
     data_type = data_type.strip()
     # If the data type is an array, remove the bound value
-    if '[' in data_type:
+    if "[" in data_type:
         data_type = re.sub(r"(^[a-z0-9]*\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
     return SCXML_DATA_STR_TO_TYPE.get(data_type, None)
 
@@ -215,8 +234,9 @@ def get_array_max_size(data_type: str) -> Optional[int]:
     """
     Get the maximum size of an array, if the data type is an array.
     """
-    assert is_array_type(get_data_type_from_string(data_type)), \
-        f"Error: SCXML data: '{data_type}' is not an array."
+    assert is_array_type(
+        get_data_type_from_string(data_type)
+    ), f"Error: SCXML data: '{data_type}' is not an array."
     match_obj = re.search(r"\[([0-9]+)\]", data_type)
     if match_obj is not None:
         return int(match_obj.group(1))

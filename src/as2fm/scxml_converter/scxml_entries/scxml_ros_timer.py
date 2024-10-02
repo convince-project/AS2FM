@@ -20,14 +20,10 @@ from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.ros_utils import \
-    generate_rate_timer_event
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
-                                                                RosDeclaration)
-from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
-                                                       is_non_empty_string)
-from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
-                                                           get_xml_argument)
+from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosDeclaration
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
 class RosTimeRate(RosDeclaration):
@@ -83,7 +79,9 @@ class RosTimeRate(RosDeclaration):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
         xml_time_rate = ET.Element(
-            RosTimeRate.get_tag_name(), {"rate_hz": str(self._rate_hz), "name": self._name})
+            RosTimeRate.get_tag_name(),
+            {"rate_hz": str(self._rate_hz), "name": self._name},
+        )
         return xml_time_rate
 
 

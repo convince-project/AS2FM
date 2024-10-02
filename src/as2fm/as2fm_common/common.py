@@ -50,8 +50,8 @@ def remove_namespace(tag: str) -> str:
     :param tag: The tag to remove the namespace from.
     :return: The tag without the namespace.
     """
-    if '}' in tag:
-        tag_wo_ns = tag.split('}')[-1]
+    if "}" in tag:
+        tag_wo_ns = tag.split("}")[-1]
     else:
         tag_wo_ns = tag
     return tag_wo_ns
@@ -61,9 +61,9 @@ def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
     """Generate a default expression for a field type."""
     assert field_type in get_args(ValidTypes), f"Error: Unsupported data type {field_type}."
     if field_type is MutableSequence[int]:
-        return array('i')
+        return array("i")
     elif field_type is MutableSequence[float]:
-        return array('d')
+        return array("d")
     else:
         return field_type()
 
@@ -71,9 +71,9 @@ def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
 def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
     """Convert a value to a type."""
     if isinstance(value, array):
-        if value.typecode == 'i':
+        if value.typecode == "i":
             return MutableSequence[int]
-        elif value.typecode == 'd':
+        elif value.typecode == "d":
             return MutableSequence[float]
         else:
             raise ValueError(f"Type of array '{value.typecode}' not supported.")
@@ -99,22 +99,26 @@ def value_to_string(value: ValidTypes) -> str:
 def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
     """Convert a string to a value of the desired type."""
     value_str = value_str.strip()
-    assert isinstance(value_str, str), \
-        f"Error: provided value is of type {type(value_str)}, expected a string."
+    assert isinstance(
+        value_str, str
+    ), f"Error: provided value is of type {type(value_str)}, expected a string."
     assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
-    is_array_value = value_str.startswith('[') and value_str.endswith(']')
+    is_array_value = value_str.startswith("[") and value_str.endswith("]")
     if not is_array_value:
-        assert value_type in (bool, int, float), \
-            f"Error: the value {value_str} shall be converted to a base type."
+        assert value_type in (
+            bool,
+            int,
+            float,
+        ), f"Error: the value {value_str} shall be converted to a base type."
         return value_type(value_str)
     else:
-        str_entries = value_str.strip('[]').split(',')
-        if str_entries == ['']:
+        str_entries = value_str.strip("[]").split(",")
+        if str_entries == [""]:
             str_entries = []
         if value_type is MutableSequence[int]:
-            return array('i', [int(v) for v in str_entries])
+            return array("i", [int(v) for v in str_entries])
         elif value_type is MutableSequence[float]:
-            return array('d', [float(v) for v in str_entries])
+            return array("d", [float(v) for v in str_entries])
         else:
             raise ValueError(f"Unsupported value type {value_type}.")
 

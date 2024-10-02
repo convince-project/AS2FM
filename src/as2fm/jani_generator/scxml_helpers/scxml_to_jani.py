@@ -21,20 +21,23 @@ from typing import List
 
 from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from as2fm.jani_generator.jani_entries.jani_model import JaniModel
-from as2fm.jani_generator.ros_helpers.ros_communication_handler import \
-    remove_empty_self_loops_from_interface_handlers_in_jani
-from as2fm.jani_generator.ros_helpers.ros_timer import (
-    RosTimer, make_global_timer_automaton)
+from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
+    remove_empty_self_loops_from_interface_handlers_in_jani,
+)
+from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_automaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
-from as2fm.jani_generator.scxml_helpers.scxml_event_processor import \
-    implement_scxml_events_as_jani_syncs
+from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
+    implement_scxml_events_as_jani_syncs,
+)
 from as2fm.jani_generator.scxml_helpers.scxml_tags import BaseTag
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
 def convert_scxml_root_to_jani_automaton(
-        scxml_root: ScxmlRoot, jani_automaton: JaniAutomaton, events_holder: EventsHolder,
-        max_array_size: int
+    scxml_root: ScxmlRoot,
+    jani_automaton: JaniAutomaton,
+    events_holder: EventsHolder,
+    max_array_size: int,
 ) -> None:
     """
     Convert an SCXML element to a Jani automaton.
@@ -44,15 +47,16 @@ def convert_scxml_root_to_jani_automaton(
     :param events_holder: The holder for the events to be implemented as Jani syncs.
     :param max_array_size: The max size of the arrays in the model.
     """
-    BaseTag.from_element(scxml_root, [], (jani_automaton,
-                         events_holder), max_array_size).write_model()
+    BaseTag.from_element(
+        scxml_root, [], (jani_automaton, events_holder), max_array_size
+    ).write_model()
 
 
 def convert_multiple_scxmls_to_jani(
-        scxmls: List[ScxmlRoot],
-        timers: List[RosTimer],
-        max_time_ns: int,
-        max_array_size: int
+    scxmls: List[ScxmlRoot],
+    timers: List[RosTimer],
+    max_time_ns: int,
+    max_array_size: int,
 ) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
@@ -70,8 +74,9 @@ def convert_multiple_scxmls_to_jani(
     for input_scxml in scxmls:
         assert isinstance(input_scxml, ScxmlRoot)
         scxml_root = input_scxml
-        assert scxml_root.is_plain_scxml(), \
-            f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
+        assert (
+            scxml_root.is_plain_scxml()
+        ), f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
         automaton = JaniAutomaton()
         convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)

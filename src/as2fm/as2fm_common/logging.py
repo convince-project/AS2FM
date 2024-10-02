@@ -29,22 +29,22 @@ class InformativeParser(ET.XMLParser):
     def _start_list(self, *args, **kwargs):
         element = super(InformativeParser, self)._start_list(*args, **kwargs)
         element._file_name = self.parser._file_name  # pylint: disable=protected-access
-        element._start_line_number = \
-            self.parser.CurrentLineNumber  # pylint: disable=protected-access
-        element._start_column_number = \
-            self.parser.CurrentColumnNumber  # pylint: disable=protected-access
-        element._start_byte_index = \
-            self.parser.CurrentByteIndex  # pylint: disable=protected-access
+        element._start_line_number = (
+            self.parser.CurrentLineNumber
+        )  # pylint: disable=protected-access
+        element._start_column_number = (
+            self.parser.CurrentColumnNumber
+        )  # pylint: disable=protected-access
+        element._start_byte_index = self.parser.CurrentByteIndex  # pylint: disable=protected-access
         return element
 
     def _end(self, *args, **kwargs):
         element = super(InformativeParser, self)._end(*args, **kwargs)
-        element._end_line_number = \
-            self.parser.CurrentLineNumber  # pylint: disable=protected-access
-        element._end_column_number = \
-            self.parser.CurrentColumnNumber  # pylint: disable=protected-access
-        element._end_byte_index = \
-            self.parser.CurrentByteIndex  # pylint: disable=protected-access
+        element._end_line_number = self.parser.CurrentLineNumber  # pylint: disable=protected-access
+        element._end_column_number = (
+            self.parser.CurrentColumnNumber
+        )  # pylint: disable=protected-access
+        element._end_byte_index = self.parser.CurrentByteIndex  # pylint: disable=protected-access
         return element
 
 
@@ -56,13 +56,16 @@ def error(element: ET.Element, message: str) -> str:
     :param message: The error message
     :return: The error message with the line number
     """
-    assert hasattr(element, '_file_name'), \
-        'The element must have the attribute "_file_name" '\
-        '(set by `as2fm_common.logging.InformativeParser`)'
-    assert hasattr(element, '_start_line_number'), \
-        'The element must have the attribute "_start_line_number" '\
-        '(set by `as2fm_common.logging.InformativeParser`)'
+    assert hasattr(element, "_file_name"), (
+        'The element must have the attribute "_file_name" '
+        "(set by `as2fm_common.logging.InformativeParser`)"
+    )
+    assert hasattr(element, "_start_line_number"), (
+        'The element must have the attribute "_start_line_number" '
+        "(set by `as2fm_common.logging.InformativeParser`)"
+    )
     return (
-        f'E ({element._file_name}:'  # pylint: disable=protected-access
-        + f'{element._start_line_number}) '  # pylint: disable=protected-access
-        + f'{message}')
+        f"E ({element._file_name}:"  # pylint: disable=protected-access
+        + f"{element._start_line_number}) "  # pylint: disable=protected-access
+        + f"{message}"
+    )

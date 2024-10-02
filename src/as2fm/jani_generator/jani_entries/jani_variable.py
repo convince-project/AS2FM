@@ -30,34 +30,46 @@ class JaniVariable:
         initial_value = variable_dict.get("initial-value", None)
         variable_type: type = JaniVariable.python_type_from_json(variable_dict["type"])
         if initial_value is None:
-            return JaniVariable(variable_name,
-                                variable_type,
-                                None,
-                                variable_dict.get("transient", False))
+            return JaniVariable(
+                variable_name,
+                variable_type,
+                None,
+                variable_dict.get("transient", False),
+            )
         if isinstance(initial_value, str):
             # Check if conversion from string to variable_type is possible
             try:
                 init_value_cast = variable_type(initial_value)
-                return JaniVariable(variable_name,
-                                    variable_type,
-                                    JaniExpression(init_value_cast),
-                                    variable_dict.get("transient", False))
+                return JaniVariable(
+                    variable_name,
+                    variable_type,
+                    JaniExpression(init_value_cast),
+                    variable_dict.get("transient", False),
+                )
             except ValueError:
                 # If no conversion possible, raise an error (variable names are not supported)
                 raise ValueError(
                     f"Initial value {initial_value} for variable {variable_name} "
-                    f"is not a valid value for type {variable_type}.")
-        return JaniVariable(variable_name,
-                            variable_type,
-                            JaniExpression(initial_value),
-                            variable_dict.get("transient", False))
+                    f"is not a valid value for type {variable_type}."
+                )
+        return JaniVariable(
+            variable_name,
+            variable_type,
+            JaniExpression(initial_value),
+            variable_dict.get("transient", False),
+        )
 
-    def __init__(self, v_name: str, v_type: Type[ValidTypes],
-                 init_value: Optional[Union[JaniExpression, JaniValue]] = None,
-                 v_transient: bool = False):
-        assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), \
-            f"Expected {v_name} init_value {init_value} to be of type " \
+    def __init__(
+        self,
+        v_name: str,
+        v_type: Type[ValidTypes],
+        init_value: Optional[Union[JaniExpression, JaniValue]] = None,
+        v_transient: bool = False,
+    ):
+        assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), (
+            f"Expected {v_name} init_value {init_value} to be of type "
             f"(JaniExpression, JaniValue), found {type(init_value)} instead."
+        )
         self._name: str = v_name
         self._type: Type[ValidTypes] = v_type
         self._transient: bool = v_transient
@@ -74,11 +86,14 @@ class JaniVariable:
                 self._init_expr = JaniExpression(0.0)
             else:
                 raise ValueError(
-                    f"JaniVariable {self._name} of type {self._type} needs an initial value")
+                    f"JaniVariable {self._name} of type {self._type} needs an initial value"
+                )
         assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
         if not self._transient and self._type in (float, MutableSequence[float]):
-            print(f"Warning: Variable {self._name} is not transient and has type float."
-                  "This is not supported by STORM.")
+            print(
+                f"Warning: Variable {self._name} is not transient and has type float."
+                "This is not supported by STORM."
+            )
 
     def name(self):
         """Get name."""
@@ -97,7 +112,7 @@ class JaniVariable:
         d = {
             "name": self._name,
             "type": JaniVariable.python_type_to_json(self._type),
-            "transient": self._transient
+            "transient": self._transient,
         }
         if self._init_expr is not None:
             d["initial-value"] = self._init_expr.as_dict()

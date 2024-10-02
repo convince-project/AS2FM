@@ -22,8 +22,7 @@ from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
-                                                           get_xml_argument)
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
 class BtInputPortDeclaration(ScxmlBase):
@@ -47,8 +46,9 @@ class BtInputPortDeclaration(ScxmlBase):
         self._type = type_str
 
     def check_validity(self) -> bool:
-        return is_non_empty_string(BtInputPortDeclaration, "key", self._key) and \
-            is_non_empty_string(BtInputPortDeclaration, "type", self._type)
+        return is_non_empty_string(
+            BtInputPortDeclaration, "key", self._key
+        ) and is_non_empty_string(BtInputPortDeclaration, "type", self._type)
 
     def get_key_name(self) -> str:
         return self._key
@@ -63,7 +63,9 @@ class BtInputPortDeclaration(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."
         xml_bt_in_port = ET.Element(
-            BtInputPortDeclaration.get_tag_name(), {"key": self._key, "type": self._type})
+            BtInputPortDeclaration.get_tag_name(),
+            {"key": self._key, "type": self._type},
+        )
         return xml_bt_in_port
 
 
@@ -88,8 +90,9 @@ class BtOutputPortDeclaration(ScxmlBase):
         self._type = type_str
 
     def check_validity(self) -> bool:
-        return is_non_empty_string(BtOutputPortDeclaration, "key", self._key) and \
-            is_non_empty_string(BtOutputPortDeclaration, "type", self._type)
+        return is_non_empty_string(
+            BtOutputPortDeclaration, "key", self._key
+        ) and is_non_empty_string(BtOutputPortDeclaration, "type", self._type)
 
     def get_key_name(self) -> str:
         return self._key
@@ -104,7 +107,9 @@ class BtOutputPortDeclaration(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."
         xml_bt_in_port = ET.Element(
-            BtOutputPortDeclaration.get_tag_name(), {"key": self._key, "type": self._type})
+            BtOutputPortDeclaration.get_tag_name(),
+            {"key": self._key, "type": self._type},
+        )
         return xml_bt_in_port
 
 
@@ -138,8 +143,7 @@ class BtGetValueInputPort(ScxmlBase):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."
-        xml_bt_in_port = ET.Element(
-            BtGetValueInputPort.get_tag_name(), {"key": self._key})
+        xml_bt_in_port = ET.Element(BtGetValueInputPort.get_tag_name(), {"key": self._key})
         return xml_bt_in_port
 
 

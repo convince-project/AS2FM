@@ -23,8 +23,7 @@ from typing import Optional, Sequence
 
 from as2fm.jani_generator.convince_jani_helpers import convince_jani_parser
 from as2fm.jani_generator.jani_entries import JaniModel
-from as2fm.jani_generator.scxml_helpers.top_level_interpreter import \
-    interpret_top_level_xml
+from as2fm.jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 
 
 def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
@@ -34,20 +33,16 @@ def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
     :param args: The arguments to parse. If None, sys.argv is used.
     :return: None
     """
-    parser = argparse.ArgumentParser(
-        description='Convert CONVINCE JANI to plain JANI.')
-    parser.add_argument(
-        '--convince_jani', help='The convince-jani file.', type=str, required=True)
-    parser.add_argument(
-        '--output', help='The output Plain JANI file.', type=str, required=True)
+    parser = argparse.ArgumentParser(description="Convert CONVINCE JANI to plain JANI.")
+    parser.add_argument("--convince_jani", help="The convince-jani file.", type=str, required=True)
+    parser.add_argument("--output", help="The output Plain JANI file.", type=str, required=True)
     args = parser.parse_args(_args)
 
     start_time = timeit.default_timer()
     model_loaded = False
     jani_model = JaniModel()
     if args.convince_jani is not None:
-        assert os.path.isfile(
-            args.convince_jani), f"File {args.convince_jani} does not exist."
+        assert os.path.isfile(args.convince_jani), f"File {args.convince_jani} does not exist."
         # Check the file's extension
         _, extension = os.path.splitext(args.convince_jani)
         assert extension == ".jani", f"File {args.convince_jani} is not a JANI file."
@@ -55,9 +50,8 @@ def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
         model_loaded = True
     assert model_loaded, "No input file was provided. Check your input."
     # Write the loaded model to the output file
-    with open(args.output, "w", encoding='utf-8') as output_file:
-        json.dump(jani_model.as_dict(), output_file,
-                  indent=4, ensure_ascii=False)
+    with open(args.output, "w", encoding="utf-8") as output_file:
+        json.dump(jani_model.as_dict(), output_file, indent=4, ensure_ascii=False)
     print(f"Converted jani model written to {args.output}.")
     print(f"Conversion took {timeit.default_timer() - start_time} seconds.")
 
@@ -77,14 +71,20 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     :param args: The arguments to parse. If None, sys.argv is used.
     :return: None
     """
-    parser = argparse.ArgumentParser(
-        description="Convert SCXML robot system models to JANI model.")
-    parser.add_argument("--generated-scxml-dir", type=str, default="",
-                        help="Path to the folder containing the generated plain-SCXML files.")
-    parser.add_argument("--jani-out-file", type=str, default="main.jani",
-                        help="Path to the generated jani file.")
+    parser = argparse.ArgumentParser(description="Convert SCXML robot system models to JANI model.")
     parser.add_argument(
-        "main_xml", type=str, help="The path to the main XML file to interpret.")
+        "--generated-scxml-dir",
+        type=str,
+        default="",
+        help="Path to the folder containing the generated plain-SCXML files.",
+    )
+    parser.add_argument(
+        "--jani-out-file",
+        type=str,
+        default="main.jani",
+        help="Path to the generated jani file.",
+    )
+    parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
     args = parser.parse_args(_args)
 
     main_xml_file = args.main_xml

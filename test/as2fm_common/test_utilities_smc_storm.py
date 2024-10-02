@@ -25,10 +25,7 @@ from typing import List, Tuple
 import pytest
 
 
-def _interpret_output(
-        output: str,
-        expected_content: List[str],
-        not_expected_content: List[str]):
+def _interpret_output(output: str, expected_content: List[str], not_expected_content: List[str]):
     """Interpret the output of the command. Make
     sure that the expected content is present and
     that the not expected content is not present."""
@@ -48,22 +45,20 @@ def _run_smc_storm(args: str) -> Tuple[str, str, int]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=True,
-        universal_newlines=True
+        universal_newlines=True,
     ) as process:
         stdout, stderr = process.communicate()
         return_code = process.returncode
-        print(f"stdout: \"\"\"\n{stdout}\"\"\"")
-        print(f"stderr: \"\"\"\n{stderr}\"\"\"")
+        print(f'stdout: """\n{stdout}"""')
+        print(f'stderr: """\n{stderr}"""')
         print(f"return code: {return_code}")
-        assert return_code == 0, \
-            f"Command failed with return code {return_code}"
+        assert return_code == 0, f"Command failed with return code {return_code}"
     return stdout, stderr, return_code
 
 
 def run_smc_storm_with_output(
-        args: str,
-        expected_content: List[str],
-        not_expected_content: List[str]):
+    args: str, expected_content: List[str], not_expected_content: List[str]
+):
     """Run smc_storm with the given arguments and check
     if the output is as expected."""
     stdout, stderr, result = _run_smc_storm(args)
@@ -78,5 +73,5 @@ def test_run_smc_storm():
     assert result == 0, "smc_storm failed to run"
 
 
-if __name__ == '__main__':
-    pytest.main(['-s', '-vv', __file__])
+if __name__ == "__main__":
+    pytest.main(["-s", "-vv", __file__])

@@ -63,7 +63,7 @@ dev = [
 ]
 
 [isort]
-profile = "google"
+profile = "black"
 line_length = 100
 
 [tool.pylint.main]
@@ -73,3 +73,6 @@ disable = [
     "R0401",  # Cyclic import
     "W0511",  # TODO comments (we need them)
 ]
+
+[tool.black]
+line-length = 100
