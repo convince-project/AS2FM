@@ -65,3 +65,8 @@ dev = [
 [isort]
 profile = "google"
 line_length = 100
+
+[tool.pylint.main]
+disable = [
+    "R0401",  # Cyclic import
+]
