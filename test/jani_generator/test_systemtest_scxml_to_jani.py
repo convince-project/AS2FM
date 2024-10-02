@@ -33,7 +33,12 @@ from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 
 
+# pylint: disable=too-many-public-methods
 class TestConversion(unittest.TestCase):
+    """
+    Test the conversion of SCXML to JANI.
+    """
+
     def test_basic_example(self):
         """
         Very basic example of a SCXML file.
@@ -120,16 +125,17 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(variable["type"], "bool")
         self.assertEqual(variable["initial-value"], False)
 
+    # pylint: disable=too-many-locals
     def test_example_with_sync(self):
         """
         Testing the conversion of two SCXML files with a sync.
         """
-        TEST_DATA_FOLDER = os.path.join(
+        test_data_folder = os.path.join(
             os.path.dirname(__file__), '_test_data', 'battery_example')
         scxml_battery_drainer_path = os.path.join(
-            TEST_DATA_FOLDER, 'battery_drainer.scxml')
+            test_data_folder, 'battery_drainer.scxml')
         scxml_battery_manager_path = os.path.join(
-            TEST_DATA_FOLDER, 'battery_manager.scxml')
+            test_data_folder, 'battery_manager.scxml')
         with open(scxml_battery_drainer_path, 'r', encoding='utf-8') as f:
             scxml_battery_drainer = ScxmlRoot.from_scxml_file(f.read())
         with open(scxml_battery_manager_path, 'r', encoding='utf-8') as f:
@@ -177,25 +183,26 @@ class TestConversion(unittest.TestCase):
                        "transient": False}, variables)
 
         # Check full jani file
-        TEST_FILE = os.path.join(
-            TEST_DATA_FOLDER, 'output.jani')
-        GROUND_TRUTH_FILE = os.path.join(
-            TEST_DATA_FOLDER, 'output_GROUND_TRUTH.jani')
-        if os.path.exists(TEST_FILE):
-            os.remove(TEST_FILE)
-        with open(TEST_FILE, "w", encoding='utf-8') as output_file:
+        test_file = os.path.join(
+            test_data_folder, 'output.jani')
+        ground_truth_file = os.path.join(
+            test_data_folder, 'output_GROUND_TRUTH.jani')
+        if os.path.exists(test_file):
+            os.remove(test_file)
+        with open(test_file, "w", encoding='utf-8') as output_file:
             json.dump(jani_dict, output_file,
                       indent=4, ensure_ascii=False)
-        with open(GROUND_TRUTH_FILE, "r", encoding='utf-8') as f:
+        with open(ground_truth_file, "r", encoding='utf-8') as f:
             ground_truth = json.load(f)
-        self.maxDiff = None
+        self.maxDiff = None  # pylint: disable=invalid-name
         self.assertEqual(jani_dict, ground_truth)
         # TODO: Can't test this in storm right now, because it has no properties.
-        if os.path.exists(TEST_FILE):
-            os.remove(TEST_FILE)
+        if os.path.exists(test_file):
+            os.remove(test_file)
 
     # Tests using main.xml ...
 
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def _test_with_main(
             self, folder: str, store_generated_scxmls: bool = False,
             property_name: str = "", success: bool = False, skip_smc: bool = False):
@@ -297,7 +304,8 @@ class TestConversion(unittest.TestCase):
 
     def test_robot_navigation_demo(self):
         """Test the robot demo."""
-        self._test_with_main('robot_navigation_tutorial', True, 'goal_reached', True, skip_smc=True)
+        self._test_with_main('robot_navigation_tutorial', True,
+                             'goal_reached', True, skip_smc=True)
 
     def test_robot_navigation_with_bt_demo(self):
         """Test the robot demo."""

@@ -25,6 +25,9 @@ from as2fm.as2fm_common.ecmascript_interpretation import \
 
 
 class TestEcmascriptInterpreter(unittest.TestCase):
+    """
+    Test the ECMAScript interpreter.
+    """
 
     def test_ecmascript_types(self):
         """

@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Helper functions to facilitate calling smc_storm and checking for
+the desired output.
+"""
+
+
 import subprocess
 from typing import List, Tuple
 
@@ -33,22 +39,24 @@ def _interpret_output(
 
 
 def _run_smc_storm(args: str) -> Tuple[str, str, int]:
+    """Run smc_storm with the given arguments and return
+    the stdout, stderr and return code."""
     command = f"smc_storm {args} --max-trace-length 10000 --max-n-traces 10000"
     print("Running command: ", command)
-    process = subprocess.Popen(
+    with subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=True,
         universal_newlines=True
-    )
-    stdout, stderr = process.communicate()
-    return_code = process.returncode
-    print(f"stdout: \"\"\"\n{stdout}\"\"\"")
-    print(f"stderr: \"\"\"\n{stderr}\"\"\"")
-    print(f"return code: {return_code}")
-    assert return_code == 0, \
-        f"Command failed with return code {return_code}"
+    ) as process:
+        stdout, stderr = process.communicate()
+        return_code = process.returncode
+        print(f"stdout: \"\"\"\n{stdout}\"\"\"")
+        print(f"stderr: \"\"\"\n{stderr}\"\"\"")
+        print(f"return code: {return_code}")
+        assert return_code == 0, \
+            f"Command failed with return code {return_code}"
     return stdout, stderr, return_code
 
 

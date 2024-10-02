@@ -22,6 +22,9 @@ from as2fm.jani_generator.jani_entries import JaniModel
 
 
 def test_convince_to_plain_jani():
+    """
+    Test the conversion of a CONVINCE robotics Jani model to plain Jani.
+    """
     test_file = os.path.join(os.path.dirname(__file__), '_test_data', 'convince_jani',
                              'first-model-mc-version.jani')
     jani_model = JaniModel()
