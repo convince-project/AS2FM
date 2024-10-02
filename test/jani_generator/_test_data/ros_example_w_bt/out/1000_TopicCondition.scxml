@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="1000_TopicCondition" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="last_msg" expr="false" type="bool" />
+    </datamodel>
+    <state id="initial">
+        <transition target="initial" event="topic_alarm_msg">
+            <assign location="last_msg" expr="_event.ros_fields__data" />
+        </transition>
+        <transition target="initial" event="bt_1000_tick">
+            <if cond="last_msg">
+                <send event="bt_1000_success" />
+                <else />
+                <send event="bt_1000_failure" />
+            </if>
+        </transition>
+    </state>
+</scxml>

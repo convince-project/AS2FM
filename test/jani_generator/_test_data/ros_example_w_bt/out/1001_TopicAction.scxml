@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="1001_TopicAction" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
+    <state id="initial">
+        <transition target="initial" event="bt_1001_tick">
+            <send event="topic_charge_msg" />
+            <send event="bt_1001_success" />
+        </transition>
+    </state>
+</scxml>

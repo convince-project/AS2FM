@@ -214,7 +214,8 @@ class TestConversion(unittest.TestCase):
         ouput_path = os.path.join(test_data_dir, 'main.jani')
         if os.path.exists(ouput_path):
             os.remove(ouput_path)
-        interpret_top_level_xml(xml_main_path, store_generated_scxmls)
+        generated_scxml_path = "generated_plain_scxml" if store_generated_scxmls else None
+        interpret_top_level_xml(xml_main_path, "main.jani", generated_scxml_path)
         self.assertTrue(os.path.exists(ouput_path))
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
