@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    name: ${{ matrix.package }} ⏩ ${{ matrix.linter }}
+    name: Pre-commit checks
     strategy:
       fail-fast: false
       matrix:
