@@ -27,7 +27,8 @@ from as2fm.as2fm_common.common import remove_namespace
 from as2fm.jani_generator.ros_helpers.ros_action_handler import \
     RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
-    generate_plain_scxml_from_handlers, update_ros_communication_handlers)
+    RosCommunicationHandler, generate_plain_scxml_from_handlers,
+    update_ros_communication_handlers)
 from as2fm.jani_generator.ros_helpers.ros_service_handler import \
     RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import (
@@ -151,8 +152,8 @@ def generate_plain_scxml_models_and_timers(
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
-    all_services: Dict[str, RosServiceHandler] = {}
-    all_actions: Dict[str, RosActionHandler] = {}
+    all_services: Dict[str, RosCommunicationHandler] = {}
+    all_actions: Dict[str, RosCommunicationHandler] = {}
     for scxml_entry in ros_scxmls:
         plain_scxmls, ros_declarations = \
             scxml_entry.to_plain_scxml_and_declarations()

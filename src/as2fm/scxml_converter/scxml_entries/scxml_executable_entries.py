@@ -132,7 +132,7 @@ class ScxmlIf(ScxmlBase):
         """Get the conditional executions."""
         return self._conditional_executions
 
-    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
+    def get_else_execution(self) -> ScxmlExecutionBody:
         """Get the else execution."""
         return self._else_execution
 

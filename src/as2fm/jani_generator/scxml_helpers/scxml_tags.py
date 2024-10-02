@@ -89,8 +89,9 @@ def _interpret_scxml_assign(
     assignment_value = parse_ecmascript_to_jani_expression(
         elem.get_expr(), array_info).replace_event(event_substitution)
     assignments: List[JaniAssignment] = [
-        JaniAssignment({"ref": assignment_target, "value": assignment_value, "index": assign_index})
-        ]
+        JaniAssignment({"ref": assignment_target,
+                       "value": assignment_value, "index": assign_index})
+    ]
     # Handle array types
     if is_target_array:
         target_identifier = assignment_target.as_identifier()
@@ -160,11 +161,17 @@ def _merge_conditions(
     return joint_condition
 
 
-def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_holder: EventsHolder,
-                                         body: ScxmlExecutionBody, source: str, target: str,
-                                         hash_str: str, guard_exp: Optional[JaniExpression],
-                                         trigger_event: Optional[str], max_array_size: int) \
-        -> Tuple[List[JaniEdge], List[str]]:
+def _append_scxml_body_to_jani_automaton(
+        jani_automaton: JaniAutomaton,
+        events_holder: EventsHolder,
+        body: ScxmlExecutionBody,
+        source: str,
+        target: str,
+        hash_str: str,
+        guard_exp: Optional[JaniExpression],
+        trigger_event: Optional[str],
+        max_array_size: int
+    ) -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
@@ -223,7 +230,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 if isinstance(res_eval_value, ArrayType):
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
                 jani_expr = parse_ecmascript_to_jani_expression(
-                                expr, array_info).replace_event(trigger_event)
+                    expr, array_info).replace_event(trigger_event)
                 new_edge.destinations[0]['assignments'].append(JaniAssignment({
                     "ref": param_assign_name,
                     "value": jani_expr
@@ -348,7 +355,8 @@ class BaseTag:
             BaseTag.from_element(child, call_trace + [element], model, max_array_size)
             for child in scxml_children]
 
-    def get_children(self) -> List[ScxmlBase]:
+    def get_children(self) -> Union[
+            List[ScxmlBase], List[ScxmlTransition], List[Union[ScxmlDataModel, ScxmlState]]]:
         """Method extracting all children from a specific Scxml Tag.
         """
         raise NotImplementedError("Method get_children not implemented.")
@@ -396,7 +404,7 @@ class DatamodelTag(BaseTag):
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
             assert check_value_type_compatible(
-                    interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
+                interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
                 f"Invalid value for {scxml_data.get_name()}: " \
                 f"Expected type {expected_type}, got {expr_type}."
             # TODO: Add support for lower and upper bounds
