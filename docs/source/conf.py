@@ -2,6 +2,8 @@
 
 # -- Project information
 
+# mypy: ignore-errors
+
 project = 'CONVINCE Model Checking Components'
 copyright = '2024'
 author = 'CONVINCE Consortium'

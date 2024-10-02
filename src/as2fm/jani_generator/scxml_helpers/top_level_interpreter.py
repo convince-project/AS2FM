@@ -24,11 +24,15 @@ from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from as2fm.as2fm_common.common import remove_namespace
+from as2fm.jani_generator.ros_helpers.ros_action_handler import \
+    RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
-    generate_plain_scxml_from_handlers, update_ros_communication_handlers)
-from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
-from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
-from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
+    RosCommunicationHandler, generate_plain_scxml_from_handlers,
+    update_ros_communication_handlers)
+from as2fm.jani_generator.ros_helpers.ros_service_handler import \
+    RosServiceHandler
+from as2fm.jani_generator.ros_helpers.ros_timer import (
+    RosTimer, make_global_timer_scxml)
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import \
     convert_multiple_scxmls_to_jani
 from as2fm.scxml_converter.bt_converter import bt_converter
@@ -148,8 +152,8 @@ def generate_plain_scxml_models_and_timers(
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []
-    all_services: Dict[str, RosServiceHandler] = {}
-    all_actions: Dict[str, RosActionHandler] = {}
+    all_services: Dict[str, RosCommunicationHandler] = {}
+    all_actions: Dict[str, RosCommunicationHandler] = {}
     for scxml_entry in ros_scxmls:
         plain_scxmls, ros_declarations = \
             scxml_entry.to_plain_scxml_and_declarations()

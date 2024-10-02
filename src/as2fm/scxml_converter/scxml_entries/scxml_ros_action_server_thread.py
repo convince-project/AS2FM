@@ -22,19 +22,24 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Optional, Type, Union
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlDataModel, ScxmlExecutionBody, ScxmlState, ScxmlTransition, ScxmlParam,
-    ScxmlRosDeclarationsContainer, RosField)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
-
+from as2fm.scxml_converter.scxml_entries import (RosField, ScxmlBase,
+                                                 ScxmlDataModel,
+                                                 ScxmlExecutionBody,
+                                                 ScxmlParam,
+                                                 ScxmlRosDeclarationsContainer,
+                                                 ScxmlState, ScxmlTransition)
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    generate_action_thread_execution_start_event, generate_action_thread_free_event,
-    sanitize_ros_interface_name)
+    generate_action_thread_execution_start_event,
+    generate_action_thread_free_event, sanitize_ros_interface_name)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import \
+    RosActionServer
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
+                                                                RosTrigger)
+from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
+                                                       is_non_empty_string)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, get_children_as_scxml)
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+    assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
 
 
 class RosActionThread(ScxmlBase):
@@ -93,14 +98,16 @@ class RosActionThread(ScxmlBase):
         self._states: List[ScxmlState] = []
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
-        """Append a state to the list of states. If initial is True, set it as the initial state."""
+        """Append a state to the list of states of the thread.
+        If initial is True, set it as the initial state."""
         self._states.append(state)
         if initial:
-            assert self._initial_state is None, "Error: SCXML root: Initial state already set"
+            assert self._initial_state is None, \
+                'Error: RosActionThread: Initial state already set'
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):
-        assert self._data_model is None, "Data model already set"
+        assert self._data_model is None, 'Data model already set'
         self._data_model = data_model
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:

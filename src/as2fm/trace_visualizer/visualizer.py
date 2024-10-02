@@ -36,7 +36,7 @@ PIXELS_INTERNAL_BORDER = 1
 def _hsv_to_rgb(h, s, v):
     """Converts an HSV color to an RGB color."""
     f_col = hsv_to_rgb(h, s, v)
-    return tuple([int(x * 255) for x in f_col])
+    return tuple(int(x * 255) for x in f_col)
 
 
 class Trace:
@@ -46,12 +46,15 @@ class Trace:
         self._df = df
 
     def df(self) -> pandas.DataFrame:
+        """Returns the dataframe of this trace."""
         return self._df
 
     def is_verified(self) -> bool:
+        """Returns True if the trace is verified, False otherwise."""
         return self._df[RESULT].dropna().item() == VERIFIED
 
 
+# pylint: disable=too-many-instance-attributes
 class Traces:
     """A class to represent a trace csv file produced by smc_storm."""
 
@@ -60,12 +63,7 @@ class Traces:
         self.ltr: bool = left_to_right
 
         # Preparing data
-        self.df = pandas.read_csv(fname, sep=';')
-        self.columns = self.df.columns.values
-        assert len(self.columns) > 1, 'Must have more than one column.'
-        self.traces = self._separate_traces()
-        self.automata = self._get_unique_automata()
-        assert len(self.automata) > 1, 'Must have more than one automaton.'
+        self._prepare_data(fname)
 
         # Precomputations for visualization
         self.titles, self.titles_max_height, self.titles_max_width = \
@@ -105,6 +103,7 @@ class Traces:
         print(f'{verified=}, {falsified=}')
         return verified, falsified
 
+    # pylint: disable=too-many-locals
     def write_trace_to_img(
             self, trace_no: int, fname: str):
         """Write one trace to image file.
@@ -119,42 +118,17 @@ class Traces:
         print(trace.df())
         data_height = len(trace.df().index)
         print(f'{data_height=}')
-        self.img_height = text_height + data_height \
+        img_height = text_height + data_height \
             + 2 * PIXELS_EXTERNAL_BORDER + PIXELS_INTERNAL_BORDER
         image = Image.new(
-            'RGB', (self.img_width, self.img_height), color='black')
+            'RGB', (self.img_width, img_height), color='black')
         draw = ImageDraw.Draw(image)
 
         # Draw the automata names
-        for a in self.automata:
-            x = self.start_per_column[f'{LOC_PREFIX}{a}']
-            y_start = PIXELS_EXTERNAL_BORDER
-            bbox = self.titles[a].getbbox()
-            # this_text_height = bbox[3] - bbox[1]
-            # this_text_width = bbox[2] - bbox[0]
-            # print(f'{a=}, {x=}, {y=}, {this_text_width=}, {this_text_height=}')
-            colorized_text = ImageOps.colorize(
-                self.titles[a], black='black',
-                white=self.color_per_automaton[a][2])
-            image.paste(colorized_text,
-                        box=(x, y_start))
-            # mask=self.titles[a])
+        image = self._draw_automata_names(image)
 
         # Add line from end of text to data
-        y_data_start = PIXELS_EXTERNAL_BORDER + text_height + \
-            PIXELS_INTERNAL_BORDER
-        for a in self.automata:
-            x = self.start_per_column[f'{LOC_PREFIX}{a}']
-            bbox = self.titles[a].getbbox()
-            y_start = PIXELS_EXTERNAL_BORDER + \
-                bbox[3] - bbox[1] + PIXELS_EXTERNAL_BORDER
-            y_end = y_data_start - 1 - PIXELS_EXTERNAL_BORDER
-            if y_start >= y_end:
-                continue
-            draw.line(
-                [x, y_start, x, y_end],
-                fill=self.color_per_automaton[a][2]
-            )
+        y_data_start = self._draw_lines(draw, text_height)
 
         # Draw the data
         y_data_end = y_data_start + data_height
@@ -202,9 +176,9 @@ class Traces:
         color = 'green' if result else 'red'
         draw.rectangle(
             [PIXELS_EXTERNAL_BORDER,
-             self.img_height - PIXELS_EXTERNAL_BORDER - 1,
+             img_height - PIXELS_EXTERNAL_BORDER - 1,
              self.img_width - PIXELS_EXTERNAL_BORDER - 1,
-             self.img_height - PIXELS_EXTERNAL_BORDER - 1],
+             img_height - PIXELS_EXTERNAL_BORDER - 1],
             fill=color
         )
 
@@ -217,6 +191,46 @@ class Traces:
 
         # Write the image to file
         image.save(fname)
+
+    def _prepare_data(self, fname: str):
+        self.df = pandas.read_csv(fname, sep=';')
+        self.columns = self.df.columns.values
+        assert len(self.columns) > 1, 'Must have more than one column.'
+        self.traces = self._separate_traces()
+        self.automata = self._get_unique_automata()
+        assert len(self.automata) > 1, 'Must have more than one automaton.'
+
+    def _draw_automata_names(self, image: Image) -> Image:
+        for a in self.automata:
+            x = self.start_per_column[f'{LOC_PREFIX}{a}']
+            y_start = PIXELS_EXTERNAL_BORDER
+            # bbox = self.titles[a].getbbox()
+            # this_text_height = bbox[3] - bbox[1]
+            # this_text_width = bbox[2] - bbox[0]
+            # print(f'{a=}, {x=}, {y=}, {this_text_width=}, {this_text_height=}')
+            colorized_text = ImageOps.colorize(
+                self.titles[a], black='black',
+                white=self.color_per_automaton[a][2])
+            image.paste(colorized_text,
+                        box=(x, y_start))
+        return image
+
+    def _draw_lines(self, draw: ImageDraw.Draw, text_height: int):
+        y_data_start = PIXELS_EXTERNAL_BORDER + text_height + \
+            PIXELS_INTERNAL_BORDER
+        for a in self.automata:
+            x = self.start_per_column[f'{LOC_PREFIX}{a}']
+            bbox = self.titles[a].getbbox()
+            y_start = PIXELS_EXTERNAL_BORDER + \
+                bbox[3] - bbox[1] + PIXELS_EXTERNAL_BORDER
+            y_end = y_data_start - 1 - PIXELS_EXTERNAL_BORDER
+            if y_start >= y_end:
+                continue
+            draw.line(
+                [x, y_start, x, y_end],
+                fill=self.color_per_automaton[a][2]
+            )
+        return y_data_start
 
     def _precompute_text(self):
         """Create the header of the image."""
@@ -238,7 +252,7 @@ class Traces:
             d = ImageDraw.Draw(txt)
             d.text((0, 0), automaton, font=f, fill=255)
             txt = enhancer(txt).enhance(10.0)
-            hist = txt.histogram()
+            # hist = txt.histogram()
             # for i in range(256):
             #     if hist[i] == 0:
             #         continue

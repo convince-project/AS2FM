@@ -17,16 +17,18 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import get_args, Dict, List
+from typing import Dict, List, get_args
 
 from as2fm.as2fm_common.common import is_array_type
 from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
 from as2fm.jani_generator.jani_entries.jani_composition import JaniComposition
 from as2fm.jani_generator.jani_entries.jani_edge import JaniEdge
-from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
+from as2fm.jani_generator.jani_entries.jani_expression_generator import \
+    array_create_operator
 from as2fm.jani_generator.ros_helpers.ros_timer import (
-    RosTimer, GLOBAL_TIMER_NAME, GLOBAL_TIMER_TICK_ACTION, ROS_TIMER_RATE_EVENT_PREFIX)
+    GLOBAL_TIMER_NAME, GLOBAL_TIMER_TICK_ACTION, ROS_TIMER_RATE_EVENT_PREFIX,
+    RosTimer)
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 
 

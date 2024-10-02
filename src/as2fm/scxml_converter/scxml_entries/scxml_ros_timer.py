@@ -19,12 +19,15 @@ from typing import Type
 from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback
-
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.ros_utils import \
+    generate_rate_timer_event
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
+                                                                RosDeclaration)
+from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
+                                                       is_non_empty_string)
+from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
+                                                           get_xml_argument)
 
 
 class RosTimeRate(RosDeclaration):

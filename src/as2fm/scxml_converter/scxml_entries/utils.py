@@ -16,12 +16,11 @@
 """Collection of various utilities for SCXML entries."""
 
 import re
-from enum import auto, Enum
-from typing import Any, Dict, List, Optional, Type, MutableSequence
+from enum import Enum, auto
+from typing import Any, Dict, List, MutableSequence, Optional, Type
 
 from as2fm.as2fm_common.common import is_array_type, string_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
-
 
 PLAIN_SCXML_EVENT_PREFIX: str = "_event."
 

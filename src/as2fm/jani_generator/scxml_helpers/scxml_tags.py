@@ -18,28 +18,31 @@ Module defining SCXML tags to match against.
 """
 
 import xml.etree.ElementTree as ET
-from hashlib import sha256
-from typing import get_args, Dict, List, Optional, Set, Tuple, Union
 from array import ArrayType
+from hashlib import sha256
+from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
-from as2fm.as2fm_common.common import (
-    check_value_type_compatible, string_to_value, value_to_type)
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.jani_generator.jani_entries import (
-    JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniExpressionType, JaniGuard,
-    JaniValue, JaniVariable)
+from as2fm.as2fm_common.common import (check_value_type_compatible,
+                                       string_to_value, value_to_type)
+from as2fm.as2fm_common.ecmascript_interpretation import \
+    interpret_ecma_script_expr
+from as2fm.jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
+                                               JaniEdge, JaniExpression,
+                                               JaniExpressionType, JaniGuard,
+                                               JaniValue, JaniVariable)
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    and_operator, not_operator, max_operator, plus_operator)
+    and_operator, max_operator, not_operator, plus_operator)
 from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_all_variables_and_instantiations, get_array_type_and_size, get_variable_type,
-    is_variable_array)
+    get_all_variables_and_instantiations, get_array_type_and_size,
+    get_variable_type, is_variable_array)
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo, parse_ecmascript_to_jani_expression)
-from as2fm.scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase, ScxmlData,
-                                           ScxmlDataModel, ScxmlExecutionBody,
-                                           ScxmlIf, ScxmlRoot, ScxmlSend,
-                                           ScxmlState, ScxmlTransition)
+from as2fm.scxml_converter.scxml_entries import (ScxmlAssign, ScxmlBase,
+                                                 ScxmlData, ScxmlDataModel,
+                                                 ScxmlExecutionBody, ScxmlIf,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 
 # The resulting types from the SCXML conversion to Jani
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
@@ -86,8 +89,9 @@ def _interpret_scxml_assign(
     assignment_value = parse_ecmascript_to_jani_expression(
         elem.get_expr(), array_info).replace_event(event_substitution)
     assignments: List[JaniAssignment] = [
-        JaniAssignment({"ref": assignment_target, "value": assignment_value, "index": assign_index})
-        ]
+        JaniAssignment({"ref": assignment_target,
+                       "value": assignment_value, "index": assign_index})
+    ]
     # Handle array types
     if is_target_array:
         target_identifier = assignment_target.as_identifier()
@@ -157,11 +161,17 @@ def _merge_conditions(
     return joint_condition
 
 
-def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_holder: EventsHolder,
-                                         body: ScxmlExecutionBody, source: str, target: str,
-                                         hash_str: str, guard_exp: Optional[JaniExpression],
-                                         trigger_event: Optional[str], max_array_size: int) \
-        -> Tuple[List[JaniEdge], List[str]]:
+def _append_scxml_body_to_jani_automaton(
+    jani_automaton: JaniAutomaton,
+    events_holder: EventsHolder,
+    body: ScxmlExecutionBody,
+    source: str,
+    target: str,
+    hash_str: str,
+    guard_exp: Optional[JaniExpression],
+    trigger_event: Optional[str],
+    max_array_size: int
+) -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
@@ -208,6 +218,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 param_assign_name = f'{ec.get_event()}.{param.get_name()}'
                 expr = param.get_expr() if param.get_expr() is not None else \
                     param.get_location()
+                assert expr is not None, "Expected expression or location in param."
                 # Update the events holder
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
                 variables = get_all_variables_and_instantiations(jani_automaton)
@@ -220,7 +231,7 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 if isinstance(res_eval_value, ArrayType):
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
                 jani_expr = parse_ecmascript_to_jani_expression(
-                                expr, array_info).replace_event(trigger_event)
+                    expr, array_info).replace_event(trigger_event)
                 new_edge.destinations[0]['assignments'].append(JaniAssignment({
                     "ref": param_assign_name,
                     "value": jani_expr
@@ -237,6 +248,8 @@ def _append_scxml_body_to_jani_automaton(jani_automaton: JaniAutomaton, events_h
                 elif jani_expr_type == JaniExpressionType.OPERATOR:
                     op_type, operands = jani_expr.as_operator()
                     if op_type == "av":
+                        assert isinstance(res_eval_value, ArrayType), \
+                            f"Expected array value, got {res_eval_value}."
                         new_edge.destinations[0]['assignments'].append(JaniAssignment({
                             "ref": f'{param_assign_name}.length',
                             "value": JaniValue(len(res_eval_value))}))
@@ -345,7 +358,8 @@ class BaseTag:
             BaseTag.from_element(child, call_trace + [element], model, max_array_size)
             for child in scxml_children]
 
-    def get_children(self) -> List[ScxmlBase]:
+    def get_children(self) -> Union[
+            List[ScxmlBase], List[ScxmlTransition], List[Union[ScxmlDataModel, ScxmlState]]]:
         """Method extracting all children from a specific Scxml Tag.
         """
         raise NotImplementedError("Method get_children not implemented.")
@@ -393,7 +407,7 @@ class DatamodelTag(BaseTag):
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
             assert check_value_type_compatible(
-                    interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
+                interpret_ecma_script_expr(scxml_data.get_expr()), expected_type), \
                 f"Invalid value for {scxml_data.get_name()}: " \
                 f"Expected type {expected_type}, got {expr_type}."
             # TODO: Add support for lower and upper bounds

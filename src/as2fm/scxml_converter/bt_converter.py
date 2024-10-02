@@ -17,19 +17,20 @@
 Convert Behavior Trees (BT xml) to SCXML.
 """
 
-from copy import deepcopy
 import os
+import re
+from copy import deepcopy
 from enum import Enum, auto
 from typing import List
-import re
 
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
 
-from as2fm.scxml_converter.scxml_entries import (
-    RosRateCallback, RosTimeRate, ScxmlRoot, ScxmlSend, ScxmlState, ScxmlTransition,
-    RESERVED_BT_PORT_NAMES)
+from as2fm.scxml_converter.scxml_entries import (RESERVED_BT_PORT_NAMES,
+                                                 RosRateCallback, RosTimeRate,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 
 
 class BT_EVENT_TYPE(Enum):

@@ -13,8 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from xml.etree import ElementTree as ET
+"""
+Utilities used to compare XML.
+"""
+
 import re
+from xml.etree import ElementTree as ET
 
 
 def to_snake_case(text: str) -> str:

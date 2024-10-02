@@ -17,10 +17,17 @@ import os
 
 from test_utils import canonicalize_xml, remove_empty_lines
 
-from as2fm.scxml_converter.scxml_entries import (
-    RosField, RosRateCallback, RosTimeRate, RosTopicCallback, RosTopicPublish, RosTopicPublisher,
-    RosTopicSubscriber, ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlParam, ScxmlRoot, ScxmlSend,
-    ScxmlState, ScxmlTransition, BtInputPortDeclaration, BtGetValueInputPort)
+from as2fm.scxml_converter.scxml_entries import (BtGetValueInputPort,
+                                                 BtInputPortDeclaration,
+                                                 RosField, RosRateCallback,
+                                                 RosTimeRate, RosTopicCallback,
+                                                 RosTopicPublish,
+                                                 RosTopicPublisher,
+                                                 RosTopicSubscriber,
+                                                 ScxmlAssign, ScxmlData,
+                                                 ScxmlDataModel, ScxmlParam,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
 
@@ -148,21 +155,25 @@ def test_bt_action_with_ports_from_code():
 
 
 def test_xml_parsing_battery_drainer():
+    """Test the parsing of the battery drainer scxml file."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'battery_drainer_w_bt', 'battery_drainer.scxml'))
 
 
 def test_xml_parsing_bt_topic_condition():
+    """Test the parsing of the bt topic condition scxml file."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'battery_drainer_w_bt', 'bt_topic_condition.scxml'))
 
 
 def test_xml_parsing_invalid_battery_drainer_xml():
+    """Test the parsing of the battery drainer scxml file with invalid xml."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'battery_drainer.scxml'), valid_xml=False)
 
 
 def test_xml_parsing_invalid_bt_topic_action_xml():
+    """Test the parsing of the bt topic action scxml file with invalid xml."""
     _test_xml_parsing(os.path.join(os.path.dirname(__file__), '_test_data',
                                    'invalid_xmls', 'bt_topic_action.scxml'), valid_xml=False)
 

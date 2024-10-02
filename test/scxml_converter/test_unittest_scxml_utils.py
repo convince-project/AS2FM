@@ -16,10 +16,11 @@
 """"Test the SCXML data conversion from all possible declaration types"""
 
 from typing import List, MutableSequence
-from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType, get_plain_expression, get_data_type_from_string)
 
 import pytest
+
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType, get_data_type_from_string, get_plain_expression)
 
 
 def test_standard_good_expressions():
@@ -71,6 +72,7 @@ def test_topic_good_expressions():
 
 
 def test_topic_bad_expressions():
+    """Test expressions that have events in them, which are not allowed in topic entries."""
     bad_expressions: List[str] = [
         "_event.data",
         "x + _res.y + z == _msg.data",

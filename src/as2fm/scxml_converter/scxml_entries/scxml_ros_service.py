@@ -23,12 +23,13 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Ser
 from typing import Type
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
-
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration, RosCallback, RosTrigger
-
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    generate_srv_request_event, generate_srv_response_event, generate_srv_server_request_event,
-    generate_srv_server_response_event, is_srv_type_known)
+    generate_srv_request_event, generate_srv_response_event,
+    generate_srv_server_request_event, generate_srv_server_response_event,
+    is_srv_type_known)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
+                                                                RosDeclaration,
+                                                                RosTrigger)
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 

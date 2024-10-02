@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-
 from typing import Dict, List, Tuple
 
 from test_utils import canonicalize_xml, remove_empty_lines, to_snake_case
@@ -24,10 +23,12 @@ from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
 def get_output_folder(test_folder: str):
+    """Get the output folder for the test."""
     return os.path.join(os.path.dirname(__file__), '_test_data', test_folder, 'output')
 
 
 def clear_output_folder(test_folder: str):
+    """Clear the output folder. If it does not exist, create it."""
     output_folder = get_output_folder(test_folder)
     if os.path.exists(output_folder):
         for f in os.listdir(output_folder):
@@ -57,7 +58,7 @@ def bt_to_scxml_test(
         for scxml_obj in scxml_objs:
             output_file = os.path.join(
                 get_output_folder(test_folder), f'{scxml_obj.get_name()}.scxml')
-            with open(output_file, 'w') as f_o:
+            with open(output_file, 'w', encoding='utf-8') as f_o:
                 f_o.write(scxml_obj.as_xml_string())
     for scxml_root in scxml_objs:
         scxml_name = scxml_root.get_name()
@@ -82,6 +83,7 @@ def ros_to_plain_scxml_test(test_folder: str,
     :param expected_scxmls: The SCXML object names expected from the specified input files.
     :param store_generated: If True, the generated SCXML files are stored in the output folder.
     """
+    # pylint: disable=too-many-locals
     test_data_path = os.path.join(os.path.dirname(__file__), '_test_data', test_folder)
     scxml_files = [file for file in os.listdir(test_data_path) if file.endswith('.scxml')]
     if store_generated:
@@ -99,7 +101,7 @@ def ros_to_plain_scxml_test(test_folder: str,
                 for generated_scxml in plain_scxmls:
                     output_file = os.path.join(get_output_folder(test_folder),
                                                f'{generated_scxml.get_name()}.scxml')
-                    with open(output_file, 'w') as f_o:
+                    with open(output_file, 'w', encoding='utf-8') as f_o:
                         f_o.write(generated_scxml.as_xml_string())
             if fname not in expected_scxmls:
                 gt_files: List[str] = [fname.removesuffix('.scxml')]
@@ -124,29 +126,37 @@ def ros_to_plain_scxml_test(test_folder: str,
 
 
 def test_bt_to_scxml_battery_drainer():
+    """Test the conversion of the battery drainer with BT to SCXML."""
     bt_to_scxml_test('battery_drainer_w_bt', 'bt.xml',
                      ['bt_topic_action.scxml', 'bt_topic_condition.scxml'], False)
 
 
 def test_ros_to_plain_scxml_battery_drainer():
+    """Test the conversion of the battery drainer with ROS macros to plain SCXML."""
     ros_to_plain_scxml_test('battery_drainer_w_bt', {}, {}, True)
 
 
 def test_bt_to_scxml_bt_ports():
+    """Test the conversion of the BT with ports to SCXML."""
     bt_to_scxml_test('bt_ports_only', 'bt.xml', ['bt_topic_action.scxml'], False)
 
 
 def test_ros_to_plain_scxml_bt_ports():
+    """Test the conversion of the BT with ports to plain SCXML."""
     ros_to_plain_scxml_test('bt_ports_only',
                             {'bt_topic_action.scxml': [('name', 'out'), ('data', '123')]}, {},
                             True)
 
 
 def test_ros_to_plain_scxml_add_int_srv():
+    """Test the conversion of the add_int_srv_example with ROS macros to plain
+    SCXML."""
     ros_to_plain_scxml_test('add_int_srv_example', {}, {}, True)
 
 
 def test_ros_to_plain_scxml_fibonacci_action():
+    """Test the conversion of the fibonacci_action_example with ROS macros to plain
+    SCXML."""
     ros_to_plain_scxml_test(
         'fibonacci_action_example', {},
         {"server.scxml": ["server", "fibonacci_thread_0", "fibonacci_thread_1"]},

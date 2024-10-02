@@ -15,7 +15,7 @@
 
 """A constant value expression."""
 
-from typing import Type, Optional, Union, get_args
+from typing import Optional, Type, Union, get_args
 
 from as2fm.jani_generator.jani_entries import JaniExpression
 

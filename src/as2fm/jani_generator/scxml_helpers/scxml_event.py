@@ -19,7 +19,9 @@ Module to hold scxml even information to convert to jani syncs later.
 
 import re
 from typing import Dict, List, Optional
-from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
+
+from as2fm.jani_generator.ros_helpers.ros_timer import \
+    ROS_TIMER_RATE_EVENT_PREFIX
 
 
 class EventSender:

@@ -16,11 +16,13 @@
 # limitations under the License.
 
 import argparse
-import os
 import json
+import os
+
 import plantuml
 
 from as2fm.jani_visualizer.visualizer import PlantUMLAutomata
+
 
 def main_jani_to_plantuml():
     parser = argparse.ArgumentParser(
