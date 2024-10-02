@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="global_timer_automata" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="current_time" expr="0" type="int64" />
+    </datamodel>
+    <state id="idle">
+        <transition target="idle" cond="current_time &lt; 100">
+            <assign location="current_time" expr="current_time + 1" />
+            <if cond="(current_time % 1) == 0">
+                <send event="ros_time_rate.my_timer" />
+            </if>
+            <if cond="(current_time % 1) == 0">
+                <send event="ros_time_rate.bt_tick" />
+            </if>
+        </transition>
+    </state>
+</scxml>

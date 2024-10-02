@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="send_req"
+    version="1.0"
+    name="client_2"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="temp_sum" type="int64" expr="0" />
+    </datamodel>
+
+    <ros_topic_publisher topic="/client_2_res" type="std_msgs/Bool" />
+    <ros_service_client service_name="/adder" type="example_interfaces/AddTwoInts" />
+
+    <state id="send_req">
+        <onentry>
+            <ros_service_send_request name="/adder">
+                <field name="a" expr="12" />
+                <field name="b" expr="12" />
+            </ros_service_send_request>
+        </onentry>
+        <ros_service_handle_response name="/adder" target="done">
+            <assign location="temp_sum" expr="_res.sum" />
+            <ros_topic_publish name="/client_2_res">
+                <field name="data" expr="temp_sum == 24" />
+            </ros_topic_publish>
+        </ros_service_handle_response>
+    </state>
+
+    <state id="done" />
+</scxml>

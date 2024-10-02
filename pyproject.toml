@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel", "pip>=24.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "as2fm"
+version = "0.0.1"
+description = ""
+readme = "README.md"
+authors = [
+    {name = "Christian Henkel", email = "christian.henkel2@de.bosch.com"},
+    {name = "Marco Lampacrescia", email = "marco.lampacrescia@de.bosch.com"}
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = []
+dependencies = [
+    # as2fm_common
+    "js2py",
+    # jani_generator
+    "jsonschema",
+    "esprima",
+    # jani_visualizer
+    "webcolors",
+    "plantuml",
+    # scxml_converter
+    "networkx",
+    # "btlib", (would be good to declare here but then this is only installable in a ros environment)
+    # trace_visualizer
+    "pandas",
+    "Pillow",
+]
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["as2fm", "as2fm.*"]
+
+[tool.setuptools.package-dir]
+as2fm = "src/as2fm"
+
+[tool.setuptools.package-data]
+"as2fm.trace_visualizer" = ["data/slkscr.ttf"]
+
+[project.scripts]
+as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"
+as2fm_scxml_to_jani = "as2fm.jani_generator.main:main_scxml_to_jani"
+as2fm_jani_to_plantuml = "as2fm.jani_visualizer.main:main_jani_to_plantuml"
+as2fm_trace_to_png = "as2fm.trace_visualizer.main:main_trace_to_png"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pycodestyle",
+    "flake8",
+    "mypy",
+    "isort",
+    "bumpver"
+]
+
+[isort]
+profile = "google"
+line_length = 100
+
+[flake8]
+max_line_length = 100

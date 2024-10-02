@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="send_req"
+    version="1.0"
+    name="client_2"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="fibonacci_result" type="int32[]" expr="[]" />
+        <data id="counter" type="int32" expr="0" />
+    </datamodel>
+
+    <ros_topic_publisher name="res_topic" topic="/client_2_last_fibonacci" type="std_msgs/Int32" />
+    <ros_topic_publisher name="feedbacks_topic" topic="/client_2_feedback_count" type="std_msgs/Int32" />
+    <ros_action_client name="example_action" action_name="/fibonacci" type="example_interfaces/Fibonacci" />
+
+    <state id="send_req">
+        <onentry>
+            <ros_action_send_goal name="example_action">
+                <field name="order" expr="7" />
+            </ros_action_send_goal>
+        </onentry>
+        <ros_action_handle_goal_response name="example_action" accept="wait_result" reject="send_req" />
+    </state>
+
+    <state id="wait_result">
+        <ros_action_handle_feedback name="example_action" target="wait_result">
+            <assign location="counter" expr="counter + 1" />
+            <ros_topic_publish name="feedbacks_topic">
+                <field name="data" expr="counter" />
+            </ros_topic_publish>
+        </ros_action_handle_feedback>
+        <ros_action_handle_success_result name="example_action" target="done">
+            <assign location="fibonacci_result" expr="_wrapped_result.result.sequence" />
+            <ros_topic_publish name="res_topic">
+                <field name="data" expr="fibonacci_result[6]" />
+            </ros_topic_publish>
+        </ros_action_handle_success_result>
+    </state>
+
+    <state id="done" />
+</scxml>

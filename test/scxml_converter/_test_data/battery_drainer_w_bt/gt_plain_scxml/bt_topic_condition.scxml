@@ -1,0 +1,20 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="BtTopicCondition" model_src="">
+
+    <datamodel>
+        <data id="last_msg" expr="False" type="bool" />
+    </datamodel>
+
+    <state id="initial">
+        <transition target="initial" event="topic_alarm_msg">
+            <assign location="last_msg" expr="_event.ros_fields__data" />
+        </transition>
+        <transition event="bt_tick" target="initial">
+            <if cond="last_msg">
+                <send event="bt_success" />
+                <else/>
+                <send event="bt_failure" />
+            </if>
+        </transition>
+    </state>
+
+</scxml>
