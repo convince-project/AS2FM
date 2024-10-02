@@ -10,7 +10,7 @@ repos:
           - id: check-added-large-files
     # black for auto-formatting
     - repo: https://github.com/psf/black
-      rev: 21.12b0
+      rev: 24.8.0
       hooks:
           - id: black
             language_version: python3.10
