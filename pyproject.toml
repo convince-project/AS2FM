@@ -35,15 +35,9 @@ dependencies = [
 ]
 requires-python = ">=3.10"
 
-[tool.setuptools]
-packages = [
-    "as2fm",
-    "as2fm.as2fm_common",
-    "as2fm.jani_generator",
-    "as2fm.jani_visualizer",
-    "as2fm.scxml_converter",
-    "as2fm.trace_visualizer"
-]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["as2fm", "as2fm.*"]
 
 [tool.setuptools.package-dir]
 as2fm = "src/as2fm"
