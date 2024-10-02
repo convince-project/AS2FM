@@ -218,6 +218,7 @@ def _append_scxml_body_to_jani_automaton(
                 param_assign_name = f'{ec.get_event()}.{param.get_name()}'
                 expr = param.get_expr() if param.get_expr() is not None else \
                     param.get_location()
+                assert expr is not None, "Expected expression or location in param."
                 # Update the events holder
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
                 variables = get_all_variables_and_instantiations(jani_automaton)
@@ -247,6 +248,8 @@ def _append_scxml_body_to_jani_automaton(
                 elif jani_expr_type == JaniExpressionType.OPERATOR:
                     op_type, operands = jani_expr.as_operator()
                     if op_type == "av":
+                        assert isinstance(res_eval_value, ArrayType), \
+                            f"Expected array value, got {res_eval_value}."
                         new_edge.destinations[0]['assignments'].append(JaniAssignment({
                             "ref": f'{param_assign_name}.length',
                             "value": JaniValue(len(res_eval_value))}))
