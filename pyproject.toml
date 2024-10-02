@@ -62,10 +62,6 @@ dev = [
     "bumpver"
 ]
 
-[isort]
-profile = "black"
-line_length = 100
-
 [tool.pylint.main]
 disable = [
     "C0114",  # Missing module docstring
