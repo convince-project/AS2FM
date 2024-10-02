@@ -18,7 +18,7 @@
 from typing import Any, Dict, List, Optional, Set
 
 from as2fm.jani_generator.jani_entries import (JaniConstant, JaniEdge,
-                                         JaniExpression, JaniVariable)
+                                               JaniExpression, JaniVariable)
 
 
 class JaniAutomaton:

@@ -17,17 +17,20 @@
 Representation of ROS timers.
 """
 
+from math import floor, gcd
 from typing import List, Optional, Tuple
 
-from math import gcd, floor
-from as2fm.jani_generator.jani_entries import (
-    JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
+from as2fm.jani_generator.jani_entries import (JaniAssignment, JaniAutomaton,
+                                               JaniEdge, JaniExpression,
+                                               JaniGuard, JaniVariable)
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
-from as2fm.scxml_converter.scxml_entries import (
-    ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlExecutionBody, ScxmlIf, ScxmlRoot, ScxmlSend,
-    ScxmlState, ScxmlTransition)
-
+    and_operator, equal_operator, lower_operator, modulo_operator,
+    not_operator, plus_operator)
+from as2fm.scxml_converter.scxml_entries import (ScxmlAssign, ScxmlData,
+                                                 ScxmlDataModel,
+                                                 ScxmlExecutionBody, ScxmlIf,
+                                                 ScxmlRoot, ScxmlSend,
+                                                 ScxmlState, ScxmlTransition)
 
 TIME_UNITS = {
     "s": 1,

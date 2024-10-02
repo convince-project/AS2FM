@@ -48,3 +48,19 @@ class ScxmlBase:
     def as_xml(self):
         """Convert the object to an XML element."""
         raise NotImplementedError
+
+    def get_body(self):
+        """Get the body of the object."""
+        raise NotImplementedError
+
+    def get_id(self) -> str:
+        """Get the ID of the object."""
+        raise NotImplementedError
+
+    def get_states(self):
+        """Get the states of the object."""
+        raise NotImplementedError
+
+    def get_data_model(self):
+        """Get the data model of the object."""
+        raise NotImplementedError

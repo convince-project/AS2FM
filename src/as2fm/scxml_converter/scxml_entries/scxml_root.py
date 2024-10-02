@@ -22,17 +22,18 @@ from os.path import isfile
 from typing import List, Optional, Tuple, get_args
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (
-    BtInputPortDeclaration, BtOutputPortDeclaration, ScxmlBase, ScxmlDataModel,
-    ScxmlRosDeclarationsContainer, ScxmlState, RosActionThread)
-
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
-
-from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
+from as2fm.scxml_converter.scxml_entries import (BtInputPortDeclaration,
+                                                 BtOutputPortDeclaration,
+                                                 RosActionThread, ScxmlBase,
+                                                 ScxmlDataModel,
+                                                 ScxmlRosDeclarationsContainer,
+                                                 ScxmlState)
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_children_as_scxml, get_xml_argument)
-from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class ScxmlRoot(ScxmlBase):
@@ -147,10 +148,12 @@ class ScxmlRoot(ScxmlBase):
             state.instantiate_bt_events(instance_id)
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
-        """Append a state to the list of states. If initial is True, set it as the initial state."""
+        """Append a state to the list of states in the SCXML model.
+        If initial is True, set it as the initial state."""
         self._states.append(state)
         if initial:
-            assert self._initial_state is None, "Error: SCXML root: Initial state already set"
+            assert self._initial_state is None, \
+                "Error: SCXML root: Initial state already set"
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):

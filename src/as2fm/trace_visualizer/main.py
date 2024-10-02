@@ -21,6 +21,12 @@ from as2fm.trace_visualizer.visualizer import Traces
 
 
 def main_trace_to_png():
+    """
+    converts a trace file produced by smc_storm into two images. One image for
+    the first verified trace (if any) and one image for the first falsified
+    trace (if any).
+    """
+
     parser = argparse.ArgumentParser(
         description='Converts a trace file produced by smc_storm into two' +
         ' images. One image for the first verified trace (if any) and one' +

@@ -20,13 +20,17 @@ Definition of SCXML Tags that can be part of executable content
 from typing import Dict, List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (
-    ScxmlBase, ScxmlParam, ScxmlRosDeclarationsContainer, BtGetValueInputPort)
-from as2fm.scxml_converter.scxml_entries.bt_utils import is_bt_event, replace_bt_event, BtPortsHandler
+from as2fm.scxml_converter.scxml_entries import (BtGetValueInputPort,
+                                                 ScxmlBase, ScxmlParam,
+                                                 ScxmlRosDeclarationsContainer)
+from as2fm.scxml_converter.scxml_entries.bt_utils import (BtPortsHandler,
+                                                          is_bt_event,
+                                                          replace_bt_event)
+from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
+                                                       get_plain_expression,
+                                                       is_non_empty_string)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
-from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType, get_plain_expression, is_non_empty_string)
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
@@ -128,7 +132,7 @@ class ScxmlIf(ScxmlBase):
         """Get the conditional executions."""
         return self._conditional_executions
 
-    def get_else_execution(self) -> Optional[ScxmlExecutionBody]:
+    def get_else_execution(self) -> ScxmlExecutionBody:
         """Get the else execution."""
         return self._else_execution
 

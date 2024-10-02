@@ -13,38 +13,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Helper functions to facilitate calling smc_storm and checking for
+the desired output.
+"""
+
+
 import subprocess
+from typing import List, Tuple
 
 import pytest
 
 
-def _run_smc_storm(args: str):
-    command = f"smc_storm {args}"
+def _interpret_output(
+        output: str,
+        expected_content: List[str],
+        not_expected_content: List[str]):
+    """Interpret the output of the command. Make
+    sure that the expected content is present and
+    that the not expected content is not present."""
+    for content in expected_content:
+        assert content in output, f"Expected content {content} not found in output."
+    for content in not_expected_content:
+        assert content not in output, f"Unexpected content {content} found in output."
+
+
+def _run_smc_storm(args: str) -> Tuple[str, str, int]:
+    """Run smc_storm with the given arguments and return
+    the stdout, stderr and return code."""
+    command = f"smc_storm {args} --max-trace-length 10000 --max-n-traces 10000"
     print("Running command: ", command)
-    process = subprocess.Popen(
+    with subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=True,
         universal_newlines=True
-    )
-    stdout, stderr = process.communicate()
-    return_code = process.returncode
-    print("smc_storm stdout:")
-    print(stdout)
-    print("smc_storm stderr:")
-    print(stderr)
-    print("smc_storm return code:")
-    print(return_code)
-    assert return_code == 0, \
-        f"Command failed with return code {return_code}"
-    return return_code == 0
+    ) as process:
+        stdout, stderr = process.communicate()
+        return_code = process.returncode
+        print(f"stdout: \"\"\"\n{stdout}\"\"\"")
+        print(f"stderr: \"\"\"\n{stderr}\"\"\"")
+        print(f"return code: {return_code}")
+        assert return_code == 0, \
+            f"Command failed with return code {return_code}"
+    return stdout, stderr, return_code
+
+
+def run_smc_storm_with_output(
+        args: str,
+        expected_content: List[str],
+        not_expected_content: List[str]):
+    """Run smc_storm with the given arguments and check
+    if the output is as expected."""
+    stdout, stderr, result = _run_smc_storm(args)
+    assert result == 0, "smc_storm failed to run"
+    _interpret_output(stdout, expected_content, not_expected_content)
+    _interpret_output(stderr, [], not_expected_content)
 
 
 def test_run_smc_storm():
     """Testing if it is possible to run smc_storm."""
-    result = _run_smc_storm("-v")
-    assert result, "smc_storm failed to run"
+    _, _, result = _run_smc_storm("-v")
+    assert result == 0, "smc_storm failed to run"
 
 
 if __name__ == '__main__':

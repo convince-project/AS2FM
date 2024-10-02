@@ -16,9 +16,10 @@
 """Test the ROS timer conversion"""
 
 from typing import List
+
 from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.ros_helpers.ros_timer import (
-    RosTimer, make_global_timer_automaton, GLOBAL_TIMER_TICK_ACTION)
+    GLOBAL_TIMER_TICK_ACTION, RosTimer, make_global_timer_automaton)
 
 
 def generic_ros_timer_check(rate_hz: float, expected_unit: str, expected_int_period: int):
@@ -38,6 +39,9 @@ def generic_ros_timer_check(rate_hz: float, expected_unit: str, expected_int_per
 
 
 def get_time_step_from_timer_automaton(automaton: JaniAutomaton) -> int:
+    """
+    Get the time step from the global timer automaton.
+    """
     global_tick_edge = [edge for edge in automaton.get_edges()
                         if edge.get_action() == GLOBAL_TIMER_TICK_ACTION]
     assert len(global_tick_edge) == 1, "Expected only one edge advancing the global timer"
@@ -46,6 +50,9 @@ def get_time_step_from_timer_automaton(automaton: JaniAutomaton) -> int:
 
 
 def generic_global_timer_check(timer_rates: List[float], expected_time_step: int):
+    """
+    Generic test function for the global timer automaton generation.
+    """
     max_time_ns = int(100 * 1e9)  # 100 seconds in nanoseconds
     timers: List[RosTimer] = []
     for i, rate in enumerate(timer_rates):
@@ -57,28 +64,52 @@ def generic_global_timer_check(timer_rates: List[float], expected_time_step: int
 
 
 def test_ros_timer_10hz():
+    """
+    Test the RosTimer class with a 10 Hz timer.
+    """
     generic_ros_timer_check(10.0, "ms", 100)
 
 
 def test_ros_timer_1mhz():
+    """
+    Test the RosTimer class with a 1 MHz timer.
+    """
     generic_ros_timer_check(1e6, "us", 1)
 
 
 def test_ros_timer_1hz():
+    """
+    Test the RosTimer class with a 1 Hz timer.
+    """
     generic_ros_timer_check(1.0, "s", 1)
 
 
 def test_ros_timer_3hz():
+    """
+    Test the RosTimer class with a 3 Hz timer.
+    """
     generic_ros_timer_check(3.0, "ms", 333)
 
 
 def test_global_timer_generation_1_2_5_hz():
+    """
+    Test the generation of the global timer automaton with 1, 2, and 5 Hz timers.
+    We expect the global period to be 100ms.
+    """
     generic_global_timer_check([1.0, 2.0, 5.0], 100)
 
 
 def test_global_timer_generation_3_9_hz():
+    """
+    Test the generation of the global timer automaton with 3 and 9 Hz timers.
+    We expect the global period to be 111ms.
+    """
     generic_global_timer_check([3.0, 9.0], 111)
 
 
 def test_global_timer_generation_less_1_hz():
+    """
+    Test the generation of the global timer automaton with 0.5 and 0.1 Hz timers.
+    We expect the global period to be 2ms.
+    """
     generic_global_timer_check([0.5, 0.1], 2)

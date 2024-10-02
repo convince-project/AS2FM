@@ -23,7 +23,7 @@ from os import path
 from typing import List
 
 from as2fm.jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
-                                         JaniModel, JaniProperty)
+                                               JaniModel, JaniProperty)
 
 
 def to_cm(value: float) -> int:
