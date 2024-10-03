@@ -21,6 +21,8 @@ from .scxml_executable_entries import (  # noqa: F401
     valid_execution_body,  # noqa: F401
     valid_execution_body_entry_types,
     instantiate_exec_body_bt_events,
+    ScxmlExecutableEntry,
+    ScxmlExecutionBody,
 )  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
 from .scxml_state import ScxmlState  # noqa: F401
