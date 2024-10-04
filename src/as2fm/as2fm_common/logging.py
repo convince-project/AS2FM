@@ -17,55 +17,77 @@
 Modules that help produce better error messages.
 """
 
+import os
 import xml.etree.ElementTree as ET
+from enum import Enum, auto
 
 
-class InformativeParser(ET.XMLParser):
+class Severity(Enum):
     """
-    An extension to the ElementTree parser that stores the line number of each element.
-    This will be used to provide more informative error messages.
+    Enum to represent the severity of the error.
     """
 
-    def _start_list(self, *args, **kwargs):
-        element = super(InformativeParser, self)._start_list(*args, **kwargs)
-        element._file_name = self.parser._file_name  # pylint: disable=protected-access
-        element._start_line_number = (
-            self.parser.CurrentLineNumber
-        )  # pylint: disable=protected-access
-        element._start_column_number = (
-            self.parser.CurrentColumnNumber
-        )  # pylint: disable=protected-access
-        element._start_byte_index = self.parser.CurrentByteIndex  # pylint: disable=protected-access
-        return element
-
-    def _end(self, *args, **kwargs):
-        element = super(InformativeParser, self)._end(*args, **kwargs)
-        element._end_line_number = self.parser.CurrentLineNumber  # pylint: disable=protected-access
-        element._end_column_number = (
-            self.parser.CurrentColumnNumber
-        )  # pylint: disable=protected-access
-        element._end_byte_index = self.parser.CurrentByteIndex  # pylint: disable=protected-access
-        return element
+    ERROR = auto()
+    WARNING = auto()
+    INFO = auto()
 
 
-def error(element: ET.Element, message: str) -> str:
-    """
-    Produce an error message with the line number of the element.
+class AS2FMLogger:
+    def __init__(self, path) -> None:
+        assert isinstance(path, str), "The path must be a string."
+        assert os.path.exists(path), "The path must exist."
+        cwd = os.getcwd()
+        rel_path = os.path.relpath(path, cwd)
+        if not rel_path.startswith("./"):
+            rel_path = "./" + rel_path
+        self.path = rel_path
 
-    :param element: The element that caused the error
-    :param message: The error message
-    :return: The error message with the line number
-    """
-    assert hasattr(element, "_file_name"), (
-        'The element must have the attribute "_file_name" '
-        "(set by `as2fm_common.logging.InformativeParser`)"
-    )
-    assert hasattr(element, "_start_line_number"), (
-        'The element must have the attribute "_start_line_number" '
-        "(set by `as2fm_common.logging.InformativeParser`)"
-    )
-    return (
-        f"E ({element._file_name}:"  # pylint: disable=protected-access
-        + f"{element._start_line_number}) "  # pylint: disable=protected-access
-        + f"{message}"
-    )
+    def _assemble_message(self, severity: Severity, element: ET.Element, message: str) -> str:
+        """
+        Produce an logging message with the line number of the element.
+
+        :param severity: The severity of the error
+        :param element: The element that caused the error
+        :param message: The message
+        :return: The message with the line number
+        """
+        assert hasattr(element, "sourceline"), (
+            "The element must have a sourceline attribute. This is usually set by the parser, "
+            "when `lxml.etree.ElementTree` is used."
+        )
+        letter = severity.name[0]
+        return (
+            f"{letter} ({self.path}:"  # pylint: disable=protected-access
+            + f"{element.sourceline}) "  # pylint: disable=protected-access
+            + f"{message}"
+        )
+
+    def error(self, element: ET.Element, message: str) -> str:
+        """
+        Log an error message.
+
+        :param element: The element that caused the error
+        :param message: The message
+        :return: The message with the line number
+        """
+        return self._assemble_message(Severity.ERROR, element, message)
+
+    def warning(self, element: ET.Element, message: str) -> str:
+        """
+        Log a warning message.
+
+        :param element: The element that caused the warning
+        :param message: The message
+        :return: The message with the line number
+        """
+        return self._assemble_message(Severity.WARNING, element, message)
+
+    def info(self, element: ET.Element, message: str) -> str:
+        """
+        Log an info message.
+
+        :param element: The element that caused the info message
+        :param message: The message
+        :return: The message with the line number
+        """
+        return self._assemble_message(Severity.INFO, element, message)

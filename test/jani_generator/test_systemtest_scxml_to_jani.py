@@ -18,8 +18,9 @@
 import json
 import os
 import unittest
+import subprocess
 import xml.etree.ElementTree as ET
-
+import random
 import pytest
 
 from as2fm.jani_generator.jani_entries import JaniAutomaton
@@ -331,6 +332,33 @@ class TestConversion(unittest.TestCase):
     def test_robot_navigation_with_bt_demo(self):
         """Test the robot demo."""
         self._test_with_main("robot_navigation_with_bt", True, "goal_reached", True, skip_smc=True)
+
+    def test_command_line_output_with_line_numbers(self):
+        """Test the command line output with line numbers for the main.xml file."""
+        tmp_test_dir = os.path.join("/tmp", "test_as2fm")
+        if not os.path.exists(tmp_test_dir):
+            os.makedirs(tmp_test_dir)
+        for file in os.listdir(tmp_test_dir):
+            os.remove(os.path.join(tmp_test_dir, file))
+        xml_main_path = os.path.join(tmp_test_dir, "main.xml")
+        offset = random.Random().randint(1, 10)
+        xml_content = "\n".join([" "] * offset + ["<aa>"] + ["<bb/>"] + ["</aa>"])
+        with open(xml_main_path, "w", encoding="utf-8") as f:
+            f.write(xml_content)
+        p = subprocess.Popen(
+            ["as2fm_scxml_to_jani", xml_main_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=tmp_test_dir,
+        )
+        stdout, stderr = p.communicate()
+        print(f"{stdout=}")
+        print(f"{stderr=}")
+
+        expected_reference = f"E (./main.xml:{offset + 1})"
+        self.assertIn(expected_reference, stderr.decode("utf-8"))
+        for file in os.listdir(tmp_test_dir):
+            os.remove(os.path.join(tmp_test_dir, file))
 
 
 if __name__ == "__main__":

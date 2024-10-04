@@ -19,6 +19,7 @@ Common functionalities used throughout the toolchain.
 
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
+from lxml.etree import _Comment, _Element
 
 """
 Set of basic types that are supported by the Jani language.
@@ -38,6 +39,7 @@ src https://docs.google.com/document/d/\
 
 Additionally, we support the array types from the array extension.
 """
+
 ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 
@@ -55,6 +57,16 @@ def remove_namespace(tag: str) -> str:
     else:
         tag_wo_ns = tag
     return tag_wo_ns
+
+
+def is_comment(element: _Element) -> bool:
+    """
+    Check if an element is a comment.
+
+    :param element: The element to check.
+    :return: True if the element is a comment, False otherwise.
+    """
+    return isinstance(element, _Comment)
 
 
 def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
