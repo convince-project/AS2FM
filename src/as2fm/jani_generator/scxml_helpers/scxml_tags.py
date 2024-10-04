@@ -17,11 +17,12 @@
 Module defining SCXML tags to match against.
 """
 
-import lxml.etree as ET
-from lxml.etree import _Element as Element
 from array import ArrayType
 from hashlib import sha256
 from typing import Dict, List, Optional, Set, Tuple, Union, get_args
+
+import lxml.etree as ET
+from lxml.etree import _Element as Element
 
 from as2fm.as2fm_common.common import check_value_type_compatible, string_to_value, value_to_type
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr

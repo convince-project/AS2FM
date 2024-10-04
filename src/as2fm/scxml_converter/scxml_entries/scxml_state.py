@@ -18,6 +18,7 @@ A single state in SCXML. In XML, it has the tag `state`.
 """
 
 from typing import List, Sequence, Union
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment

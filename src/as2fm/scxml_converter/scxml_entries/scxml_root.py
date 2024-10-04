@@ -20,11 +20,10 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 from copy import deepcopy
 from os.path import isfile
 from typing import List, Optional, Tuple, get_args
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
-
-# from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -106,7 +105,6 @@ class ScxmlRoot(ScxmlBase):
         print(f"{xml_file=}")
         if isfile(xml_file):
             xml_element = ET.parse(xml_file).getroot()
-            # self.logger = AS2FMLogger(xml_file)
         elif xml_file.startswith("<?xml"):
             raise NotImplementedError("Can only parse files, not strings.")
         else:

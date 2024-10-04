@@ -18,6 +18,7 @@ SCXML entries related to Behavior Trees.
 """
 
 from typing import Union
+
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase

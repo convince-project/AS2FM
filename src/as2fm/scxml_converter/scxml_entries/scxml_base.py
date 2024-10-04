@@ -17,11 +17,18 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from typing import Optional
+
 from lxml import etree as ET
+
+from as2fm.as2fm_common.logging import AS2FMLogger
 
 
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
+
+    def __init__(self, logger: Optional[AS2FMLogger] = None):
+        self.logger = logger
 
     @staticmethod
     def get_tag_name() -> str:

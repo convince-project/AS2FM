@@ -20,6 +20,7 @@ Modules that help produce better error messages.
 import os
 import xml.etree.ElementTree as ET
 from enum import Enum, auto
+from typing import Optional
 
 
 class Severity(Enum):
@@ -33,7 +34,10 @@ class Severity(Enum):
 
 
 class AS2FMLogger:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: Optional[str] = None):
+        if path is None:
+            path = None
+            return
         assert isinstance(path, str), "The path must be a string."
         assert os.path.exists(path), "The path must exist."
         cwd = os.getcwd()
@@ -51,16 +55,16 @@ class AS2FMLogger:
         :param message: The message
         :return: The message with the line number
         """
-        assert hasattr(element, "sourceline"), (
-            "The element must have a sourceline attribute. This is usually set by the parser, "
-            "when `lxml.etree.ElementTree` is used."
-        )
-        letter = severity.name[0]
-        return (
-            f"{letter} ({self.path}:"  # pylint: disable=protected-access
-            + f"{element.sourceline}) "  # pylint: disable=protected-access
-            + f"{message}"
-        )
+        severity_initial = severity.name[0]
+        if self.path is not None:
+            assert hasattr(element, "sourceline"), (
+                "The element must have a sourceline attribute. This is usually set by the parser, "
+                "when `lxml.etree.ElementTree` is used."
+            )
+            filename_with_line: str = f"({self.path}:{element.sourceline}) "
+        else:
+            filename_with_line = ""
+        return f"{severity_initial} {filename_with_line}{message}"
 
     def error(self, element: ET.Element, message: str) -> str:
         """

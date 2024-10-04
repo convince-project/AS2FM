@@ -19,6 +19,7 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 
 import re
 from typing import Any, Optional, Tuple, Union
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_array_type, is_comment

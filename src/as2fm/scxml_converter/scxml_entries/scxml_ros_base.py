@@ -16,6 +16,7 @@
 """Collection of SCXML ROS Base classes to derive from."""
 
 from typing import Dict, List, Optional, Type, Union
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment

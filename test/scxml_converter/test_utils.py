@@ -18,6 +18,7 @@ Utilities used to compare XML.
 """
 
 import re
+
 from lxml import etree as ET
 
 

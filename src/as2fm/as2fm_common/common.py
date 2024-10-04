@@ -19,6 +19,7 @@ Common functionalities used throughout the toolchain.
 
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
+
 from lxml.etree import _Comment, _Element
 
 """

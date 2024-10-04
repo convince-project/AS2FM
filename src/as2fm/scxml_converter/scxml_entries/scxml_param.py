@@ -18,6 +18,7 @@ Container for a single parameter, sent within an event. In XML, it has the tag `
 """
 
 from typing import Optional, Union
+
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase

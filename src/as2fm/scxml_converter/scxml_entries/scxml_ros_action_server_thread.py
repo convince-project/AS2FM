@@ -20,6 +20,7 @@ Based loosely on https://design.ros2.org/articles/actions.html
 """
 
 from typing import List, Optional, Type, Union
+
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (

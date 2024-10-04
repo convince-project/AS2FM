@@ -17,10 +17,11 @@
 
 import json
 import os
-import unittest
-import subprocess
-import xml.etree.ElementTree as ET
 import random
+import subprocess
+import unittest
+import xml.etree.ElementTree as ET
+
 import pytest
 
 from as2fm.jani_generator.jani_entries import JaniAutomaton

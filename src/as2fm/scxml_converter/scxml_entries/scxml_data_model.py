@@ -18,6 +18,7 @@ Container for the variables defined in the SCXML model. In XML, it has the tag `
 """
 
 from typing import List, Optional
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment

@@ -18,6 +18,7 @@ Definition of SCXML Tags that can be part of executable content
 """
 
 from typing import Dict, List, Optional, Tuple, Union, get_args
+
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
