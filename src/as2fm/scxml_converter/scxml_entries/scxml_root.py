@@ -24,6 +24,7 @@ from typing import List, Optional, Tuple, get_args
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -52,7 +53,7 @@ class ScxmlRoot(ScxmlBase):
         return "scxml"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
@@ -63,25 +64,25 @@ class ScxmlRoot(ScxmlBase):
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
         scxml_init_state = get_xml_argument(ScxmlRoot, xml_tree, "initial")
         # Data Model
-        datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,), logger)
         assert (
             len(datamodel_elements) <= 1
         ), f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
         ros_declarations: List[RosDeclaration] = get_children_as_scxml(
-            xml_tree, RosDeclaration.__subclasses__()
+            xml_tree, RosDeclaration.__subclasses__(), logger
         )
         # BT Declarations
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
-            xml_tree, get_args(BtPortDeclarations)
+            xml_tree, get_args(BtPortDeclarations), logger
         )
         # Additional threads
-        additional_threads = get_children_as_scxml(xml_tree, (RosActionThread,))
+        additional_threads = get_children_as_scxml(xml_tree, (RosActionThread,), logger)
         # States
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,), logger)
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the ScxmlRoot object
-        scxml_root = ScxmlRoot(scxml_name)
+        scxml_root = ScxmlRoot(scxml_name, logger)
         # Data Model
         if len(datamodel_elements) > 0:
             scxml_root.set_data_model(datamodel_elements[0])
@@ -115,9 +116,9 @@ class ScxmlRoot(ScxmlBase):
                 continue
             child.tag = remove_namespace(child.tag)
         # Do the conversion
-        return ScxmlRoot.from_xml_tree(xml_element)
+        return ScxmlRoot.from_xml_tree(xml_element, AS2FMLogger(xml_file))
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, logger: AS2FMLogger):
         self._name = name
         self._version = "1.0"  # This is the only version mentioned in the official documentation
         self._initial_state: Optional[str] = None
@@ -126,6 +127,7 @@ class ScxmlRoot(ScxmlBase):
         self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
         self._additional_threads: List[RosActionThread] = []
+        self.logger = logger
 
     def get_name(self) -> str:
         """Get the name of the automaton represented by this SCXML model."""
@@ -293,7 +295,7 @@ class ScxmlRoot(ScxmlBase):
             return [self], ScxmlRosDeclarationsContainer(self._name)
         converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
-        main_scxml = ScxmlRoot(self._name)
+        main_scxml = ScxmlRoot(self._name, self.logger)
         main_scxml._data_model = deepcopy(self._data_model)
         main_scxml._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()

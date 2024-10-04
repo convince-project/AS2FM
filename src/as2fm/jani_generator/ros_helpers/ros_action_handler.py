@@ -19,6 +19,7 @@ Helper to create an orchestrator out of ROS Actions declarations.
 
 from typing import Callable, Dict, List, Tuple
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
@@ -266,7 +267,7 @@ class RosActionHandler(RosCommunicationHandler):
         wait_state.add_transition(
             self._generate_result_response_transition(wait_state, client_to_goal_id, result_params)
         )
-        scxml_root = ScxmlRoot(scxml_root_name)
+        scxml_root = ScxmlRoot(scxml_root_name, AS2FMLogger())
         scxml_root.set_data_model(ScxmlDataModel(action_fields_as_data))
         scxml_root.add_state(wait_state, initial=True)
         scxml_root.add_state(goal_requested_state)

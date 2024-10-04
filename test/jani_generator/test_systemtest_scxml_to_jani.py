@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
@@ -60,7 +61,7 @@ class TestConversion(unittest.TestCase):
                 </onentry>
             </state>
         </scxml>"""
-        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
+        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml), AS2FMLogger())
         jani_a = JaniAutomaton()
         eh = EventsHolder()
         convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)

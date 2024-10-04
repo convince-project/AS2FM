@@ -23,6 +23,7 @@ from typing import Any, Optional, Tuple, Union
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_array_type, is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -74,7 +75,7 @@ class ScxmlData(ScxmlBase):
         return type_match.group(1), type_match.group(2)
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element, comment_above: Optional[str] = None) -> "ScxmlData":
+    def from_xml_tree(xml_tree: ET.Element, comment_above: str, logger: AS2FMLogger) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
         assert_xml_tag_ok(ScxmlData, xml_tree)
         data_id = get_xml_argument(ScxmlData, xml_tree, "id")
@@ -90,13 +91,14 @@ class ScxmlData(ScxmlBase):
             )
             data_type = comment_tuple[1]
         data_expr = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str)
+            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str), logger
         )
         lower_bound = read_value_from_xml_arg_or_child(
             ScxmlData,
             xml_tree,
             "lower_bound_incl",
             (BtGetValueInputPort, str),
+            logger,
             none_allowed=True,
         )
         upper_bound = read_value_from_xml_arg_or_child(
@@ -104,6 +106,7 @@ class ScxmlData(ScxmlBase):
             xml_tree,
             "upper_bound_incl",
             (BtGetValueInputPort, str),
+            logger,
             none_allowed=True,
         )
         return ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)

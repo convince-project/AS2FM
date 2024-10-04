@@ -23,6 +23,7 @@ from typing import List, Optional, Type, Union
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     RosField,
     ScxmlBase,
@@ -59,7 +60,7 @@ class RosActionThread(ScxmlBase):
         return "ros_action_thread"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionThread":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_argument(RosActionThread, xml_tree, "name")
@@ -67,9 +68,9 @@ class RosActionThread(ScxmlBase):
         n_threads = int(n_threads)
         assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
         initial_state = get_xml_argument(RosActionThread, xml_tree, "initial")
-        datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,), logger)
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,), logger)
         assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
         assert len(scxml_states) > 0, "Error: SCXML Action Thread: no states defined."
         # The non-plain SCXML Action thread has the same name as the action
@@ -174,7 +175,7 @@ class RosActionThread(ScxmlBase):
         )
         for thread_idx in range(self._n_threads):
             thread_name = f"{action_name}_thread_{thread_idx}"
-            plain_thread_instance = ScxmlRoot(thread_name)
+            plain_thread_instance = ScxmlRoot(thread_name, AS2FMLogger())
             plain_thread_instance.set_data_model(self._data_model)
             for state in self._states:
                 initial_state = state.get_id() == self._initial_state

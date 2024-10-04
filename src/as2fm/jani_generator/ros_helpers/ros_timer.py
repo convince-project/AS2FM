@@ -20,6 +20,7 @@ Representation of ROS timers.
 from math import floor, gcd
 from typing import List, Optional, Tuple
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -250,7 +251,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
             f"Max time {max_time_ns} cannot be converted to {global_timer_period_unit}. "
             "The max_time must have a unit that is greater or equal to the smallest timer period."
         )
-    scxml_root = ScxmlRoot("global_timer_automata")
+    scxml_root = ScxmlRoot("global_timer_automata", AS2FMLogger())
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData("current_time", "0", "int64")]))
     idle_state = ScxmlState("idle")
     global_timer_tick_body: ScxmlExecutionBody = []

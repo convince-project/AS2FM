@@ -19,6 +19,7 @@ Representation of ROS Services.
 
 from typing import Dict, List
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
@@ -133,7 +134,7 @@ class RosServiceHandler(RosCommunicationHandler):
             for client_id in self._clients_automata
         ]
         # Prepare the ScxmlRoot object and return it
-        scxml_root = ScxmlRoot(scxml_root_name)
+        scxml_root = ScxmlRoot(scxml_root_name, AS2FMLogger())
         scxml_root.set_data_model(ScxmlDataModel(req_fields_as_data))
         scxml_root.add_state(wait_state, initial=True)
         for processing_state in processing_states:

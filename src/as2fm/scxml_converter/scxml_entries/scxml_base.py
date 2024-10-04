@@ -17,8 +17,6 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
-from typing import Optional
-
 from lxml import etree as ET
 
 from as2fm.as2fm_common.logging import AS2FMLogger
@@ -27,7 +25,7 @@ from as2fm.as2fm_common.logging import AS2FMLogger
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
 
-    def __init__(self, logger: Optional[AS2FMLogger] = None):
+    def __init__(self, logger: AS2FMLogger):
         self.logger = logger
 
     @staticmethod
@@ -36,7 +34,7 @@ class ScxmlBase:
         raise NotImplementedError
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlBase":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlBase":
         """Create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 

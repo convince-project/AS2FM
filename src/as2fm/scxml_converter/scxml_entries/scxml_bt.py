@@ -21,6 +21,7 @@ from typing import Union
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
@@ -36,7 +37,7 @@ class BtInputPortDeclaration(ScxmlBase):
         return "bt_declare_port_in"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtInputPortDeclaration":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "BtInputPortDeclaration":
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
         key_str = get_xml_argument(BtInputPortDeclaration, xml_tree, "key")
         type_str = get_xml_argument(BtInputPortDeclaration, xml_tree, "type")
@@ -80,7 +81,7 @@ class BtOutputPortDeclaration(ScxmlBase):
         return "bt_declare_port_out"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtOutputPortDeclaration":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "BtOutputPortDeclaration":
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
         key_str = get_xml_argument(BtOutputPortDeclaration, xml_tree, "key")
         type_str = get_xml_argument(BtOutputPortDeclaration, xml_tree, "type")
@@ -124,7 +125,7 @@ class BtGetValueInputPort(ScxmlBase):
         return "bt_get_input"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtGetValueInputPort":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_argument(BtGetValueInputPort, xml_tree, "key")
         return BtGetValueInputPort(key_str)

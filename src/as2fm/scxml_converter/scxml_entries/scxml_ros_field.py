@@ -19,6 +19,7 @@ from typing import Optional, Union
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -42,12 +43,12 @@ class RosField(ScxmlParam):
         return "field"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosField":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_argument(RosField, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(
-            RosField, xml_tree, "expr", (BtGetValueInputPort, str)
+            RosField, xml_tree, "expr", (BtGetValueInputPort, str), logger
         )
         return RosField(name, expr)
 

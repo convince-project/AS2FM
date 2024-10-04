@@ -19,6 +19,7 @@ from typing import Type
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
@@ -35,7 +36,7 @@ class RosTimeRate(RosDeclaration):
         return "ros_time_rate"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)
         timer_name = get_xml_argument(RosTimeRate, xml_tree, "name")

@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Tuple, Union, get_args
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     ScxmlBase,
@@ -83,7 +84,7 @@ class ScxmlIf(ScxmlBase):
         return "if"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
 
@@ -110,7 +111,7 @@ class ScxmlIf(ScxmlBase):
                 exec_bodies.append(current_body)
                 current_body = []
             else:
-                current_body.append(execution_entry_from_xml(child))
+                current_body.append(execution_entry_from_xml(child, logger))
         else_body: Optional[ScxmlExecutionBody] = None
         if else_tag_found:
             else_body = current_body
@@ -240,7 +241,7 @@ class ScxmlSend(ScxmlBase):
         return "send"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
 
@@ -256,7 +257,7 @@ class ScxmlSend(ScxmlBase):
         for param_xml in xml_tree:
             if is_comment(param_xml):
                 continue
-            params.append(ScxmlParam.from_xml_tree(param_xml))
+            params.append(ScxmlParam.from_xml_tree(param_xml, logger))
         return ScxmlSend(event, params)
 
     def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
@@ -346,7 +347,7 @@ class ScxmlAssign(ScxmlBase):
         return "assign"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
 
@@ -357,7 +358,7 @@ class ScxmlAssign(ScxmlBase):
         location = get_xml_argument(ScxmlAssign, xml_tree, "location")
         expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
         if expr is None:
-            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
+            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str), logger)
             assert expr is not None, "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
 
@@ -453,7 +454,7 @@ def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
     return False
 
 
-def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
+def execution_entry_from_xml(xml_tree: ET.Element, logger: AS2FMLogger) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
 
@@ -471,10 +472,10 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     assert (
         exec_tag in tag_to_cls
     ), f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
-    return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
+    return tag_to_cls[exec_tag].from_xml_tree(xml_tree, logger)
 
 
-def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
+def execution_body_from_xml(xml_tree: ET.Element, logger: AS2FMLogger) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
@@ -484,7 +485,7 @@ def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
     exec_body: ScxmlExecutionBody = []
     for exec_elem_xml in xml_tree:
         if not is_comment(exec_elem_xml):
-            exec_body.append(execution_entry_from_xml(exec_elem_xml))
+            exec_body.append(execution_entry_from_xml(exec_elem_xml, logger))
     return exec_body
 
 

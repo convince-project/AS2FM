@@ -17,6 +17,7 @@ import os
 
 from test_utils import canonicalize_xml
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     BtInputPortDeclaration,
@@ -73,7 +74,7 @@ def test_battery_drainer_from_code():
     """
     Test for scxml_entries generation and conversion to xml.
     """
-    battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
+    battery_drainer_scxml = ScxmlRoot("BatteryDrainer", AS2FMLogger())
     battery_drainer_scxml.set_data_model(
         ScxmlDataModel([ScxmlData("battery_percent", "100", "int16")])
     )
@@ -135,7 +136,7 @@ def test_battery_drainer_ros_from_code():
         - if / elseif / else
         - assign
     """
-    battery_drainer_scxml = ScxmlRoot("BatteryDrainer")
+    battery_drainer_scxml = ScxmlRoot("BatteryDrainer", AS2FMLogger())
     battery_drainer_scxml.set_data_model(
         ScxmlDataModel([ScxmlData("battery_percent", "100", "int16")])
     )
@@ -196,7 +197,7 @@ def test_bt_action_with_ports_from_code():
             )
         ],
     )
-    scxml_root = ScxmlRoot("BtTopicAction")
+    scxml_root = ScxmlRoot("BtTopicAction", AS2FMLogger())
     scxml_root.set_data_model(data_model)
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))

@@ -22,6 +22,7 @@ from typing import List, Sequence, Union
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutableEntry,
@@ -48,7 +49,9 @@ class ScxmlState(ScxmlBase):
         return "state"
 
     @staticmethod
-    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
+    def _transitions_from_xml(
+        state_id: str, xml_tree: ET.Element, logger: AS2FMLogger
+    ) -> List[ScxmlTransition]:
         from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback
 
         transitions: List[ScxmlTransition] = []
@@ -63,7 +66,7 @@ class ScxmlState(ScxmlBase):
             if is_comment(child):
                 continue
             elif child.tag in tag_to_cls:
-                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
+                transitions.append(tag_to_cls[child.tag].from_xml_tree(child, logger))
             else:
                 assert child.tag in (
                     "onentry",
@@ -72,7 +75,7 @@ class ScxmlState(ScxmlBase):
         return transitions
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlState.get_tag_name()
@@ -90,13 +93,13 @@ class ScxmlState(ScxmlBase):
             len(on_exit) <= 1
         ), f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
-            for exec_entry in execution_body_from_xml(on_entry[0]):
+            for exec_entry in execution_body_from_xml(on_entry[0], logger):
                 scxml_state.append_on_entry(exec_entry)
         if len(on_exit) > 0:
-            for exec_entry in execution_body_from_xml(on_exit[0]):
+            for exec_entry in execution_body_from_xml(on_exit[0], logger):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
-        for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree):
+        for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree, logger):
             scxml_state.add_transition(body_entry)
         return scxml_state
 

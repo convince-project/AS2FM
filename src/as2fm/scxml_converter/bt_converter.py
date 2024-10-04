@@ -23,10 +23,11 @@ from copy import deepcopy
 from enum import Enum, auto
 from typing import List
 
-from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
-from btlib.bts import xml_to_networkx
-from btlib.common import NODE_CAT
+from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM  # type: ignore
+from btlib.bts import xml_to_networkx  # type: ignore
+from btlib.common import NODE_CAT  # type: ignore
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     RESERVED_BT_PORT_NAMES,
     RosRateCallback,
@@ -74,6 +75,7 @@ def bt_converter(
         A list of the generated SCXML objects.
     """
     bt_graph, _ = xml_to_networkx(bt_xml_path)
+    logger = AS2FMLogger(bt_xml_path)
 
     bt_plugins_scxmls = {}
     for path in bt_plugins_scxml_paths:
@@ -115,7 +117,7 @@ def bt_converter(
             generated_scxmls.append(scxml_plugin_instance)
     # Generate the BT SCXML
     fsm_graph = Bt2FSM(bt_graph).convert()
-    bt_scxml_root = ScxmlRoot("bt")
+    bt_scxml_root = ScxmlRoot("bt", logger)
     name_with_id_pattern = re.compile(r"[0-9]+_.+")
     for node in fsm_graph.nodes:
         state = ScxmlState(node)

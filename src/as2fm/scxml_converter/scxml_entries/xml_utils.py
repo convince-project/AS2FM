@@ -17,6 +17,7 @@ from typing import Iterable, List, Optional, Type, Union
 from xml.etree import ElementTree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
@@ -49,7 +50,7 @@ def get_xml_argument(
 
 
 def get_children_as_scxml(
-    xml_tree: ET.Element, scxml_types: Iterable[Type[ScxmlBase]]
+    xml_tree: ET.Element, scxml_types: Iterable[Type[ScxmlBase]], logger: AS2FMLogger
 ) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
@@ -64,7 +65,7 @@ def get_children_as_scxml(
         if is_comment(child):
             continue
         if child.tag in tag_to_type:
-            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
+            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child, logger))
     return scxml_list
 
 
@@ -72,6 +73,7 @@ def read_value_from_xml_child(
     xml_tree: ET.Element,
     child_tag: str,
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
+    logger: AS2FMLogger,
     *,
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:
@@ -102,7 +104,7 @@ def read_value_from_xml_child(
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
-    scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
+    scxml_entry = get_children_as_scxml(xml_child[0], valid_types, logger)
     if len(scxml_entry) == 0:
         print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
         return None
@@ -114,6 +116,7 @@ def read_value_from_xml_arg_or_child(
     xml_tree: ET.Element,
     tag_name: str,
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
+    logger: AS2FMLogger,
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:
     """
@@ -128,7 +131,7 @@ def read_value_from_xml_arg_or_child(
     read_value = get_xml_argument(scxml_type, xml_tree, tag_name, none_allowed=True)
     if read_value is None:
         read_value = read_value_from_xml_child(
-            xml_tree, tag_name, valid_types, none_allowed=none_allowed
+            xml_tree, tag_name, valid_types, logger, none_allowed=none_allowed
         )
     if not none_allowed:
         assert (

@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Type, Union
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     RosField,
@@ -71,11 +72,13 @@ class RosDeclaration(ScxmlBase):
         return f"{cls.get_communication_interface()}_name"
 
     @classmethod
-    def from_xml_tree(cls: Type["RosDeclaration"], xml_tree: ET.Element) -> "RosDeclaration":
+    def from_xml_tree(
+        cls: Type["RosDeclaration"], xml_tree: ET.Element, logger: AS2FMLogger
+    ) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = read_value_from_xml_arg_or_child(
-            cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str)
+            cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str), logger
         )
         interface_type = get_xml_argument(cls, xml_tree, "type")
         interface_alias = get_xml_argument(cls, xml_tree, "name", none_allowed=True)
@@ -186,13 +189,15 @@ class RosCallback(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_callback_type.")
 
     @classmethod
-    def from_xml_tree(cls: Type["RosCallback"], xml_tree: ET.Element) -> "RosCallback":
+    def from_xml_tree(
+        cls: Type["RosCallback"], xml_tree: ET.Element, logger: AS2FMLogger
+    ) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_argument(cls, xml_tree, "name")
         target_state = get_xml_argument(cls, xml_tree, "target")
         condition = get_xml_argument(cls, xml_tree, "cond", none_allowed=True)
-        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = execution_body_from_xml(xml_tree, logger)
         return cls(interface_name, target_state, condition, exec_body)
 
     def __init__(
@@ -316,7 +321,9 @@ class RosTrigger(ScxmlSend):
         return []
 
     @classmethod
-    def from_xml_tree(cls: Type["RosTrigger"], xml_tree: ET.Element) -> "RosTrigger":
+    def from_xml_tree(
+        cls: Type["RosTrigger"], xml_tree: ET.Element, logger: AS2FMLogger
+    ) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.
 
@@ -327,8 +334,14 @@ class RosTrigger(ScxmlSend):
         interface_name = get_xml_argument(cls, xml_tree, "name")
         additional_arg_values: Dict[str, str] = {}
         for arg_name in cls.get_additional_arguments():
-            additional_arg_values[arg_name] = get_xml_argument(cls, xml_tree, arg_name)
-        fields = [RosField.from_xml_tree(field) for field in xml_tree if not is_comment(field)]
+            arg_value = get_xml_argument(cls, xml_tree, arg_name)
+            assert arg_value is not None, logger.error(
+                xml_tree, f"SCXML {cls.__name__}: missing argument {arg_name}."
+            )
+            additional_arg_values[arg_name] = arg_value
+        fields = [
+            RosField.from_xml_tree(field, logger) for field in xml_tree if not is_comment(field)
+        ]
         return cls(interface_name, fields, additional_arg_values)
 
     def __init__(

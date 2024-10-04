@@ -21,6 +21,7 @@ from typing import Optional, Union
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
@@ -39,7 +40,7 @@ class ScxmlParam(ScxmlBase):
         return "param"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_argument(ScxmlParam, xml_tree, "name")

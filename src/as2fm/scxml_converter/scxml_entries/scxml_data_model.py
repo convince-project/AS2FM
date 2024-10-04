@@ -22,6 +22,7 @@ from typing import List, Optional
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
@@ -39,7 +40,7 @@ class ScxmlDataModel(ScxmlBase):
         return "datamodel"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert_xml_tag_ok(ScxmlDataModel, xml_tree)
         data_entries = []
@@ -48,7 +49,9 @@ class ScxmlDataModel(ScxmlBase):
             if is_comment(data_entry_xml):
                 prev_xml_comment = data_entry_xml.text.strip()
             else:
-                data_entries.append(ScxmlData.from_xml_tree(data_entry_xml, prev_xml_comment))
+                data_entries.append(
+                    ScxmlData.from_xml_tree(data_entry_xml, prev_xml_comment, logger)
+                )
                 prev_xml_comment = None
         return ScxmlDataModel(data_entries)
 

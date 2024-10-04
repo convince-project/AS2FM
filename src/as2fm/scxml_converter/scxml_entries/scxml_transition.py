@@ -21,6 +21,7 @@ from typing import List, Optional
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutableEntry,
@@ -50,7 +51,7 @@ class ScxmlTransition(ScxmlBase):
         return "transition"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
+    def from_xml_tree(xml_tree: ET.Element, logger: AS2FMLogger) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
@@ -60,7 +61,7 @@ class ScxmlTransition(ScxmlBase):
         events_str = xml_tree.get("event")
         events = events_str.split(" ") if events_str is not None else []
         condition = xml_tree.get("cond")
-        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = execution_body_from_xml(xml_tree, logger)
         exec_body = exec_body if exec_body is not None else None
         return ScxmlTransition(target, events, condition, exec_body)
 
