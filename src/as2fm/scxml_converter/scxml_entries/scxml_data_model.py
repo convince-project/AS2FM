@@ -18,8 +18,9 @@ Container for the variables defined in the SCXML model. In XML, it has the tag `
 """
 
 from typing import List, Optional
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
+from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
@@ -43,8 +44,8 @@ class ScxmlDataModel(ScxmlBase):
         data_entries = []
         prev_xml_comment: Optional[str] = None
         for data_entry_xml in xml_tree:
-            if data_entry_xml.tag is ET.Comment:
-                prev_xml_comment = data_entry_xml.text
+            if is_comment(data_entry_xml):
+                prev_xml_comment = data_entry_xml.text.strip()
             else:
                 data_entries.append(ScxmlData.from_xml_tree(data_entry_xml, prev_xml_comment))
                 prev_xml_comment = None

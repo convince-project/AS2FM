@@ -66,7 +66,7 @@ def is_comment(element: _Element) -> bool:
     :param element: The element to check.
     :return: True if the element is a comment, False otherwise.
     """
-    return isinstance(element, _Comment)
+    return isinstance(element, _Comment) or "function Comment" in str(element)
 
 
 def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:

@@ -96,3 +96,10 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     assert len(jani_out_file) > 0, "Output file not provided."
 
     interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
+
+
+if __name__ == "__main__":
+    # for testing purposes only
+    import sys
+
+    main_scxml_to_jani(sys.argv[1:])

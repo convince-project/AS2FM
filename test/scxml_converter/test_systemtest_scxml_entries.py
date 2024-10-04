@@ -15,7 +15,7 @@
 
 import os
 
-from test_utils import canonicalize_xml, remove_empty_lines
+from test_utils import canonicalize_xml
 
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
@@ -44,8 +44,8 @@ def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):
     with open(ref_file_path, "r", encoding="utf-8") as f_o:
         expected_output = f_o.read()
     test_output = scxml_root.as_xml_string()
-    test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
-    ref_xml_string = remove_empty_lines(canonicalize_xml(expected_output))
+    test_xml_string = canonicalize_xml(test_output)
+    ref_xml_string = canonicalize_xml(expected_output)
     assert test_xml_string == ref_xml_string
 
 
@@ -54,14 +54,14 @@ def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
     # Check output xml
     if valid_xml:
         test_output = scxml_root.as_xml_string()
-        test_xml_string = remove_empty_lines(canonicalize_xml(test_output))
+        test_xml_string = canonicalize_xml(test_output)
         ref_file_path = os.path.join(
             os.path.dirname(xml_file_path),
             "gt_parsed_scxml",
             os.path.basename(xml_file_path),
         )
         with open(ref_file_path, "r", encoding="utf-8") as f_o:
-            ref_xml_string = remove_empty_lines(canonicalize_xml(f_o.read()))
+            ref_xml_string = canonicalize_xml(f_o.read())
         assert test_xml_string == ref_xml_string
         # All the test scxml files we are using contain ROS declarations
         assert not scxml_root.is_plain_scxml()

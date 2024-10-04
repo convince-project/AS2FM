@@ -145,4 +145,4 @@ class TestScxmlData(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    pytest.main(["-s", "-v", __file__])
+    pytest.main(["-s", "-v", __file__, "-k", "test_datamodel_loading"])

@@ -33,7 +33,7 @@ class Severity(Enum):
 
 
 class AS2FMLogger:
-    def __init__(self, path) -> None:
+    def __init__(self, path: str) -> None:
         assert isinstance(path, str), "The path must be a string."
         assert os.path.exists(path), "The path must exist."
         cwd = os.getcwd()

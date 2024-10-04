@@ -19,9 +19,9 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 
 import re
 from typing import Any, Optional, Tuple, Union
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
-from as2fm.as2fm_common.common import is_array_type
+from as2fm.as2fm_common.common import is_array_type, is_comment
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -79,6 +79,8 @@ class ScxmlData(ScxmlBase):
         data_id = get_xml_argument(ScxmlData, xml_tree, "id")
         data_type = get_xml_argument(ScxmlData, xml_tree, "type", none_allowed=True)
         if data_type is None:
+            if is_comment(comment_above):
+                pass
             comment_tuple = ScxmlData._interpret_type_from_comment_above(comment_above)
             assert comment_tuple is not None, f"Error: SCXML data: type of {data_id} not found."
             assert comment_tuple[0] == data_id, (

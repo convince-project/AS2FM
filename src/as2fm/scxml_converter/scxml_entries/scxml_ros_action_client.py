@@ -20,7 +20,7 @@ Based loosely on https://design.ros2.org/articles/actions.html
 """
 
 from typing import List, Type, Union
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 from action_msgs.msg import GoalStatus
 

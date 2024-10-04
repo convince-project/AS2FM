@@ -17,7 +17,8 @@
 Module defining SCXML tags to match against.
 """
 
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
+from lxml.etree import _Element as Element
 from array import ArrayType
 from hashlib import sha256
 from typing import Dict, List, Optional, Set, Tuple, Union, get_args
@@ -68,21 +69,21 @@ from as2fm.scxml_converter.scxml_entries import (
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
 
-def _hash_element(element: Union[ET.Element, ScxmlBase, List[str]]) -> str:
+def _hash_element(element: Union[Element, ScxmlBase, List[str]]) -> str:
     """
     Hash an ElementTree element.
     :param element: The element to hash.
     :return: The hash of the element.
     """
-    if isinstance(element, ET.Element):
-        s = ET.tostring(element, encoding="unicode", method="xml")
+    if isinstance(element, Element):
+        s = ET.tostring(element, encoding="utf-8", method="xml")
     elif isinstance(element, ScxmlBase):
-        s = ET.tostring(element.as_xml(), encoding="unicode", method="xml")
+        s = ET.tostring(element.as_xml(), encoding="utf-8", method="xml")
     elif isinstance(element, list):
-        s = "/".join(f"{element}")
+        s = ("/".join(f"{element}")).encode()
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
-    return sha256(s.encode()).hexdigest()[:8]
+    return sha256(s).hexdigest()[:8]
 
 
 def _interpret_scxml_assign(

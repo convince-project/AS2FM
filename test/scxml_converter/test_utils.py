@@ -18,7 +18,7 @@ Utilities used to compare XML.
 """
 
 import re
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 
 def to_snake_case(text: str) -> str:
@@ -26,17 +26,25 @@ def to_snake_case(text: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", text).lower()
 
 
-def canonicalize_xml(xml: str) -> str:
-    """Helper function to make XML comparable."""
-    # sort attributes
-    assert isinstance(xml, str), f"Error: invalid input: expected str, found {type(xml)}"
-    et = ET.fromstring(xml)
-    for elem in et.iter():
-        elem.attrib = {k: elem.attrib[k] for k in sorted(elem.attrib.keys())}
-    return ET.tostring(et, encoding="unicode")
-
-
 def remove_empty_lines(text: str) -> str:
     """Remove empty lines from a string."""
     assert isinstance(text, str), f"Error: invalid input: expected str, found {type(text)}"
     return "\n".join([line for line in text.split("\n") if line.strip()])
+
+
+def remove_comments(text: str) -> str:
+    """Remove comments from a string."""
+    assert isinstance(text, str), f"Error: invalid input: expected str, found {type(text)}"
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+
+def canonicalize_xml(xml: str) -> str:
+    """Helper function to make XML comparable."""
+    # sort attributes
+    assert isinstance(xml, str), f"Error: invalid input: expected str, found {type(xml)}"
+    et = ET.fromstring(xml.encode("utf-8"))
+    for elem in et.iter():
+        elem.attrib.clear()
+        for k in sorted(elem.keys()):
+            elem.set(k, elem.get(k))
+    return remove_empty_lines(remove_comments(ET.tostring(et, encoding="unicode")))

@@ -16,8 +16,9 @@
 """Collection of SCXML ROS Base classes to derive from."""
 
 from typing import Dict, List, Optional, Type, Union
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
+from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     RosField,
@@ -326,9 +327,7 @@ class RosTrigger(ScxmlSend):
         additional_arg_values: Dict[str, str] = {}
         for arg_name in cls.get_additional_arguments():
             additional_arg_values[arg_name] = get_xml_argument(cls, xml_tree, arg_name)
-        fields = [
-            RosField.from_xml_tree(field) for field in xml_tree if field.tag is not ET.Comment
-        ]
+        fields = [RosField.from_xml_tree(field) for field in xml_tree if not is_comment(field)]
         return cls(interface_name, fields, additional_arg_values)
 
     def __init__(

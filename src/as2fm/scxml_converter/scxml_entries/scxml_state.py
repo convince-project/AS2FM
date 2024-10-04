@@ -18,8 +18,9 @@ A single state in SCXML. In XML, it has the tag `state`.
 """
 
 from typing import List, Sequence, Union
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
+from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutableEntry,
@@ -58,7 +59,7 @@ class ScxmlState(ScxmlBase):
         tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
-            if child.tag is ET.Comment:
+            if is_comment(child):
                 continue
             elif child.tag in tag_to_cls:
                 transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
