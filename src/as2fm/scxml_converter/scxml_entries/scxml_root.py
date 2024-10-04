@@ -20,8 +20,12 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 from copy import deepcopy
 from os.path import isfile
 from typing import List, Optional, Tuple, get_args
-from xml.etree import ElementTree as ET
 
+from lxml import etree as ET
+
+from as2fm.as2fm_common.common import is_comment, remove_namespace
+
+# from as2fm.as2fm_common.logging import AS2FMLogger
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -100,19 +104,19 @@ class ScxmlRoot(ScxmlBase):
     @staticmethod
     def from_scxml_file(xml_file: str) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
+        print(f"{xml_file=}")
         if isfile(xml_file):
-            # Custom parser to include comments
-            xml_parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
-            xml_element = ET.parse(xml_file, xml_parser).getroot()
+            xml_element = ET.parse(xml_file).getroot()
+            # self.logger = AS2FMLogger(xml_file)
         elif xml_file.startswith("<?xml"):
-            xml_element = ET.fromstring(xml_file)
+            raise NotImplementedError("Can only parse files, not strings.")
         else:
             raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' isn't a file / xml string.")
         # Remove the namespace from all tags in the XML file
         for child in xml_element.iter():
-            if child.tag is not ET.Comment:
-                if "{" in child.tag:
-                    child.tag = child.tag.split("}")[1]
+            if is_comment(child):
+                continue
+            child.tag = remove_namespace(child.tag)
         # Do the conversion
         return ScxmlRoot.from_xml_tree(xml_element)
 
@@ -341,4 +345,4 @@ class ScxmlRoot(ScxmlBase):
         return xml_root
 
     def as_xml_string(self) -> str:
-        return ET.tostring(self.as_xml(), encoding="unicode", xml_declaration=True)
+        return ET.tostring(self.as_xml(), encoding="unicode")

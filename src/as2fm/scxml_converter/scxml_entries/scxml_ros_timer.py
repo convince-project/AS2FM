@@ -16,7 +16,8 @@
 """Declaration of SCXML tags related to ROS Timers."""
 
 from typing import Type
-from xml.etree import ElementTree as ET
+
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler

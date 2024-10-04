@@ -215,7 +215,7 @@ def interpret_top_level_xml(
     )
 
     jani_dict = jani_model.as_dict()
-    assert len(model.properties) == 1, "Only one property is supported right now."
+    assert len(model.properties) == 1, f"Only one property is supported right now in {xml_path}."
     with open(model.properties[0], "r", encoding="utf-8") as f:
         jani_dict["properties"] = json.load(f)["properties"]
 
