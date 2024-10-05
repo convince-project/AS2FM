@@ -22,8 +22,12 @@ from math import degrees
 from os import path
 from typing import List
 
-from as2fm.jani_generator.jani_entries import (JaniAutomaton, JaniComposition,
-                                               JaniModel, JaniProperty)
+from as2fm.jani_generator.jani_entries import (
+    JaniAutomaton,
+    JaniComposition,
+    JaniModel,
+    JaniProperty,
+)
 
 
 def to_cm(value: float) -> int:
@@ -61,8 +65,9 @@ def __convince_env_model_to_jani(base_model: JaniModel, env_model: dict):
         # The robot pose should be stored using integers -> centimeters and degrees
         base_model.add_variable(f"robots.{robot_name}.pose.x_cm", int, to_cm(robot_pose["x"]))
         base_model.add_variable(f"robots.{robot_name}.pose.y_cm", int, to_cm(robot_pose["y"]))
-        base_model.add_variable(f"robots.{robot_name}.pose.theta_deg", int,
-                                to_deg(robot_pose["theta"]))
+        base_model.add_variable(
+            f"robots.{robot_name}.pose.theta_deg", int, to_deg(robot_pose["theta"])
+        )
         base_model.add_variable(f"robots.{robot_name}.pose.x", float, transient=True)
         base_model.add_variable(f"robots.{robot_name}.pose.y", float, transient=True)
         base_model.add_variable(f"robots.{robot_name}.pose.theta", float, transient=True)
@@ -70,14 +75,18 @@ def __convince_env_model_to_jani(base_model: JaniModel, env_model: dict):
         base_model.add_variable(f"robots.{robot_name}.goal.y", float, transient=True)
         base_model.add_variable(f"robots.{robot_name}.goal.theta", float, transient=True)
         robot_shape = robot["shape"]
-        base_model.add_constant(f"robots.{robot_name}.shape.radius", float,
-                                float(robot_shape["radius"]))
-        base_model.add_constant(f"robots.{robot_name}.shape.height", float,
-                                float(robot_shape["height"]))
-        base_model.add_constant(f"robots.{robot_name}.linear_velocity", float,
-                                float(robot["linear_velocity"]))
-        base_model.add_constant(f"robots.{robot_name}.angular_velocity", float,
-                                float(robot["angular_velocity"]))
+        base_model.add_constant(
+            f"robots.{robot_name}.shape.radius", float, float(robot_shape["radius"])
+        )
+        base_model.add_constant(
+            f"robots.{robot_name}.shape.height", float, float(robot_shape["height"])
+        )
+        base_model.add_constant(
+            f"robots.{robot_name}.linear_velocity", float, float(robot["linear_velocity"])
+        )
+        base_model.add_constant(
+            f"robots.{robot_name}.angular_velocity", float, float(robot["angular_velocity"])
+        )
     if "obstacles" in env_model:
         # Extract the obstacles from the env_model
         # TODO
@@ -111,8 +120,9 @@ def __convince_properties_to_jani(base_model: JaniModel, properties: List[dict])
     assert isinstance(base_model, JaniModel), "The base_model should be a JaniModel instance"
     for property_dict in properties:
         assert isinstance(property_dict, dict), "The properties list should contain dictionaries"
-        base_model.add_jani_property(JaniProperty(property_dict["name"],
-                                                  property_dict["expression"]))
+        base_model.add_jani_property(
+            JaniProperty(property_dict["name"], property_dict["expression"])
+        )
 
 
 def convince_jani_parser(base_model: JaniModel, convince_jani_path: str):
@@ -122,14 +132,14 @@ def convince_jani_parser(base_model: JaniModel, convince_jani_path: str):
     # Check if the convince_jani_path is a file
     assert path.isfile(convince_jani_path), "The convince_jani_path should be a file"
     # Read the convince-jani file
-    with open(convince_jani_path, "r", encoding='utf-8') as file:
+    with open(convince_jani_path, "r", encoding="utf-8") as file:
         convince_jani_json = json.load(file)
     # ---- Metadata ----
     base_model.set_name(convince_jani_json["name"])
     # Make sure we are loading a convince-jani file
-    assert "features" in convince_jani_json and \
-        "convince_extensions" in convince_jani_json["features"], \
-        "The provided file is not a convince-jani file (missing feature entry)"
+    assert (
+        "features" in convince_jani_json and "convince_extensions" in convince_jani_json["features"]
+    ), "The provided file is not a convince-jani file (missing feature entry)"
     # Extract the environment model from the convince-jani file
     # ---- Environment Model ----
     __convince_env_model_to_jani(base_model, convince_jani_json["rob_env_model"])

@@ -20,26 +20,37 @@ Definition of SCXML Tags that can be part of executable content
 from typing import Dict, List, Optional, Tuple, Union, get_args
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (BtGetValueInputPort,
-                                                 ScxmlBase, ScxmlParam,
-                                                 ScxmlRosDeclarationsContainer)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (BtPortsHandler,
-                                                          is_bt_event,
-                                                          replace_bt_event)
-from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
-                                                       get_plain_expression,
-                                                       is_non_empty_string)
+from as2fm.scxml_converter.scxml_entries import (
+    BtGetValueInputPort,
+    ScxmlBase,
+    ScxmlParam,
+    ScxmlRosDeclarationsContainer,
+)
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    is_bt_event,
+    replace_bt_event,
+)
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    get_plain_expression,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_child)
+    assert_xml_tag_ok,
+    get_xml_argument,
+    read_value_from_xml_child,
+)
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
-ScxmlExecutableEntry = Union['ScxmlAssign', 'ScxmlIf', 'ScxmlSend']
+ScxmlExecutableEntry = Union["ScxmlAssign", "ScxmlIf", "ScxmlSend"]
 ScxmlExecutionBody = List[ScxmlExecutableEntry]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
 def instantiate_exec_body_bt_events(
-        exec_body: Optional[ScxmlExecutionBody], instance_id: str) -> None:
+    exec_body: Optional[ScxmlExecutionBody], instance_id: str
+) -> None:
     """
     Instantiate the behavior tree events in the execution body.
 
@@ -52,7 +63,8 @@ def instantiate_exec_body_bt_events(
 
 
 def update_exec_body_bt_ports_values(
-        exec_body: Optional[ScxmlExecutionBody], bt_ports_handler: BtPortsHandler) -> None:
+    exec_body: Optional[ScxmlExecutionBody], bt_ports_handler: BtPortsHandler
+) -> None:
     """
     Update the BT ports values in the execution body.
     """
@@ -102,14 +114,17 @@ class ScxmlIf(ScxmlBase):
             else_body = current_body
         else:
             exec_bodies.append(current_body)
-        assert len(conditions) == len(exec_bodies), \
-            "Error: SCXML if: number of conditions and bodies do not match " \
+        assert len(conditions) == len(exec_bodies), (
+            "Error: SCXML if: number of conditions and bodies do not match "
             f"({len(conditions)} != {len(exec_bodies)}). Conditions: {conditions}."
+        )
         return ScxmlIf(list(zip(conditions, exec_bodies)), else_body)
 
-    def __init__(self,
-                 conditional_executions: List[ConditionalExecutionBody],
-                 else_execution: Optional[ScxmlExecutionBody] = None):
+    def __init__(
+        self,
+        conditional_executions: List[ConditionalExecutionBody],
+        else_execution: Optional[ScxmlExecutionBody] = None,
+    ):
         """
         Class representing a conditional execution in SCXML.
 
@@ -148,9 +163,10 @@ class ScxmlIf(ScxmlBase):
         update_exec_body_bt_ports_values(self._else_execution, bt_ports_handler)
 
     def check_validity(self) -> bool:
-        valid_conditional_executions = len(self._conditional_executions) > 0 and \
-            all(isinstance(condition, str) and len(body) > 0 and valid_execution_body(body)
-                for condition, body in self._conditional_executions)
+        valid_conditional_executions = len(self._conditional_executions) > 0 and all(
+            isinstance(condition, str) and len(body) > 0 and valid_execution_body(body)
+            for condition, body in self._conditional_executions
+        )
         if not valid_conditional_executions:
             print("Error: SCXML if: Found invalid entries in conditional executions.")
         valid_else_execution = valid_execution_body(self._else_execution)
@@ -158,12 +174,14 @@ class ScxmlIf(ScxmlBase):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> bool:
         """Check if the ros instantiations have been declared."""
         # Check the executable content
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML if: invalid ROS declarations type provided."
+        assert isinstance(
+            ros_declarations, ScxmlRosDeclarationsContainer
+        ), "Error: SCXML if: invalid ROS declarations type provided."
         for _, exec_body in self._conditional_executions:
             for exec_entry in exec_body:
                 if not exec_entry.check_valid_ros_instantiations(ros_declarations):
@@ -191,7 +209,8 @@ class ScxmlIf(ScxmlBase):
             execution_body = as_plain_execution_body(execution, ros_declarations)
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
             conditional_executions.append(
-                (get_plain_expression(condition, self._cb_type), execution_body))
+                (get_plain_expression(condition, self._cb_type), execution_body)
+            )
         set_execution_body_callback_type(self._else_execution, self._cb_type)
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(conditional_executions, else_execution)
@@ -203,10 +222,10 @@ class ScxmlIf(ScxmlBase):
         xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
         append_execution_body_to_xml(xml_if, first_conditional_execution[1])
         for condition, execution in self._conditional_executions[1:]:
-            xml_if.append(ET.Element('elseif', {"cond": condition}))
+            xml_if.append(ET.Element("elseif", {"cond": condition}))
             append_execution_body_to_xml(xml_if, execution)
         if len(self._else_execution) > 0:
-            xml_if.append(ET.Element('else'))
+            xml_if.append(ET.Element("else"))
             append_execution_body_to_xml(xml_if, self._else_execution)
         return xml_if
 
@@ -226,8 +245,9 @@ class ScxmlSend(ScxmlBase):
         :param xml_tree: The XML tree to create the object from.
         :param cb_type: The kind of callback executing this SCXML entry.
         """
-        assert xml_tree.tag == ScxmlSend.get_tag_name(), \
-            f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
+        assert (
+            xml_tree.tag == ScxmlSend.get_tag_name()
+        ), f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
         event = xml_tree.attrib["event"]
         params: List[ScxmlParam] = []
         assert params is not None, "Error: SCXML send: params is not valid."
@@ -293,8 +313,9 @@ class ScxmlSend(ScxmlBase):
         return True
 
     def append_param(self, param: ScxmlParam) -> None:
-        assert self.__class__ is ScxmlSend, \
-            f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
+        assert (
+            self.__class__ is ScxmlSend
+        ), f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         self._params.append(param)
 
@@ -383,14 +404,15 @@ class ScxmlAssign(ScxmlBase):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid assign object."
-        return ET.Element(ScxmlAssign.get_tag_name(), {
-            "location": self._location, "expr": self._expr})
+        return ET.Element(
+            ScxmlAssign.get_tag_name(), {"location": self._location, "expr": self._expr}
+        )
 
 
 # Get the resolved types from the forward references in ScxmlExecutableEntry
-_ResolvedScxmlExecutableEntry = \
-    tuple(entry._evaluate(globals(), locals(), frozenset())
-          for entry in get_args(ScxmlExecutableEntry))
+_ResolvedScxmlExecutableEntry = tuple(
+    entry._evaluate(globals(), locals(), frozenset()) for entry in get_args(ScxmlExecutableEntry)
+)
 
 
 def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
@@ -405,8 +427,10 @@ def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
         return False
     for entry in exec_body:
         if not isinstance(entry, _ResolvedScxmlExecutableEntry):
-            print(f"Error: SCXML execution body: entry type {type(entry)} not in valid set."
-                  f" {_ResolvedScxmlExecutableEntry}.")
+            print(
+                f"Error: SCXML execution body: entry type {type(entry)} not in valid set."
+                f" {_ResolvedScxmlExecutableEntry}."
+            )
             return False
     return True
 
@@ -438,11 +462,13 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
 
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {
-        cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry}
+        cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry
+    }
     tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
-    assert exec_tag in tag_to_cls, \
-        f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
+    assert (
+        exec_tag in tag_to_cls
+    ), f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
     return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 
@@ -483,8 +509,8 @@ def set_execution_body_callback_type(exec_body: ScxmlExecutionBody, cb_type: Cal
 
 
 def as_plain_execution_body(
-        exec_body: Optional[ScxmlExecutionBody],
-        ros_declarations: ScxmlRosDeclarationsContainer) -> Optional[ScxmlExecutionBody]:
+    exec_body: Optional[ScxmlExecutionBody], ros_declarations: ScxmlRosDeclarationsContainer
+) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 

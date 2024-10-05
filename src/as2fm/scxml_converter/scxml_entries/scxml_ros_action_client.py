@@ -24,20 +24,22 @@ from xml.etree import ElementTree as ET
 
 from action_msgs.msg import GoalStatus
 
-from as2fm.scxml_converter.scxml_entries import (ScxmlRosDeclarationsContainer,
-                                                 ScxmlTransition)
+from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer, ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_feedback_handle_event,
     generate_action_goal_handle_accepted_event,
-    generate_action_goal_handle_rejected_event, generate_action_goal_req_event,
-    generate_action_result_handle_event, is_action_type_known)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
-                                                                RosDeclaration,
-                                                                RosTrigger)
-from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
-                                                       is_non_empty_string)
-from as2fm.scxml_converter.scxml_entries.xml_utils import (assert_xml_tag_ok,
-                                                           get_xml_argument)
+    generate_action_goal_handle_rejected_event,
+    generate_action_goal_req_event,
+    generate_action_result_handle_event,
+    is_action_type_known,
+)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
+    RosCallback,
+    RosDeclaration,
+    RosTrigger,
+)
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
 class RosActionClient(RosDeclaration):
@@ -78,7 +80,8 @@ class RosActionSendGoal(RosTrigger):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_req_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
 
 class RosActionHandleGoalResponse(ScxmlTransition):
@@ -103,8 +106,9 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         reject_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "reject")
         return RosActionHandleGoalResponse(action_name, accept_target, reject_target)
 
-    def __init__(self, action_client: Union[str, RosActionClient],
-                 accept_target: str, reject_target: str) -> None:
+    def __init__(
+        self, action_client: Union[str, RosActionClient], accept_target: str, reject_target: str
+    ) -> None:
         """
         Initialize a new RosActionHandleGoalResponse object.
 
@@ -123,10 +127,12 @@ class RosActionHandleGoalResponse(ScxmlTransition):
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(RosActionHandleGoalResponse, "name", self._client_name)
-        valid_accept = is_non_empty_string(RosActionHandleGoalResponse, "accept",
-                                           self._accept_target)
-        valid_reject = is_non_empty_string(RosActionHandleGoalResponse, "reject",
-                                           self._reject_target)
+        valid_accept = is_non_empty_string(
+            RosActionHandleGoalResponse, "accept", self._accept_target
+        )
+        valid_reject = is_non_empty_string(
+            RosActionHandleGoalResponse, "reject", self._reject_target
+        )
         return valid_name and valid_accept and valid_reject
 
     def instantiate_bt_events(self, _: str):
@@ -138,22 +144,29 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         # We do not expect a body with BT ports to be substituted
         pass
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML Service Handle Response: invalid ROS declarations container."
-        assert isinstance(ros_declarations, ScxmlRosDeclarationsContainer), \
-            "Error: SCXML action goal request: invalid ROS declarations container."
+    def check_valid_ros_instantiations(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> bool:
+        assert isinstance(
+            ros_declarations, ScxmlRosDeclarationsContainer
+        ), "Error: SCXML Service Handle Response: invalid ROS declarations container."
+        assert isinstance(
+            ros_declarations, ScxmlRosDeclarationsContainer
+        ), "Error: SCXML action goal request: invalid ROS declarations container."
         if not ros_declarations.is_action_client_defined(self._client_name):
-            print("Error: SCXML action goal request: "
-                  f"action client {self._client_name} not declared.")
+            print(
+                "Error: SCXML action goal request: "
+                f"action client {self._client_name} not declared."
+            )
             return False
         return True
 
-    def as_plain_scxml(self,
-                       ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlTransition]:
-        assert self.check_valid_ros_instantiations(ros_declarations), \
-            "Error: SCXML service response handler: invalid ROS instantiations."
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
+        assert self.check_valid_ros_instantiations(
+            ros_declarations
+        ), "Error: SCXML service response handler: invalid ROS instantiations."
         automaton_name = ros_declarations.get_automaton_name()
         interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
         accept_event = generate_action_goal_handle_accepted_event(interface_name, automaton_name)
@@ -164,9 +177,14 @@ class RosActionHandleGoalResponse(ScxmlTransition):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
-        return ET.Element(RosActionHandleGoalResponse.get_tag_name(),
-                          {"name": self._client_name,
-                           "accept": self._accept_target, "reject": self._reject_target})
+        return ET.Element(
+            RosActionHandleGoalResponse.get_tag_name(),
+            {
+                "name": self._client_name,
+                "accept": self._accept_target,
+                "reject": self._reject_target,
+            },
+        )
 
 
 class RosActionHandleFeedback(RosCallback):
@@ -190,7 +208,8 @@ class RosActionHandleFeedback(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_feedback_handle_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
 
 class RosActionHandleSuccessResult(RosCallback):
@@ -214,11 +233,13 @@ class RosActionHandleSuccessResult(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_handle_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self._condition is None, \
-            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        assert (
+            self._condition is None
+        ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_SUCCEEDED}"
         return super().as_plain_scxml(ros_declarations)
 
@@ -244,11 +265,13 @@ class RosActionHandleCanceledResult(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_handle_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self._condition is None, \
-            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        assert (
+            self._condition is None
+        ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_CANCELED}"
         return super().as_plain_scxml(ros_declarations)
 
@@ -274,10 +297,12 @@ class RosActionHandleAbortedResult(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_handle_event(
             ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
-        assert self._condition is None, \
-            "Error: SCXML RosActionHandleSuccessResult: condition not supported."
+        assert (
+            self._condition is None
+        ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_ABORTED}"
         return super().as_plain_scxml(ros_declarations)

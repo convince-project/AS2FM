@@ -34,17 +34,14 @@ class JaniConstant:
             # Check if conversion from string to constant_type is possible
             try:
                 const_value_cast = constant_type(constant_value)
-                return JaniConstant(constant_name,
-                                    constant_type,
-                                    JaniExpression(const_value_cast))
+                return JaniConstant(constant_name, constant_type, JaniExpression(const_value_cast))
             except ValueError:
                 # If no conversion possible, raise an error (constant names are not supported)
                 raise ValueError(
                     f"Value {constant_value} for constant {constant_name} "
-                    f"is not a valid value for type {constant_type}.")
-        return JaniConstant(constant_name,
-                            constant_type,
-                            JaniExpression(constant_value))
+                    f"is not a valid value for type {constant_type}."
+                )
+        return JaniConstant(constant_name, constant_type, JaniExpression(constant_value))
 
     def __init__(self, c_name: str, c_type: Type, c_value: Optional[JaniExpression]):
         assert isinstance(c_value, JaniExpression), "Value should be a JaniExpression"
@@ -60,8 +57,7 @@ class JaniConstant:
         if self._value is None:
             return None
         jani_value = self._value.value
-        assert jani_value.is_valid(), \
-            "The expression can't be evaluated to a constant value"
+        assert jani_value.is_valid(), "The expression can't be evaluated to a constant value"
         return jani_value.value()
 
     @staticmethod
@@ -106,10 +102,7 @@ class JaniConstant:
         raise ValueError(f"Type {c_type} not supported by Jani")
 
     def as_dict(self):
-        const_dict = {
-            "name": self._name,
-            "type": JaniConstant.jani_type_to_string(self._type)
-        }
+        const_dict = {"name": self._name, "type": JaniConstant.jani_type_to_string(self._type)}
         if self._value is not None:
             const_dict["value"] = self._value.as_dict()
         return const_dict

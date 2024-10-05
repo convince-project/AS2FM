@@ -20,16 +20,21 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Sequence, Union
 from xml.etree import ElementTree as ET
 
-from as2fm.scxml_converter.scxml_entries import (ScxmlBase,
-                                                 ScxmlExecutableEntry,
-                                                 ScxmlExecutionBody,
-                                                 ScxmlRosDeclarationsContainer,
-                                                 ScxmlTransition)
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlBase,
+    ScxmlExecutableEntry,
+    ScxmlExecutionBody,
+    ScxmlRosDeclarationsContainer,
+    ScxmlTransition,
+)
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
-    as_plain_execution_body, execution_body_from_xml,
-    instantiate_exec_body_bt_events, set_execution_body_callback_type,
-    valid_execution_body)
+    as_plain_execution_body,
+    execution_body_from_xml,
+    instantiate_exec_body_bt_events,
+    set_execution_body_callback_type,
+    valid_execution_body,
+)
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
@@ -42,12 +47,14 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import \
-            RosCallback
+        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback
+
         transitions: List[ScxmlTransition] = []
-        tag_to_cls = {cls.get_tag_name(): cls
-                      for cls in ScxmlTransition.__subclasses__()
-                      if cls != RosCallback}
+        tag_to_cls = {
+            cls.get_tag_name(): cls
+            for cls in ScxmlTransition.__subclasses__()
+            if cls != RosCallback
+        }
         tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
         tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
         for child in xml_tree:
@@ -56,25 +63,30 @@ class ScxmlState(ScxmlBase):
             elif child.tag in tag_to_cls:
                 transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
             else:
-                assert child.tag in ("onentry", "onexit"), \
-                    f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
+                assert child.tag in (
+                    "onentry",
+                    "onexit",
+                ), f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
         return transitions
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
-        assert xml_tree.tag == ScxmlState.get_tag_name(), \
-            f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
+        assert (
+            xml_tree.tag == ScxmlState.get_tag_name()
+        ), f"Error: SCXML state: XML tag name is not {ScxmlState.get_tag_name()}."
         id_ = xml_tree.attrib.get("id")
         assert id_ is not None and len(id_) > 0, "Error: SCXML state: id is not valid."
         scxml_state = ScxmlState(id_)
         # Get the onentry and onexit execution bodies
         on_entry = xml_tree.findall("onentry")
-        assert len(on_entry) <= 1, \
-            f"Error: SCXML state: {len(on_entry)} onentry tags found, expected 0 or 1."
+        assert (
+            len(on_entry) <= 1
+        ), f"Error: SCXML state: {len(on_entry)} onentry tags found, expected 0 or 1."
         on_exit = xml_tree.findall("onexit")
-        assert len(on_exit) <= 1, \
-            f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
+        assert (
+            len(on_exit) <= 1
+        ), f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
             for exec_entry in execution_body_from_xml(on_entry[0]):
                 scxml_state.append_on_entry(exec_entry)
@@ -86,10 +98,14 @@ class ScxmlState(ScxmlBase):
             scxml_state.add_transition(body_entry)
         return scxml_state
 
-    def __init__(self, state_id: str, *,
-                 on_entry: ScxmlExecutionBody = None,
-                 on_exit: ScxmlExecutionBody = None,
-                 body: List[ScxmlTransition] = None):
+    def __init__(
+        self,
+        state_id: str,
+        *,
+        on_entry: ScxmlExecutionBody = None,
+        on_exit: ScxmlExecutionBody = None,
+        body: List[ScxmlTransition] = None,
+    ):
         """
         Initialize a new ScxmlState object.
 
@@ -120,7 +136,7 @@ class ScxmlState(ScxmlBase):
         """Assign the thread ID to the thread-specific transitions in the body."""
         for entry in self._on_entry + self._on_exit + self._body:
             # Assign the thread only to the entries supporting it
-            if hasattr(entry, 'set_thread_id'):
+            if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
     def instantiate_bt_events(self, instance_id: str) -> None:
@@ -157,8 +173,9 @@ class ScxmlState(ScxmlBase):
             valid_body = isinstance(self._body, list)
             if valid_body:
                 for transition in self._body:
-                    valid_transition = isinstance(
-                        transition, ScxmlTransition) and transition.check_validity()
+                    valid_transition = (
+                        isinstance(transition, ScxmlTransition) and transition.check_validity()
+                    )
                     if not valid_transition:
                         valid_body = False
                         break
@@ -172,8 +189,9 @@ class ScxmlState(ScxmlBase):
             print(f"Error: SCXML state {self._id}: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
-    def check_valid_ros_instantiations(self,
-                                       ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_valid_ros_instantiations(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> bool:
         """Check if the ros instantiations have been declared."""
         valid_entry = ScxmlState._check_valid_ros_instantiations(self._on_entry, ros_declarations)
         valid_exit = ScxmlState._check_valid_ros_instantiations(self._on_exit, ros_declarations)
@@ -188,11 +206,13 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _check_valid_ros_instantiations(
-            body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
-            ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+        body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> bool:
         """Check if the ros instantiations have been declared in the body."""
-        return (len(body) == 0 or
-                all(entry.check_valid_ros_instantiations(ros_declarations) for entry in body))
+        return len(body) == 0 or all(
+            entry.check_valid_ros_instantiations(ros_declarations) for entry in body
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""
@@ -205,25 +225,28 @@ class ScxmlState(ScxmlBase):
             plain_entries = entry.as_plain_scxml(ros_declarations)
             if isinstance(plain_entries, ScxmlTransition):
                 plain_body.append(plain_entries)
-            elif isinstance(plain_entries, list) and \
-                    all(isinstance(e, ScxmlTransition) for e in plain_entries):
+            elif isinstance(plain_entries, list) and all(
+                isinstance(e, ScxmlTransition) for e in plain_entries
+            ):
                 # Some special entries return multiple transitions
                 plain_body.extend(plain_entries)
             else:
-                raise ValueError(f"Error: SCXML state {self._id}: found invalid transition in "
-                                 "state body after conversion to plain SCXML.")
+                raise ValueError(
+                    f"Error: SCXML state {self._id}: found invalid transition in "
+                    "state body after conversion to plain SCXML."
+                )
         return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid state object."
         xml_state = ET.Element(ScxmlState.get_tag_name(), {"id": self._id})
         if len(self._on_entry) > 0:
-            xml_on_entry = ET.Element('onentry')
+            xml_on_entry = ET.Element("onentry")
             for executable_entry in self._on_entry:
                 xml_on_entry.append(executable_entry.as_xml())
             xml_state.append(xml_on_entry)
         if len(self._on_exit) > 0:
-            xml_on_exit = ET.Element('onexit')
+            xml_on_exit = ET.Element("onexit")
             for executable_entry in self._on_exit:
                 xml_on_exit.append(executable_entry.as_xml())
             xml_state.append(xml_on_exit)

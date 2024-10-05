@@ -23,25 +23,21 @@ def test_plantumlautomata():
     """
     Regression test to see if the PlantUML automata are correctly generated.
     """
-    for data_prefix in ['demo_manual', 'ros_example_w_bt']:
-        test_data_folder = os.path.join(
-            os.path.dirname(__file__),
-            '_test_data')
-        jani_fname = os.path.join(test_data_folder, f'{data_prefix}.jani')
+    for data_prefix in ["demo_manual", "ros_example_w_bt"]:
+        test_data_folder = os.path.join(os.path.dirname(__file__), "_test_data")
+        jani_fname = os.path.join(test_data_folder, f"{data_prefix}.jani")
 
-        with open(jani_fname, 'r', encoding='utf-8') as f:
+        with open(jani_fname, "r", encoding="utf-8") as f:
             jani_dict = json.load(f)
         pua = PlantUMLAutomata(jani_dict)
         puml_str = pua.to_plantuml(
             with_assignments=True,  # default
             with_guards=True,  # default
-            with_syncs=True  # default
+            with_syncs=True,  # default
         )
 
         # Comparing the generated images with the reference images
-        output_file = os.path.join(
-            test_data_folder, 'expected_output', f'{data_prefix}.plantuml')
-        with open(output_file, 'r', encoding='utf-8') as f:
+        output_file = os.path.join(test_data_folder, "expected_output", f"{data_prefix}.plantuml")
+        with open(output_file, "r", encoding="utf-8") as f:
             expected_content = f.read()
-        assert puml_str == expected_content, \
-            f'The content for {output_file} is not as expected.'
+        assert puml_str == expected_content, f"The content for {output_file} is not as expected."
