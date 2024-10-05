@@ -19,12 +19,10 @@ Generic class for generators of SCXML state machine for specific ROS communicati
 
 from typing import Dict, Iterator, List, Optional, Type
 
-from as2fm.as2fm_common.common import (get_default_expression_for_type,
-                                       value_to_string)
+from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string
 from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
-from as2fm.scxml_converter.scxml_entries.utils import (
-    ROS_FIELD_PREFIX, get_data_type_from_string)
+from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, get_data_type_from_string
 
 
 class RosCommunicationHandler:
@@ -58,10 +56,12 @@ class RosCommunicationHandler:
             self._interface_name = interface_name
             self._interface_type = interface_type
         else:
-            assert self._interface_name == interface_name, \
-                f"Error: Interface name {interface_name} does not match {self._interface_name}."
-            assert self._interface_type == interface_type, \
-                f"Error: Interface type {interface_type} does not match {self._interface_type}."
+            assert (
+                self._interface_name == interface_name
+            ), f"Error: Interface name {interface_name} does not match {self._interface_name}."
+            assert (
+                self._interface_type == interface_type
+            ), f"Error: Interface type {interface_type} does not match {self._interface_type}."
 
     def _assert_validity(self):
         """
@@ -69,10 +69,12 @@ class RosCommunicationHandler:
         """
         assert self._interface_name is not None, "Interface name not set."
         assert self._interface_type is not None, "Interface type not set."
-        assert self._server_automaton is not None, \
-            f"ROS server not provided for {self._interface_name}."
-        assert len(self._clients_automata) > 0, \
-            f"No ROS clients provided for {self._interface_name}."
+        assert (
+            self._server_automaton is not None
+        ), f"ROS server not provided for {self._interface_name}."
+        assert (
+            len(self._clients_automata) > 0
+        ), f"No ROS clients provided for {self._interface_name}."
 
     def set_server(self, interface_name: str, interface_type: str, automaton_name: str) -> None:
         """
@@ -84,8 +86,9 @@ class RosCommunicationHandler:
         :automaton_name: The name of the JANI automaton that implements this server.
         """
         self._set_name_and_type(interface_name, interface_type)
-        assert self._server_automaton is None, \
-            f"Found more than one server for interface {interface_name}."
+        assert (
+            self._server_automaton is None
+        ), f"Found more than one server for interface {interface_name}."
         self._server_automaton = automaton_name
 
     def add_client(self, interface_name: str, interface_type: str, automaton_name: str) -> None:
@@ -98,8 +101,9 @@ class RosCommunicationHandler:
         :automaton_name: The name of the JANI automaton that implements this client.
         """
         self._set_name_and_type(interface_name, interface_type)
-        assert automaton_name not in self._clients_automata, \
-            f"Service client for {automaton_name} already declared for service {interface_name}."
+        assert (
+            automaton_name not in self._clients_automata
+        ), f"Service client for {automaton_name} already declared for service {interface_name}."
         self._clients_automata.append(automaton_name)
 
     def to_scxml(self) -> ScxmlRoot:
@@ -130,9 +134,12 @@ class RosCommunicationHandler:
 
 
 def update_ros_communication_handlers(
-        automaton_name: str, handler_class: Type[RosCommunicationHandler],
-        handlers_dict: Dict[str, RosCommunicationHandler],
-        servers_dict: Dict[str, tuple], clients_dict: Dict[str, tuple]):
+    automaton_name: str,
+    handler_class: Type[RosCommunicationHandler],
+    handlers_dict: Dict[str, RosCommunicationHandler],
+    servers_dict: Dict[str, tuple],
+    clients_dict: Dict[str, tuple],
+):
     """
     Update the ROS communication handlers with the given clients and servers.
 
@@ -141,8 +148,9 @@ def update_ros_communication_handlers(
     :param servers_dict: The dictionary of servers to add.
     :param clients_dict: The dictionary of clients to add.
     """
-    assert issubclass(handler_class, RosCommunicationHandler), \
-        f"The handler class {handler_class} must be a subclass of RosCommunicationHandler."
+    assert issubclass(
+        handler_class, RosCommunicationHandler
+    ), f"The handler class {handler_class} must be a subclass of RosCommunicationHandler."
     for service_name, service_type in servers_dict.values():
         if service_name not in handlers_dict:
             handlers_dict[service_name] = handler_class()
@@ -150,12 +158,12 @@ def update_ros_communication_handlers(
     for service_name, service_type in clients_dict.values():
         if service_name not in handlers_dict:
             handlers_dict[service_name] = handler_class()
-        handlers_dict[service_name].add_client(
-            service_name, service_type, automaton_name)
+        handlers_dict[service_name].add_client(service_name, service_type, automaton_name)
 
 
 def generate_plain_scxml_from_handlers(
-        handlers_dict: Dict[str, RosCommunicationHandler]) -> Iterator[ScxmlRoot]:
+    handlers_dict: Dict[str, RosCommunicationHandler]
+) -> Iterator[ScxmlRoot]:
     """
     Generate the plain SCXML models from the ROS communication handlers.
 
@@ -172,8 +180,9 @@ def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniMode
 
     :param jani_model: The Jani model to modify.
     """
-    handlers_prefixes = [handler.get_interface_prefix()
-                         for handler in RosCommunicationHandler.__subclasses__()]
+    handlers_prefixes = [
+        handler.get_interface_prefix() for handler in RosCommunicationHandler.__subclasses__()
+    ]
     for automaton in jani_model.get_automata():
         # Modify the automaton in place
         for prefix in handlers_prefixes:

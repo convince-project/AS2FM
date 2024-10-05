@@ -23,14 +23,17 @@ from typing import Union
 
 class JaniValue:
     """Class containing Jani Constant Values"""
+
     def __init__(self, value):
         self._value = value
 
     def is_valid(self) -> bool:
         if isinstance(self._value, dict):
             if "constant" in self._value:
-                assert self._value["constant"] in ("e", "π"), \
-                    f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
+                assert self._value["constant"] in (
+                    "e",
+                    "π",
+                ), f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
         elif isinstance(self._value, list):
             return all(JaniValue(v).is_valid() for v in self._value)

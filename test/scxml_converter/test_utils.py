@@ -23,7 +23,7 @@ from xml.etree import ElementTree as ET
 
 def to_snake_case(text: str) -> str:
     """Convert a string to snake case."""
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', text).lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", text).lower()
 
 
 def canonicalize_xml(xml: str) -> str:
@@ -33,7 +33,7 @@ def canonicalize_xml(xml: str) -> str:
     et = ET.fromstring(xml)
     for elem in et.iter():
         elem.attrib = {k: elem.attrib[k] for k in sorted(elem.attrib.keys())}
-    return ET.tostring(et, encoding='unicode')
+    return ET.tostring(et, encoding="unicode")
 
 
 def remove_empty_lines(text: str) -> str:

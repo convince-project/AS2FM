@@ -19,7 +19,10 @@ from typing import List
 
 from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.ros_helpers.ros_timer import (
-    GLOBAL_TIMER_TICK_ACTION, RosTimer, make_global_timer_automaton)
+    GLOBAL_TIMER_TICK_ACTION,
+    RosTimer,
+    make_global_timer_automaton,
+)
 
 
 def generic_ros_timer_check(rate_hz: float, expected_unit: str, expected_int_period: int):
@@ -42,8 +45,9 @@ def get_time_step_from_timer_automaton(automaton: JaniAutomaton) -> int:
     """
     Get the time step from the global timer automaton.
     """
-    global_tick_edge = [edge for edge in automaton.get_edges()
-                        if edge.get_action() == GLOBAL_TIMER_TICK_ACTION]
+    global_tick_edge = [
+        edge for edge in automaton.get_edges() if edge.get_action() == GLOBAL_TIMER_TICK_ACTION
+    ]
     assert len(global_tick_edge) == 1, "Expected only one edge advancing the global timer"
     edge_dict = global_tick_edge[0].as_dict({})
     return int(edge_dict["destinations"][0]["assignments"][0]["value"]["right"])
@@ -59,8 +63,9 @@ def generic_global_timer_check(timer_rates: List[float], expected_time_step: int
         timers.append(RosTimer(f"timer{i}", rate))
     jani_automaton = make_global_timer_automaton(timers, max_time_ns)
     time_step = get_time_step_from_timer_automaton(jani_automaton)
-    assert time_step == expected_time_step, \
-        f"Expected the global timer to advance by {expected_time_step} each time."
+    assert (
+        time_step == expected_time_step
+    ), f"Expected the global timer to advance by {expected_time_step} each time."
 
 
 def test_ros_timer_10hz():

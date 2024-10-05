@@ -17,8 +17,7 @@
 
 from typing import Any, Dict, MutableSequence, Optional, Tuple, Type, get_args
 
-from as2fm.as2fm_common.common import (get_default_expression_for_type,
-                                       is_array_type)
+from as2fm.as2fm_common.common import get_default_expression_for_type, is_array_type
 from as2fm.jani_generator.jani_entries import JaniAutomaton
 
 
@@ -32,8 +31,9 @@ def get_variable_type(jani_automaton: JaniAutomaton, variable_name: Optional[str
     """
     assert variable_name is not None, "Variable name must be provided."
     variable = jani_automaton.get_variables().get(variable_name)
-    assert variable is not None, \
-        f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
+    assert (
+        variable is not None
+    ), f"Variable {variable_name} not found in {jani_automaton.get_variables()}."
     return variable.get_type()
 
 
@@ -64,9 +64,9 @@ def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tup
     init_operator = variable.get_init_expr().as_operator()
     assert init_operator is not None, f"Expected init expr of {var_name} to be an operator expr."
     if init_operator[0] == "av":
-        max_size = len(init_operator[1]['elements'].as_literal().value())
+        max_size = len(init_operator[1]["elements"].as_literal().value())
     elif init_operator[0] == "ac":
-        max_size = init_operator[1]['length'].as_literal().value()
+        max_size = init_operator[1]["length"].as_literal().value()
     else:
         raise ValueError(f"Unexpected operator {init_operator[0]} for {var_name} init expr.")
     return (array_type, max_size)

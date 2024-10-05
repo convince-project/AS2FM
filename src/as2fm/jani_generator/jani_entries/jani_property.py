@@ -21,24 +21,26 @@ Properties in Jani
 from typing import Any, Dict, Union
 
 from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import \
-    expand_expression
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
 
 
 class FilterProperty:
     """All Property operators must occur in a FilterProperty object."""
+
     def __init__(self, property_filter_exp: Dict[str, Any]):
         assert isinstance(property_filter_exp, dict), "Unexpected FilterProperty initialization"
-        assert "op" in property_filter_exp and property_filter_exp["op"] == "filter", \
-            "Unexpected FilterProperty initialization"
+        assert (
+            "op" in property_filter_exp and property_filter_exp["op"] == "filter"
+        ), "Unexpected FilterProperty initialization"
         self._fun = property_filter_exp["fun"]
         raw_states = property_filter_exp["states"]
         assert isinstance(raw_states, dict) and raw_states["op"] == "initial"
         self._process_values(property_filter_exp["values"])
 
     def _process_values(self, prop_values: Dict[str, Any]) -> None:
-        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = \
+        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = (
             ProbabilityProperty(prop_values)
+        )
         if self._values.is_valid():
             return
         self._values = RewardProperty(prop_values)
@@ -48,20 +50,20 @@ class FilterProperty:
         assert self._values.is_valid(), "Unexpected values in FilterProperty"
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        assert isinstance(self._values, ProbabilityProperty), \
-            "Only ProbabilityProperty is supported in FilterProperty"
+        assert isinstance(
+            self._values, ProbabilityProperty
+        ), "Only ProbabilityProperty is supported in FilterProperty"
         return {
             "op": "filter",
             "fun": self._fun,
-            "states": {
-                "op": "initial"
-            },
-            "values": self._values.as_dict(constants)
+            "states": {"op": "initial"},
+            "values": self._values.as_dict(constants),
         }
 
 
 class ProbabilityProperty:
     """Pmin / Pmax"""
+
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
         if "op" in prop_values and "exp" in prop_values:
@@ -74,14 +76,12 @@ class ProbabilityProperty:
         return self._valid
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        return {
-            "op": self._op,
-            "exp": self._exp.as_dict(constants)
-        }
+        return {"op": self._op, "exp": self._exp.as_dict(constants)}
 
 
 class RewardProperty:
     """E properties"""
+
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
 
@@ -91,6 +91,7 @@ class RewardProperty:
 
 class NumPathsProperty:
     """This address properties where we want the property verified on all / at least one case."""
+
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
 
@@ -100,6 +101,7 @@ class NumPathsProperty:
 
 class PathProperty:
     """Mainly Until properties. Need to check support of Next and Global properties in Jani."""
+
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
         if "op" not in prop_values:
@@ -111,7 +113,7 @@ class PathProperty:
         elif self._op in ("U", "W"):
             self._operands = {
                 "left": JaniExpression(prop_values["left"]),
-                "right": JaniExpression(prop_values["right"])
+                "right": JaniExpression(prop_values["right"]),
             }
         else:
             print(f"Warning: Unsupported PathProperty operator {self._op}")
@@ -129,8 +131,12 @@ class PathProperty:
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
         ret_dict = {"op": self._op}
-        ret_dict.update({operand: expand_expression(expr, constants).as_dict() for
-                         operand, expr in self._operands.items()})
+        ret_dict.update(
+            {
+                operand: expand_expression(expr, constants).as_dict()
+                for operand, expr in self._operands.items()
+            }
+        )
         if self._bounds is not None:
             ret_dict["step-bounds"] = self._bounds.as_dict(constants)
         return ret_dict
@@ -171,7 +177,4 @@ class JaniProperty:
         self._expression = FilterProperty(expression)
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        return {
-            "name": self._name,
-            "expression": self._expression.as_dict(constants)
-        }
+        return {"name": self._name, "expression": self._expression.as_dict(constants)}

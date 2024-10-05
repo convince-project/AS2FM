@@ -17,10 +17,13 @@
 
 from typing import Dict, Optional
 
-from as2fm.jani_generator.jani_entries import (JaniAssignment, JaniConstant,
-                                               JaniExpression, JaniGuard)
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import \
-    expand_expression
+from as2fm.jani_generator.jani_entries import (
+    JaniAssignment,
+    JaniConstant,
+    JaniExpression,
+    JaniGuard,
+)
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
 
 
 class JaniEdge:
@@ -37,7 +40,7 @@ class JaniEdge:
             jani_destination = {
                 "location": dest["location"],
                 "probability": None,
-                "assignments": []
+                "assignments": [],
             }
             if "probability" in dest:
                 jani_destination["probability"] = JaniExpression(dest["probability"]["exp"])
@@ -57,18 +60,18 @@ class JaniEdge:
 
     def is_empty_self_loop(self) -> bool:
         """Check if the edge is an empty self loop (i.e. has no assignments)."""
-        return len(self.destinations) == 1 and self.location == self.destinations[0]["location"] \
+        return (
+            len(self.destinations) == 1
+            and self.location == self.destinations[0]["location"]
             and len(self.destinations[0]["assignments"]) == 0
+        )
 
     def set_action(self, action_name: str):
         """Set the action name."""
         self.action = action_name
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        edge_dict = {
-            "location": self.location,
-            "destinations": []
-        }
+        edge_dict = {"location": self.location, "destinations": []}
         if self.action is not None:
             edge_dict.update({"action": self.action})
         if self.guard is not None:

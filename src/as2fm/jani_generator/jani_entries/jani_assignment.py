@@ -20,8 +20,7 @@ Assignment in Jani
 from typing import Dict
 
 from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import \
-    expand_expression
+from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
 
 
 class JaniAssignment:
@@ -43,5 +42,5 @@ class JaniAssignment:
         return {
             "ref": self._var_name.as_dict(),
             "value": expanded_value.as_dict(),
-            "index": self._index
+            "index": self._index,
         }

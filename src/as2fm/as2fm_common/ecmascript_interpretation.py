@@ -28,7 +28,8 @@ BasicJsTypes = Union[int, float, bool]
 
 
 def interpret_ecma_script_expr(
-        expr: str, variables: Optional[Dict[str, ValidTypes]] = None) -> object:
+    expr: str, variables: Optional[Dict[str, ValidTypes]] = None
+) -> object:
     """
     Interpret the ECMA script expression.
 
@@ -54,12 +55,16 @@ def interpret_ecma_script_expr(
             if all(isinstance(x, int) for x in res_as_list):
                 return array("i", res_as_list)
             else:
-                return array('d', res_as_list)
+                return array("d", res_as_list)
         else:
-            raise ValueError(f"Expected expr. {expr} to be of type {BasicJsTypes} or "
-                             f"an array, got '{type(expr_result._obj)}'")
+            raise ValueError(
+                f"Expected expr. {expr} to be of type {BasicJsTypes} or "
+                f"an array, got '{type(expr_result._obj)}'"
+            )
     elif isinstance(expr_result, array):
         return expr_result
     else:
-        raise ValueError(f"Expected expr. {expr} to be of type {BasicJsTypes} or "
-                         f"JsObjectWrapper, got '{type(expr_result)}'")
+        raise ValueError(
+            f"Expected expr. {expr} to be of type {BasicJsTypes} or "
+            f"JsObjectWrapper, got '{type(expr_result)}'"
+        )

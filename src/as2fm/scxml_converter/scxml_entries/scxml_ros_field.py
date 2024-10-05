@@ -20,12 +20,17 @@ from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.utils import (ROS_FIELD_PREFIX,
-                                                       CallbackType,
-                                                       get_plain_expression,
-                                                       is_non_empty_string)
+from as2fm.scxml_converter.scxml_entries.utils import (
+    ROS_FIELD_PREFIX,
+    CallbackType,
+    get_plain_expression,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+    assert_xml_tag_ok,
+    get_xml_argument,
+    read_value_from_xml_arg_or_child,
+)
 
 
 class RosField(ScxmlParam):
@@ -40,8 +45,9 @@ class RosField(ScxmlParam):
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_argument(RosField, xml_tree, "name")
-        expr = read_value_from_xml_arg_or_child(RosField, xml_tree, "expr",
-                                                (BtGetValueInputPort, str))
+        expr = read_value_from_xml_arg_or_child(
+            RosField, xml_tree, "expr", (BtGetValueInputPort, str)
+        )
         return RosField(name, expr)
 
     def __init__(self, name: str, expr: Union[BtGetValueInputPort, str]):
@@ -52,8 +58,9 @@ class RosField(ScxmlParam):
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(RosField, "name", self._name)
-        valid_expr = (isinstance(self._expr, BtGetValueInputPort) or
-                      is_non_empty_string(RosField, "expr", self._expr))
+        valid_expr = isinstance(self._expr, BtGetValueInputPort) or is_non_empty_string(
+            RosField, "expr", self._expr
+        )
         return valid_name and valid_expr
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
@@ -63,11 +70,11 @@ class RosField(ScxmlParam):
 
     def as_plain_scxml(self, _) -> ScxmlParam:
         # In order to distinguish the message body from additional entries, add a prefix to the name
-        assert self._cb_type is not None, \
-            f"Error: SCXML ROS field: {self._name} has not callback type set."
+        assert (
+            self._cb_type is not None
+        ), f"Error: SCXML ROS field: {self._name} has not callback type set."
         plain_field_name = ROS_FIELD_PREFIX + self._name
-        return ScxmlParam(plain_field_name,
-                          expr=get_plain_expression(self._expr, self._cb_type))
+        return ScxmlParam(plain_field_name, expr=get_plain_expression(self._expr, self._cb_type))
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

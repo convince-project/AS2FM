@@ -24,19 +24,18 @@ from webcolors import rgb_to_hex
 def _compact_assignments(assignments: Union[dict, list, str, int]) -> str:
     out: str = ""
     if isinstance(assignments, dict):
-        if 'ref' in assignments:
-            assert 'value' in assignments, \
-                "The value must be present if ref is present."
+        if "ref" in assignments:
+            assert "value" in assignments, "The value must be present if ref is present."
             out += f"{assignments['ref']}=({_compact_assignments(assignments['value'])})\n"
-        elif 'op' in assignments:
-            if 'left' in assignments and 'right' in assignments:
+        elif "op" in assignments:
+            if "left" in assignments and "right" in assignments:
                 out += f"{_compact_assignments(assignments['left'])} {assignments['op']} "
                 out += f"{_compact_assignments(assignments['right'])}"
-            elif 'exp' in assignments:
+            elif "exp" in assignments:
                 out += f"{assignments['op']}({_compact_assignments(assignments['exp'])})"
             else:
                 raise ValueError(f"Unknown assignment: {assignments}")
-        elif assignments.keys() == {'exp'}:
+        elif assignments.keys() == {"exp"}:
             out += f"({_compact_assignments(assignments['exp'])})"
         else:
             raise ValueError(f"Unknown assignment: {assignments}")
@@ -64,20 +63,16 @@ class PlantUMLAutomata:
 
     def __init__(self, jani_dict: dict):
         self.jani_dict = jani_dict
-        self.jani_automata = jani_dict['automata']
-        assert isinstance(self.jani_automata, list), \
-            "The automata must be a list."
-        assert len(self.jani_automata) >= 1, \
-            "At least one automaton must be present."
+        self.jani_automata = jani_dict["automata"]
+        assert isinstance(self.jani_automata, list), "The automata must be a list."
+        assert len(self.jani_automata) >= 1, "At least one automaton must be present."
 
     def _preprocess_syncs(self):
         """Preprocess the synchronizations."""
-        assert 'system' in self.jani_dict, \
-            "The system must be present."
-        assert 'syncs' in self.jani_dict['system'], \
-            "The system must have syncs."
+        assert "system" in self.jani_dict, "The system must be present."
+        assert "syncs" in self.jani_dict["system"], "The system must have syncs."
         n_syncs = len(self.jani_dict["system"]["syncs"])
-        automata = [a['name'] for a in self.jani_automata]
+        automata = [a["name"] for a in self.jani_automata]
 
         # define colors for the syncs
         colors = []
@@ -91,8 +86,9 @@ class PlantUMLAutomata:
         colors_per_action = {}
         for i, sync in enumerate(self.jani_dict["system"]["syncs"]):
             synchronise = sync["synchronise"]
-            assert len(synchronise) == len(automata), \
-                "The synchronisation must have the same number of elements as the automata."
+            assert len(synchronise) == len(
+                automata
+            ), "The synchronisation must have the same number of elements as the automata."
             for action, automaton in zip(synchronise, automata):
                 if action is None:
                     continue
@@ -101,11 +97,12 @@ class PlantUMLAutomata:
                 colors_per_action[automaton][action] = colors[i]
         return colors_per_action
 
-    def to_plantuml(self,
-                    with_assignments: bool = False,
-                    with_guards: bool = False,
-                    with_syncs: bool = False,
-                    ) -> str:
+    def to_plantuml(
+        self,
+        with_assignments: bool = False,
+        with_guards: bool = False,
+        with_syncs: bool = False,
+    ) -> str:
         colors_per_action = self._preprocess_syncs()
 
         puml: str = "@startuml\n"
@@ -113,49 +110,44 @@ class PlantUMLAutomata:
 
         for automaton in self.jani_automata:
             # add a box for the automaton
-            automaton_name = automaton['name']
+            automaton_name = automaton["name"]
             puml += f"package {automaton_name} {{\n"
-            for i_l, location in enumerate(automaton['locations']):
-                loc_name = _unique_name(automaton_name, location['name'])
+            for i_l, location in enumerate(automaton["locations"]):
+                loc_name = _unique_name(automaton_name, location["name"])
                 puml += f"    usecase \"({i_l}) {location['name']}\" as {loc_name}\n"
-            for edge in automaton['edges']:
-                source = _unique_name(automaton_name, edge['location'])
-                assert len(edge['destinations']) == 1, \
-                    "Only one destination is supported."
-                destination = edge['destinations'][0]
-                target = _unique_name(automaton_name, destination['location'])
+            for edge in automaton["edges"]:
+                source = _unique_name(automaton_name, edge["location"])
+                assert len(edge["destinations"]) == 1, "Only one destination is supported."
+                destination = edge["destinations"][0]
+                target = _unique_name(automaton_name, destination["location"])
                 edge_label = ""
                 color = "#000"  # black by default
 
                 # Assignments
                 if (
-                    with_assignments and
-                    'assignments' in destination and
-                    len(destination['assignments']) > 0
+                    with_assignments
+                    and "assignments" in destination
+                    and len(destination["assignments"]) > 0
                 ):
-                    assignments_str = _compact_assignments(destination['assignments']).strip()
+                    assignments_str = _compact_assignments(destination["assignments"]).strip()
                     edge_label += f"⏬{assignments_str}\n"
 
                 # Guards
-                if (
-                    with_guards and
-                    'guard' in edge
-                ):
-                    guard_str = _compact_assignments(edge['guard']).strip()
+                if with_guards and "guard" in edge:
+                    guard_str = _compact_assignments(edge["guard"]).strip()
                     edge_label += f"💂{guard_str}\n"
 
                 # Syncs
-                if (
-                    with_syncs and
-                    'action' in edge
-                ):
-                    action = edge['action']
-                    if (automaton['name'] in colors_per_action and
-                            action in colors_per_action[automaton['name']]):
-                        color = colors_per_action[automaton['name']][action]
+                if with_syncs and "action" in edge:
+                    action = edge["action"]
+                    if (
+                        automaton["name"] in colors_per_action
+                        and action in colors_per_action[automaton["name"]]
+                    ):
+                        color = colors_per_action[automaton["name"]][action]
                     edge_label += f"🔗{action}\n"
 
-                edge_label = '  \\n\\\n'.join(edge_label.split('\n'))
+                edge_label = "  \\n\\\n".join(edge_label.split("\n"))
                 if len(edge_label.strip()) > 0:
                     puml += f"    {source} -[{color}]-> {target} : {edge_label}\n"
                 else:
