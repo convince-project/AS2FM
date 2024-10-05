@@ -17,8 +17,7 @@
 
 from typing import Any, Dict, List, Optional, Set
 
-from as2fm.jani_generator.jani_entries import (JaniConstant, JaniEdge,
-                                               JaniExpression, JaniVariable)
+from as2fm.jani_generator.jani_entries import JaniConstant, JaniEdge, JaniExpression, JaniVariable
 
 
 class JaniAutomaton:
@@ -36,8 +35,7 @@ class JaniAutomaton:
         if automaton_dict is None:
             return
         self._name = automaton_dict["name"]
-        self._generate_locations(
-            automaton_dict["locations"], automaton_dict["initial-locations"])
+        self._generate_locations(automaton_dict["locations"], automaton_dict["initial-locations"])
         self._generate_variables(automaton_dict.get("variables", []))
         self._generate_edges(automaton_dict["edges"])
 
@@ -56,15 +54,16 @@ class JaniAutomaton:
         return self._initial_locations
 
     def make_initial(self, location_name: str):
-        assert location_name in self._locations, \
-            f"Location {location_name} must exist in the automaton"
+        assert (
+            location_name in self._locations
+        ), f"Location {location_name} must exist in the automaton"
         self._initial_locations.add(location_name)
 
     def unset_initial(self, location_name: str):
-        assert location_name in self._locations, \
-            f"Location {location_name} must exist in the automaton"
-        assert location_name in self._initial_locations, \
-            f"Location {location_name} must be initial"
+        assert (
+            location_name in self._locations
+        ), f"Location {location_name} must exist in the automaton"
+        assert location_name in self._initial_locations, f"Location {location_name} must be initial"
         self._initial_locations.remove(location_name)
 
     def add_variable(self, variable: JaniVariable):
@@ -90,8 +89,9 @@ class JaniAutomaton:
         """Remove all self-loop edges from the automaton."""
         self._edges = [edge for edge in self._edges if not edge.is_empty_self_loop()]
 
-    def _generate_locations(self,
-                            location_list: List[Dict[str, Any]], initial_locations: List[str]):
+    def _generate_locations(
+        self, location_list: List[Dict[str, Any]], initial_locations: List[str]
+    ):
         for location in location_list:
             self._locations.add(location["name"])
         for init_location in initial_locations:
@@ -106,8 +106,13 @@ class JaniAutomaton:
             if "transient" in variable:
                 is_transient = variable["transient"]
             var_type = JaniVariable.python_type_from_json(variable["type"])
-            self._local_variables.update({variable["name"]: JaniVariable(
-                variable["name"], var_type, init_expr, is_transient)})
+            self._local_variables.update(
+                {
+                    variable["name"]: JaniVariable(
+                        variable["name"], var_type, init_expr, is_transient
+                    )
+                }
+            )
 
     def _generate_edges(self, edge_list: List[dict]):
         for edge in edge_list:
@@ -122,7 +127,7 @@ class JaniAutomaton:
                 actions.add(action)
         return actions
 
-    def merge(self, other: 'JaniAutomaton'):
+    def merge(self, other: "JaniAutomaton"):
         assert self._name == other.get_name(), "Automaton names must match"
         self._locations.update(other._locations)
         self._initial_locations.update(other._initial_locations)
@@ -134,9 +139,10 @@ class JaniAutomaton:
             "name": self._name,
             "locations": [{"name": location} for location in sorted(self._locations)],
             "initial-locations": sorted(list(self._initial_locations)),
-            "edges": [edge.as_dict(constant) for edge in self._edges]
+            "edges": [edge.as_dict(constant) for edge in self._edges],
         }
         if len(self._local_variables) > 0:
             automaton_dict.update(
-                {"variables": [jani_var.as_dict() for jani_var in self._local_variables.values()]})
+                {"variables": [jani_var.as_dict() for jani_var in self._local_variables.values()]}
+            )
         return automaton_dict

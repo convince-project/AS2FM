@@ -25,7 +25,7 @@ from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
 
 class JaniGuard:
 
-    def __init__(self, guard_exp: Optional[Union['JaniGuard', JaniExpression, dict]]):
+    def __init__(self, guard_exp: Optional[Union["JaniGuard", JaniExpression, dict]]):
         """
         Construct a new JaniGuard object.
 
@@ -42,8 +42,10 @@ class JaniGuard:
             assert "exp" in guard_exp, "Expected guard expression to be in the 'exp' dict entry"
             self._expression = JaniExpression(guard_exp["exp"])
         else:
-            raise ValueError(f"Unexpected guard_exp type {type(guard_exp)}. "
-                             "Should be None, JaniExpression or Dict.")
+            raise ValueError(
+                f"Unexpected guard_exp type {type(guard_exp)}. "
+                "Should be None, JaniExpression or Dict."
+            )
 
     def get_expression(self) -> Optional[JaniExpression]:
         return self._expression
@@ -52,8 +54,8 @@ class JaniGuard:
         d = {}
         if self._expression:
             exp = self._expression.as_dict()
-            if (isinstance(exp, dict) and list(exp.keys()) == ['exp']):
-                d['exp'] = exp['exp']
+            if isinstance(exp, dict) and list(exp.keys()) == ["exp"]:
+                d["exp"] = exp["exp"]
             else:
-                d['exp'] = exp
+                d["exp"] = exp
         return d

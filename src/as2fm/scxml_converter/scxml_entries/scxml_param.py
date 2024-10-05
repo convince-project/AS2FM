@@ -22,10 +22,12 @@ from xml.etree import ElementTree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.utils import (CallbackType,
-                                                       is_non_empty_string)
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+    assert_xml_tag_ok,
+    get_xml_argument,
+    read_value_from_xml_arg_or_child,
+)
 
 
 class ScxmlParam(ScxmlBase):
@@ -40,14 +42,19 @@ class ScxmlParam(ScxmlBase):
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_argument(ScxmlParam, xml_tree, "name")
-        expr = read_value_from_xml_arg_or_child(ScxmlParam, xml_tree, "expr",
-                                                (BtGetValueInputPort, str), True)
+        expr = read_value_from_xml_arg_or_child(
+            ScxmlParam, xml_tree, "expr", (BtGetValueInputPort, str), True
+        )
         location = get_xml_argument(ScxmlParam, xml_tree, "location", none_allowed=True)
         return ScxmlParam(name, expr=expr, location=location)
 
-    def __init__(self, name: str, *,
-                 expr: Optional[Union[BtGetValueInputPort, str]] = None,
-                 location: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        *,
+        expr: Optional[Union[BtGetValueInputPort, str]] = None,
+        location: Optional[str] = None,
+    ):
         """
         Initialize the SCXML Parameter object.
 

@@ -25,10 +25,16 @@ from as2fm.as2fm_common.common import is_array_type
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import (
-    convert_string_to_type, get_array_max_size, get_data_type_from_string,
-    is_non_empty_string)
+    convert_string_to_type,
+    get_array_max_size,
+    get_data_type_from_string,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok, get_xml_argument, read_value_from_xml_arg_or_child)
+    assert_xml_tag_ok,
+    get_xml_argument,
+    read_value_from_xml_arg_or_child,
+)
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float]
 
@@ -51,7 +57,8 @@ class ScxmlData(ScxmlBase):
 
     @staticmethod
     def _interpret_type_from_comment_above(
-            comment_above: Optional[str]) -> Optional[Tuple[str, str]]:
+        comment_above: Optional[str],
+    ) -> Optional[Tuple[str, str]]:
         """Interpret the type of the data from the comment above the data tag.
 
         :param comment_above: The comment above the data tag (optional)
@@ -60,7 +67,7 @@ class ScxmlData(ScxmlBase):
         if comment_above is None:
             return None
         # match string inside xml comment brackets
-        type_match = re.search(r'TYPE\ (.+):(.+)', comment_above.strip())
+        type_match = re.search(r"TYPE\ (.+):(.+)", comment_above.strip())
         if type_match is None:
             return None
         return type_match.group(1), type_match.group(2)
@@ -74,21 +81,30 @@ class ScxmlData(ScxmlBase):
         if data_type is None:
             comment_tuple = ScxmlData._interpret_type_from_comment_above(comment_above)
             assert comment_tuple is not None, f"Error: SCXML data: type of {data_id} not found."
-            assert comment_tuple[0] == data_id, \
-                "Error: SCXML data: unexpected ID in type in comment " \
+            assert comment_tuple[0] == data_id, (
+                "Error: SCXML data: unexpected ID in type in comment "
                 f"({comment_tuple[0]}!={data_id})."
+            )
             data_type = comment_tuple[1]
         data_expr = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str))
+            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str)
+        )
         lower_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "lower_bound_incl", (BtGetValueInputPort, str), none_allowed=True)
+            ScxmlData, xml_tree, "lower_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+        )
         upper_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True)
+            ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+        )
         return ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
 
     def __init__(
-            self, id_: str, expr: ValidExpr, data_type: str,
-            lower_bound: Optional[ValidExpr] = None, upper_bound: Optional[ValidExpr] = None):
+        self,
+        id_: str,
+        expr: ValidExpr,
+        data_type: str,
+        lower_bound: Optional[ValidExpr] = None,
+        upper_bound: Optional[ValidExpr] = None,
+    ):
         self._id: str = id_
         self._expr: str = expr
         self._data_type: str = data_type
@@ -100,13 +116,15 @@ class ScxmlData(ScxmlBase):
 
     def get_type(self) -> type:
         python_type = get_data_type_from_string(self._data_type)
-        assert python_type is not None, \
-            f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'."
+        assert (
+            python_type is not None
+        ), f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'."
         return python_type
 
     def get_array_max_size(self) -> Optional[int]:
-        assert is_array_type(self.get_type()), \
-            f"Error: SCXML data: '{self._id}' type is not an array."
+        assert is_array_type(
+            self.get_type()
+        ), f"Error: SCXML data: '{self._id}' type is not an array."
         return get_array_max_size(self._data_type)
 
     def get_expr(self) -> str:
@@ -117,8 +135,10 @@ class ScxmlData(ScxmlBase):
             # Nothing to check
             return True
         if self.get_type() not in (float, int):
-            print(f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
-                  "not a number.")
+            print(
+                f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
+                "not a number."
+            )
             return False
         lower_bound = None
         upper_bound = None
@@ -128,8 +148,10 @@ class ScxmlData(ScxmlBase):
             upper_bound = convert_string_to_type(self._upper_bound, self._data_type)
         if all(bound is not None for bound in [lower_bound, upper_bound]):
             if lower_bound > upper_bound:
-                print(f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
-                      f"than 'upper_bound_incl' {upper_bound}.")
+                print(
+                    f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
+                    f"than 'upper_bound_incl' {upper_bound}."
+                )
                 return False
         return True
 
@@ -144,8 +166,9 @@ class ScxmlData(ScxmlBase):
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid data object."
-        xml_data = ET.Element(ScxmlData.get_tag_name(),
-                              {"id": self._id, "expr": self._expr, "type": self._data_type})
+        xml_data = ET.Element(
+            ScxmlData.get_tag_name(), {"id": self._id, "expr": self._expr, "type": self._data_type}
+        )
         if self._lower_bound is not None:
             xml_data.set("lower_bound_incl", str(self._lower_bound))
         if self._upper_bound is not None:

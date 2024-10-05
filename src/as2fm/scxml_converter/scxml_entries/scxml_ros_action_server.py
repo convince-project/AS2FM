@@ -24,17 +24,22 @@ from xml.etree import ElementTree as ET
 
 from action_msgs.msg import GoalStatus
 
-from as2fm.scxml_converter.scxml_entries import (ScxmlParam,
-                                                 ScxmlRosDeclarationsContainer,
-                                                 ScxmlSend)
+from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    generate_action_feedback_event, generate_action_goal_accepted_event,
-    generate_action_goal_handle_event, generate_action_goal_rejected_event,
-    generate_action_result_event, generate_action_thread_execution_start_event,
-    generate_action_thread_free_event, is_action_type_known)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
-                                                                RosDeclaration,
-                                                                RosTrigger)
+    generate_action_feedback_event,
+    generate_action_goal_accepted_event,
+    generate_action_goal_handle_event,
+    generate_action_goal_rejected_event,
+    generate_action_result_event,
+    generate_action_thread_execution_start_event,
+    generate_action_thread_free_event,
+    is_action_type_known,
+)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
+    RosCallback,
+    RosDeclaration,
+    RosTrigger,
+)
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
@@ -81,7 +86,8 @@ class RosActionHandleGoalRequest(RosCallback):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_handle_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
 
 class RosActionAcceptGoal(RosTrigger):
@@ -109,7 +115,8 @@ class RosActionAcceptGoal(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_accepted_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
     def as_xml(self) -> ET.Element:
         assert self.check_fields_validity(None), "Error: SCXML RosActionAcceptGoal: invalid fields."
@@ -117,7 +124,6 @@ class RosActionAcceptGoal(RosTrigger):
 
 
 class RosActionRejectGoal(RosTrigger):
-
     """
     Object representing the SCXML ROS Event sent from the server when an action Goal is rejected.
     """
@@ -143,7 +149,8 @@ class RosActionRejectGoal(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_rejected_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
     def as_xml(self) -> ET.Element:
         assert self.check_fields_validity(None), "Error: SCXML RosActionRejectGoal: invalid fields."
@@ -177,7 +184,8 @@ class RosActionStartThread(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_execution_start_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
 
 class RosActionSendFeedback(RosTrigger):
@@ -200,12 +208,14 @@ class RosActionSendFeedback(RosTrigger):
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_feedback_fields(self._interface_name,
-                                                                   self._fields)
+        return ros_declarations.check_valid_action_feedback_fields(
+            self._interface_name, self._fields
+        )
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_feedback_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
 
 class RosActionSendSuccessResult(RosTrigger):
@@ -232,7 +242,8 @@ class RosActionSendSuccessResult(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
@@ -264,7 +275,8 @@ class RosActionSendCanceledResult(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
@@ -296,7 +308,8 @@ class RosActionSendAbortedResult(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
         plain_send = super().as_plain_scxml(ros_declarations)
@@ -327,4 +340,5 @@ class RosActionHandleThreadFree(RosCallback):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_free_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0])
+            ros_declarations.get_action_server_info(self._interface_name)[0]
+        )

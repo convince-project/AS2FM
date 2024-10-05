@@ -24,12 +24,17 @@ from typing import Type
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    generate_srv_request_event, generate_srv_response_event,
-    generate_srv_server_request_event, generate_srv_server_response_event,
-    is_srv_type_known)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (RosCallback,
-                                                                RosDeclaration,
-                                                                RosTrigger)
+    generate_srv_request_event,
+    generate_srv_response_event,
+    generate_srv_server_request_event,
+    generate_srv_server_response_event,
+    is_srv_type_known,
+)
+from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
+    RosCallback,
+    RosDeclaration,
+    RosTrigger,
+)
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
@@ -89,7 +94,8 @@ class RosServiceSendRequest(RosTrigger):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_request_event(
             ros_declarations.get_service_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
 
 
 class RosServiceHandleRequest(RosCallback):
@@ -112,7 +118,8 @@ class RosServiceHandleRequest(RosCallback):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_server_request_event(
-            ros_declarations.get_service_server_info(self._interface_name)[0])
+            ros_declarations.get_service_server_info(self._interface_name)[0]
+        )
 
 
 class RosServiceSendResponse(RosTrigger):
@@ -134,7 +141,8 @@ class RosServiceSendResponse(RosTrigger):
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_server_response_event(
-            ros_declarations.get_service_server_info(self._interface_name)[0])
+            ros_declarations.get_service_server_info(self._interface_name)[0]
+        )
 
 
 class RosServiceHandleResponse(RosCallback):
@@ -158,4 +166,5 @@ class RosServiceHandleResponse(RosCallback):
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_response_event(
             ros_declarations.get_service_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name())
+            ros_declarations.get_automaton_name(),
+        )
