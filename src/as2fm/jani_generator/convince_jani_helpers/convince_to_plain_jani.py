@@ -82,14 +82,10 @@ def __convince_env_model_to_jani(base_model: JaniModel, env_model: dict):
             f"robots.{robot_name}.shape.height", float, float(robot_shape["height"])
         )
         base_model.add_constant(
-            f"robots.{robot_name}.linear_velocity",
-            float,
-            float(robot["linear_velocity"]),
+            f"robots.{robot_name}.linear_velocity", float, float(robot["linear_velocity"])
         )
         base_model.add_constant(
-            f"robots.{robot_name}.angular_velocity",
-            float,
-            float(robot["angular_velocity"]),
+            f"robots.{robot_name}.angular_velocity", float, float(robot["angular_velocity"])
         )
     if "obstacles" in env_model:
         # Extract the obstacles from the env_model

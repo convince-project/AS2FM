@@ -102,10 +102,7 @@ class JaniConstant:
         raise ValueError(f"Type {c_type} not supported by Jani")
 
     def as_dict(self):
-        const_dict = {
-            "name": self._name,
-            "type": JaniConstant.jani_type_to_string(self._type),
-        }
+        const_dict = {"name": self._name, "type": JaniConstant.jani_type_to_string(self._type)}
         if self._value is not None:
             const_dict["value"] = self._value.as_dict()
         return const_dict

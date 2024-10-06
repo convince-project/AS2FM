@@ -31,10 +31,7 @@ class JaniVariable:
         variable_type: type = JaniVariable.python_type_from_json(variable_dict["type"])
         if initial_value is None:
             return JaniVariable(
-                variable_name,
-                variable_type,
-                None,
-                variable_dict.get("transient", False),
+                variable_name, variable_type, None, variable_dict.get("transient", False)
             )
         if isinstance(initial_value, str):
             # Check if conversion from string to variable_type is possible

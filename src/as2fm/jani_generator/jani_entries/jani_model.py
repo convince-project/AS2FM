@@ -74,10 +74,7 @@ class JaniModel:
         return self._name
 
     def add_feature(self, feature: str):
-        assert feature in [
-            "arrays",
-            "trigonometric-functions",
-        ], f"Unknown Jani feature {feature}"
+        assert feature in ["arrays", "trigonometric-functions"], f"Unknown Jani feature {feature}"
         self._features.append(feature)
 
     def get_features(self) -> List[str]:

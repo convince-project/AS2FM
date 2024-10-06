@@ -72,9 +72,7 @@ def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tup
     return (array_type, max_size)
 
 
-def get_all_variables_and_instantiations(
-    jani_automaton: JaniAutomaton,
-) -> Dict[str, Any]:
+def get_all_variables_and_instantiations(jani_automaton: JaniAutomaton) -> Dict[str, Any]:
     """
     Retrieve all variables and their instantiations from the Jani automaton.
 

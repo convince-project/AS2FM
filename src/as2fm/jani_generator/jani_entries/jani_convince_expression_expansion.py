@@ -86,21 +86,13 @@ OPERATORS_TO_JANI_MAP: Dict[str, str] = {
 # Custom operators (CONVINCE, specific to mobile 2D robot use case)
 def intersection_operator(left, right) -> JaniExpression:
     return JaniExpression(
-        {
-            "op": "intersect",
-            "robot": JaniExpression(left),
-            "barrier": JaniExpression(right),
-        }
+        {"op": "intersect", "robot": JaniExpression(left), "barrier": JaniExpression(right)}
     )
 
 
 def distance_operator(left, right) -> JaniExpression:
     return JaniExpression(
-        {
-            "op": "distance",
-            "robot": JaniExpression(left),
-            "barrier": JaniExpression(right),
-        }
+        {"op": "distance", "robot": JaniExpression(left), "barrier": JaniExpression(right)}
     )
 
 
@@ -263,8 +255,7 @@ def __expression_interpolation_single_boundary(
     # Interpolation factors
     ha_interp_exp = if_operator(
         and_operator(
-            greater_equal_operator(ha_dist_exp, 0.0),
-            lower_operator(ha_dist_exp, robot_radius),
+            greater_equal_operator(ha_dist_exp, 0.0), lower_operator(ha_dist_exp, robot_radius)
         ),
         divide_operator(
             minus_operator(
@@ -277,8 +268,7 @@ def __expression_interpolation_single_boundary(
     )
     hb_interp_exp = if_operator(
         and_operator(
-            greater_equal_operator(hb_dist_exp, 0.0),
-            lower_operator(hb_dist_exp, robot_radius),
+            greater_equal_operator(hb_dist_exp, 0.0), lower_operator(hb_dist_exp, robot_radius)
         ),
         divide_operator(
             minus_operator(
@@ -305,8 +295,7 @@ def __expression_interpolation_single_boundary(
     )
     return if_operator(
         greater_equal_operator(
-            max_operator(v_dist_exp, max_operator(ha_dist_exp, hb_dist_exp)),
-            robot_radius,
+            max_operator(v_dist_exp, max_operator(ha_dist_exp, hb_dist_exp)), robot_radius
         ),
         0.0,
         min_operator(h_interp_exp, v_interp_exp),
@@ -451,8 +440,7 @@ def __expression_distance_to_point(
     robot_y_cm = f"robots.{robot_name}.pose.y_cm"
     return to_m_operator(
         norm2d_operator(
-            minus_operator(robot_x_cm, target_x_cm),
-            minus_operator(robot_y_cm, target_y_cm),
+            minus_operator(robot_x_cm, target_x_cm), minus_operator(robot_y_cm, target_y_cm)
         )
     )
 
@@ -465,8 +453,7 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-    expression: Union[JaniExpression, JaniValue],
-    jani_constants: Dict[str, JaniConstant],
+    expression: Union[JaniExpression, JaniValue], jani_constants: Dict[str, JaniConstant]
 ) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
     assert isinstance(
