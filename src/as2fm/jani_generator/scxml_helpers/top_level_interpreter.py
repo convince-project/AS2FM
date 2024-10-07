@@ -21,9 +21,11 @@ import json
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-from xml.etree import ElementTree as ET
+
+import lxml.etree as ET
 
 from as2fm.as2fm_common.common import remove_namespace
+from as2fm.as2fm_common.logging import error, set_filepath_for_all_elements
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -76,11 +78,13 @@ def parse_main_xml(xml_path: str) -> FullModel:
     """
     # Used to generate absolute paths of scxml models
     folder_of_xml = os.path.dirname(xml_path)
+    parser_wo_comments = ET.XMLParser(remove_comments=True)
     with open(xml_path, "r", encoding="utf-8") as f:
-        xml = ET.parse(f)
-    assert (
-        remove_namespace(xml.getroot().tag) == "convince_mc_tc"
-    ), "The top-level XML element must be convince_mc_tc."
+        xml = ET.parse(f, parser=parser_wo_comments)
+    set_filepath_for_all_elements(xml.getroot(), xml_path)
+    assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", error(
+        xml.getroot(), "The top-level XML element must be convince_mc_tc."
+    )
     model = FullModel()
     for first_level in xml.getroot():
         if remove_namespace(first_level.tag) == "mc_parameters":

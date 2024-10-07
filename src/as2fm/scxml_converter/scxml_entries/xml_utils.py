@@ -14,7 +14,8 @@
 # limitations under the License.
 
 from typing import Iterable, List, Optional, Type, Union
-from xml.etree import ElementTree as ET
+
+import lxml.etree as ET
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import ScxmlBase

@@ -14,12 +14,18 @@
 # limitations under the License.
 
 """
-Modules that help produce better error messages.
+Modules that help produce error messages with references to the right line of the (sc)XML file
+that caused the error.
 """
-
 import os
-import xml.etree.ElementTree as ET
 from enum import Enum, auto
+
+import lxml.etree
+
+from as2fm.as2fm_common.common import is_comment
+
+# This is the name of an internal attribute that is used to store the filepath of an element.
+INTERNAL_FILEPATH_ATTR = "_filepath"
 
 
 class Severity(Enum):
@@ -32,62 +38,77 @@ class Severity(Enum):
     INFO = auto()
 
 
-class AS2FMLogger:
-    def __init__(self, path: str) -> None:
-        assert isinstance(path, str), "The path must be a string."
-        assert os.path.exists(path), "The path must exist."
-        cwd = os.getcwd()
-        rel_path = os.path.relpath(path, cwd)
-        if not rel_path.startswith("./"):
-            rel_path = "./" + rel_path
-        self.path = rel_path
+def set_filepath_for_all_elements(root: "lxml.etree._Element", filepath: str) -> None:
+    """
+    Set the filepath for all elements in the XML tree.
 
-    def _assemble_message(self, severity: Severity, element: ET.Element, message: str) -> str:
-        """
-        Produce an logging message with the line number of the element.
+    :param root: The root element
+    :param filepath: The filepath
+    """
+    # make a relative path for better readability (shorter)
+    rel_path = os.path.relpath(filepath, os.getcwd())
+    if not rel_path.startswith("./"):
+        rel_path = "./" + rel_path
+    # set the filepath for all elements
+    for element in root.iter():
+        try:
+            element.attrib[INTERNAL_FILEPATH_ATTR] = rel_path
+        except KeyError as e:
+            if is_comment(element):
+                continue
+            raise e
 
-        :param severity: The severity of the error
-        :param element: The element that caused the error
-        :param message: The message
-        :return: The message with the line number
-        """
-        assert hasattr(element, "sourceline"), (
-            "The element must have a sourceline attribute. This is usually set by the parser, "
-            "when `lxml.etree.ElementTree` is used."
-        )
-        letter = severity.name[0]
-        return (
-            f"{letter} ({self.path}:"  # pylint: disable=protected-access
-            + f"{element.sourceline}) "  # pylint: disable=protected-access
-            + f"{message}"
-        )
 
-    def error(self, element: ET.Element, message: str) -> str:
-        """
-        Log an error message.
+def _assemble_message(severity: Severity, element: "lxml.etree._Element", message: str) -> str:
+    """
+    Produce an logging message with the line number of the element.
 
-        :param element: The element that caused the error
-        :param message: The message
-        :return: The message with the line number
-        """
-        return self._assemble_message(Severity.ERROR, element, message)
+    :param severity: The severity of the error
+    :param element: The element that caused the error
+    :param message: The message
+    :return: The message with path and line number
+    """
+    assert hasattr(element, "sourceline"), (
+        "The element must have a sourceline attribute. This is set by the parser, "
+        "i. e. when `lxml.etree.ElementTree` is used."
+    )
+    assert INTERNAL_FILEPATH_ATTR in element.attrib.keys(), (
+        "The element must have a filepath attribute. This is set by "
+        "`as2fm_common.logging.set_filepath_for_all_elements`."
+    )
+    severity_initial = severity.name[0]
+    path = element.attrib[INTERNAL_FILEPATH_ATTR]
+    return f"{severity_initial} ({path}:{element.sourceline}) " + f"{message}"
 
-    def warning(self, element: ET.Element, message: str) -> str:
-        """
-        Log a warning message.
 
-        :param element: The element that caused the warning
-        :param message: The message
-        :return: The message with the line number
-        """
-        return self._assemble_message(Severity.WARNING, element, message)
+def error(element: "lxml.etree._Element", message: str) -> str:
+    """
+    Log an error message.
 
-    def info(self, element: ET.Element, message: str) -> str:
-        """
-        Log an info message.
+    :param element: The element that caused the error
+    :param message: The message
+    :return: The message with the line number
+    """
+    return _assemble_message(Severity.ERROR, element, message)
 
-        :param element: The element that caused the info message
-        :param message: The message
-        :return: The message with the line number
-        """
-        return self._assemble_message(Severity.INFO, element, message)
+
+def warn(element: "lxml.etree._Element", message: str) -> str:
+    """
+    Log a warning message.
+
+    :param element: The element that caused the warning
+    :param message: The message
+    :return: The message with the line number
+    """
+    return _assemble_message(Severity.WARNING, element, message)
+
+
+def info(element: "lxml.etree._Element", message: str) -> str:
+    """
+    Log an info message.
+
+    :param element: The element that caused the info message
+    :param message: The message
+    :return: The message with the line number
+    """
+    return _assemble_message(Severity.INFO, element, message)
