@@ -89,7 +89,7 @@ class JaniVariable:
         if not self._transient and self._type in (float, MutableSequence[float]):
             print(
                 f"Warning: Variable {self._name} is not transient and has type float."
-                "This is not supported by STORM."
+                " This is not supported by STORM."
             )
 
     def name(self):
