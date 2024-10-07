@@ -33,7 +33,8 @@ from scxml_converter.scxml_entries.utils import (
     convert_string_to_type, get_array_max_size, get_data_type_from_string, is_non_empty_string)
 
 
-ValidExpr = Union[BtGetValueInputPort, str, int, float]
+ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
+ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
 
 
 def valid_bound(bound_value: Any) -> bool:
@@ -91,12 +92,12 @@ class ScxmlData(ScxmlBase):
 
     def __init__(
             self, id_: str, expr: ValidExpr, data_type: str,
-            lower_bound: Optional[ValidExpr] = None, upper_bound: Optional[ValidExpr] = None):
+            lower_bound: ValidBound = None, upper_bound: ValidBound = None):
         self._id: str = id_
-        self._expr: str = expr
+        self._expr: ValidExpr = expr
         self._data_type: str = data_type
-        self._lower_bound: str = lower_bound
-        self._upper_bound: str = upper_bound
+        self._lower_bound: ValidBound = lower_bound
+        self._upper_bound: ValidBound = upper_bound
 
     def get_name(self) -> str:
         return self._id
@@ -112,7 +113,7 @@ class ScxmlData(ScxmlBase):
             f"Error: SCXML data: '{self._id}' type is not an array."
         return get_array_max_size(self._data_type)
 
-    def get_expr(self) -> str:
+    def get_expr(self) -> ValidExpr:
         return self._expr
 
     def check_valid_bounds(self) -> bool:
@@ -144,7 +145,7 @@ class ScxmlData(ScxmlBase):
         if isinstance(self._expr, str):
             valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
         else:
-            valid_expr = isinstance(self._expr, (int, float))
+            valid_expr = isinstance(self._expr, (int, float, bool))
             if not valid_expr:
                 print(f"Error: SCXML data: '{self._id}': initial expression ",
                       f"evaluates to an invalid type '{type(self._expr)}'.")
