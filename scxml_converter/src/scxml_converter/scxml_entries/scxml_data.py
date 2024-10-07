@@ -146,8 +146,8 @@ class ScxmlData(ScxmlBase):
         else:
             valid_expr = isinstance(self._expr, (int, float))
             if not valid_expr:
-                print(f"Error: SCXML data: '{self._id}' ",
-                      "default type is invalid: '{type(self._expr)}'.")
+                print(f"Error: SCXML data: '{self._id}': initial expression ",
+                      f"evaluates to an invalid type '{type(self._expr)}'.")
         valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_bounds
 
