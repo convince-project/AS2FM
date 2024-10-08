@@ -16,9 +16,9 @@
 """"Test the SCXML data conversion from all possible declaration types"""
 
 import unittest
-import xml.etree.ElementTree as ET
 from typing import MutableSequence
 
+import lxml.etree as ET
 import pytest
 
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
@@ -145,4 +145,4 @@ class TestScxmlData(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    pytest.main(["-s", "-v", __file__])
+    pytest.main(["-s", "-v", __file__, "-k", "test_datamodel_loading"])

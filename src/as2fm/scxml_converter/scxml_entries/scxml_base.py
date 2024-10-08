@@ -17,7 +17,7 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 
 class ScxmlBase:

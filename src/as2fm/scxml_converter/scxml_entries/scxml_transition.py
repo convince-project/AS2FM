@@ -18,7 +18,8 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
-from xml.etree import ElementTree as ET
+
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,

@@ -14,8 +14,10 @@
 # limitations under the License.
 
 from typing import Iterable, List, Optional, Type, Union
-from xml.etree import ElementTree as ET
 
+import lxml.etree as ET
+
+from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
@@ -59,7 +61,7 @@ def get_children_as_scxml(
     scxml_list = []
     tag_to_type = {scxml_type.get_tag_name(): scxml_type for scxml_type in scxml_types}
     for child in xml_tree:
-        if child.tag is ET.Comment:
+        if is_comment(child):
             continue
         if child.tag in tag_to_type:
             scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
@@ -84,7 +86,7 @@ def read_value_from_xml_child(
     if len(xml_child) > 1:
         print(f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
         return None
-    tag_children = [child for child in xml_child[0] if child.tag is not ET.Comment]
+    tag_children = [child for child in xml_child[0] if not is_comment(child)]
     n_tag_children = len(tag_children)
     if n_tag_children == 0 and str in valid_types:
         # Try to read the text value

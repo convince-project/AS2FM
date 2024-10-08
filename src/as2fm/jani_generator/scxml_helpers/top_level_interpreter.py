@@ -21,9 +21,11 @@ import json
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-from xml.etree import ElementTree as ET
+
+import lxml.etree as ET
 
 from as2fm.as2fm_common.common import remove_namespace
+from as2fm.as2fm_common.logging import error, set_filepath_for_all_elements
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -76,11 +78,13 @@ def parse_main_xml(xml_path: str) -> FullModel:
     """
     # Used to generate absolute paths of scxml models
     folder_of_xml = os.path.dirname(xml_path)
+    parser_wo_comments = ET.XMLParser(remove_comments=True)
     with open(xml_path, "r", encoding="utf-8") as f:
-        xml = ET.parse(f)
-    assert (
-        remove_namespace(xml.getroot().tag) == "convince_mc_tc"
-    ), "The top-level XML element must be convince_mc_tc."
+        xml = ET.parse(f, parser=parser_wo_comments)
+    set_filepath_for_all_elements(xml.getroot(), xml_path)
+    assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", error(
+        xml.getroot(), "The top-level XML element must be convince_mc_tc."
+    )
     model = FullModel()
     for first_level in xml.getroot():
         if remove_namespace(first_level.tag) == "mc_parameters":
@@ -94,7 +98,10 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
                 else:
-                    raise ValueError(f"Invalid mc_parameter tag: {mc_parameter.tag}")
+                    raise ValueError(
+                        error(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
+                    )
+            assert model.max_time is not None, error(first_level, "`max_time` must be defined.")
         elif remove_namespace(first_level.tag) == "behavior_tree":
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
@@ -104,24 +111,38 @@ def parse_main_xml(xml_path: str) -> FullModel:
                     elif child.attrib["type"] == "bt-plugin-ros-scxml":
                         model.plugins.append(os.path.join(folder_of_xml, child.attrib["src"]))
                     else:
-                        raise ValueError(f"Invalid input type: {child.attrib['type']}")
+                        raise ValueError(
+                            error(child, f"Invalid input type: {child.attrib['type']}")
+                        )
                 else:
-                    raise ValueError(f"Invalid behavior_tree tag: {child.tag} != input")
-            assert model.bt is not None, "A Behavior Tree must be defined."
+                    raise ValueError(
+                        error(child, f"Invalid behavior_tree tag: {child.tag} != input")
+                    )
+            assert model.bt is not None, error(first_level, "A Behavior Tree must be defined.")
         elif remove_namespace(first_level.tag) == "node_models":
             for node_model in first_level:
-                assert remove_namespace(node_model.tag) == "input", "Only input tags are supported."
-                assert (
-                    node_model.attrib["type"] == "ros-scxml"
-                ), "Only ROS-SCXML node models are supported."
+                assert remove_namespace(node_model.tag) == "input", error(
+                    node_model, "Only input tags are supported."
+                )
+                assert node_model.attrib["type"] == "ros-scxml", error(
+                    node_model, "Only ROS-SCXML node models are supported."
+                )
                 model.skills.append(os.path.join(folder_of_xml, node_model.attrib["src"]))
         elif remove_namespace(first_level.tag) == "properties":
-            for property in first_level:
-                assert remove_namespace(property.tag) == "input", "Only input tags are supported."
-                assert property.attrib["type"] == "jani", "Only Jani properties are supported."
-                model.properties.append(os.path.join(folder_of_xml, property.attrib["src"]))
+            for jani_property in first_level:
+                assert remove_namespace(jani_property.tag) == "input", error(
+                    jani_property, "Only input tags are supported."
+                )
+                assert jani_property.attrib["type"] == "jani", error(
+                    jani_property,
+                    "Only Jani properties are supported, not {jani_property.attrib['type']}.",
+                )
+                model.properties.append(os.path.join(folder_of_xml, jani_property.attrib["src"]))
+            assert len(model.properties) == 1, error(
+                first_level, "Only exactly one Jani property is supported."
+            )
         else:
-            raise ValueError(f"Invalid main point tag: {first_level.tag}")
+            raise ValueError(error(first_level, f"Invalid main point tag: {first_level.tag}"))
     return model
 
 
@@ -215,7 +236,6 @@ def interpret_top_level_xml(
     )
 
     jani_dict = jani_model.as_dict()
-    assert len(model.properties) == 1, "Only one property is supported right now."
     with open(model.properties[0], "r", encoding="utf-8") as f:
         jani_dict["properties"] = json.load(f)["properties"]
 

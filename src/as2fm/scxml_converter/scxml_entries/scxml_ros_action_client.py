@@ -20,9 +20,9 @@ Based loosely on https://design.ros2.org/articles/actions.html
 """
 
 from typing import List, Type, Union
-from xml.etree import ElementTree as ET
 
 from action_msgs.msg import GoalStatus
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer, ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.ros_utils import (

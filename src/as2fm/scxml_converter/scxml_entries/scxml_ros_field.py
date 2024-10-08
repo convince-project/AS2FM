@@ -16,7 +16,8 @@
 """Declaration of the ROS Field SCXML tag extension."""
 
 from typing import Optional, Union
-from xml.etree import ElementTree as ET
+
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
