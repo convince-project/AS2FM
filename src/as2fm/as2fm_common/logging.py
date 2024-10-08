@@ -78,7 +78,7 @@ def _assemble_message(severity: Severity, element: "lxml.etree._Element", messag
     )
     severity_initial = severity.name[0]
     path = element.attrib[INTERNAL_FILEPATH_ATTR]
-    return f"{severity_initial} ({path}:{element.sourceline}) " + f"{message}"
+    return f"{severity_initial} ({path}:{element.sourceline}) {message}"
 
 
 def error(element: "lxml.etree._Element", message: str) -> str:
