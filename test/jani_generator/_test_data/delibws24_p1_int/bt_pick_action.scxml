@@ -6,7 +6,7 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_action_client name="act" action_name="/pick_object" type="delib_ws_24_interfaces/Pick" />
+    <ros_action_client name="act" action_name="/pick_object" type="delib_ws_24_interfaces/PickInt" />
 
     <datamodel>
         <data id="tmp_result" type="bool" expr="false" />

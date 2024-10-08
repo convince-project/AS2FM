@@ -1,0 +1,11 @@
+<root BTCPP_format="4">
+    <BehaviorTree>
+        <!-- For now use a normal sequence, since failures aren't expected yet -->
+        <Sequence>
+            <Action ID="NavigateAction" name="navigate" data="pantry" />
+            <Action ID="PickAction" name="pick" data="snacks0" />
+            <Action ID="NavigateAction" name="navigate" data="table" />
+            <Action ID="PlaceAction" name="place" />
+        </Sequence>
+    </BehaviorTree>
+</root>

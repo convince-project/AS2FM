@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="initial"
+    version="1.0"
+    name="PickAction"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_action_client name="act" action_name="/pick_object" type="delib_ws_24_interfaces/PickStr" />
+
+    <datamodel>
+        <data id="tmp_result" type="bool" expr="false" />
+    </datamodel>
+
+    <bt_declare_port_in key="data" type="int32" />
+
+    <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
+    <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
+
+    <state id="initial">
+        <transition event="bt_tick" target="wait_result">
+            <ros_action_send_goal name="act">
+                <field name="object_id">
+                    <expr>
+                        <bt_get_input key="data" />
+                    </expr>
+                </field>
+            </ros_action_send_goal>
+            <!-- Let's assume this is always successful. -->
+            <send event="bt_running" />
+        </transition>
+    </state>
+
+    <state id="wait_result">
+        <transition event="bt_tick" target="wait_result">
+            <send event="bt_running" />
+        </transition>
+        <ros_action_handle_success_result name="act" target="result_available">
+            <assign location="tmp_result" expr="true" />
+        </ros_action_handle_success_result>
+        <ros_action_handle_aborted_result name="act" target="result_available">
+            <assign location="tmp_result" expr="false" />
+        </ros_action_handle_aborted_result>
+    </state>
+
+    <state id="result_available">
+        <transition event="bt_tick" target="initial">
+            <if cond="tmp_result">
+                <send event="bt_success" />
+                <else/>
+                <send event="bt_failure" />
+            </if>
+        </transition>
+    </state>
+
+</scxml>

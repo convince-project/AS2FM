@@ -302,7 +302,7 @@ class TestConversion(unittest.TestCase):
     @pytest.mark.skip(reason="Not yet working. The BT ticking needs some revision.")
     def test_ros_delib_ws_2024_p1(self):
         """Test the ROS Deliberation Workshop example works."""
-        self._test_with_main("delibws24_p1", True, "snack_at_table", True)
+        self._test_with_main("delibws24_p1_int", True, "snack_at_table", True)
 
     def test_robot_navigation_demo(self):
         """Test the robot demo."""
