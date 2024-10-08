@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scxml name="addition_server" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="temp_a" expr="0" type="int64" />
+        <data id="temp_b" expr="0" type="int64" />
+    </datamodel>
+    <state id="idle">
+        <transition target="idle" event="srv_adder_request">
+            <assign location="temp_a" expr="_event.ros_fields__a" />
+            <assign location="temp_b" expr="_event.ros_fields__b" />
+            <send event="srv_adder_response">
+                <param name="ros_fields__sum" expr="temp_a + temp_b" />
+            </send>
+        </transition>
+    </state>
+</scxml>

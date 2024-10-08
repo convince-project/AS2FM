@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="init"
+    version="1.0"
+    name="DriveRobot"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_in key="topic" type="string" />
+    <bt_declare_port_in key="direction" type="int8" />
+
+    <ros_topic_publisher name="cmd_pub" type="geometry_msgs/Twist">
+        <topic>
+            <bt_get_input key="topic" />
+        </topic>
+    </ros_topic_publisher>
+
+    <datamodel>
+        <data id="control_type" type="int8">
+            <expr>
+                <!-- 0 = drive_fwd, 1 = rotate_ccw -->
+                <bt_get_input key="direction" />
+            </expr>
+        </data>
+        <data id="x_vel" expr="0" type="float64" />
+        <data id="theta_vel" expr="0" type="float64" />
+    </datamodel>
+
+    <state id="init">
+        <transition target="wait_for_tick">
+            <if cond="control_type == 0">
+                <assign location="x_vel" expr="2.0" />
+                <assign location="theta_vel" expr="0.0" />
+            <else />
+                <assign location="x_vel" expr="0.0" />
+                <assign location="theta_vel" expr="2.0" />
+            </if>
+        </transition>
+    </state>
+
+    <state id="wait_for_tick">
+        <transition event="bt_tick" target="wait_for_tick">
+            <ros_topic_publish name="cmd_pub">
+                <!-- 2D robots require only x and theta controls -->
+                <field name="linear.x" expr="x_vel" />
+                <field name="angular.z" expr="theta_vel" />
+                <!-- Additional fields are set to 0 -->
+                <field name="linear.y" expr="0.0" />
+                <field name="linear.z" expr="0.0" />
+                <field name="angular.x" expr="0.0" />
+                <field name="angular.y" expr="0.0" />
+            </ros_topic_publish>
+            <send event="bt_success" />
+        </transition>
+    </state>
+
+</scxml>

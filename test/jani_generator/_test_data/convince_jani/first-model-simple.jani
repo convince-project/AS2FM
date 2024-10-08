@@ -1,0 +1,315 @@
+{
+    "name": "r2d2_in_test_room",
+    "features": ["convince_extensions"],
+    "type": "mdp",
+
+    "metadata": {
+        "description": "Example of CONVINCE-Jani with a round robot in a square room with a small niche. The robot can randomly drive straight or rotate.",
+        "version": "0.0.1",
+        "author": "Bosch CR"
+    },
+
+    "rob_env_model":
+    {
+        "comment": "Distances are in meters, time (e.g. sim_step) is in seconds.",
+        "name": "test_room",
+        "sim_step": 0.1,
+        "boundaries": [
+            {
+                "x": 0,
+                "y": 0
+            },
+            {
+                "x": 3,
+                "y": 0
+            },
+            {
+                "x": 3,
+                "y": 5
+            },
+            {
+                "x": 0,
+                "y": 5
+            },
+            {
+                "x": 0,
+                "y": 4.5
+            },
+            {
+                "x": -0.5,
+                "y": 4.5
+            },
+            {
+                "x": -0.5,
+                "y": 3.5
+            },
+            {
+                "x": 0,
+                "y": 3.5
+            }
+        ],
+
+        "robots": [
+            {
+                "name": "r2d2",
+                "pose": {
+                    "x": 0.5,
+                    "y": 0.5,
+                    "theta": 3
+                },
+                "shape": {
+                    "radius": 0.3,
+                    "height": 0.2
+                },
+                "perception": {
+                    "boundaries": {},
+                    "obstacles": {},
+                    "pose": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "theta": 3
+                    }
+                },
+                "linear_velocity": 0.5,
+                "angular_velocity": 0.5
+            }
+        ]
+    },
+
+    "automata": [
+        {
+            "name": "robot_behavior",
+            "locations": [
+                {
+                    "name": "alive",
+                    "comment": "Unique state of the robot, where it is able to both drive and rotate"
+                }
+            ],
+            "initial-locations":[
+                "alive"
+            ],
+            "variables": [
+                {
+                    "name": "robots.r2d2.goal.x",
+                    "type": "real",
+                    "initial-value": 0.0,
+                    "comment": "X component of position reached if no barrier is hit"
+                },
+                {
+                    "name": "robots.r2d2.goal.y",
+                    "type": "real",
+                    "initial-value": 0.0,
+                    "comment": "Y component of position reached if no barrier is hit"
+                },
+                {
+                    "name": "intersect_backup",
+                    "type": "real",
+                    "initial-value": 0.0,
+                    "comment": "Value between 0 (no correction) and 1 (no movement) to stop the robot right before the hit"
+                }
+            ],
+            "edges": [
+                {
+					"location": "alive",
+					"action": "drive",
+					"destinations": [ {
+						"location": "alive",
+                        "assignments": [
+                            {
+                                "comment": "goal_x = cos(theta) * v * time_step + curr_x",
+                                "index": 0,
+                                "ref": "robots.r2d2.goal.x",
+                                "value": {
+                                    "op": "+",
+                                    "left": "robots.r2d2.pose.x",
+                                    "right": {
+                                        "op": "*",
+                                        "left": {
+                                            "op": "cos",
+                                            "exp": "robots.r2d2.pose.theta"
+                                        },
+                                        "right": {
+                                            "op": "*",
+                                            "left": "robots.r2d2.linear_velocity",
+                                            "right": "sim_step"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "comment": "goal_y = sin(theta) * v * time_step + curr_y",
+                                "index": 0,
+                                "ref": "robots.r2d2.goal.y",
+                                "value": {
+                                    "op": "+",
+                                    "left": "robots.r2d2.pose.y",
+                                    "right": {
+                                        "op": "*",
+                                        "left": {
+                                            "op": "sin",
+                                            "exp": "robots.r2d2.pose.theta"
+                                        },
+                                        "right": {
+                                            "op": "*",
+                                            "left": "robots.r2d2.linear_velocity",
+                                            "right": "sim_step"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "comment": "intersect_backup = 1 if robot needs to stay at start, 0 if it reaches the goal",
+                                "index": 1,
+                                "ref": "intersect_backup",
+                                "value": {
+                                    "op": "intersect",
+                                    "robot": "r2d2",
+                                    "barrier": "all"
+                                }
+                            },
+                            {
+                                "index": 2,
+                                "ref": "robots.r2d2.pose.x",
+                                "value": {
+                                    "op": "+",
+                                    "left": "robots.r2d2.goal.x",
+                                    "right": {
+                                        "op": "*",
+                                        "left": {
+                                            "op": "-",
+                                            "left": "robots.r2d2.pose.x",
+                                            "right": "robots.r2d2.goal.x"
+                                        },
+                                        "right": "intersect_backup"
+                                    }
+                                }
+                            },
+                            {
+                                "index": 2,
+                                "ref": "robots.r2d2.pose.y",
+                                "value": {
+                                    "op": "+",
+                                    "left": "robots.r2d2.goal.y",
+                                    "right": {
+                                        "op": "*",
+                                        "left": {
+                                            "op": "-",
+                                            "left": "robots.r2d2.pose.y",
+                                            "right": "robots.r2d2.goal.y"
+                                        },
+                                        "right": "intersect_backup"
+                                    }
+                                }
+                            }
+                        ]
+                    }]
+				},
+                {
+                    "location": "alive",
+                    "action": "rotate",
+                    "destinations": [ {
+                        "location": "alive",
+                        "assignments": [
+                            {
+                                "ref": "robots.r2d2.pose.theta",
+                                "value": {
+                                    "op": "-",
+                                    "left":{
+                                        "op": "+",
+                                        "left": "robots.r2d2.pose.theta",
+                                        "right": {
+                                            "op": "*",
+                                            "left": "robots.r2d2.angular_velocity",
+                                            "right": "sim_step"
+                                        }
+                                    },
+                                    "right": {
+                                        "op": "*",
+                                        "left": {
+                                            "op": "*",
+                                            "left": 2,
+                                            "right": {
+                                                "constant": "π"
+                                            }
+                                        },
+                                        "right": {
+                                            "op": "floor",
+                                            "exp": {
+                                                "op": "/",
+                                                "left": {
+                                                    "op": "+",
+                                                    "left": "robots.r2d2.pose.theta",
+                                                    "right": {
+                                                        "op": "*",
+                                                        "left": "robots.r2d2.angular_velocity",
+                                                        "right": "sim_step"
+                                                    }
+                                                },
+                                                "right": {
+                                                    "op": "*",
+                                                    "left": 2,
+                                                    "right": {
+                                                        "constant": "π"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }]
+                }
+            ]
+        }
+    ],
+
+    "system":  {
+        "elements": [
+            {
+                "automaton": "robot_behavior"
+            }
+        ],
+        "syncs": [
+            {
+                "synchronise": ["drive"],
+                "result": "drive"
+            },
+            {
+                "synchronise": ["rotate"],
+                "result": "rotate"
+            }
+        ]
+    },
+
+    "properties": [
+        {
+            "comment": "What is the maximal probability that the robot will eventually reach position (3,5) with an error of 0.01. The correct result is 1, because it moves randomly and in this model can always free itself by rotating to move around obstacles it bumped in",
+            "name": "go-to-position",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "op": "<",
+                            "left": {
+                                "op": "distance_to_point",
+                                "robot": "r2d2",
+                                "x": 3.0,
+                                "y": 5.0
+                            },
+                            "right": 0.01
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

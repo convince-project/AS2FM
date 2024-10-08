@@ -1,0 +1,33 @@
+{
+    "properties": [
+        {
+            "name": "happy_clients",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "∧",
+                                "left": "topic_client_1_res_msg.ros_fields__data",
+                                "right": "topic_client_1_res_msg.valid"
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": "topic_client_2_res_msg.ros_fields__data",
+                                "right": "topic_client_2_res_msg.valid"
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

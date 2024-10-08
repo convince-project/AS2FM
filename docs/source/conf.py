@@ -2,19 +2,21 @@
 
 # -- Project information
 
-project = 'CONVINCE Model Checking Components'
-copyright = '2024'
-author = 'CONVINCE Consortium'
+# mypy: ignore-errors
 
-release = '0.1'
-version = '0.1.0'
+project = "CONVINCE Model Checking Components"
+copyright = "2024"
+author = "CONVINCE Consortium"
+
+release = "0.1"
+version = "0.1.0"
 
 # -- General configuration
 
 extensions = [
-    'sphinx.ext.autosummary',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
+    "sphinx.ext.autosummary",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     # 'myst_parser',
     # 'autodoc2',
 ]
@@ -24,14 +26,14 @@ extensions = [
 #     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 #     'networkx': ('https://networkx.org/documentation/stable/', None),
 # }
-intersphinx_disabled_domains = ['std']
+intersphinx_disabled_domains = ["std"]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # -- Options for HTML output
 
-html_theme = 'sphinx_rtd_theme'
-html_logo = 'convince_logo_horizontal_200p.png'
+html_theme = "sphinx_rtd_theme"
+html_logo = "convince_logo_horizontal_200p.png"
 html_theme_options = {
     # 'analytics_id': 'G-XXXXXXXXXX',  #  Provided by Google in your dashboard
     # 'analytics_anonymize_ip': False,
@@ -48,15 +50,11 @@ html_theme_options = {
     # 'includehidden': True,
     # 'titles_only': False
 }
-html_static_path = ['_static']
+html_static_path = ["_static"]
 # html_css_files = [
 #     'css/custom.css',
 # ]
-html_style = 'css/custom.css'
+html_style = "css/custom.css"
 
 # -- Options for EPUB output
-epub_show_urls = 'footnote'
-
-# autodoc2_packages = [
-#     "../../jani_generator/src/jani_generator",
-# ]
+epub_show_urls = "footnote"

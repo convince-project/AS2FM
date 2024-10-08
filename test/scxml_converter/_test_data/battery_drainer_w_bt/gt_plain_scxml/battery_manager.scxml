@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="check_battery"
+    version="1.0"
+    name="BatteryManager"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <state id="check_battery">
+        <transition event="topic_level_msg" target="check_battery">
+            <send event="topic_alarm_msg">
+                <param name="ros_fields__data" expr="_event.ros_fields__data &lt; 30" />
+            </send>
+        </transition>
+    </state>
+</scxml>
