@@ -23,10 +23,9 @@ from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
     """Ensures the xml_tree we are trying to parse has the expected name."""
-    if xml_tree.tag != scxml_type.get_tag_name():
-        assert (
-            xml_tree.tag == scxml_type.get_tag_name()
-        ), f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}"
+    assert (
+        xml_tree.tag == scxml_type.get_tag_name()
+    ), f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}"
 
 
 def get_xml_argument(
