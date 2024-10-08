@@ -24,6 +24,10 @@ from jani_generator.jani_entries import (
     JaniAssignment, JaniAutomaton, JaniEdge, JaniExpression, JaniGuard,  JaniVariable)
 from jani_generator.jani_entries.jani_expression_generator import (
     lower_operator, not_operator, modulo_operator, and_operator, equal_operator, plus_operator)
+from scxml_converter.scxml_entries import (
+    ScxmlAssign, ScxmlData, ScxmlDataModel, ScxmlExecutionBody, ScxmlIf, ScxmlRoot, ScxmlSend,
+    ScxmlState, ScxmlTransition)
+
 
 TIME_UNITS = {
     "s": 1,
@@ -37,7 +41,7 @@ GLOBAL_TIMER_TICK_ACTION = "global_timer_tick"
 ROS_TIMER_RATE_EVENT_PREFIX = "ros_time_rate."
 
 
-def _convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
+def convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
     """Convert time from one unit to another."""
     assert from_unit in TIME_UNITS, f"Unit {from_unit} not supported."
     assert to_unit in TIME_UNITS, f"Unit {to_unit} not supported."
@@ -75,31 +79,43 @@ class RosTimer(object):
             self.period)
 
 
+def get_gcd_of_timer_periods(timers: List[RosTimer]) -> Tuple[int, str]:
+    """
+    Get the greatest common divider of the time periods from the provided ROS timers.
+
+    :param timers: The list of ROS timers.
+    :return: The time step and time unit resulting from the GCD of the timers periods.
+    """
+    if len(timers) == 0:
+        raise ValueError("At least one timer is required.")
+    common_unit = "s"
+    for timer in timers:
+        if TIME_UNITS[timer.unit] < TIME_UNITS[common_unit]:
+            common_unit = timer.unit
+    timer_periods = [
+        convert_time_between_units(timer.period_int, timer.unit, common_unit) for timer in timers]
+    common_period = gcd(*timer_periods)
+    return common_period, common_unit
+
+
 def make_global_timer_automaton(timers: List[RosTimer],
                                 max_time_ns: int) -> Optional[JaniAutomaton]:
     """
-    Create a global timer automaton from a list of ROS timers.
+    Create a global timer Jani automaton from a list of ROS timers.
 
     :param timers: The list of ROS timers.
     :return: The global timer automaton.
     """
     if len(timers) == 0:
         return None
-    # Calculate the period of the global timer
-    smallest_unit: str = "s"
-    for timer in timers:
-        if TIME_UNITS[timer.unit] < TIME_UNITS[smallest_unit]:
-            smallest_unit = timer.unit
-    timer_periods_in_smallest_unit = {
-        timer.name: _convert_time_between_units(
-            timer.period_int, timer.unit, smallest_unit)
+    global_timer_period, global_timer_period_unit = get_gcd_of_timer_periods(timers)
+    timers_map = {
+        timer.name: convert_time_between_units(timer.period_int, timer.unit,
+                                               global_timer_period_unit)
         for timer in timers
     }
-    global_timer_period = gcd(*timer_periods_in_smallest_unit.values())
-    global_timer_period_unit = smallest_unit
-
     try:
-        max_time = _convert_time_between_units(
+        max_time = convert_time_between_units(
             max_time_ns, "ns", global_timer_period_unit)
     except AssertionError:
         raise ValueError(
@@ -128,7 +144,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
     # timer assignments
     timer_assignments = []
     for i, (timer, variable_name) in enumerate(zip(timers, variable_names)):
-        period_in_global_unit = timer_periods_in_smallest_unit[timer.name]
+        period_in_global_unit = timers_map[timer.name]
         timer_assignments.append(JaniAssignment({
             "ref": variable_name,
             # t % {period_in_global_unit} == 0
@@ -143,7 +159,7 @@ def make_global_timer_automaton(timers: List[RosTimer],
         unprocessed_timer_exp = not_operator(variable_name)
         # Append this expression to the guard using the and operator
         guard_exp = and_operator(guard_exp, unprocessed_timer_exp)
-        # TODO: write test case for this
+        # TODO: write test case for this (and switch to not(t1 or t2 or ... or tN) guard)
     assignments = [
         # t = t + global_timer_period
         JaniAssignment({
@@ -181,5 +197,42 @@ def make_global_timer_automaton(timers: List[RosTimer],
             }]
         })
         timer_automaton.add_edge(timer_edge)
-
     return timer_automaton
+
+
+def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optional[ScxmlRoot]:
+    """
+    Create a global timer SCXML automaton from a list of ROS timers.
+
+    :param timers: The list of ROS timers.
+    :return: The global timer SCXML.
+    """
+    if len(timers) == 0:
+        return None
+    global_timer_period, global_timer_period_unit = get_gcd_of_timer_periods(timers)
+    timers_map = {
+        timer.name: convert_time_between_units(timer.period_int, timer.unit,
+                                               global_timer_period_unit)
+        for timer in timers
+    }
+    try:
+        max_time = convert_time_between_units(
+            max_time_ns, "ns", global_timer_period_unit)
+    except AssertionError:
+        raise ValueError(
+            f"Max time {max_time_ns}ns cannot be converted to '{global_timer_period_unit}'. "
+            "The max_time must have a unit that is greater or equal to the smallest timer period.")
+    scxml_root = ScxmlRoot("global_timer_automata")
+    scxml_root.set_data_model(ScxmlDataModel([ScxmlData("current_time", 0, "int64")]))
+    idle_state = ScxmlState("idle")
+    global_timer_tick_body: ScxmlExecutionBody = []
+    global_timer_tick_body.append(ScxmlAssign("current_time",
+                                              f"current_time + {global_timer_period}"))
+    for timer_name, timer_period in timers_map.items():
+        global_timer_tick_body.append(ScxmlIf([(f"(current_time % {timer_period}) == 0",
+                                               [ScxmlSend(f"ros_time_rate.{timer_name}")])]))
+    timer_step_transition = ScxmlTransition("idle", [], f"current_time < {max_time}",
+                                            global_timer_tick_body)
+    idle_state.add_transition(timer_step_transition)
+    scxml_root.add_state(idle_state, initial=True)
+    return scxml_root
