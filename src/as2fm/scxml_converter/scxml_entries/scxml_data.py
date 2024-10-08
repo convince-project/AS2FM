@@ -36,7 +36,8 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     read_value_from_xml_arg_or_child,
 )
 
-ValidExpr = Union[BtGetValueInputPort, str, int, float]
+ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
+ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
 
 
 def valid_bound(bound_value: Any) -> bool:
@@ -102,14 +103,14 @@ class ScxmlData(ScxmlBase):
         id_: str,
         expr: ValidExpr,
         data_type: str,
-        lower_bound: Optional[ValidExpr] = None,
-        upper_bound: Optional[ValidExpr] = None,
+        lower_bound: ValidBound = None,
+        upper_bound: ValidBound = None,
     ):
         self._id: str = id_
-        self._expr: str = expr
+        self._expr: ValidExpr = expr
         self._data_type: str = data_type
-        self._lower_bound: str = lower_bound
-        self._upper_bound: str = upper_bound
+        self._lower_bound: ValidBound = lower_bound
+        self._upper_bound: ValidBound = upper_bound
 
     def get_name(self) -> str:
         return self._id
@@ -127,7 +128,7 @@ class ScxmlData(ScxmlBase):
         ), f"Error: SCXML data: '{self._id}' type is not an array."
         return get_array_max_size(self._data_type)
 
-    def get_expr(self) -> str:
+    def get_expr(self) -> ValidExpr:
         return self._expr
 
     def check_valid_bounds(self) -> bool:
@@ -160,7 +161,15 @@ class ScxmlData(ScxmlBase):
         if get_data_type_from_string(self._data_type) is None:
             print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
             return False
-        valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
+        if isinstance(self._expr, str):
+            valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
+        else:
+            valid_expr = isinstance(self._expr, (int, float, bool))
+            if not valid_expr:
+                print(
+                    f"Error: SCXML data: '{self._id}': initial expression ",
+                    f"evaluates to an invalid type '{type(self._expr)}'.",
+                )
         valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_bounds
 

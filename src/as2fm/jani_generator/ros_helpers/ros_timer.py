@@ -96,12 +96,12 @@ class RosTimer(object):
         self.period_int, self.unit, self.factor = _to_best_int_period(self.period)
 
 
-def get_common_time_step(timers: List[RosTimer]) -> Tuple[int, str]:
+def get_gcd_of_timer_periods(timers: List[RosTimer]) -> Tuple[int, str]:
     """
-    Get the common time step of a list of ROS timers.
+    Get the greatest common divider of the time periods from the provided ROS timers.
 
     :param timers: The list of ROS timers.
-    :return: The common time step and time unit.
+    :return: The time step and time unit resulting from the GCD of the timers periods.
     """
     if len(timers) == 0:
         raise ValueError("At least one timer is required.")
@@ -120,14 +120,14 @@ def make_global_timer_automaton(
     timers: List[RosTimer], max_time_ns: int
 ) -> Optional[JaniAutomaton]:
     """
-    Create a global timer automaton from a list of ROS timers.
+    Create a global timer Jani automaton from a list of ROS timers.
 
     :param timers: The list of ROS timers.
     :return: The global timer automaton.
     """
     if len(timers) == 0:
         return None
-    global_timer_period, global_timer_period_unit = get_common_time_step(timers)
+    global_timer_period, global_timer_period_unit = get_gcd_of_timer_periods(timers)
     timers_map = {
         timer.name: convert_time_between_units(
             timer.period_int, timer.unit, global_timer_period_unit
@@ -223,17 +223,14 @@ def make_global_timer_automaton(
 
 def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optional[ScxmlRoot]:
     """
-    Create a global timer SCXML from a list of ROS timers.
+    Create a global timer SCXML automaton from a list of ROS timers.
 
     :param timers: The list of ROS timers.
     :return: The global timer SCXML.
     """
-    """
-    Generate an SCXML model containing the timers.
-    """
     if len(timers) == 0:
         return None
-    global_timer_period, global_timer_period_unit = get_common_time_step(timers)
+    global_timer_period, global_timer_period_unit = get_gcd_of_timer_periods(timers)
     timers_map = {
         timer.name: convert_time_between_units(
             timer.period_int, timer.unit, global_timer_period_unit
@@ -244,7 +241,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
         max_time = convert_time_between_units(max_time_ns, "ns", global_timer_period_unit)
     except AssertionError:
         raise ValueError(
-            f"Max time {max_time_ns} cannot be converted to {global_timer_period_unit}. "
+            f"Max time {max_time_ns}ns cannot be converted to '{global_timer_period_unit}'. "
             "The max_time must have a unit that is greater or equal to the smallest timer period."
         )
     scxml_root = ScxmlRoot("global_timer_automata")

@@ -204,7 +204,7 @@ def interpret_top_level_xml(
         global_timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
         if global_timer_scxml is not None:
             with open(
-                os.path.join(plain_scxml_dir, global_timer_scxml.get_name() + ".scxml"),
+                os.path.join(plain_scxml_dir, f"{global_timer_scxml.get_name()}.scxml"),
                 "w",
                 encoding="utf-8",
             ) as f:
