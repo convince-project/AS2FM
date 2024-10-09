@@ -45,15 +45,24 @@ class BtTick(ScxmlTransition):
         assert_xml_tag_ok(BtTick, xml_tree)
         target: str = get_xml_argument(BtTick, xml_tree, "target")
         condition: Optional[str] = get_xml_argument(BtTick, xml_tree, "cond", none_allowed=True)
-        return BtTick(target, condition)
+        body = execution_body_from_xml(xml_tree)
+        return BtTick(target, condition, body)
 
-    def __init__(self, target: str, condition: Optional[str] = None):
-        super().__init__(target, ["bt_tick"], condition)
+    def __init__(
+        self,
+        target: str,
+        condition: Optional[str] = None,
+        body: Optional[ScxmlExecutionBody] = None,
+    ):
+        super().__init__(target, ["bt_tick"], condition, body)
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick = ET.Element(BtTick.get_tag_name(), {"target": self._target})
         if self._condition is not None:
             xml_bt_tick.set("cond", self._condition)
+        if self._body is not None:
+            for executable_entry in self._body:
+                xml_bt_tick.append(executable_entry.as_xml())
         return xml_bt_tick
 
 
