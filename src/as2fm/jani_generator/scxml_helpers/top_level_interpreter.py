@@ -19,7 +19,6 @@ Module reading the top level xml file containing the whole model to check.
 
 import json
 import os
-from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import lxml.etree as ET
@@ -34,21 +33,11 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 )
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
+from as2fm.jani_generator.scxml_helpers.full_model_type import FullModel
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
+from as2fm.jani_generator.string_replacer import replace_strings_in_model
 from as2fm.scxml_converter.bt_converter import bt_converter
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
-
-
-@dataclass()
-class FullModel:
-    max_time: Optional[int] = None
-    max_array_size: int = field(default=100)
-    bt_tick_rate: float = field(default=1.0)
-    bt: Optional[str] = None
-    plugins: List[str] = field(default_factory=list)
-    skills: List[str] = field(default_factory=list)
-    components: List[str] = field(default_factory=list)
-    properties: List[str] = field(default_factory=list)
 
 
 def _parse_time_element(time_element: ET.Element) -> int:
@@ -195,7 +184,10 @@ def generate_plain_scxml_models_and_timers(
 
 
 def interpret_top_level_xml(
-    xml_path: str, jani_file: str, generated_scxmls_dir: Optional[str] = None
+    xml_path: str,
+    jani_file: str,
+    generated_scxmls_dir: Optional[str] = None,
+    replace_strings: bool = False,
 ):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
@@ -210,6 +202,9 @@ def interpret_top_level_xml(
     model = parse_main_xml(xml_path)
     assert model.max_time is not None, f"Max time must be defined in {xml_path}."
     plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(model)
+
+    if replace_strings:
+        model = replace_strings_in_model(model)
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
