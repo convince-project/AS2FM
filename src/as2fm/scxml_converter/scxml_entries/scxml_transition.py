@@ -116,7 +116,7 @@ class ScxmlTransition(ScxmlBase):
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 
-    def instantiate_bt_events(self, instance_id: str):
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlTransition":
         """Instantiate the BT events of this transition."""
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
@@ -125,7 +125,8 @@ class ScxmlTransition(ScxmlBase):
                 if is_bt_event(event_str):
                     self._events[event_id] = replace_bt_event(event_str, instance_id)
         # The body of a transition needs to be replaced on derived classes, too
-        instantiate_exec_body_bt_events(self._body, instance_id)
+        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""

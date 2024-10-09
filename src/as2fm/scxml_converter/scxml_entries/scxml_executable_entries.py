@@ -51,7 +51,7 @@ ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
 def instantiate_exec_body_bt_events(
-    exec_body: Optional[ScxmlExecutionBody], instance_id: str
+    exec_body: Optional[ScxmlExecutionBody], instance_id: int, children_ids: List[int]
 ) -> None:
     """
     Instantiate the behavior tree events in the execution body.
@@ -61,7 +61,7 @@ def instantiate_exec_body_bt_events(
     """
     if exec_body is not None:
         for entry in exec_body:
-            entry.instantiate_bt_events(instance_id)
+            entry.instantiate_bt_events(instance_id, children_ids)
 
 
 def update_exec_body_bt_ports_values(
@@ -153,11 +153,11 @@ class ScxmlIf(ScxmlBase):
         """Get the else execution."""
         return self._else_execution
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> None:
         """Instantiate the behavior tree events in the If action, if available."""
         for _, exec_body in self._conditional_executions:
-            instantiate_exec_body_bt_events(exec_body, instance_id)
-        instantiate_exec_body_bt_events(self._else_execution, instance_id)
+            instantiate_exec_body_bt_events(exec_body, instance_id, children_ids)
+        instantiate_exec_body_bt_events(self._else_execution, instance_id, children_ids)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         for _, exec_body in self._conditional_executions:
@@ -285,7 +285,7 @@ class ScxmlSend(ScxmlBase):
         """Get the parameters to send."""
         return self._params
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, _) -> None:
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         if type(self) is ScxmlSend and is_bt_event(self._event):
@@ -378,7 +378,7 @@ class ScxmlAssign(ScxmlBase):
         """Get the expression to assign."""
         return self._expr
 
-    def instantiate_bt_events(self, _) -> None:
+    def instantiate_bt_events(self, _, __) -> None:
         """This functionality is not needed in this class."""
         return
 

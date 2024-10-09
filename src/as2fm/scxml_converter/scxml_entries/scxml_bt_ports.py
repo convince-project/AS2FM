@@ -138,7 +138,7 @@ class BtGetValueInputPort(ScxmlBase):
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML BT Ports declarations cannot be converted to plain SCXML.")
+        raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."

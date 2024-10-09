@@ -97,7 +97,7 @@ def ros_to_plain_scxml_test(
             scxml_obj = ScxmlRoot.from_scxml_file(input_file)
             if fname in scxml_bt_ports:
                 scxml_obj.set_bt_ports_values(scxml_bt_ports[fname])
-                scxml_obj.update_bt_ports_values()
+                scxml_obj.instantiate_bt_information()
             plain_scxmls, _ = scxml_obj.to_plain_scxml_and_declarations()
             if store_generated:
                 for generated_scxml in plain_scxmls:

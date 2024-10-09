@@ -125,6 +125,8 @@ class ScxmlRoot(ScxmlBase):
         self._data_model: Optional[ScxmlDataModel] = None
         self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
+        self._bt_plugin_id: Optional[int] = None
+        self._bt_children_ids: List[int] = []
         self._additional_threads: List[RosActionThread] = []
 
     def get_name(self) -> str:
@@ -153,10 +155,9 @@ class ScxmlRoot(ScxmlBase):
                 return state
         return None
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def set_bt_plugin_id(self, instance_id: str) -> None:
         """Update all BT-related events to use the assigned instance ID."""
-        for state in self._states:
-            state.instantiate_bt_events(instance_id)
+        self._bt_plugin_id = instance_id
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states in the SCXML model.
@@ -207,8 +208,17 @@ class ScxmlRoot(ScxmlBase):
         for port_name, port_value in ports_values:
             self.set_bt_port_value(port_name, port_value)
 
-    def update_bt_ports_values(self):
-        """Update the values of the declared BT ports in the SCXML object."""
+    def append_bt_child_id(self, child_id: int):
+        """Append a child ID to the list of child IDs."""
+        assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
+        self._bt_children_ids.append(child_id)
+
+    def instantiate_bt_information(self):
+        """Instantiate the values of BT ports and childrebn IDs in the SCXML entries."""
+        n_bt_children = len(self._bt_children_ids)
+        # Automatically add the correct amount of children to the specific port
+        if self._bt_ports_handler.in_port_exists("CHILDREN_COUNT"):
+            self._bt_ports_handler.set_port_value("CHILDREN_COUNT", str(n_bt_children))
         if self._data_model is not None:
             self._data_model.update_bt_ports_values(self._bt_ports_handler)
         for ros_decl_scxml in self._ros_declarations:
@@ -216,6 +226,7 @@ class ScxmlRoot(ScxmlBase):
         for scxml_thread in self._additional_threads:
             scxml_thread.update_bt_ports_values(self._bt_ports_handler)
         for state in self._states:
+            state.instantiate_bt_events(self._bt_plugin_id, self._bt_children_ids)
             state.update_bt_ports_values(self._bt_ports_handler)
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:

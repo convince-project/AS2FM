@@ -104,14 +104,14 @@ def bt_converter(
             instance_name = f"{node_id}_{node_type}"
             scxml_plugin_instance: ScxmlRoot = deepcopy(bt_plugins_scxmls[node_type])
             scxml_plugin_instance.set_name(instance_name)
-            scxml_plugin_instance.instantiate_bt_events(node_id)
+            scxml_plugin_instance.set_bt_plugin_id(node_id)
             bt_ports = [
                 (p_name, p_value)
                 for p_name, p_value in bt_graph.nodes[node].items()
                 if p_name not in RESERVED_BT_PORT_NAMES
             ]
             scxml_plugin_instance.set_bt_ports_values(bt_ports)
-            scxml_plugin_instance.update_bt_ports_values()
+            scxml_plugin_instance.instantiate_bt_information()
             assert (
                 scxml_plugin_instance.check_validity()
             ), f"Error: SCXML plugin instance {instance_name} is not valid."
@@ -205,7 +205,7 @@ def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> S
     bt_scxml_root.add_state(error_state)
     # TODO: BT children handling  interface must be finalized
     bt_scxml_root.append_bt_child_id(tick_id)
-    # TODO: Decide how to handle the BT children (might  be expanded when getting the plain SCXML)
+    bt_scxml_root.instantiate_bt_information()
     return bt_scxml_root
 
 
