@@ -44,6 +44,11 @@ class BtResponse(Enum):
         raise ValueError(f"Error: {resp_str} is an invalid BT Status type.")
 
 
+def generate_bt_tick_event(instance_id: str) -> str:
+    """Generate the BT tick event name for a given BT node instance."""
+    return f"bt_{instance_id}_tick"
+
+
 def is_bt_event(event_name: str) -> bool:
     """Given an event name, returns whether it is related to a BT event or not."""
     bt_events = [f"bt_{suffix}" for suffix in ["tick", "running", "success", "failure"]]
