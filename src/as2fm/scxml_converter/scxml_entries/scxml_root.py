@@ -27,6 +27,7 @@ from as2fm.as2fm_common.common import is_comment, remove_namespace
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
+    BtPortDeclarations,
     RosActionThread,
     ScxmlBase,
     ScxmlDataModel,
@@ -34,7 +35,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (

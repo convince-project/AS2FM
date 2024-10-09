@@ -3,8 +3,9 @@
 from .scxml_base import ScxmlBase  # noqa: F401
 from .utils import CallbackType  # noqa: F401
 from .bt_utils import RESERVED_BT_PORT_NAMES  # noqa: F401
-from .scxml_bt import (  # noqa: F401
+from .scxml_bt_ports import (  # noqa: F401
     BtInputPortDeclaration,
+    BtPortDeclarations,
     BtOutputPortDeclaration,
     BtGetValueInputPort,
 )  # noqa: F401
