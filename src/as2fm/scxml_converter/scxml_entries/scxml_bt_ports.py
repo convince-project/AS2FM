@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-SCXML entries related to Behavior Trees.
+SCXML entries related to Behavior Trees' Ports.
 """
 
 from typing import Union
