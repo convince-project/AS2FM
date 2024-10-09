@@ -19,28 +19,30 @@
     </datamodel>
 
     <state id="wait_for_tick">
+        <!-- Check if the state is valid. If not, go to error and stop -->
         <transition target="error" cond="children_count < 2 || children_count > 3" />
-        <transition event="bt_tick" target="tick_condition_child" cond="child_idx == 0"/>
-        <transition event="bt_tick" target="tick_exec_child" cond="child_idx > 0"/>
+        <!-- React to an incoming BT Tick -->
+        <bt_tick cond="child_idx == 0" target="tick_condition_child" />
+        <bt_tick cond="child_idx > 0" target="tick_exec_child" />
     </state>
 
     <state id="tick_condition_child">
         <onentry>
-            <tick_child id="0"/>
+            <bt_tick_child id="0"/>
         </onentry>
         <transition target="error" cond="child_idx != 0" />
-        <get_child_response id="0" cond="_bt.response == SUCCESS" target="tick_exec_child">
+        <bt_child_status id="0" cond="_bt.status == SUCCESS" target="tick_exec_child">
             <assign location="child_idx" expr="1" />
-        </get_child_response>
-        <get_child_response id="0" cond="_bt.response == FAILURE && children_count_== 3" target="tick_exec_child">
+        </bt_child_status>
+        <bt_child_status id="0" cond="_bt.status == FAILURE && children_count== 3" target="tick_exec_child">
             <assign location="child_idx" expr="2" />
-        </get_child_response>
-        <get_child_response id="0" cond="_bt.response == FAILURE && children_count_ < 3" target="wait_for_tick">
-            <send event="bt_failure" />
-        </get_child_response>
-        <get_child_response id="0" cond="_bt.response == RUNNING" target="wait_for_tick">
-            <send event="bt_running" />
-        </get_child_response>
+        </bt_child_status>
+        <bt_child_status id="0" cond="_bt.status == FAILURE && children_count < 3" target="wait_for_tick">
+            <bt_return_status status="FAILURE"/>
+        </bt_child_status>
+        <bt_child_status id="0" cond="_bt.status == RUNNING" target="wait_for_tick">
+            <bt_return_status status="RUNNING"/>
+        </bt_child_status>
     </state>
 
     <state id="tick_exec_child">
@@ -49,17 +51,17 @@
         </onentry>
         <transition target="error" cond="child_idx != 1 && child_idx != 2" />
         <transition target="error" cond="child_idx >= children_count" />
-        <get_child_response id="child_idx" cond="_bt.response == SUCCESS" target="wait_for_tick">
+        <bt_child_status id="child_idx" cond="_bt.status == SUCCESS" target="wait_for_tick">
             <assign location="child_idx" expr="0" />
-            <send event="bt_success" />
-        </get_child_response>
-        <get_child_response id="child_idx" cond="_bt.response == FAILURE" target="wait_for_tick">
+            <bt_return_status status="SUCCESS"/>
+        </bt_child_status>
+        <bt_child_status id="child_idx" cond="_bt.status == FAILURE" target="wait_for_tick">
             <assign location="child_idx" expr="0" />
-            <send event="bt_failure" />
-        </get_child_response>
-        <get_child_response id="child_idx" cond="_bt.response == RUNNING" target="wait_for_tick">
-            <send event="bt_running" />
-        </get_child_response>
+            <bt_return_status status="FAILURE"/>
+        </bt_child_status>
+        <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
+            <bt_return_status status="RUNNING"/>
+        </bt_child_status>
     </state>
 
     <!-- A state to transition to when something did not work -->
