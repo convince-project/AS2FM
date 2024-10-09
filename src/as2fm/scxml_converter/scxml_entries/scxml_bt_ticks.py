@@ -21,13 +21,19 @@ from typing import Optional, Union
 
 from lxml import etree as ET
 
-from as2fm.scxml_converter.scxml_entries import ScxmlSend, ScxmlTransition
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlExecutionBody,
+    ScxmlSend,
+    ScxmlTransition,
+    execution_body_from_xml,
+)
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtResponse
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
 class BtTick(ScxmlTransition):
     """
-    Tick a BT plugin/control node, triggering the related transition.
+    Process a BT plugin/control node tick, triggering the related transition.
     """
 
     @staticmethod
@@ -73,3 +79,68 @@ class BtTickChild(ScxmlSend):
     def as_xml(self) -> ET.Element:
         xml_bt_tick_child = ET.Element(BtTickChild.get_tag_name(), {"id": str(self._child)})
         return xml_bt_tick_child
+
+
+class BtChildStatus(ScxmlTransition):
+    """
+    Process the response received from a BT child.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "bt_child_status"
+
+    @staticmethod
+    def from_xml_tree(xml_tree):
+        assert_xml_tag_ok(BtChildStatus, xml_tree)
+        child_id = get_xml_argument(BtChildStatus, xml_tree, "id")
+        target = get_xml_argument(BtChildStatus, xml_tree, "target")
+        condition = get_xml_argument(BtChildStatus, xml_tree, "cond", none_allowed=True)
+        body = execution_body_from_xml(xml_tree)
+        return BtChildStatus(child_id, target, condition, body)
+
+    def __init__(
+        self,
+        child_id: Union[str, int],
+        target: str,
+        condition: Optional[str] = None,
+        body: Optional[ScxmlExecutionBody] = None,
+    ):
+        self._child_id = child_id
+        self._target = target
+        self._condition = condition
+        self._body = body
+
+    def as_xml(self) -> ET.Element:
+        xml_bt_child_status = ET.Element(
+            BtChildStatus.get_tag_name(), {"id": str(self._child_id), "target": self._target}
+        )
+        if self._condition is not None:
+            xml_bt_child_status.set("cond", self._condition)
+        if self._body is not None:
+            for executable_entry in self._body:
+                xml_bt_child_status.append(executable_entry.as_xml())
+        return xml_bt_child_status
+
+
+class BtReturnStatus(ScxmlSend):
+    """
+    Send a status response to a BT parent node.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "bt_return_status"
+
+    @staticmethod
+    def from_xml_tree(xml_tree: ET.Element) -> "BtReturnStatus":
+        assert_xml_tag_ok(BtReturnStatus, xml_tree)
+        status = get_xml_argument(BtReturnStatus, xml_tree, "status")
+        return BtReturnStatus(status)
+
+    def __init__(self, status: str):
+        self._status: str = status
+        self._status_id: int = BtResponse.str_to_int(status)
+
+    def as_xml(self) -> ET.Element:
+        return ET.Element(BtReturnStatus.get_tag_name(), {"status": self._status})
