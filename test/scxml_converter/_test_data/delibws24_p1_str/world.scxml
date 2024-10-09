@@ -18,15 +18,15 @@
     <ros_action_server name="act_nav" action_name="/go_to_goal" type="delib_ws_24_interfaces/NavigateStr" />
     <ros_action_server name="act_pick" action_name="/pick_object" type="delib_ws_24_interfaces/PickStr" />
     <ros_action_server name="act_place" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
-    <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
+    <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Str" />
 
     <datamodel>
-        <data id="obj_locs" type="int32[1]" expr="[0]" />
-        <data id="robot_loc" type="int32" expr="1" />
-        <data id="robot_holding" type="int32" expr="-1" />
+        <data id="snacks0_loc" type="str" expr="'pantry'" />
+        <data id="robot_loc" type="str" expr="'table'" />
+        <data id="robot_holding" type="str" expr="''" />
         <!-- Additional support variable for the goal_id -->
         <data id="goal_id" type="int32" expr="0" />
-        <data id="tmp_idx" type="int32" expr="0" />
+        <data id="pick_obj" type="int32" expr="0" />
     </datamodel>
 
     <state id="idle">
@@ -38,20 +38,24 @@
 
         <ros_action_handle_goal name="act_nav" target="idle">
             <assign location="goal_id" expr="_action.goal_id" />
-            <assign location="robot_loc" expr="_goal.goal_id" />
+            <assign location="robot_loc" expr="_goal.goal_loc" />
             <ros_action_accept_goal name="act_nav" goal_id="goal_id" />
             <ros_action_succeed name="act_nav" goal_id="goal_id" />
         </ros_action_handle_goal>
 
         <ros_action_handle_goal name="act_pick" target="idle">
             <assign location="goal_id" expr="_action.goal_id" />
-            <assign location="tmp_idx" expr="_goal.object_id" />
+            <assign location="pick_obj" expr="_goal.object_id" />
             <ros_action_accept_goal name="act_pick" goal_id="goal_id" />
-            <if cond="obj_locs[tmp_idx] == robot_loc">
-                <assign location="robot_holding" expr="tmp_idx" />
-                <assign location="obj_locs[tmp_idx]" expr="-1" />
+            <if cond="robot_holding == ''">
+                <!-- empty-handed -->
+                <assign location="robot_holding" expr="pick_obj" />
+                <if cond="pick_obj == 'snacks0'">
+                    <assign location="snacks0_loc" expr="'ON_ROBOT'" />
+                </if>
                 <ros_action_succeed name="act_pick" goal_id="goal_id" />
             <else/>
+                <!-- holding something -->
                 <ros_action_aborted name="act_pick" goal_id="goal_id" />
             </if>
         </ros_action_handle_goal>
@@ -59,11 +63,15 @@
         <ros_action_handle_goal name="act_place" target="idle">
             <assign location="goal_id" expr="_action.goal_id" />
             <ros_action_accept_goal name="act_place" goal_id="goal_id" />
-            <if cond="robot_holding != -1">
-                <assign location="obj_locs[robot_holding]" expr="robot_loc" />
-                <assign location="robot_holding" expr="-1" />
+            <if cond="robot_holding != ''">
+                <!-- holding something -->
+                <if cond="robot_holding == 'snacks0'">
+                    <assign location="snacks0_loc" expr="robot_loc" />
+                </if>
+                <assign location="robot_holding" expr="''" />
                 <ros_action_succeed name="act_place" goal_id="goal_id" />
             <else/>
+                <!-- empty-handed -->
                 <ros_action_aborted name="act_place" goal_id="goal_id" />
             </if>
         </ros_action_handle_goal>

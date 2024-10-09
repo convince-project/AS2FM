@@ -20,7 +20,7 @@
     <state id="initial">
         <transition event="bt_tick" target="wait_result">
             <ros_action_send_goal name="act">
-                <field name="goal_id">
+                <field name="goal_loc">
                     <expr>
                         <bt_get_input key="data" />
                     </expr>

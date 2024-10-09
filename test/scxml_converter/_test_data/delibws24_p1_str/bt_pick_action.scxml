@@ -12,7 +12,7 @@
         <data id="tmp_result" type="bool" expr="false" />
     </datamodel>
 
-    <bt_declare_port_in key="data" type="int32" />
+<bt_declare_port_in key="data" type="strn" />
 
     <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
     <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
