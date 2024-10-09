@@ -17,17 +17,20 @@
 SCXML entries related to Behavior Tree Ticks and related responses.
 """
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
+    ScxmlIf,
     ScxmlSend,
     ScxmlTransition,
     execution_body_from_xml,
+    instantiate_exec_body_bt_events,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtResponse
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtResponse, generate_bt_tick_event
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
@@ -55,6 +58,14 @@ class BtTick(ScxmlTransition):
         body: Optional[ScxmlExecutionBody] = None,
     ):
         super().__init__(target, ["bt_tick"], condition, body)
+
+    def check_validity(self) -> bool:
+        return super().check_validity()
+
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> ScxmlTransition:
+        self._events = [generate_bt_tick_event(instance_id)]
+        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        return ScxmlTransition(self._target, self._events, self._condition, self._body)
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick = ET.Element(BtTick.get_tag_name(), {"target": self._target})
@@ -84,6 +95,27 @@ class BtTickChild(ScxmlSend):
             child_id, (str, int)
         ), f"Error: SCXML BT Tick Child: invalid child id type {type(child_id)}."
         self._child = child_id
+        if isinstance(child_id, str):
+            child_id = child_id.strip()
+            try:
+                self._child = int(child_id)
+            except ValueError:
+                self._child = child_id
+                assert is_non_empty_string(BtTickChild, "id", self._child)
+                assert (
+                    self._child.isidentifier()
+                ), f"Error: SCXML BT Tick Child: invalid child id '{self._child}'."
+
+    def check_validity(self) -> bool:
+        return True
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> Union[ScxmlIf, ScxmlSend]:
+        """
+        Convert the BtTickChild to ScxmlSend if the child id is constant and an ScxmlIf otherwise.
+        """
+        raise NotImplementedError("Error: SCXML BT Tick Child: instantiation not implemented.")
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick_child = ET.Element(BtTickChild.get_tag_name(), {"id": str(self._child)})
