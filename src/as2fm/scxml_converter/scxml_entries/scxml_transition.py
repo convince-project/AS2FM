@@ -39,7 +39,11 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body,
     valid_execution_body_entry_types,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    get_plain_expression,
+    is_non_empty_string,
+)
 
 
 class ScxmlTransition(ScxmlBase):
@@ -116,7 +120,7 @@ class ScxmlTransition(ScxmlBase):
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 
-    def instantiate_bt_events(self, instance_id: str):
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlTransition":
         """Instantiate the BT events of this transition."""
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
@@ -125,7 +129,8 @@ class ScxmlTransition(ScxmlBase):
                 if is_bt_event(event_str):
                     self._events[event_id] = replace_bt_event(event_str, instance_id)
         # The body of a transition needs to be replaced on derived classes, too
-        instantiate_exec_body_bt_events(self._body, instance_id)
+        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -144,22 +149,18 @@ class ScxmlTransition(ScxmlBase):
         ), "Error SCXML transition: invalid body entry found after extension."
 
     def check_validity(self) -> bool:
-        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_target = is_non_empty_string(type(self), "target", self._target)
+        valid_condition = self._condition is None or (
+            is_non_empty_string(type(self), "condition", self._condition)
+        )
         valid_events = self._events is None or (
             isinstance(self._events, list) and all(isinstance(ev, str) for ev in self._events)
         )
-        valid_condition = self._condition is None or (
-            isinstance(self._condition, str) and len(self._condition) > 0
-        )
         valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_target:
-            print("Error: SCXML transition: target is not valid.")
         if not valid_events:
             print("Error: SCXML transition: events are not valid.\nList of events:")
             for event in self._events:
                 print(f"\t-'{event}'.")
-        if not valid_condition:
-            print("Error: SCXML transition: condition is not valid.")
         if not valid_body:
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body

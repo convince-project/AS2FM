@@ -16,6 +16,7 @@
 """Collection of SCXML utilities related to BT functionalities."""
 
 import re
+from enum import Enum, auto
 from typing import Dict, Tuple, Type
 
 from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
@@ -25,6 +26,27 @@ VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 
 """List of keys that are not going to be read as BT ports from the BT XML definition."""
 RESERVED_BT_PORT_NAMES = ["NAME", "ID", "category"]
+
+
+class BtResponse(Enum):
+    """Enumeration of possible BT responses."""
+
+    SUCCESS = auto()
+    FAILURE = auto()
+    RUNNING = auto()
+
+    @staticmethod
+    def str_to_int(resp_str: str) -> int:
+        """Convert the BT response to an integer."""
+        for response in BtResponse:
+            if response.name == resp_str:
+                return response.value
+        raise ValueError(f"Error: {resp_str} is an invalid BT Status type.")
+
+
+def generate_bt_tick_event(instance_id: str) -> str:
+    """Generate the BT tick event name for a given BT node instance."""
+    return f"bt_{instance_id}_tick"
 
 
 def is_bt_event(event_name: str) -> bool:
