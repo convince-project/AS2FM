@@ -81,6 +81,12 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--jani-out-file", type=str, default="main.jani", help="Path to the generated jani file."
     )
+    parser.add_argument(
+        "--replace-strings",
+        action="store_true",
+        help="Replace string constants with unique numbers. "
+        + "(Workaround Required by most model checkers)",
+    )
     parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
     args = parser.parse_args(_args)
 
@@ -92,7 +98,7 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
     assert len(jani_out_file) > 0, "Output file not provided."
 
-    interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
+    interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir, args.replace_strings)
 
 
 if __name__ == "__main__":
