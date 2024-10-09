@@ -26,9 +26,12 @@ from typing import List
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
 from btlib.common import NODE_CAT
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
     RESERVED_BT_PORT_NAMES,
+    BtChildStatus,
+    BtTickChild,
     RosRateCallback,
     RosTimeRate,
     ScxmlRoot,
@@ -156,3 +159,60 @@ def bt_converter(
     generated_scxmls.append(bt_scxml_root)
 
     return generated_scxmls
+
+
+def bt_converter_new(
+    bt_xml_path: str, bt_plugins_scxml_paths: List[str], bt_tick_rate: float
+) -> List[ScxmlRoot]:
+    """
+    Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
+    """
+    xml_tree: ET.ElementBase = ET.parse(bt_xml_path).getroot()
+    root_children = xml_tree.getchildren()
+    assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
+    assert (
+        root_children[0].tag == "BehaviorTree"
+    ), f"Error: Expected BehaviorTree root, found {root_children[0].tag}."
+    bt_children = root_children[0].getchildren()
+    assert (
+        len(bt_children) == 1
+    ), f"Error: Expected one BehaviorTree child, found {len(bt_children)}."
+    root_child_tick_idx = 1000
+    bt_name = os.path.basename(bt_xml_path).replace(".xml", "")
+    bt_scxml_root = generate_bt_root_scxml(bt_name, root_child_tick_idx, bt_tick_rate)
+    generated_scxmls = [bt_scxml_root] + generate_bt_children_scxmls(
+        bt_children[0], root_child_tick_idx, bt_plugins_scxml_paths
+    )
+    return generated_scxmls
+
+
+def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> ScxmlRoot:
+    """
+    Generate the root SCXML for a Behavior Tree.
+    """
+    bt_scxml_root = ScxmlRoot(scxml_name)
+    ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
+    bt_scxml_root.add_ros_declaration(ros_rate_decl)
+    idle_state = ScxmlState(
+        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)])]
+    )
+    wait_res_state = ScxmlState(
+        "wait_tick_res", body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(0, "idle")]
+    )
+    error_state = ScxmlState("error")
+    bt_scxml_root.add_state(idle_state, initial=True)
+    bt_scxml_root.add_state(wait_res_state)
+    bt_scxml_root.add_state(error_state)
+    # TODO: BT children handling  interface must be finalized
+    bt_scxml_root.append_bt_child_id(tick_id)
+    # TODO: Decide how to handle the BT children (might  be expanded when getting the plain SCXML)
+    return bt_scxml_root
+
+
+def generate_bt_children_scxmls(
+    bt_xml_tree: ET.ElementBase, root_child_tick_idx: int, bt_plugins_scxml_paths: List[str]
+) -> List[ScxmlRoot]:
+    """
+    Generate the SCXML files for the children of a Behavior Tree.
+    """
+    pass
