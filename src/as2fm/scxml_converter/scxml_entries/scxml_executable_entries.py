@@ -466,6 +466,9 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {
         cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry
     }
+    tag_to_cls.update(
+        {cls.get_tag_name(): cls for cls in ScxmlSend.__subclasses__() if cls != RosTrigger}
+    )
     tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
     assert (
