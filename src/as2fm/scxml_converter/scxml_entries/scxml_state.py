@@ -141,12 +141,23 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> None:
         """Instantiate the BT events in all entries belonging to a state."""
+        instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
-            transition.instantiate_bt_events(instance_id)
-        instantiate_exec_body_bt_events(self._on_entry, instance_id)
-        instantiate_exec_body_bt_events(self._on_exit, instance_id)
+            new_transition = transition.instantiate_bt_events(instance_id, children_ids)
+            if isinstance(new_transition, ScxmlTransition):
+                instantiated_transitions.append(new_transition)
+            elif isinstance(new_transition, list) and all(
+                isinstance(t, ScxmlTransition) for t in new_transition
+            ):
+                instantiated_transitions.extend(new_transition)
+            else:
+                raise ValueError(
+                    f"Error: SCXML state {self._id}: found invalid transition in state body."
+                )
+        instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
+        instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
