@@ -1,0 +1,29 @@
+{
+    "properties": [
+        {
+            "name": "destination_reached",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": ">",
+                                "left": "counter.data",
+                                "right": 9
+                            },
+                            "right": "success.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

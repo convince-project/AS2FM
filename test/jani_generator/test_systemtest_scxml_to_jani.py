@@ -279,6 +279,10 @@ class TestConversion(unittest.TestCase):
         being sent in different orders without deadlocks."""
         self._test_with_main("multiple_senders_same_event", False, "seq_check", True)
 
+    def test_conditional_transitions(self):
+        """Test transitions upon same event with multiple conditions."""
+        self._test_with_main("conditional_transitions", False, "destination_reached", True)
+
     def test_array_model_basic(self):
         """Test the array model."""
         self._test_with_main("array_model_basic", False, "array_check", True)
