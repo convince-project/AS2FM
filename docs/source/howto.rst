@@ -55,7 +55,7 @@ The following sections guide you through the process of :ref:`creating a SCXML m
 .. _ros_node_scxml:
 
 Creating an SCXML model of a ROS node
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In AS2FM, we extended the SCXML language with some additional functionalities, to support the following ROS specific features:
 

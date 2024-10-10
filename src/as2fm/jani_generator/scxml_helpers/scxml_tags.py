@@ -619,25 +619,27 @@ class StateTag(BaseTag):
         self._events_no_condition: List[str] = []
         for child in self.children:
             transition_events = child.element.get_events()
-            transition_event = "" if len(transition_events) == 0 else transition_events[0]
+            assert len(transition_events) <= 1, "Multiple events in a transition not supported."
+            transition_event: str = "" if len(transition_events) == 0 else transition_events[0]
+            assert transition_event not in self._events_no_condition, (
+                f"Event {transition_event} in state {self.element.get_id()} has already a base"
+                "exit condition."
+            )
             transition_condition = child.element.get_condition()
             # Add previous conditions matching the same event trigger to the current child state
             child.set_previous_siblings_conditions(
                 self._event_to_conditions.get(transition_event, [])
             )
+            # Write the model BEFORE appending the new condition to the events' conditions list
+            child.write_model()
             if transition_condition is None:
-                # Make sure we do not have multiple transitions with no condition and same event
-                assert transition_event not in self._events_no_condition, (
-                    f"Event {transition_event} in state {self.element.get_id()} already has a"
-                    "transition without condition."
-                )
+                # Base condition for transitioning, when all previous aren't verified
                 self._events_no_condition.append(transition_event)
             else:
                 # Update the list of conditions related to a transition trigger
                 if transition_event not in self._event_to_conditions:
                     self._event_to_conditions[transition_event] = []
                 self._event_to_conditions[transition_event].append(transition_condition)
-            child.write_model()
 
 
 class TransitionTag(BaseTag):

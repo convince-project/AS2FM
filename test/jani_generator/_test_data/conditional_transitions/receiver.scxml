@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="check_counter"
+    version="1.0"
+    name="Receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <state id="check_counter">
+        <transition event="counter" target="check_counter" cond="_event.data &lt; 10" />
+        <transition event="counter" target="done" cond="_event.data >= 10">
+            <send event="success" />
+        </transition>
+    </state>
+
+    <state id="done" />
+</scxml>
