@@ -45,9 +45,7 @@ jobs:
             - name: Install our packages
               run: |
                     source colcon_ws/install/setup.bash
-                    pip install as2fm_common/.
-                    pip install scxml_converter/.
-                    pip install jani_generator/.
+                    pip install .
             # build the documentation
             - name: Build documentation
               run: |
