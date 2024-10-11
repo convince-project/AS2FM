@@ -30,10 +30,14 @@ from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
     convert_scxml_root_to_jani_automaton,
 )
-from as2fm.jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
+from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
+    interpret_top_level_xml,
+    parse_main_xml,
+)
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
+from .utils import json_jani_properties_match
 
 
 # pylint: disable=too-many-public-methods
@@ -219,23 +223,27 @@ class TestConversion(unittest.TestCase):
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
         xml_main_path = os.path.join(test_data_dir, "main.xml")
-        ouput_path = os.path.join(test_data_dir, "main.jani")
-        if os.path.exists(ouput_path):
-            os.remove(ouput_path)
+        output_path = os.path.join(test_data_dir, "main.jani")
+        if os.path.exists(output_path):
+            os.remove(output_path)
         generated_scxml_path = "generated_plain_scxml" if store_generated_scxmls else None
         interpret_top_level_xml(xml_main_path, "main.jani", generated_scxml_path)
-        self.assertTrue(os.path.exists(ouput_path))
+        self.assertTrue(os.path.exists(output_path))
+        properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
+        assert json_jani_properties_match(
+            properties_file, output_path
+        ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
             pos_res = "Result: 1" if success else "Result: 0"
             neg_res = "Result: 0" if success else "Result: 1"
             run_smc_storm_with_output(
-                f"--model {ouput_path} --properties-names {property_name}",
-                [property_name, ouput_path, pos_res],
+                f"--model {output_path} --properties-names {property_name}",
+                [property_name, output_path, pos_res],
                 [neg_res],
             )
-        # if os.path.exists(ouput_path):
-        #     os.remove(ouput_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
@@ -278,6 +286,10 @@ class TestConversion(unittest.TestCase):
         """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
         self._test_with_main("multiple_senders_same_event", False, "seq_check", True)
+
+    def test_conditional_transitions(self):
+        """Test transitions upon same event with multiple conditions."""
+        self._test_with_main("conditional_transitions", False, "destination_reached", True)
 
     def test_array_model_basic(self):
         """Test the array model."""
