@@ -22,7 +22,7 @@ from typing import Any, Dict, List, MutableSequence, Optional, Type
 from as2fm.as2fm_common.common import is_array_type, string_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
-PLAIN_SCXML_EVENT_PREFIX: str = "_event."
+PLAIN_SCXML_EVENT_PREFIX: str = "_event.data."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"
@@ -77,7 +77,7 @@ class CallbackType(Enum):
         if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
             return []
         elif cb_type == CallbackType.TRANSITION:
-            return [PLAIN_SCXML_EVENT_PREFIX]
+            return [PLAIN_SCXML_EVENT_PREFIX, "_event.origin"]
         elif cb_type == CallbackType.ROS_TOPIC:
             return ["_msg."]
         elif cb_type == CallbackType.ROS_SERVICE_REQUEST:
