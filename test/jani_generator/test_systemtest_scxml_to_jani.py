@@ -242,8 +242,8 @@ class TestConversion(unittest.TestCase):
                 [property_name, output_path, pos_res],
                 [neg_res],
             )
-        # if os.path.exists(output_path):
-        #     os.remove(output_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
