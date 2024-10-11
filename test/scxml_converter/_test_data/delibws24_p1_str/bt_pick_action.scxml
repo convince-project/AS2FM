@@ -2,17 +2,17 @@
 <scxml
     initial="initial"
     version="1.0"
-    name="NavigateAction"
+    name="PickAction"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_action_client name="act" action_name="/go_to_goal" type="delib_ws_24_interfaces/Navigate" />
+    <ros_action_client name="act" action_name="/pick_object" type="delib_ws_24_interfaces/PickStr" />
 
     <datamodel>
         <data id="tmp_result" type="bool" expr="false" />
     </datamodel>
 
-    <bt_declare_port_in key="data" type="int32" />
+<bt_declare_port_in key="data" type="strn" />
 
     <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
     <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
@@ -20,7 +20,7 @@
     <state id="initial">
         <transition event="bt_tick" target="wait_result">
             <ros_action_send_goal name="act">
-                <field name="goal_id">
+                <field name="object_id">
                     <expr>
                         <bt_get_input key="data" />
                     </expr>
@@ -41,7 +41,6 @@
         <ros_action_handle_aborted_result name="act" target="result_available">
             <assign location="tmp_result" expr="false" />
         </ros_action_handle_aborted_result>
-
     </state>
 
     <state id="result_available">
