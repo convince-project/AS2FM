@@ -155,9 +155,13 @@ class ScxmlRoot(ScxmlBase):
                 return state
         return None
 
-    def set_bt_plugin_id(self, instance_id: str) -> None:
+    def set_bt_plugin_id(self, instance_id: int) -> None:
         """Update all BT-related events to use the assigned instance ID."""
         self._bt_plugin_id = instance_id
+
+    def get_bt_plugin_id(self) -> Optional[int]:
+        """Get the ID of the BT plugin instance, if any."""
+        return self._bt_plugin_id
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states in the SCXML model.
@@ -214,8 +218,9 @@ class ScxmlRoot(ScxmlBase):
         self._bt_children_ids.append(child_id)
 
     def instantiate_bt_information(self):
-        """Instantiate the values of BT ports and childrebn IDs in the SCXML entries."""
+        """Instantiate the values of BT ports and children IDs in the SCXML entries."""
         n_bt_children = len(self._bt_children_ids)
+        assert self._bt_plugin_id is not None, "Error: SCXML root: BT plugin ID not set."
         # Automatically add the correct amount of children to the specific port
         if self._bt_ports_handler.in_port_exists("CHILDREN_COUNT"):
             self._bt_ports_handler.set_port_value("CHILDREN_COUNT", str(n_bt_children))

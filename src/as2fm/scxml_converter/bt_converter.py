@@ -21,7 +21,7 @@ import os
 import re
 from copy import deepcopy
 from enum import Enum, auto
-from typing import List
+from typing import Dict, List
 
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
 from btlib.bts import xml_to_networkx
@@ -161,12 +161,23 @@ def bt_converter(
     return generated_scxmls
 
 
+def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, ScxmlRoot]:
+    available_bt_plugins = {}
+    for path in bt_plugins_scxml_paths:
+        assert os.path.exists(path), f"SCXML must exist. {path} not found."
+        bt_plugin_scxml = ScxmlRoot.from_scxml_file(path)
+        available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
+    return available_bt_plugins
+
+
 def bt_converter_new(
     bt_xml_path: str, bt_plugins_scxml_paths: List[str], bt_tick_rate: float
 ) -> List[ScxmlRoot]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
     """
+    # TODO: load SCXML plugins in as2fm's resources
+    available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths)
     xml_tree: ET.ElementBase = ET.parse(bt_xml_path).getroot()
     root_children = xml_tree.getchildren()
     assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
@@ -181,7 +192,7 @@ def bt_converter_new(
     bt_name = os.path.basename(bt_xml_path).replace(".xml", "")
     bt_scxml_root = generate_bt_root_scxml(bt_name, root_child_tick_idx, bt_tick_rate)
     generated_scxmls = [bt_scxml_root] + generate_bt_children_scxmls(
-        bt_children[0], root_child_tick_idx, bt_plugins_scxml_paths
+        bt_children[0], root_child_tick_idx, available_bt_plugins
     )
     return generated_scxmls
 
@@ -194,25 +205,59 @@ def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> S
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
     bt_scxml_root.add_ros_declaration(ros_rate_decl)
     idle_state = ScxmlState(
-        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)])]
+        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(tick_id)])]
     )
     wait_res_state = ScxmlState(
-        "wait_tick_res", body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(0, "idle")]
+        "wait_tick_res",
+        body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(tick_id, "idle")],
     )
     error_state = ScxmlState("error")
     bt_scxml_root.add_state(idle_state, initial=True)
     bt_scxml_root.add_state(wait_res_state)
     bt_scxml_root.add_state(error_state)
-    # TODO: BT children handling  interface must be finalized
+    # The BT root's ID is set to 0 (unused anyway)
+    bt_scxml_root.set_bt_plugin_id(0)
     bt_scxml_root.append_bt_child_id(tick_id)
     bt_scxml_root.instantiate_bt_information()
     return bt_scxml_root
 
 
+def get_bt_plugin_type(bt_xml_subtree: ET.ElementBase) -> str:
+    """
+    Get the BT plugin node type from the XML subtree.
+    """
+    plugin_type = bt_xml_subtree.tag
+    assert plugin_type not in (
+        "BehaviorTree",
+        "SubTree",  # SubTrees support will be integrated later on
+        "root",
+    ), f"Error: Unexpected BT plugin tag {plugin_type}."
+    if plugin_type in ("Condition", "Action"):
+        plugin_type = bt_xml_subtree.attrib["ID"]
+    return plugin_type
+
+
 def generate_bt_children_scxmls(
-    bt_xml_tree: ET.ElementBase, root_child_tick_idx: int, bt_plugins_scxml_paths: List[str]
+    bt_xml_subtree: ET.ElementBase,
+    subtree_tick_idx: int,
+    available_bt_plugins: Dict[str, ScxmlRoot],
 ) -> List[ScxmlRoot]:
     """
     Generate the SCXML files for the children of a Behavior Tree.
     """
-    pass
+    generated_scxmls: List[ScxmlRoot] = []
+    plugin_type = get_bt_plugin_type(bt_xml_subtree)
+    assert (
+        plugin_type in available_bt_plugins
+    ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
+    bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
+    bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
+    generated_scxmls.append(bt_plugin_scxml)
+    next_tick_idx = subtree_tick_idx + 1
+    for child in bt_xml_subtree.getchildren():
+        bt_plugin_scxml.append_bt_child_id(next_tick_idx)
+        child_scxmls = generate_bt_children_scxmls(child, next_tick_idx, available_bt_plugins)
+        generated_scxmls.extend(child_scxmls)
+        next_tick_idx = generated_scxmls[-1].get_bt_plugin_id() + 1
+    bt_plugin_scxml.instantiate_bt_information()
+    return generated_scxmls
