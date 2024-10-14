@@ -100,7 +100,7 @@ def _parse_ecmascript_to_jani_expression(
                 "right": _parse_ecmascript_to_jani_expression(ast.argument, array_info),
             }
         )
-    elif ast.type == "BinaryExpression":
+    elif ast.type == "BinaryExpression" or ast.type == "LogicalExpression":
         # It is a more complex expression
         assert (
             ast.operator in OPERATORS_TO_JANI_MAP
