@@ -310,7 +310,7 @@ class ScxmlSend(ScxmlBase):
         if not valid_event:
             print("Error: SCXML send: event is not valid.")
         if not valid_params:
-            print("Error: SCXML send: one or more param entries are not valid.")
+            print(f"Error: SCXML send: one or more param invalid entries of event '{self._event}'.")
         return valid_event and valid_params
 
     def check_valid_ros_instantiations(self, _) -> bool:

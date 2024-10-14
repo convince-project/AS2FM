@@ -257,14 +257,14 @@ class ScxmlRoot(ScxmlBase):
             for scxml_thread in self._additional_threads
         )
         if not valid_data_model:
-            print("Error: SCXML root: datamodel is not valid.")
+            print(f"Error: SCXML root({self._name}): datamodel is not valid.")
         if not valid_states:
-            print("Error: SCXML root: states are not valid.")
+            print(f"Error: SCXML root({self._name}): states are not valid.")
         if not valid_threads:
-            print("Error: SCXML root: additional threads are not valid.")
+            print(f"Error: SCXML root({self._name}): additional threads are not valid.")
         valid_ros = self._check_valid_ros_declarations()
         if not valid_ros:
-            print("Error: SCXML root: ROS declarations are not valid.")
+            print(f"Error: SCXML root({self._name}): ROS declarations are not valid.")
         return (
             valid_name and valid_initial_state and valid_states and valid_data_model and valid_ros
         )

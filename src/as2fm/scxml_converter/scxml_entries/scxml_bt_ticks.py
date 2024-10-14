@@ -240,7 +240,8 @@ class BtReturnStatus(ScxmlSend):
 
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> ScxmlSend:
         return ScxmlSend(
-            generate_bt_response_event(instance_id), [ScxmlParam("status", expr=self._status_id)]
+            generate_bt_response_event(instance_id),
+            [ScxmlParam("status", expr=f"{self._status_id}")],
         )
 
     def as_xml(self) -> ET.Element:
