@@ -21,6 +21,7 @@ import os
 import re
 from copy import deepcopy
 from enum import Enum, auto
+from importlib.resources import path as resource_path
 from typing import Dict, List
 
 from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
@@ -167,6 +168,11 @@ def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, Sc
         assert os.path.exists(path), f"SCXML must exist. {path} not found."
         bt_plugin_scxml = ScxmlRoot.from_scxml_file(path)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
+    internal_bt_plugins_path = resource_path("as2fm", "resources").joinpath("bt_control_nodes")
+    for plugin_path in internal_bt_plugins_path.iterdir():
+        if plugin_path.is_file() and plugin_path.suffix == ".scxml":
+            bt_plugin_scxml = ScxmlRoot.from_scxml_file(str(plugin_path))
+            available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     return available_bt_plugins
 
 
