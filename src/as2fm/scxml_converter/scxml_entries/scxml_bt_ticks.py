@@ -24,12 +24,17 @@ from lxml import etree as ET
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlIf,
+    ScxmlParam,
     ScxmlSend,
     ScxmlTransition,
     execution_body_from_xml,
     instantiate_exec_body_bt_events,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtResponse, generate_bt_tick_event
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtResponse,
+    generate_bt_response_event,
+    generate_bt_tick_event,
+)
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
@@ -150,7 +155,31 @@ class BtChildStatus(ScxmlTransition):
         self._child_id = child_id
         self._target = target
         self._condition = condition
+        if self._condition is not None:
+            self._condition = BtResponse.process_expr(self._condition)
         self._body = body
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> List[ScxmlTransition]:
+        if isinstance(self._child_id, int):
+            # Handling specific child ID, return a single transition
+            assert self._child_id < len(children_ids), (
+                f"Error: SCXML BT Child Status: invalid child ID {self._child_id} "
+                f"for {len(children_ids)} children."
+            )
+            target_child_id = children_ids[self._child_id]
+            return [
+                ScxmlTransition(
+                    self._target,
+                    [generate_bt_tick_event(target_child_id)],
+                    self._condition,
+                    self._body,
+                ).instantiate_bt_events(instance_id, children_ids)
+            ]
+        else:
+            # Handling a generic child ID, return a transition for each child
+            raise NotImplementedError(f"BtChildStatus need to handle a variable {self._child_id}.")
 
     def as_xml(self) -> ET.Element:
         xml_bt_child_status = ET.Element(
@@ -182,6 +211,14 @@ class BtReturnStatus(ScxmlSend):
     def __init__(self, status: str):
         self._status: str = status
         self._status_id: int = BtResponse.str_to_int(status)
+
+    def check_validity(self) -> bool:
+        return True
+
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> ScxmlSend:
+        return ScxmlSend(
+            generate_bt_response_event(instance_id), [ScxmlParam("status", expr=self._status_id)]
+        )
 
     def as_xml(self) -> ET.Element:
         return ET.Element(BtReturnStatus.get_tag_name(), {"status": self._status})

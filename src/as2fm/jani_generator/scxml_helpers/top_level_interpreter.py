@@ -35,7 +35,7 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
-from as2fm.scxml_converter.bt_converter import bt_converter
+from as2fm.scxml_converter.bt_converter import bt_converter_new
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 
@@ -159,7 +159,7 @@ def generate_plain_scxml_models_and_timers(
         ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        ros_scxmls.extend(bt_converter(model.bt, model.plugins, model.bt_tick_rate))
+        ros_scxmls.extend(bt_converter_new(model.bt, model.plugins, model.bt_tick_rate))
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []

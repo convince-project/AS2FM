@@ -43,10 +43,22 @@ class BtResponse(Enum):
                 return response.value
         raise ValueError(f"Error: {resp_str} is an invalid BT Status type.")
 
+    @staticmethod
+    def process_expr(expr: str) -> str:
+        """Substitute occurrences of BT responses in the expression."""
+        for response in BtResponse:
+            expr = re.sub(rf"{response.name}", f"{response.value}", expr)
+        return expr
+
 
 def generate_bt_tick_event(instance_id: str) -> str:
     """Generate the BT tick event name for a given BT node instance."""
     return f"bt_{instance_id}_tick"
+
+
+def generate_bt_response_event(instance_id: str) -> str:
+    """Generate the BT response event name for a given BT node instance."""
+    return f"bt_{instance_id}_response"
 
 
 def is_bt_event(event_name: str) -> bool:
