@@ -59,6 +59,16 @@ def remove_namespace(tag: str) -> str:
     return tag_wo_ns
 
 
+def substitute_xml_escaping(text: str) -> str:
+    """
+    Substitute the XML escaping characters in the text.
+
+    :param text: The text to substitute the characters in.
+    :return: The text with the characters substituted.
+    """
+    return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+
+
 def is_comment(element: _Element) -> bool:
     """
     Check if an element is a comment.

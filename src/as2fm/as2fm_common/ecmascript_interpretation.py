@@ -22,7 +22,7 @@ from typing import Dict, Optional, Union
 
 import js2py
 
-from as2fm.as2fm_common.common import ValidTypes
+from as2fm.as2fm_common.common import ValidTypes, substitute_xml_escaping
 
 BasicJsTypes = Union[int, float, bool]
 
@@ -36,6 +36,7 @@ def interpret_ecma_script_expr(
     :param expr: The ECMA script expression
     :return: The interpreted object
     """
+    expr = substitute_xml_escaping(expr)
     if variables is None:
         variables = {}
     context = js2py.EvalJs(variables)
