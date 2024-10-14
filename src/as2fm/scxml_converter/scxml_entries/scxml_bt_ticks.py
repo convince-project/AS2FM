@@ -120,7 +120,21 @@ class BtTickChild(ScxmlSend):
         """
         Convert the BtTickChild to ScxmlSend if the child id is constant and an ScxmlIf otherwise.
         """
-        raise NotImplementedError("Error: SCXML BT Tick Child: instantiation not implemented.")
+        if isinstance(self._child, int):
+            # We know the exact child ID we want to tick
+            assert self._child < len(children_ids), (
+                f"Error: SCXML BT Tick Child: invalid child ID {self._child} "
+                f"for {len(children_ids)} children."
+            )
+            return ScxmlSend(generate_bt_tick_event(children_ids[self._child]))
+        else:
+            # The children to tick depends on the index of the self._child variable at runtime
+            if_bodies = []
+            for child_id in children_ids:
+                if_bodies.append(
+                    (f"{self._child} == {child_id}", [ScxmlSend(generate_bt_tick_event(child_id))])
+                )
+            return ScxmlIf(if_bodies).instantiate_bt_events(instance_id, children_ids)
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick_child = ET.Element(BtTickChild.get_tag_name(), {"id": str(self._child)})
@@ -179,7 +193,16 @@ class BtChildStatus(ScxmlTransition):
             ]
         else:
             # Handling a generic child ID, return a transition for each child
-            raise NotImplementedError(f"BtChildStatus need to handle a variable {self._child_id}.")
+            condition_prefix = "" if self._condition is None else f"({self._condition}) &amp;&amp; "
+            return [
+                ScxmlTransition(
+                    self._target,
+                    [generate_bt_tick_event(child_id)],
+                    condition_prefix + f"({self._child_id} == {child_id})",
+                    self._body,
+                ).instantiate_bt_events(instance_id, children_ids)
+                for child_id in children_ids
+            ]
 
     def as_xml(self) -> ET.Element:
         xml_bt_child_status = ET.Element(

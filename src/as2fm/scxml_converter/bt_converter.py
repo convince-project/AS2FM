@@ -211,18 +211,18 @@ def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> S
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
     bt_scxml_root.add_ros_declaration(ros_rate_decl)
     idle_state = ScxmlState(
-        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(tick_id)])]
+        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)])]
     )
     wait_res_state = ScxmlState(
         "wait_tick_res",
-        body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(tick_id, "idle")],
+        body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(0, "idle")],
     )
     error_state = ScxmlState("error")
     bt_scxml_root.add_state(idle_state, initial=True)
     bt_scxml_root.add_state(wait_res_state)
     bt_scxml_root.add_state(error_state)
-    # The BT root's ID is set to 0 (unused anyway)
-    bt_scxml_root.set_bt_plugin_id(0)
+    # The BT root's ID is set to -1 (unused anyway)
+    bt_scxml_root.set_bt_plugin_id(-1)
     bt_scxml_root.append_bt_child_id(tick_id)
     bt_scxml_root.instantiate_bt_information()
     return bt_scxml_root

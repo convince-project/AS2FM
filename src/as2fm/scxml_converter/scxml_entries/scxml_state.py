@@ -156,6 +156,7 @@ class ScxmlState(ScxmlBase):
                 raise ValueError(
                     f"Error: SCXML state {self._id}: found invalid transition in state body."
                 )
+        self._body = instantiated_transitions
         instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
         instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
 
