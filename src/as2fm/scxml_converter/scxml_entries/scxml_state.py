@@ -23,6 +23,7 @@ from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
+    BtTick,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
@@ -227,6 +228,10 @@ class ScxmlState(ScxmlBase):
         return len(body) == 0 or all(
             entry.check_valid_ros_instantiations(ros_declarations) for entry in body
         )
+
+    def has_bt_tick_transitions(self) -> bool:
+        """Check if the state has BT tick transitions."""
+        return any(isinstance(entry, BtTick) for entry in self._body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""

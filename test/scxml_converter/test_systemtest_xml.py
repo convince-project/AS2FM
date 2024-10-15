@@ -52,7 +52,6 @@ def bt_to_scxml_test(
     bt_file = os.path.join(test_data_path, bt_file)
     plugin_files = [os.path.join(test_data_path, f) for f in bt_plugins]
     scxml_objs = bt_converter(bt_file, plugin_files, 1.0)
-    assert len(scxml_objs) == 4, f"Expecting 4 scxml objects, found {len(scxml_objs)}."
     if store_generated:
         clear_output_folder(test_folder)
         for scxml_obj in scxml_objs:
@@ -61,6 +60,12 @@ def bt_to_scxml_test(
             )
             with open(output_file, "w", encoding="utf-8") as f_o:
                 f_o.write(scxml_obj.as_xml_string())
+    # Evaluate generated artifacts
+    gt_scxml_dir_path = os.path.join(test_data_path, "gt_bt_scxml")
+    n_gt_models = len([f for f in os.listdir(gt_scxml_dir_path) if f.endswith(".scxml")])
+    assert (
+        len(scxml_objs) == n_gt_models
+    ), f"Expecting {n_gt_models} scxml objects, found {len(scxml_objs)}."
     for scxml_root in scxml_objs:
         scxml_name = scxml_root.get_name()
         gt_scxml_path = os.path.join(test_data_path, "gt_bt_scxml", f"{scxml_name}.scxml")
@@ -146,7 +151,12 @@ def test_bt_to_scxml_battery_drainer():
 
 def test_ros_to_plain_scxml_battery_drainer():
     """Test the conversion of the battery drainer with ROS macros to plain SCXML."""
-    ros_to_plain_scxml_test("battery_drainer_w_bt", {}, {}, True)
+    ros_to_plain_scxml_test(
+        "battery_drainer_w_bt",
+        {"bt_topic_action.scxml": [], "bt_topic_condition.scxml": []},
+        {},
+        True,
+    )
 
 
 def test_bt_to_scxml_bt_ports():

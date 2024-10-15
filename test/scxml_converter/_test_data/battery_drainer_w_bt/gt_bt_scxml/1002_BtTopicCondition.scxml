@@ -1,13 +1,12 @@
-<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="initial" version="1.0" name="BtTopicCondition" model_src="">
-
+<scxml name="1002_BtTopicCondition" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
-        <data id="last_msg" expr="False" type="bool" />
+        <data id="last_msg" expr="False" type="bool"/>
     </datamodel>
-
+    <ros_topic_subscriber name="alarm" topic="alarm" type="std_msgs/Bool"/>
     <state id="initial">
-        <transition target="initial" event="topic_alarm_msg">
-            <assign location="last_msg" expr="_event.ros_fields__data"/>
-        </transition>
+        <ros_topic_callback name="alarm" target="initial">
+            <assign location="last_msg" expr="_msg.data"/>
+        </ros_topic_callback>
         <transition target="initial" event="bt_1002_tick">
             <if cond="last_msg">
                 <send event="bt_1002_response">
@@ -20,5 +19,4 @@
             </if>
         </transition>
     </state>
-
 </scxml>

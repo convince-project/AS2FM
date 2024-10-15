@@ -290,8 +290,9 @@ class ScxmlRoot(ScxmlBase):
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS specific features or all entries are plain SCXML."""
         assert self.check_validity(), "SCXML: found invalid root object."
-        # If this is a valid scxml object, just check the absence of ROS and thread declarations
-        return len(self._ros_declarations) == 0 and len(self._additional_threads) == 0
+        has_ros_entries = len(self._ros_declarations) > 0 or len(self._additional_threads) > 0
+        has_bt_entries = any(state.has_bt_tick_transitions() for state in self._states)
+        return not (has_ros_entries or has_bt_entries)
 
     def to_plain_scxml_and_declarations(
         self,
