@@ -57,7 +57,7 @@ In addition, in this main file, all the components of the example are put togeth
 Structure of Inputs
 `````````````````````
 
-The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/ros_example_w_bt/main.xmll>`_ with the following content:
+The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/ros_example_w_bt/main.xml>`_ with the following content:
 
 * one or multiple ROS nodes in SCXML:
 

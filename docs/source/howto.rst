@@ -218,9 +218,11 @@ TODO
 Creating an SCXML model of a BT plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-SCXML models of BT plugins can be done similarly to the ones for ROS nodes. However, in BT plugins there are a few special functionalities that are provided:
+As for ROS nodes, in AS2FM we support the implementation of custom BT plugins using ROS-SCXML.
 
-* :ref:`BT communication <bt_communication>`: A set of special events that are used in each BT plugin for starting a BT node and providing results.
+Since BT plugins rely on a specific interface, we extended the SCXML language to support the following features:
+
+* :ref:`BT communication <bt_communication>`: A set of XML tags for modeling the BT Communication interface, based on BT ticks and BT responses.
 * :ref:`BT Ports <bt_ports>`: A special BT interface to parametrize a specific plugin instance.
 
 
@@ -229,15 +231,80 @@ SCXML models of BT plugins can be done similarly to the ones for ROS nodes. Howe
 BT Communication
 _________________
 
-TODO: describe `bt_tick`, `bt_running`, `bt_success`, `bt_failure`.
+Normally, a BT plugin (or BT node), is idle until it receives a BT tick from a control node.
+The BT tick is used to trigger the execution of the BT plugin, which will then return a BT response to the control node that sent the tick.
 
+The BT plugin `AlwaysSuccess`, that returns `SUCCESS` each time it is ticked, can be implemented as follows:
+
+.. code-block:: xml
+
+    <scxml name="AlwaysSuccess" initial="idle">
+        <state id="idle">
+            <bt_tick target="idle">
+                <bt_return_status status="SUCCESS" />
+            </bt_tick>
+        </state>
+    </scxml>
+
+In this example, there is only the `idle` state, always listening for an incoming `bt_tick` event.
+When the tick is received, the plugin starts executing the body of the `bt_tick` tag, that returns a `SUCCESS` response and starts listening for a new `bt_tick`.
+
+Additionally, it is possible to model BT control nodes, that can send ticks to their children (that, in turns, are BT nodes as well) and receive their responses:
+
+.. code-block:: xml
+
+    <scxml initial="wait_for_tick" name="Inverter">
+        <!-- A default BT port reporting the amount of children -->
+        <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
+
+        <datamodel>
+            <data id="children_count" type="int8">
+                <expr>
+                    <bt_get_input key="CHILDREN_COUNT" />
+                </expr>
+            </data>
+        </datamodel>
+
+        <state id="wait_for_tick">
+            <!-- Check if the state is valid. If not, go to error and stop -->
+            <transition target="error" cond="children_count != 1" />
+            <!-- React to an incoming BT Tick -->
+            <bt_tick target="tick_child" />
+        </state>
+
+        <state id="tick_child">
+            <onentry>
+                <bt_tick_child id="0"/>
+            </onentry>
+            <bt_child_status id="0" cond="_bt.status == SUCCESS" target="wait_for_tick">
+                <bt_return_status status="FAILURE" />
+            </bt_child_status>
+            <bt_child_status id="0" cond="_bt.status == FAILURE" target="wait_for_tick">
+                <bt_return_status status="SUCCESS" />
+            </bt_child_status>
+            <bt_child_status id="0" cond="_bt.status == RUNNING" target="wait_for_tick">
+                <bt_return_status status="RUNNING" />
+            </bt_child_status>
+        </state>
+
+        <!-- A state to transition to when something did not work -->
+        <state id="error" />
+
+    </scxml>
+
+In this example, the `Inverter` control node waits for a tick, then sends a tick to its child (identified by the id `0`), and waits for the response.
+Once the child response is available, the control node inverts the response and sends it back to the control node that ticked it in the first place.
+
+In this model, the `CHILDREN_COUNT` BT port is used to access the number of children of a control node instance, to check it is correctly configured.
+
+Additional control nodes implementations are available in the `src/as2fm/resources <https://github.com/convince-project/AS2FM/blob/main/src/as2fm/resources/bt_control_nodes>`_ folder, and can be used as a reference to implement new ones.
 
 .. _bt_ports:
 
 BT Ports
 ________
 
-Additionally, when loading a BT plugin in the BT XML tree, it is possible to configure a specific plugin instance by means of the BT ports.
+When loading a BT plugin in the BT XML tree, it is possible to configure a specific plugin instance by means of the BT ports.
 
 As in the case of ROS functionalities, BT ports need to be declared before being used, to provide the port name and expected type.
 
