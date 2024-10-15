@@ -189,6 +189,7 @@ def test_bt_action_with_ports_from_code():
         ],
     )
     scxml_root = ScxmlRoot("BtTopicAction")
+    scxml_root.set_bt_plugin_id(0)
     scxml_root.set_data_model(data_model)
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))
