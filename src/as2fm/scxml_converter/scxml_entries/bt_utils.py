@@ -25,7 +25,7 @@ VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string":
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 
 """List of keys that are not going to be read as BT ports from the BT XML definition."""
-RESERVED_BT_PORT_NAMES = ["NAME", "ID", "category"]
+RESERVED_BT_PORT_NAMES = ["ID", "name"]
 
 
 class BtResponse(Enum):
@@ -88,9 +88,11 @@ class BtPortsHandler:
     @staticmethod
     def check_port_name_allowed(port_name: str) -> None:
         """Check if the port name is allowed."""
-        assert (
-            port_name not in RESERVED_BT_PORT_NAMES
-        ), f"Error: Port name {port_name} is reserved in BT"
+        # All port IDs are valid
+        pass
+        # assert (
+        #     port_name not in RESERVED_BT_PORT_NAMES
+        # ), f"Error: Port name {port_name} is reserved in BT"
 
     def __init__(self):
         # For each port name, store the port type string and value.
@@ -162,8 +164,8 @@ class BtPortsHandler:
         elif self.out_port_exists(port_name):
             self._set_out_port_value(port_name, port_value)
         else:
-            # The 'name' port can be set even if undeclared, since it defines the node name in BT.
-            if port_name != "name":
+            # The reserved port IDs can be set in the bt.xml even if they are unused in the plugin
+            if port_name not in RESERVED_BT_PORT_NAMES:
                 raise RuntimeError(f"Error: Port {port_name} is not declared.")
 
     def _set_in_port_value(self, port_name: str, port_value: str):

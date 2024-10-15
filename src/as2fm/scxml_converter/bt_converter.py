@@ -20,7 +20,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 import os
 from copy import deepcopy
 from importlib.resources import path as resource_path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from lxml import etree as ET
 
@@ -119,6 +119,14 @@ def get_bt_plugin_type(bt_xml_subtree: ET.ElementBase) -> str:
     return plugin_type
 
 
+def get_bt_child_ports(bt_xml_subtree: ET.ElementBase) -> List[Tuple[str, str]]:
+    """
+    Get the ports of a BT child node.
+    """
+    ports = [(attr_key, attr_value) for attr_key, attr_value in bt_xml_subtree.attrib.items()]
+    return ports
+
+
 def generate_bt_children_scxmls(
     bt_xml_subtree: ET.ElementBase,
     subtree_tick_idx: int,
@@ -135,6 +143,7 @@ def generate_bt_children_scxmls(
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
     bt_plugin_scxml.set_name(f"{subtree_tick_idx}_{plugin_type}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
+    bt_plugin_scxml.set_bt_ports_values(get_bt_child_ports(bt_xml_subtree))
     generated_scxmls.append(bt_plugin_scxml)
     next_tick_idx = subtree_tick_idx + 1
     for child in bt_xml_subtree.getchildren():
