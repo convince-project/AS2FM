@@ -198,6 +198,7 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     :param arg_value: The value of the argument to be checked.
     :return: True if the string is non-empty, False otherwise.
     """
+    arg_value = arg_value.strip()
     valid_str = isinstance(arg_value, str) and len(arg_value) > 0
     if not valid_str:
         print(
@@ -205,6 +206,18 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
             f"Expected non-empty argument {arg_name}, got >{arg_value}<."
         )
     return valid_str
+
+
+def to_integer(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> Optional[int]:
+    """
+    Try to convert a string to an integer. Return None if not possible.
+    """
+    arg_value = arg_value.strip()
+    assert is_non_empty_string(scxml_type, arg_name, arg_value)
+    try:
+        return int(arg_value)
+    except ValueError:
+        return None
 
 
 # ------------ Datatype-related utilities ------------
