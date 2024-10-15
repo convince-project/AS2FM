@@ -25,31 +25,15 @@ jobs:
               uses: ros-tooling/setup-ros@v0.7
               with:
                 required-ros-distributions: humble
-            # Get bt_tools TODO: remove after the release of bt_tools
-            - name: Checkout bt_tools
-              uses: actions/checkout@v2
-              with:
-                repository: boschresearch/bt_tools
-                ref: main
-                path: colcon_ws/src/bt_tools
-            # Compile bt_tools TODO: remove after the release of bt_tools
-            - name: Compile bt_tools
-              run: |
-                source /opt/ros/humble/setup.bash
-                # Install dependencies
-                cd colcon_ws
-                rosdep update && rosdep install --from-paths src --ignore-src -y
-                # Build and install bt_tools
-                colcon build --symlink-install
             # Install packages
             - name: Install our packages
               run: |
-                    source colcon_ws/install/setup.bash
+                    source /opt/ros/humble/setup.bash
                     pip install .
             # build the documentation
             - name: Build documentation
               run: |
-                    source colcon_ws/install/setup.bash
+                    source /opt/ros/humble/setup.bash
                     cd docs
                     make html
             # upload the documentation to GitHub Pages
