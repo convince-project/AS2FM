@@ -38,11 +38,11 @@
         <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </bt_child_status>
-        <bt_child_status id="child_idx" cond="_bt.status == FAILURE" target="wait_for_tick">
+        <bt_child_status id="child_idx" cond="_bt.status == FAILURE" target="tick_children">
             <assign location="failure_count" expr="failure_count + 1" />
             <assign location="child_idx" expr="child_idx + 1" />
         </bt_child_status>
-        <bt_child_status id="child_idx" cond="_bt.status == SUCCESS" target="tick_children">
+        <bt_child_status id="child_idx" cond="_bt.status == SUCCESS" target="wait_for_tick">
             <bt_return_status status="SUCCESS" />
         </bt_child_status>
         <!-- Exit conditions -->
