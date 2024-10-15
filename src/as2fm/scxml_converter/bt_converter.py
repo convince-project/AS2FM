@@ -215,7 +215,12 @@ def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> S
     )
     wait_res_state = ScxmlState(
         "wait_tick_res",
-        body=[RosRateCallback(ros_rate_decl, "error"), BtChildStatus(0, "idle")],
+        body=[
+            # If we allow timer ticks here, the automata will generate timer callbacks and make the
+            # BT automaton transition to error state (since our concept of time is not real).
+            # RosRateCallback(ros_rate_decl, "error"),
+            BtChildStatus(0, "idle")
+        ],
     )
     error_state = ScxmlState("error")
     bt_scxml_root.add_state(idle_state, initial=True)
