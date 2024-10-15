@@ -20,6 +20,7 @@ from test_utils import canonicalize_xml
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     BtInputPortDeclaration,
+    BtTick,
     RosField,
     RosRateCallback,
     RosTimeRate,
@@ -177,9 +178,8 @@ def test_bt_action_with_ports_from_code():
     init_state = ScxmlState(
         "initial",
         body=[
-            ScxmlTransition(
+            BtTick(
                 "initial",
-                ["bt_tick"],
                 None,
                 [
                     ScxmlAssign("number", BtGetValueInputPort("data")),
