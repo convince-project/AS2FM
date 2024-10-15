@@ -22,7 +22,6 @@ from typing import List, Optional, Type, Union
 
 import esprima
 
-from as2fm.as2fm_common.common import substitute_xml_escaping
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
@@ -54,7 +53,6 @@ def parse_ecmascript_to_jani_expression(
     :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
-    ecmascript = substitute_xml_escaping(ecmascript)
     try:
         ast = esprima.parseScript(ecmascript)
     except esprima.error_handler.Error as e:

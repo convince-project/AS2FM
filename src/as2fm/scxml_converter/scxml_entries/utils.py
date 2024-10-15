@@ -71,6 +71,7 @@ class CallbackType(Enum):
     ROS_ACTION_GOAL = auto()  # Action callback
     ROS_ACTION_RESULT = auto()  # Action callback
     ROS_ACTION_FEEDBACK = auto()  # Action callback
+    BT_RESPONSE = auto()  # BT response callback
 
     @staticmethod
     def get_expected_prefixes(cb_type: "CallbackType") -> List[str]:
@@ -90,6 +91,8 @@ class CallbackType(Enum):
             return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
         elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
             return ["_action.goal_id", "_feedback."]
+        elif cb_type == CallbackType.BT_RESPONSE:
+            return ["_bt.status"]
 
     @staticmethod
     def get_plain_callback(cb_type: "CallbackType") -> "CallbackType":
@@ -147,27 +150,28 @@ def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
     return False
 
 
-def get_plain_expression(msg_expr: str, cb_type: CallbackType) -> str:
+def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
     """
     Convert a ROS interface expressions (using ROS-specific PREFIXES) to plain SCXML.
 
-    :param msg_expr: The expression to convert.
+    :param in_expr: The expression to convert.
     :param cb_type: The type of callback the expression is used in.
     """
     expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
     # pre-check over the expression
     if PLAIN_SCXML_EVENT_PREFIX not in expected_prefixes:
-        assert not _contains_prefixes(msg_expr, [PLAIN_SCXML_EVENT_PREFIX]), (
-            "Error: SCXML ROS conversion: "
-            f"unexpected {PLAIN_SCXML_EVENT_PREFIX} prefix in expr. {msg_expr}"
+        assert not _contains_prefixes(in_expr, [PLAIN_SCXML_EVENT_PREFIX]), (
+            "Error: SCXML-ROS expression conversion: "
+            f"unexpected {PLAIN_SCXML_EVENT_PREFIX} prefix in expr. {in_expr}"
         )
     forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
     if len(expected_prefixes) == 0:
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_PREFIX)
-    new_expr = _replace_ros_interface_expression(msg_expr, expected_prefixes)
-    assert not _contains_prefixes(
-        new_expr, forbidden_prefixes
-    ), f"Error: SCXML ROS conversion: unexpected ROS interface prefixes in expr.: {msg_expr}"
+    new_expr = _replace_ros_interface_expression(in_expr, expected_prefixes)
+    assert not _contains_prefixes(new_expr, forbidden_prefixes), (
+        "Error: SCXML-ROS expression conversion: "
+        f"unexpected ROS interface prefixes in expr.: {in_expr}"
+    )
     return new_expr
 
 

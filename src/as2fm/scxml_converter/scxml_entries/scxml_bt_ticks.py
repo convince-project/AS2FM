@@ -35,7 +35,11 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     generate_bt_response_event,
     generate_bt_tick_event,
 )
-from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    get_plain_expression,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
@@ -176,6 +180,9 @@ class BtChildStatus(ScxmlTransition):
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> List[ScxmlTransition]:
+        plain_cond_expr = None
+        if self._condition is not None:
+            plain_cond_expr = get_plain_expression(self._condition, CallbackType.BT_RESPONSE)
         if isinstance(self._child_id, int):
             # Handling specific child ID, return a single transition
             assert self._child_id < len(children_ids), (
@@ -186,18 +193,18 @@ class BtChildStatus(ScxmlTransition):
             return [
                 ScxmlTransition(
                     self._target,
-                    [generate_bt_tick_event(target_child_id)],
-                    self._condition,
+                    [generate_bt_response_event(target_child_id)],
+                    plain_cond_expr,
                     self._body,
                 ).instantiate_bt_events(instance_id, children_ids)
             ]
         else:
             # Handling a generic child ID, return a transition for each child
-            condition_prefix = "" if self._condition is None else f"({self._condition}) &amp;&amp; "
+            condition_prefix = "" if plain_cond_expr is None else f"({plain_cond_expr}) && "
             return [
                 ScxmlTransition(
                     self._target,
-                    [generate_bt_tick_event(child_id)],
+                    [generate_bt_response_event(child_id)],
                     condition_prefix + f"({self._child_id} == {child_id})",
                     self._body,
                 ).instantiate_bt_events(instance_id, children_ids)
