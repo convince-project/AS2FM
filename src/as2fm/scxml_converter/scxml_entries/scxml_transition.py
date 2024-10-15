@@ -17,6 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
+import warnings
 from typing import List, Optional
 
 from lxml import etree as ET
@@ -27,11 +28,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    is_bt_event,
-    replace_bt_event,
-)
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml,
     instantiate_exec_body_bt_events,
@@ -122,12 +119,25 @@ class ScxmlTransition(ScxmlBase):
 
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlTransition":
         """Instantiate the BT events of this transition."""
+        # Old handling of BT events is deprecated: remove this if block after support removed
+        from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtTick
+
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
             for event_id, event_str in enumerate(self._events):
                 # Those are expected to be only ticks
                 if is_bt_event(event_str):
-                    self._events[event_id] = replace_bt_event(event_str, instance_id)
+                    warnings.warn(
+                        "Deprecation warning: BT events should not be found in SCXML transitions. "
+                        "Use the 'bt_tick' ROS-scxml tag instead.",
+                        DeprecationWarning,
+                    )
+                    assert (
+                        len(self._events) == 1 and event_str == "bt_tick"
+                    ), f"Unexpected BT event '{event_str}' in SCXML transition."
+                    return BtTick(self._target, self._condition, self._body).instantiate_bt_events(
+                        instance_id, children_ids
+                    )
         # The body of a transition needs to be replaced on derived classes, too
         instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
         return self
