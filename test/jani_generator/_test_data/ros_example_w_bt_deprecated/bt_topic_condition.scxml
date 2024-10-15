@@ -19,13 +19,13 @@
         <ros_topic_callback name="alarm" target="initial">
             <assign location="last_msg" expr="_msg.data" />
         </ros_topic_callback>
-        <bt_tick target="initial">
+        <transition event="bt_tick" target="initial">
             <if cond="last_msg">
-                <bt_return_status status="SUCCESS" />
+                <send event="bt_success" />
                 <else />
-                <bt_return_status status="FAILURE" />
+                <send event="bt_failure" />
             </if>
-        </bt_tick>
+        </transition>
     </state>
 
 </scxml>

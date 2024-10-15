@@ -65,7 +65,7 @@
                         "right": {
                             "op": "∧",
                             "left": "topic_alarm_msg.ros_fields__data",
-                            "right": "topic_charge_msg.valid"
+                            "right": "topic_alarm_msg.valid"
                         }
                     }
                 },

@@ -257,13 +257,13 @@ class TestConversion(unittest.TestCase):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main("ros_example", False, "alarm_on", False)
 
-    def test_battery_example_w_new_bt_battery_depleted(self):
+    def test_battery_example_w_bt_battery_depleted_deprecated(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main("ros_example_w_bt_new", True, "battery_depleted", False)
+        self._test_with_main("ros_example_w_bt_deprecated", True, "battery_depleted", False)
 
-    def test_battery_example_w_new_bt_main_alarm_and_charge(self):
+    def test_battery_example_w_bt_main_alarm_and_charge_deprecated(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main("ros_example_w_bt_new", False, "battery_alarm_on", True)
+        self._test_with_main("ros_example_w_bt_deprecated", False, "battery_alarm_on", True)
 
     def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
