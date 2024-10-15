@@ -19,7 +19,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 
 import os
 from copy import deepcopy
-from importlib.resources import path as resource_path
+from importlib.resources import files as resource_files
 from typing import Dict, List, Tuple
 
 from lxml import etree as ET
@@ -40,7 +40,9 @@ def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, Sc
         assert os.path.exists(path), f"SCXML must exist. {path} not found."
         bt_plugin_scxml = ScxmlRoot.from_scxml_file(path)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
-    internal_bt_plugins_path = resource_path("as2fm", "resources").joinpath("bt_control_nodes")
+    internal_bt_plugins_path = (
+        resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
+    )
     for plugin_path in internal_bt_plugins_path.iterdir():
         if plugin_path.is_file() and plugin_path.suffix == ".scxml":
             bt_plugin_scxml = ScxmlRoot.from_scxml_file(str(plugin_path))
