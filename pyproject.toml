@@ -42,7 +42,7 @@ requires-python = ">=3.10"
 # "as2fm" = "src/as2fm"
 
 [tool.setuptools.package-data]
-"as2fm.trace_visualizer" = ["trace_visualizer/data/slkscr.ttf"]
+"as2fm.trace_visualizer" = ["data/slkscr.ttf"]
 "as2fm.resources" = ["bt_control_nodes/*.scxml"]
 
 [project.scripts]
