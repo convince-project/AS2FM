@@ -257,11 +257,13 @@ class TestConversion(unittest.TestCase):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main("ros_example", False, "alarm_on", False)
 
-    @pytest.mark.skip(reason="Not yet working. Enable after BT engine refactoring.")
     def test_battery_example_w_new_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""
-        # TODO: Improve properties under evaluation!
         self._test_with_main("ros_example_w_bt_new", True, "battery_depleted", False)
+
+    def test_battery_example_w_new_bt_main_alarm_and_charge(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main("ros_example_w_bt_new", False, "battery_alarm_on", True)
 
     def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""

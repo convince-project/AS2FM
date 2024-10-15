@@ -262,6 +262,7 @@ def generate_bt_children_scxmls(
         plugin_type in available_bt_plugins
     ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
+    bt_plugin_scxml.set_name(f"{subtree_tick_idx}_{plugin_type}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
     generated_scxmls.append(bt_plugin_scxml)
     next_tick_idx = subtree_tick_idx + 1
