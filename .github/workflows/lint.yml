@@ -38,13 +38,6 @@ jobs:
         with:
           timezoneLinux: "Europe/Berlin"
       - uses: actions/checkout@v3
-      # Get bt_tools TODO: remove after the release of bt_tools
-      - name: Checkout bt_tools
-        uses: actions/checkout@v2
-        with:
-          repository: boschresearch/bt_tools
-          ref: main
-          path: bt_tools
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -53,11 +46,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install setuptools_rust
-      # Install btlib TODO: remove after the release of bt_tools
-      - name: Install btlib
-        run: |
-          cd bt_tools
-          pip install -e btlib/.
       - name: Install packages
         run: |
           pip install .

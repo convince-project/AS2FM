@@ -27,8 +27,6 @@ dependencies = [
     "webcolors",
     "plantuml",
     # scxml_converter
-    "networkx",
-    # "btlib", (would be good to declare here but then this is only installable in a ros environment)
     # trace_visualizer
     "pandas",
     "Pillow",

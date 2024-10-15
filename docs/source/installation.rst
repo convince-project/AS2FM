@@ -11,7 +11,6 @@ The scripts have been tested with Python 3.10 and pip version 24.0.
 Additionally, the following dependencies are required to be installed:
 
 * `ROS Humble <https://docs.ros.org/en/humble/index.html>`_
-* `bt_tools <https://github.com/boschresearch/bt_tools>`_
 
 
 AS2FM Package Installations
@@ -46,7 +45,7 @@ AS2FM can be installed using pip:
     # Editable mode
     python3 -m pip install -e AS2FM/
 
-Verify your installation by **sourcing the ROS workspace containing btlib** and then running:
+Verify your installation by **sourcing your ROS distribution** and then running:
 
 .. code-block:: bash
 
