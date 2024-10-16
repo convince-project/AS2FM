@@ -72,6 +72,14 @@ class TestConversion(unittest.TestCase):
             True,
         )
 
+    def test_reactive_fallback(self):
+        """Test the reactive_fallback behavior."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_reactive_fallback.xml"),
+            "ten_tick_zero_no_tick_one",
+            True,
+        )
+
 
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])
