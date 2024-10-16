@@ -1,0 +1,10 @@
+<!-- First test: We expect that tick_count_0 is ticked multiple times and tick_count_1 is never ticked -->
+<root BTCPP_format="4" >
+    <BehaviorTree ID="MainTree">
+        <ReactiveSequence name="root_sequence">
+            <Action ID="BtCountTicks" topic_name="tick_count_0" />
+            <Action ID="AlwaysFailure" />
+            <Action ID="BtCountTicks" topic_name="tick_count_1" />
+        </ReactiveSequence>
+    </BehaviorTree>
+</root>

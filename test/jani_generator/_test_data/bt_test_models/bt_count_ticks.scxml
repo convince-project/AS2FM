@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="initial"
+    version="1.0"
+    name="BtCountTicks"
+    model_src="">
+
+    <datamodel>
+        <data id="counter" type="int16" expr="0" />
+    </datamodel>
+
+    <bt_declare_port_in key="topic_name" type="string" />
+
+    <ros_topic_publisher type="std_msgs/Int16" name="counter_pub">
+        <topic>
+            <bt_get_input key="topic_name" />
+        </topic>
+    </ros_topic_publisher>
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <assign location="counter" expr="counter + 1" />
+            <ros_topic_publish name="counter_pub">
+                <field name="data" expr="counter" />
+            </ros_topic_publish>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+    </state>
+
+</scxml>

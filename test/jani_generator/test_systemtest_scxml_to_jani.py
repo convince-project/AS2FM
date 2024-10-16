@@ -218,7 +218,7 @@ class TestConversion(unittest.TestCase):
         :param folder: The folder containing the test data.
         :param store_generated_scxmls: If the generated SCXMLs should be stored.
         :param property_name: The property name to test.
-        :param success: If the property is expected to be always satisfied of always not satisfied.
+        :param success: If the property is expected to be always satisfied or always not satisfied.
         :param skip_smc: If the model shall be executed using SMC (uses smc_storm).
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
