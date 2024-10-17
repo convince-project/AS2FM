@@ -84,7 +84,15 @@ class TestConversion(unittest.TestCase):
         """Test the sequence behavior."""
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_sequence.xml"),
-            "sequence_success_test",
+            "regular_bt_test",
+            True,
+        )
+
+    def test_fallback(self):
+        """Test the sequence behavior."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_fallback.xml"),
+            "regular_bt_test",
             True,
         )
 

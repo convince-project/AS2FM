@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "name": "sequence_success_test",
+            "name": "regular_bt_test",
             "expression": {
                 "op": "filter",
                 "fun": "values",
