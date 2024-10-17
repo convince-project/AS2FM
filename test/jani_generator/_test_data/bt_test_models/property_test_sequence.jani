@@ -1,0 +1,57 @@
+{
+    "properties": [
+        {
+            "name": "sequence_success_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "comment": "As soon as tick_count_3 is published, all previous tick_counts should be at th expected value",
+                        "step-bounds": {
+                            "lower": 100
+                        },
+                        "left": {
+                            "op": "¬",
+                            "exp": "topic_tick_count_3_msg.valid"
+                        },
+                        "op": "U",
+                        "right": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "topic_tick_count_0_msg.ros_fields__data",
+                                "right": 1
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_tick_count_1_msg.ros_fields__data",
+                                    "right": 3
+                                },
+                                "right": {
+                                    "op": "∧",
+                                    "left": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_2_msg.ros_fields__data",
+                                        "right": 1
+                                    },
+                                    "right": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_3_msg.ros_fields__data",
+                                        "right": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

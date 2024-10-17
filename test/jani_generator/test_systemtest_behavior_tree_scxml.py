@@ -80,6 +80,14 @@ class TestConversion(unittest.TestCase):
             True,
         )
 
+    def test_sequence(self):
+        """Test the sequence behavior."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_sequence.xml"),
+            "sequence_success_test",
+            True,
+        )
+
 
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])

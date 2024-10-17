@@ -33,19 +33,20 @@
     </ros_topic_publisher>
 
     <state id="initial">
+        <transition target="error" cond="ticks_before_success &lt; 0" />
         <bt_tick target="initial">
             <assign location="counter" expr="counter + 1" />
             <ros_topic_publish name="counter_pub">
                 <field name="data" expr="counter" />
             </ros_topic_publish>
-            <if cond="ticks_before_success &lt;= 0">
-                <bt_return_status status="SUCCESS" />
-            <elseif cond="counter % ticks_before_success &gt; 0"/>
+            <if cond="counter % (ticks_before_success + 1) &gt; 0">
                 <bt_return_status status="RUNNING" />
             <else/>
                 <bt_return_status status="SUCCESS" />
             </if>
         </bt_tick>
     </state>
+
+    <state id="error" />
 
 </scxml>

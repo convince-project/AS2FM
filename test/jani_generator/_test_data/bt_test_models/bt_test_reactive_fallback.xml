@@ -1,4 +1,4 @@
-<!-- First test: We expect that tick_count_0 is ticked multiple times and tick_count_1 is never ticked -->
+<!-- Test: We expect that tick_count_0 is ticked multiple times and tick_count_1 is never ticked -->
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
         <ReactiveFallback name="root_sequence">
