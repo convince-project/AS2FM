@@ -39,7 +39,7 @@
     </state>
 
     <state id="wait_for_tick">
-        <transition event="bt_tick" target="wait_for_tick">
+        <bt_tick target="wait_for_tick">
             <ros_topic_publish name="cmd_pub">
                 <!-- 2D robots require only x and theta controls -->
                 <field name="linear.x" expr="x_vel" />
@@ -50,8 +50,8 @@
                 <field name="angular.x" expr="0.0" />
                 <field name="angular.y" expr="0.0" />
             </ros_topic_publish>
-            <send event="bt_success" />
-        </transition>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
     </state>
 
 </scxml>

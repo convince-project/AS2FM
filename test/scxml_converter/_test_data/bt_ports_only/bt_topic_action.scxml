@@ -23,7 +23,7 @@
     </ros_topic_publisher>
 
     <state id="initial">
-        <transition event="bt_tick" target="initial">
+        <bt_tick target="initial">
             <assign location="number">
                 <expr>
                     <bt_get_input key="data" />
@@ -32,7 +32,7 @@
             <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number" />
             </ros_topic_publish>
-        </transition>
+        </bt_tick>
     </state>
 
 </scxml>

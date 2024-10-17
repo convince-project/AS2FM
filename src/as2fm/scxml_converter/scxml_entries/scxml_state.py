@@ -23,6 +23,7 @@ from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
+    BtTick,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
@@ -141,12 +142,24 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> None:
         """Instantiate the BT events in all entries belonging to a state."""
+        instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
-            transition.instantiate_bt_events(instance_id)
-        instantiate_exec_body_bt_events(self._on_entry, instance_id)
-        instantiate_exec_body_bt_events(self._on_exit, instance_id)
+            new_transition = transition.instantiate_bt_events(instance_id, children_ids)
+            if isinstance(new_transition, ScxmlTransition):
+                instantiated_transitions.append(new_transition)
+            elif isinstance(new_transition, list) and all(
+                isinstance(t, ScxmlTransition) for t in new_transition
+            ):
+                instantiated_transitions.extend(new_transition)
+            else:
+                raise ValueError(
+                    f"Error: SCXML state {self._id}: found invalid transition in state body."
+                )
+        self._body = instantiated_transitions
+        instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
+        instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -215,6 +228,10 @@ class ScxmlState(ScxmlBase):
         return len(body) == 0 or all(
             entry.check_valid_ros_instantiations(ros_declarations) for entry in body
         )
+
+    def has_bt_tick_transitions(self) -> bool:
+        """Check if the state has BT tick transitions."""
+        return any(isinstance(entry, BtTick) for entry in self._body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""

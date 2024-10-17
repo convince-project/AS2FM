@@ -27,23 +27,23 @@ dependencies = [
     "webcolors",
     "plantuml",
     # scxml_converter
-    "networkx",
-    # "btlib", (would be good to declare here but then this is only installable in a ros environment)
     # trace_visualizer
     "pandas",
     "Pillow",
 ]
 requires-python = ">=3.10"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["as2fm", "as2fm.*"]
-
-[tool.setuptools.package-dir]
-as2fm = "src/as2fm"
+# Comment these lines out, since they prevent the package from being found in code
+# [tool.setuptools.packages.find]
+# where = ["src"]
+# include = ["as2fm", "as2fm.*"]
+#
+# [tool.setuptools.package-dir]
+# "as2fm" = "src/as2fm"
 
 [tool.setuptools.package-data]
 "as2fm.trace_visualizer" = ["data/slkscr.ttf"]
+"as2fm.resources" = ["bt_control_nodes/*.scxml"]
 
 [project.scripts]
 as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"

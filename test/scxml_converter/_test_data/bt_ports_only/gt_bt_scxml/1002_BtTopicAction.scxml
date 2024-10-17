@@ -1,0 +1,14 @@
+<scxml name="1002_BtTopicAction" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="number" expr="0" type="int16"/>
+    </datamodel>
+    <ros_topic_publisher name="answer_pub" topic="answer_incremented" type="std_msgs/Int16"/>
+    <state id="initial">
+        <transition target="initial" event="bt_1002_tick">
+            <assign location="number" expr="43"/>
+            <ros_topic_publish name="answer_pub">
+                <field name="data" expr="number"/>
+            </ros_topic_publish>
+        </transition>
+    </state>
+</scxml>

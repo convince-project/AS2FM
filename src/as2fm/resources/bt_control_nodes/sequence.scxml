@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="wait_for_tick"
+    version="1.0"
+    name="Sequence"
+    model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/controls/sequence_node.cpp">
+
+    <!-- A default BT port reporting the amount of children -->
+    <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
+
+    <datamodel>
+        <data id="current_child_idx" type="int8" expr="0" />
+        <data id="children_count" type="int8">
+            <expr>
+                <bt_get_input key="CHILDREN_COUNT" />
+            </expr>
+        </data>
+    </datamodel>
+
+    <state id="wait_for_tick">
+        <!-- Check if the state is valid. If not, go to error and stop -->
+        <transition target="error" cond="children_count &lt; 1" />
+        <!-- React to an incoming BT Tick -->
+        <bt_tick target="tick_children"/>
+    </state>
+
+    <state id="tick_children">
+        <onentry>
+            <if cond="current_child_idx &lt; children_count">
+                <bt_tick_child id="current_child_idx"/>
+            </if>
+        </onentry>
+        <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="tick_children">
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </bt_child_status>
+        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="wait_for_tick">
+            <assign location="current_child_idx" expr="0" />
+            <bt_return_status status="FAILURE" />
+        </bt_child_status>
+        <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
+            <bt_return_status status="RUNNING" />
+        </bt_child_status>
+        <!-- All children returned success -->
+        <transition target="wait_for_tick" cond="current_child_idx == children_count">
+            <assign location="current_child_idx" expr="0" />
+            <bt_return_status status="SUCCESS" />
+        </transition>
+        <!-- The current_child_idx is out of bounds -->
+        <transition target="error" cond="current_child_idx &lt; 0 || current_child_idx > children_count" />
+    </state>
+
+    <!-- A state to transition to when something did not work -->
+    <state id="error" />
+
+</scxml>

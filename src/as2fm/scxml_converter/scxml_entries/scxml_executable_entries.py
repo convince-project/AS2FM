@@ -17,6 +17,7 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
+import warnings
 from typing import Dict, List, Optional, Tuple, Union, get_args
 
 from lxml import etree as ET
@@ -28,11 +29,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    is_bt_event,
-    replace_bt_event,
-)
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -51,7 +48,7 @@ ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
 def instantiate_exec_body_bt_events(
-    exec_body: Optional[ScxmlExecutionBody], instance_id: str
+    exec_body: Optional[ScxmlExecutionBody], instance_id: int, children_ids: List[int]
 ) -> None:
     """
     Instantiate the behavior tree events in the execution body.
@@ -60,8 +57,10 @@ def instantiate_exec_body_bt_events(
     :param instance_id: The instance ID of the BT node
     """
     if exec_body is not None:
-        for entry in exec_body:
-            entry.instantiate_bt_events(instance_id)
+        for id in range(len(exec_body)):
+            entry = exec_body[id].instantiate_bt_events(instance_id, children_ids)
+            assert entry is not None, f"Error instantiating BT events in {exec_body[id]}: got None."
+            exec_body[id] = entry
 
 
 def update_exec_body_bt_ports_values(
@@ -153,11 +152,12 @@ class ScxmlIf(ScxmlBase):
         """Get the else execution."""
         return self._else_execution
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
         """Instantiate the behavior tree events in the If action, if available."""
         for _, exec_body in self._conditional_executions:
-            instantiate_exec_body_bt_events(exec_body, instance_id)
-        instantiate_exec_body_bt_events(self._else_execution, instance_id)
+            instantiate_exec_body_bt_events(exec_body, instance_id, children_ids)
+        instantiate_exec_body_bt_events(self._else_execution, instance_id, children_ids)
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         for _, exec_body in self._conditional_executions:
@@ -285,12 +285,28 @@ class ScxmlSend(ScxmlBase):
         """Get the parameters to send."""
         return self._params
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
+        # Support for deprecated BT events handling. Remove the whole if block once transition done.
+        from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtReturnStatus
+
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         if type(self) is ScxmlSend and is_bt_event(self._event):
+            warnings.warn(
+                "Deprecation warning: BT events should not be found in SCXML send. "
+                "Use the 'bt_return_status' ROS-scxml tag instead.",
+                DeprecationWarning,
+            )
             # Those are expected to be only bt_success, bt_failure and bt_running
-            self._event = replace_bt_event(self._event, instance_id)
+            event_to_status = {
+                "bt_success": "SUCCESS",
+                "bt_failure": "FAILURE",
+                "bt_running": "RUNNING",
+            }
+            return BtReturnStatus(event_to_status[self._event]).instantiate_bt_events(
+                instance_id, []
+            )
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
@@ -306,7 +322,7 @@ class ScxmlSend(ScxmlBase):
         if not valid_event:
             print("Error: SCXML send: event is not valid.")
         if not valid_params:
-            print("Error: SCXML send: one or more param entries are not valid.")
+            print(f"Error: SCXML send: one or more param invalid entries of event '{self._event}'.")
         return valid_event and valid_params
 
     def check_valid_ros_instantiations(self, _) -> bool:
@@ -378,9 +394,9 @@ class ScxmlAssign(ScxmlBase):
         """Get the expression to assign."""
         return self._expr
 
-    def instantiate_bt_events(self, _) -> None:
+    def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
         """This functionality is not needed in this class."""
-        return
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -466,6 +482,9 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {
         cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry
     }
+    tag_to_cls.update(
+        {cls.get_tag_name(): cls for cls in ScxmlSend.__subclasses__() if cls != RosTrigger}
+    )
     tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
     assert (
