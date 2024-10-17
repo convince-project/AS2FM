@@ -5,12 +5,26 @@
     version="1.0"
     name="BtCountTicks"
     model_src="">
+    <!--
+        A BT plugin that, upon tick, increases a counter, publishes its value on a topic and
+        * n_ticks_running times, returns running.
+        * After n_ticks_running times, returns success and waits for n_ticks_running ticks before returning success again.
+    -->
+
+    <!-- The topic used to publish the tick count -->
+    <bt_declare_port_in key="topic_name" type="string" />
+    <!-- How many ticks to get before sending out a success -->
+    <bt_declare_port_in key="n_ticks_running" type="int8" />
 
     <datamodel>
         <data id="counter" type="int16" expr="0" />
+        <!-- Assign this for accessing the port value in conditions... -->
+        <data id="ticks_before_success" type="int8">
+            <expr>
+                <bt_get_input key="n_ticks_running" />
+            </expr>
+        </data>
     </datamodel>
-
-    <bt_declare_port_in key="topic_name" type="string" />
 
     <ros_topic_publisher type="std_msgs/Int16" name="counter_pub">
         <topic>
@@ -24,7 +38,13 @@
             <ros_topic_publish name="counter_pub">
                 <field name="data" expr="counter" />
             </ros_topic_publish>
-            <bt_return_status status="SUCCESS" />
+            <if cond="ticks_before_success &lt;= 0">
+                <bt_return_status status="SUCCESS" />
+            <elseif cond="counter % ticks_before_success &gt; 0"/>
+                <bt_return_status status="RUNNING" />
+            <else/>
+                <bt_return_status status="SUCCESS" />
+            </if>
         </bt_tick>
     </state>
 

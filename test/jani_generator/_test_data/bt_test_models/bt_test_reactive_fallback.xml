@@ -3,10 +3,10 @@
     <BehaviorTree ID="MainTree">
         <ReactiveFallback name="root_sequence">
             <Inverter>
-                <Action ID="BtCountTicks" topic_name="tick_count_0" />
+                <Action ID="BtCountTicks" topic_name="tick_count_0" n_ticks_running="0" />
             </Inverter>
             <Action ID="AlwaysSuccess" />
-            <Action ID="BtCountTicks" topic_name="tick_count_1" />
+            <Action ID="BtCountTicks" topic_name="tick_count_1" n_ticks_running="0" />
         </ReactiveFallback>
     </BehaviorTree>
 </root>
