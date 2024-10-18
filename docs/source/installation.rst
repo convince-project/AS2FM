@@ -45,7 +45,7 @@ AS2FM can be installed using pip:
     # Editable mode
     python3 -m pip install -e AS2FM/
 
-Verify your installation by **sourcing your ROS distribution** and then running:
+Verify your installation by **sourcing your ROS distribution** (i.e. running `source /opt/ros/<ros-distro>/setup.bash`) and then running:
 
 .. code-block:: bash
 

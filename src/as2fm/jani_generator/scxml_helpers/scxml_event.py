@@ -105,6 +105,7 @@ class Event:
     def is_bt_response_event(self):
         """Check if the event is a behavior tree response event (running, success, failure).
         They may have no sender if the plugin does not implement it."""
+        # TODO: Remove it when deprecated support for running, success, failure BT events is removed
         return self.name.startswith("bt_") and (
             self.name.endswith("_running")
             or self.name.endswith("_success")
