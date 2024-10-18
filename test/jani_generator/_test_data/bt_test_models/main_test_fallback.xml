@@ -1,0 +1,15 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <bt_tick_rate value="1.0" />
+    </mc_parameters>
+
+    <behavior_tree>
+        <input type="bt.cpp-xml" src="./bt_test_fallback.xml" />
+        <input type="bt-plugin-ros-scxml" src="./bt_count_ticks.scxml" />
+    </behavior_tree>
+
+    <properties>
+        <input type="jani" src="./property_test_regular_behaviors.jani" />
+    </properties>
+</convince_mc_tc>

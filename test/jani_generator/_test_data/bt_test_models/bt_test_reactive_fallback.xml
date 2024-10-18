@@ -1,0 +1,12 @@
+<!-- Test: We expect that tick_count_0 is ticked multiple times and tick_count_1 is never ticked -->
+<root BTCPP_format="4" >
+    <BehaviorTree ID="MainTree">
+        <ReactiveFallback name="root_sequence">
+            <Inverter>
+                <Action ID="BtCountTicks" topic_name="tick_count_0" n_ticks_running="0" />
+            </Inverter>
+            <Action ID="AlwaysSuccess" />
+            <Action ID="BtCountTicks" topic_name="tick_count_1" n_ticks_running="0" />
+        </ReactiveFallback>
+    </BehaviorTree>
+</root>

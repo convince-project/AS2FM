@@ -23,9 +23,9 @@
     <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
 
     <state id="wait_first_msg">
-        <transition event="bt_tick" target="wait_first_msg">
-            <send event="bt_running" />
-        </transition>
+        <bt_tick target="wait_first_msg">
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
         <ros_topic_callback name="goal_sub" target="ready_to_check">
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />
@@ -33,13 +33,13 @@
     </state>
 
     <state id="ready_to_check">
-        <transition event="bt_tick" target="ready_to_check">
+        <bt_tick target="ready_to_check">
             <if cond="goal_x > Math.abs(goal_y)">
-                <send event="bt_success" />
+                <bt_return_status status="SUCCESS" />
             <else />
-                <send event="bt_failure" />
+                <bt_return_status status="FAILURE" />
             </if>
-        </transition>
+        </bt_tick>
         <ros_topic_callback name="goal_sub" target="ready_to_check">
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />

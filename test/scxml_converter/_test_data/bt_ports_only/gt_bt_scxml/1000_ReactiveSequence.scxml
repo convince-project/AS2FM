@@ -1,0 +1,60 @@
+<scxml name="1000_ReactiveSequence" version="1.0" model_src="" initial="wait_for_tick" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <data id="success_count" expr="0" type="int8"/>
+        <data id="child_idx" expr="0" type="int8"/>
+        <data id="children_count" expr="2" type="int8"/>
+    </datamodel>
+    <state id="wait_for_tick">
+        <transition target="error" cond="children_count &lt; 1"/>
+        <transition target="tick_children" event="bt_1000_tick">
+            <assign location="success_count" expr="0"/>
+            <assign location="child_idx" expr="0"/>
+        </transition>
+    </state>
+    <state id="tick_children">
+        <onentry>
+            <if cond="success_count &lt; children_count">
+                <if cond="child_idx == 0">
+                    <send event="bt_1001_tick"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1002_tick"/>
+                </if>
+            </if>
+        </onentry>
+        <transition target="tick_children" event="bt_1001_response" cond="(_event.status == 1) &amp;&amp; (child_idx == 0)">
+            <assign location="success_count" expr="success_count + 1"/>
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition target="tick_children" event="bt_1002_response" cond="(_event.status == 1) &amp;&amp; (child_idx == 1)">
+            <assign location="success_count" expr="success_count + 1"/>
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.status == 2) &amp;&amp; (child_idx == 0)">
+            <send event="bt_1000_response">
+                <param name="status" expr="2"/>
+            </send>
+        </transition>
+        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.status == 2) &amp;&amp; (child_idx == 1)">
+            <send event="bt_1000_response">
+                <param name="status" expr="2"/>
+            </send>
+        </transition>
+        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.status == 3) &amp;&amp; (child_idx == 0)">
+            <send event="bt_1000_response">
+                <param name="status" expr="3"/>
+            </send>
+        </transition>
+        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.status == 3) &amp;&amp; (child_idx == 1)">
+            <send event="bt_1000_response">
+                <param name="status" expr="3"/>
+            </send>
+        </transition>
+        <transition target="wait_for_tick" cond="success_count == children_count">
+            <send event="bt_1000_response">
+                <param name="status" expr="1"/>
+            </send>
+        </transition>
+        <transition target="error" cond="child_idx &lt; 0 || child_idx &gt;= children_count"/>
+    </state>
+    <state id="error"/>
+</scxml>

@@ -53,7 +53,10 @@ def parse_ecmascript_to_jani_expression(
     :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
-    ast = esprima.parseScript(ecmascript)
+    try:
+        ast = esprima.parseScript(ecmascript)
+    except esprima.error_handler.Error as e:
+        raise RuntimeError(f"Failed parsing ecmascript: {ecmascript}. Error: {e}.")
     assert len(ast.body) == 1, "The ecmascript must contain exactly one expression."
     ast = ast.body[0]
     try:
@@ -75,8 +78,17 @@ def _parse_ecmascript_to_jani_expression(
     :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
-    if ast.type == "Literal":
+    if ast.type == "ExpressionStatement":
+        return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
+    elif ast.type == "Literal":
         return JaniExpression(JaniValue(ast.value))
+    elif ast.type == "Identifier":
+        # If it is an identifier, we do not need to expand further
+        assert ast.name not in ("True", "False"), (
+            f"Boolean {ast.name} mistaken for an identifier. "
+            "Did you mean to use 'true' or 'false' instead?"
+        )
+        return JaniExpression(ast.name)
     elif ast.type == "UnaryExpression":
         assert ast.prefix is True and ast.operator == "-", "Only unary minus is supported."
         return JaniExpression(
@@ -84,6 +96,18 @@ def _parse_ecmascript_to_jani_expression(
                 "op": OPERATORS_TO_JANI_MAP[ast.operator],
                 "left": JaniValue(0),
                 "right": _parse_ecmascript_to_jani_expression(ast.argument, array_info),
+            }
+        )
+    elif ast.type == "BinaryExpression" or ast.type == "LogicalExpression":
+        # It is a more complex expression
+        assert (
+            ast.operator in OPERATORS_TO_JANI_MAP
+        ), f"ecmascript to jani expression: unknown operator {ast.operator}"
+        return JaniExpression(
+            {
+                "op": OPERATORS_TO_JANI_MAP[ast.operator],
+                "left": _parse_ecmascript_to_jani_expression(ast.left, array_info),
+                "right": _parse_ecmascript_to_jani_expression(ast.right, array_info),
             }
         )
     elif ast.type == "ArrayExpression":
@@ -105,13 +129,6 @@ def _parse_ecmascript_to_jani_expression(
             # Add dummy elements to make sure the full array is assigned
             elements_list.extend([entry_type(0)] * elements_to_add)
             return array_value_operator(elements_list)
-    elif ast.type == "Identifier":
-        # If it is an identifier, we do not need to expand further
-        assert ast.name not in ("True", "False"), (
-            f"Boolean {ast.name} mistaken for an identifier. "
-            "Did you mean to use 'true' or 'false' instead?"
-        )
-        return JaniExpression(ast.name)
     elif ast.type == "MemberExpression":
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, array_info)
         if ast.computed:
@@ -130,20 +147,6 @@ def _parse_ecmascript_to_jani_expression(
             ), "Dot notation can be used only to access object's members."
             field_complete_name = f"{object_expr_str}.{ast.property.name}"
             return JaniExpression(field_complete_name)
-    elif ast.type == "ExpressionStatement":
-        return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
-    elif ast.type == "BinaryExpression":
-        # It is a more complex expression
-        assert (
-            ast.operator in OPERATORS_TO_JANI_MAP
-        ), f"ecmascript to jani expression: unknown operator {ast.operator}"
-        return JaniExpression(
-            {
-                "op": OPERATORS_TO_JANI_MAP[ast.operator],
-                "left": _parse_ecmascript_to_jani_expression(ast.left, array_info),
-                "right": _parse_ecmascript_to_jani_expression(ast.right, array_info),
-            }
-        )
     elif ast.type == "CallExpression":
         # We expect function calls to be of the form Math.function_name(args) (JavaScript-like)
         # The "." operator is represented as a MemberExpression

@@ -3,8 +3,9 @@
 from .scxml_base import ScxmlBase  # noqa: F401
 from .utils import CallbackType  # noqa: F401
 from .bt_utils import RESERVED_BT_PORT_NAMES  # noqa: F401
-from .scxml_bt import (  # noqa: F401
+from .scxml_bt_ports import (  # noqa: F401
     BtInputPortDeclaration,
+    BtPortDeclarations,
     BtOutputPortDeclaration,
     BtGetValueInputPort,
 )  # noqa: F401
@@ -24,6 +25,7 @@ from .scxml_executable_entries import (  # noqa: F401
     instantiate_exec_body_bt_events,
 )  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
+from .scxml_bt_ticks import BtTick, BtTickChild, BtChildStatus, BtReturnStatus  # noqa: F401
 from .scxml_state import ScxmlState  # noqa: F401
 from .scxml_ros_timer import RosTimeRate, RosRateCallback  # noqa: F401
 from .scxml_ros_topic import (  # noqa: F401
