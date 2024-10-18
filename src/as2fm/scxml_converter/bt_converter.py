@@ -33,6 +33,15 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
 )
 
+BT_ROOT_PREFIX = "bt_root_fsm_"
+
+
+def is_bt_root_scxml(scxml_name: str) -> bool:
+    """
+    Check if the SCXML name matches with the BT root SCXML name pattern.
+    """
+    return scxml_name.startswith(BT_ROOT_PREFIX)
+
 
 def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, ScxmlRoot]:
     available_bt_plugins = {}
@@ -80,7 +89,7 @@ def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> S
     """
     Generate the root SCXML for a Behavior Tree.
     """
-    bt_scxml_root = ScxmlRoot(scxml_name)
+    bt_scxml_root = ScxmlRoot(BT_ROOT_PREFIX + scxml_name)
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
     bt_scxml_root.add_ros_declaration(ros_rate_decl)
     idle_state = ScxmlState(
