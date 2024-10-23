@@ -231,7 +231,9 @@ class TestConversion(unittest.TestCase):
         if store_generated_scxmls:
             plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
             self.assertTrue(os.path.exists(plain_scxml_path))
+            generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
+            self.assertGreater(len(generated_files), 0, "Expected at least one gen. SCXML file.")
             for file in os.listdir(plain_scxml_path):
                 with open(os.path.join(plain_scxml_path, file), "r", encoding="utf-8") as f:
                     content = f.read()

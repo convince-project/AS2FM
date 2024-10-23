@@ -19,6 +19,7 @@ Module reading the top level xml file containing the whole model to check.
 
 import json
 import os
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -194,6 +195,30 @@ def generate_plain_scxml_models_and_timers(
     return plain_scxml_models, all_timers
 
 
+def export_plain_scxml_models(
+    generated_scxml_path: str,
+    plain_scxml_models: List[ScxmlRoot],
+    all_timers: List[RosTimer],
+    max_time: int,
+):
+    """Generate the plain SCXML files adding all compatibility entries to fit the SCXML standard."""
+    os.makedirs(generated_scxml_path, exist_ok=True)
+    models_to_export = deepcopy(plain_scxml_models)
+    global_timer_scxml = make_global_timer_scxml(all_timers, max_time)
+    if global_timer_scxml is not None:
+        models_to_export.append(global_timer_scxml)
+    # Compute the targets
+    # TODO
+    # Export the models
+    for scxml_model in models_to_export:
+        with open(
+            os.path.join(generated_scxml_path, f"{scxml_model.get_name()}.scxml"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            f.write(scxml_model.as_xml_string(data_type_as_argument=False))
+
+
 def interpret_top_level_xml(
     xml_path: str, jani_file: str, generated_scxmls_dir: Optional[str] = None
 ):
@@ -213,23 +238,7 @@ def interpret_top_level_xml(
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
-        os.makedirs(plain_scxml_dir, exist_ok=True)
-        for scxml_model in plain_scxml_models:
-            with open(
-                os.path.join(plain_scxml_dir, f"{scxml_model.get_name()}.scxml"),
-                "w",
-                encoding="utf-8",
-            ) as f:
-                f.write(scxml_model.as_xml_string(data_type_as_argument=False))
-        # Additionally, write the timers SCXML model
-        global_timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
-        if global_timer_scxml is not None:
-            with open(
-                os.path.join(plain_scxml_dir, f"{global_timer_scxml.get_name()}.scxml"),
-                "w",
-                encoding="utf-8",
-            ) as f:
-                f.write(global_timer_scxml.as_xml_string(data_type_as_argument=False))
+        export_plain_scxml_models(plain_scxml_dir, plain_scxml_models, all_timers, model.max_time)
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, model.max_time, model.max_array_size
