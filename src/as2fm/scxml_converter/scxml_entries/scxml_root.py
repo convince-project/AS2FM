@@ -332,9 +332,10 @@ class ScxmlRoot(ScxmlBase):
             )
         return (converted_scxmls, ros_declarations)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self, **kwargs) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
         assert self._initial_state is not None, "Error: SCXML root: no initial state set."
+        data_type_as_argument = kwargs.get("data_type_as_argument", True)
         xml_root = ET.Element(
             "scxml",
             {
@@ -346,7 +347,7 @@ class ScxmlRoot(ScxmlBase):
             },
         )
         if self._data_model is not None:
-            data_model_xml = self._data_model.as_xml()
+            data_model_xml = self._data_model.as_xml(data_type_as_argument)
             assert data_model_xml is not None, "Error: SCXML root: invalid data model."
             xml_root.append(data_model_xml)
         for ros_declaration in self._ros_declarations:
@@ -358,5 +359,5 @@ class ScxmlRoot(ScxmlBase):
         ET.indent(xml_root, "    ")
         return xml_root
 
-    def as_xml_string(self) -> str:
-        return ET.tostring(self.as_xml(), encoding="unicode")
+    def as_xml_string(self, **kwargs) -> str:
+        return ET.tostring(self.as_xml(**kwargs), encoding="unicode")
