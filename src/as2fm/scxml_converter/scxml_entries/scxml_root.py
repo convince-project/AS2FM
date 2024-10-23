@@ -165,10 +165,12 @@ class ScxmlRoot(ScxmlBase):
 
     def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
         for state in self._states:
-            add_targets_to_scxml_send(state.get_onentry(), events_to_targets)
-            add_targets_to_scxml_send(state.get_onexit(), events_to_targets)
+            state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
+            state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
             for transition in state.get_body():
-                add_targets_to_scxml_send(transition.get_body(), events_to_targets)
+                transition.set_body(
+                    add_targets_to_scxml_send(transition.get_body(), events_to_targets)
+                )
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:

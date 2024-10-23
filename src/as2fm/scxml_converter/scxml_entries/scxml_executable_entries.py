@@ -566,24 +566,31 @@ def as_plain_execution_body(
 
 def add_targets_to_scxml_send(
     exec_body: Optional[ScxmlExecutionBody], events_to_automata: EventsToAutomata
-):
+) -> Optional[ScxmlExecutionBody]:
     """For each ScxmlSend in the body, generate instances containing the target automata."""
     if exec_body is None:
-        return
-    for entry_idx in reversed(range(len(exec_body))):
-        entry = exec_body[entry_idx]
+        return None
+    new_body: ScxmlExecutionBody = []
+    for entry in exec_body:
         if isinstance(entry, ScxmlIf):
-            for _, cond_body in entry.get_conditional_executions():
-                add_targets_to_scxml_send(cond_body, events_to_automata)
-            add_targets_to_scxml_send(entry.get_else_execution(), events_to_automata)
+            if_conditionals = []
+            for cond, cond_body in entry.get_conditional_executions():
+                if_conditionals.append(
+                    (cond, add_targets_to_scxml_send(cond_body, events_to_automata))
+                )
+            else_body = add_targets_to_scxml_send(entry.get_else_execution(), events_to_automata)
+            new_body.append(ScxmlIf(if_conditionals, else_body))
         elif isinstance(entry, ScxmlSend):
             target_automata = events_to_automata.get(entry.get_event(), {"NONE"})
-            _ = exec_body.pop(entry_idx)
             assert (
                 entry.get_target_automaton() is None
             ), f"Error: SCXML send: target automaton already set for event {entry.get_event()}."
             for automaton in target_automata:
                 new_entry = deepcopy(entry)
                 new_entry.set_target_automaton(automaton)
-                exec_body.insert(entry_idx, new_entry)
-        # ScxmlAssign entries can be skipped
+                new_body.append(new_entry)
+        elif isinstance(entry, ScxmlAssign):
+            new_body.append(deepcopy(entry))
+        else:
+            raise ValueError(f"Error: SCXML send: invalid entry type {type(entry)}.")
+    return new_body
