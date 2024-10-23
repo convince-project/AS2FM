@@ -21,7 +21,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import lxml.etree as ET
 
@@ -37,7 +37,7 @@ from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandl
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
 from as2fm.scxml_converter.bt_converter import bt_converter
-from as2fm.scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
 
 
 @dataclass()
@@ -208,14 +208,15 @@ def export_plain_scxml_models(
     if global_timer_scxml is not None:
         models_to_export.append(global_timer_scxml)
     # Compute the set of target automaton for each event
-    event_targets: Dict[str, Set[str]] = {}
+    event_targets: EventsToAutomata = {}
     for scxml_model in models_to_export:
         for event in scxml_model.get_transition_events():
             if event not in event_targets:
                 event_targets[event] = set()
             event_targets[event].add(scxml_model.get_name())
     # Add the target automaton to each event sent
-    # TODO
+    for scxml_model in models_to_export:
+        scxml_model.add_targets_to_scxml_sends(event_targets)
     # Export the models
     for scxml_model in models_to_export:
         with open(

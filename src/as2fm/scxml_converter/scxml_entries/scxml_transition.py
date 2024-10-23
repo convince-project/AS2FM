@@ -113,7 +113,7 @@ class ScxmlTransition(ScxmlBase):
         """Return the condition required to execute this transition (if any)."""
         return self._condition
 
-    def get_executable_body(self) -> ScxmlExecutionBody:
+    def get_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 

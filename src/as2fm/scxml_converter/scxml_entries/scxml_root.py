@@ -28,11 +28,13 @@ from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
     BtPortDeclarations,
+    EventsToAutomata,
     RosActionThread,
     ScxmlBase,
     ScxmlDataModel,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
+    add_targets_to_scxml_send,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
@@ -160,6 +162,13 @@ class ScxmlRoot(ScxmlBase):
             for transition in state.get_body():
                 transition_events.update({ev for ev in transition.get_events()})
         return transition_events
+
+    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
+        for state in self._states:
+            add_targets_to_scxml_send(state.get_onentry(), events_to_targets)
+            add_targets_to_scxml_send(state.get_onexit(), events_to_targets)
+            for transition in state.get_body():
+                add_targets_to_scxml_send(transition.get_body(), events_to_targets)
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:
