@@ -228,6 +228,15 @@ class TestConversion(unittest.TestCase):
             os.remove(output_path)
         generated_scxml_path = "generated_plain_scxml" if store_generated_scxmls else None
         interpret_top_level_xml(xml_main_path, "main.jani", generated_scxml_path)
+        if store_generated_scxmls:
+            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+            self.assertTrue(os.path.exists(plain_scxml_path))
+            # Ensure there is the data type comment in the generated SCXML
+            for file in os.listdir(plain_scxml_path):
+                with open(os.path.join(plain_scxml_path, file), "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if "<datamodel>" in content:
+                        self.assertIn("<!-- TYPE", content)
         self.assertTrue(os.path.exists(output_path))
         properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
         assert json_jani_properties_match(
@@ -244,6 +253,10 @@ class TestConversion(unittest.TestCase):
             )
         if os.path.exists(output_path):
             os.remove(output_path)
+        if store_generated_scxmls:
+            for file in os.listdir(plain_scxml_path):
+                os.remove(os.path.join(plain_scxml_path, file))
+            os.removedirs(plain_scxml_path)
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""

@@ -220,7 +220,7 @@ def interpret_top_level_xml(
                 "w",
                 encoding="utf-8",
             ) as f:
-                f.write(scxml_model.as_xml_string())
+                f.write(scxml_model.as_xml_string(data_type_as_argument=False))
         # Additionally, write the timers SCXML model
         global_timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
         if global_timer_scxml is not None:
@@ -229,7 +229,7 @@ def interpret_top_level_xml(
                 "w",
                 encoding="utf-8",
             ) as f:
-                f.write(global_timer_scxml.as_xml_string())
+                f.write(global_timer_scxml.as_xml_string(data_type_as_argument=False))
 
     jani_model = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, model.max_time, model.max_array_size
