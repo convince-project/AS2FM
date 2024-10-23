@@ -236,9 +236,12 @@ class TestConversion(unittest.TestCase):
             self.assertGreater(len(generated_files), 0, "Expected at least one gen. SCXML file.")
             for file in os.listdir(plain_scxml_path):
                 with open(os.path.join(plain_scxml_path, file), "r", encoding="utf-8") as f:
+                    # Make sure that the generated plain SCXML files use the agreed format
                     content = f.read()
                     if "<datamodel>" in content:
                         self.assertIn("<!-- TYPE", content)
+                    if "<send" in content:
+                        self.assertIn("target=", content)
         self.assertTrue(os.path.exists(output_path))
         properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
         assert json_jani_properties_match(
