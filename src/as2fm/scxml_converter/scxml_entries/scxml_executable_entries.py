@@ -18,7 +18,8 @@ Definition of SCXML Tags that can be part of executable content
 """
 
 import warnings
-from typing import Dict, List, Optional, Tuple, Union, get_args
+from copy import deepcopy
+from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
 from lxml import etree as ET
 
@@ -45,6 +46,8 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 ScxmlExecutableEntry = Union["ScxmlAssign", "ScxmlIf", "ScxmlSend"]
 ScxmlExecutionBody = List[ScxmlExecutableEntry]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
+# Map each event ID to a list of automata transitioning using that event
+EventsToAutomata = Dict[str, Set[str]]
 
 
 def instantiate_exec_body_bt_events(
@@ -251,26 +254,33 @@ class ScxmlSend(ScxmlBase):
             xml_tree.tag == ScxmlSend.get_tag_name()
         ), f"Error: SCXML send: XML tag name is not {ScxmlSend.get_tag_name()}."
         event = xml_tree.attrib["event"]
+        target = xml_tree.attrib.get("target")
         params: List[ScxmlParam] = []
         assert params is not None, "Error: SCXML send: params is not valid."
         for param_xml in xml_tree:
             if is_comment(param_xml):
                 continue
             params.append(ScxmlParam.from_xml_tree(param_xml))
-        return ScxmlSend(event, params)
+        return ScxmlSend(event, params, target)
 
-    def __init__(self, event: str, params: Optional[List[ScxmlParam]] = None):
+    def __init__(
+        self,
+        event: str,
+        params: Optional[List[ScxmlParam]] = None,
+        target_automaton: Optional[str] = None,
+    ):
         """
         Construct a new ScxmlSend object.
 
         :param event: The name of the event sent when executing this entry.
         :param params: The parameters to send as part of the event.
-        :param cb_type: The kind of callback executing this SCXML entry.
+        :param target_automaton: The target automaton for this send event.
         """
         if params is None:
             params = []
         self._event = event
         self._params = params
+        self._target_automaton = target_automaton
         self._cb_type: Optional[CallbackType] = None
 
     def set_callback_type(self, cb_type: CallbackType) -> None:
@@ -284,6 +294,14 @@ class ScxmlSend(ScxmlBase):
     def get_params(self) -> List[ScxmlParam]:
         """Get the parameters to send."""
         return self._params
+
+    def get_target_automaton(self) -> Optional[str]:
+        """Get the target automata associated to this send event."""
+        return self._target_automaton
+
+    def set_target_automaton(self, target_automaton: str) -> None:
+        """Set the target automata associated to this send event."""
+        self._target_automaton = target_automaton
 
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
@@ -349,6 +367,8 @@ class ScxmlSend(ScxmlBase):
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
+        if self._target_automaton is not None:
+            xml_send.set("target", self._target_automaton)
         for param in self._params:
             xml_send.append(param.as_xml())
         return xml_send
@@ -542,3 +562,28 @@ def as_plain_execution_body(
     if exec_body is None:
         return None
     return [entry.as_plain_scxml(ros_declarations) for entry in exec_body if not is_comment(entry)]
+
+
+def add_targets_to_scxml_send(
+    exec_body: Optional[ScxmlExecutionBody], events_to_automata: EventsToAutomata
+):
+    """For each ScxmlSend in the body, generate instances containing the target automata."""
+    if exec_body is None:
+        return
+    for entry_idx in reversed(range(len(exec_body))):
+        entry = exec_body[entry_idx]
+        if isinstance(entry, ScxmlIf):
+            for _, cond_body in entry.get_conditional_executions():
+                add_targets_to_scxml_send(cond_body, events_to_automata)
+            add_targets_to_scxml_send(entry.get_else_execution(), events_to_automata)
+        elif isinstance(entry, ScxmlSend):
+            target_automata = events_to_automata.get(entry.get_event(), {"NONE"})
+            _ = exec_body.pop(entry_idx)
+            assert (
+                entry.get_target_automaton() is None
+            ), f"Error: SCXML send: target automaton already set for event {entry.get_event()}."
+            for automaton in target_automata:
+                new_entry = deepcopy(entry)
+                new_entry.set_target_automaton(automaton)
+                exec_body.insert(entry_idx, new_entry)
+        # ScxmlAssign entries can be skipped
