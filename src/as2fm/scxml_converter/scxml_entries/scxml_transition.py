@@ -117,6 +117,10 @@ class ScxmlTransition(ScxmlBase):
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 
+    def set_body(self, body: ScxmlExecutionBody) -> None:
+        """Set the body of this transition."""
+        self._body = body
+
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> List["ScxmlTransition"]:
