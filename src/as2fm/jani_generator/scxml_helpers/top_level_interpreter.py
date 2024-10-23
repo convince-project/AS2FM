@@ -21,7 +21,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import lxml.etree as ET
 
@@ -207,7 +207,14 @@ def export_plain_scxml_models(
     global_timer_scxml = make_global_timer_scxml(all_timers, max_time)
     if global_timer_scxml is not None:
         models_to_export.append(global_timer_scxml)
-    # Compute the targets
+    # Compute the set of target automaton for each event
+    event_targets: Dict[str, Set[str]] = {}
+    for scxml_model in models_to_export:
+        for event in scxml_model.get_transition_events():
+            if event not in event_targets:
+                event_targets[event] = set()
+            event_targets[event].add(scxml_model.get_name())
+    # Add the target automaton to each event sent
     # TODO
     # Export the models
     for scxml_model in models_to_export:

@@ -19,7 +19,7 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 
 from copy import deepcopy
 from os.path import isfile
-from typing import List, Optional, Tuple, get_args
+from typing import List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
 
@@ -148,6 +148,18 @@ class ScxmlRoot(ScxmlBase):
 
     def get_states(self) -> List[ScxmlState]:
         return self._states
+
+    def get_transition_events(self) -> Set[str]:
+        """Generate the set of events that are expected by the SCXML automaton."""
+        assert self.is_plain_scxml(), (
+            f"Error: SCXML root: {self.get_name()} must be plain SCXML "
+            "for generating the list of transition events."
+        )
+        transition_events = set()
+        for state in self._states:
+            for transition in state.get_body():
+                transition_events.update({ev for ev in transition.get_events()})
+        return transition_events
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:
