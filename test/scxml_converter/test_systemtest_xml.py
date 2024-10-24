@@ -95,7 +95,7 @@ def ros_to_plain_scxml_test(
     if store_generated:
         clear_output_folder(test_folder)
     bt_index = 1000
-    for fname in scxml_files:
+    for fname in sorted(scxml_files):
         input_file = os.path.join(test_data_path, fname)
         # gt_file = os.path.join(test_data_path, 'gt_plain_scxml', fname)
         try:
