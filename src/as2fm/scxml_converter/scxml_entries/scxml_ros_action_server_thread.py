@@ -41,7 +41,11 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import (
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
+    CallbackType,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_children_as_scxml,
@@ -265,8 +269,11 @@ class RosActionHandleThreadStart(RosCallback):
             self._thread_id is not None
         ), f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
-        self._condition = "_event.thread_id == " + str(self._thread_id)
-        return super().as_plain_scxml(ros_declarations)
+        plain_transition = super().as_plain_scxml(ros_declarations)
+        plain_transition._condition = (
+            f"{PLAIN_SCXML_EVENT_DATA_PREFIX}thread_id == {self._thread_id}"
+        )
+        return plain_transition
 
 
 class RosActionThreadFree(RosTrigger):
