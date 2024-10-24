@@ -23,8 +23,7 @@ from as2fm.as2fm_common.common import is_array_type, string_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 PLAIN_SCXML_EVENT_PREFIX: str = "_event."
-# PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
-PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX
+PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"

@@ -12,7 +12,7 @@
 
     <state id="check_battery">
         <transition event="level" target="check_battery">
-            <assign location="battery_alarm" expr="_event.data &lt; 30" />
+            <assign location="battery_alarm" expr="_event.data.data &lt; 30" />
         </transition>
     </state>
 </scxml>

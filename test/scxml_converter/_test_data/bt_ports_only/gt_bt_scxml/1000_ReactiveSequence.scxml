@@ -21,30 +21,30 @@
                 </if>
             </if>
         </onentry>
-        <transition target="tick_children" event="bt_1001_response" cond="(_event.status == 1) &amp;&amp; (child_idx == 0)">
+        <transition target="tick_children" event="bt_1001_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 0)">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition target="tick_children" event="bt_1002_response" cond="(_event.status == 1) &amp;&amp; (child_idx == 1)">
+        <transition target="tick_children" event="bt_1002_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 1)">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.status == 2) &amp;&amp; (child_idx == 0)">
+        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 0)">
             <send event="bt_1000_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.status == 2) &amp;&amp; (child_idx == 1)">
+        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 1)">
             <send event="bt_1000_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.status == 3) &amp;&amp; (child_idx == 0)">
+        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 0)">
             <send event="bt_1000_response">
                 <param name="status" expr="3"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.status == 3) &amp;&amp; (child_idx == 1)">
+        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 1)">
             <send event="bt_1000_response">
                 <param name="status" expr="3"/>
             </send>
