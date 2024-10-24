@@ -15,7 +15,7 @@
     <ros_topic_publisher topic="/sys/add_srv" name="answer_pub" type="std_msgs/Int16" />
 
     <state id="initial">
-        <transition event="bt_tick" target="initial">
+        <transition event="bt_0_tick" target="initial">
             <assign location="number" expr="25" />
             <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number" />
