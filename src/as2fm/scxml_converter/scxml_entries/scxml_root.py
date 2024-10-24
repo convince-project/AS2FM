@@ -358,7 +358,7 @@ class ScxmlRoot(ScxmlBase):
     def as_xml(self, **kwargs) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
         assert self._initial_state is not None, "Error: SCXML root: no initial state set."
-        data_type_as_argument = kwargs.get("data_type_as_argument", True)
+        data_type_as_attribute = kwargs.get("data_type_as_attribute", True)
         xml_root = ET.Element(
             "scxml",
             {
@@ -370,7 +370,7 @@ class ScxmlRoot(ScxmlBase):
             },
         )
         if self._data_model is not None:
-            data_model_xml = self._data_model.as_xml(data_type_as_argument)
+            data_model_xml = self._data_model.as_xml(data_type_as_attribute)
             assert data_model_xml is not None, "Error: SCXML root: invalid data model."
             xml_root.append(data_model_xml)
         for ros_declaration in self._ros_declarations:

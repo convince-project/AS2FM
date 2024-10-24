@@ -224,7 +224,7 @@ def export_plain_scxml_models(
             "w",
             encoding="utf-8",
         ) as f:
-            f.write(scxml_model.as_xml_string(data_type_as_argument=False))
+            f.write(scxml_model.as_xml_string(data_type_as_attribute=False))
 
 
 def interpret_top_level_xml(
