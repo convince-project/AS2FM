@@ -567,7 +567,7 @@ def as_plain_execution_body(
 def add_targets_to_scxml_send(
     exec_body: Optional[ScxmlExecutionBody], events_to_automata: EventsToAutomata
 ) -> Optional[ScxmlExecutionBody]:
-    """For each ScxmlSend in the body, generate instances containing the target automata."""
+    """For each ScxmlSend in the body, generate instances containing the target automaton."""
     if exec_body is None:
         return None
     new_body: ScxmlExecutionBody = []
