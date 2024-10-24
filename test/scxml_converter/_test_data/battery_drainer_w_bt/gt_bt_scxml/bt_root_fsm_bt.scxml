@@ -1,4 +1,4 @@
-<scxml name="bt" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+<scxml name="bt_root_fsm_bt" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
     <ros_time_rate rate_hz="1.0" name="bt_tick"/>
     <state id="idle">
         <ros_rate_callback name="bt_tick" target="wait_tick_res">
