@@ -23,10 +23,11 @@ from as2fm.as2fm_common.common import is_array_type, string_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 PLAIN_SCXML_EVENT_PREFIX: str = "_event."
+PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"
-PLAIN_FIELD_EVENT_PREFIX: str = f"{PLAIN_SCXML_EVENT_PREFIX}{ROS_FIELD_PREFIX}"
+PLAIN_FIELD_EVENT_PREFIX: str = PLAIN_SCXML_EVENT_DATA_PREFIX + ROS_FIELD_PREFIX
 
 ROS_EVENT_PREFIXES = [
     "_msg.",  # Topic-related
@@ -78,7 +79,7 @@ class CallbackType(Enum):
         if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
             return []
         elif cb_type == CallbackType.TRANSITION:
-            return [PLAIN_SCXML_EVENT_PREFIX]
+            return [PLAIN_SCXML_EVENT_DATA_PREFIX]
         elif cb_type == CallbackType.ROS_TOPIC:
             return ["_msg."]
         elif cb_type == CallbackType.ROS_SERVICE_REQUEST:
@@ -86,7 +87,7 @@ class CallbackType(Enum):
         elif cb_type == CallbackType.ROS_SERVICE_RESULT:
             return ["_res."]
         elif cb_type == CallbackType.ROS_ACTION_GOAL:
-            return ["_action.goal_id", "_goal.", PLAIN_SCXML_EVENT_PREFIX]
+            return ["_action.goal_id", "_goal."]
         elif cb_type == CallbackType.ROS_ACTION_RESULT:
             return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
         elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
@@ -111,8 +112,8 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
     :param expected_prefixes: The list of (ROS) prefixes that are expected in the expression.
     """
 
-    if PLAIN_SCXML_EVENT_PREFIX in expected_prefixes:
-        expected_prefixes.remove(PLAIN_SCXML_EVENT_PREFIX)
+    if PLAIN_SCXML_EVENT_DATA_PREFIX in expected_prefixes:
+        expected_prefixes.remove(PLAIN_SCXML_EVENT_DATA_PREFIX)
     msg_expr.strip()
     for prefix in expected_prefixes:
         assert prefix.startswith(
@@ -132,7 +133,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
             assert (
                 len(split_prefix) == 2
             ), f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
-            substitution = f"{PLAIN_SCXML_EVENT_PREFIX}{split_prefix[1]}"
+            substitution = f"{PLAIN_SCXML_EVENT_DATA_PREFIX}{split_prefix[1]}"
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}($|[^a-zA-Z0-9_.])",
@@ -159,14 +160,14 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
     """
     expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
     # pre-check over the expression
-    if PLAIN_SCXML_EVENT_PREFIX not in expected_prefixes:
-        assert not _contains_prefixes(in_expr, [PLAIN_SCXML_EVENT_PREFIX]), (
+    if PLAIN_SCXML_EVENT_DATA_PREFIX not in expected_prefixes:
+        assert not _contains_prefixes(in_expr, [PLAIN_SCXML_EVENT_DATA_PREFIX]), (
             "Error: SCXML-ROS expression conversion: "
-            f"unexpected {PLAIN_SCXML_EVENT_PREFIX} prefix in expr. {in_expr}"
+            f"unexpected {PLAIN_SCXML_EVENT_DATA_PREFIX} prefix in expr. {in_expr}"
         )
     forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
     if len(expected_prefixes) == 0:
-        forbidden_prefixes.append(PLAIN_SCXML_EVENT_PREFIX)
+        forbidden_prefixes.append(PLAIN_SCXML_EVENT_DATA_PREFIX)
     new_expr = _replace_ros_interface_expression(in_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), (
         "Error: SCXML-ROS expression conversion: "

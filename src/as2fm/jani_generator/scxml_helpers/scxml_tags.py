@@ -709,7 +709,7 @@ class TransitionTag(BaseTag):
             else:
                 guard = None
 
-        original_transition_body = self.element.get_executable_body()
+        original_transition_body = self.element.get_body()
 
         merged_transition_body = []
         if current_state.get_onexit() is not None:

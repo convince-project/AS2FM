@@ -20,6 +20,8 @@ from typing import List, MutableSequence
 import pytest
 
 from as2fm.scxml_converter.scxml_entries.utils import (
+    PLAIN_FIELD_EVENT_PREFIX,
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
     get_data_type_from_string,
     get_plain_expression,
@@ -42,10 +44,10 @@ def test_standard_good_expressions():
 def test_standard_bad_expressions():
     """Test expressions that have events in them, which are not allowed in state entries."""
     bad_expressions: List[str] = [
-        "_event.data",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}data",
         "x + y + z == _msg.data",
         "_action.goal_id == 0",
-        "x + y + z == 0 && _event.data == 1",
+        f"x + y + z == 0 && {PLAIN_SCXML_EVENT_DATA_PREFIX}data == 1",
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
@@ -63,11 +65,13 @@ def test_topic_good_expressions():
         "_msg.array_entry[_msg.index] == _msg.index",
     ]
     expected_expressions: List[str] = [
-        "_event.ros_fields__data == 1",
-        "cos(_event.ros_fields__data) == 1.0",
-        "some_msg.data + _event.ros_fields__count",
-        "_event.ros_fields__x<1 && sin(_event.ros_fields__angle.x+_event.ros_fields__angle.y)>2",
-        "_event.ros_fields__array_entry[_event.ros_fields__index] == _event.ros_fields__index",
+        f"{PLAIN_FIELD_EVENT_PREFIX}data == 1",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}data) == 1.0",
+        f"some_msg.data + {PLAIN_FIELD_EVENT_PREFIX}count",
+        f"{PLAIN_FIELD_EVENT_PREFIX}x<1 && sin({PLAIN_FIELD_EVENT_PREFIX}angle.x+"
+        + f"{PLAIN_FIELD_EVENT_PREFIX}angle.y)>2",
+        f"{PLAIN_FIELD_EVENT_PREFIX}array_entry[{PLAIN_FIELD_EVENT_PREFIX}index] == "
+        + f"{PLAIN_FIELD_EVENT_PREFIX}index",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC)
@@ -77,7 +81,7 @@ def test_topic_good_expressions():
 def test_topic_bad_expressions():
     """Test expressions that have events in them, which are not allowed in topic entries."""
     bad_expressions: List[str] = [
-        "_event.data",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}data",
         "x + _res.y + z == _msg.data",
         "_action.goal_id == 0",
         "_wrapped_result.code == 1",
@@ -93,8 +97,8 @@ def test_action_goal_good_expressions():
     ok_expressions: List[str] = ["some_action.goal_id", "_action.goal_id", "_goal.x < 1"]
     expected_expressions: List[str] = [
         "some_action.goal_id",
-        "_event.goal_id",
-        "_event.ros_fields__x < 1",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
+        f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL)
@@ -109,9 +113,9 @@ def test_action_feedback_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        "cos(_event.ros_fields__angle.x) == 1.0",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle.x) == 1.0",
         "some_action.goal_id",
-        "_event.goal_id",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK)
@@ -127,10 +131,10 @@ def test_action_result_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        "_event.code == 1",
-        "cos(_event.ros_fields__angle) == 0.0",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}code == 1",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle) == 0.0",
         "some_action.goal_id",
-        "_event.goal_id",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT)

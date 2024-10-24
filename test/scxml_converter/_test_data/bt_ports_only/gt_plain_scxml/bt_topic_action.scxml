@@ -4,7 +4,7 @@
         <data id="number" expr="0" type="int16" />
     </datamodel>
     <state id="initial">
-        <transition target="initial" event="bt_tick">
+        <transition target="initial" event="bt_1001_tick">
             <assign location="number" expr="123" />
             <send event="topic_out_msg">
                 <param name="ros_fields__data" expr="number" />

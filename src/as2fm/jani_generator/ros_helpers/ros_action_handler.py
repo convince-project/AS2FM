@@ -48,7 +48,7 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
-    PLAIN_SCXML_EVENT_PREFIX,
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
     ROS_FIELD_PREFIX,
 )
 
@@ -114,7 +114,7 @@ class RosActionHandler(RosCommunicationHandler):
         scxml_transition = ScxmlTransition(goal_state.get_id(), [srv_event_name])
         for entry_name in extra_entries:
             scxml_transition.append_body_executable_entry(
-                ScxmlAssign(entry_name, PLAIN_SCXML_EVENT_PREFIX + entry_name)
+                ScxmlAssign(entry_name, PLAIN_SCXML_EVENT_DATA_PREFIX + entry_name)
             )
         out_params: List[ScxmlParam] = []
         for entry_name in additional_data:

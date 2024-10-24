@@ -73,11 +73,20 @@ class ScxmlDataModel(ScxmlBase):
                     return False
         return True
 
-    def as_xml(self) -> Optional[ET.Element]:
+    def as_xml(self, type_as_attribute: bool = True) -> Optional[ET.Element]:
+        """
+        Store the datamodel, containing all model's data entries, as an XML element.
+
+        :param type_as_attribute: If True, store data types as arguments, if False as Comments
+        """
         assert self.check_validity(), "SCXML: found invalid datamodel object."
         if self._data_entries is None or len(self._data_entries) == 0:
             return None
         xml_datamodel = ET.Element(ScxmlDataModel.get_tag_name())
         for data_entry in self._data_entries:
-            xml_datamodel.append(data_entry.as_xml())
+            if not type_as_attribute:
+                xml_datamodel.append(
+                    ET.Comment(f" TYPE {data_entry.get_name()}:{data_entry.get_type_str()} ")
+                )
+            xml_datamodel.append(data_entry.as_xml(type_as_attribute))
         return xml_datamodel

@@ -16,7 +16,7 @@
 import os
 from typing import Dict, List, Tuple
 
-from test_utils import canonicalize_xml, remove_empty_lines, to_snake_case
+from test_utils import canonicalize_xml, to_snake_case
 
 from as2fm.scxml_converter.bt_converter import bt_converter
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
@@ -70,8 +70,8 @@ def bt_to_scxml_test(
         scxml_name = scxml_root.get_name()
         gt_scxml_path = os.path.join(test_data_path, "gt_bt_scxml", f"{scxml_name}.scxml")
         with open(gt_scxml_path, "r", encoding="utf-8") as f_o:
-            gt_xml = remove_empty_lines(canonicalize_xml(f_o.read()))
-            scxml_xml = remove_empty_lines(canonicalize_xml(scxml_root.as_xml_string()))
+            gt_xml = canonicalize_xml(f_o.read())
+            scxml_xml = canonicalize_xml(scxml_root.as_xml_string())
         assert scxml_xml == gt_xml
 
 
@@ -95,7 +95,7 @@ def ros_to_plain_scxml_test(
     if store_generated:
         clear_output_folder(test_folder)
     bt_index = 1000
-    for fname in scxml_files:
+    for fname in sorted(scxml_files):
         input_file = os.path.join(test_data_path, fname)
         # gt_file = os.path.join(test_data_path, 'gt_plain_scxml', fname)
         try:
@@ -131,9 +131,9 @@ def ros_to_plain_scxml_test(
                 )
                 with open(gt_file_path, "r", encoding="utf-8") as f_o:
                     gt_output = f_o.read()
-                assert remove_empty_lines(
-                    canonicalize_xml(generated_scxml.as_xml_string())
-                ) == remove_empty_lines(canonicalize_xml(gt_output))
+                assert canonicalize_xml(generated_scxml.as_xml_string()) == canonicalize_xml(
+                    gt_output
+                )
         except Exception as e:
             print(f"Error in file {fname}:")
             raise e
