@@ -90,10 +90,12 @@ class BtTick(ScxmlTransition):
     def check_validity(self) -> bool:
         return super().check_validity()
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> ScxmlTransition:
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> List[ScxmlTransition]:
         self._events = [generate_bt_tick_event(instance_id)]
         instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
-        return ScxmlTransition(self._target, self._events, self._condition, self._body)
+        return [ScxmlTransition(self._target, self._events, self._condition, self._body)]
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick = ET.Element(BtTick.get_tag_name(), {"target": self._target})
@@ -216,26 +218,28 @@ class BtChildStatus(ScxmlTransition):
                 f"for {len(children_ids)} children."
             )
             target_child_id = children_ids[self._child_seq_id]
-            return [
-                ScxmlTransition(
-                    self._target,
-                    [generate_bt_response_event(target_child_id)],
-                    plain_cond_expr,
-                    self._body,
-                ).instantiate_bt_events(instance_id, children_ids)
-            ]
+            return ScxmlTransition(
+                self._target,
+                [generate_bt_response_event(target_child_id)],
+                plain_cond_expr,
+                self._body,
+            ).instantiate_bt_events(instance_id, children_ids)
         else:
             # Handling a generic child ID, return a transition for each child
             condition_prefix = "" if plain_cond_expr is None else f"({plain_cond_expr}) && "
-            return [
-                ScxmlTransition(
+            generated_transitions = []
+            for child_seq_n, child_id in enumerate(children_ids):
+                generated_transition = ScxmlTransition(
                     self._target,
                     [generate_bt_response_event(child_id)],
                     condition_prefix + f"({self._child_seq_id} == {child_seq_n})",
                     self._body,
                 ).instantiate_bt_events(instance_id, children_ids)
-                for child_seq_n, child_id in enumerate(children_ids)
-            ]
+                assert (
+                    len(generated_transition) == 1
+                ), "Error: SCXML BT Child Status: Expected a single transition."
+                generated_transitions.append(generated_transition[0])
+            return generated_transitions
 
     def as_xml(self) -> ET.Element:
         xml_bt_child_status = ET.Element(

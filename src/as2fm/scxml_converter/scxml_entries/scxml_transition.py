@@ -117,14 +117,16 @@ class ScxmlTransition(ScxmlBase):
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlTransition":
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> List["ScxmlTransition"]:
         """Instantiate the BT events of this transition."""
         # Old handling of BT events is deprecated: remove this if block after support removed
         from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtTick
 
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
-            for event_id, event_str in enumerate(self._events):
+            for event_str in self._events:
                 # Those are expected to be only ticks
                 if is_bt_event(event_str):
                     warnings.warn(
@@ -140,7 +142,7 @@ class ScxmlTransition(ScxmlBase):
                     )
         # The body of a transition needs to be replaced on derived classes, too
         instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
-        return self
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""

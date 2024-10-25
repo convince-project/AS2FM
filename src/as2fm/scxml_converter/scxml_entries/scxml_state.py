@@ -146,17 +146,11 @@ class ScxmlState(ScxmlBase):
         """Instantiate the BT events in all entries belonging to a state."""
         instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
-            new_transition = transition.instantiate_bt_events(instance_id, children_ids)
-            if isinstance(new_transition, ScxmlTransition):
-                instantiated_transitions.append(new_transition)
-            elif isinstance(new_transition, list) and all(
-                isinstance(t, ScxmlTransition) for t in new_transition
-            ):
-                instantiated_transitions.extend(new_transition)
-            else:
-                raise ValueError(
-                    f"Error: SCXML state {self._id}: found invalid transition in state body."
-                )
+            new_transitions = transition.instantiate_bt_events(instance_id, children_ids)
+            assert isinstance(new_transitions, list) and all(
+                isinstance(t, ScxmlTransition) for t in new_transitions
+            ), f"Error: SCXML state {self._id}: found invalid transition in state body."
+            instantiated_transitions.extend(new_transitions)
         self._body = instantiated_transitions
         instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
         instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
