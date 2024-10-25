@@ -6,13 +6,17 @@
 
     <state id="initial">
         <transition target="initial" event="topic_alarm_msg">
-            <assign location="last_msg" expr="_event.ros_fields__data" />
+            <assign location="last_msg" expr="_event.ros_fields__data"/>
         </transition>
-        <transition event="bt_tick" target="initial">
+        <transition target="initial" event="bt_1002_tick">
             <if cond="last_msg">
-                <send event="bt_success" />
+                <send event="bt_1002_response">
+                    <param name="status" expr="1"/>
+                </send>
                 <else/>
-                <send event="bt_failure" />
+                <send event="bt_1002_response">
+                    <param name="status" expr="2"/>
+                </send>
             </if>
         </transition>
     </state>

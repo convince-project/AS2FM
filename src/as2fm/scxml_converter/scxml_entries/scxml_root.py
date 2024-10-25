@@ -27,6 +27,7 @@ from as2fm.as2fm_common.common import is_comment, remove_namespace
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
+    BtPortDeclarations,
     RosActionThread,
     ScxmlBase,
     ScxmlDataModel,
@@ -34,7 +35,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.scxml_bt import BtPortDeclarations
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
@@ -125,6 +125,8 @@ class ScxmlRoot(ScxmlBase):
         self._data_model: Optional[ScxmlDataModel] = None
         self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
+        self._bt_plugin_id: Optional[int] = None
+        self._bt_children_ids: List[int] = []
         self._additional_threads: List[RosActionThread] = []
 
     def get_name(self) -> str:
@@ -153,10 +155,13 @@ class ScxmlRoot(ScxmlBase):
                 return state
         return None
 
-    def instantiate_bt_events(self, instance_id: str) -> None:
+    def set_bt_plugin_id(self, instance_id: int) -> None:
         """Update all BT-related events to use the assigned instance ID."""
-        for state in self._states:
-            state.instantiate_bt_events(instance_id)
+        self._bt_plugin_id = instance_id
+
+    def get_bt_plugin_id(self) -> Optional[int]:
+        """Get the ID of the BT plugin instance, if any."""
+        return self._bt_plugin_id
 
     def add_state(self, state: ScxmlState, *, initial: bool = False):
         """Append a state to the list of states in the SCXML model.
@@ -207,8 +212,18 @@ class ScxmlRoot(ScxmlBase):
         for port_name, port_value in ports_values:
             self.set_bt_port_value(port_name, port_value)
 
-    def update_bt_ports_values(self):
-        """Update the values of the declared BT ports in the SCXML object."""
+    def append_bt_child_id(self, child_id: int):
+        """Append a child ID to the list of child IDs."""
+        assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
+        self._bt_children_ids.append(child_id)
+
+    def instantiate_bt_information(self):
+        """Instantiate the values of BT ports and children IDs in the SCXML entries."""
+        n_bt_children = len(self._bt_children_ids)
+        assert self._bt_plugin_id is not None, "Error: SCXML root: BT plugin ID not set."
+        # Automatically add the correct amount of children to the specific port
+        if self._bt_ports_handler.in_port_exists("CHILDREN_COUNT"):
+            self._bt_ports_handler.set_port_value("CHILDREN_COUNT", str(n_bt_children))
         if self._data_model is not None:
             self._data_model.update_bt_ports_values(self._bt_ports_handler)
         for ros_decl_scxml in self._ros_declarations:
@@ -216,6 +231,7 @@ class ScxmlRoot(ScxmlBase):
         for scxml_thread in self._additional_threads:
             scxml_thread.update_bt_ports_values(self._bt_ports_handler)
         for state in self._states:
+            state.instantiate_bt_events(self._bt_plugin_id, self._bt_children_ids)
             state.update_bt_ports_values(self._bt_ports_handler)
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
@@ -241,14 +257,14 @@ class ScxmlRoot(ScxmlBase):
             for scxml_thread in self._additional_threads
         )
         if not valid_data_model:
-            print("Error: SCXML root: datamodel is not valid.")
+            print(f"Error: SCXML root({self._name}): datamodel is not valid.")
         if not valid_states:
-            print("Error: SCXML root: states are not valid.")
+            print(f"Error: SCXML root({self._name}): states are not valid.")
         if not valid_threads:
-            print("Error: SCXML root: additional threads are not valid.")
+            print(f"Error: SCXML root({self._name}): additional threads are not valid.")
         valid_ros = self._check_valid_ros_declarations()
         if not valid_ros:
-            print("Error: SCXML root: ROS declarations are not valid.")
+            print(f"Error: SCXML root({self._name}): ROS declarations are not valid.")
         return (
             valid_name and valid_initial_state and valid_states and valid_data_model and valid_ros
         )
@@ -274,8 +290,9 @@ class ScxmlRoot(ScxmlBase):
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS specific features or all entries are plain SCXML."""
         assert self.check_validity(), "SCXML: found invalid root object."
-        # If this is a valid scxml object, just check the absence of ROS and thread declarations
-        return len(self._ros_declarations) == 0 and len(self._additional_threads) == 0
+        has_ros_entries = len(self._ros_declarations) > 0 or len(self._additional_threads) > 0
+        has_bt_entries = any(state.has_bt_tick_transitions() for state in self._states)
+        return not (has_ros_entries or has_bt_entries)
 
     def to_plain_scxml_and_declarations(
         self,

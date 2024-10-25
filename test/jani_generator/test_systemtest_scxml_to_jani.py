@@ -218,7 +218,7 @@ class TestConversion(unittest.TestCase):
         :param folder: The folder containing the test data.
         :param store_generated_scxmls: If the generated SCXMLs should be stored.
         :param property_name: The property name to test.
-        :param success: If the property is expected to be always satisfied of always not satisfied.
+        :param success: If the property is expected to be always satisfied or always not satisfied.
         :param skip_smc: If the model shall be executed using SMC (uses smc_storm).
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
@@ -256,6 +256,14 @@ class TestConversion(unittest.TestCase):
     def test_battery_ros_example_alarm_on(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main("ros_example", False, "alarm_on", False)
+
+    def test_battery_example_w_bt_battery_depleted_deprecated(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main("ros_example_w_bt_deprecated", True, "battery_depleted", False)
+
+    def test_battery_example_w_bt_main_alarm_and_charge_deprecated(self):
+        """Here we expect the property to be *not* satisfied."""
+        self._test_with_main("ros_example_w_bt_deprecated", False, "battery_alarm_on", True)
 
     def test_battery_example_w_bt_battery_depleted(self):
         """Here we expect the property to be *not* satisfied."""

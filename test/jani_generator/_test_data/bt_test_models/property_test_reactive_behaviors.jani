@@ -1,0 +1,36 @@
+{
+    "properties": [
+        {
+            "name": "ten_tick_zero_no_tick_one",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "step-bounds": {
+                            "lower": 100
+                        },
+                        "left": true,
+                        "op": "U",
+                        "right": {
+                            "left": {
+                                "op": "=",
+                                "left": "topic_tick_count_0_msg.ros_fields__data",
+                                "right": 10
+                            },
+                            "op": "∧",
+                            "right": {
+                                "op": "¬",
+                                "exp": "topic_tick_count_1_msg.valid"
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

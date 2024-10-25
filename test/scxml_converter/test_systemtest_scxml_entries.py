@@ -20,6 +20,7 @@ from test_utils import canonicalize_xml
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     BtInputPortDeclaration,
+    BtTick,
     RosField,
     RosRateCallback,
     RosTimeRate,
@@ -177,9 +178,8 @@ def test_bt_action_with_ports_from_code():
     init_state = ScxmlState(
         "initial",
         body=[
-            ScxmlTransition(
+            BtTick(
                 "initial",
-                ["bt_tick"],
                 None,
                 [
                     ScxmlAssign("number", BtGetValueInputPort("data")),
@@ -189,6 +189,7 @@ def test_bt_action_with_ports_from_code():
         ],
     )
     scxml_root = ScxmlRoot("BtTopicAction")
+    scxml_root.set_bt_plugin_id(0)
     scxml_root.set_data_model(data_model)
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("name", "string"))
     scxml_root.add_bt_port_declaration(BtInputPortDeclaration("data", "int16"))
@@ -196,7 +197,7 @@ def test_bt_action_with_ports_from_code():
     scxml_root.add_state(init_state, initial=True)
     assert not scxml_root.check_validity(), "Currently, we handle unspecified BT entries as invalid"
     scxml_root.set_bt_ports_values([("name", "/sys/add_srv"), ("data", "25")])
-    scxml_root.update_bt_ports_values()
+    scxml_root.instantiate_bt_information()
     _test_scxml_from_code(
         scxml_root,
         os.path.join(

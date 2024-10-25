@@ -17,6 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
+import warnings
 from typing import List, Optional
 
 from lxml import etree as ET
@@ -27,11 +28,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    is_bt_event,
-    replace_bt_event,
-)
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml,
     instantiate_exec_body_bt_events,
@@ -39,7 +36,11 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body,
     valid_execution_body_entry_types,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    get_plain_expression,
+    is_non_empty_string,
+)
 
 
 class ScxmlTransition(ScxmlBase):
@@ -116,16 +117,32 @@ class ScxmlTransition(ScxmlBase):
         """Return the executable content of this transition."""
         return self._body if self._body is not None else []
 
-    def instantiate_bt_events(self, instance_id: str):
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> List["ScxmlTransition"]:
         """Instantiate the BT events of this transition."""
+        # Old handling of BT events is deprecated: remove this if block after support removed
+        from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtTick
+
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
-            for event_id, event_str in enumerate(self._events):
+            for event_str in self._events:
                 # Those are expected to be only ticks
                 if is_bt_event(event_str):
-                    self._events[event_id] = replace_bt_event(event_str, instance_id)
+                    warnings.warn(
+                        "Deprecation warning: BT events should not be found in SCXML transitions. "
+                        "Use the 'bt_tick' ROS-scxml tag instead.",
+                        DeprecationWarning,
+                    )
+                    assert (
+                        len(self._events) == 1 and event_str == "bt_tick"
+                    ), f"Unexpected BT event '{event_str}' in SCXML transition."
+                    return BtTick(self._target, self._condition, self._body).instantiate_bt_events(
+                        instance_id, children_ids
+                    )
         # The body of a transition needs to be replaced on derived classes, too
-        instantiate_exec_body_bt_events(self._body, instance_id)
+        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -144,22 +161,18 @@ class ScxmlTransition(ScxmlBase):
         ), "Error SCXML transition: invalid body entry found after extension."
 
     def check_validity(self) -> bool:
-        valid_target = isinstance(self._target, str) and len(self._target) > 0
+        valid_target = is_non_empty_string(type(self), "target", self._target)
+        valid_condition = self._condition is None or (
+            is_non_empty_string(type(self), "condition", self._condition)
+        )
         valid_events = self._events is None or (
             isinstance(self._events, list) and all(isinstance(ev, str) for ev in self._events)
         )
-        valid_condition = self._condition is None or (
-            isinstance(self._condition, str) and len(self._condition) > 0
-        )
         valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_target:
-            print("Error: SCXML transition: target is not valid.")
         if not valid_events:
             print("Error: SCXML transition: events are not valid.\nList of events:")
             for event in self._events:
                 print(f"\t-'{event}'.")
-        if not valid_condition:
-            print("Error: SCXML transition: condition is not valid.")
         if not valid_body:
             print("Error: SCXML transition: executable content is not valid.")
         return valid_target and valid_events and valid_condition and valid_body

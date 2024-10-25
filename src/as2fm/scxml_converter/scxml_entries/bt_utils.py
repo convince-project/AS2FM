@@ -16,6 +16,7 @@
 """Collection of SCXML utilities related to BT functionalities."""
 
 import re
+from enum import Enum, auto
 from typing import Dict, Tuple, Type
 
 from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
@@ -24,7 +25,40 @@ VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string":
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 
 """List of keys that are not going to be read as BT ports from the BT XML definition."""
-RESERVED_BT_PORT_NAMES = ["NAME", "ID", "category"]
+RESERVED_BT_PORT_NAMES = ["ID", "name"]
+
+
+class BtResponse(Enum):
+    """Enumeration of possible BT responses."""
+
+    SUCCESS = auto()
+    FAILURE = auto()
+    RUNNING = auto()
+
+    @staticmethod
+    def str_to_int(resp_str: str) -> int:
+        """Convert the BT response to an integer."""
+        for response in BtResponse:
+            if response.name == resp_str:
+                return response.value
+        raise ValueError(f"Error: {resp_str} is an invalid BT Status type.")
+
+    @staticmethod
+    def process_expr(expr: str) -> str:
+        """Substitute occurrences of BT responses in the expression."""
+        for response in BtResponse:
+            expr = re.sub(rf"{response.name}", f"{response.value}", expr)
+        return expr
+
+
+def generate_bt_tick_event(instance_id: str) -> str:
+    """Generate the BT tick event name for a given BT node instance."""
+    return f"bt_{instance_id}_tick"
+
+
+def generate_bt_response_event(instance_id: str) -> str:
+    """Generate the BT response event name for a given BT node instance."""
+    return f"bt_{instance_id}_response"
 
 
 def is_bt_event(event_name: str) -> bool:
@@ -54,9 +88,11 @@ class BtPortsHandler:
     @staticmethod
     def check_port_name_allowed(port_name: str) -> None:
         """Check if the port name is allowed."""
-        assert (
-            port_name not in RESERVED_BT_PORT_NAMES
-        ), f"Error: Port name {port_name} is reserved in BT"
+        # All port IDs are valid
+        pass
+        # assert (
+        #     port_name not in RESERVED_BT_PORT_NAMES
+        # ), f"Error: Port name {port_name} is reserved in BT"
 
     def __init__(self):
         # For each port name, store the port type string and value.
@@ -128,8 +164,8 @@ class BtPortsHandler:
         elif self.out_port_exists(port_name):
             self._set_out_port_value(port_name, port_value)
         else:
-            # The 'name' port can be set even if undeclared, since it defines the node name in BT.
-            if port_name != "name":
+            # The reserved port IDs can be set in the bt.xml even if they are unused in the plugin
+            if port_name not in RESERVED_BT_PORT_NAMES:
                 raise RuntimeError(f"Error: Port {port_name} is not declared.")
 
     def _set_in_port_value(self, port_name: str, port_value: str):

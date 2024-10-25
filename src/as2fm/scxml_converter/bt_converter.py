@@ -18,141 +18,149 @@ Convert Behavior Trees (BT xml) to SCXML.
 """
 
 import os
-import re
 from copy import deepcopy
-from enum import Enum, auto
-from typing import List
+from importlib.resources import files as resource_files
+from typing import Dict, List, Tuple
 
-from btlib.bt_to_fsm.bt_to_fsm import Bt2FSM
-from btlib.bts import xml_to_networkx
-from btlib.common import NODE_CAT
+from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
-    RESERVED_BT_PORT_NAMES,
+    BtChildStatus,
+    BtTickChild,
     RosRateCallback,
     RosTimeRate,
     ScxmlRoot,
-    ScxmlSend,
     ScxmlState,
-    ScxmlTransition,
 )
 
-
-class BT_EVENT_TYPE(Enum):
-    """Event types for Behavior Tree."""
-
-    TICK = auto()
-    SUCCESS = auto()
-    FAILURE = auto()
-    RUNNING = auto()
-
-    @staticmethod
-    def from_str(event_name: str) -> "BT_EVENT_TYPE":
-        event_name = event_name.replace("event=", "")
-        event_name = event_name.replace('"', "")
-        event_name = event_name.replace("bt_", "")
-        return BT_EVENT_TYPE[event_name.upper()]
+BT_ROOT_PREFIX = "bt_root_fsm_"
 
 
-def bt_event_name(node_id: str, event_type: BT_EVENT_TYPE) -> str:
-    """Return the event name for the given node and event type."""
-    return f"bt_{node_id}_{event_type.name.lower()}"
+def is_bt_root_scxml(scxml_name: str) -> bool:
+    """
+    Check if the SCXML name matches with the BT root SCXML name pattern.
+    """
+    return scxml_name.startswith(BT_ROOT_PREFIX)
+
+
+def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, ScxmlRoot]:
+    available_bt_plugins = {}
+    for path in bt_plugins_scxml_paths:
+        assert os.path.exists(path), f"SCXML must exist. {path} not found."
+        bt_plugin_scxml = ScxmlRoot.from_scxml_file(path)
+        available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
+    internal_bt_plugins_path = (
+        resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
+    )
+    for plugin_path in internal_bt_plugins_path.iterdir():
+        if plugin_path.is_file() and plugin_path.suffix == ".scxml":
+            bt_plugin_scxml = ScxmlRoot.from_scxml_file(str(plugin_path))
+            available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
+    return available_bt_plugins
 
 
 def bt_converter(
     bt_xml_path: str, bt_plugins_scxml_paths: List[str], bt_tick_rate: float
 ) -> List[ScxmlRoot]:
     """
-    Convert a Behavior Tree (BT) in XML format to SCXML.
-
-    Args:
-        bt_xml_path: The path to the Behavior Tree in XML format.
-        bt_plugins_scxml_paths: The paths to the SCXML files of BT plugins.
-        bt_tick_rate: The rate at which the BT should tick.
-
-    Returns:
-        A list of the generated SCXML objects.
+    Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
     """
-    bt_graph, _ = xml_to_networkx(bt_xml_path)
+    available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths)
+    xml_tree: ET.ElementBase = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
+    root_children = xml_tree.getchildren()
+    assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
+    assert (
+        root_children[0].tag == "BehaviorTree"
+    ), f"Error: Expected BehaviorTree root, found {root_children[0].tag}."
+    bt_children = root_children[0].getchildren()
+    assert (
+        len(bt_children) == 1
+    ), f"Error: Expected one BehaviorTree child, found {len(bt_children)}."
+    root_child_tick_idx = 1000
+    bt_name = os.path.basename(bt_xml_path).replace(".xml", "")
+    bt_scxml_root = generate_bt_root_scxml(bt_name, root_child_tick_idx, bt_tick_rate)
+    generated_scxmls = [bt_scxml_root] + generate_bt_children_scxmls(
+        bt_children[0], root_child_tick_idx, available_bt_plugins
+    )
+    return generated_scxmls
 
-    bt_plugins_scxmls = {}
-    for path in bt_plugins_scxml_paths:
-        assert os.path.exists(path), f"SCXML must exist. {path} not found."
-        bt_plugin_scxml = ScxmlRoot.from_scxml_file(path)
-        bt_plugin_name = bt_plugin_scxml.get_name()
-        assert (
-            bt_plugin_name not in bt_plugins_scxmls
-        ), f"Plugin name must be unique. {bt_plugin_name} already exists."
-        bt_plugins_scxmls[bt_plugin_name] = bt_plugin_scxml
 
-    leaf_node_ids = []
+def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> ScxmlRoot:
+    """
+    Generate the root SCXML for a Behavior Tree.
+    """
+    bt_scxml_root = ScxmlRoot(BT_ROOT_PREFIX + scxml_name)
+    ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
+    bt_scxml_root.add_ros_declaration(ros_rate_decl)
+    idle_state = ScxmlState(
+        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)])]
+    )
+    wait_res_state = ScxmlState(
+        "wait_tick_res",
+        body=[
+            # If we allow timer ticks here, the automata will generate timer callbacks and make the
+            # BT automaton transition to error state (since our concept of time is not real).
+            # RosRateCallback(ros_rate_decl, "error"),
+            BtChildStatus(0, "idle")
+        ],
+    )
+    error_state = ScxmlState("error")
+    bt_scxml_root.add_state(idle_state, initial=True)
+    bt_scxml_root.add_state(wait_res_state)
+    bt_scxml_root.add_state(error_state)
+    # The BT root's ID is set to -1 (unused anyway)
+    bt_scxml_root.set_bt_plugin_id(-1)
+    bt_scxml_root.append_bt_child_id(tick_id)
+    bt_scxml_root.instantiate_bt_information()
+    return bt_scxml_root
+
+
+def get_bt_plugin_type(bt_xml_subtree: ET.ElementBase) -> str:
+    """
+    Get the BT plugin node type from the XML subtree.
+    """
+    plugin_type = bt_xml_subtree.tag
+    assert plugin_type not in (
+        "BehaviorTree",
+        "SubTree",  # SubTrees support will be integrated later on
+        "root",
+    ), f"Error: Unexpected BT plugin tag {plugin_type}."
+    if plugin_type in ("Condition", "Action"):
+        plugin_type = bt_xml_subtree.attrib["ID"]
+    return plugin_type
+
+
+def get_bt_child_ports(bt_xml_subtree: ET.ElementBase) -> List[Tuple[str, str]]:
+    """
+    Get the ports of a BT child node.
+    """
+    ports = [(attr_key, attr_value) for attr_key, attr_value in bt_xml_subtree.attrib.items()]
+    return ports
+
+
+def generate_bt_children_scxmls(
+    bt_xml_subtree: ET.ElementBase,
+    subtree_tick_idx: int,
+    available_bt_plugins: Dict[str, ScxmlRoot],
+) -> List[ScxmlRoot]:
+    """
+    Generate the SCXML files for the children of a Behavior Tree.
+    """
     generated_scxmls: List[ScxmlRoot] = []
-    # Generate the instances of the plugins used in the BT
-    for node in bt_graph.nodes:
-        assert "category" in bt_graph.nodes[node], "Node must have a category."
-        if bt_graph.nodes[node]["category"] == NODE_CAT.LEAF:
-            leaf_node_ids.append(node)
-            assert "ID" in bt_graph.nodes[node], "Leaf node must have a type."
-            node_type = bt_graph.nodes[node]["ID"]
-            node_id = node
-            assert (
-                node_type in bt_plugins_scxmls
-            ), f"Leaf node must have a plugin. {node_type} not found."
-            instance_name = f"{node_id}_{node_type}"
-            scxml_plugin_instance: ScxmlRoot = deepcopy(bt_plugins_scxmls[node_type])
-            scxml_plugin_instance.set_name(instance_name)
-            scxml_plugin_instance.instantiate_bt_events(node_id)
-            bt_ports = [
-                (p_name, p_value)
-                for p_name, p_value in bt_graph.nodes[node].items()
-                if p_name not in RESERVED_BT_PORT_NAMES
-            ]
-            scxml_plugin_instance.set_bt_ports_values(bt_ports)
-            scxml_plugin_instance.update_bt_ports_values()
-            assert (
-                scxml_plugin_instance.check_validity()
-            ), f"Error: SCXML plugin instance {instance_name} is not valid."
-            generated_scxmls.append(scxml_plugin_instance)
-    # Generate the BT SCXML
-    fsm_graph = Bt2FSM(bt_graph).convert()
-    bt_scxml_root = ScxmlRoot("bt")
-    name_with_id_pattern = re.compile(r"[0-9]+_.+")
-    for node in fsm_graph.nodes:
-        state = ScxmlState(node)
-        node_id = None
-        if name_with_id_pattern.match(node):
-            node_id = int(node.split("_")[0])
-            if node_id in leaf_node_ids:
-                state.append_on_entry(ScxmlSend(bt_event_name(node_id, BT_EVENT_TYPE.TICK)))
-        for edge in fsm_graph.edges(node):
-            target = edge[1]
-            transition = ScxmlTransition(target)
-            if node_id is not None and node_id in leaf_node_ids:
-                if "label" not in fsm_graph.edges[edge]:
-                    continue
-                label = fsm_graph.edges[edge]["label"]
-                if label == "on_success":
-                    event_type = BT_EVENT_TYPE.SUCCESS
-                elif label == "on_failure":
-                    event_type = BT_EVENT_TYPE.FAILURE
-                elif label == "on_running":
-                    event_type = BT_EVENT_TYPE.RUNNING
-                else:
-                    raise ValueError(f"Invalid label: {label}")
-                event_name = bt_event_name(node_id, event_type)
-                transition.add_event(event_name)
-            state.add_transition(transition)
-        if node in ["success", "failure", "running"]:
-            state.add_transition(ScxmlTransition("wait_for_tick"))
-        bt_scxml_root.add_state(state)
-    # TODO: Make BT rate configurable, e.g. from main.xml
-    rtr = RosTimeRate("bt_tick", bt_tick_rate)
-    bt_scxml_root.add_ros_declaration(rtr)
-
-    wait_for_tick = ScxmlState("wait_for_tick")
-    wait_for_tick.add_transition(RosRateCallback(rtr, "tick"))
-    bt_scxml_root.add_state(wait_for_tick, initial=True)
-    assert bt_scxml_root.check_validity(), "Error: SCXML root tag is not valid."
-    generated_scxmls.append(bt_scxml_root)
-
+    plugin_type = get_bt_plugin_type(bt_xml_subtree)
+    assert (
+        plugin_type in available_bt_plugins
+    ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
+    bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
+    bt_plugin_scxml.set_name(f"{subtree_tick_idx}_{plugin_type}")
+    bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
+    bt_plugin_scxml.set_bt_ports_values(get_bt_child_ports(bt_xml_subtree))
+    generated_scxmls.append(bt_plugin_scxml)
+    next_tick_idx = subtree_tick_idx + 1
+    for child in bt_xml_subtree.getchildren():
+        bt_plugin_scxml.append_bt_child_id(next_tick_idx)
+        child_scxmls = generate_bt_children_scxmls(child, next_tick_idx, available_bt_plugins)
+        generated_scxmls.extend(child_scxmls)
+        next_tick_idx = generated_scxmls[-1].get_bt_plugin_id() + 1
+    bt_plugin_scxml.instantiate_bt_information()
     return generated_scxmls
