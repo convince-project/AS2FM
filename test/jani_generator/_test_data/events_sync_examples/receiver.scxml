@@ -13,13 +13,13 @@
 
     <state id="receive_a">
         <transition target="receive_b" event="msg_a">
-            <assign location="a_seq" expr="_event.seq" />
+            <assign location="a_seq" expr="_event.data.seq" />
         </transition>
     </state>
 
     <state id="receive_b">
         <transition target="receive_a" event="msg_b">
-            <assign location="b_seq" expr="_event.seq" />
+            <assign location="b_seq" expr="_event.data.seq" />
         </transition>
     </state>
 

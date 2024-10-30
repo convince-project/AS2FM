@@ -18,6 +18,7 @@ Utilities used to compare XML.
 """
 
 import re
+from copy import deepcopy
 
 from lxml import etree as ET
 
@@ -45,7 +46,9 @@ def canonicalize_xml(xml: str) -> str:
     assert isinstance(xml, str), f"Error: invalid input: expected str, found {type(xml)}"
     et = ET.fromstring(xml.encode("utf-8"))
     for elem in et.iter():
+        # Copy the attributes into a different variable, before clearing it away!
+        elem_attributes = deepcopy(elem.attrib)
         elem.attrib.clear()
-        for k in sorted(elem.keys()):
-            elem.set(k, elem.get(k))
+        for k in sorted(elem_attributes.keys()):
+            elem.set(k, elem_attributes[k])
     return remove_empty_lines(remove_comments(ET.tostring(et, encoding="unicode")))

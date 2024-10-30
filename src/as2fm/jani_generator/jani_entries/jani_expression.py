@@ -21,6 +21,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Tuple, Union
 
 from as2fm.jani_generator.jani_entries import JaniValue
+from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
 SupportedExp = Union[str, int, float, bool, dict, list]
 
@@ -190,20 +191,24 @@ class JaniExpression:
         raise RuntimeError("Unknown expression type")
 
     def replace_event(self, replacement: Optional[str]):
-        """Replace `_event` with `replacement`.
+        """Replace the default SCXML event prefix with the provided replacement.
 
-        Within a transitions, scxml can access data of events from the `_event` variable. We
-        have to replace this by the global variable where we stored the data from the received
+        Within a transitions, scxml can access to the event's parameters using a specific prefix.
+        We have to replace this by the global variable where we stored the data from the received
         event.
 
-        :param replacement: The string to replace `_event` with.
+        :param replacement: The string to replace `PLAIN_SCXML_EVENT_DATA_PREFIX` with.
         :return self: for the convenience of chain-ability
         """
         if replacement is None:
             # No replacement needed!
             return self
-        if self.identifier is not None and self.identifier.startswith("_event."):
-            self.identifier = f"{replacement}.{self.identifier.removeprefix('_event.')}"
+        if self.identifier is not None and self.identifier.startswith(
+            PLAIN_SCXML_EVENT_DATA_PREFIX
+        ):
+            self.identifier = (
+                f"{replacement}.{self.identifier.removeprefix(PLAIN_SCXML_EVENT_DATA_PREFIX)}"
+            )
             return self
         if self.value is not None:
             return self

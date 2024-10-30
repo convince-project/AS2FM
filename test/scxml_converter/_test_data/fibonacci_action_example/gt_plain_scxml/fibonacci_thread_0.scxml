@@ -13,9 +13,9 @@
                 <param name="thread_id" expr="0" />
             </send>
         </onentry>
-        <transition target="execute" event="action_fibonacci_thread_start" cond="_event.thread_id == 0">
-            <assign location="goal_id" expr="_event.goal_id" />
-            <assign location="order" expr="_event.ros_fields__order" />
+        <transition target="execute" event="action_fibonacci_thread_start" cond="_event.data.thread_id == 0">
+            <assign location="goal_id" expr="_event.data.goal_id" />
+            <assign location="order" expr="_event.data.ros_fields__order" />
         </transition>
     </state>
     <state id="execute">

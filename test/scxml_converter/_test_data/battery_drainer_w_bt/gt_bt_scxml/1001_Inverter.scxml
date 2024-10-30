@@ -10,17 +10,17 @@
         <onentry>
             <send event="bt_1002_tick"/>
         </onentry>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.status == 1">
+        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 1">
             <send event="bt_1001_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.status == 2">
+        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 2">
             <send event="bt_1001_response">
                 <param name="status" expr="1"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.status == 3">
+        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 3">
             <send event="bt_1001_response">
                 <param name="status" expr="3"/>
             </send>

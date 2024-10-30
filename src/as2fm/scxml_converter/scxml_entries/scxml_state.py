@@ -164,14 +164,20 @@ class ScxmlState(ScxmlBase):
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
 
-    def add_transition(self, transition: ScxmlTransition):
+    def add_transition(self, transition: ScxmlTransition) -> None:
         self._body.append(transition)
 
-    def append_on_entry(self, executable_entry: ScxmlExecutableEntry):
+    def append_on_entry(self, executable_entry: ScxmlExecutableEntry) -> None:
         self._on_entry.append(executable_entry)
 
-    def append_on_exit(self, executable_entry: ScxmlExecutableEntry):
+    def append_on_exit(self, executable_entry: ScxmlExecutableEntry) -> None:
         self._on_exit.append(executable_entry)
+
+    def set_on_entry(self, on_entry: ScxmlExecutionBody) -> None:
+        self._on_entry = on_entry
+
+    def set_on_exit(self, on_exit: ScxmlExecutionBody) -> None:
+        self._on_exit = on_exit
 
     def check_validity(self) -> bool:
         valid_id = isinstance(self._id, str) and len(self._id) > 0

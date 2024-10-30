@@ -19,7 +19,7 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 
 from copy import deepcopy
 from os.path import isfile
-from typing import List, Optional, Tuple, get_args
+from typing import List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
 
@@ -28,11 +28,13 @@ from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
     BtPortDeclarations,
+    EventsToAutomata,
     RosActionThread,
     ScxmlBase,
     ScxmlDataModel,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
+    add_targets_to_scxml_send,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
@@ -148,6 +150,27 @@ class ScxmlRoot(ScxmlBase):
 
     def get_states(self) -> List[ScxmlState]:
         return self._states
+
+    def get_transition_events(self) -> Set[str]:
+        """Generate the set of events that are expected by the SCXML automaton."""
+        assert self.is_plain_scxml(), (
+            f"Error: SCXML root: {self.get_name()} must be plain SCXML "
+            "for generating the list of transition events."
+        )
+        transition_events = set()
+        for state in self._states:
+            for transition in state.get_body():
+                transition_events.update({ev for ev in transition.get_events()})
+        return transition_events
+
+    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
+        for state in self._states:
+            state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
+            state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
+            for transition in state.get_body():
+                transition.set_body(
+                    add_targets_to_scxml_send(transition.get_body(), events_to_targets)
+                )
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:
@@ -332,9 +355,10 @@ class ScxmlRoot(ScxmlBase):
             )
         return (converted_scxmls, ros_declarations)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self, **kwargs) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid root object."
         assert self._initial_state is not None, "Error: SCXML root: no initial state set."
+        data_type_as_attribute = kwargs.get("data_type_as_attribute", True)
         xml_root = ET.Element(
             "scxml",
             {
@@ -346,7 +370,7 @@ class ScxmlRoot(ScxmlBase):
             },
         )
         if self._data_model is not None:
-            data_model_xml = self._data_model.as_xml()
+            data_model_xml = self._data_model.as_xml(data_type_as_attribute)
             assert data_model_xml is not None, "Error: SCXML root: invalid data model."
             xml_root.append(data_model_xml)
         for ros_declaration in self._ros_declarations:
@@ -358,5 +382,5 @@ class ScxmlRoot(ScxmlBase):
         ET.indent(xml_root, "    ")
         return xml_root
 
-    def as_xml_string(self) -> str:
-        return ET.tostring(self.as_xml(), encoding="unicode")
+    def as_xml_string(self, **kwargs) -> str:
+        return ET.tostring(self.as_xml(**kwargs), encoding="unicode")
