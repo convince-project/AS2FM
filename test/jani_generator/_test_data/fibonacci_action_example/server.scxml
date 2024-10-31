@@ -86,7 +86,7 @@
             <!-- Store a local copy of the received ID, to prevent it being changed while evaluating the if -->
             <!-- TODO:
             It might make sense to enforce the pattern of assigning event variables to local variables and
-            evaluate them afterwards, preventing event variables from being used after the intial assignment block.
+            evaluate them afterwards, preventing event variables from being used after the initial assignment block.
             This could solve problems with the event variables being changed by other actions in the meantime and
             evaluating the type of event variables at conversion time.
             -->
