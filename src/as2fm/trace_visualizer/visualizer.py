@@ -310,7 +310,7 @@ class Traces:
 
     def _get_data_per_automaton(self) -> Dict[str, List[str]]:
         """Returns a dictionary with the data column names that can be
-        somhow related to that automaton. This is only done by comparing
+        somehow related to that automaton. This is only done by comparing
         the name, so it is not perfect."""
         data_per_automaton: Dict[str, List[str]] = {automaton: [] for automaton in self.automata}
         for col in self.columns:

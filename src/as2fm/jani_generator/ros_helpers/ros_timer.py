@@ -148,7 +148,7 @@ def make_global_timer_automaton(
     timer_automaton.set_name(GLOBAL_TIMER_NAME)
     timer_automaton.add_location(LOC_NAME, is_initial=True)
 
-    # Check iif timers are correctly defined
+    # Check if timers are correctly defined
     assert len(timers) > 0, "At least one timer is required."
 
     # variables
