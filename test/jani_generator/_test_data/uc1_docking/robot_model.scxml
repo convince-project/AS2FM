@@ -25,38 +25,39 @@
     <ros_time_rate rate_hz="1" name="status_update" />
 
     <state id="running">
-    <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
-    The charging is enabled only the second time the robot reached the dock. -->
-    <ros_rate_callback name="status_update" target="running">
-        <assign location="cb_counter" expr="cb_counter + 1" />
-        <!-- After bumps, the robot cannot go forward -->
-        <if cond="has_bumped" />
-            <if cond="last_cmd &lt; 0" >
+        <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
+        The charging is enabled only the second time the robot reached the dock. -->
+        <ros_rate_callback name="status_update" target="running">
+            <assign location="cb_counter" expr="cb_counter + 1" />
+            <!-- After bumps, the robot cannot go forward -->
+            <if cond="has_bumped" />
+                <if cond="last_cmd &lt; 0" >
+                    <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
+                </if>
+            <else />
                 <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
             </if>
-        <else />
-            <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
-        </if>
-        <!-- Prevent the robot from going past the dock: raise a bump instead -->
-        <if cond="dist_to_dock < 0">
-            <assign location="dist_to_dock" expr="0" />
-            <assign location="has_bumped" expr="True" />
-            <ros_topic_publish name="bumper" />
-        </if>
-        <!-- Make sure that a cmd_vel command is used only once -->
-        <assign location="last_cmd" expr="0" />
-        <!-- Predictive bump event: it happens at the 5th callback -->
-        <if cond="cb_counter == 5" >
-            <assign location="has_bumped" expr="True" />
-            <ros_topic_publish name="bumper" />
-        </if>
-        <!-- Publish the robot pose -->
-        <ros_topic_publish name="dock_dist">
-            <field name="data" expr="dist_to_dock" />
-        </ros_topic_publish>
-        <!-- Publish wether it is charging -->
-        <ros_topic_publish name="charging">
-            <field name="data" expr="dist_to_dock == 0 && dock_attempt &gt; 0" />
-        </ros_topic_publish>
+            <!-- Prevent the robot from going past the dock: raise a bump instead -->
+            <if cond="dist_to_dock < 0">
+                <assign location="dist_to_dock" expr="0" />
+                <assign location="has_bumped" expr="True" />
+                <ros_topic_publish name="bumper" />
+            </if>
+            <!-- Make sure that a cmd_vel command is used only once -->
+            <assign location="last_cmd" expr="0" />
+            <!-- Predictive bump event: it happens at the 5th callback -->
+            <if cond="cb_counter == 5" >
+                <assign location="has_bumped" expr="True" />
+                <ros_topic_publish name="bumper" />
+            </if>
+            <!-- Publish the robot pose -->
+            <ros_topic_publish name="dock_dist">
+                <field name="data" expr="dist_to_dock" />
+            </ros_topic_publish>
+            <!-- Publish wether it is charging -->
+            <ros_topic_publish name="charging">
+                <field name="data" expr="dist_to_dock == 0 && dock_attempt &gt; 0" />
+            </ros_topic_publish>
+        </ros_rate_callback>
     </state>
 </scxml>
