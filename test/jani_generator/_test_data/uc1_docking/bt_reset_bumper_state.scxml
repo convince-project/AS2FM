@@ -6,14 +6,11 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_topic_publisher topic="charge" type="std_msgs/Empty" />
-
-    <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
-    <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
+    <ros_service_client name="reset_bump" srv_name="/reset_bump" type="std_srvs/Trigger" />
 
     <state id="initial">
         <bt_tick target="initial">
-            <ros_topic_publish name="charge" />
+            <ros_service_send_request name="reset_bump" />
             <bt_return_status status="SUCCESS" />
         </bt_tick>
     </state>
