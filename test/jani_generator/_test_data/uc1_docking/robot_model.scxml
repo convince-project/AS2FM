@@ -7,18 +7,20 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="dist_to_dock" expr="100" type="int16" />
+        <data id="dist_to_dock" expr="10" type="int16" />
         <data id="has_bumped" expr="False" type="bool" />
     </datamodel>
 
     <ros_topic_publisher topic="/bumper" type="std_msgs/Empty" />
     <ros_topic_publisher topic="/dist_to_dock" type="std_msgs/Int16" />
     <ros_topic_publisher topic="/battery_charging" type="std_msgs/Bool" />
-    <!-- TODO: Actually, this is rosgraph_msgs/msg/Clock, but requires nested msgs -->
-    <ros_topic_subscriber topic="/clock" type="builtin_interfaces/msg/Time" />
+
+    <ros_service_server srv_name="/reset_bump" type="std_srvs/Trigger" />
 
     <ros_time_rate rate_hz="1" name="sampling_timer" />
 
     <state id="running">
+    <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
+    The charging is enabled only the second time the robot reached the dock.-->
     </state>
 </scxml>
