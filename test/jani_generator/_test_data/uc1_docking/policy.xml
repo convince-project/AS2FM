@@ -7,7 +7,7 @@
                 </Inverter>
                 <Action ID="PerformDockingManeuver" name="docking_controller" topic="/dist_to_dock"/>
                 <Action ID="SimpleWait" name="wait_1_sec" wait_duration="1.0"/>
-                <Action ID="IsCharging" name="check_charing" topic="battery_charging" />
+                <Action ID="IsCharging" name="check_charging" topic="/battery_charging" />
             </ReactiveSequence>
             <Sequence name="clear_bump_and_backup">
                 <Action ID="ResetBumperState" name="reset_bump" />

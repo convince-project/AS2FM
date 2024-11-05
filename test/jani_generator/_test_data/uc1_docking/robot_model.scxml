@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="running"
+    version="1.0"
+    name="RobotModel"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="dist_to_dock" expr="100" type="int16" />
+        <data id="has_bumped" expr="False" type="bool" />
+    </datamodel>
+
+    <ros_topic_publisher topic="/bumper" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="/dist_to_dock" type="std_msgs/Int16" />
+    <ros_topic_publisher topic="/battery_charging" type="std_msgs/Bool" />
+    <!-- TODO: Actually, this is rosgraph_msgs/msg/Clock, but requires nested msgs -->
+    <ros_topic_subscriber topic="/clock" type="builtin_interfaces/msg/Time" />
+
+    <ros_time_rate rate_hz="1" name="sampling_timer" />
+
+    <state id="running">
+    </state>
+</scxml>
