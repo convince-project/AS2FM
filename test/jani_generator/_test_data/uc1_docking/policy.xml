@@ -1,19 +1,23 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="docking_uc1">
-        <Fallback>
-            <ReactiveSequence name="perform_docking_until_bump">
-                <Inverter>
-                    <Action ID="IsBumpDetected" name="bump_detector" /> <!-- topic="/bumper"/> -->
-                </Inverter>
-                <Action ID="PerformDockingManeuver" name="docking_controller" /> <!--  topic="/dist_to_dock"/> -->
-                <Action ID="SimpleWait" name="wait_1_sec" wait_duration="1.0"/>
-                <Action ID="IsCharging" name="check_charging" /> <!-- topic="/battery_charging" /> -->
-            </ReactiveSequence>
-            <Sequence name="clear_bump_and_backup">
-                <Action ID="ResetBumperState" name="reset_bump" />
-                <Action ID="BackUp" name="backup_robot" /> <!-- topic="/dist_to_dock" /> -->
-                <AlwaysFailure/>
-            </Sequence>
-        </Fallback>
+        <Sequence>
+            <Fallback name="test_target">
+                <ReactiveSequence name="perform_docking_until_bump">
+                    <Inverter>
+                        <Action ID="IsBumpDetected" name="bump_detector" /> <!-- topic="/bumper"/> -->
+                    </Inverter>
+                    <Action ID="PerformDockingManeuver" name="docking_controller" /> <!--  topic="/dist_to_dock"/> -->
+                    <Action ID="SimpleWait" name="wait_1_sec" wait_duration="1.0"/>
+                    <Action ID="IsCharging" name="check_charging" /> <!-- topic="/battery_charging" /> -->
+                </ReactiveSequence>
+                <Sequence name="clear_bump_and_backup">
+                    <Action ID="ResetBumperState" name="reset_bump" />
+                    <Action ID="BackUp" name="backup_robot" /> <!-- topic="/dist_to_dock" /> -->
+                    <AlwaysFailure/>
+                </Sequence>
+            </Fallback>
+            <!-- TODO: Add something to track the sequence of the Fallback above (just a publisher should do) -->
+            <!-- Proposal: In the future, a property like "BT Tree Success" could be useful! -->
+        </Sequence>
     </BehaviorTree>
 </root>
