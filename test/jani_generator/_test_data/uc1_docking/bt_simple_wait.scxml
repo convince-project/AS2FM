@@ -12,7 +12,7 @@
         <data id="wait_duration_s" expr="0" type="int16" />
     </datamodel>
 
-    <bt_port key="wait_duration" type="int16" />
+    <bt_declare_port_in key="wait_duration" type="int16" />
     <ros_time_rate rate_hz="10" name="wait_timer" />
 
     <state id="initial">

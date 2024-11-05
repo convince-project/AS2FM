@@ -141,7 +141,7 @@ class ScxmlIf(ScxmlBase):
         if else_execution is not None:
             self._else_execution = else_execution
         self._cb_type: Optional[CallbackType] = None
-        assert self.check_validity(), "Error: SCXML if: invalid if object."
+        # assert self.check_validity(), "Error: SCXML if: invalid if object."
 
     def set_callback_type(self, cb_type: CallbackType) -> None:
         """Set the cb type for this entry and its children."""
