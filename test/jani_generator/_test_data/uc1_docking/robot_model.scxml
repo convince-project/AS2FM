@@ -23,7 +23,7 @@
 
     <ros_service_server name="reset_bump" service_name="/reset_bump" type="std_srvs/Empty" />
 
-    <ros_time_rate rate_hz="1" name="status_update" />
+    <ros_time_rate rate_hz="5" name="status_update" />
 
     <state id="running">
         <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
