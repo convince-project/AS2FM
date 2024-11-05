@@ -17,7 +17,7 @@
 
     <state id="initial">
         <bt_tick target="initial">
-            <if cond="!waiting">
+            <if cond="waiting == false">  <!-- TODO: support !waiting later on-->
                 <assign location="waiting" expr="true" />
                 <assign location="n_waited" expr="0" />
                 <assign location="wait_duration_s">
