@@ -59,5 +59,14 @@
                 <field name="data" expr="dist_to_dock == 0 && dock_attempt &gt; 0" />
             </ros_topic_publish>
         </ros_rate_callback>
+        <!-- Store the cmd_vel received by the controller -->
+        <ros_topic_callback name="cmd" target="running">
+            <assign location="last_cmd" expr="_msg.data">
+        </ros_topic_callback>
+        <!-- Handle the reset bumper request -->
+        <ros_service_handle_request name="reset_bump" target="running">
+            <assign location="has_bumped" expr="False" />
+            <ros_service_send_response name="reset_bump" />
+        </ros_service_handle_request>
     </state>
 </scxml>
