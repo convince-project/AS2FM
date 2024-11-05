@@ -16,7 +16,7 @@
                                 "right": 0
                             },
                             "op": "∧",
-                            "right": "topic_level_msg.valid"
+                            "right": "topic_dist_to_dock_msg.valid"
                         }
                     }
                 },
