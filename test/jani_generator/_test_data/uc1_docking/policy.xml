@@ -7,7 +7,7 @@
                         <Action ID="IsBumpDetected" name="bump_detector" /> <!-- topic="/bumper"/> -->
                     </Inverter>
                     <Action ID="PerformDockingManeuver" name="docking_controller" /> <!--  topic="/dist_to_dock"/> -->
-                    <Action ID="SimpleWait" name="wait_1_sec" wait_duration="1.0"/>
+                    <Action ID="SimpleWait" name="wait_one_sec" wait_duration="1.0"/>
                     <Action ID="IsCharging" name="check_charging" /> <!-- topic="/battery_charging" /> -->
                 </ReactiveSequence>
                 <Sequence name="clear_bump_and_backup">
@@ -16,8 +16,9 @@
                     <AlwaysFailure/>
                 </Sequence>
             </Fallback>
-            <!-- TODO: Add something to track the sequence of the Fallback above (just a publisher should do) -->
+            <!-- Something to track the success of the Fallback above (just an empty msg publisher) -->
             <!-- Proposal: In the future, a property like "BT Tree Success" could be useful! -->
+            <Action ID="PublishEmptyMsg" name="tree_success" topic="/tree_succeeded" />
         </Sequence>
     </BehaviorTree>
 </root>
