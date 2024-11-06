@@ -8,10 +8,6 @@
 
     <ros_topic_publisher name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
 
-    <datamodel>
-        <data id="dock_dist" expr="-1" type="int16" />
-    </datamodel>
-
     <state id="initial">
         <bt_tick target="initial">
             <ros_topic_publish name="cmd">

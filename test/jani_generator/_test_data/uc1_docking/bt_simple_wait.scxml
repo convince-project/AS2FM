@@ -17,6 +17,7 @@
 
     <state id="initial">
         <bt_tick target="initial">
+            <!-- In a Reactive sequence, if another node fails we should reset this... -->
             <if cond="waiting == false">  <!-- TODO: support !waiting later on-->
                 <assign location="waiting" expr="true" />
                 <assign location="n_waited" expr="0" />
