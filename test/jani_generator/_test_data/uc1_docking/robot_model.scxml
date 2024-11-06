@@ -13,6 +13,8 @@
         <data id="has_bumped" expr="false" type="bool" />
         <data id="dock_attempt" expr="0" type="int16" />
         <data id="last_cmd" expr="0" type="int16" />
+        <data id="docked_time" expr="0" type="int16" />
+        <data id="charge_delay" expr="2" type="int16" />
     </datamodel>
 
     <ros_topic_publisher name="bumper" topic="/bumper" type="std_msgs/Empty" />
@@ -39,12 +41,18 @@
                 <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
             </if>
             <!-- Track how often we reach the dock -->
-            <if cond="last_cmd != 0 &amp;&amp; dist_to_dock == 0">
-                <assign location="dock_attempt" expr="dock_attempt + 1" />
+            <if cond="dist_to_dock == 0">
+                <if cond="last_cmd != 0">
+                    <assign location="dock_attempt" expr="dock_attempt + 1" />
+                    <assign location="docked_time" expr="0" />
+                <else />
+                    <assign location="docked_time" expr="docked_time + 1" />
+                </if>
             </if>
             <!-- Prevent the robot from going past the dock: raise a bump instead -->
             <if cond="dist_to_dock &lt; 0">
-                <assign location="dist_to_dock" expr="0" />
+                <!-- Upon bump, the robot reacts by going back a bit -->
+                <assign location="dist_to_dock" expr="1" />
                 <assign location="has_bumped" expr="true" />
                 <ros_topic_publish name="bumper" />
             </if>
@@ -61,7 +69,7 @@
             </ros_topic_publish>
             <!-- Publish wether it is charging: it will do so only at the second attempt (fake randomness) -->
             <ros_topic_publish name="charging">
-                <field name="data" expr="dist_to_dock == 0 &amp;&amp; dock_attempt &gt; 1" />
+                <field name="data" expr="dist_to_dock == 0 &amp;&amp; dock_attempt &gt; 1 &amp;&amp; docked_time &gt; charge_delay" />
             </ros_topic_publish>
         </ros_rate_callback>
         <!-- Store the cmd_vel received by the controller -->
