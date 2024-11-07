@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="initial"
+    version="1.0"
+    name="IsBumpDetected"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="state" expr="false" type="bool" />
+    </datamodel>
+
+    <ros_topic_subscriber name="bumper" topic="/bumper" type="std_msgs/Empty" />
+
+    <state id="initial">
+        <ros_topic_callback name="bumper" target="initial">
+            <assign location="state" expr="true" />
+        </ros_topic_callback>
+        <bt_tick target="initial">
+            <if cond="state">
+                <bt_return_status status="SUCCESS" />
+                <assign location="state" expr="false" />
+                <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+    </state>
+
+</scxml>

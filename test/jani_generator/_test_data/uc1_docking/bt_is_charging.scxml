@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="initial"
+    version="1.0"
+    name="IsCharging"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="last_msg" expr="false" type="bool" />
+    </datamodel>
+
+    <ros_topic_subscriber name="charging" topic="/battery_charging" type="std_msgs/Bool" />
+
+    <state id="initial">
+        <ros_topic_callback name="charging" target="initial">
+            <assign location="last_msg" expr="_msg.data" />
+        </ros_topic_callback>
+        <bt_tick target="initial">
+            <if cond="last_msg">
+                <bt_return_status status="SUCCESS" />
+                <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+    </state>
+
+</scxml>

@@ -310,8 +310,8 @@ As in the case of ROS functionalities, BT ports need to be declared before being
 
 .. code-block:: xml
 
-    <bt_port key="my_string_port" type="string" />
-    <bt_port key="start_value" type="int32">
+    <bt_declare_port_in key="my_string_port" type="string" />
+    <bt_declare_port_in key="start_value" type="int32">
 
 Once declared, it is possible to reference to the port in multiple SCXML entries.
 

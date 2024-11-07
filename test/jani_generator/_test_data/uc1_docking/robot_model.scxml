@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="running"
+    version="1.0"
+    name="RobotModel"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <!-- Counter for timer callbacks, for "random" bump event -->
+        <data id="cb_counter" expr="0" type="int64" />
+        <data id="dist_to_dock" expr="20" type="int16" />
+        <data id="has_bumped" expr="false" type="bool" />
+        <data id="dock_attempt" expr="0" type="int16" />
+        <data id="last_cmd" expr="0" type="int16" />
+        <data id="docked_time" expr="0" type="int16" />
+        <data id="charge_delay" expr="2" type="int16" />
+    </datamodel>
+
+    <ros_topic_publisher name="bumper" topic="/bumper" type="std_msgs/Empty" />
+    <ros_topic_publisher name="dock_dist" topic="/dist_to_dock" type="std_msgs/Int16" />
+    <ros_topic_publisher name="charging" topic="/battery_charging" type="std_msgs/Bool" />
+
+    <ros_topic_subscriber name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
+
+    <ros_service_server name="reset_bump" service_name="/reset_bump" type="std_srvs/Empty" />
+
+    <ros_time_rate rate_hz="5" name="status_update" />
+
+    <state id="running">
+        <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
+        The charging is enabled only the second time the robot reached the dock. -->
+        <ros_rate_callback name="status_update" target="running">
+            <assign location="cb_counter" expr="cb_counter + 1" />
+            <!-- After bumps, the robot cannot go forward -->
+            <if cond="has_bumped">
+                <if cond="last_cmd &lt; 0" >
+                    <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
+                </if>
+            <else />
+                <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
+            </if>
+            <!-- Track how often we reach the dock -->
+            <if cond="dist_to_dock == 0">
+                <if cond="last_cmd != 0">
+                    <assign location="dock_attempt" expr="dock_attempt + 1" />
+                    <assign location="docked_time" expr="0" />
+                <else />
+                    <assign location="docked_time" expr="docked_time + 1" />
+                </if>
+            </if>
+            <!-- Prevent the robot from going past the dock: raise a bump instead -->
+            <if cond="dist_to_dock &lt; 0">
+                <!-- Upon bump, the robot reacts by going back a bit -->
+                <assign location="dist_to_dock" expr="1" />
+                <assign location="has_bumped" expr="true" />
+                <ros_topic_publish name="bumper" />
+            </if>
+            <!-- Make sure that a cmd_vel command is used only once -->
+            <assign location="last_cmd" expr="0" />
+            <!-- Predictive bump event: it happens at the 5th callback -->
+            <if cond="cb_counter == 5" >
+                <assign location="has_bumped" expr="true" />
+                <ros_topic_publish name="bumper" />
+            </if>
+            <!-- Publish the robot pose -->
+            <ros_topic_publish name="dock_dist">
+                <field name="data" expr="dist_to_dock" />
+            </ros_topic_publish>
+            <!-- Publish wether it is charging: it will do so only at the second attempt (fake randomness) -->
+            <ros_topic_publish name="charging">
+                <field name="data" expr="dist_to_dock == 0 &amp;&amp; dock_attempt &gt; 1 &amp;&amp; docked_time &gt; charge_delay" />
+            </ros_topic_publish>
+        </ros_rate_callback>
+        <!-- Store the cmd_vel received by the controller -->
+        <ros_topic_callback name="cmd" target="running">
+            <assign location="last_cmd" expr="_msg.data"/>
+        </ros_topic_callback>
+        <!-- Handle the reset bumper request -->
+        <ros_service_handle_request name="reset_bump" target="running">
+            <assign location="has_bumped" expr="false" />
+            <ros_service_send_response name="reset_bump" />
+        </ros_service_handle_request>
+    </state>
+</scxml>

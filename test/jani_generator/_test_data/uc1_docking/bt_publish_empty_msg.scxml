@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="initial"
+    version="1.0"
+    name="PublishEmptyMsg"
+    model_src="">
+
+    <!-- The topic used to publish the tick count -->
+    <bt_declare_port_in key="topic" type="string" />
+
+    <ros_topic_publisher type="std_msgs/Empty" name="msg_pub">
+        <topic>
+            <bt_get_input key="topic" />
+        </topic>
+    </ros_topic_publisher>
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <ros_topic_publish name="msg_pub" />
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+    </state>
+
+</scxml>
