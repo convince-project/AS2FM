@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="idle"
+    version="1.0"
+    name="RecoverBlock"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_in key="block_id" type="int32" />
+
+    <!-- RecoverBlock is a client for the RecoverBlockSkill -->
+    <ros_action_client name="RecoverBlock_action" action_name="/uc2/skills/recover_block" type="uc2_interfaces/RecoverBlock" />
+
+    <datamodel>
+        <data id="skillResponse" expr="false" type="bool" />
+        <!-- This skill does not need to provide any measurable result, only success/failure -->
+    </datamodel>
+
+    <state id="idle">
+        <!-- If ticked, start the RecoverBlockSkill -->
+        <transition event="bt_tick" target="startSkill" />
+        <!-- If halted, do nothing-->
+        <!-- Do we expect a BT return from a halt request? -->
+        <!--<transition event="bt_halt" target="idle" />-->
+    </state>
+
+    <state id="startSkill">
+        <!-- Send an asynchronous request and answer RUNNING to the BT -->
+        <onentry>
+            <ros_action_send_goal name="RecoverBlock_action">
+                <field name="block_id">
+                  <expr>
+                    <bt_get_input key="block_id" />
+                  </expr>
+                </field>
+            </ros_action_send_goal>
+            <send event="bt_running" />
+        </onentry>
+        <ros_action_handle_goal_response name="RecoverBlock_action" accept="running" reject="startSkill" />
+    </state>
+
+    <state id="running">
+        <!-- If the RecoverBlock_action returns, go to answer state-->
+        <ros_action_handle_success_result name="RecoverBlock_action" target="answer">
+            <assign location="skillResponse" expr="true" />
+        </ros_action_handle_success_result>
+        <!--<ros_action_handle_canceled_result name="RecoverBlock_action" target="answer">
+            <assign location="skillResponse" expr="false" /> ???
+        </ros_action_handle_canceled_result>-->
+        <ros_action_handle_aborted_result name="RecoverBlock_action" target="answer">
+            <assign location="skillResponse" expr="false" />
+        </ros_action_handle_aborted_result>
+
+        <!-- If ticked, just answer RUNNING and stay in this state -->
+        <transition event="bt_tick" target="running">
+            <send event="bt_running" />
+        </transition>
+        <!-- If halted, send stop request to skill and go to idle state -->
+        <!--<transition event="bt_halt" target="idle">
+            <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME
+        </transition>-->
+    </state>
+
+    <state id="answer">
+        <!-- If halted, return to the idle state -->
+        <!--<transition event="bt_halt" target="idle" />-->
+        <!-- If ticked, send back an answer to the BT and go to idle state -->
+        <transition event="bt_tick" target="idle">
+            <if cond="skillResponse == true">
+                <send event="bt_success" />
+                <else />
+                <send event="bt_failure" />
+            </if>
+        </transition>
+    </state>
+</scxml>
