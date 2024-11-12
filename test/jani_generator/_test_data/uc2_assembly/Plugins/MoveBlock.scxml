@@ -14,7 +14,7 @@
     <datamodel>
         <data id="skillResponse" expr="false" type="bool" />
         <!-- This skill does not need to provide any measurable result, only success/failure -->
-        <!-- Alternatively, a result could be placement_error (float32) within acceptable bound --> 
+        <!-- Alternatively, a result could be placement_error (float32) within acceptable bound -->
     </datamodel>
 
     <state id="idle">
@@ -65,7 +65,7 @@
         </transition>
         <!-- If halted, send stop request to skill and go to idle state -->
         <!--<transition event="bt_halt" target="idle">
-            <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME 
+            <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME
         </transition>-->
     </state>
 
