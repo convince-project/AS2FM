@@ -18,10 +18,10 @@
 
     <state id="idle">
         <!-- If ticked, start the RecoverBlockSkill -->
-        <transition event="bt_tick" target="startSkill" />
+        <bt_tick target="startSkill" />
         <!-- If halted, do nothing-->
         <!-- Do we expect a BT return from a halt request? -->
-        <!--<transition event="bt_halt" target="idle" />-->
+        <!--<bt_halt target="idle" />-->
     </state>
 
     <state id="startSkill">
@@ -34,7 +34,7 @@
                   </expr>
                 </field>
             </ros_action_send_goal>
-            <send event="bt_running" />
+            <bt_return_status status="RUNNING" />
         </onentry>
         <ros_action_handle_goal_response name="RecoverBlock_action" accept="running" reject="startSkill" />
     </state>
@@ -52,25 +52,25 @@
         </ros_action_handle_aborted_result>
 
         <!-- If ticked, just answer RUNNING and stay in this state -->
-        <transition event="bt_tick" target="running">
-            <send event="bt_running" />
-        </transition>
+        <bt_tick target="running">
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
         <!-- If halted, send stop request to skill and go to idle state -->
-        <!--<transition event="bt_halt" target="idle">
+        <!--<bt_halt target="idle">
             <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME
-        </transition>-->
+        </bt_halt>-->
     </state>
 
     <state id="answer">
         <!-- If halted, return to the idle state -->
-        <!--<transition event="bt_halt" target="idle" />-->
+        <!--<bt_halt target="idle" />-->
         <!-- If ticked, send back an answer to the BT and go to idle state -->
-        <transition event="bt_tick" target="idle">
+        <bt_tick target="idle">
             <if cond="skillResponse == true">
-                <send event="bt_success" />
+                <bt_return_status status="SUCCESS" />
                 <else />
-                <send event="bt_failure" />
+                <bt_return_status status="FAILURE" />
             </if>
-        </transition>
+        </bt_tick>
     </state>
 </scxml>

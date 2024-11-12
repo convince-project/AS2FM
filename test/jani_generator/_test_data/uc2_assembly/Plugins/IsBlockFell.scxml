@@ -13,7 +13,7 @@
     </datamodel>
 
     <state id="idle">
-        <transition event="bt_tick" target="send_req" />
+        <bt_tick target="send_req" />
     </state>
 
     <state id="send_req">
@@ -26,27 +26,27 @@
 
     <state id="wait_answer">
         <!--<onentry>
-            <send event="bt_running" />
+            <bt_return_status status="RUNNING" />
         </onentry>
-        <transition event="bt_tick" target="wait_answer" />-->
+        <bt_tick target="wait_answer" />-->
         <ros_service_handle_response name="get_block_status" target="idle"> <!--target="answer">-->
             <assign location="block_down" expr="_res.block_down" />
             <if cond="block_down > 0">
-                <send event="bt_success" />
+                <bt_return_status status="SUCCESS" />
                 <else />
-                <send event="bt_failure" />
+                <bt_return_status status="FAILURE" />
             </if>
         </ros_service_handle_response>
     </state>
 
     <!--<state id="answer">
-        <transition event="bt_tick" target="idle">
+        <bt_tick target="idle">
             <if cond="block_down > 0">
-                <send event="bt_success" />
+                <bt_return_status status="SUCCESS" />
                 <else />
-                <send event="bt_failure" />
+                <bt_return_status status="FAILURE" />
             </if>
-        </transition>
+        </bt_tick>
     </state>-->
 
 </scxml>
