@@ -55,9 +55,17 @@ jobs:
               if: ${{ matrix.os == 'ubuntu-22.04' }}
             # lint packages
             # TODO: add linting
+            # Prepare ROS WS for the tests
+            - name: Install ROS support pkgs
+              run: |
+                source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                mkdir ros_interfaces_ws
+                ln -s ros_support_interfaces ros_interfaces_ws/src
+                cd ros_interfaces_ws
+                colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
             # run the tests
             - name: Run tests
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
-                source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                source ros_interfaces_ws/install/setup.bash
                 pytest-3 -vs test/
