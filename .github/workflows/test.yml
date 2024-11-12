@@ -60,8 +60,8 @@ jobs:
               run: |
                 source /opt/ros/${{ matrix.ros-distro }}/setup.bash
                 mkdir ros_interfaces_ws
-                ln -s ros_support_interfaces ros_interfaces_ws/src
                 cd ros_interfaces_ws
+                ln -s ../ros_support_interfaces src
                 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
             # run the tests
             - name: Run tests
