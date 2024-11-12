@@ -388,25 +388,27 @@ ____________
 
 The maximum time the global clock is allowed to reach.
 
-The tag defining it is `<max_time value="100" unit="s" />`. The `value` argument is the max time, and the argument `unit` specifies the time unit of the provided value. Supported units are `s`, `ms`, `us`, `ns`.
+The tag is called `max_time`. The `value` argument is the max time, and the argument `unit` specifies the time unit of the provided value. Supported units are `s`, `ms`, `us`, `ns`.
 
 Max Array Size
 _________________
 
 The maximum size assigned to a dynamic array.
 
-The tag defining it is `<max_array_size value="100" />`. The `value` argument defines the max size the dynamic array can reach, and is 100 by default.
+The tag is called `max_array_size`. The `value` argument defines the max size the dynamic array can reach, and is 100 by default.
 
 BT Tick Rate
 _________________
 
 The tick rate of the Behavior Tree (in Hz).
 
-The tag defining it is `<bt_tick_rate value="1.0">`. The `value` argument defines the tick rate in Hz, and is 1.0 by default.
+The tag is called `bt_tick_rate`. The `value` argument defines the tick rate in Hz, and is 1.0 by default.
 
 BT Tick If Not Running
 _________________________
 
 Whether we shall keep ticking a Behavior Tree after it returns something different from `RUNNING` (i.e. `SUCCESS` or `FAILURE`).
 
-The tag defining it is `<bt_tick_if_not_running value="false" />`. The `value` argument enables / disables the ticking of non-running Behavior Trees, and is set to `false` by default. After the tree is stopped, the model execution will stop as well.
+The tag is called `bt_tick_if_not_running`. The `value` argument enables or disables the ticking of non-running Behavior Trees, and is set to `false` by default. After the tree is stopped, the model execution will stop as well.
+
+For example `<bt_tick_if_not_running value="false" />` would stop ticking the tree after it returned either _SUCCESS_ or _FAILURE_.

@@ -46,10 +46,10 @@ class FullModel:
     max_time: Optional[int] = None
     # Max size of "dynamic" arrays defined in the SCXML models
     max_array_size: int = field(default=100)
-    # Tick rate for the loaded BT
+    # Tick rate for the loaded BT in Hz
     bt_tick_rate: float = field(default=1.0)
     # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
-    bt_tick_not_running: bool = field(default=False)
+    bt_tick_when_not_running: bool = field(default=False)
     # Path to the behavior tree loaded in the model
     bt: Optional[str] = None
     # Paths to the SCXML models of the BT nodes used in the model
@@ -101,7 +101,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_if_not_running":
-                    model.bt_tick_not_running = bool(mc_parameter.attrib["value"])
+                    model.bt_tick_when_not_running = bool(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         error(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -165,7 +165,9 @@ def generate_plain_scxml_models_and_timers(
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
         ros_scxmls.extend(
-            bt_converter(model.bt, model.plugins, model.bt_tick_rate, model.bt_tick_not_running)
+            bt_converter(
+                model.bt, model.plugins, model.bt_tick_rate, model.bt_tick_when_not_running
+            )
         )
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []

@@ -62,7 +62,7 @@ jobs:
                 mkdir ros_interfaces_ws
                 cd ros_interfaces_ws
                 ln -s ../ros_support_interfaces src
-                colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+                colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
             # run the tests
             - name: Run tests
               run: |
