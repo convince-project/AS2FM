@@ -100,7 +100,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
                     model.max_array_size = int(mc_parameter.attrib["value"])
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
-                elif remove_namespace(mc_parameter.tag) == "tick_if_not_running":
+                elif remove_namespace(mc_parameter.tag) == "bt_tick_if_not_running":
                     model.bt_tick_not_running = bool(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
