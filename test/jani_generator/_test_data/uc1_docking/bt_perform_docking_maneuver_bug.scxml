@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="initial"
+    version="1.0"
+    name="PerformDockingManeuver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_topic_publisher name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <ros_topic_publish name="cmd">
+                <field name="data" expr="2" />
+            </ros_topic_publish>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+    </state>
+
+</scxml>

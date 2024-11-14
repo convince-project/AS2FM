@@ -42,13 +42,23 @@ from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
 
 @dataclass()
 class FullModel:
+    # The maximum time the model is allowed to run, in nanoseconds
     max_time: Optional[int] = None
+    # Max size of "dynamic" arrays defined in the SCXML models
     max_array_size: int = field(default=100)
+    # Tick rate for the loaded BT in Hz
     bt_tick_rate: float = field(default=1.0)
+    # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
+    bt_tick_when_not_running: bool = field(default=False)
+    # Path to the behavior tree loaded in the model
     bt: Optional[str] = None
+    # Paths to the SCXML models of the BT nodes used in the model
     plugins: List[str] = field(default_factory=list)
+    # Paths to the SCXML models of the non-BT nodes in the model
     skills: List[str] = field(default_factory=list)
+    # Similar to the skills, currently unused
     components: List[str] = field(default_factory=list)
+    # Path to the properties definition, currently in JANI
     properties: List[str] = field(default_factory=list)
 
 
@@ -67,15 +77,7 @@ def _parse_time_element(time_element: ET.Element) -> int:
 
 def parse_main_xml(xml_path: str) -> FullModel:
     """
-    Interpret the top-level XML file as a dictionary.
-
-    The returned dictionary contains the following keys:
-    - max_time: The maximum time in nanoseconds.
-    - bt: The path to the Behavior Tree definition.
-    - plugins: A list of paths to the Behavior Tree plugins.
-    - skills: A list of paths to SCXML files encoding an FSM.
-    - components: Similar to skills, but representing abstract models of existing skills
-    - properties: A list of paths to Jani properties.
+    Interpret the top-level XML file and return it as a FullModel object.
     """
     # Used to generate absolute paths of scxml models
     folder_of_xml = os.path.dirname(xml_path)
@@ -98,6 +100,8 @@ def parse_main_xml(xml_path: str) -> FullModel:
                     model.max_array_size = int(mc_parameter.attrib["value"])
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
+                elif remove_namespace(mc_parameter.tag) == "bt_tick_if_not_running":
+                    model.bt_tick_when_not_running = bool(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         error(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -160,7 +164,11 @@ def generate_plain_scxml_models_and_timers(
         ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        ros_scxmls.extend(bt_converter(model.bt, model.plugins, model.bt_tick_rate))
+        ros_scxmls.extend(
+            bt_converter(
+                model.bt, model.plugins, model.bt_tick_rate, model.bt_tick_when_not_running
+            )
+        )
     # Convert the loaded entries to plain SCXML
     plain_scxml_models = []
     all_timers: List[RosTimer] = []

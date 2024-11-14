@@ -29,6 +29,7 @@ from as2fm.scxml_converter.scxml_entries import (
     BtTickChild,
     RosRateCallback,
     RosTimeRate,
+    ScxmlExecutionBody,
     ScxmlRoot,
     ScxmlState,
 )
@@ -60,10 +61,18 @@ def load_available_bt_plugins(bt_plugins_scxml_paths: List[str]) -> Dict[str, Sc
 
 
 def bt_converter(
-    bt_xml_path: str, bt_plugins_scxml_paths: List[str], bt_tick_rate: float
+    bt_xml_path: str,
+    bt_plugins_scxml_paths: List[str],
+    bt_tick_rate: float,
+    tick_if_not_running: bool,
 ) -> List[ScxmlRoot]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
+
+    :param bt_xml_path: Path to the xml file implementing the Behavior Tree.
+    :param bt_plugins_scxml_paths: Paths to the scxml files implementing the BT nodes (plugins).
+    :param bt_tick_rate: The rate at which the root of the input BT is ticked.
+    :param tick_if_not_running: If true, keep ticking the BT root after it stops returning RUNNING.
     """
     available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths)
     xml_tree: ET.ElementBase = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
@@ -78,36 +87,55 @@ def bt_converter(
     ), f"Error: Expected one BehaviorTree child, found {len(bt_children)}."
     root_child_tick_idx = 1000
     bt_name = os.path.basename(bt_xml_path).replace(".xml", "")
-    bt_scxml_root = generate_bt_root_scxml(bt_name, root_child_tick_idx, bt_tick_rate)
+    bt_scxml_root = generate_bt_root_scxml(
+        bt_name, root_child_tick_idx, bt_tick_rate, tick_if_not_running
+    )
     generated_scxmls = [bt_scxml_root] + generate_bt_children_scxmls(
         bt_children[0], root_child_tick_idx, available_bt_plugins
     )
     return generated_scxmls
 
 
-def generate_bt_root_scxml(scxml_name: str, tick_id: int, tick_rate: float) -> ScxmlRoot:
+def generate_bt_root_scxml(
+    scxml_name: str, tick_id: int, tick_rate: float, tick_if_not_running: bool
+) -> ScxmlRoot:
     """
     Generate the root SCXML for a Behavior Tree.
+
+    :param scxml_name: name of the scxml object to be generated.
+    :param tick_id: A tick ID for the BT Root node.
+    :param tick_rate: The rate at which the root is ticked.
+    :param tick_if_not_running: If true, tick the BT root after it stops returning RUNNING.
     """
     bt_scxml_root = ScxmlRoot(BT_ROOT_PREFIX + scxml_name)
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
     bt_scxml_root.add_ros_declaration(ros_rate_decl)
     idle_state = ScxmlState(
-        "idle", body=[RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)])]
+        "idle",
+        body=[
+            RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]),
+            BtChildStatus(0, "error"),
+        ],
+    )
+    tick_res_body: ScxmlExecutionBody = (
+        # In case we keep ticking after BT root finishes running
+        [BtChildStatus(0, "idle")]
+        if tick_if_not_running
+        # In case we stop the BT after the BT root result is not RUNNING
+        else [
+            BtChildStatus(0, "idle", "_bt.status == RUNNING"),
+            # This is the case in which BT-status != RUNNING
+            BtChildStatus(0, "done"),
+        ]
     )
     wait_res_state = ScxmlState(
         "wait_tick_res",
-        body=[
-            # If we allow timer ticks here, the automata will generate timer callbacks and make the
-            # BT automaton transition to error state (since our concept of time is not real).
-            # RosRateCallback(ros_rate_decl, "error"),
-            BtChildStatus(0, "idle")
-        ],
+        body=tick_res_body,
     )
-    error_state = ScxmlState("error")
     bt_scxml_root.add_state(idle_state, initial=True)
     bt_scxml_root.add_state(wait_res_state)
-    bt_scxml_root.add_state(error_state)
+    bt_scxml_root.add_state(ScxmlState("done"))
+    bt_scxml_root.add_state(ScxmlState("error"))
     # The BT root's ID is set to -1 (unused anyway)
     bt_scxml_root.set_bt_plugin_id(-1)
     bt_scxml_root.append_bt_child_id(tick_id)

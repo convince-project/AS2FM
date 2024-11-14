@@ -1,0 +1,24 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <max_array_size value="10" />
+        <bt_tick_rate value="0.5" />
+    </mc_parameters>
+
+    <behavior_tree>
+        <input type="bt.cpp-xml" src="./Policy0.xml" />
+        <input type="bt-plugin-ros-scxml" src="../Plugins/MoveBlock.scxml" />
+        <input type="bt-plugin-ros-scxml" src="../Plugins/RecoverBlock.scxml" />
+        <input type="bt-plugin-ros-scxml" src="../Plugins/IsBlockFell.scxml" />
+    </behavior_tree>
+
+    <node_models>
+        <input type="ros-scxml" src="../Skills/MoveBlockSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/RecoverBlockSkill.scxml" />
+        <input type="ros-scxml" src="../Components/Clock.scxml" />
+    </node_models>
+
+    <properties>
+        <input type="jani" src="./properties.jani" />
+    </properties>
+</convince_mc_tc>

@@ -1,0 +1,43 @@
+{
+    "properties": [
+        {
+            "name": "can_execute_recovery_branch",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "comment": "((abort_time > 0) ⇒ (clock < abort_time + 5000)) U (recover_block_running > 0)",
+                        "op": "U",
+                        "left": {
+                            "op": "⇒",
+                            "left": {
+                                "op": ">",
+                                "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__data",
+                                "right": 0
+                            },
+                            "right": {
+                                "op": "<",
+                                "left": "topic_uc2__info__clock_msg.ros_fields__data",
+                                "right": {
+                                  "op": "+",
+                                  "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__data",
+                                  "right": 5000
+                                }
+                            }
+                        },
+                        "right": {
+                            "op": ">",
+                            "left": "topic_uc2__info__properties__recover_block_running_msg.ros_fields__data",
+                            "right": 0
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

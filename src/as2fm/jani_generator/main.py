@@ -79,18 +79,26 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
         help="Path to the folder containing the generated plain-SCXML files.",
     )
     parser.add_argument(
-        "--jani-out-file", type=str, default="main.jani", help="Path to the generated jani file."
+        "--jani-out-file", type=str, default="", help="Path to the generated jani file."
     )
     parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
     args = parser.parse_args(_args)
 
+    # Check the main xml file provided by the user
     main_xml_file = args.main_xml
+    assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
+    assert main_xml_file.endswith(".xml"), "File {main_xml_file} is not a '.xml' file."
+    # Process additional, optional parameters
     scxml_out_dir = args.generated_scxml_dir
     scxml_out_dir = None if len(scxml_out_dir) == 0 else scxml_out_dir
-    jani_out_file = args.jani_out_file
-    # Very basic input args checks
-    assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
-    assert len(jani_out_file) > 0, "Output file not provided."
+    jani_out_file = (
+        args.jani_out_file
+        if len(args.jani_out_file) > 0
+        else main_xml_file.removesuffix("xml") + "jani"
+    )
+
+    print("AS2FM - SCXML to JANI.\n")
+    print(f"Loading model from {main_xml_file}.")
 
     interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
 

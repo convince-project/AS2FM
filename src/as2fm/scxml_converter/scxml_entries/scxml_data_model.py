@@ -80,8 +80,6 @@ class ScxmlDataModel(ScxmlBase):
         :param type_as_attribute: If True, store data types as arguments, if False as Comments
         """
         assert self.check_validity(), "SCXML: found invalid datamodel object."
-        if self._data_entries is None or len(self._data_entries) == 0:
-            return None
         xml_datamodel = ET.Element(ScxmlDataModel.get_tag_name())
         for data_entry in self._data_entries:
             if not type_as_attribute:
