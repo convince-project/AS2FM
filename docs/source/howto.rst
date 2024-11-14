@@ -390,6 +390,8 @@ The maximum time the global clock is allowed to reach.
 
 The tag is called `max_time`. The `value` argument is the max time, and the argument `unit` specifies the time unit of the provided value. Supported units are `s`, `ms`, `us`, `ns`.
 
+For example `<max_time value="100" unit="s" />` would allow the model to run for 100 seconds.
+
 Max Array Size
 _________________
 
@@ -397,12 +399,16 @@ The maximum size assigned to a dynamic array.
 
 The tag is called `max_array_size`. The `value` argument defines the max size the dynamic array can reach, and is 100 by default.
 
+For example `<max_array_size value="100" />` would allow dynamic arrays to contain up tp 100 entries.
+
 BT Tick Rate
 _________________
 
 The tick rate of the Behavior Tree (in Hz).
 
 The tag is called `bt_tick_rate`. The `value` argument defines the tick rate in Hz, and is 1.0 by default.
+
+For example `<bt_tick_rate value="10.0">` would tick the behavior tree with a frequency of _10Hz_.
 
 BT Tick If Not Running
 _________________________
