@@ -341,15 +341,80 @@ Or we can use `start_value` to define the initial value of a variable.
 BT ports can also be linked to variables in the `BT Blackboard` by wrapping the variable name in curly braces in the BT XML file. However, this feature is not yet supported.
 
 
-.. _additional_params_howto:
+.. _main_xml_howto:
 
-Additional Parameters for the Main XML file
--------------------------------------------
+The System Description (High Level XML file)
+---------------------------------------------
 
+This file references all the components defining the system, including the Behavior Tree, its plugins and the additional nodes that might be running on the side.
+Additionally, it contains additional configuration for the model, e.g. the maximum time the clock can reach or the tick rate of a Behavior Tree.
 
-.. _max_time_tag:
+An exemplary system description is the following:
+
+.. code-block:: xml
+
+    <convince_mc_tc>
+        <mc_parameters>
+            <max_time value="100" unit="s" />
+            <bt_tick_rate value="1.0" />
+            <bt_tick_if_not_running value="true" />
+        </mc_parameters>
+
+        <behavior_tree>
+            <input type="bt.cpp-xml" src="./bt.xml" />
+            <input type="bt-plugin-ros-scxml" src="./bt_topic_condition.scxml" />
+            <input type="bt-plugin-ros-scxml" src="./bt_topic_action.scxml" />
+        </behavior_tree>
+
+        <node_models>
+            <input type="ros-scxml" src="./battery_drainer.scxml" />
+            <input type="ros-scxml" src="./battery_manager.scxml" />
+        </node_models>
+
+        <properties>
+            <input type="jani" src="./battery_properties.jani" />
+        </properties>
+    </convince_mc_tc>
+
+.. _mc_parameters:
+
+Available Parameters
+~~~~~~~~~~~~~~~~~~~~~
+
+AS2FM provides a number of parameters to control the generation of the formal model. They are all contained in the tag `<mc_parameters>`.
 
 Max Time
-~~~~~~~~
+____________
 
-TODO
+The maximum time the global clock is allowed to reach.
+
+The tag is called `max_time`. The `value` argument is the max time, and the argument `unit` specifies the time unit of the provided value. Supported units are `s`, `ms`, `us`, `ns`.
+
+For example `<max_time value="100" unit="s" />` would allow the model to run for 100 seconds.
+
+Max Array Size
+_________________
+
+The maximum size assigned to a dynamic array.
+
+The tag is called `max_array_size`. The `value` argument defines the max size the dynamic array can reach, and is 100 by default.
+
+For example `<max_array_size value="100" />` would allow dynamic arrays to contain up tp 100 entries.
+
+BT Tick Rate
+_________________
+
+The tick rate of the Behavior Tree (in Hz).
+
+The tag is called `bt_tick_rate`. The `value` argument defines the tick rate in Hz, and is 1.0 by default.
+
+For example `<bt_tick_rate value="10.0">` would tick the behavior tree with a frequency of _10Hz_.
+
+BT Tick If Not Running
+_________________________
+
+Whether we shall keep ticking a Behavior Tree after it returns something different from `RUNNING` (i.e. `SUCCESS` or `FAILURE`).
+
+The tag is called `bt_tick_if_not_running`. The `value` argument enables or disables the ticking of non-running Behavior Trees, and is set to `false` by default. After the tree is stopped, the model execution will stop as well.
+
+For example `<bt_tick_if_not_running value="false" />` would stop ticking the tree after it returned either _SUCCESS_ or _FAILURE_.

@@ -4,9 +4,11 @@
         <ros_rate_callback name="bt_tick" target="wait_tick_res">
             <send event="bt_1000_tick"/>
         </ros_rate_callback>
+        <transition event="bt_1000_response" target="error"/>
     </state>
     <state id="wait_tick_res">
         <transition target="idle" event="bt_1000_response"/>
     </state>
+    <state id="done"/>
     <state id="error"/>
 </scxml>

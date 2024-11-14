@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="idle"
+    version="1.0"
+    name="RecoverBlockSkill"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- RecoverBlockSkill is a service client for /uc2/world/reset_block_status-->
+    <ros_service_client name="reset_block_status" service_name="/uc2/world/reset_block_status" type="std_srvs/Empty" />
+    <!-- action server part of RecoverBlockSkill -->
+    <ros_action_server name="RecoverBlock_action_srv" action_name="/uc2/skills/recover_block" type="uc2_interfaces/RecoverBlock" />
+    <!-- publish status info about starting/ending action execution -->
+    <ros_topic_publisher name="recover_block_running_pub" topic="/uc2/info/properties/recover_block_running" type="std_msgs/Int32" />
+
+    <datamodel>
+        <!-- Variables for action management -->
+        <data id="block_id" type="int32" expr="0" />
+        <data id="goal_id" type="int32" expr="0" />
+    </datamodel>
+
+    <state id="idle">
+        <onentry>
+            <ros_topic_publish name="recover_block_running_pub">
+				        <field name="data" expr="0" />
+            </ros_topic_publish>
+        </onentry>
+        <!-- If action called, accept goal -->
+        <ros_action_handle_goal name="RecoverBlock_action_srv" target="executing">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="block_id" expr="_goal.block_id" />
+            <ros_action_accept_goal name="RecoverBlock_action_srv" goal_id="goal_id" />
+        </ros_action_handle_goal>
+    </state>
+
+    <state id="executing">
+        <!-- send the query to reset the block status -->
+        <onentry>
+            <ros_topic_publish name="recover_block_running_pub">
+				        <field name="data" expr="1" />
+            </ros_topic_publish>
+            <ros_service_send_request name="reset_block_status">
+            </ros_service_send_request>
+        </onentry>
+        <ros_service_handle_response name="reset_block_status" target="done">
+        </ros_service_handle_response>
+    </state>
+
+    <state id="done">
+        <onentry>
+            <ros_action_succeed name="RecoverBlock_action_srv" goal_id="goal_id" />
+            <ros_topic_publish name="recover_block_running_pub">
+				        <field name="data" expr="0" />
+            </ros_topic_publish>
+        </onentry>
+    </state>
+</scxml>

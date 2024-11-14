@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="Policy0">
+
+  <BehaviorTree ID="Policy0">
+    <Sequence>
+      <Fallback>
+        <Inverter name="not">
+          <Condition name="BlockFell?" ID="IsBlockFell"/>
+        </Inverter>
+        <Action name="RecoverBlock" ID="RecoverBlock" block_id="0"/>
+      </Fallback>
+      <Action name="MoveBlock" ID="MoveBlock" block_id="0"/>
+    </Sequence>
+  </BehaviorTree>
+
+</root>

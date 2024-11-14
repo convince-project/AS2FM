@@ -402,17 +402,36 @@ class TestConversion(unittest.TestCase):
         )
 
     def test_uc1_docking(self):
-        """Test the robot demo."""
+        """Test the UC1 docking BT."""
         self._test_with_main(
             "uc1_docking", store_generated_scxmls=True, property_name="tree_success", success=True
         )
 
     def test_uc1_docking_bugged(self):
-        """Test the robot demo."""
+        """Test the UC1 docking BT (with a bug)."""
         self._test_with_main(
             "uc1_docking",
             model_xml="main_with_problem.xml",
             property_name="tree_success",
+            success=False,
+        )
+
+    @pytest.mark.skip(reason="Result is 0.98, need to find the 2 percent failures.")
+    def test_uc2_assembly(self):
+        """Test the UC2 BT example."""
+        self._test_with_main(
+            os.path.join("uc2_assembly", "Main"),
+            model_xml="main.xml",
+            property_name="can_execute_recovery_branch",
+            success=True,
+        )
+
+    def test_uc2_assembly_with_bug(self):
+        """Test the UC2 BT example, with bugged BT policy."""
+        self._test_with_main(
+            os.path.join("uc2_assembly", "Main"),
+            model_xml="main_bug.xml",
+            property_name="can_execute_recovery_branch",
             success=False,
         )
 
