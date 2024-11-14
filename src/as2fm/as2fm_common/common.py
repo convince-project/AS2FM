@@ -22,24 +22,20 @@ from typing import MutableSequence, Type, Union, get_args, get_origin
 
 from lxml.etree import _Comment, _Element
 
-"""
-Set of basic types that are supported by the Jani language.
-
-Basic types (from Jani docs):
-Types
-We cover only the most basic types at the moment.
-In the remainder of the specification, all requirements like "y must be of type x" are to be
-interpreted as "type x must be assignable from y's type".
-var BasicType = schema([
-"bool", // assignable from bool
-"int", // numeric; assignable from int and bounded int
-"real" // numeric; assignable from all numeric types
-]);
-src https://docs.google.com/document/d/\
-    1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
-
-Additionally, we support the array types from the array extension.
-"""
+# Set of basic types that are supported by the Jani language.
+# Basic types (from Jani docs):
+# Types
+# We cover only the most basic types at the moment.
+# In the remainder of the specification, all requirements like "y must be of type x" are to be
+# interpreted as "type x must be assignable from y's type".
+# var BasicType = schema([
+# "bool", // assignable from bool
+# "int", // numeric; assignable from int and bounded int
+# "real" // numeric; assignable from all numeric types
+# ]);
+# src https://docs.google.com/document/d/\
+#     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
+# Additionally, we support the array types from the array extension.
 ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 

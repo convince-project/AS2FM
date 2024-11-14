@@ -67,7 +67,7 @@
             <ros_topic_publish name="dock_dist">
                 <field name="data" expr="dist_to_dock" />
             </ros_topic_publish>
-            <!-- Publish wether it is charging: it will do so only at the second attempt (fake randomness) -->
+            <!-- Publish whether it is charging: it will do so only at the second attempt (fake randomness) -->
             <ros_topic_publish name="charging">
                 <field name="data" expr="dist_to_dock == 0 &amp;&amp; dock_attempt &gt; 1 &amp;&amp; docked_time &gt; charge_delay" />
             </ros_topic_publish>

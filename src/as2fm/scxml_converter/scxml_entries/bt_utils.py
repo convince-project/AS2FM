@@ -24,7 +24,7 @@ from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string": str}
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 
-"""List of keys that are not going to be read as BT ports from the BT XML definition."""
+# List of keys that are not going to be read as BT ports from the BT XML definition.
 RESERVED_BT_PORT_NAMES = ["ID", "name"]
 
 

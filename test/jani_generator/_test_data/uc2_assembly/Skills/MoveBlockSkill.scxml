@@ -8,7 +8,7 @@
 
     <!-- server part of MoveBlockSkill -->
     <ros_action_server name="MoveBlock_action_srv" action_name="/uc2/skills/move_block" type="uc2_interfaces/MoveBlock" />
-    <!-- service server regarding block_down informations -->
+    <!-- service server regarding block_down information -->
     <ros_service_server name="get_block_status_srv" service_name="/uc2/world/get_block_status" type="uc2_interfaces/GetBlockStatus" />
 	  <ros_service_server name="reset_block_status_srv" service_name="/uc2/world/reset_block_status" type="std_srvs/Empty" />
 

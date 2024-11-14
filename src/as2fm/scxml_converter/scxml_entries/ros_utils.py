@@ -33,8 +33,7 @@ BASIC_FIELD_TYPES = [
     "sequence<int32>",
 ]
 
-
-"""Container for the ROS interface name (e.g. topic or service name) and the related type"""
+# Container for the ROS interface name (e.g. topic or service name) and the related type
 RosInterfaceAndType = Tuple[str, str]
 
 
