@@ -3,5 +3,6 @@
 */**/main*.jani
 */**/*.csv
 */**/*.ods
+*/**/*.pu
 */output.jani
 */out

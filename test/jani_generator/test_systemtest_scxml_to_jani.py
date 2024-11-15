@@ -416,7 +416,6 @@ class TestConversion(unittest.TestCase):
             success=False,
         )
 
-    @pytest.mark.skip(reason="Result is 0.98, need to find the 2 percent failures.")
     def test_uc2_assembly(self):
         """Test the UC2 BT example."""
         self._test_with_main(

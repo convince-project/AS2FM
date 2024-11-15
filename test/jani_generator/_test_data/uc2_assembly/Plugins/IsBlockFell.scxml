@@ -21,15 +21,7 @@
             <ros_service_send_request name="get_block_status">
             </ros_service_send_request>
         </onentry>
-        <transition target="wait_answer" />
-    </state>
-
-    <state id="wait_answer">
-        <!--<onentry>
-            <bt_return_status status="RUNNING" />
-        </onentry>
-        <bt_tick target="wait_answer" />-->
-        <ros_service_handle_response name="get_block_status" target="idle"> <!--target="answer">-->
+        <ros_service_handle_response name="get_block_status" target="idle">
             <assign location="block_down" expr="_res.block_down" />
             <if cond="block_down > 0">
                 <bt_return_status status="SUCCESS" />
@@ -38,15 +30,5 @@
             </if>
         </ros_service_handle_response>
     </state>
-
-    <!--<state id="answer">
-        <bt_tick target="idle">
-            <if cond="block_down > 0">
-                <bt_return_status status="SUCCESS" />
-                <else />
-                <bt_return_status status="FAILURE" />
-            </if>
-        </bt_tick>
-    </state>-->
 
 </scxml>
