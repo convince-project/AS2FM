@@ -595,6 +595,8 @@ class StateTag(BaseTag):
     def add_unhandled_transitions(self, transitions_set: Set[str]):
         """Add self-loops for transitions that weren't handled yet."""
         for event_name in transitions_set:
+            if not self._generate_empty_event_transitions:
+                continue
             if event_name in self._events_no_condition or len(event_name) == 0:
                 continue
             guard_exp = self.get_guard_exp_for_prev_conditions(event_name)
@@ -616,6 +618,8 @@ class StateTag(BaseTag):
             self._events_no_condition.append(event_name)
 
     def write_model(self):
+        # Whether we should auto-generate empty self-loops for unhandled events
+        has_event_transition: bool = False
         state_name = self.element.get_id()
         self.automaton.add_location(state_name)
         # Dictionary tracking the conditional trigger-based transitions
@@ -625,7 +629,11 @@ class StateTag(BaseTag):
         for child in self.children:
             transition_events = child.element.get_events()
             assert len(transition_events) <= 1, "Multiple events in a transition not supported."
-            transition_event: str = "" if len(transition_events) == 0 else transition_events[0]
+            if len(transition_events) == 0:
+                transition_event: str = ""
+            else:
+                transition_event = transition_events[0]
+                has_event_transition = True
             assert transition_event not in self._events_no_condition, (
                 f"Event {transition_event} in state {self.element.get_id()} has already a base"
                 "exit condition."
@@ -645,6 +653,12 @@ class StateTag(BaseTag):
                 if transition_event not in self._event_to_conditions:
                     self._event_to_conditions[transition_event] = []
                 self._event_to_conditions[transition_event].append(transition_condition)
+        # if "" in self._events_no_condition, then we can transition to new states without events
+        assert not (has_event_transition and "" in self._events_no_condition), (
+            f"Model {self.call_trace[0].get_name()} at state {self.element.get_id()} can always "
+            "transition without an event trigger: not event-based transitions expected."
+        )
+        self._generate_empty_event_transitions = "" not in self._events_no_condition
 
 
 class TransitionTag(BaseTag):
