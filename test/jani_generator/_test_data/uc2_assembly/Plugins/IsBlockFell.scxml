@@ -21,6 +21,10 @@
             <ros_service_send_request name="get_block_status">
             </ros_service_send_request>
         </onentry>
+        <transition target="wait_answer" />
+    </state>
+
+    <state id="wait_answer">
         <ros_service_handle_response name="get_block_status" target="idle">
             <assign location="block_down" expr="_res.block_down" />
             <if cond="block_down > 0">

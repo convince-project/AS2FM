@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
     xmlns="http://www.w3.org/2005/07/scxml"
-    initial="wait_for_tick"
+    initial="init"
     version="1.0"
     name="IfThenElse"
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/controls/if_then_else_node.cpp">
@@ -18,9 +18,14 @@
         </data>
     </datamodel>
 
-    <state id="wait_for_tick">
-        <!-- Check if the state is valid. If not, go to error and stop -->
+    <state id="init">
+        <!-- Check if the config is valid. If not, go to error and stop -->
         <transition target="error" cond="children_count &lt; 2 || children_count > 3" />
+        <!-- The condition here will be the negation of the one above -->
+        <transition target="wait_for_tick" />
+    </state>
+
+    <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
         <bt_tick cond="child_idx == 0" target="tick_condition_child" />
         <bt_tick cond="child_idx > 0" target="tick_exec_child" />

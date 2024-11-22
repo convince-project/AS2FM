@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
     xmlns="http://www.w3.org/2005/07/scxml"
-    initial="wait_for_tick"
+    initial="init"
     version="1.0"
     name="Sequence"
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/controls/sequence_node.cpp">
@@ -18,9 +18,14 @@
         </data>
     </datamodel>
 
-    <state id="wait_for_tick">
-        <!-- Check if the state is valid. If not, go to error and stop -->
+    <state id="init">
+        <!-- Check if the config is valid. If not, go to error and stop -->
         <transition target="error" cond="children_count &lt; 1" />
+        <!-- The condition here will be the negation of the one above -->
+        <transition target="wait_for_tick" />
+    </state>
+
+    <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
         <bt_tick target="tick_children"/>
     </state>
