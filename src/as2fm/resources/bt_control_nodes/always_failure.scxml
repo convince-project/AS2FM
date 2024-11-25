@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
     xmlns="http://www.w3.org/2005/07/scxml"
-    initial="idle"
+    initial="init"
     version="1.0"
     name="AlwaysFailure"
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/include/behaviortree_cpp_v3/actions/always_failure_node.h">
@@ -17,9 +17,14 @@
         </data>
     </datamodel>
 
-    <state id="idle">
-        <!-- Check if the state is valid. If not, go to error and stop -->
+    <state id="init">
+        <!-- Check if the config is valid. If not, go to error and stop -->
         <transition target="error" cond="children_count != 0" />
+        <!-- The condition here will be the negation of the one above -->
+        <transition target="idle" />
+    </state>
+
+    <state id="idle">
         <!-- React to an incoming BT Tick -->
         <bt_tick target="idle">
             <bt_return_status status="FAILURE" />
