@@ -7,10 +7,10 @@
 
     <datamodel>
         <data id="n" type="int" expr="10" />  <!-- grid size -->
-        <data id="pose_x" type="int" expr="Math.floor(Math.random() * n)" />
-        <data id="pose_y" type="int" />
-        <data id="goal_x" type="int" />
-        <data id="goal_y" type="int" />
+        <data id="pose_x" type="int32" expr="Math.floor(Math.random() * n)" />
+        <data id="pose_y" type="int32" />
+        <data id="goal_x" type="int32" />
+        <data id="goal_y" type="int32" />
     </datamodel>
 
     <ros_topic_subscriber topic="move" type="std_msgs/Int16" />
