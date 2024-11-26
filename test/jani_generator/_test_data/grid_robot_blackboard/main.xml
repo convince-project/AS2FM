@@ -1,0 +1,19 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <max_array_size value="10" />
+    </mc_parameters>
+
+    <behavior_tree>
+        <input type="bt.cpp-xml" src="./bt.xml" />
+        <!-- TODO -->
+    </behavior_tree>
+
+    <node_models>
+        <input type="ros-scxml" src="./world.scxml" />
+    </node_models>
+
+    <properties>
+        <input type="jani" src="./properties.jani" />
+    </properties>
+</convince_mc_tc>

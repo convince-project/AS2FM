@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    version="1.0"
+    name="world"
+    initial="init">
+
+    <datamodel>
+        <data id="pose_x" type="int" />
+        <data id="pose_y" type="int" />
+        <data id="goal_x" type="int" />
+        <data id="goal_y" type="int" />
+    </datamodel>
+
+    <ros_topic_subscriber topic="move" type="std_msgs/Int16" />
+    <!--
+        0: right,
+        1: left,
+        2: up,
+        3: down
+    -->
+    <ros_topic_publisher topic="pose" type="grid_robot_interfaces/Int2D" />
+    <ros_topic_publisher topic="goal" type="grid_robot_interfaces/Int2D" />
+
+
+    <state name="init">
+        <onentry>
+            <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish>
+        </onentry>
+
+
+
+    </state>
+
+    <state name="new_goal">
+        <onentry>
+            <ros_topic_publish name="goal">
+                <field name="x" expr="goal_x" />
+                <field name="y" expr="goal_y" />
+            </ros_topic_publish>
+        </onentry>
+        <transition target="init">
+
+
+        </transition>
+    </state>
