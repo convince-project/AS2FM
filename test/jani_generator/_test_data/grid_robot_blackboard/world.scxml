@@ -5,45 +5,56 @@
     name="world"
     initial="init">
 
-    <datamodel>
-        <data id="pose_x" type="int" />
-        <data id="pose_y" type="int" />
-        <data id="goal_x" type="int" />
-        <data id="goal_y" type="int" />
-    </datamodel>
+<datamodel>
+    <data id="n" type="int" expr="10" />  <!-- grid size -->
+    <data id="pose_x" type="int" />
+    <data id="pose_y" type="int" />
+    <data id="goal_x" type="int" />
+    <data id="goal_y" type="int" />
+</datamodel>
 
-    <ros_topic_subscriber topic="move" type="std_msgs/Int16" />
-    <!--
+<ros_topic_subscriber topic="move" type="std_msgs/Int16" />
+<!--
         0: right,
         1: left,
         2: up,
         3: down
     -->
-    <ros_topic_publisher topic="pose" type="grid_robot_interfaces/Int2D" />
-    <ros_topic_publisher topic="goal" type="grid_robot_interfaces/Int2D" />
+<ros_topic_publisher topic="pose" type="grid_robot_interfaces/Int2D" />
+<ros_topic_publisher topic="goal" type="grid_robot_interfaces/Int2D" />
 
-
-    <state name="init">
-        <onentry>
-            <ros_topic_publish name="pose">
-                <field name="x" expr="pose_x" />
-                <field name="y" expr="pose_y" />
-            </ros_topic_publish>
-        </onentry>
-
-
-
-    </state>
-
-    <state name="new_goal">
-        <onentry>
+<state name="init">
+    <onentry>
+        <!-- if at goal -->
+        <if cond="pose_x == goal_x and pose_y == goal_y">
+            <assign location="goal_x" expr="Math.floor(Math.random() * n)" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * n)" />
             <ros_topic_publish name="goal">
                 <field name="x" expr="goal_x" />
                 <field name="y" expr="goal_y" />
             </ros_topic_publish>
-        </onentry>
-        <transition target="init">
+        </if>
+    </onentry>
+
+    <ros_topic_callback name="move">
+        <if cond="_msg.data == 0 and pose_x &lt; n - 1">
+            <!-- right -->
+            <assign location="pose_x" expr="pose_x + 1" />
+            <elseif cond="_msg.data == 1 and pose_x &gt; 0" />
+            <!-- left -->
+            <assign location="pose_x" expr="pose_x - 1" />
+            <elseif cond="_msg.data == 2 and pose_y &lt; n - 1" />
+            <!-- up -->
+            <assign location="pose_y" expr="pose_y + 1" />
+            <elseif cond="_msg.data == 3 and pose_y &gt; 0" />
+            <!-- down -->
+            <assign location="pose_y" expr="pose_y - 1" />
+        </if>
+        <ros_topic_publish name="pose">
+            <field name="x" expr="pose_x" />
+            <field name="y" expr="pose_y" />
+        </ros_topic_publish>
+    </ros_topic_callback>
 
 
-        </transition>
-    </state>
+</state>
