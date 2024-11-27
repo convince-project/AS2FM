@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
-    initial="initial"
+    initial="running"
     version="1.0"
-    name="IsCharging"
+    name="UpdateGoalAndCurrentPosition"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
@@ -25,27 +25,27 @@
         <topic>
             <bt_get_input key="curr_topic" />
         </topic>
-    </ros_topic_publisher>
+    </ros_topic_subscriber>
 
     <ros_topic_subscriber name="goal_sub" type="grid_robot_interfaces/Int2D">
         <topic>
             <bt_get_input key="goal_topic" />
         </topic>
-    </ros_topic_publisher>
+    </ros_topic_subscriber>
 
-    <state id="initial">
+    <state id="running">
         <!-- New robot goal -->
-        <ros_topic_callback name="goal_sub" target="initial">
+        <ros_topic_callback name="goal_sub" target="running">
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />
         </ros_topic_callback>
         <!-- New robot pose -->
-        <ros_topic_callback name="curr_sub" target="initial">
+        <ros_topic_callback name="curr_sub" target="running">
             <assign location="curr_x" expr="_msg.x" />
             <assign location="curr_y" expr="_msg.y" />
         </ros_topic_callback>
         <!-- Leaf node tick -->
-        <bt_tick target="initial">
+        <bt_tick target="running">
             <if cond="is_init">
                 <bt_set_output key="goal_x" expr="goal_x" />
                 <bt_set_output key="goal_y" expr="goal_y" />

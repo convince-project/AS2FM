@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="running"
+    version="1.0"
+    name="ShallMove"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!--
+        Movement enum in the world.
+        0: right,
+        1: left,
+        2: up,
+        3: down
+    -->
+    <bt_declare_port_in key="direction" type="int32" />
+    <bt_declare_port_in key="cmd_topic" type="string" />
+
+    <ros_topic_publisher name="move_pub" type="std_msgs/Int16">
+        <topic>
+            <bt_get_input key="cmd_topic" />
+        </topic>
+    </ros_topic_publisher>
+
+    <state id="running">
+        <bt_tick target="running">
+            <ros_topic_publish name="goal">
+                <field name="data">
+                    <expr>
+                        <bt_get_input key="direction" />
+                    </expr>
+                </field>
+            </ros_topic_publish>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+    </state>
+
+</scxml>
