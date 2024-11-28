@@ -165,7 +165,15 @@ class BtPortsHandler:
 
     def get_out_port_value(self, port_name: str) -> str:
         """Get the value of an output port."""
-        raise NotImplementedError("Error: Output ports are not supported yet.")
+        assert self.out_port_exists(
+            port_name
+        ), f"Error: Port {port_name} is not declared as input port."
+        port_value = self._out_ports[port_name][1]
+        assert port_value is not None, f"Error: Port {port_name} has no assigned value."
+        assert is_blackboard_reference(
+            port_value
+        ), f"Error: Port {port_name} should be a blackboard reference, found value {port_value}"
+        return port_value
 
     def set_port_value(self, port_name: str, port_value: str) -> None:
         """Set the value of a port."""
@@ -175,8 +183,7 @@ class BtPortsHandler:
             self._set_out_port_value(port_name, port_value)
         else:
             # The reserved port IDs can be set in the bt.xml even if they are unused in the plugin
-            if port_name not in RESERVED_BT_PORT_NAMES:
-                raise RuntimeError(f"Error: Port {port_name} is not declared.")
+            assert port_name in RESERVED_BT_PORT_NAMES, f"Error: Port {port_name} is not declared."
 
     def _set_in_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
@@ -185,16 +192,20 @@ class BtPortsHandler:
         ), f"Error: Port {port_name} is not declared as input port."
         assert (
             self._in_ports[port_name][1] is None
-        ), f"Error: Port {port_name} already has a value assigned."
+        ), f"Error: Value of port {port_name} already assigned."
         port_type = self._in_ports[port_name][0]
-        # Ensure this is not a Blackboard variable reference: currently not supported
-        if is_blackboard_reference(port_value):
-            raise NotImplementedError(
-                f"Error: {port_value} assigns a Blackboard variable  to {port_name}. "
-                "This is not yet supported."
-            )
         self._in_ports[port_name] = (port_type, port_value)
 
     def _set_out_port_value(self, port_name: str, port_value: str):
         """Set the value of an output port."""
-        raise NotImplementedError("Error: Output ports are not supported yet.")
+        assert self.out_port_exists(
+            port_name
+        ), f"Error: Port {port_name} is not declared as output port."
+        assert (
+            self._out_ports[port_name][1] is None
+        ), f"Error: Value of port {port_name} already assigned."
+        assert is_blackboard_reference(
+            port_value
+        ), f"Error: value of output port {port_name} must be a blackboard variable."
+        port_type = self._out_ports[port_name][0]
+        self._out_ports[port_name] = (port_type, port_value)
