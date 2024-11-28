@@ -235,6 +235,14 @@ class ScxmlRoot(ScxmlBase):
         for port_name, port_value in ports_values:
             self.set_bt_port_value(port_name, port_value)
 
+    def get_bt_ports_types_values(self) -> List[Tuple[str, str, str]]:
+        """
+        Get information about the BT ports in the model.
+
+        :return: A list of Tuples containing bt_port_name, type and value.
+        """
+        return [(p_name, p_type, p_value) for p_name, (p_type, p_value) in self._bt_ports_handler]
+
     def append_bt_child_id(self, child_id: int):
         """Append a child ID to the list of child IDs."""
         assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."

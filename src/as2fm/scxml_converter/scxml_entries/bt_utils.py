@@ -82,6 +82,12 @@ def is_blackboard_reference(port_value: str) -> bool:
     return re.match(r"\{.+\}", port_value) is not None
 
 
+def get_blackboard_variable_name(port_value: str) -> str:
+    assert is_blackboard_reference(
+        port_value
+    ), f"Error: expected '{port_value}' to be a reference to a blackboard variable."
+
+
 class BtPortsHandler:
     """Collector for declared BT ports and their assigned value."""
 
@@ -97,7 +103,7 @@ class BtPortsHandler:
     def __init__(self):
         # For each port name, store the port type string and value.
         self._in_ports: Dict[str, Tuple[str, str]] = {}
-        self._out_ports: Dict[str, Tuple[Type, str]] = {}
+        self._out_ports: Dict[str, Tuple[str, str]] = {}
 
     def in_port_exists(self, port_name: str) -> bool:
         """Check if an input port exists."""
@@ -143,6 +149,10 @@ class BtPortsHandler:
             return self.get_out_port_value(port_name)
         else:
             raise RuntimeError(f"Error: Port {port_name} is not declared.")
+
+    def get_all_ports(self) -> Dict[str, Tuple[str, str]]:
+        """Get all declaed ports as a dict referencing port names to type and value."""
+        return self._in_ports | self._out_ports
 
     def get_in_port_value(self, port_name: str) -> str:
         """Get the value of an input port."""

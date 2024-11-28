@@ -36,7 +36,7 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
-from as2fm.scxml_converter.bt_converter import bt_converter
+from as2fm.scxml_converter.bt_converter import bt_converter, get_blackboard_variables_from_models
 from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
 
 
@@ -174,6 +174,8 @@ def generate_plain_scxml_models_and_timers(
     all_timers: List[RosTimer] = []
     all_services: Dict[str, RosCommunicationHandler] = {}
     all_actions: Dict[str, RosCommunicationHandler] = {}
+    bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_scxmls)
+    print(bt_blackboard_vars)
     for scxml_entry in ros_scxmls:
         plain_scxmls, ros_declarations = scxml_entry.to_plain_scxml_and_declarations()
         # Handle ROS timers

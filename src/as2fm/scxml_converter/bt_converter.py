@@ -33,8 +33,34 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlRoot,
     ScxmlState,
 )
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    get_blackboard_variable_name,
+    is_blackboard_reference,
+)
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
+
+
+def get_blackboard_variables_from_models(models: List[ScxmlRoot]) -> Dict[str, str]:
+    """
+    Collect all blackboard variables and return them as a dictionary.
+
+    :param models: List of ScxmlModel to extract the information from.
+    :return: Dictionary with name and type of the detected blackboard variable.
+    """
+    blackboard_vars: Dict[str, str] = {}
+    for scxml_model in models:
+        declared_ports: List[Tuple[str, str, str]] = scxml_model.get_bt_ports_types_values()
+        for p_name, p_type, p_value in declared_ports:
+            assert (
+                p_value is not None
+            ), f"Error in model {scxml_model.get_name()}: undefined value in {p_name} BT port."
+            if is_blackboard_reference(p_value):
+                var_name = get_blackboard_variable_name(p_value)
+                existing_bt_type = blackboard_vars.get(var_name)
+                assert existing_bt_type is None or existing_bt_type == p_type
+                blackboard_vars.update({var_name: p_type})
+    return blackboard_vars
 
 
 def is_bt_root_scxml(scxml_name: str) -> bool:
