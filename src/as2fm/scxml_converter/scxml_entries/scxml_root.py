@@ -241,7 +241,10 @@ class ScxmlRoot(ScxmlBase):
 
         :return: A list of Tuples containing bt_port_name, type and value.
         """
-        return [(p_name, p_type, p_value) for p_name, (p_type, p_value) in self._bt_ports_handler]
+        return [
+            (p_name, p_type, p_value)
+            for p_name, (p_type, p_value) in self._bt_ports_handler.get_all_ports().items()
+        ]
 
     def append_bt_child_id(self, child_id: int):
         """Append a child ID to the list of child IDs."""
@@ -261,9 +264,13 @@ class ScxmlRoot(ScxmlBase):
             ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
         for scxml_thread in self._additional_threads:
             scxml_thread.update_bt_ports_values(self._bt_ports_handler)
+        processed_states: List[ScxmlState] = []
         for state in self._states:
-            state.instantiate_bt_events(self._bt_plugin_id, self._bt_children_ids)
-            state.update_bt_ports_values(self._bt_ports_handler)
+            processed_states.extend(
+                state.instantiate_bt_events(
+                    self._bt_plugin_id, self._bt_children_ids, self._bt_ports_handler
+                )
+            )
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""

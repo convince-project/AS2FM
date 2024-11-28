@@ -142,7 +142,9 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> None:
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    ) -> List["ScxmlState"]:
         """Instantiate the BT events in all entries belonging to a state."""
         instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
@@ -154,6 +156,9 @@ class ScxmlState(ScxmlBase):
         self._body = instantiated_transitions
         instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
         instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
+        self.update_bt_ports_values(bt_ports_handler)
+        # TODO: Split this state in two parts if there are blackboard vars
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
