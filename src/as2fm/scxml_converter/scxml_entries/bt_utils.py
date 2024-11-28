@@ -104,6 +104,11 @@ class BtPortsHandler:
         # For each port name, store the port type string and value.
         self._in_ports: Dict[str, Tuple[str, str]] = {}
         self._out_ports: Dict[str, Tuple[str, str]] = {}
+        self._has_bt_references: bool = False
+
+    def has_bt_references(self) -> bool:
+        """Boolean check reporting whether any port references blackboard variables or not."""
+        return self._has_bt_references
 
     def in_port_exists(self, port_name: str) -> bool:
         """Check if an input port exists."""
@@ -184,6 +189,8 @@ class BtPortsHandler:
         else:
             # The reserved port IDs can be set in the bt.xml even if they are unused in the plugin
             assert port_name in RESERVED_BT_PORT_NAMES, f"Error: Port {port_name} is not declared."
+        # Update flag to track whether we added a blackboard variable or not
+        self._has_bt_references = self._has_bt_references or is_blackboard_reference(port_value)
 
     def _set_in_port_value(self, port_name: str, port_value: str):
         """Set the value of an input port."""
