@@ -142,10 +142,17 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    def _generate_blackboard_retrieval(
+        self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
-        """Instantiate the BT events in all entries belonging to a state."""
+        if bt_ports_handler.has_bt_references():
+            # TODO: Split the state in 2 parts
+            raise NotImplementedError
+        return [self]
+
+    def _substitute_bt_events_and_ports(
+        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    ) -> None:
         instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
             new_transitions = transition.instantiate_bt_events(instance_id, children_ids)
@@ -156,11 +163,9 @@ class ScxmlState(ScxmlBase):
         self._body = instantiated_transitions
         instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
         instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
-        self.update_bt_ports_values(bt_ports_handler)
-        # TODO: Split this state in two parts if there are blackboard vars
-        return [self]
+        self._update_bt_ports_values(bt_ports_handler)
 
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+    def _update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         for transition in self._body:
             transition.update_bt_ports_values(bt_ports_handler)
@@ -168,6 +173,15 @@ class ScxmlState(ScxmlBase):
             entry.update_bt_ports_values(bt_ports_handler)
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    ) -> List["ScxmlState"]:
+        """Instantiate the BT events in all entries belonging to a state."""
+        generated_states = self._generate_blackboard_retrieval(bt_ports_handler)
+        for state in generated_states:
+            state._substitute_bt_events_and_ports(instance_id, children_ids, bt_ports_handler)
+        return generated_states
 
     def add_transition(self, transition: ScxmlTransition) -> None:
         self._body.append(transition)

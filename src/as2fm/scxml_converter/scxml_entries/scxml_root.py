@@ -271,6 +271,7 @@ class ScxmlRoot(ScxmlBase):
                     self._bt_plugin_id, self._bt_children_ids, self._bt_ports_handler
                 )
             )
+        self._states = processed_states
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""
