@@ -34,6 +34,9 @@ RESERVED_BT_PORT_NAMES = ["ID", "name"]
 BT_BLACKBOARD_REQUEST = "bt_blackboard_req"
 BT_BLACKBOARD_GET = "bt_blackboard_get"
 
+BT_SET_BLACKBOARD_PARAM = "value"
+BT_BLACKBOARD_EVENT_VALUE = PLAIN_SCXML_EVENT_DATA_PREFIX + BT_SET_BLACKBOARD_PARAM
+
 
 class BtResponse(Enum):
     """Enumeration of possible BT responses."""

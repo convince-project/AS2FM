@@ -24,19 +24,31 @@ from typing import Dict, List, Tuple
 
 from lxml import etree as ET
 
+from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string
 from as2fm.scxml_converter.scxml_entries import (
     BtChildStatus,
     BtTickChild,
     RosRateCallback,
     RosTimeRate,
+    ScxmlAssign,
+    ScxmlData,
+    ScxmlDataModel,
     ScxmlExecutionBody,
+    ScxmlParam,
     ScxmlRoot,
+    ScxmlSend,
     ScxmlState,
+    ScxmlTransition,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BT_BLACKBOARD_EVENT_VALUE,
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
+    generate_bt_blackboard_set,
     get_blackboard_variable_name,
     is_blackboard_reference,
 )
+from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
 
@@ -61,6 +73,41 @@ def get_blackboard_variables_from_models(models: List[ScxmlRoot]) -> Dict[str, s
                 assert existing_bt_type is None or existing_bt_type == p_type
                 blackboard_vars.update({var_name: p_type})
     return blackboard_vars
+
+
+def generate_blackboard_scxml(bt_blackboard_vars: Dict[str, str]) -> ScxmlRoot:
+    """Generate an SCXML model that handles all BT related synchronization."""
+    assert len(bt_blackboard_vars) > 0, "Cannot generate BT Blackboard, no variables"
+    # TODO: Append the name of the related BT, as in generate_bt_root_scxml
+    scxml_model_name = "bt_blackboard_fsm"
+    state_name = "idle"
+    idle_state = ScxmlState(state_name)
+    bt_data: List[ScxmlData] = []
+    bt_bb_param_list: List[ScxmlParam] = []
+    for bb_key, bb_type in bt_blackboard_vars.items():
+        default_value = value_to_string(
+            get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[bb_type])
+        )
+        bt_data.append(ScxmlData(bb_key, default_value, bb_type))
+        bt_bb_param_list.append(ScxmlParam(bb_key, expr=bb_key))
+        idle_state.add_transition(
+            ScxmlTransition(
+                state_name,
+                [generate_bt_blackboard_set(bb_key)],
+                body=[ScxmlAssign(bb_key, BT_BLACKBOARD_EVENT_VALUE)],
+            )
+        )
+    idle_state.add_transition(
+        ScxmlTransition(
+            state_name,
+            [BT_BLACKBOARD_REQUEST],
+            body=[ScxmlSend(BT_BLACKBOARD_GET, bt_bb_param_list)],
+        )
+    )
+    bt_root = ScxmlRoot(scxml_model_name)
+    bt_root.set_data_model(ScxmlDataModel(bt_data))
+    bt_root.add_state(idle_state, initial=True)
+    return bt_root
 
 
 def is_bt_root_scxml(scxml_name: str) -> bool:

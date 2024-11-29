@@ -21,6 +21,7 @@ from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BT_SET_BLACKBOARD_PARAM,
     BtPortsHandler,
     generate_bt_blackboard_set,
     get_blackboard_variable_name,
@@ -73,7 +74,7 @@ class BtSetValueOutputPort(ScxmlSend):
         ), "Error: SCXML BT Output Port: must run 'update_bt_ports_values' before 'as_plain_scxml'"
         return ScxmlSend(
             generate_bt_blackboard_set(self._blackboard_reference),
-            [ScxmlParam("value", expr=self._expr)],
+            [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
         )
 
     def as_xml(self) -> ET.Element:
