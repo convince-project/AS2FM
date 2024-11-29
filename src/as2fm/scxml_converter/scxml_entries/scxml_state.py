@@ -28,6 +28,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
     ScxmlRosDeclarationsContainer,
+    ScxmlSend,
     ScxmlTransition,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -142,13 +143,34 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
+    def _is_blackboard_required(self, bt_ports_handler: BtPortsHandler) -> List["ScxmlState"]:
+        # TODO(Blackboard-optimization): We should generate the additional state only in case
+        # there is a bt_get_input targeting a blackboard variable, this requires adding support
+        # to retrieve this information from the state's children.
+        # TODO: Additionally, we assume the bt is read only during ticks, but we aren't verifying
+        # this assumption
+        return bt_ports_handler.has_blackboard_inputs() and self.has_bt_tick_transitions()
+
     def _generate_blackboard_retrieval(
         self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
-        if bt_ports_handler.has_bt_references():
-            # TODO: Split the state in 2 parts
-            raise NotImplementedError
-        return [self]
+        generated_states: List[ScxmlState] = [self]
+        if self._is_blackboard_required(bt_ports_handler):
+            for transition in self._body:
+                if isinstance(transition, BtTick):
+                    # TODO: Write the transitions names in a variable
+                    new_state_id = f"{self.get_id}_on_tick_{len(generated_states)}"
+                    new_state = ScxmlState(new_state_id)
+                    blackboard_transition = ScxmlTransition(
+                        transition.get_target_state_id(),
+                        ["bt_blackboard_get"],
+                        body=transition.get_body(),
+                    )
+                    new_state.add_transition(blackboard_transition)
+                    transition.set_target_state_id(new_state_id)
+                    transition.set_body([ScxmlSend("bt_blackboard_req")])
+                    generated_states.append(new_state)
+        return generated_states
 
     def _substitute_bt_events_and_ports(
         self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
