@@ -434,7 +434,6 @@ class TestConversion(unittest.TestCase):
             success=False,
         )
 
-    @pytest.mark.skip(reason="WIP: Blackboard support.")
     def test_grid_robot_blackboard(self):
         """Test the grid_robot_blackboard model (BT + Blackboard)."""
         self._test_with_main(
