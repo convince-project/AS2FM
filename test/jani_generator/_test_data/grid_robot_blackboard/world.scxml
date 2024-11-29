@@ -9,8 +9,8 @@
         <data id="n" type="int32" expr="10" />  <!-- grid size -->
         <data id="pose_x" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
         <data id="pose_y" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
-        <data id="goal_x" type="int32" expr="4" />
-        <data id="goal_y" type="int32" expr="9" />
+        <data id="goal_x" type="int32" expr="0" />
+        <data id="goal_y" type="int32" expr="0" />
     </datamodel>
 
     <ros_topic_subscriber topic="move" type="std_msgs/Int16" />
@@ -25,17 +25,21 @@
 
     <state id="init">
         <onentry>
-            <!-- if at goal -->
-            <if cond="pose_x == goal_x &amp;&amp; pose_y == goal_y">
-                <assign location="goal_x" expr="goal_x + 1" /> <!-- TODO: Math.floor(Math.random() * n) -->
-                <assign location="goal_y" expr="goal_y - 1" /> <!-- TODO: Math.floor(Math.random() * n) -->
-                <ros_topic_publish name="goal">
-                    <field name="x" expr="goal_x" />
-                    <field name="y" expr="goal_y" />
-                </ros_topic_publish>
-            </if>
+            <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <ros_topic_publish name="goal">
+                <field name="x" expr="goal_x" />
+                <field name="y" expr="goal_y" />
+            </ros_topic_publish>
+            <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish>
         </onentry>
+        <transition target="running" />
+    </state>
 
+    <state id="running">
         <ros_topic_callback name="move" target="init">
             <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
                 <!-- right -->
@@ -55,6 +59,5 @@
                 <field name="y" expr="pose_y" />
             </ros_topic_publish>
         </ros_topic_callback>
-
     </state>
 </scxml>

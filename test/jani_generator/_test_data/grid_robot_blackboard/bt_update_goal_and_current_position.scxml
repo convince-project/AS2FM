@@ -14,7 +14,8 @@
     <bt_declare_port_in key="curr_topic" type="string" />
 
     <datamodel>
-        <data id="is_init" expr="false" type="bool" />
+        <data id="is_goal_init" expr="false" type="bool" />
+        <data id="is_pose_init" expr="false" type="bool" />
         <data id="goal_x" expr="0" type="int32" />
         <data id="goal_y" expr="0" type="int32" />
         <data id="curr_x" expr="0" type="int32" />
@@ -38,15 +39,17 @@
         <ros_topic_callback name="goal_sub" target="running">
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />
+            <assign location="is_goal_init" expr="true" />
         </ros_topic_callback>
         <!-- New robot pose -->
         <ros_topic_callback name="curr_sub" target="running">
             <assign location="curr_x" expr="_msg.x" />
             <assign location="curr_y" expr="_msg.y" />
+            <assign location="is_pose_init" expr="true" />
         </ros_topic_callback>
         <!-- Leaf node tick -->
         <bt_tick target="running">
-            <if cond="is_init">
+            <if cond="is_goal_init &amp;&amp; is_pose_init">
                 <bt_set_output key="goal_x" expr="goal_x" />
                 <bt_set_output key="goal_y" expr="goal_y" />
                 <bt_set_output key="curr_x" expr="curr_x" />
