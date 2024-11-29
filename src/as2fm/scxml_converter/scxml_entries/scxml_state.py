@@ -31,7 +31,11 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
+    BtPortsHandler,
+)
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body,
     execution_body_from_xml,
@@ -163,12 +167,12 @@ class ScxmlState(ScxmlBase):
                     new_state = ScxmlState(new_state_id)
                     blackboard_transition = ScxmlTransition(
                         transition.get_target_state_id(),
-                        ["bt_blackboard_get"],
+                        [BT_BLACKBOARD_GET],
                         body=transition.get_body(),
                     )
                     new_state.add_transition(blackboard_transition)
                     transition.set_target_state_id(new_state_id)
-                    transition.set_body([ScxmlSend("bt_blackboard_req")])
+                    transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
                     generated_states.append(new_state)
         return generated_states
 

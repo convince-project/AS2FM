@@ -8,6 +8,7 @@ from .scxml_bt_ports import (  # noqa: F401
     BtPortDeclarations,
     BtOutputPortDeclaration,
     BtGetValueInputPort,
+    BtSetValueOutputPort,
 )  # noqa: F401
 from .scxml_param import ScxmlParam  # noqa: F401
 from .scxml_ros_field import RosField  # noqa: F401
