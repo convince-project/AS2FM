@@ -2,7 +2,7 @@
 <scxml
     initial="running"
     version="1.0"
-    name="ShallMove"
+    name="Move"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
@@ -24,7 +24,7 @@
 
     <state id="running">
         <bt_tick target="running">
-            <ros_topic_publish name="goal">
+            <ros_topic_publish name="move_pub">
                 <field name="data">
                     <expr>
                         <bt_get_input key="direction" />
