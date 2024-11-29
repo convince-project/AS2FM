@@ -22,7 +22,10 @@ from typing import Optional, Union
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    get_input_variable_as_scxml_expression,
+)
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
@@ -86,7 +89,9 @@ class ScxmlParam(ScxmlBase):
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
         if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            self._expr = get_input_variable_as_scxml_expression(
+                bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            )
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(ScxmlParam, "name", self._name)

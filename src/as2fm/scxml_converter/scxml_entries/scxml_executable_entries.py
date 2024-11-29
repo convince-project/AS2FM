@@ -30,7 +30,11 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    get_input_variable_as_scxml_expression,
+    is_bt_event,
+)
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -420,7 +424,9 @@ class ScxmlAssign(ScxmlBase):
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            self._expr = get_input_variable_as_scxml_expression(
+                bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            )
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model

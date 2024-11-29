@@ -24,7 +24,7 @@ from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_array_type, is_comment
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.utils import (
     convert_string_to_type,
     get_array_max_size,
@@ -203,7 +203,19 @@ class ScxmlData(ScxmlBase):
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         if isinstance(self._expr, BtGetValueInputPort):
             self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            assert not is_blackboard_reference(self._expr), (
+                f"Error: SCXML Data: '{self._id}': cannot set the initial expression from "
+                f" the BT blackboard variable {self._expr}"
+            )
         if isinstance(self._lower_bound, BtGetValueInputPort):
             self._lower_bound = bt_ports_handler.get_in_port_value(self._lower_bound.get_key_name())
+            assert not is_blackboard_reference(self._lower_bound), (
+                f"Error: SCXML Data: '{self._id}': cannot set the lower bound from "
+                f" the BT blackboard variable {self._lower_bound}"
+            )
         if isinstance(self._upper_bound, BtGetValueInputPort):
             self._upper_bound = bt_ports_handler.get_in_port_value(self._upper_bound.get_key_name())
+            assert not is_blackboard_reference(self._upper_bound), (
+                f"Error: SCXML Data: '{self._id}': cannot set the upper bound from "
+                f" the BT blackboard variable {self._upper_bound}"
+            )

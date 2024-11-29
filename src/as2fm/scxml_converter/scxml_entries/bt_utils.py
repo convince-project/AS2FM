@@ -19,7 +19,10 @@ import re
 from enum import Enum, auto
 from typing import Dict, Tuple, Type
 
-from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from as2fm.scxml_converter.scxml_entries.utils import (
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
+    SCXML_DATA_STR_TO_TYPE,
+)
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string": str}
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
@@ -100,6 +103,18 @@ def get_blackboard_variable_name(port_value: str) -> str:
     assert is_blackboard_reference(
         port_value
     ), f"Error: expected '{port_value}' to be a reference to a blackboard variable."
+    return port_value.removeprefix("{").removesuffix("}")
+
+
+def get_input_variable_as_scxml_expression(port_value: str) -> str:
+    """
+    Given an input variable it generates an expression as event data or single value.
+
+    The outcome depends on whether port value refers to the BT blackboard or not.
+    """
+    if is_blackboard_reference(port_value):
+        return PLAIN_SCXML_EVENT_DATA_PREFIX + get_blackboard_variable_name(port_value)
+    return port_value
 
 
 class BtPortsHandler:
