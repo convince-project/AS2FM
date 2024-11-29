@@ -19,7 +19,13 @@ SCXML set output for Behavior Trees' Ports.
 
 from lxml import etree as ET
 
-from as2fm.scxml_converter.scxml_entries import ScxmlSend
+from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    generate_bt_blackboard_set,
+    get_blackboard_variable_name,
+    is_blackboard_reference,
+)
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
@@ -37,22 +43,42 @@ class BtSetValueOutputPort(ScxmlSend):
     def from_xml_tree(xml_tree: ET.Element) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "key")
-        return BtSetValueOutputPort(key_str)
+        expr_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "expr")
+        return BtSetValueOutputPort(key_str, expr_str)
 
-    def __init__(self, key_str: str):
+    def __init__(self, key_str: str, expr_str: str):
         self._key = key_str
+        self._expr = expr_str
+        self._blackboard_reference = None
 
     def check_validity(self) -> bool:
-        return is_non_empty_string(BtSetValueOutputPort, "key", self._key)
+        return is_non_empty_string(BtSetValueOutputPort, "key", self._key) and is_non_empty_string(
+            BtSetValueOutputPort, "expr", self._expr
+        )
 
-    def get_key_name(self) -> str:
-        return self._key
+    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+        assert bt_ports_handler.out_port_exists(
+            self._key
+        ), f"Error: SCXML BT Port {self._key} is not declared as output port."
+        port_value = bt_ports_handler.get_out_port_value(self._key)
+        assert is_blackboard_reference(
+            port_value
+        ), f"Error: SCXML BT Port {self._key} is not referencing a blackboard variable."
+        self._blackboard_reference = get_blackboard_variable_name(port_value)
 
     def as_plain_scxml(self, _) -> ScxmlSend:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
-        raise RuntimeError("Error: SCXML BT Port value setter cannot be converted to plain SCXML.")
+        assert (
+            self._blackboard_reference is not None
+        ), "Error: SCXML BT Output Port: must run 'update_bt_ports_values' before 'as_plain_scxml'"
+        return ScxmlSend(
+            generate_bt_blackboard_set(self._blackboard_reference),
+            [ScxmlParam("value", expr=self._expr)],
+        )
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."
-        xml_bt_in_port = ET.Element(BtSetValueOutputPort.get_tag_name(), {"key": self._key})
+        assert self.check_validity(), "Error: SCXML BT Output Port: invalid parameters."
+        xml_bt_in_port = ET.Element(
+            BtSetValueOutputPort.get_tag_name(), {"key": self._key, "expr": self._expr}
+        )
         return xml_bt_in_port
