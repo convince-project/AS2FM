@@ -162,8 +162,9 @@ class ScxmlState(ScxmlBase):
         if self._is_blackboard_required(bt_ports_handler):
             for transition in self._body:
                 if isinstance(transition, BtTick):
-                    # TODO: Write the transitions names in a variable
-                    new_state_id = f"{self.get_id}_on_tick_{len(generated_states)}"
+                    # Prepare the new state using the received BT info
+                    states_count = len(generated_states)
+                    new_state_id = f"{self.get_id}_{transition.get_tag_name()}_{states_count}"
                     new_state = ScxmlState(new_state_id)
                     blackboard_transition = ScxmlTransition(
                         transition.get_target_state_id(),
@@ -171,9 +172,10 @@ class ScxmlState(ScxmlBase):
                         body=transition.get_body(),
                     )
                     new_state.add_transition(blackboard_transition)
+                    generated_states.append(new_state)
+                    # Set the new target and body to the original transition
                     transition.set_target_state_id(new_state_id)
                     transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
-                    generated_states.append(new_state)
         return generated_states
 
     def _substitute_bt_events_and_ports(
