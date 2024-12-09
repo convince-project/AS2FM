@@ -105,6 +105,9 @@ class ScxmlTransition(ScxmlBase):
         """Return the ID of the target state of this transition."""
         return self._target
 
+    def set_target_state_id(self, state_id: str):
+        self._target = state_id
+
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""
         return self._events

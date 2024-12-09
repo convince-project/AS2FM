@@ -30,7 +30,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body,
     execution_body_from_xml,
@@ -140,9 +140,11 @@ class RosDeclaration(ScxmlBase):
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         if isinstance(self._interface_name, BtGetValueInputPort):
-            self._interface_name = bt_ports_handler.get_in_port_value(
-                self._interface_name.get_key_name()
-            )
+            port_value = bt_ports_handler.get_in_port_value(self._interface_name.get_key_name())
+            assert not is_blackboard_reference(
+                port_value
+            ), f"Error: SCXML {self.__class__.__name__}: interface can't come  from BT Blackboard."
+            self._interface_name = port_value
 
     def as_plain_scxml(self, _) -> ScxmlBase:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot

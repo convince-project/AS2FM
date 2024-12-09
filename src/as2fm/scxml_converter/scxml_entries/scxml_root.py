@@ -235,6 +235,17 @@ class ScxmlRoot(ScxmlBase):
         for port_name, port_value in ports_values:
             self.set_bt_port_value(port_name, port_value)
 
+    def get_bt_ports_types_values(self) -> List[Tuple[str, str, str]]:
+        """
+        Get information about the BT ports in the model.
+
+        :return: A list of Tuples containing bt_port_name, type and value.
+        """
+        return [
+            (p_name, p_type, p_value)
+            for p_name, (p_type, p_value) in self._bt_ports_handler.get_all_ports().items()
+        ]
+
     def append_bt_child_id(self, child_id: int):
         """Append a child ID to the list of child IDs."""
         assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
@@ -253,9 +264,14 @@ class ScxmlRoot(ScxmlBase):
             ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
         for scxml_thread in self._additional_threads:
             scxml_thread.update_bt_ports_values(self._bt_ports_handler)
+        processed_states: List[ScxmlState] = []
         for state in self._states:
-            state.instantiate_bt_events(self._bt_plugin_id, self._bt_children_ids)
-            state.update_bt_ports_values(self._bt_ports_handler)
+            processed_states.extend(
+                state.instantiate_bt_events(
+                    self._bt_plugin_id, self._bt_children_ids, self._bt_ports_handler
+                )
+            )
+        self._states = processed_states
 
     def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
         """Generate a HelperRosDeclarations object from the existing ROS declarations."""

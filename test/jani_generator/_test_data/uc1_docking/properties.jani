@@ -38,7 +38,12 @@
                     "op": "Pmin",
                     "exp": {
                         "op": "F",
-                        "exp": "topic_tree_succeeded_msg.valid"
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1000_response.status",
+                            "right": 1,
+                            "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                        }
                     }
                 },
                 "states": {
