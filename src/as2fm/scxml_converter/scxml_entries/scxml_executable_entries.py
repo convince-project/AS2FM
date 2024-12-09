@@ -599,3 +599,18 @@ def add_targets_to_scxml_send(
         else:
             raise ValueError(f"Error: SCXML send: invalid entry type {type(entry)}.")
     return new_body
+
+
+def has_bt_blackboard_input(
+    exec_body: Optional[ScxmlExecutionBody], bt_ports_info: BtPortsHandler
+) -> bool:
+    """
+    Check if any entry in the execution body requires reading from the blackboard.
+    """
+    if exec_body is None:
+        return False
+    for entry in exec_body:
+        # If any entry in the executable body requires reading from the blackboard, report it
+        if entry.has_bt_blackboard_input(bt_ports_info):
+            return True
+    return False
