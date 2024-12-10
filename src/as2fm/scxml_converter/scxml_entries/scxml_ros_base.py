@@ -370,6 +370,13 @@ class RosTrigger(ScxmlSend):
         field.set_callback_type(self._cb_type)
         self._fields.append(field)
 
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        for field in self._fields:
+            if field.has_bt_blackboard_input(bt_ports_handler):
+                return True
+        return False
+
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
         for field in self._fields:

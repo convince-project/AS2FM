@@ -39,6 +39,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body,
     execution_body_from_xml,
+    has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
     set_execution_body_callback_type,
     valid_execution_body,
@@ -147,21 +148,21 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def _is_blackboard_required(self, bt_ports_handler: BtPortsHandler) -> List["ScxmlState"]:
-        # TODO(Blackboard-optimization): We should generate the additional state only in case
-        # there is a bt_get_input targeting a blackboard variable, this requires adding support
-        # to retrieve this information from the state's children.
-        # TODO: Additionally, we assume the bt is read only during ticks, but we aren't verifying
-        # this assumption
-        return bt_ports_handler.has_blackboard_inputs() and self.has_bt_tick_transitions()
-
     def _generate_blackboard_retrieval(
         self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
         generated_states: List[ScxmlState] = [self]
-        if self._is_blackboard_required(bt_ports_handler):
+        if bt_ports_handler.has_blackboard_inputs():
+            assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
+                "This isn't yet supported."
+            )
+            assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
+                "This isn't yet supported."
+            )
             for transition in self._body:
-                if isinstance(transition, BtTick):
+                if transition.has_bt_blackboard_input(bt_ports_handler):
                     # Prepare the new state using the received BT info
                     states_count = len(generated_states)
                     new_state_id = f"{self.get_id}_{transition.get_tag_name()}_{states_count}"

@@ -33,6 +33,7 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
     get_input_variable_as_scxml_expression,
+    is_blackboard_reference,
     is_bt_event,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -79,6 +80,21 @@ def update_exec_body_bt_ports_values(
     if exec_body is not None:
         for entry in exec_body:
             entry.update_bt_ports_values(bt_ports_handler)
+
+
+def has_bt_blackboard_input(
+    exec_body: Optional[ScxmlExecutionBody], bt_ports_info: BtPortsHandler
+) -> bool:
+    """
+    Check if any entry in the execution body requires reading from the blackboard.
+    """
+    if exec_body is None:
+        return False
+    for entry in exec_body:
+        # If any entry in the executable body requires reading from the blackboard, report it
+        if entry.has_bt_blackboard_input(bt_ports_info):
+            return True
+    return False
 
 
 class ScxmlIf(ScxmlBase):
@@ -157,6 +173,13 @@ class ScxmlIf(ScxmlBase):
     def get_else_execution(self) -> ScxmlExecutionBody:
         """Get the else execution."""
         return self._else_execution
+
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        for _, cond_body in self._conditional_executions:
+            if has_bt_blackboard_input(cond_body, bt_ports_handler):
+                return True
+        return has_bt_blackboard_input(self._else_execution, bt_ports_handler)
 
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
         """Instantiate the behavior tree events in the If action, if available."""
@@ -306,6 +329,13 @@ class ScxmlSend(ScxmlBase):
         """Set the target automata associated to this send event."""
         self._target_automaton = target_automaton
 
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        for param in self._params:
+            if param.has_bt_blackboard_input(bt_ports_handler):
+                return True
+        return False
+
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
         # Support for deprecated BT events handling. Remove the whole if block once transition done.
@@ -416,6 +446,12 @@ class ScxmlAssign(ScxmlBase):
     def get_expr(self) -> Union[str, BtGetValueInputPort]:
         """Get the expression to assign."""
         return self._expr
+
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
+            bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+        )
 
     def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
         """This functionality is not needed in this class."""
@@ -599,18 +635,3 @@ def add_targets_to_scxml_send(
         else:
             raise ValueError(f"Error: SCXML send: invalid entry type {type(entry)}.")
     return new_body
-
-
-def has_bt_blackboard_input(
-    exec_body: Optional[ScxmlExecutionBody], bt_ports_info: BtPortsHandler
-) -> bool:
-    """
-    Check if any entry in the execution body requires reading from the blackboard.
-    """
-    if exec_body is None:
-        return False
-    for entry in exec_body:
-        # If any entry in the executable body requires reading from the blackboard, report it
-        if entry.has_bt_blackboard_input(bt_ports_info):
-            return True
-    return False

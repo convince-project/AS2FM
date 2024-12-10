@@ -25,6 +25,7 @@ from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
     get_input_variable_as_scxml_expression,
+    is_blackboard_reference,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
@@ -85,6 +86,11 @@ class ScxmlParam(ScxmlBase):
 
     def get_location(self) -> Optional[str]:
         return self._location
+
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
+            bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+        )
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
