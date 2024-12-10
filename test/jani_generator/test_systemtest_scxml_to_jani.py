@@ -434,6 +434,24 @@ class TestConversion(unittest.TestCase):
             success=False,
         )
 
+    def test_blackboard_features(self):
+        """Test the grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "blackboard_test",
+            model_xml="main.xml",
+            property_name="tree_success",
+            success=True,
+        )
+
+    def test_grid_robot_blackboard(self):
+        """Test the grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "grid_robot_blackboard",
+            model_xml="main.xml",
+            property_name="at_goal",
+            success=True,
+        )
+
     def test_command_line_output_with_line_numbers(self):
         """Test the command line output with line numbers for the main.xml file."""
         tmp_test_dir = os.path.join("/tmp", "test_as2fm")

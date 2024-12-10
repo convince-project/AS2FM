@@ -31,6 +31,7 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml,
+    has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
     set_execution_body_callback_type,
     valid_execution_body,
@@ -105,6 +106,9 @@ class ScxmlTransition(ScxmlBase):
         """Return the ID of the target state of this transition."""
         return self._target
 
+    def set_target_state_id(self, state_id: str):
+        self._target = state_id
+
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""
         return self._events
@@ -120,6 +124,9 @@ class ScxmlTransition(ScxmlBase):
     def set_body(self, body: ScxmlExecutionBody) -> None:
         """Set the body of this transition."""
         self._body = body
+
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        return has_bt_blackboard_input(self._body, bt_ports_handler)
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
