@@ -275,6 +275,10 @@ class BtReturnStatus(ScxmlSend):
     def check_validity(self) -> bool:
         return True
 
+    def has_bt_blackboard_input(self, _) -> bool:
+        """We do not expect reading from BT Ports here. Return False!"""
+        return False
+
     def instantiate_bt_events(self, instance_id: int, _) -> ScxmlSend:
         return ScxmlSend(
             generate_bt_response_event(instance_id),

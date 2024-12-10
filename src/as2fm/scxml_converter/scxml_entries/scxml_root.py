@@ -343,8 +343,9 @@ class ScxmlRoot(ScxmlBase):
             - a list of ScxmlRoot objects with all ROS specific entries converted to plain SCXML
             - The Ros declarations contained in the original SCXML object
         """
-        if self.is_plain_scxml():
-            return [self], ScxmlRosDeclarationsContainer(self._name)
+        # TODO: The check for BtTicks is not working, since we convert it at instantiate_bt_events
+        # if self.is_plain_scxml():
+        #     return [self], ScxmlRosDeclarationsContainer(self._name)
         converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
         main_scxml = ScxmlRoot(self._name)
