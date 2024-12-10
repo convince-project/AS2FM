@@ -439,7 +439,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             "grid_robot_blackboard",
             model_xml="main.xml",
-            property_name="tree_success",
+            property_name="at_goal",
             success=True,
         )
 
