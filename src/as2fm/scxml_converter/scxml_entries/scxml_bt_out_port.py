@@ -57,6 +57,10 @@ class BtSetValueOutputPort(ScxmlSend):
             BtSetValueOutputPort, "expr", self._expr
         )
 
+    def has_bt_blackboard_input(self, _) -> bool:
+        """We do not expect reading from BT Ports here. Return False!"""
+        return False
+
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         assert bt_ports_handler.out_port_exists(
             self._key
