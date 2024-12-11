@@ -33,6 +33,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml,
     has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
+    is_plain_execution_body,
     set_execution_body_callback_type,
     valid_execution_body,
     valid_execution_body_entry_types,
@@ -203,6 +204,10 @@ class ScxmlTransition(ScxmlBase):
             for entry in self._body:
                 if hasattr(entry, "set_thread_id"):
                     entry.set_thread_id(thread_id)
+
+    def is_plain_scxml(self) -> bool:
+        """Check if the transition is a plain scxml entry and contains only plain scxml."""
+        return type(self) is ScxmlTransition and is_plain_execution_body(self._body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(

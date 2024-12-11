@@ -232,6 +232,13 @@ class ScxmlIf(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_id)
 
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlIf:
+            return all(
+                is_plain_execution_body(body) for _, body in self._conditional_executions
+            ) and is_plain_execution_body(self._else_execution)
+        return False
+
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
         conditional_executions = []
@@ -388,6 +395,11 @@ class ScxmlSend(ScxmlBase):
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         self._params.append(param)
 
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlSend:
+            return all(isinstance(param.get_expr(), str) for param in self._params)
+        return False
+
     def as_plain_scxml(self, _) -> "ScxmlSend":
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
@@ -474,6 +486,11 @@ class ScxmlAssign(ScxmlBase):
         """Check if the ros instantiations have been declared."""
         # This has nothing to do with ROS. Return always True
         return True
+
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlAssign:
+            return isinstance(self._expr, str)
+        return False
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
@@ -588,6 +605,13 @@ def set_execution_body_callback_type(exec_body: ScxmlExecutionBody, cb_type: Cal
     """
     for entry in exec_body:
         entry.set_callback_type(cb_type)
+
+
+def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody]) -> bool:
+    """Check if al entries in the exec body are plain scxml."""
+    if exec_body is None:
+        return True
+    return all(entry.is_plain_scxml() for entry in exec_body)
 
 
 def as_plain_execution_body(

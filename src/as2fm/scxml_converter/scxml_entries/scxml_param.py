@@ -63,7 +63,7 @@ class ScxmlParam(ScxmlBase):
         """
         Initialize the SCXML Parameter object.
 
-        The location entryu is kept for consistency, but using expr achieves the same result.
+        The 'location' entry is kept for consistency, but using expr achieves the same result.
 
         :param name: The name of the parameter.
         :param expr: The expression to assign to the parameter. Can come from a BT port.
@@ -81,7 +81,7 @@ class ScxmlParam(ScxmlBase):
     def get_name(self) -> str:
         return self._name
 
-    def get_expr(self) -> Optional[str]:
+    def get_expr(self) -> Optional[Union[BtGetValueInputPort, str]]:
         return self._expr
 
     def get_location(self) -> Optional[str]:
