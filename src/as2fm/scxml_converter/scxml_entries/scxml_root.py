@@ -327,11 +327,11 @@ class ScxmlRoot(ScxmlBase):
         return True
 
     def is_plain_scxml(self) -> bool:
-        """Check whether there are ROS specific features or all entries are plain SCXML."""
+        """Check whether there are ROS or BT specific tags in the SCXML model."""
         assert self.check_validity(), "SCXML: found invalid root object."
-        has_ros_entries = len(self._ros_declarations) > 0 or len(self._additional_threads) > 0
-        has_bt_entries = any(state.has_bt_tick_transitions() for state in self._states)
-        return not (has_ros_entries or has_bt_entries)
+        no_ros_declarations = (len(self._ros_declarations) + len(self._additional_threads)) == 0
+        all_states_plain = all(state.is_plain_scxml() for state in self._states)
+        return no_ros_declarations and all_states_plain
 
     def to_plain_scxml_and_declarations(
         self,
@@ -343,9 +343,8 @@ class ScxmlRoot(ScxmlBase):
             - a list of ScxmlRoot objects with all ROS specific entries converted to plain SCXML
             - The Ros declarations contained in the original SCXML object
         """
-        # TODO: The check for BtTicks is not working, since we convert it at instantiate_bt_events
-        # if self.is_plain_scxml():
-        #     return [self], ScxmlRosDeclarationsContainer(self._name)
+        if self.is_plain_scxml():
+            return [self], ScxmlRosDeclarationsContainer(self._name)
         converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
         main_scxml = ScxmlRoot(self._name)
