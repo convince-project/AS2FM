@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    version="1.0"
+    name="world"
+    initial="init">
+
+    <datamodel>
+        <data id="n" type="int32" expr="10" />  <!-- grid size -->
+        <data id="pose_x" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
+        <data id="pose_y" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
+        <data id="goal_x" type="int32" expr="0" />
+        <data id="goal_y" type="int32" expr="0" />
+    </datamodel>
+
+    <ros_topic_subscriber topic="move" type="std_msgs/Int16" />
+    <!--
+        0: right,
+        1: left,
+        2: up,
+        3: down
+    -->
+    <ros_topic_publisher topic="pose" type="grid_robot_interfaces/Int2D" />
+    <ros_topic_publisher topic="goal" type="grid_robot_interfaces/Int2D" />
+
+    <state id="init">
+        <onentry>
+            <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <ros_topic_publish name="goal">
+                <field name="x" expr="goal_x" />
+                <field name="y" expr="goal_y" />
+            </ros_topic_publish>
+            <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish>
+        </onentry>
+        <transition target="running" />
+    </state>
+
+    <state id="running">
+        <ros_topic_callback name="move" target="init">
+            <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
+                <!-- right -->
+                <assign location="pose_x" expr="pose_x + 1" />
+                <elseif cond="_msg.data == 1 &amp;&amp; pose_x &gt; 0" />
+                <!-- left -->
+                <assign location="pose_x" expr="pose_x - 1" />
+                <elseif cond="_msg.data == 2 &amp;&amp; pose_y &lt; n - 1" />
+                <!-- up -->
+                <assign location="pose_y" expr="pose_y + 1" />
+                <elseif cond="_msg.data == 3 &amp;&amp; pose_y &gt; 0" />
+                <!-- down -->
+                <assign location="pose_y" expr="pose_y - 1" />
+            </if>
+            <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish>
+        </ros_topic_callback>
+    </state>
+</scxml>

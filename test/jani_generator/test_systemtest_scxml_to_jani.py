@@ -435,7 +435,7 @@ class TestConversion(unittest.TestCase):
         )
 
     def test_blackboard_features(self):
-        """Test the grid_robot_blackboard model (BT + Blackboard)."""
+        """Test the blackboard features."""
         self._test_with_main(
             "blackboard_test",
             model_xml="main.xml",
@@ -447,6 +447,15 @@ class TestConversion(unittest.TestCase):
         """Test the grid_robot_blackboard model (BT + Blackboard)."""
         self._test_with_main(
             "grid_robot_blackboard",
+            model_xml="main.xml",
+            property_name="at_goal",
+            success=True,
+        )
+
+    def test_grid_robot_blackboard_simpler(self):
+        """Test the simpler grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "grid_robot_blackboard_simpler",
             model_xml="main.xml",
             property_name="at_goal",
             success=True,
