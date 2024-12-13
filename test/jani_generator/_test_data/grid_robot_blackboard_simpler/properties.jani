@@ -1,0 +1,47 @@
+{
+    "properties": [
+        {
+            "expression": {
+                "fun": "values",
+                "op": "filter",
+                "states": {
+                    "op": "initial"
+                },
+                "values": {
+                    "exp": {
+                        "exp": {
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}",
+                            "left": "bt_1000_response.status",
+                            "op": "=",
+                            "right": 1
+                        },
+                        "op": "F"
+                    },
+                    "op": "Pmin"
+                }
+            },
+            "name": "tree_success"
+        },
+        {
+            "expression": {
+                "fun": "values",
+                "op": "filter",
+                "states": {
+                    "op": "initial"
+                },
+                "values": {
+                    "exp": {
+                        "exp": {
+                            "left": "topic_at_goal_msg.valid",
+                            "op": "∧",
+                            "right": "topic_at_goal_msg.data"
+                        },
+                        "op": "F"
+                    },
+                    "op": "Pmin"
+                }
+            },
+            "name": "at_goal"
+        }
+    ]
+}

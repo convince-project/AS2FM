@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="running"
+    version="1.0"
+    name="UpdateGoalAndCurrentPosition"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_out key="goal_x" type="int32" />
+    <bt_declare_port_out key="goal_y" type="int32" />
+    <bt_declare_port_out key="curr_x" type="int32" />
+    <bt_declare_port_out key="curr_y" type="int32" />
+    <bt_declare_port_out key="move" type="int32" />
+    <!--
+        move: 0 - right
+              1 - left
+              2 - up
+              3 - down
+              4 - stop
+    -->
+    <!-- <bt_declare_port_in key="goal_topic" type="string" />
+    <bt_declare_port_in key="curr_topic" type="string" /> -->
+
+    <ros_topic_publisher name="at_goal" topic="at_goal" type="std_msgs/Bool" />
+
+    <datamodel>
+        <!-- <data id="is_goal_init" expr="false" type="bool" /> -->
+        <data id="is_pose_init" expr="false" type="bool" />
+        <data id="goal_x" expr="0" type="int32" />
+        <data id="goal_y" expr="0" type="int32" />
+        <data id="pose_x" expr="0" type="int32" />
+        <data id="pose_y" expr="0" type="int32" />
+    </datamodel>
+
+    <!-- <state id="running">
+        New robot goal
+        <ros_topic_callback name="goal_sub" target="running">
+            <assign location="goal_x" expr="_msg.x" />
+            <assign location="goal_y" expr="_msg.y" />
+            <assign location="is_goal_init" expr="true" />
+        </ros_topic_callback>
+        New robot pose
+        <ros_topic_callback name="curr_sub" target="running">
+            <assign location="curr_x" expr="_msg.x" />
+            <assign location="curr_y" expr="_msg.y" />
+            <assign location="is_pose_init" expr="true" />
+        </ros_topic_callback>
+        Leaf node tick
+        <bt_tick target="running">
+            <if cond="is_goal_init &amp;&amp; is_pose_init">
+                <bt_set_output key="goal_x" expr="goal_x" />
+                <bt_set_output key="goal_y" expr="goal_y" />
+                <bt_set_output key="curr_x" expr="curr_x" />
+                <bt_set_output key="curr_y" expr="curr_y" />
+                <bt_return_status status="SUCCESS" />
+                <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+    </state> -->
+
+    <state id="init">
+        <onentry>
+            <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
+            <bt_set_output key="goal_x" expr="goal_x" />
+            <bt_set_output key="goal_y" expr="goal_y" />
+            <bt_set_output key="curr_x" expr="pose_x" />
+            <bt_set_output key="curr_y" expr="pose_y" />
+            <!-- <ros_topic_publish name="goal">
+                <field name="x" expr="goal_x" />
+                <field name="y" expr="goal_y" />
+            </ros_topic_publish>
+            <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish> -->
+        </onentry>
+        <bt_tick target="running" />
+    </state>
+
+    <state id="running">
+        <transition target="wait_for_tick" cond="move != 4">
+            <if cond="move == 0 &amp;&amp; pose_x &lt; n - 1">
+                <!-- right -->
+                <assign location="pose_x" expr="pose_x + 1" />
+                <elseif cond="move == 1 &amp;&amp; pose_x &gt; 0" />
+                <!-- left -->
+                <assign location="pose_x" expr="pose_x - 1" />
+                <elseif cond="move == 2 &amp;&amp; pose_y &lt; n - 1" />
+                <!-- up -->
+                <assign location="pose_y" expr="pose_y + 1" />
+                <elseif cond="move == 3 &amp;&amp; pose_y &gt; 0" />
+                <!-- down -->
+                <assign location="pose_y" expr="pose_y - 1" />
+            </if>
+            <if cond="pose_x == goal_x &amp;&amp; pose_y == goal_y">
+                <ros_topic_publish name="at_goal">
+                    <field name="data" expr="true" />
+                </ros_topic_publish>
+                <else/>
+                <ros_topic_publish name="at_goal">
+                    <field name="data" expr="false" />
+                </ros_topic_publish>
+            </if>
+            <!-- <ros_topic_publish name="pose">
+                <field name="x" expr="pose_x" />
+                <field name="y" expr="pose_y" />
+            </ros_topic_publish> -->
+            <bt_return_status status="SUCCESS" />
+        </transition>
+    </state>
+
+    <state id="wait_for_tick">
+        <bt_tick target="running" />
+    </state>
+</scxml>
