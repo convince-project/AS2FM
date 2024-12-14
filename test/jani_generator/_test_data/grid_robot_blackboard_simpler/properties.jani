@@ -34,7 +34,7 @@
                         "exp": {
                             "left": "topic_at_goal_msg.valid",
                             "op": "∧",
-                            "right": "topic_at_goal_msg.data"
+                            "right": "topic_at_goal_msg.ros_fields__data"
                         },
                         "op": "F"
                     },

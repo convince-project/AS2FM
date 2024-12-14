@@ -10,7 +10,7 @@
     <bt_declare_port_out key="goal_y" type="int32" />
     <bt_declare_port_out key="curr_x" type="int32" />
     <bt_declare_port_out key="curr_y" type="int32" />
-    <bt_declare_port_out key="move" type="int32" />
+    <bt_declare_port_in key="move" type="int32" />
     <!--
         move: 0 - right
               1 - left
@@ -30,6 +30,9 @@
         <data id="goal_y" expr="0" type="int32" />
         <data id="pose_x" expr="0" type="int32" />
         <data id="pose_y" expr="0" type="int32" />
+        <data id="move" expr="4" type="int32" />
+        <data id="n" expr="10" type="int32" /> <!-- grid size -->
+        <data id="first_tick" expr="true" type="bool" />
     </datamodel>
 
     <!-- <state id="running">
@@ -60,27 +63,28 @@
     </state> -->
 
     <state id="init">
-        <onentry>
+        <bt_tick target="running">
             <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
             <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
             <bt_set_output key="goal_x" expr="goal_x" />
             <bt_set_output key="goal_y" expr="goal_y" />
             <bt_set_output key="curr_x" expr="pose_x" />
             <bt_set_output key="curr_y" expr="pose_y" />
-            <!-- <ros_topic_publish name="goal">
-                <field name="x" expr="goal_x" />
-                <field name="y" expr="goal_y" />
-            </ros_topic_publish>
-            <ros_topic_publish name="pose">
-                <field name="x" expr="pose_x" />
-                <field name="y" expr="pose_y" />
-            </ros_topic_publish> -->
-        </onentry>
-        <bt_tick target="running" />
+            <if cond="first_tick">
+                <assign location="first_tick" expr="false" />
+                <assign location="move" expr="4" />
+                <else />
+                <assign location="move">
+                    <expr>
+                        <bt_get_input key="move" />
+                    </expr>
+                </assign>
+            </if>
+        </bt_tick>
     </state>
 
     <state id="running">
-        <transition target="wait_for_tick" cond="move != 4">
+        <transition target="init" cond="move != 4">
             <if cond="move == 0 &amp;&amp; pose_x &lt; n - 1">
                 <!-- right -->
                 <assign location="pose_x" expr="pose_x + 1" />
@@ -98,10 +102,6 @@
                 <ros_topic_publish name="at_goal">
                     <field name="data" expr="true" />
                 </ros_topic_publish>
-                <else/>
-                <ros_topic_publish name="at_goal">
-                    <field name="data" expr="false" />
-                </ros_topic_publish>
             </if>
             <!-- <ros_topic_publish name="pose">
                 <field name="x" expr="pose_x" />
@@ -109,9 +109,5 @@
             </ros_topic_publish> -->
             <bt_return_status status="SUCCESS" />
         </transition>
-    </state>
-
-    <state id="wait_for_tick">
-        <bt_tick target="running" />
     </state>
 </scxml>
