@@ -165,7 +165,7 @@ class ScxmlState(ScxmlBase):
                 if transition.has_bt_blackboard_input(bt_ports_handler):
                     # Prepare the new state using the received BT info
                     states_count = len(generated_states)
-                    new_state_id = f"{self.get_id}_{transition.get_tag_name()}_{states_count}"
+                    new_state_id = f"{self.get_id()}_{transition.get_tag_name()}_{states_count}"
                     new_state = ScxmlState(new_state_id)
                     blackboard_transition = ScxmlTransition(
                         transition.get_target_state_id(),
