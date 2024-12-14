@@ -353,7 +353,7 @@ def _append_scxml_body_to_jani_automaton(
                 interm_loc_after,
                 "-".join([hash_str, _hash_element(ec), else_execution_id]),
                 jani_cond,
-                None,
+                trigger_event,
                 max_array_size,
             )
             new_edges.extend(sub_edges)
