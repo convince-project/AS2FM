@@ -239,6 +239,7 @@ def _append_scxml_body_to_jani_automaton(
             jani_assigns = _interpret_scxml_assign(ec, jani_automaton, trigger_event, assign_idx)
             new_edges[-1].destinations[0]["assignments"].extend(jani_assigns)
         elif isinstance(ec, ScxmlSend):
+            print(f">>>> ScxmlSend / {ec.get_event()=}")
             event_name = ec.get_event()
             event_send_action_name = event_name + "_on_send"
             interm_loc = f"{source}-{i}-{hash_str}"
@@ -306,9 +307,11 @@ def _append_scxml_body_to_jani_automaton(
             )
 
             if not events_holder.has_event(event_name):
+                print(f">>>> not has_event / {event_name=} {data_structure_for_event=}")
                 send_event = Event(event_name, data_structure_for_event)
                 events_holder.add_event(send_event)
             else:
+                print(f">>>> has_event {event_name=} {data_structure_for_event=}")
                 send_event = events_holder.get_event(event_name)
                 send_event.set_data_structure(data_structure_for_event)
             send_event.add_sender_edge(jani_automaton.get_name(), event_send_action_name)

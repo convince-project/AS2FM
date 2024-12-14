@@ -45,6 +45,7 @@ class BtSetValueOutputPort(ScxmlSend):
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "expr")
+        print(f">>>> BtSetValueOutputPort / from_xml_tree / {key_str=} {expr_str=}")
         return BtSetValueOutputPort(key_str, expr_str)
 
     def __init__(self, key_str: str, expr_str: str):
@@ -76,6 +77,11 @@ class BtSetValueOutputPort(ScxmlSend):
         assert (
             self._blackboard_reference is not None
         ), "Error: SCXML BT Output Port: must run 'update_bt_ports_values' before 'as_plain_scxml'"
+        print(
+            ">>>> BtSetValueOutputPort / as_plain_scxml / "
+            + f"{generate_bt_blackboard_set(self._blackboard_reference)=} "
+            + f"{BT_SET_BLACKBOARD_PARAM=} {self._blackboard_reference=} {self._expr=}"
+        )
         return ScxmlSend(
             generate_bt_blackboard_set(self._blackboard_reference),
             [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],

@@ -68,6 +68,7 @@ def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     :param bt_bb_ref_name: The name of the blackboard variable to set.
     :return: The name of the event to use to generate the specific variable.
     """
+    print(f">>>> generate_bt_blackboard_set / {bt_bb_ref_name=}")
     return f"bt_blackboard_set_{bt_bb_ref_name}"
 
 
