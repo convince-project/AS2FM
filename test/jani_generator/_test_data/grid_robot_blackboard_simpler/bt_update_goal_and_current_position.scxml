@@ -10,7 +10,8 @@
     <bt_declare_port_out key="goal_y" type="int32" />
     <bt_declare_port_out key="curr_x" type="int32" />
     <bt_declare_port_out key="curr_y" type="int32" />
-    <bt_declare_port_in key="move" type="int32" />
+    <bt_declare_port_in key="move_in" type="int32" />
+    <bt_declare_port_out key="move_out" type="int32" />
     <!--
         move: 0 - right
               1 - left
@@ -63,6 +64,13 @@
     </state> -->
 
     <state id="init">
+        <onentry>
+            <bt_set_output key="move_out" expr="4" />
+        </onentry>
+        <transition target="wait_for_tick" />
+    </state>
+
+    <state id="wait_for_tick">
         <bt_tick target="running">
             <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
             <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
@@ -70,21 +78,16 @@
             <bt_set_output key="goal_y" expr="goal_y" />
             <bt_set_output key="curr_x" expr="pose_x" />
             <bt_set_output key="curr_y" expr="pose_y" />
-            <if cond="first_tick">
-                <assign location="first_tick" expr="false" />
-                <assign location="move" expr="4" />
-                <else />
-                <assign location="move">
-                    <expr>
-                        <bt_get_input key="move" />
-                    </expr>
-                </assign>
-            </if>
+            <assign location="move">
+                <expr>
+                    <bt_get_input key="move_in" />
+                </expr>
+            </assign>
         </bt_tick>
     </state>
 
     <state id="running">
-        <transition target="init" cond="move != 4">
+        <transition target="wait_for_tick">
             <if cond="move == 0 &amp;&amp; pose_x &lt; n - 1">
                 <!-- right -->
                 <assign location="pose_x" expr="pose_x + 1" />
@@ -98,6 +101,7 @@
                 <!-- down -->
                 <assign location="pose_y" expr="pose_y - 1" />
             </if>
+            <bt_set_output key="move_out" expr="4" />
             <if cond="pose_x == goal_x &amp;&amp; pose_y == goal_y">
                 <ros_topic_publish name="at_goal">
                     <field name="data" expr="true" />
