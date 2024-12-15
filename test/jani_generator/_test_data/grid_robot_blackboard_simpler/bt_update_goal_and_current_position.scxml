@@ -27,12 +27,12 @@
     <datamodel>
         <!-- <data id="is_goal_init" expr="false" type="bool" /> -->
         <data id="is_pose_init" expr="false" type="bool" />
-        <data id="goal_x" expr="0" type="int32" />
-        <data id="goal_y" expr="0" type="int32" />
+        <data id="goal_x" expr="99" type="int32" />
+        <data id="goal_y" expr="99" type="int32" />
         <data id="pose_x" expr="0" type="int32" />
         <data id="pose_y" expr="0" type="int32" />
         <data id="move" expr="4" type="int32" />
-        <data id="n" expr="10" type="int32" /> <!-- grid size -->
+        <data id="n" expr="100" type="int32" /> <!-- grid size -->
         <data id="first_tick" expr="true" type="bool" />
     </datamodel>
 
@@ -72,8 +72,6 @@
 
     <state id="wait_for_tick">
         <bt_tick target="running">
-            <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
-            <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
             <bt_set_output key="goal_x" expr="goal_x" />
             <bt_set_output key="goal_y" expr="goal_y" />
             <bt_set_output key="curr_x" expr="pose_x" />
