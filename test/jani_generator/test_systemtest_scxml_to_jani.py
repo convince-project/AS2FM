@@ -213,6 +213,7 @@ class TestConversion(unittest.TestCase):
         skip_smc: bool = False,
         property_name: str,
         success: bool,
+        size_limit: int = 10_000,
     ):
         """
         Testing the conversion of the model xml file with the entrypoint.
@@ -257,7 +258,8 @@ class TestConversion(unittest.TestCase):
             pos_res = "Result: 1" if success else "Result: 0"
             neg_res = "Result: 0" if success else "Result: 1"
             run_smc_storm_with_output(
-                f"--model {output_path} --properties-names {property_name}",
+                f"--model {output_path} --properties-names {property_name} "
+                + f"--max-trace-length {size_limit} --max-n-traces {size_limit}",
                 [property_name, output_path, pos_res],
                 [neg_res],
             )
@@ -459,6 +461,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main.xml",
             property_name="at_goal",
             success=True,
+            size_limit=1_000_000,
         )
 
     def test_command_line_output_with_line_numbers(self):
