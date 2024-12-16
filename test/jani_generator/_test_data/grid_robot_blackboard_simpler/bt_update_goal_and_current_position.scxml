@@ -19,13 +19,10 @@
               3 - down
               4 - stop
     -->
-    <!-- <bt_declare_port_in key="goal_topic" type="string" />
-    <bt_declare_port_in key="curr_topic" type="string" /> -->
 
     <ros_topic_publisher name="at_goal" topic="at_goal" type="std_msgs/Bool" />
 
     <datamodel>
-        <!-- <data id="is_goal_init" expr="false" type="bool" /> -->
         <data id="is_pose_init" expr="false" type="bool" />
         <data id="goal_x" expr="99" type="int32" />
         <data id="goal_y" expr="99" type="int32" />
@@ -35,33 +32,6 @@
         <data id="n" expr="100" type="int32" /> <!-- grid size -->
         <data id="first_tick" expr="true" type="bool" />
     </datamodel>
-
-    <!-- <state id="running">
-        New robot goal
-        <ros_topic_callback name="goal_sub" target="running">
-            <assign location="goal_x" expr="_msg.x" />
-            <assign location="goal_y" expr="_msg.y" />
-            <assign location="is_goal_init" expr="true" />
-        </ros_topic_callback>
-        New robot pose
-        <ros_topic_callback name="curr_sub" target="running">
-            <assign location="curr_x" expr="_msg.x" />
-            <assign location="curr_y" expr="_msg.y" />
-            <assign location="is_pose_init" expr="true" />
-        </ros_topic_callback>
-        Leaf node tick
-        <bt_tick target="running">
-            <if cond="is_goal_init &amp;&amp; is_pose_init">
-                <bt_set_output key="goal_x" expr="goal_x" />
-                <bt_set_output key="goal_y" expr="goal_y" />
-                <bt_set_output key="curr_x" expr="curr_x" />
-                <bt_set_output key="curr_y" expr="curr_y" />
-                <bt_return_status status="SUCCESS" />
-                <else />
-                <bt_return_status status="FAILURE" />
-            </if>
-        </bt_tick>
-    </state> -->
 
     <state id="init">
         <onentry>
@@ -105,10 +75,6 @@
                     <field name="data" expr="true" />
                 </ros_topic_publish>
             </if>
-            <!-- <ros_topic_publish name="pose">
-                <field name="x" expr="pose_x" />
-                <field name="y" expr="pose_y" />
-            </ros_topic_publish> -->
             <bt_return_status status="SUCCESS" />
         </transition>
     </state>
