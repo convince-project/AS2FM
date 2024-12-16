@@ -6,7 +6,7 @@ SCXML and JANI
 
 In CONVINCE, we expect developers to use Behavior Trees and SCXML to model the different parts of a robotic systems.
 
-SCXML (Scope XML) is an XML format that describes a single state machine, and allows it to exchange information with other SCXML state machines using events. Each SCXML file defines its variables (datamodel), states, and transitions.
+SCXML (State Chart XML) is an XML format that describes a single state machine, and allows it to exchange information with other SCXML state machines using events. Each SCXML file defines its variables (datamodel), states, and transitions.
 
 Using SCXML, the system can be modeled as a set of state machines, each one represented by an SCXML file, which are synchronized together using events. Operations are carried out when the execution of a state machine receives an event, enters a state, or exits a state.
 
