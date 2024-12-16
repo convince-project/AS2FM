@@ -45,6 +45,7 @@ class JaniAssignment:
         return self._value
 
     def get_index(self) -> int:
+        """Returns the index, i.e. the number that defines the order of execution in Jani."""
         return self._index
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
