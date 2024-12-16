@@ -83,6 +83,7 @@ class JaniExpression:
                 self.operands = self._get_operands(expression)
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
+        """Generate the expressions operands from a raw dictionary, after validating  it."""
         assert self.op is not None, "Operator not set"
         if self.op in ("intersect", "distance"):
             # intersect: returns a value in [0.0, 1.0], indicating where on the robot trajectory
@@ -222,6 +223,7 @@ class JaniExpression:
         return self
 
     def is_valid(self) -> bool:
+        """Expression validity check."""
         return self.identifier is not None or self.value is not None or self.op is not None
 
     def as_literal(self) -> Optional[JaniValue]:
@@ -242,6 +244,7 @@ class JaniExpression:
         return (self.op, self.operands)
 
     def as_dict(self) -> Union[str, int, float, bool, dict]:
+        """Convert the expression to a dictionary, ready to be converted to JSON."""
         assert hasattr(self, "identifier"), f"Identifier not set for {self.__dict__}"
         if self.identifier is not None:
             return self.identifier
@@ -278,6 +281,7 @@ class JaniDistribution(JaniExpression):
         assert self.is_valid(), "Invalid arguments provided: expected args[0] <= args[1]."
 
     def is_valid(self):
+        """Distribution validity check."""
         # All other checks are carried out in the constructor
         return all(isinstance(argument, (int, float)) for argument in self._args) and (
             self._args[0] <= self._args[1]
@@ -305,12 +309,15 @@ class JaniDistribution(JaniExpression):
         return None
 
     def get_dist_type(self) -> str:
+        """Return the distribution type set in the object."""
         return self._distribution
 
     def get_dist_args(self) -> List[Union[int, float]]:
+        """Return the config. arguments of the distribution."""
         return self._args
 
     def as_dict(self) -> Dict[str, Any]:
+        """Convert the distribution to a dictionary, ready to be converted to JSON."""
         assert self.is_valid(), "Expected distribution to be valid."
         return {"distribution": self._distribution, "args": self._args}
 
