@@ -44,7 +44,7 @@ def _generate_new_edge_for_random_assignments(
 
 
 def _expand_random_variables_in_edge(
-    jani_edge: JaniEdge, *, n_options: int = 100
+    jani_edge: JaniEdge, *, n_options: int = 101
 ) -> List[JaniEdge]:
     """
     If there are random variables in the input JaniEdge, generate new edges to handle it.
@@ -100,7 +100,7 @@ def _expand_random_variables_in_edge(
     return generated_edges
 
 
-def expand_random_variables_in_jani_model(model: JaniModel, *, n_options: int = 100) -> None:
+def expand_random_variables_in_jani_model(model: JaniModel, *, n_options: int = 101) -> None:
     """Find all expression containing the 'distribution' expression and expand them."""
     # Check that no global variable has a random value (not supported)
     for g_var_name, g_var in model.get_variables().items():
