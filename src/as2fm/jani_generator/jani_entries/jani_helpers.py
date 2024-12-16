@@ -43,7 +43,9 @@ def _generate_new_edge_for_random_assignments(
     )
 
 
-def _expand_random_variables_in_edge(jani_edge: JaniEdge) -> List[JaniEdge]:
+def _expand_random_variables_in_edge(
+    jani_edge: JaniEdge, *, n_options: int = 100
+) -> List[JaniEdge]:
     """
     If there are random variables in the input JaniEdge, generate new edges to handle it.
 
@@ -61,7 +63,7 @@ def _expand_random_variables_in_edge(jani_edge: JaniEdge) -> List[JaniEdge]:
         curr_assign_idx = 0
         while curr_assign_idx < len(jani_assignments):
             expanded_assignments = expand_distribution_expressions(
-                jani_assignments[curr_assign_idx].get_expression()
+                jani_assignments[curr_assign_idx].get_expression(), n_options=n_options
             )
             if len(expanded_assignments) > 1:
                 # In this case, we expanded the assignments, and we need to generate new edges
@@ -90,13 +92,15 @@ def _expand_random_variables_in_edge(jani_edge: JaniEdge) -> List[JaniEdge]:
                 dest_val["location"] = expanded_edge_loc
                 dest_val["assignments"] = dest_val["assignments"][0:curr_assign_idx]
                 generated_edges.append(expanded_edge)
-                generated_edges.extend(_expand_random_variables_in_edge(continuation_edge))
+                generated_edges.extend(
+                    _expand_random_variables_in_edge(continuation_edge, n_options=n_options)
+                )
                 break
             curr_assign_idx += 1
     return generated_edges
 
 
-def expand_random_variables_in_jani_model(model: JaniModel) -> None:
+def expand_random_variables_in_jani_model(model: JaniModel, *, n_options: int = 100) -> None:
     """Find all expression containing the 'distribution' expression and expand them."""
     # Check that no global variable has a random value (not supported)
     for g_var_name, g_var in model.get_variables().items():
@@ -113,7 +117,7 @@ def expand_random_variables_in_jani_model(model: JaniModel) -> None:
         # Edges created to handle random distributions
         new_edges: List[JaniEdge] = []
         for edge in automaton.get_edges():
-            generated_edges = _expand_random_variables_in_edge(edge)
+            generated_edges = _expand_random_variables_in_edge(edge, n_options=n_options)
             for gen_edge in generated_edges:
                 automaton.add_location(gen_edge.location)
             new_edges.extend(generated_edges)
