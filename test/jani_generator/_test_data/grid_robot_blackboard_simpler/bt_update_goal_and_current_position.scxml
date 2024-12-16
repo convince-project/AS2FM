@@ -23,14 +23,15 @@
     <ros_topic_publisher name="at_goal" topic="at_goal" type="std_msgs/Bool" />
 
     <datamodel>
-        <data id="is_pose_init" expr="false" type="bool" />
-        <data id="n" expr="10" type="int32" /> <!-- grid size -->
+        <data id="n" expr="100" type="int32" /> <!-- grid size -->
         <data id="goal_x" expr="0" type="int32" />
         <data id="goal_y" expr="0" type="int32" />
         <data id="pose_x" expr="0" type="int32" />
         <data id="pose_y" expr="0" type="int32" />
         <data id="move" expr="4" type="int32" />
         <data id="first_tick" expr="true" type="bool" />
+        <data id="n_goals" expr="3" type="int32" />
+        <data id="n_goals_reached" expr="0" type="int32" />
     </datamodel>
 
     <state id="init">
@@ -78,9 +79,14 @@
             </if>
             <bt_set_output key="move_out" expr="4" />
             <if cond="pose_x == goal_x &amp;&amp; pose_y == goal_y">
-                <ros_topic_publish name="at_goal">
-                    <field name="data" expr="true" />
-                </ros_topic_publish>
+                <assign location="n_goals_reached" expr="n_goals_reached + 1" />
+                <if cond="n_goals_reached == n_goals">
+                    <ros_topic_publish name="at_goal">
+                        <field name="data" expr="true" />
+                    </ros_topic_publish>
+                </if>
+                <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
+                <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
             </if>
             <bt_return_status status="SUCCESS" />
         </transition>
