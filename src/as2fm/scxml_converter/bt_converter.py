@@ -76,7 +76,7 @@ def get_blackboard_variables_from_models(models: List[ScxmlRoot]) -> Dict[str, s
 
 
 def generate_blackboard_scxml(bt_blackboard_vars: Dict[str, str]) -> ScxmlRoot:
-    """Generate an SCXML model that handles all BT related synchronization."""
+    """Generate an SCXML model that handles all BT-related synchronization."""
     assert len(bt_blackboard_vars) > 0, "Cannot generate BT Blackboard, no variables"
     # TODO: Append the name of the related BT, as in generate_bt_root_scxml
     scxml_model_name = "bt_blackboard_fsm"
