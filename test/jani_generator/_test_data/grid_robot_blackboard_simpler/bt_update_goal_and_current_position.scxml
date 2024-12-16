@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
-    initial="running"
+    initial="init"
     version="1.0"
     name="UpdateGoalAndCurrentPosition"
     model_src=""
@@ -24,18 +24,22 @@
 
     <datamodel>
         <data id="is_pose_init" expr="false" type="bool" />
-        <data id="goal_x" expr="99" type="int32" />
-        <data id="goal_y" expr="99" type="int32" />
+        <data id="n" expr="10" type="int32" /> <!-- grid size -->
+        <data id="goal_x" expr="0" type="int32" />
+        <data id="goal_y" expr="0" type="int32" />
         <data id="pose_x" expr="0" type="int32" />
         <data id="pose_y" expr="0" type="int32" />
         <data id="move" expr="4" type="int32" />
-        <data id="n" expr="100" type="int32" /> <!-- grid size -->
         <data id="first_tick" expr="true" type="bool" />
     </datamodel>
 
     <state id="init">
         <onentry>
             <bt_set_output key="move_out" expr="4" />
+            <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="pose_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="pose_y" expr="Math.floor(Math.random() * (n-1))" />
         </onentry>
         <transition target="wait_for_tick" />
     </state>
