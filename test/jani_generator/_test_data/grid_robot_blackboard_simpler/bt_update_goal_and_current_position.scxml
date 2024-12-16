@@ -24,12 +24,12 @@
 
     <datamodel>
         <data id="is_pose_init" expr="false" type="bool" />
-        <data id="goal_x" expr="99" type="int32" />
-        <data id="goal_y" expr="99" type="int32" />
+        <data id="goal_x" expr="23" type="int32" />
+        <data id="goal_y" expr="14" type="int32" />
         <data id="pose_x" expr="0" type="int32" />
         <data id="pose_y" expr="0" type="int32" />
         <data id="move" expr="4" type="int32" />
-        <data id="n" expr="100" type="int32" /> <!-- grid size -->
+        <data id="n" expr="30" type="int32" /> <!-- grid size -->
         <data id="first_tick" expr="true" type="bool" />
     </datamodel>
 
