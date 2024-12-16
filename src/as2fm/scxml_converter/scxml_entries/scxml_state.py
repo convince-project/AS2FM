@@ -152,31 +152,30 @@ class ScxmlState(ScxmlBase):
         self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
         generated_states: List[ScxmlState] = [self]
-        if bt_ports_handler.has_blackboard_inputs():
-            assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
-                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
-                "This isn't yet supported."
-            )
-            assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
-                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
-                "This isn't yet supported."
-            )
-            for transition in self._body:
-                if transition.has_bt_blackboard_input(bt_ports_handler):
-                    # Prepare the new state using the received BT info
-                    states_count = len(generated_states)
-                    new_state_id = f"{self.get_id()}_{transition.get_tag_name()}_{states_count}"
-                    new_state = ScxmlState(new_state_id)
-                    blackboard_transition = ScxmlTransition(
-                        transition.get_target_state_id(),
-                        [BT_BLACKBOARD_GET],
-                        body=transition.get_body(),
-                    )
-                    new_state.add_transition(blackboard_transition)
-                    generated_states.append(new_state)
-                    # Set the new target and body to the original transition
-                    transition.set_target_state_id(new_state_id)
-                    transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
+        assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
+            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
+            "This isn't yet supported."
+        )
+        assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
+            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
+            "This isn't yet supported."
+        )
+        for transition in self._body:
+            if transition.has_bt_blackboard_input(bt_ports_handler):
+                # Prepare the new state using the received BT info
+                states_count = len(generated_states)
+                new_state_id = f"{self.get_id()}_{transition.get_tag_name()}_{states_count}"
+                new_state = ScxmlState(new_state_id)
+                blackboard_transition = ScxmlTransition(
+                    transition.get_target_state_id(),
+                    [BT_BLACKBOARD_GET],
+                    body=transition.get_body(),
+                )
+                new_state.add_transition(blackboard_transition)
+                generated_states.append(new_state)
+                # Set the new target and body to the original transition
+                transition.set_target_state_id(new_state_id)
+                transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
         return generated_states
 
     def _substitute_bt_events_and_ports(

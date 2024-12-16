@@ -136,11 +136,6 @@ class BtPortsHandler:
         # For each port name, store the port type string and value.
         self._in_ports: Dict[str, Tuple[str, str]] = {}
         self._out_ports: Dict[str, Tuple[str, str]] = {}
-        self._has_blackboard_inputs: bool = False
-
-    def has_blackboard_inputs(self) -> bool:
-        """Boolean check reporting whether any input port references blackboard variables."""
-        return self._has_blackboard_inputs
 
     def in_port_exists(self, port_name: str) -> bool:
         """Check if an input port exists."""
@@ -232,10 +227,6 @@ class BtPortsHandler:
         ), f"Error: Value of port {port_name} already assigned."
         port_type = self._in_ports[port_name][0]
         self._in_ports[port_name] = (port_type, port_value)
-        # Update flag to track whether we added a blackboard variable or not
-        self._has_blackboard_inputs = self._has_blackboard_inputs or is_blackboard_reference(
-            port_value
-        )
 
     def _set_out_port_value(self, port_name: str, port_value: str):
         """Set the value of an output port."""

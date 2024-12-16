@@ -133,6 +133,10 @@ class BtTickChild(ScxmlSend):
     def check_validity(self) -> bool:
         return True
 
+    def has_bt_blackboard_input(self, _):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        return False
+
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> Union[ScxmlIf, ScxmlSend]:

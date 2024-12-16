@@ -21,39 +21,6 @@
                     "op": "initial"
                 }
             }
-        },
-        {
-            "name": "at_goal",
-            "expression": {
-                "op": "filter",
-                "fun": "values",
-                "values": {
-                    "op": "Pmin",
-                    "exp": {
-                        "op": "F",
-                        "exp": {
-                            "op": "∧",
-                            "left": "topic_goal_msg.valid",
-                            "right": {
-                                "op": "∧",
-                                "left": {
-                                    "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__x",
-                                    "right": "topic_goal_msg.ros_fields__x"
-                                },
-                                "right": {
-                                    "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__y",
-                                    "right": "topic_goal_msg.ros_fields__y"
-                                }
-                            }
-                        }
-                    }
-                },
-                "states": {
-                    "op": "initial"
-                }
-            }
         }
     ]
 }
