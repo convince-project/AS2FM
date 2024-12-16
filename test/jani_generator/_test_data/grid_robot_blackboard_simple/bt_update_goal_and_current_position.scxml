@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="init"
+    version="1.0"
+    name="UpdateGoalAndCurrentPosition"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_out key="goal_x" type="int32" />
+    <bt_declare_port_out key="goal_y" type="int32" />
+    <bt_declare_port_out key="curr_x" type="int32" />
+    <bt_declare_port_out key="curr_y" type="int32" />
+    <bt_declare_port_in key="grid_size" type="int32" />
+
+    <datamodel>
+        <data id="n" type="int32">
+            <expr>
+                <bt_get_input key="grid_size" />
+            </expr>
+        </data>
+        <data id="goal_x" expr="0" type="int32" />
+        <data id="goal_y" expr="0" type="int32" />
+        <data id="curr_x" expr="0" type="int32" />
+        <data id="curr_y" expr="0" type="int32" />
+        <data id="goal_count" expr="0" type="int32" />
+    </datamodel>
+
+    <state id="init">
+        <transition target="next_goal">
+            <assign location="curr_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="curr_y" expr="Math.floor(Math.random() * (n-1))" />
+            <bt_set_output key="curr_x" expr="curr_x" />
+            <bt_set_output key="curr_y" expr="curr_y" />
+        </transition>
+    </state>
+
+    <state id="next_goal">
+        <transition target="running">
+            <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+            <bt_set_output key="goal_x" expr="goal_x" />
+            <bt_set_output key="goal_y" expr="goal_y" />
+        </transition>
+    </state>
+
+    <state id="running">
+        <!-- Leaf node tick -->
+        <bt_tick target="running">
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+    </state>
+
+</scxml>

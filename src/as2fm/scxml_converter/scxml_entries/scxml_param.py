@@ -89,14 +89,14 @@ class ScxmlParam(ScxmlBase):
 
     def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
         return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
-            bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            bt_ports_handler.get_port_value(self._expr.get_key_name())
         )
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
         if isinstance(self._expr, BtGetValueInputPort):
             self._expr = get_input_variable_as_scxml_expression(
-                bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+                bt_ports_handler.get_port_value(self._expr.get_key_name())
             )
 
     def check_validity(self) -> bool:
