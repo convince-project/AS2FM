@@ -38,7 +38,7 @@ def _interpret_output(output: str, expected_content: List[str], not_expected_con
 def _run_smc_storm(args: str) -> Tuple[str, str, int]:
     """Run smc_storm with the given arguments and return
     the stdout, stderr and return code."""
-    command = f"smc_storm {args} --max-trace-length 10000 --max-n-traces 10000"
+    command = f"smc_storm {args}"
     print("Running command: ", command)
     with subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True

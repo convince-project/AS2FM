@@ -213,6 +213,7 @@ class TestConversion(unittest.TestCase):
         skip_smc: bool = False,
         property_name: str,
         success: bool,
+        size_limit: int = 10_000,
     ):
         """
         Testing the conversion of the model xml file with the entrypoint.
@@ -257,7 +258,8 @@ class TestConversion(unittest.TestCase):
             pos_res = "Result: 1" if success else "Result: 0"
             neg_res = "Result: 0" if success else "Result: 1"
             run_smc_storm_with_output(
-                f"--model {output_path} --properties-names {property_name}",
+                f"--model {output_path} --properties-names {property_name} "
+                + f"--max-trace-length {size_limit} --max-n-traces {size_limit}",
                 [property_name, output_path, pos_res],
                 [neg_res],
             )
@@ -432,6 +434,34 @@ class TestConversion(unittest.TestCase):
             model_xml="main_bug.xml",
             property_name="can_execute_recovery_branch",
             success=False,
+        )
+
+    def test_blackboard_features(self):
+        """Test the blackboard features."""
+        self._test_with_main(
+            "blackboard_test",
+            model_xml="main.xml",
+            property_name="tree_success",
+            success=True,
+        )
+
+    def test_grid_robot_blackboard(self):
+        """Test the grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "grid_robot_blackboard",
+            model_xml="main.xml",
+            property_name="at_goal",
+            success=True,
+        )
+
+    def test_grid_robot_blackboard_simple(self):
+        """Test the simpler grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "grid_robot_blackboard_simple",
+            model_xml="main.xml",
+            property_name="tree_success",
+            success=True,
+            size_limit=1_000_000,
         )
 
     def test_command_line_output_with_line_numbers(self):

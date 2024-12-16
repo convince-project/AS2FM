@@ -33,6 +33,7 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_result_handle_event,
     is_action_type_known,
 )
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
     RosCallback,
     RosDeclaration,
@@ -104,6 +105,9 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         action_name = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "name")
         accept_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "accept")
         reject_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "reject")
+        assert (
+            len(execution_body_from_xml(xml_tree)) == 0
+        ), "Error: SCXML RosActionHandleGoalResponse can not have an execution body."
         return RosActionHandleGoalResponse(action_name, accept_target, reject_target)
 
     def __init__(
@@ -143,6 +147,10 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         """Update the values of potential entries making use of BT ports."""
         # We do not expect a body with BT ports to be substituted
         pass
+
+    def has_bt_blackboard_input(self, _) -> bool:
+        """This can not have a body, so it can not have BT blackboard input."""
+        return False
 
     def check_valid_ros_instantiations(
         self, ros_declarations: ScxmlRosDeclarationsContainer

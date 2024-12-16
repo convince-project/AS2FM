@@ -15,7 +15,7 @@
 
 """And edge defining the possible transition from one state to another in jani."""
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -52,6 +52,7 @@ class JaniEdge:
                         jani_destination["assignments"].append(assignment)
                     else:
                         raise RuntimeError(f"Unexpected type {type(assignment)} in assignments")
+                _sort_assignments_by_index(jani_destination["assignments"])
             self.destinations.append(jani_destination)
 
     def get_action(self) -> Optional[str]:
@@ -93,3 +94,8 @@ class JaniEdge:
                 single_destination.update({"assignments": expanded_assignments})
             edge_dict["destinations"].append(single_destination)
         return edge_dict
+
+
+def _sort_assignments_by_index(assignments: List[JaniAssignment]) -> None:
+    """Sorts a list of assignments by assignment index."""
+    assignments.sort(key=lambda assignment: assignment.get_index())

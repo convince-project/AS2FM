@@ -1,0 +1,33 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="simple_robot_blackboard">
+        <Sequence name="control_loop">
+            <!-- Store goal and robot pose in 4 blackboard variables -->
+            <Action ID="UpdateGoalAndCurrentPosition" goal_topic="goal" curr_topic="pose" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" />
+            <Fallback name="move_to_goal">
+                <!--
+                    Movement enum in the world.
+                    0: right,
+                    1: left,
+                    2: up,
+                    3: down
+                -->
+                <Sequence name="TryR">
+                    <Condition ID="ShallMove" direction="0" name="check_right" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" />
+                    <Action ID="Move" direction="0" cmd_topic="move" name="move_right" />
+                </Sequence>
+                <Sequence name="TryL">
+                    <Condition ID="ShallMove" direction="1" name="check_left" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" />
+                    <Action ID="Move" direction="1" cmd_topic="move" name="move_left" />
+                </Sequence>
+                <Sequence name="TryU">
+                    <Condition ID="ShallMove" direction="2" name="check_up" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" />
+                    <Action ID="Move" direction="2" cmd_topic="move" name="move_up" />
+                </Sequence>
+                <Sequence name="TryD">
+                    <Condition ID="ShallMove" direction="3" name="check_down" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" />
+                    <Action ID="Move" direction="3" cmd_topic="move" name="move_down" />
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

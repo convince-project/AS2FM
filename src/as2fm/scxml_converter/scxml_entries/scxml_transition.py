@@ -31,7 +31,9 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     execution_body_from_xml,
+    has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
+    is_plain_execution_body,
     set_execution_body_callback_type,
     valid_execution_body,
     valid_execution_body_entry_types,
@@ -105,6 +107,9 @@ class ScxmlTransition(ScxmlBase):
         """Return the ID of the target state of this transition."""
         return self._target
 
+    def set_target_state_id(self, state_id: str):
+        self._target = state_id
+
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""
         return self._events
@@ -120,6 +125,9 @@ class ScxmlTransition(ScxmlBase):
     def set_body(self, body: ScxmlExecutionBody) -> None:
         """Set the body of this transition."""
         self._body = body
+
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        return has_bt_blackboard_input(self._body, bt_ports_handler)
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
@@ -196,6 +204,10 @@ class ScxmlTransition(ScxmlBase):
             for entry in self._body:
                 if hasattr(entry, "set_thread_id"):
                     entry.set_thread_id(thread_id)
+
+    def is_plain_scxml(self) -> bool:
+        """Check if the transition is a plain scxml entry and contains only plain scxml."""
+        return type(self) is ScxmlTransition and is_plain_execution_body(self._body)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(

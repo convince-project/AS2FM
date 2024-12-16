@@ -30,7 +30,12 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    get_input_variable_as_scxml_expression,
+    is_blackboard_reference,
+    is_bt_event,
+)
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -75,6 +80,21 @@ def update_exec_body_bt_ports_values(
     if exec_body is not None:
         for entry in exec_body:
             entry.update_bt_ports_values(bt_ports_handler)
+
+
+def has_bt_blackboard_input(
+    exec_body: Optional[ScxmlExecutionBody], bt_ports_info: BtPortsHandler
+) -> bool:
+    """
+    Check if any entry in the execution body requires reading from the blackboard.
+    """
+    if exec_body is None:
+        return False
+    for entry in exec_body:
+        # If any entry in the executable body requires reading from the blackboard, report it
+        if entry.has_bt_blackboard_input(bt_ports_info):
+            return True
+    return False
 
 
 class ScxmlIf(ScxmlBase):
@@ -154,6 +174,13 @@ class ScxmlIf(ScxmlBase):
         """Get the else execution."""
         return self._else_execution
 
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        for _, cond_body in self._conditional_executions:
+            if has_bt_blackboard_input(cond_body, bt_ports_handler):
+                return True
+        return has_bt_blackboard_input(self._else_execution, bt_ports_handler)
+
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
         """Instantiate the behavior tree events in the If action, if available."""
         for _, exec_body in self._conditional_executions:
@@ -204,6 +231,13 @@ class ScxmlIf(ScxmlBase):
         for entry in self._else_execution:
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_id)
+
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlIf:
+            return all(
+                is_plain_execution_body(body) for _, body in self._conditional_executions
+            ) and is_plain_execution_body(self._else_execution)
+        return False
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
@@ -302,6 +336,13 @@ class ScxmlSend(ScxmlBase):
         """Set the target automata associated to this send event."""
         self._target_automaton = target_automaton
 
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        for param in self._params:
+            if param.has_bt_blackboard_input(bt_ports_handler):
+                return True
+        return False
+
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
         # Support for deprecated BT events handling. Remove the whole if block once transition done.
@@ -353,6 +394,11 @@ class ScxmlSend(ScxmlBase):
         ), f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
         assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
         self._params.append(param)
+
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlSend:
+            return all(isinstance(param.get_expr(), str) for param in self._params)
+        return False
 
     def as_plain_scxml(self, _) -> "ScxmlSend":
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
@@ -413,6 +459,12 @@ class ScxmlAssign(ScxmlBase):
         """Get the expression to assign."""
         return self._expr
 
+    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
+            bt_ports_handler.get_port_value(self._expr.get_key_name())
+        )
+
     def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
         """This functionality is not needed in this class."""
         return self
@@ -420,7 +472,9 @@ class ScxmlAssign(ScxmlBase):
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
+            self._expr = get_input_variable_as_scxml_expression(
+                bt_ports_handler.get_port_value(self._expr.get_key_name())
+            )
 
     def check_validity(self) -> bool:
         # TODO: Check that the location to assign exists in the data-model
@@ -432,6 +486,11 @@ class ScxmlAssign(ScxmlBase):
         """Check if the ros instantiations have been declared."""
         # This has nothing to do with ROS. Return always True
         return True
+
+    def is_plain_scxml(self) -> bool:
+        if type(self) is ScxmlAssign:
+            return isinstance(self._expr, str)
+        return False
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         # TODO: Might make sense to check if the assignment happens in a topic callback
@@ -546,6 +605,13 @@ def set_execution_body_callback_type(exec_body: ScxmlExecutionBody, cb_type: Cal
     """
     for entry in exec_body:
         entry.set_callback_type(cb_type)
+
+
+def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody]) -> bool:
+    """Check if al entries in the exec body are plain scxml."""
+    if exec_body is None:
+        return True
+    return all(entry.is_plain_scxml() for entry in exec_body)
 
 
 def as_plain_execution_body(

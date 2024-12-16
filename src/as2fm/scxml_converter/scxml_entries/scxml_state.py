@@ -23,18 +23,24 @@ from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
-    BtTick,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
     ScxmlRosDeclarationsContainer,
+    ScxmlSend,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
+    BtPortsHandler,
+)
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     as_plain_execution_body,
     execution_body_from_xml,
+    has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
+    is_plain_execution_body,
     set_execution_body_callback_type,
     valid_execution_body,
 )
@@ -142,8 +148,39 @@ class ScxmlState(ScxmlBase):
             if hasattr(entry, "set_thread_id"):
                 entry.set_thread_id(thread_idx)
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> None:
-        """Instantiate the BT events in all entries belonging to a state."""
+    def _generate_blackboard_retrieval(
+        self, bt_ports_handler: BtPortsHandler
+    ) -> List["ScxmlState"]:
+        generated_states: List[ScxmlState] = [self]
+        assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
+            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
+            "This isn't yet supported."
+        )
+        assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
+            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
+            "This isn't yet supported."
+        )
+        for transition in self._body:
+            if transition.has_bt_blackboard_input(bt_ports_handler):
+                # Prepare the new state using the received BT info
+                states_count = len(generated_states)
+                new_state_id = f"{self.get_id()}_{transition.get_tag_name()}_{states_count}"
+                new_state = ScxmlState(new_state_id)
+                blackboard_transition = ScxmlTransition(
+                    transition.get_target_state_id(),
+                    [BT_BLACKBOARD_GET],
+                    body=transition.get_body(),
+                )
+                new_state.add_transition(blackboard_transition)
+                generated_states.append(new_state)
+                # Set the new target and body to the original transition
+                transition.set_target_state_id(new_state_id)
+                transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
+        return generated_states
+
+    def _substitute_bt_events_and_ports(
+        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    ) -> None:
         instantiated_transitions: List[ScxmlTransition] = []
         for transition in self._body:
             new_transitions = transition.instantiate_bt_events(instance_id, children_ids)
@@ -154,8 +191,9 @@ class ScxmlState(ScxmlBase):
         self._body = instantiated_transitions
         instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
         instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
+        self._update_bt_ports_values(bt_ports_handler)
 
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
+    def _update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
         for transition in self._body:
             transition.update_bt_ports_values(bt_ports_handler)
@@ -163,6 +201,15 @@ class ScxmlState(ScxmlBase):
             entry.update_bt_ports_values(bt_ports_handler)
         for entry in self._on_exit:
             entry.update_bt_ports_values(bt_ports_handler)
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
+    ) -> List["ScxmlState"]:
+        """Instantiate the BT events in all entries belonging to a state."""
+        generated_states = self._generate_blackboard_retrieval(bt_ports_handler)
+        for state in generated_states:
+            state._substitute_bt_events_and_ports(instance_id, children_ids, bt_ports_handler)
+        return generated_states
 
     def add_transition(self, transition: ScxmlTransition) -> None:
         self._body.append(transition)
@@ -229,9 +276,12 @@ class ScxmlState(ScxmlBase):
             entry.check_valid_ros_instantiations(ros_declarations) for entry in body
         )
 
-    def has_bt_tick_transitions(self) -> bool:
-        """Check if the state has BT tick transitions."""
-        return any(isinstance(entry, BtTick) for entry in self._body)
+    def is_plain_scxml(self) -> bool:
+        """Check if all SCXML entries in the state are plain scxml."""
+        plain_entry = is_plain_execution_body(self._on_entry)
+        plain_exit = is_plain_execution_body(self._on_exit)
+        plain_body = all(transition.is_plain_scxml() for transition in self._body)
+        return plain_entry and plain_exit and plain_body
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
         """Convert the ROS-specific entries to be plain SCXML"""

@@ -20,6 +20,7 @@ Module handling the conversion from SCXML to Jani.
 from typing import List
 
 from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
+from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
 from as2fm.jani_generator.jani_entries.jani_model import JaniModel
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
@@ -82,4 +83,5 @@ def convert_multiple_scxmls_to_jani(
         base_model.add_jani_automaton(timer_automaton)
     implement_scxml_events_as_jani_syncs(events_holder, timers, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)
+    expand_random_variables_in_jani_model(base_model, n_options=100)
     return base_model

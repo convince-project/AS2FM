@@ -20,7 +20,6 @@ from typing import Optional, Union
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.utils import (
     ROS_FIELD_PREFIX,
     CallbackType,
@@ -63,11 +62,6 @@ class RosField(ScxmlParam):
             RosField, "expr", self._expr
         )
         return valid_name and valid_expr
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
 
     def as_plain_scxml(self, _) -> ScxmlParam:
         # In order to distinguish the message body from additional entries, add a prefix to the name

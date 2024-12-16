@@ -15,15 +15,22 @@
 
 """Expand expressions into jani."""
 
+from copy import deepcopy
 from math import pi
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, List
 
-from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression, JaniValue
+from as2fm.jani_generator.jani_entries import (
+    JaniConstant,
+    JaniDistribution,
+    JaniExpression,
+    JaniExpressionType,
+)
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     abs_operator,
     and_operator,
     ceil_operator,
     cos_operator,
+    distribution_expression,
     divide_operator,
     equal_operator,
     floor_operator,
@@ -81,6 +88,11 @@ OPERATORS_TO_JANI_MAP: Dict[str, str] = {
     "ac": "ac",
     "av": "av",
 }
+
+
+def random_operator() -> JaniDistribution:
+    """Function to get a random number between 0 and 1 in the Jani Model."""
+    return distribution_expression("Uniform", [0.0, 1.0])
 
 
 # Custom operators (CONVINCE, specific to mobile 2D robot use case)
@@ -453,7 +465,7 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-    expression: Union[JaniExpression, JaniValue], jani_constants: Dict[str, JaniConstant]
+    expression: JaniExpression, jani_constants: Dict[str, JaniConstant]
 ) -> JaniExpression:
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
     assert isinstance(
@@ -462,6 +474,9 @@ def expand_expression(
     assert (
         expression.is_valid()
     ), "The expression is not valid: it defines no value, nor variable, nor operation to be done."
+    if expression.get_expression_type() == JaniExpressionType.DISTRIBUTION:
+        # For now this is fine, since we expect only real values in the args
+        return expression
     if expression.op is None:
         # It is either a variable/constant identifier or a value
         return expression
@@ -492,6 +507,48 @@ def expand_expression(
     return __substitute_expression_op(expression)
 
 
+def expand_distribution_expressions(
+    expression: JaniExpression, *, n_options: int = 101
+) -> List[JaniExpression]:
+    """
+    Traverse the expression and substitute each distribution with n expressions.
+
+    This is a workaround, until we can support it in our model checker.
+
+    :param expression: The expression to expand.
+    :param n_options: How many options to generate for each encountered distribution.
+    :return: One expression, if no distribution is found, n_options^n_distributions expr. otherwise.
+    """
+    assert isinstance(
+        expression, JaniExpression
+    ), f"Unexpected expression type: {type(expression)} != (JaniExpression, JaniDistribution)."
+    assert expression.is_valid(), f"Invalid expression found: {expression}."
+    expr_type = expression.get_expression_type()
+    if expr_type == JaniExpressionType.OPERATOR:
+        # Generate all possible expressions, if expansion returns many expressions for an operand
+        expanded_expressions: List[JaniExpression] = [deepcopy(expression)]
+        for key, value in expression.operands.items():
+            expanded_operand = expand_distribution_expressions(value, n_options=n_options)
+            base_expressions = expanded_expressions
+            expanded_expressions = []
+            for expr in base_expressions:
+                for key_value in expanded_operand:
+                    expr.operands[key] = key_value
+                    expanded_expressions.append(deepcopy(expr))
+        return expanded_expressions
+    elif expr_type == JaniExpressionType.DISTRIBUTION:
+        # Here we need to substitute the distribution with a number of constants
+        assert isinstance(expression, JaniDistribution) and expression.is_valid()
+        lower_bound = expression.get_dist_args()[0]
+        dist_width = expression.get_dist_args()[1] - lower_bound
+        # Generate a (constant) JaniExpression for each possible outcome
+        return [
+            JaniExpression(lower_bound + (x * dist_width / (n_options - 1)))
+            for x in range(n_options)
+        ]
+    return [expression]
+
+
 # Map each function name to the corresponding Expression generator
 CALLABLE_OPERATORS_MAP: Dict[str, Callable] = {
     "abs": abs_operator,
@@ -503,4 +560,5 @@ CALLABLE_OPERATORS_MAP: Dict[str, Callable] = {
     "pow": pow_operator,
     "min": min_operator,
     "max": max_operator,
+    "random": random_operator,
 }

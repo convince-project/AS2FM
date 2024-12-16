@@ -45,7 +45,10 @@ def interpret_ecma_script_expr(
         msg_addition = ""
         if expr in ("True", "False"):
             msg_addition = "Did you mean to use 'true' or 'false' instead?"
-        raise RuntimeError(f"Failed to interpret JS expression: 'result = {expr}'. {msg_addition}")
+        raise RuntimeError(
+            f"Failed to interpret JS expression using variables {variables}: ",
+            f"'result = {expr}'. {msg_addition}",
+        )
     expr_result = context.result
     if isinstance(expr_result, BasicJsTypes):
         return expr_result
