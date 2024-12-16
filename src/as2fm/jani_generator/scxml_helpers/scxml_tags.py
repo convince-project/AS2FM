@@ -19,12 +19,17 @@ Module defining SCXML tags to match against.
 
 from array import ArrayType
 from hashlib import sha256
-from typing import Dict, List, Optional, Set, Tuple, Union, get_args
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, get_args
 
 import lxml.etree as ET
 from lxml.etree import _Element as Element
 
-from as2fm.as2fm_common.common import check_value_type_compatible, string_to_value, value_to_type
+from as2fm.as2fm_common.common import (
+    check_value_type_compatible,
+    get_default_expression_for_type,
+    string_to_value,
+    value_to_type,
+)
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -448,6 +453,8 @@ class DatamodelTag(BaseTag):
         return []
 
     def write_model(self):
+        # A collection of the variables read from the datamodel so far
+        read_vars: Dict[str, Any] = {}
         for scxml_data in self.element.get_data_entries():
             assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
             assert scxml_data.check_validity(), "Found invalid data entry."
@@ -465,12 +472,10 @@ class DatamodelTag(BaseTag):
                 expected_type = ArrayType
                 array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
-            expr_type = type(interpret_ecma_script_expr(scxml_data.get_expr()))
-            assert check_value_type_compatible(
-                interpret_ecma_script_expr(scxml_data.get_expr()), expected_type
-            ), (
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), read_vars)
+            assert check_value_type_compatible(evaluated_expr, expected_type), (
                 f"Invalid value for {scxml_data.get_name()}: "
-                f"Expected type {expected_type}, got {expr_type}."
+                f"Expected type {expected_type}, got {type(evaluated_expr)}."
             )
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
@@ -484,6 +489,9 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
+            read_vars.update(
+                {scxml_data.get_name(): get_default_expression_for_type(scxml_data.get_type())}
+            )
 
 
 class ScxmlTag(BaseTag):

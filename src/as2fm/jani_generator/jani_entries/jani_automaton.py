@@ -78,6 +78,12 @@ class JaniAutomaton:
             self._edge_id += 1
         self._edges.append(edge)
 
+    def set_edges(self, new_edges: List[JaniEdge]) -> None:
+        """Replace the edges in the Automaton."""
+        self._edges = []
+        for edge in new_edges:
+            self.add_edge(edge)
+
     def get_edges(self) -> List[JaniEdge]:
         return self._edges
 

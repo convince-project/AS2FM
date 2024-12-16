@@ -17,7 +17,7 @@
 Generate full expressions in Jani
 """
 
-from as2fm.jani_generator.jani_entries import JaniExpression
+from as2fm.jani_generator.jani_entries import JaniDistribution, JaniExpression
 
 
 # Math operators
@@ -152,3 +152,13 @@ def array_value_operator(elements) -> JaniExpression:
     :param elements: The elements of the array
     """
     return JaniExpression({"op": "av", "elements": elements})
+
+
+def distribution_expression(distribution: str, arguments: list) -> JaniDistribution:
+    """
+    Generate a distribution expression
+
+    :param distribution: The statistical distribution to pick from
+    :param arguments: The parameters for configuring the statistical distribution
+    """
+    return JaniDistribution({"distribution": distribution, "args": arguments})

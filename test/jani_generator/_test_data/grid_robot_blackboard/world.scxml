@@ -7,8 +7,8 @@
 
     <datamodel>
         <data id="n" type="int32" expr="10" />  <!-- grid size -->
-        <data id="pose_x" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
-        <data id="pose_y" type="int32" expr="0" /> <!-- TODO: Math.floor(Math.random() * n) -->
+        <data id="pose_x" type="int32" expr="0" />
+        <data id="pose_y" type="int32" expr="0" />
         <data id="goal_x" type="int32" expr="0" />
         <data id="goal_y" type="int32" expr="0" />
     </datamodel>
@@ -24,23 +24,29 @@
     <ros_topic_publisher topic="goal" type="grid_robot_interfaces/Int2D" />
 
     <state id="init">
-        <onentry>
-            <assign location="goal_x" expr="4" /> <!-- TODO: Math.floor(Math.random() * n) -->
-            <assign location="goal_y" expr="9" /> <!-- TODO: Math.floor(Math.random() * n) -->
-            <ros_topic_publish name="goal">
-                <field name="x" expr="goal_x" />
-                <field name="y" expr="goal_y" />
-            </ros_topic_publish>
+        <transition target="next_goal">
+            <assign location="pose_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="pose_y" expr="Math.floor(Math.random() * (n-1))" />
             <ros_topic_publish name="pose">
                 <field name="x" expr="pose_x" />
                 <field name="y" expr="pose_y" />
             </ros_topic_publish>
-        </onentry>
-        <transition target="running" />
+        </transition>
+    </state>
+
+    <state id="next_goal">
+        <transition target="running">
+            <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+            <ros_topic_publish name="goal">
+                <field name="x" expr="goal_x" />
+                <field name="y" expr="goal_y" />
+            </ros_topic_publish>
+        </transition>
     </state>
 
     <state id="running">
-        <ros_topic_callback name="move" target="init">
+        <ros_topic_callback name="move" target="running">
             <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
                 <!-- right -->
                 <assign location="pose_x" expr="pose_x + 1" />
