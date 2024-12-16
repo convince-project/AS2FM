@@ -212,27 +212,41 @@ def _append_scxml_body_to_jani_automaton(
     hash_str: str,
     guard_exp: Optional[JaniExpression],
     trigger_event: Optional[str],
+    data_event: Optional[str],
     max_array_size: int,
 ) -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a set of locations and edges.
 
     They need to be added to a JaniAutomaton later on.
+
+    :param jani_automaton: The single automaton hosting the generated edges and locations.
+    :param events_holder: A data structure describing the events generated in the automaton.
+    :param body: A list of SCXML entries to be translated into Jani.
+    :param source: The location we are starting executing the body from.
+    :param target: The location we are ending up in after executing the body.
+    :param hash_str: Additional hash to ensure a unique action identifier to executing the body.
+    :param guard_exp: An expression that needs to hold before executing this action.
+    :param trigger_event: The event starting the exec. block (use only from ScxmlTransition).
+    :param data_event: The event carrying the data, that might be read in the exec block.
+    :param max_array_size: The maximum allowed array size (for unbounded arrays).
     """
-    edge_action_name = f"{source}-{target}-{hash_str}"
-    trigger_event_action = (
-        edge_action_name if trigger_event is None else f"{trigger_event}_on_receive"
+    jani_action_name = (
+        f"{trigger_event}_on_receive"
+        if trigger_event is not None
+        else f"{source}-{target}-parent-{hash_str}"
     )
+
     new_edges = []
     new_locations = []
     if guard_exp is not None:
-        guard_exp.replace_event(trigger_event)
+        guard_exp.replace_event(data_event)
     # First edge. Has to evaluate guard and trigger event of original transition.
     new_edges.append(
         JaniEdge(
             {
                 "location": source,
-                "action": trigger_event_action,
+                "action": jani_action_name,
                 "guard": JaniGuard(guard_exp),
                 "destinations": [{"location": None, "assignments": []}],
             }
@@ -241,7 +255,7 @@ def _append_scxml_body_to_jani_automaton(
     for i, ec in enumerate(body):
         if isinstance(ec, ScxmlAssign):
             assign_idx = len(new_edges[-1].destinations[0]["assignments"])
-            jani_assigns = _interpret_scxml_assign(ec, jani_automaton, trigger_event, assign_idx)
+            jani_assigns = _interpret_scxml_assign(ec, jani_automaton, data_event, assign_idx)
             new_edges[-1].destinations[0]["assignments"].extend(jani_assigns)
         elif isinstance(ec, ScxmlSend):
             event_name = ec.get_event()
@@ -273,7 +287,7 @@ def _append_scxml_body_to_jani_automaton(
                 if isinstance(res_eval_value, ArrayType):
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
                 jani_expr = parse_ecmascript_to_jani_expression(expr, array_info).replace_event(
-                    trigger_event
+                    data_event
                 )
                 new_edge.destinations[0]["assignments"].append(
                     JaniAssignment({"ref": param_assign_name, "value": jani_expr})
@@ -293,7 +307,7 @@ def _append_scxml_body_to_jani_automaton(
                             )
                         )
                 elif jani_expr_type == JaniExpressionType.OPERATOR:
-                    op_type, operands = jani_expr.as_operator()
+                    op_type, _ = jani_expr.as_operator()
                     if op_type == "av":
                         assert isinstance(
                             res_eval_value, ArrayType
@@ -329,7 +343,7 @@ def _append_scxml_body_to_jani_automaton(
             for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
                 current_cond = parse_ecmascript_to_jani_expression(cond_str)
                 jani_cond = _merge_conditions(previous_conditions, current_cond).replace_event(
-                    trigger_event
+                    data_event
                 )
                 sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                     jani_automaton,
@@ -339,7 +353,9 @@ def _append_scxml_body_to_jani_automaton(
                     interm_loc_after,
                     "-".join([hash_str, _hash_element(ec), str(if_idx)]),
                     jani_cond,
-                    None,
+                    None,  # This is not triggered by an event, even under a transition. Because
+                    # the event triggering the transition is handled at the top of this function.
+                    data_event,
                     max_array_size,
                 )
                 new_edges.extend(sub_edges)
@@ -349,7 +365,7 @@ def _append_scxml_body_to_jani_automaton(
             else_execution_body = ec.get_else_execution()
             else_execution_id = str(len(ec.get_conditional_executions()))
             else_execution_body = [] if else_execution_body is None else else_execution_body
-            jani_cond = _merge_conditions(previous_conditions).replace_event(trigger_event)
+            jani_cond = _merge_conditions(previous_conditions).replace_event(data_event)
             sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                 jani_automaton,
                 events_holder,
@@ -359,16 +375,18 @@ def _append_scxml_body_to_jani_automaton(
                 "-".join([hash_str, _hash_element(ec), else_execution_id]),
                 jani_cond,
                 None,
+                data_event,
                 max_array_size,
             )
             new_edges.extend(sub_edges)
             new_locations.extend(sub_locs)
             # Prepare the edge from the end of the if-else block
+            end_edge_action_name = f"{source}-{target}-{hash_str}"
             new_edges.append(
                 JaniEdge(
                     {
                         "location": interm_loc_after,
-                        "action": edge_action_name,
+                        "action": end_edge_action_name,
                         "guard": None,
                         "destinations": [{"location": None, "assignments": []}],
                     }
@@ -528,6 +546,7 @@ class ScxmlTag(BaseTag):
                 hash_str,
                 None,
                 None,
+                None,
                 self.max_array_size,
             )
             # Add the initial state and start sequence to the automaton
@@ -616,6 +635,7 @@ class StateTag(BaseTag):
                 self.element.get_id(),
                 "",
                 guard_exp,
+                event_name,
                 event_name,
                 self.max_array_size,
             )
@@ -752,6 +772,7 @@ class TransitionTag(BaseTag):
             target_state_id,
             hash_str,
             guard,
+            transition_trigger_event,
             transition_trigger_event,
             self.max_array_size,
         )
