@@ -2,7 +2,7 @@
     <BehaviorTree ID="simple_robot_blackboard">
         <Fallback name="control_loop">
             <!-- Store goal and robot pose in 4 blackboard variables -->
-            <Action ID="UpdateGoalAndCurrentPosition" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" grid_size="100" />
+            <Action ID="UpdateGoalAndCurrentPosition" goal_x="{goal_x}" goal_y="{goal_y}" curr_x="{curr_x}" curr_y="{curr_y}" grid_size="10" />
             <!--
                 Movement enum in the world.
                 0: right,

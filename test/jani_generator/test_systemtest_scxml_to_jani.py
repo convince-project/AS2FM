@@ -454,12 +454,12 @@ class TestConversion(unittest.TestCase):
             success=True,
         )
 
-    def test_grid_robot_blackboard_simpler(self):
+    def test_grid_robot_blackboard_simple(self):
         """Test the simpler grid_robot_blackboard model (BT + Blackboard)."""
         self._test_with_main(
-            "grid_robot_blackboard_simpler",
+            "grid_robot_blackboard_simple",
             model_xml="main.xml",
-            property_name="at_goal",
+            property_name="tree_success",
             success=True,
             size_limit=1_000_000,
         )
