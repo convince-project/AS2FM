@@ -76,9 +76,17 @@ def generate_bt_tick_event(instance_id: str) -> str:
     return f"bt_{instance_id}_tick"
 
 
+def is_bt_tick_event(event_name: str) -> bool:
+    return re.match(r"^bt_.+_tick$", event_name) is not None
+
+
 def generate_bt_response_event(instance_id: str) -> str:
     """Generate the BT response event name for a given BT node instance."""
     return f"bt_{instance_id}_response"
+
+
+def is_bt_response_event(event_name: str) -> bool:
+    return re.match(r"^bt_.+_response$", event_name) is not None
 
 
 def is_bt_event(event_name: str) -> bool:
