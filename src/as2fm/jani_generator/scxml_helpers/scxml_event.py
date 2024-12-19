@@ -22,7 +22,12 @@ from typing import Dict, List, Optional
 
 from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
 from as2fm.scxml_converter.scxml_entries.bt_utils import is_bt_response_event, is_bt_tick_event
-from as2fm.scxml_converter.scxml_entries.ros_utils import is_action_event, is_srv_event
+from as2fm.scxml_converter.scxml_entries.ros_utils import (
+    is_action_request_event,
+    is_action_result_event,
+    is_action_thread_event,
+    is_srv_event,
+)
 
 
 class EventSender:
@@ -152,9 +157,12 @@ def is_event_synched(event_name: str) -> bool:
 
     :param event_name: The name of the event to evaluate.
     """
+    # Action feedbacks are not considered synched, since a client might discard one or more of them
     return (
         is_bt_tick_event(event_name)
         or is_bt_response_event(event_name)
-        or is_action_event(event_name)
+        or is_action_request_event(event_name)
+        or is_action_result_event(event_name)
+        or is_action_thread_event(event_name)
         or is_srv_event(event_name)
     )

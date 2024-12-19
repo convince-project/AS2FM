@@ -427,7 +427,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("uc2_assembly", "Main"),
             model_xml="main.xml",
-            property_name="can_execute_recovery_branch",
+            property_name="executes_recovery_branch_or_success",
             success=True,
         )
 
@@ -436,7 +436,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("uc2_assembly", "Main"),
             model_xml="main_bug.xml",
-            property_name="can_execute_recovery_branch",
+            property_name="executes_recovery_branch_or_success",
             success=False,
         )
 
