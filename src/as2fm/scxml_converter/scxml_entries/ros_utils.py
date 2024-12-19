@@ -268,12 +268,19 @@ def generate_action_result_handle_event(action_name: str, automaton_name: str) -
     )
 
 
-def is_action_event(event_name: str) -> bool:
+def is_action_request_event(event_name: str) -> bool:
     """Check whether the event name matches the ROS action plain events pattern."""
-    return (
-        re.match(r"action_.+_(goal_.+|thread_(start|free)|feedback|result).*$", event_name)
-        is not None
-    )
+    return re.match(r"action_.+_goal_.+$", event_name) is not None
+
+
+def is_action_result_event(event_name: str) -> bool:
+    """Check whether the event name matches the ROS action plain events pattern."""
+    return re.match(r"action_.+_result.*$", event_name) is not None
+
+
+def is_action_thread_event(event_name: str) -> bool:
+    """Check whether the event name matches the ROS action plain events pattern."""
+    return re.match(r"action_.+_thread_(start|free)$", event_name) is not None
 
 
 class ScxmlRosDeclarationsContainer:
