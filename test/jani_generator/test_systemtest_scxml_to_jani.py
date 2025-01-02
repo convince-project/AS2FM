@@ -406,7 +406,11 @@ class TestConversion(unittest.TestCase):
     def test_uc1_docking(self):
         """Test the UC1 docking BT."""
         self._test_with_main(
-            "uc1_docking", store_generated_scxmls=True, property_name="tree_success", success=True
+            "uc1_docking",
+            store_generated_scxmls=True,
+            property_name="tree_success",
+            success=True,
+            size_limit=1_000_000,
         )
 
     def test_uc1_docking_bugged(self):
