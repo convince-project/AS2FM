@@ -26,6 +26,11 @@ jobs:
               uses: ros-tooling/setup-ros@v0.7
               with:
                 required-ros-distributions: ${{ matrix.ros-distro }}
+            # Set up rosdep
+            - name: Set up rosdep
+              run: |
+                sudo rosdep init
+                rosdep update
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
