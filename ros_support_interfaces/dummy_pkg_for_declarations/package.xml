@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dummy_pkg_for_declarations</name>
+  <version>0.0.0</version>
+  <description>Declares example_interfaces needed e.g. by examples/fibonacci_action_example.</description>
+  <maintainer email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
+  <exec_depend>example_interfaces</exec_depend>
+</package>
