@@ -9,6 +9,8 @@
   <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
 
   <exec_depend>example_interfaces</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
   <exec_depend>delib_ws_24_interfaces</exec_depend>
   <exec_depend>grid_robot_interfaces</exec_depend>
