@@ -12,9 +12,8 @@ jobs:
             matrix:
                 include:
                   - ros-distro: jazzy
-                    # os: ubuntu-24.04
+                    pip-break-system-packages: true
                   - ros-distro: humble
-                    # os: ubuntu-22.04
             fail-fast: false
         runs-on: ubuntu-latest
         container: ros:${{ matrix.ros-distro }}-ros-core
@@ -36,7 +35,7 @@ jobs:
                 echo SMC_STORM_PATH=$PWD/bin/ >> $GITHUB_OUTPUT
             # Update pip
             - name: Update pip
-              run: python3 -m pip install --upgrade pip
+              run: python3 -m pip install ${{ matrix.pip-break-system-packages && '--break-system-packages' || '' }} --upgrade pip
             # # workaround python 3.12 issue
             # - name: Install special fork of js2py
             #   run: |
@@ -45,7 +44,7 @@ jobs:
             # install the packages
             - name: Install packages
               run: |
-                pip install .
+                pip install ${{ matrix.pip-break-system-packages && '--break-system-packages' || '' }} .
             # this solves
             # E   ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
             # - name: Downgrade numpy
@@ -57,11 +56,13 @@ jobs:
             # Prepare ROS WS for the tests
             - name: Install ROS support pkgs
               run: |
-                source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-                mkdir ros_interfaces_ws
-                cd ros_interfaces_ws
-                ln -s ../ros_support_interfaces src
-                colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+                bash -c "
+                  source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+                  mkdir ros_interfaces_ws
+                  cd ros_interfaces_ws
+                  ln -s ../ros_support_interfaces src
+                  colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+                "
             # run the tests
             - name: Run tests
               run: |
