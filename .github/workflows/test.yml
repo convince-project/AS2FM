@@ -12,20 +12,21 @@ jobs:
             matrix:
                 include:
                   - ros-distro: jazzy
-                    os: ubuntu-24.04
+                    # os: ubuntu-24.04
                   - ros-distro: humble
-                    os: ubuntu-22.04
+                    # os: ubuntu-22.04
             fail-fast: false
-        runs-on: ${{ matrix.os }}
+        runs-on: ubuntu-latest
+        container: ros:${{ matrix.ros-distro }}-ros-core
         steps:
             # Checkout the repository
             - name: Checkout repository
               uses: actions/checkout@v2
-            # Set up ROS
-            - name: Set up ROS
-              uses: ros-tooling/setup-ros@v0.7
-              with:
-                required-ros-distributions: ${{ matrix.ros-distro }}
+            # # Set up ROS
+            # - name: Set up ROS
+            #   uses: ros-tooling/setup-ros@v0.7
+            #   with:
+            #     required-ros-distributions: ${{ matrix.ros-distro }}
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
