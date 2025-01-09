@@ -5,11 +5,11 @@
   <version>0.0.0</version>
   <description>Contains the interfaces use in the delib example.</description>
 
-  <maintainer email="marco.lampacrescia@de.bosch.com">Geoffrey Biggs</maintainer>
+  <maintainer email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</maintainer>
 
   <license>Apache License 2.0</license>
 
-  <author email="marco.lampacrescia@de.bosch.com">Dirk Thomas</author>
+  <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

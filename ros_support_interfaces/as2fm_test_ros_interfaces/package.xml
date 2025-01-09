@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>as2fm_test_ros_interfaces</name>
+  <version>0.0.0</version>
+  <description>Meta package depending on all interface we use in the tests.</description>
+  <maintainer email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
+
+  <exec_depend>example_interfaces</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <exec_depend>delib_ws_24_interfaces</exec_depend>
+  <exec_depend>grid_robot_interfaces</exec_depend>
+  <exec_depend>uc2_interfaces</exec_depend>
+</package>

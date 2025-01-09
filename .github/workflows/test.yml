@@ -30,7 +30,7 @@ jobs:
             - name: Get smc_storm
               id: get_smc_storm
               run: |
-                wget https://github.com/convince-project/smc_storm/releases/download/0.0.3/smc_storm_executable.tar.gz
+                wget https://github.com/convince-project/smc_storm/releases/latest/download/smc_storm_executable.tar.gz
                 tar -xzf smc_storm_executable.tar.gz
                 ./install.sh --install-dependencies
                 # Save the path to the smc_storm executable
@@ -62,6 +62,8 @@ jobs:
                 mkdir ros_interfaces_ws
                 cd ros_interfaces_ws
                 ln -s ../ros_support_interfaces src
+                rosdep update
+                rosdep install --from-paths src -y --ignore-src
                 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
             # run the tests
             - name: Run tests
