@@ -8,7 +8,7 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest # 24.04
         steps:
             # Checkout the repository
             - name: Checkout repository
@@ -24,16 +24,16 @@ jobs:
             - name: Set up ROS
               uses: ros-tooling/setup-ros@v0.7
               with:
-                required-ros-distributions: humble
+                required-ros-distributions: jazzy
             # Install packages
             - name: Install our packages
               run: |
-                    source /opt/ros/humble/setup.bash
+                    source /opt/ros/jazzy/setup.bash
                     pip install .
             # build the documentation
             - name: Build documentation
               run: |
-                    source /opt/ros/humble/setup.bash
+                    source /opt/ros/jazzy/setup.bash
                     cd docs
                     make html
             # upload the documentation to GitHub Pages
