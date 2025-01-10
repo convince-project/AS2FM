@@ -25,8 +25,8 @@
 
     <state id="init">
         <transition target="next_goal">
-            <assign location="pose_x" expr="Math.floor(Math.random() * (n-1))" />
-            <assign location="pose_y" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="pose_x" expr="Math.floor(Math.random() * n)" />
+            <assign location="pose_y" expr="Math.floor(Math.random() * n)" />
             <ros_topic_publish name="pose">
                 <field name="x" expr="pose_x" />
                 <field name="y" expr="pose_y" />
@@ -36,8 +36,8 @@
 
     <state id="next_goal">
         <transition target="running">
-            <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
-            <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="goal_x" expr="Math.floor(Math.random() * n)" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * n)" />
             <ros_topic_publish name="goal">
                 <field name="x" expr="goal_x" />
                 <field name="y" expr="goal_y" />

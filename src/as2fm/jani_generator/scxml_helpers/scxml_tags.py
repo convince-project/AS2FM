@@ -53,7 +53,7 @@ from as2fm.jani_generator.jani_entries.jani_utils import (
     get_variable_type,
     is_variable_array,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
@@ -627,6 +627,9 @@ class StateTag(BaseTag):
             if event_name in self._events_no_condition or len(event_name) == 0:
                 continue
             guard_exp = self.get_guard_exp_for_prev_conditions(event_name)
+            # If the event was not handled in the state and is expected to be synched, skip it
+            if guard_exp is None and is_event_synched(event_name):
+                continue
             edges, locations = _append_scxml_body_to_jani_automaton(
                 self.automaton,
                 self.events_holder,

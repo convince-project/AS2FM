@@ -44,7 +44,7 @@ def _generate_new_edge_for_random_assignments(
 
 
 def _expand_random_variables_in_edge(
-    jani_edge: JaniEdge, *, n_options: int = 101
+    jani_edge: JaniEdge, *, n_options: int = 100
 ) -> List[JaniEdge]:
     """
     If there are random variables in the input JaniEdge, generate new edges to handle it.

@@ -45,13 +45,13 @@ def test_jani_expression_expansion_distribution():
     Test the expansion of an expression with only a distribution.
     """
     # Simplest case, just a distribution. Boundaries are included
-    n_options = 101
+    n_options = 100
     jani_distribution = generate_jani_expression({"distribution": "Uniform", "args": [1.0, 3.0]})
     jani_expressions = expand_distribution_expressions(jani_distribution, n_options=n_options)
     assert len(jani_expressions) == n_options, "Base distribution was not expanded!"
     assert all(expr.as_literal() is not None for expr in jani_expressions)
     assert jani_expressions[0].as_literal().value() == pytest.approx(1.0)
-    assert jani_expressions[100].as_literal().value() == pytest.approx(3.0)
+    assert jani_expressions[99].as_literal().value() == pytest.approx(2.98)
     assert jani_expressions[10].as_literal().value() == pytest.approx(1.2)
     # Test a non trivial expression
     jani_distribution = generate_jani_expression(
@@ -74,9 +74,9 @@ def test_jani_expression_expansion_distribution():
         "op": "floor",
         "exp": {"op": "*", "left": 0.1, "right": 20},
     }
-    assert jani_expressions[100].as_dict() == {
+    assert jani_expressions[99].as_dict() == {
         "op": "floor",
-        "exp": {"op": "*", "left": 1.0, "right": 20},
+        "exp": {"op": "*", "left": 0.99, "right": 20},
     }
 
 
@@ -85,7 +85,7 @@ def test_jani_expression_expansion_expr_with_multiple_distribution():
     Test the expansion of complex expressions with multiple distributions.
     """
     # Multiple distributions at the same level
-    n_options = 21
+    n_options = 20
     jani_distribution = generate_jani_expression(
         {
             "op": "floor",
@@ -104,11 +104,11 @@ def test_jani_expression_expansion_expr_with_multiple_distribution():
     }
     assert jani_expressions[-1].as_dict() == {
         "op": "floor",
-        "exp": {"op": "*", "left": 20.0, "right": 10.0},
+        "exp": {"op": "*", "left": 19.0, "right": 9.5},
     }
     assert jani_expressions[-2].as_dict() == {
         "op": "floor",
-        "exp": {"op": "*", "left": 20.0, "right": 9.5},
+        "exp": {"op": "*", "left": 19.0, "right": 9.0},
     }
     # Multiple distributions at a different level
     jani_distribution = generate_jani_expression(
@@ -131,8 +131,8 @@ def test_jani_expression_expansion_expr_with_multiple_distribution():
     }
     assert jani_expressions[-1].as_dict() == {
         "op": "*",
-        "left": 20.0,
-        "right": {"op": "*", "left": 2, "right": 10.0},
+        "left": 19.0,
+        "right": {"op": "*", "left": 2, "right": 9.5},
     }
     assert jani_expressions[1].as_dict() == {
         "op": "*",

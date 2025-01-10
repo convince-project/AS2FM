@@ -1,14 +1,14 @@
 {
     "properties": [
         {
-            "name": "can_execute_recovery_branch",
+            "name": "executes_recovery_branch_or_success",
             "expression": {
                 "op": "filter",
                 "fun": "values",
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "comment": "((abort_time > 0) ⇒ (clock < abort_time + 5000)) U (recover_block_running > 0)",
+                        "comment": "((abort_time > 0) ⇒ (clock < abort_time + 5000)) U (recover_block_running > 0 || tree_success)",
                         "op": "U",
                         "left": {
                             "op": "⇒",
@@ -28,9 +28,41 @@
                             }
                         },
                         "right": {
-                            "op": ">",
-                            "left": "topic_uc2__info__properties__recover_block_running_msg.ros_fields__data",
-                            "right": 0
+                            "op": "∨",
+                            "left": {
+                                "op": ">",
+                                "left": "topic_uc2__info__properties__recover_block_running_msg.ros_fields__data",
+                                "right": 0
+                            },
+                            "right": {
+                                "op": "=",
+                                "left": "bt_1000_response.status",
+                                "right": 1,
+                                "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "move_success",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "comment": "The tree succeeds only in case MoveBlock succeeds, but currently not working, since after recovery the plugin MoveAction will FAIL anyway! This is a problem with the missing reset: when RecoverBlock runs, the MoveAction plugin shall be reset, preventing failure from happening...",
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1000_response.status",
+                            "right": 1,
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
                         }
                     }
                 },
