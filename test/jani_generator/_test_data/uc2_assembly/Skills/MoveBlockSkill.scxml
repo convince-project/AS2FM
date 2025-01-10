@@ -38,7 +38,7 @@
             <!-- accept goal -->
             <ros_action_accept_goal name="MoveBlock_action_srv" goal_id="goal_id" />
             <!-- compute result -->
-            <assign location="block_down" expr="Math.floor(Math.random() * 1.99)" />
+            <assign location="block_down" expr="Math.floor(Math.random() * 2)" />
             <if cond="block_down == 0">
                 <!-- then success -->
                 <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
