@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="select_corridor"
+    version="1.0"
+    name="CorridorsEnvironment"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="progress" expr="0" type="int16" />
+    </datamodel>
+
+    <state id="select_corridor">
+        <transition target="corridor_one" event="go_to_one" />
+        <transition target="corridor_two" event="go_to_two" />
+        <transition target="corridor_three" event="go_to_three" />
+    </state>
+
+    <state id="corridor_one">
+        <transition target="corridor_one" event="step_fw">
+            <prob value="0.3">
+                <assign location="progress" expr="progress + 1" />
+            <elseprob value="0.4" />
+                <assign location="progress" expr="progress + 2" />
+            <else />
+                <assign location="progress" expr="progress" />
+            </prob>
+        </target>
+    </state>
+
+    <state id="corridor_two">
+        <transition target="corridor_two" event="step_fw" prob="0.5">
+            <assign location="progress" expr="progress + 2" />
+        </transition>
+        <transition target="corridor_two" event="step_fw" prob="0.5">
+            <assign location="progress" expr="progress" />
+        </transition>
+    </state>
+
+    <state id="corridor_three">
+        <transition event="step_fw">
+            <target id="corridor_three" prob="0.7">
+                <assign location="progress" expr="progress + 1" />
+            </target>
+            <target id="corridor_three" prob="0.3">
+                <assign location="progress" expr="progress" />
+            </target>
+        </transition>
+    </state>
+</scxml>
