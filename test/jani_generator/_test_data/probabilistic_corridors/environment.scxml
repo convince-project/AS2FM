@@ -12,12 +12,13 @@
 
     <state id="select_corridor">
         <transition target="corridor_one" event="go_to_one" />
-        <transition target="corridor_two" event="go_to_two" />
+        <!-- <transition target="corridor_two" event="go_to_two" /> -->
         <transition target="corridor_three" event="go_to_three" />
     </state>
 
     <state id="corridor_one">
         <transition target="corridor_one" event="step_fw">
+            <assign location="corridor" expr="..." />
             <prob value="0.3">
                 <assign location="progress" expr="progress + 1" />
             <elseprob value="0.4" />
@@ -25,24 +26,28 @@
             <else />
                 <assign location="progress" expr="progress" />
             </prob>
+            <prob value="0.3">
+                <assign location="corridor" expr="2" />
+            </prob>
+            <assign location="corridor" expr="..." />
         </target>
     </state>
 
-    <state id="corridor_two">
+    <!-- <state id="corridor_two">
         <transition target="corridor_two" event="step_fw" prob="0.5">
             <assign location="progress" expr="progress + 2" />
         </transition>
-        <transition target="corridor_two" event="step_fw" prob="0.5">
+        <transition target="corridor_two" event="step_fw">
             <assign location="progress" expr="progress" />
         </transition>
-    </state>
+    </state> -->
 
     <state id="corridor_three">
-        <transition event="step_fw">
+        <transition event="step_fw" cond="something">
             <target id="corridor_three" prob="0.7">
                 <assign location="progress" expr="progress + 1" />
             </target>
-            <target id="corridor_three" prob="0.3">
+            <target id="corridor_two" prob="0.3">
                 <assign location="progress" expr="progress" />
             </target>
         </transition>
