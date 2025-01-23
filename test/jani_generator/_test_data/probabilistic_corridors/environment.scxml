@@ -19,15 +19,28 @@
     <state id="corridor_one">
         <transition target="corridor_one" event="step_fw">
             <assign location="corridor" expr="..." />
-            <prob value="0.3">
+            <!-- <prob value="0.3">
                 <assign location="progress" expr="progress + 1" />
             <elseprob value="0.4" />
                 <assign location="progress" expr="progress + 2" />
             <else />
                 <assign location="progress" expr="progress" />
+            </prob> -->
+            <prob>
+                <option value="0.3">
+                    <assign location="progress" expr="progress + 1" />
+                </option>
+                <option value="0.4">
+                    <assign location="progress" expr="progress + 2" />
+                </option>
+                <option>
+                    <assign location="progress" expr="progress" />
+                </option>
             </prob>
-            <prob value="0.3">
-                <assign location="corridor" expr="2" />
+            <prob>
+                <option value="0.3">
+                    <assign location="corridor" expr="2" />
+                </option>
             </prob>
             <assign location="corridor" expr="..." />
         </target>
@@ -47,9 +60,13 @@
             <target id="corridor_three" prob="0.7">
                 <assign location="progress" expr="progress + 1" />
             </target>
-            <target id="corridor_two" prob="0.3">
-                <assign location="progress" expr="progress" />
-            </target>
+            <!-- <target id="corridor_one" prob="0.3">
+                <assign location="progress" expr="progress - 1" />
+            </target> -->
+            <!-- Implicitly added -->
+            <!-- Note: Need to ensure those automatically added transitions are
+            not executing on_entry / on_exit blocks -->
+            <target id="corridor_three" prob="{remaining_prob}" />
         </transition>
     </state>
 </scxml>
