@@ -103,12 +103,14 @@ def expand_random_variables_in_jani_model(model: JaniModel, *, n_options: int) -
     # Check that no global variable has a random value (not supported)
     for g_var_name, g_var in model.get_variables().items():
         assert (
-            len(expand_distribution_expressions(g_var.get_init_expr())) == 1
+            len(expand_distribution_expressions(g_var.get_init_expr(), n_options=100)) == 1
         ), f"Global variable {g_var_name} is init using a random value. This is unsupported."
     for automaton in model.get_automata():
         # Also for automaton, check variables initialization
         for aut_var_name, aut_var in automaton.get_variables().items():
-            assert len(expand_distribution_expressions(aut_var.get_init_expr())) == 1, (
+            assert (
+                len(expand_distribution_expressions(aut_var.get_init_expr(), n_options=100)) == 1
+            ), (
                 f"Variable {aut_var_name} in automaton {automaton.get_name()} is init using random "
                 f"values: init expr = '{aut_var.get_init_expr().as_dict()}'. This is unsupported."
             )

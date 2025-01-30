@@ -29,13 +29,13 @@ def test_jani_expression_expansion_no_distribution():
     Test the expansion of an expression containing no distribution (should stay the same).
     """
     jani_entry = generate_jani_expression(5)
-    jani_expressions = expand_distribution_expressions(jani_entry)
+    jani_expressions = expand_distribution_expressions(jani_entry, n_options=100)
     assert len(jani_expressions) == 1, "Expression without distribution should not be expanded!"
     assert jani_entry.as_dict() == jani_expressions[0].as_dict()
     jani_entry = generate_jani_expression(
         {"op": "*", "left": 2, "right": {"op": "floor", "exp": 1.1}}
     )
-    jani_expressions = expand_distribution_expressions(jani_entry)
+    jani_expressions = expand_distribution_expressions(jani_entry, n_options=100)
     assert len(jani_expressions) == 1, "Expression without distribution should not be expanded!"
     assert jani_entry.as_dict() == jani_expressions[0].as_dict()
 

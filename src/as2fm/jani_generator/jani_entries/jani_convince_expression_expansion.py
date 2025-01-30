@@ -508,7 +508,7 @@ def expand_expression(
 
 
 def expand_distribution_expressions(
-    expression: JaniExpression, *, n_options: int = 100
+    expression: JaniExpression, *, n_options
 ) -> List[JaniExpression]:
     """
     Traverse the expression and substitute each distribution with n expressions.
