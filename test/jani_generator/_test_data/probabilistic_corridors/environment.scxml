@@ -43,7 +43,7 @@
                 </option>
             </prob>
             <assign location="corridor" expr="..." />
-        </target>
+        </transition>
     </state>
 
     <!-- <state id="corridor_two">
