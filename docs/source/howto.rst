@@ -311,7 +311,8 @@ As in the case of ROS functionalities, BT ports need to be declared before being
 .. code-block:: xml
 
     <bt_declare_port_in key="my_string_port" type="string" />
-    <bt_declare_port_in key="start_value" type="int32">
+    <bt_declare_port_in key="start_value" type="int32" />
+    <bt_declare_port_out key="output_int" type="int32" />
 
 Once declared, it is possible to reference to the port in multiple SCXML entries.
 
@@ -337,8 +338,27 @@ Or we can use `start_value` to define the initial value of a variable.
         </data>
     </datamodel>
 
+Finally, we can store a specific value to the blackboard (only for output ports).
 
-BT ports can also be linked to variables in the `BT Blackboard` by wrapping the variable name in curly braces in the BT XML file. However, this feature is not yet supported.
+.. code-block:: xml
+
+    <state id="some_state">
+        <onentry>
+            ...
+            <bt_set_output key="output_int" expr="new_value_expression" />
+            ...
+        </onentry>
+        ...
+    </state>
+
+
+BT Ports can be declared either as input or output ports:
+
+* input ports can refer to either fixed or mutable variables (i.e. blackboard variables)
+* output ports on only refer to mutable variables
+
+When a BT plugin declares an output port, this must be referenced to a `BT Blackboard` variable.
+This is defined in the BT XML file, by providing a blackboard variable name wrapped by curly braces.
 
 
 .. _main_xml_howto:

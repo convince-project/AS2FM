@@ -28,8 +28,8 @@
 
     <state id="init">
         <transition target="next_goal">
-            <assign location="curr_x" expr="Math.floor(Math.random() * (n-1))" />
-            <assign location="curr_y" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="curr_x" expr="Math.floor(Math.random() * n)" />
+            <assign location="curr_y" expr="Math.floor(Math.random() * n)" />
             <bt_set_output key="curr_x" expr="curr_x" />
             <bt_set_output key="curr_y" expr="curr_y" />
         </transition>
@@ -37,8 +37,8 @@
 
     <state id="next_goal">
         <transition target="running">
-            <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
-            <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+            <assign location="goal_x" expr="Math.floor(Math.random() * n)" />
+            <assign location="goal_y" expr="Math.floor(Math.random() * n)" />
             <bt_set_output key="goal_x" expr="goal_x" />
             <bt_set_output key="goal_y" expr="goal_y" />
         </transition>
@@ -48,8 +48,8 @@
         <onentry>
             <if cond="curr_x == goal_x &amp;&amp; curr_y == goal_y">
                 <assign location="goal_count" expr="goal_count + 1" />
-                <assign location="goal_x" expr="Math.floor(Math.random() * (n-1))" />
-                <assign location="goal_y" expr="Math.floor(Math.random() * (n-1))" />
+                <assign location="goal_x" expr="Math.floor(Math.random() * n)" />
+                <assign location="goal_y" expr="Math.floor(Math.random() * n)" />
                 <bt_set_output key="goal_x" expr="goal_x" />
                 <bt_set_output key="goal_y" expr="goal_y" />
             </if>

@@ -15,6 +15,7 @@
 
 """Collection of SCXML utilities related to ROS functionalities."""
 
+import re
 from typing import Any, Dict, List, Tuple, Type
 
 from as2fm.scxml_converter.scxml_entries import RosField, ScxmlBase
@@ -196,6 +197,11 @@ def generate_srv_server_response_event(service_name: str) -> str:
     return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
+def is_srv_event(event_name) -> str:
+    """Check whether the event name matches the ROS service plain events pattern."""
+    return re.match(r"^srv_.+_(response|request|req_client).*$", event_name) is not None
+
+
 def generate_action_goal_req_event(action_name: str, client_name: str) -> str:
     """Generate the name of the event that sends an action goal from a client to the server."""
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_req_client_{client_name}"
@@ -260,6 +266,21 @@ def generate_action_result_handle_event(action_name: str, automaton_name: str) -
         f"action_{sanitize_ros_interface_name(action_name)}_"
         f"result_handle_client_{automaton_name}"
     )
+
+
+def is_action_request_event(event_name: str) -> bool:
+    """Check whether the event name matches the ROS action plain events pattern."""
+    return re.match(r"^action_.+_goal_.+$", event_name) is not None
+
+
+def is_action_result_event(event_name: str) -> bool:
+    """Check whether the event name matches the ROS action plain events pattern."""
+    return re.match(r"^action_.+_result.*$", event_name) is not None
+
+
+def is_action_thread_event(event_name: str) -> bool:
+    """Check whether the event name matches the ROS action plain events pattern."""
+    return re.match(r"^action_.+_thread_(start|free)$", event_name) is not None
 
 
 class ScxmlRosDeclarationsContainer:

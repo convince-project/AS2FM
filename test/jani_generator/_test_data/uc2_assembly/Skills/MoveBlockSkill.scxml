@@ -10,7 +10,7 @@
     <ros_action_server name="MoveBlock_action_srv" action_name="/uc2/skills/move_block" type="uc2_interfaces/MoveBlock" />
     <!-- service server regarding block_down information -->
     <ros_service_server name="get_block_status_srv" service_name="/uc2/world/get_block_status" type="uc2_interfaces/GetBlockStatus" />
-	  <ros_service_server name="reset_block_status_srv" service_name="/uc2/world/reset_block_status" type="std_srvs/Empty" />
+    <ros_service_server name="reset_block_status_srv" service_name="/uc2/world/reset_block_status" type="std_srvs/Empty" />
 
     <!-- listen time info and publish abort_time info -->
     <ros_topic_subscriber name="clock_sub" topic="/uc2/info/clock" type="std_msgs/Int32" />
@@ -38,15 +38,15 @@
             <!-- accept goal -->
             <ros_action_accept_goal name="MoveBlock_action_srv" goal_id="goal_id" />
             <!-- compute result -->
-            <assign location="block_down" expr="block_down + 1" />
-            <if cond="(block_down % 2) == 0">
+            <assign location="block_down" expr="Math.floor(Math.random() * 2)" />
+            <if cond="block_down == 0">
                 <!-- then success -->
                 <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
             <else/>
                 <!-- else abort -->
                 <!-- publish abort time -->
                 <ros_topic_publish name="moveblock_abort_time_pub">
-				            <field name="data" expr="time" />
+                    <field name="data" expr="time" />
                 </ros_topic_publish>
                 <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
             </if>
