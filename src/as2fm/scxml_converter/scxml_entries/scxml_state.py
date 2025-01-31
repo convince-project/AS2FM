@@ -160,22 +160,29 @@ class ScxmlState(ScxmlBase):
             f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
             "This isn't yet supported."
         )
-        for transition in self._body:
-            if transition.has_bt_blackboard_input(bt_ports_handler):
+        for transition_idx in range(len(self.body)):
+            if self._body[transition_idx].has_bt_blackboard_input(bt_ports_handler):
+                # For now, make sure this is a transitions with a single target
+                assert (
+                    len(self._body[transition_idx].get_targets()) == 1
+                ), "Blackboard support is not yet compatible with probabilistic transitions."
                 # Prepare the new state using the received BT info
                 states_count = len(generated_states)
-                new_state_id = f"{self.get_id()}_{transition.get_tag_name()}_{states_count}"
+                new_state_id = (
+                    f"{self.get_id()}_{self._body[transition_idx].get_tag_name()}_{states_count}"
+                )
                 new_state = ScxmlState(new_state_id)
                 blackboard_transition = ScxmlTransition(
-                    transition.get_target_state_id(),
-                    [BT_BLACKBOARD_GET],
-                    body=transition.get_body(),
+                    self._body[transition_idx].get_targets(), [BT_BLACKBOARD_GET]
                 )
                 new_state.add_transition(blackboard_transition)
                 generated_states.append(new_state)
                 # Set the new target and body to the original transition
-                transition.set_target_state_id(new_state_id)
-                transition.set_body([ScxmlSend(BT_BLACKBOARD_REQUEST)])
+                trans_events = self._body[transition_idx].get_events()
+                trans_cond = self._body[transition_idx].get_condition()
+                self._body[transition_idx] = ScxmlTransition.make_single_target_transition(
+                    new_state_id, trans_events, trans_cond, [ScxmlSend(BT_BLACKBOARD_REQUEST)]
+                )
         return generated_states
 
     def _substitute_bt_events_and_ports(

@@ -29,10 +29,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
-    execution_body_from_xml,
-    valid_execution_body,
-)
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -48,24 +45,16 @@ class ScxmlTransition(ScxmlBase):
         return "transition"
 
     @staticmethod
-    def _contains_transition_target(xml_tree: ET.Element) -> bool:
+    def contains_transition_target(xml_tree: ET.Element) -> bool:
         """Check if the children of the ScxmlTransition contain ScxmlTransitionTarget tags."""
-        for entry in xml_tree:
-            if entry.tag == ScxmlTransitionTarget.get_tag_name():
-                return True
-        return False
+        return len(xml_tree) > 0 and all(
+            entry.tag == ScxmlTransitionTarget.get_tag_name() for entry in xml_tree
+        )
 
-    @staticmethod
-    def _contains_executable_content(xml_tree: ET.Element) -> bool:
-        """Check if the children of the ScxmlTransition contain executable content."""
-        for entry in xml_tree:
-            if valid_execution_body(
-                [
-                    entry,
-                ]
-            ):
-                return True
-        return False
+    # @staticmethod
+    # def _contains_executable_content(xml_tree: ET.Element) -> bool:
+    #     """Check if the children of the ScxmlTransition contain executable content."""
+    #     return all(valid_execution_body([entry]) for entry in xml_tree)
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
@@ -79,17 +68,9 @@ class ScxmlTransition(ScxmlBase):
         condition = xml_tree.get("cond")
 
         # Differentiate between children being targets or being executable content
-        contains_stt: bool = ScxmlTransition._contains_transition_target(xml_tree)
-        contains_ec: bool = ScxmlTransition._contains_executable_content(xml_tree)
-        assert not (contains_stt and contains_ec), (
-            "Error: SCXML transition: Can only contain either (probabilistic) transition targets ",
-            "or executable content.",
-        )
-        if contains_ec or len(xml_tree) == 0:
-            assert target is not None, "Error: SCXML transition: target attribute not found."
-            return ScxmlTransition.make_single_target_transition(
-                target, events, condition, execution_body_from_xml(xml_tree)
-            )
+        contains_stt: bool = ScxmlTransition.contains_transition_target(xml_tree)
+        # contains_ec: bool = ScxmlTransition._contains_executable_content(xml_tree)
+        # Make sure that only one of the two holds true (XOR)
         if contains_stt:
             assert target is None, (
                 "Error: SCXML transition: Can have either target attribute or ",
@@ -104,7 +85,11 @@ class ScxmlTransition(ScxmlBase):
                     "conditions are not supported for probabilistic transition targets right now."
                 )  # TODO: Consider enabling this
             targets = [ScxmlTransitionTarget.from_xml_tree(entry) for entry in xml_tree]
-        return ScxmlTransition(targets, events, condition)
+            return ScxmlTransition(targets, events, condition)
+        assert target is not None, "Error: SCXML transition: target attribute not found."
+        return ScxmlTransition.make_single_target_transition(
+            target, events, condition, execution_body_from_xml(xml_tree)
+        )
 
     @staticmethod
     def make_single_target_transition(

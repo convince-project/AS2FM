@@ -497,15 +497,17 @@ _ResolvedScxmlExecutableEntry = tuple(
 )
 
 
-def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
+def valid_execution_body_entry_types(exec_body: Optional[ScxmlExecutionBody]) -> bool:
     """
     Check if the type of the entries in an execution body are valid.
 
     :param exec_body: The execution body to check
     :return: True if all types of the body entries are the expected ones, False otherwise
     """
+    if exec_body is None:
+        return True
     if not isinstance(exec_body, list):
-        print("Error: SCXML execution body: invalid type found: expected a list.")
+        print(f"Error: SCXML execution body: invalid type found: {type(exec_body)} is not a list.")
         return False
     for entry in exec_body:
         if not isinstance(entry, _ResolvedScxmlExecutableEntry):

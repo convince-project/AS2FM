@@ -29,7 +29,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlTransition,
     execution_body_from_xml,
-    instantiate_exec_body_bt_events,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
@@ -85,17 +84,28 @@ class BtTick(ScxmlTransition):
         condition: Optional[str] = None,
         body: Optional[ScxmlExecutionBody] = None,
     ):
-        super().__init__(target, ["bt_tick"], condition, body)
+        self.__dict__.update(
+            ScxmlTransition.make_single_target_transition(
+                target, ["bt_tick"], condition, body
+            ).__dict__
+        )
 
     def check_validity(self) -> bool:
+        if len(self._targets) != 1:
+            print(f"SCXML bt_tick error: there are {len(self._targets)} targets, expecting 1.")
+            return False
         return super().check_validity()
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> List[ScxmlTransition]:
         self._events = [generate_bt_tick_event(instance_id)]
-        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
-        return [ScxmlTransition(self._target, self._events, self._condition, self._body)]
+        self._targets[0].instantiate_bt_events(instance_id, children_ids)
+        return [
+            ScxmlTransition.make_single_target_transition(
+                self._targets, self._events, self._condition
+            )
+        ]
 
     def as_xml(self) -> ET.Element:
         xml_bt_tick = ET.Element(BtTick.get_tag_name(), {"target": self._target})
@@ -201,13 +211,13 @@ class BtChildStatus(ScxmlTransition):
         :param condition: The condition to check before transitioning.
         :param body: The body to execute before the transition.
         """
+        self.__dict__.update(
+            ScxmlTransition.make_single_target_transition(target, [], condition, body).__dict__
+        )
         self._child_seq_id = _process_child_seq_id(BtChildStatus, child_seq_id)
-        self._target = target
-        self._condition = condition
         if self._condition is not None:
             # Substitute the responses string with the corresponding integer
             self._condition = BtResponse.process_expr(self._condition)
-        self._body = body
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
@@ -223,10 +233,7 @@ class BtChildStatus(ScxmlTransition):
             )
             target_child_id = children_ids[self._child_seq_id]
             return ScxmlTransition(
-                self._target,
-                [generate_bt_response_event(target_child_id)],
-                plain_cond_expr,
-                self._body,
+                self._targets, [generate_bt_response_event(target_child_id)], plain_cond_expr
             ).instantiate_bt_events(instance_id, children_ids)
         else:
             # Handling a generic child ID, return a transition for each child
@@ -234,10 +241,9 @@ class BtChildStatus(ScxmlTransition):
             generated_transitions = []
             for child_seq_n, child_id in enumerate(children_ids):
                 generated_transition = ScxmlTransition(
-                    self._target,
+                    self._targets,
                     [generate_bt_response_event(child_id)],
                     condition_prefix + f"({self._child_seq_id} == {child_seq_n})",
-                    self._body,
                 ).instantiate_bt_events(instance_id, children_ids)
                 assert (
                     len(generated_transition) == 1
@@ -247,12 +253,13 @@ class BtChildStatus(ScxmlTransition):
 
     def as_xml(self) -> ET.Element:
         xml_bt_child_status = ET.Element(
-            BtChildStatus.get_tag_name(), {"id": str(self._child_seq_id), "target": self._target}
+            BtChildStatus.get_tag_name(),
+            {"id": str(self._child_seq_id), "target": self._targets[0].get_target_id()},
         )
         if self._condition is not None:
             xml_bt_child_status.set("cond", self._condition)
-        if self._body is not None:
-            for executable_entry in self._body:
+        if self._targets[0].get_body() is not None:
+            for executable_entry in self._targets[0].get_body():
                 xml_bt_child_status.append(executable_entry.as_xml())
         return xml_bt_child_status
 

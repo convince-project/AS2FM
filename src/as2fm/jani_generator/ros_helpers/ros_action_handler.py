@@ -75,7 +75,9 @@ class RosActionHandler(RosCommunicationHandler):
         goal_id_name = get_action_goal_id_definition()[0]
         action_client_req_event = generate_action_goal_req_event(self._interface_name, client_id)
         action_srv_handle_event = generate_action_goal_handle_event(self._interface_name)
-        goal_req_transition = ScxmlTransition(goal_state.get_id(), [action_client_req_event])
+        goal_req_transition = ScxmlTransition.make_single_target_transition(
+            goal_state.get_id(), [action_client_req_event]
+        )
         send_params = [ScxmlParam(goal_id_name, expr=str(goal_id))]
         for field_name in req_params:
             # Add preliminary assignments (part of the hack mentioned in self.to_scxml())
@@ -111,7 +113,9 @@ class RosActionHandler(RosCommunicationHandler):
         goal_id_name = get_action_goal_id_definition()[0]
         extra_entries = additional_data + [goal_id_name]
         srv_event_name = srv_event_function(self._interface_name)
-        scxml_transition = ScxmlTransition(goal_state.get_id(), [srv_event_name])
+        scxml_transition = ScxmlTransition.make_single_target_transition(
+            goal_state.get_id(), [srv_event_name]
+        )
         for entry_name in extra_entries:
             scxml_transition.append_body_executable_entry(
                 ScxmlAssign(entry_name, PLAIN_SCXML_EVENT_DATA_PREFIX + entry_name)

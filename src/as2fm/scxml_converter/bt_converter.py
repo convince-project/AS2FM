@@ -91,14 +91,14 @@ def generate_blackboard_scxml(bt_blackboard_vars: Dict[str, str]) -> ScxmlRoot:
         bt_data.append(ScxmlData(bb_key, default_value, bb_type))
         bt_bb_param_list.append(ScxmlParam(bb_key, expr=bb_key))
         idle_state.add_transition(
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 state_name,
                 [generate_bt_blackboard_set(bb_key)],
                 body=[ScxmlAssign(bb_key, BT_BLACKBOARD_EVENT_VALUE)],
             )
         )
     idle_state.add_transition(
-        ScxmlTransition(
+        ScxmlTransition.make_single_target_transition(
             state_name,
             [BT_BLACKBOARD_REQUEST],
             body=[ScxmlSend(BT_BLACKBOARD_GET, bt_bb_param_list)],
