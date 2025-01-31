@@ -18,6 +18,7 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
 from typing import List, Optional
+from warnings import warn
 
 from lxml import etree as ET
 
@@ -29,6 +30,7 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+    execution_body_from_xml,
     has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
     is_plain_execution_body,
@@ -37,7 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body_entry_types,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
+
 
 class ScxmlTransitionTarget(ScxmlBase):
     """This class represents a single scxml transition target."""
@@ -49,15 +51,15 @@ class ScxmlTransitionTarget(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
-        assert (
-            xml_tree.tag == ScxmlTransitionTarget.get_tag_name()
-        ), (
-            "Error: SCXML transition target: XML root tag name is " +
-            f"not {ScxmlTransitionTarget.get_tag_name()}."
+        assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
+            "Error: SCXML transition target: XML root tag name is "
+            + f"not {ScxmlTransitionTarget.get_tag_name()}."
         )
         target_id = xml_tree.get("id")
         assert target_id is not None, "Error: SCXML transition target: id not found."
         probability = xml_tree.get("prob")
+        if probability == 0.0:
+            warn("Warning: SCXML transition target: Probability is zero.")
         exec_body = execution_body_from_xml(xml_tree)
         return ScxmlTransitionTarget(target_id, probability, exec_body)
 

@@ -16,10 +16,6 @@
 
     <ros_time_rate name="my_timer" rate_hz="1" />
 
-    <datamodel>
-        <data id="dummy" expr="0" type="int32" />
-    </datamodel>
-
     <state id="init">
         <ros_rate_callback name="my_timer" target="fork" />
     </state>
@@ -40,11 +36,9 @@
         </onentry>
 
         <transition>
-            <target id="t_a" prob="0.1">
-                <assign location="dummy" expr="0" />
-            </target>
+            <target id="t_a" prob="0.1" />
             <target id="t_b" prob="0.3" />
-            <target id="t_c" prob="{remaining_prob}" />
+            <target id="t_c" />
         </transition>
     </state>
 
