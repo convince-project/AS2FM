@@ -37,7 +37,7 @@ from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 
 
 class ScxmlTransitionTarget(ScxmlBase):
-    """This class represents a single scxml state."""
+    """This class represents a single scxml transition target."""
 
     @staticmethod
     def get_tag_name() -> str:
@@ -50,35 +50,36 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def __init__(
         self,
-        target: str,
-        events: Optional[List[str]] = None,
-        condition: Optional[str] = None,
+        target_id: str,
+        probability: Optional[float] = None,
         body: Optional[ScxmlExecutionBody] = None,
     ):
         """
-        Generate a new transition. Currently, transitions must have a target.
+        Generate a new transition target, including its execution body and probability.
 
-        :param target: The state transition goes to. Required (unlike in SCXML specifications)
-        :param events: The events that trigger this transition.
-        :param condition: The condition guard to enable/disable the transition
-        :param body: Content that is executed when the transition happens
+        :param target_id: The state transition goes to. Required (unlike in SCXML specifications).
+        :param probability: The likelihood of taking this target what the transition is selected.
+        :param body: Content that is executed when the transition happens.
         """
-        pass
+        assert (
+            isinstance(target_id, str) and len(target_id) > 0
+        ), "Error SCXML transition target: target id must be a non-empty string."
+        assert probability is None or isinstance(
+            probability, float
+        ), "Error SCXML transition target: probability must be a float."
+        assert valid_execution_body_entry_types(
+            body
+        ), "Error SCXML transition target: invalid body provided."
+        self._target_id = target_id
+        self._probability = probability
+        self._body = body
 
-    def get_target_state_id(self) -> str:
+    def get_target_id(self) -> str:
         """Return the ID of the target state of this transition."""
-        return self._target
+        return self._target_id
 
-    def set_target_state_id(self, state_id: str):
-        self._target = state_id
-
-    def get_events(self) -> List[str]:
-        """Return the events that trigger this transition (if any)."""
-        return self._events
-
-    def get_condition(self) -> Optional[str]:
-        """Return the condition required to execute this transition (if any)."""
-        return self._condition
+    def set_target_id(self, state_id: str):
+        self._target_id = state_id
 
     def get_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
@@ -102,9 +103,6 @@ class ScxmlTransitionTarget(ScxmlBase):
         for entry in self._body:
             entry.update_bt_ports_values(bt_ports_handler)
 
-    def add_event(self, event: str):
-        self._events.append(event)
-
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
         if self._body is None:
             self._body = []
@@ -114,21 +112,21 @@ class ScxmlTransitionTarget(ScxmlBase):
         ), "Error SCXML transition: invalid body entry found after extension."
 
     def check_validity(self) -> bool:
-        valid_target = is_non_empty_string(type(self), "target", self._target)
-        valid_condition = self._condition is None or (
-            is_non_empty_string(type(self), "condition", self._condition)
-        )
-        valid_events = self._events is None or (
-            isinstance(self._events, list) and all(isinstance(ev, str) for ev in self._events)
+        """Make sure the object content is valid."""
+        valid_target = is_non_empty_string(type(self), "target", self._target_id)
+        valid_probability = self._probability is None or (
+            isinstance(self._probability, float)
+            and self._probability > 0.0
+            and self._probability <= 1.0
         )
         valid_body = self._body is None or valid_execution_body(self._body)
-        if not valid_events:
-            print("Error: SCXML transition: events are not valid.\nList of events:")
-            for event in self._events:
-                print(f"\t-'{event}'.")
+        if not valid_target:
+            print("Error SCXML transition target: target must be a non-empty string.")
+        if not valid_probability:
+            print("Error SCXML transition target: invalid probability value.")
         if not valid_body:
-            print("Error: SCXML transition: executable content is not valid.")
-        return valid_target and valid_events and valid_condition and valid_body
+            print("Error SCXML transition target: executable content is not valid.")
+        return valid_target and valid_probability and valid_body
 
     def check_valid_ros_instantiations(
         self, ros_declarations: ScxmlRosDeclarationsContainer

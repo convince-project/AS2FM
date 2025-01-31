@@ -45,7 +45,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 
 
 class ScxmlTransition(ScxmlBase):
-    """This class represents a single scxml state."""
+    """This class represents a scxml transition."""
 
     @staticmethod
     def get_tag_name() -> str:
