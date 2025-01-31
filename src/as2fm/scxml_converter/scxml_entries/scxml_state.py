@@ -160,7 +160,7 @@ class ScxmlState(ScxmlBase):
             f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
             "This isn't yet supported."
         )
-        for transition_idx in range(len(self.body)):
+        for transition_idx in range(len(self._body)):
             if self._body[transition_idx].has_bt_blackboard_input(bt_ports_handler):
                 # For now, make sure this is a transitions with a single target
                 assert (

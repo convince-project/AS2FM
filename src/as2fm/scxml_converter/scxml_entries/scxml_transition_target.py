@@ -125,8 +125,9 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
-        for entry in self._body:
-            entry.update_bt_ports_values(bt_ports_handler)
+        if self._body is not None:
+            for entry in self._body:
+                entry.update_bt_ports_values(bt_ports_handler)
 
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
         if self._body is None:
