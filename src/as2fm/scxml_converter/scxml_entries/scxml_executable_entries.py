@@ -17,7 +17,6 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
-import warnings
 from copy import deepcopy
 from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
@@ -345,24 +344,11 @@ class ScxmlSend(ScxmlBase):
 
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
-        # Support for deprecated BT events handling. Remove the whole if block once transition done.
-        from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtReturnStatus
-
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        if type(self) is ScxmlSend and is_bt_event(self._event):
-            warnings.warn(
-                "Deprecation warning: BT events should not be found in SCXML send. "
-                "Use the 'bt_return_status' ROS-scxml tag instead.",
-                DeprecationWarning,
-            )
-            # Those are expected to be only bt_success, bt_failure and bt_running
-            event_to_status = {
-                "bt_success": "SUCCESS",
-                "bt_failure": "FAILURE",
-                "bt_running": "RUNNING",
-            }
-            return BtReturnStatus(event_to_status[self._event]).instantiate_bt_events(
-                instance_id, []
+        if type(self) is ScxmlSend:
+            assert not is_bt_event(self._event), (
+                "Error: SCXML send: BT events should not be found in SCXML send. "
+                "Use the 'bt_return_status' ROS-scxml tag instead."
             )
         return self
 

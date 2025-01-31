@@ -282,19 +282,21 @@ class TestConversion(unittest.TestCase):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main("ros_example", property_name="alarm_on", success=False)
 
-    def test_battery_example_w_bt_battery_depleted_deprecated(self):
+    @pytest.mark.xfail(reason="Expect removed functionalities not to work anymore.", strict=True)
+    def test_battery_example_w_bt_battery_depleted_removed(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main(
-            "ros_example_w_bt_deprecated",
+            "ros_example_w_bt_removed",
             store_generated_scxmls=True,
             property_name="battery_depleted",
             success=False,
         )
 
-    def test_battery_example_w_bt_main_alarm_and_charge_deprecated(self):
+    @pytest.mark.xfail(reason="Expect removed functionalities not to work anymore.", strict=True)
+    def test_battery_example_w_bt_main_alarm_and_charge_removed(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main(
-            "ros_example_w_bt_deprecated", property_name="battery_alarm_on", success=True
+            "ros_example_w_bt_removed", property_name="battery_alarm_on", success=True
         )
 
     def test_battery_example_w_bt_battery_depleted(self):
@@ -373,7 +375,6 @@ class TestConversion(unittest.TestCase):
             success=True,
         )
 
-    @pytest.mark.skip(reason="Not yet working. The BT ticking needs some revision.")
     def test_ros_delib_ws_2024_p1(self):
         """Test the ROS Deliberation Workshop example works."""
         self._test_with_main(
