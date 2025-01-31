@@ -30,6 +30,7 @@ from .scxml_executable_entries import (  # noqa: F401
     instantiate_exec_body_bt_events,
     add_targets_to_scxml_send,
 )  # noqa: F401
+from .scxml_transition_target import ScxmlTransitionTarget  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
 from .scxml_bt_ticks import BtTick, BtTickChild, BtChildStatus, BtReturnStatus  # noqa: F401
 from .scxml_state import ScxmlState  # noqa: F401

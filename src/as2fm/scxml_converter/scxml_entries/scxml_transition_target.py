@@ -30,11 +30,14 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     has_bt_blackboard_input,
+    instantiate_exec_body_bt_events,
+    is_plain_execution_body,
+    set_execution_body_callback_type,
     valid_execution_body,
     valid_execution_body_entry_types,
 )
-from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
-
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
 
 class ScxmlTransitionTarget(ScxmlBase):
     """This class represents a single scxml transition target."""
@@ -45,8 +48,18 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransitionTarget":
-        """Create a ScxmlTransition object from an XML tree."""
-        pass
+        """Create a ScxmlTransitionTarget object from an XML tree."""
+        assert (
+            xml_tree.tag == ScxmlTransitionTarget.get_tag_name()
+        ), (
+            "Error: SCXML transition target: XML root tag name is " +
+            f"not {ScxmlTransitionTarget.get_tag_name()}."
+        )
+        target_id = xml_tree.get("id")
+        assert target_id is not None, "Error: SCXML transition target: id not found."
+        probability = xml_tree.get("prob")
+        exec_body = execution_body_from_xml(xml_tree)
+        return ScxmlTransitionTarget(target_id, probability, exec_body)
 
     def __init__(
         self,
@@ -79,7 +92,16 @@ class ScxmlTransitionTarget(ScxmlBase):
         return self._target_id
 
     def set_target_id(self, state_id: str):
+        """Set the ID of the target state of this transition."""
         self._target_id = state_id
+
+    def get_probability(self) -> Optional[float]:
+        """Return the probability of the target state of this transition."""
+        return self._probability
+
+    def set_probability(self, probability: float):
+        """Set the probability of the target state of this transition."""
+        self._probability = probability
 
     def get_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
@@ -94,9 +116,10 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
-    ) -> List["ScxmlTransitionTarget"]:
-        """Instantiate the BT events of this transition."""
-        pass
+    ) -> "ScxmlTransitionTarget":
+        """Instantiate the BT events in the object's body."""
+        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -146,13 +169,29 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        pass
+        is_plain_execution_body(self._body)
 
     def as_plain_scxml(
         self, ros_declarations: ScxmlRosDeclarationsContainer
     ) -> "ScxmlTransitionTarget":
-        pass
+        assert isinstance(
+            ros_declarations, ScxmlRosDeclarationsContainer
+        ), "Error: SCXML transition: invalid ROS declarations container."
+        assert self.check_valid_ros_instantiations(
+            ros_declarations
+        ), "Error: SCXML transition: invalid ROS instantiations in transition body."
+        new_body = None
+        set_execution_body_callback_type(self._body, CallbackType.TRANSITION)
+        if self._body is not None:
+            new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
+        return ScxmlTransitionTarget(self._target_id, self._probability, new_body)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "SCXML: found invalid transition."
-        pass
+        assert self.check_validity(), "SCXML: found invalid transition target."
+        xml_target = ET.Element(ScxmlTransitionTarget.get_tag_name(), {"id": self._target_id})
+        if self._probability is not None:
+            xml_target.set("prob", self._probability)
+        if self._body is not None:
+            for executable_entry in self._body:
+                xml_target.append(executable_entry.as_xml())
+        return xml_target

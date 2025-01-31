@@ -23,6 +23,7 @@ from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
+    ScxmlTransitionTarget,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
     ScxmlRosDeclarationsContainer,
@@ -36,6 +37,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
     valid_execution_body,
     valid_execution_body_entry_types,
+    ResolvedScxmlExecutableEntry
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
@@ -50,6 +52,20 @@ class ScxmlTransition(ScxmlBase):
     @staticmethod
     def get_tag_name() -> str:
         return "transition"
+    
+    def _contains_transition_target(xml_tree: ET.Element) -> bool:
+        """Check if the children of the ScxmlTransition contain ScxmlTransitionTarget tags."""
+        for entry in xml_tree:
+            if entry.tag == ScxmlTransitionTarget.get_tag_name():
+                return True
+        return False
+
+    def _contains_executable_content(xml_tree: ET.Element) -> bool:
+        """Check if the children of the ScxmlTransition contain executable content."""
+        for entry in xml_tree:
+            if valid_execution_body([entry,]):
+                return True
+        return False
 
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
@@ -62,21 +78,29 @@ class ScxmlTransition(ScxmlBase):
         events_str = xml_tree.get("event")
         events = events_str.split(" ") if events_str is not None else []
         condition = xml_tree.get("cond")
+
+        # Differentiate between children being targets or being executable content
+        contains_stt: bool = _contains_transition_target(xml_tree)
+        contains_ec: bool = _contains_executable_content(xml_tree)
+        assert not (contains_stt and contains_ec), (
+            "Error: SCXML transition: Can only contain either (probabilistic) transition targets " +
+            "or executable content.")
+
         exec_body = execution_body_from_xml(xml_tree)
+
         exec_body = exec_body if exec_body is not None else None
         return ScxmlTransition(target, events, condition, exec_body)
 
     def __init__(
         self,
-        target: str,
+        targets: List[ScxmlTransitionTarget],
         events: Optional[List[str]] = None,
         condition: Optional[str] = None,
-        body: Optional[ScxmlExecutionBody] = None,
     ):
         """
         Generate a new transition. Currently, transitions must have a target.
 
-        :param target: The state transition goes to. Required (unlike in SCXML specifications)
+        :param targets: The various targets that can be reached from this state. At least one!
         :param events: The events that trigger this transition.
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
@@ -85,29 +109,22 @@ class ScxmlTransition(ScxmlBase):
             events = []
         if body is None:
             body = []
-        assert (
-            isinstance(target, str) and len(target) > 0
-        ), "Error SCXML transition: target must be a non-empty string."
-        assert isinstance(events, list) and all(
-            (isinstance(ev, str) and len(ev) > 0) for ev in events
-        ), f"Error SCXML transition: events must be a list of filled strings. Found {events}."
+        assert isinstance(targets, list) and all([isinstance(target, ScxmlTransitionTarget) for target in targets]), (
+            "Error SCXML transition: no target provided or unexpected type."
+        )
         assert condition is None or (
             isinstance(condition, str) and len(condition) > 0
         ), "Error SCXML transition: condition must be a non-empty string."
-        assert valid_execution_body_entry_types(
-            body
-        ), "Error SCXML transition: invalid body provided."
-        self._target: str = target
-        self._body: ScxmlExecutionBody = body
+        self._targets: List[ScxmlTransitionTarget] = targets
         self._events: List[str] = events
         self._condition = condition
 
-    def get_target_state_id(self) -> str:
-        """Return the ID of the target state of this transition."""
-        return self._target
+    def get_targets(self) -> List[ScxmlTransitionTarget]:
+        """Return all targets belonging to this transition."""
+        return self._targets
 
-    def set_target_state_id(self, state_id: str):
-        self._target = state_id
+    def set_targets(self, new_targets: List[ScxmlTransitionTarget]):
+        self._targets = new_targets
 
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""
@@ -117,16 +134,9 @@ class ScxmlTransition(ScxmlBase):
         """Return the condition required to execute this transition (if any)."""
         return self._condition
 
-    def get_body(self) -> ScxmlExecutionBody:
-        """Return the executable content of this transition."""
-        return self._body if self._body is not None else []
-
-    def set_body(self, body: ScxmlExecutionBody) -> None:
-        """Set the body of this transition."""
-        self._body = body
-
     def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        return has_bt_blackboard_input(self._body, bt_ports_handler)
+        """Check if the transition contains references to blackboard inputs."""
+        return any([target.has_bt_blackboard_input(bt_ports_handler) for target in self._targets])
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]

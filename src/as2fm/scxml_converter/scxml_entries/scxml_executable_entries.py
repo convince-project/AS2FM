@@ -517,20 +517,20 @@ def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
     return True
 
 
-def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
+def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
     """
     Check if an execution body is valid.
 
     :param execution_body: The execution body to check
     :return: True if the execution body is valid, False otherwise
     """
-    if valid_execution_body_entry_types(execution_body):
-        for entry in execution_body:
-            if not entry.check_validity():
-                print(f"Error: SCXML execution body: content of {entry.get_tag_name()} is invalid.")
-                return False
-        return True
-    return False
+    if not valid_execution_body_entry_types(exec_body):
+        return False
+    for entry in exec_body:
+        if not entry.check_validity():
+            print(f"Error: SCXML execution body: content of {entry.get_tag_name()} is invalid.")
+            return False
+    return True
 
 
 def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:

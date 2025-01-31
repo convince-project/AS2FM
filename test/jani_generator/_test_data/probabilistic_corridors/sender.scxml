@@ -40,11 +40,11 @@
         </onentry>
 
         <transition>
-            <target target="t_a" prob="0.1">
+            <target id="t_a" prob="0.1">
                 <assign location="dummy" expr="0" />
             </target>
-            <target target="t_b" prob="0.3" />
-            <target target="t_c" prob="{remaining_prob}" />
+            <target id="t_b" prob="0.3" />
+            <target id="t_c" prob="{remaining_prob}" />
         </transition>
     </state>
 
