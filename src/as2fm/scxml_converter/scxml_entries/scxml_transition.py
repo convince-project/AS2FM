@@ -29,7 +29,10 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+    ScxmlExecutableEntry,
+    execution_body_from_xml,
+)
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -201,6 +204,16 @@ class ScxmlTransition(ScxmlBase):
 
     def add_event(self, event: str):
         self._events.append(event)
+
+    def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
+        """Append a executable boy entry if this has only one target.
+
+        If this transition has not exactly one target, this will raise an AssertionError."""
+        assert len(self._targets) == 1, (
+            "Error SCXML transition: Can only assign executable content to transition if there is"
+            + f" exactly one target. But there are {len(self._targets)}."
+        )
+        self._targets[0].append_body_executable_entry(exec_entry)
 
     def check_validity(self) -> bool:
         valid_targets = isinstance(self._targets, list) and all(
