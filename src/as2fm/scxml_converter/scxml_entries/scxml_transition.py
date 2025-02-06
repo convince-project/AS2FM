@@ -247,12 +247,13 @@ class ScxmlTransition(ScxmlBase):
         assert self.check_valid_ros_instantiations(
             ros_declarations
         ), "Error: SCXML transition: invalid ROS instantiations in transition body."
+        plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(CallbackType.TRANSITION)
-            target.as_plain_scxml(ros_declarations)
+            plain_targets.append(target.as_plain_scxml(ros_declarations))
         if self._condition is not None:
             self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
-        return ScxmlTransition(self._targets, self._events, self._condition)
+        return ScxmlTransition(plain_targets, self._events, self._condition)
 
     def as_xml(self) -> ET.Element:
         assert self.check_validity(), "SCXML: found invalid transition."
