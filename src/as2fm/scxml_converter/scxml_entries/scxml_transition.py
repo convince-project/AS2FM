@@ -236,9 +236,7 @@ class ScxmlTransition(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        return type(self) is ScxmlTransition and all(
-            target.is_plain_scxml() for target in self._targets
-        )
+        return all(target.is_plain_scxml() for target in self._targets)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(
