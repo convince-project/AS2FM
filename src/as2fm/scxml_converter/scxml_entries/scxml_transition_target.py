@@ -177,7 +177,7 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        is_plain_execution_body(self._body)
+        return is_plain_execution_body(self._body)
 
     def as_plain_scxml(
         self, ros_declarations: ScxmlRosDeclarationsContainer
@@ -190,8 +190,8 @@ class ScxmlTransitionTarget(ScxmlBase):
         ), "Error: SCXML transition target: invalid ROS instantiations in transition body."
         new_body = None
         assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
-        set_execution_body_callback_type(self._body, self._cb_type)
         if self._body is not None:
+            set_execution_body_callback_type(self._body, self._cb_type)
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         return ScxmlTransitionTarget(self._target_id, self._probability, new_body)
 
