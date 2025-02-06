@@ -248,6 +248,7 @@ class ScxmlTransition(ScxmlBase):
             ros_declarations
         ), "Error: SCXML transition: invalid ROS instantiations in transition body."
         for target in self._targets:
+            target.set_callback_type(CallbackType.TRANSITION)
             target.as_plain_scxml(ros_declarations)
         if self._condition is not None:
             self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)

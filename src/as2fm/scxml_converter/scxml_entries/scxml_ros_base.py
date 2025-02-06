@@ -279,6 +279,7 @@ class RosCallback(ScxmlTransition):
         ), f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
         new_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
+            target.set_callback_type(self.get_callback_type())
             new_targets.append(target.as_plain_scxml(ros_declarations))
             if new_targets[-1]._body is not None:
                 set_execution_body_callback_type(new_targets[-1]._body, self.get_callback_type())

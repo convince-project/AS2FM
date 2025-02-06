@@ -88,6 +88,11 @@ class ScxmlTransitionTarget(ScxmlBase):
         self._target_id = target_id
         self._probability = probability
         self._body = body
+        self._cb_type: Optional[CallbackType] = None
+
+    def set_callback_type(self, cb_type: CallbackType):
+        """Configure the callback type associated to this transition_target instance."""
+        self._cb_type = cb_type
 
     def get_target_id(self) -> str:
         """Return the ID of the target state of this transition."""
@@ -179,18 +184,19 @@ class ScxmlTransitionTarget(ScxmlBase):
     ) -> "ScxmlTransitionTarget":
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML transition: invalid ROS declarations container."
+        ), "Error: SCXML transition target: invalid ROS declarations container."
         assert self.check_valid_ros_instantiations(
             ros_declarations
-        ), "Error: SCXML transition: invalid ROS instantiations in transition body."
+        ), "Error: SCXML transition target: invalid ROS instantiations in transition body."
         new_body = None
-        set_execution_body_callback_type(self._body, CallbackType.TRANSITION)
+        assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
+        set_execution_body_callback_type(self._body, self._cb_type)
         if self._body is not None:
             new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
         return ScxmlTransitionTarget(self._target_id, self._probability, new_body)
 
     def as_xml(self) -> ET.Element:
-        assert self.check_validity(), "SCXML: found invalid transition target."
+        assert self.check_validity(), "Error: SCXML transition target: invalid."
         xml_target = ET.Element(ScxmlTransitionTarget.get_tag_name(), {"id": self._target_id})
         if self._probability is not None:
             xml_target.set("prob", self._probability)
