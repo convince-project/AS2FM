@@ -38,6 +38,9 @@ from lxml.etree import _Comment, _Element
 # Additionally, we support the array types from the array extension.
 ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
+# Small number used for float comparison.
+EPSILON = 1e-3
+
 
 def remove_namespace(tag: str) -> str:
     """

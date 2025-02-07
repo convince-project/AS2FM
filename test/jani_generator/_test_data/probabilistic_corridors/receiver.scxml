@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="init"
+    version="1.0"
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="count_ec_a" expr="0" type="int32" />
+        <data id="count_ec_b" expr="0" type="int32" />
+        <data id="count_ec_c" expr="0" type="int32" />
+
+        <data id="count_tr_a" expr="0" type="int32" />
+        <data id="count_tr_b" expr="0" type="int32" />
+        <data id="count_tr_c" expr="0" type="int32" />
+    </datamodel>
+
+    <ros_topic_subscriber topic="ec_a" type="std_msgs/Empty" />
+    <ros_topic_subscriber topic="ec_b" type="std_msgs/Empty" />
+    <ros_topic_subscriber topic="ec_c" type="std_msgs/Empty" />
+
+    <ros_topic_subscriber topic="tr_a" type="std_msgs/Empty" />
+    <ros_topic_subscriber topic="tr_b" type="std_msgs/Empty" />
+    <ros_topic_subscriber topic="tr_c" type="std_msgs/Empty" />
+
+    <ros_topic_publisher topic="state" type="std_msgs/Int32MultiArray" />
+
+    <state id="init">
+        <onentry>
+            <ros_topic_publish name="state">
+                <field name="data" expr="
+            [ count_ec_a, count_ec_b, count_ec_c, count_tr_a, count_tr_b, count_tr_c ]" />
+            </ros_topic_publish>
+        </onentry>
+
+        <ros_topic_callback name="ec_a" target="init">
+            <assign location="count_ec_a" expr="count_ec_a + 1" />
+        </ros_topic_callback>
+        <ros_topic_callback name="ec_b" target="init">
+            <assign location="count_ec_b" expr="count_ec_b + 1" />
+        </ros_topic_callback>
+        <ros_topic_callback name="ec_c" target="init">
+            <assign location="count_ec_c" expr="count_ec_c + 1" />
+        </ros_topic_callback>
+        <ros_topic_callback name="tr_a" target="init">
+            <assign location="count_tr_a" expr="count_tr_a + 1" />
+        </ros_topic_callback>
+        <ros_topic_callback name="tr_b" target="init">
+            <assign location="count_tr_b" expr="count_tr_b + 1" />
+        </ros_topic_callback>
+        <ros_topic_callback name="tr_c" target="init">
+            <assign location="count_tr_c" expr="count_tr_c + 1" />
+        </ros_topic_callback>
+    </state>
+</scxml>

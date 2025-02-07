@@ -36,28 +36,50 @@ class JaniEdge:
         if "guard" in edge_dict:
             self.guard = JaniGuard(edge_dict["guard"])
         self.destinations = []
+        if "destinations" not in edge_dict:
+            return
         for dest in edge_dict["destinations"]:
-            jani_destination = {
-                "location": dest["location"],
-                "probability": None,
-                "assignments": [],
-            }
+            prob = None
             if "probability" in dest:
-                jani_destination["probability"] = JaniExpression(dest["probability"]["exp"])
+                prob = JaniExpression(dest["probability"]["exp"])
+            assignments = []
             if "assignments" in dest:
                 for assignment in dest["assignments"]:
                     if isinstance(assignment, dict):
-                        jani_destination["assignments"].append(JaniAssignment(assignment))
+                        assignments.append(JaniAssignment(assignment))
                     elif isinstance(assignment, JaniAssignment):
-                        jani_destination["assignments"].append(assignment)
+                        assignments.append(assignment)
                     else:
                         raise RuntimeError(f"Unexpected type {type(assignment)} in assignments")
-                _sort_assignments_by_index(jani_destination["assignments"])
-            self.destinations.append(jani_destination)
+            self.append_destination(
+                location=dest["location"], probability=prob, assignments=assignments
+            )
 
     def get_action(self) -> Optional[str]:
         """Get the action name, if set."""
         return self.action
+
+    def append_destination(
+        self,
+        *,
+        location: Optional[str] = None,
+        probability: Optional[JaniExpression] = None,
+        assignments: Optional[List[JaniAssignment]] = None,
+    ):
+        """
+        Add a new destination to the JaniEdge.
+        """
+        assert location is None or isinstance(location, str)
+        assert probability is None or isinstance(probability, JaniExpression)
+        assert assignments is None or all(
+            isinstance(assign, JaniAssignment) for assign in assignments
+        )
+        jani_destination = {
+            "location": location,
+            "probability": probability,
+            "assignments": [] if assignments is None else assignments,
+        }
+        self.destinations.append(jani_destination)
 
     def is_empty_self_loop(self) -> bool:
         """Check if the edge is an empty self loop (i.e. has no assignments)."""

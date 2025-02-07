@@ -164,13 +164,16 @@ class ScxmlRoot(ScxmlBase):
         return transition_events
 
     def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
+        """
+        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
+
+        :param events_to_targets: Mapping between the event name and the automata recipients.
+        """
         for state in self._states:
             state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
             state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
             for transition in state.get_body():
-                transition.set_body(
-                    add_targets_to_scxml_send(transition.get_body(), events_to_targets)
-                )
+                transition.add_targets_to_scxml_sends(events_to_targets)
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:

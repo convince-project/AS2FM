@@ -56,11 +56,3 @@ class ScxmlBase:
     def get_id(self) -> str:
         """Get the ID of the object."""
         raise NotImplementedError
-
-    def get_states(self):
-        """Get the states of the object."""
-        raise NotImplementedError
-
-    def get_data_model(self):
-        """Get the data model of the object."""
-        raise NotImplementedError

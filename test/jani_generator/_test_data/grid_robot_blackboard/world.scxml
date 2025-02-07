@@ -46,7 +46,10 @@
     </state>
 
     <state id="running">
-        <ros_topic_callback name="move" target="running">
+        <!-- Topics and transitions boil down to the same interface -->
+        <!-- This one gives a 20% prob the robot won't move -->
+        <ros_topic_callback name="move" target="running" prob="0.2" />
+        <ros_topic_callback name="move" target="running" prob="0.8">
             <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
                 <!-- right -->
                 <assign location="pose_x" expr="pose_x + 1" />

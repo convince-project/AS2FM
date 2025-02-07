@@ -84,12 +84,12 @@ def test_battery_drainer_from_code():
             )
         ],
         body=[
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 "use_battery",
                 ["ros_time_rate.my_timer"],
                 body=[ScxmlAssign("battery_percent", "battery_percent - 1")],
             ),
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 "use_battery", ["topic_charge_msg"], body=[ScxmlAssign("battery_percent", "100")]
             ),
         ],

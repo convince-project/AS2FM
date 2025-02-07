@@ -33,7 +33,6 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_result_handle_event,
     is_action_type_known,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import execution_body_from_xml
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
     RosCallback,
     RosDeclaration,
@@ -105,9 +104,10 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         action_name = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "name")
         accept_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "accept")
         reject_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "reject")
-        assert (
-            len(execution_body_from_xml(xml_tree)) == 0
-        ), "Error: SCXML RosActionHandleGoalResponse can not have an execution body."
+        assert len(xml_tree) == 0, (
+            "Error: SCXML RosActionHandleGoalResponse can not have any children. "
+            "(Neither executable content nor probabilistic targets)"
+        )
         return RosActionHandleGoalResponse(action_name, accept_target, reject_target)
 
     def __init__(
@@ -179,8 +179,12 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
         accept_event = generate_action_goal_handle_accepted_event(interface_name, automaton_name)
         reject_event = generate_action_goal_handle_rejected_event(interface_name, automaton_name)
-        accept_transition = ScxmlTransition(self._accept_target, [accept_event])
-        reject_transition = ScxmlTransition(self._reject_target, [reject_event])
+        accept_transition = ScxmlTransition.make_single_target_transition(
+            self._accept_target, [accept_event]
+        )
+        reject_transition = ScxmlTransition.make_single_target_transition(
+            self._reject_target, [reject_event]
+        )
         return [accept_transition, reject_transition]
 
     def as_xml(self) -> ET.Element:
