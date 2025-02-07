@@ -30,7 +30,9 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+    EventsToAutomata,
     ScxmlExecutableEntry,
+    add_targets_to_scxml_send,
     execution_body_from_xml,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -169,6 +171,15 @@ class ScxmlTransition(ScxmlBase):
             assert (
                 abs(prob_sum - 1.0) < EPSILON
             ), f"The sum of probabilities is {prob_sum}, must be 1.0."
+
+    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata):
+        """
+        For each "ScxmlSend" entry in the transition body, add the automata receiving the event.
+        """
+        for transition_target in self._targets:
+            transition_target.set_body(
+                add_targets_to_scxml_send(transition_target.get_body(), events_to_targets)
+            )
 
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""

@@ -17,6 +17,7 @@
 SCXML entries related to Behavior Tree Ticks and related responses.
 """
 
+from copy import deepcopy
 from typing import List, Optional, Type, Union
 
 from lxml import etree as ET
@@ -236,8 +237,9 @@ class BtChildStatus(ScxmlTransition):
             condition_prefix = "" if plain_cond_expr is None else f"({plain_cond_expr}) && "
             generated_transitions = []
             for child_seq_n, child_id in enumerate(children_ids):
+                # Make a copy per set of targets: might create issues when adding targets otherwise
                 generated_transition = ScxmlTransition(
-                    self._targets,
+                    deepcopy(self._targets),
                     [generate_bt_response_event(child_id)],
                     condition_prefix + f"({self._child_seq_id} == {child_seq_n})",
                 ).instantiate_bt_events(instance_id, children_ids)
