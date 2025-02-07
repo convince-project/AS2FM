@@ -206,7 +206,7 @@ class ScxmlTransition(ScxmlBase):
         self._events.append(event)
 
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
-        """Append a executable boy entry if this has only one target.
+        """Append a executable body entry if this has only one target.
 
         If this transition has not exactly one target, this will raise an AssertionError."""
         assert len(self._targets) == 1, (
