@@ -463,6 +463,11 @@ class ScxmlAssign(ScxmlBase):
             )
 
     def check_validity(self) -> bool:
+        """
+        Check that the ScxmlAssign instance is valid.
+
+        Note that this assumes all values from BT ports are already substituted.
+        """
         # TODO: Check that the location to assign exists in the data-model
         valid_location = is_non_empty_string(ScxmlAssign, "location", self._location)
         valid_expr = is_non_empty_string(ScxmlAssign, "expr", self._expr)

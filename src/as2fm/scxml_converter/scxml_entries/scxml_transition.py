@@ -21,7 +21,7 @@ from typing import List, Optional
 
 from lxml import etree as ET
 
-from as2fm.as2fm_common.common import EPSILON
+from as2fm.as2fm_common.common import EPSILON, is_comment
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutionBody,
@@ -52,9 +52,15 @@ class ScxmlTransition(ScxmlBase):
     @staticmethod
     def contains_transition_target(xml_tree: ET.Element) -> bool:
         """Check if the children of the ScxmlTransition contain ScxmlTransitionTarget tags."""
-        return len(xml_tree) > 0 and all(
-            entry.tag == ScxmlTransitionTarget.get_tag_name() for entry in xml_tree
-        )
+        targets_found = False
+        for entry in xml_tree:
+            if is_comment(entry):
+                pass  # Do nothing
+            elif entry.tag == ScxmlTransitionTarget.get_tag_name():
+                targets_found = True
+            else:
+                return False  # Found an entry that isn't a target: return
+        return targets_found
 
     # @staticmethod
     # def _contains_executable_content(xml_tree: ET.Element) -> bool:
@@ -89,7 +95,11 @@ class ScxmlTransition(ScxmlBase):
                 raise NotImplementedError(
                     "conditions are not supported for probabilistic transition targets right now."
                 )  # TODO: Consider enabling this
-            targets = [ScxmlTransitionTarget.from_xml_tree(entry) for entry in xml_tree]
+            targets = [
+                ScxmlTransitionTarget.from_xml_tree(entry)
+                for entry in xml_tree
+                if not is_comment(entry)
+            ]
             return ScxmlTransition(targets, events, condition)
         assert target is not None, "Error: SCXML transition: target attribute not found."
         return ScxmlTransition.make_single_target_transition(
@@ -156,14 +166,14 @@ class ScxmlTransition(ScxmlBase):
             target.get_probability() is not None for target in new_targets[:-1]
         ), "Error SCXML transition: Only the last target can have no probability."
         if n_targets == 1:
-            assert new_targets[0].check_validity()
+            # Skip validity check, since we need to substitute BT ports values first
             single_prob = new_targets[0].get_probability()
             assert single_prob is None or single_prob == 1.0
             self._targets.append(new_targets[0])
         else:
             prob_sum = 0.0
             for target in new_targets:
-                assert target.check_validity()
+                # Skip validity check, since we need to substitute BT ports values first
                 if target.get_probability() is None:  # This is the last target entry
                     target.set_probability(1.0 - prob_sum)
                 self._targets.append(target)

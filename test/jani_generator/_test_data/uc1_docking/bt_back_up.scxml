@@ -9,7 +9,7 @@
     <ros_topic_publisher name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
 
     <state id="initial">
-        <bt_tick target="initial">
+        <bt_tick>
             <!-- Another option -->
             <target id="fail" prob="0.2"/>
             <target id="initial" prob="0.8">

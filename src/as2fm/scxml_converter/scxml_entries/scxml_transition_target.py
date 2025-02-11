@@ -57,7 +57,7 @@ class ScxmlTransitionTarget(ScxmlBase):
         )
         target_id = xml_tree.get("id")
         assert target_id is not None, "Error: SCXML transition target: id not found."
-        probability = xml_tree.get("prob")
+        probability = float(xml_tree.get("prob"))
         if probability == 0.0:
             warn("Warning: SCXML transition target: Probability is zero.")
         exec_body = execution_body_from_xml(xml_tree)
