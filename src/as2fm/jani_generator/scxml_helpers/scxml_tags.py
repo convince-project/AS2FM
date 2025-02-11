@@ -854,7 +854,7 @@ class TransitionTag(BaseTag):
                 target_state_id,
                 target_probability,
                 target_hash,
-                action_name,
+                trigger_event,
                 self.max_array_size,
             )
             generated_edges.extend(additional_edges)
