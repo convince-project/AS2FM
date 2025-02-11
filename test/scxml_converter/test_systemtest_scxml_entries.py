@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
+    ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
@@ -179,12 +180,15 @@ def test_bt_action_with_ports_from_code():
         "initial",
         body=[
             BtTick(
-                "initial",
-                None,
                 [
-                    ScxmlAssign("number", BtGetValueInputPort("data")),
-                    RosTopicPublish(topic_publisher, [RosField("data", "number")]),
-                ],
+                    ScxmlTransitionTarget(
+                        "initial",
+                        body=[
+                            ScxmlAssign("number", BtGetValueInputPort("data")),
+                            RosTopicPublish(topic_publisher, [RosField("data", "number")]),
+                        ],
+                    )
+                ]
             )
         ],
     )

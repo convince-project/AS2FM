@@ -29,6 +29,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlRosDeclarationsContainer,
     ScxmlSend,
     ScxmlTransition,
+    ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BT_BLACKBOARD_GET,
@@ -178,11 +179,10 @@ class ScxmlState(ScxmlBase):
                 new_state.add_transition(blackboard_transition)
                 generated_states.append(new_state)
                 # Set the new target and body to the original transition
-                trans_events = self._body[transition_idx].get_events()
-                trans_cond = self._body[transition_idx].get_condition()
-                self._body[transition_idx] = ScxmlTransition.make_single_target_transition(
-                    new_state_id, trans_events, trans_cond, [ScxmlSend(BT_BLACKBOARD_REQUEST)]
+                new_transition_target = ScxmlTransitionTarget(
+                    new_state_id, body=[ScxmlSend(BT_BLACKBOARD_REQUEST)]
                 )
+                self._body[transition_idx].set_targets([new_transition_target])
         return generated_states
 
     def _substitute_bt_events_and_ports(

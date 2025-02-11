@@ -270,7 +270,9 @@ class ScxmlTransition(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        return all(target.is_plain_scxml() for target in self._targets)
+        return type(self) is ScxmlTransition and all(
+            target.is_plain_scxml() for target in self._targets
+        )
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
         assert isinstance(
@@ -294,7 +296,7 @@ class ScxmlTransition(ScxmlBase):
             xml_transition.set("event", " ".join(self._events))
         if self._condition is not None:
             xml_transition.set("cond", self._condition)
-        if len(self._targets) > 1 or self._targets[0].get_probability is not None:
+        if len(self._targets) > 1 or self._targets[0].get_probability() is not None:
             # Using the custom probability functionalities: add the target children
             for target in self._targets:
                 xml_transition.append(target.as_xml())

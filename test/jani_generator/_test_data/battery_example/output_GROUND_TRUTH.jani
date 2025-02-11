@@ -32,10 +32,10 @@
             "name": "level_on_send"
         },
         {
-            "name": "use_battery-first-exec-use_battery-parent-766fa6e4"
+            "name": "transition-use_battery-eventless-14843ca2"
         },
         {
-            "name": "use_battery-use_battery-parent-cf7e7c41"
+            "name": "use_battery-first-exec-use_battery-parent-766fa6e4"
         }
     ],
     "automata": [
@@ -46,7 +46,7 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery-1-cf7e7c41"
+                    "name": "use_battery-1-8056b156"
                 },
                 {
                     "name": "use_battery-first-exec"
@@ -63,7 +63,10 @@
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery-1-cf7e7c41",
+                            "location": "use_battery-1-8056b156",
+                            "probability": {
+                                "exp": 1.0
+                            },
                             "assignments": [
                                 {
                                     "ref": "battery_percent",
@@ -77,10 +80,13 @@
                             ]
                         }
                     ],
-                    "action": "use_battery-use_battery-parent-cf7e7c41"
+                    "action": "transition-use_battery-eventless-14843ca2",
+                    "guard": {
+                        "exp": true
+                    }
                 },
                 {
-                    "location": "use_battery-1-cf7e7c41",
+                    "location": "use_battery-1-8056b156",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -105,6 +111,9 @@
                     "destinations": [
                         {
                             "location": "use_battery-first-exec-0-766fa6e4",
+                            "probability": {
+                                "exp": 1.0
+                            },
                             "assignments": []
                         }
                     ],
@@ -157,6 +166,9 @@
                     "destinations": [
                         {
                             "location": "check_battery",
+                            "probability": {
+                                "exp": 1.0
+                            },
                             "assignments": [
                                 {
                                     "ref": "battery_alarm",
@@ -170,7 +182,10 @@
                             ]
                         }
                     ],
-                    "action": "level_on_receive"
+                    "action": "level_on_receive",
+                    "guard": {
+                        "exp": true
+                    }
                 }
             ],
             "variables": [
@@ -255,17 +270,17 @@
                 ]
             },
             {
-                "result": "use_battery-first-exec-use_battery-parent-766fa6e4",
+                "result": "transition-use_battery-eventless-14843ca2",
                 "synchronise": [
-                    "use_battery-first-exec-use_battery-parent-766fa6e4",
+                    "transition-use_battery-eventless-14843ca2",
                     null,
                     null
                 ]
             },
             {
-                "result": "use_battery-use_battery-parent-cf7e7c41",
+                "result": "use_battery-first-exec-use_battery-parent-766fa6e4",
                 "synchronise": [
-                    "use_battery-use_battery-parent-cf7e7c41",
+                    "use_battery-first-exec-use_battery-parent-766fa6e4",
                     null,
                     null
                 ]
