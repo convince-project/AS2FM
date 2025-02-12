@@ -33,7 +33,6 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
-    execution_body_from_xml,
     set_execution_body_callback_type,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -191,30 +190,8 @@ class RosCallback(ScxmlTransition):
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_argument(cls, xml_tree, "name")
-        target_state = get_xml_argument(cls, xml_tree, "target", none_allowed=True)
         condition = get_xml_argument(cls, xml_tree, "cond", none_allowed=True)
-        transition_targets: List[ScxmlTransitionTarget] = []
-        if ScxmlTransition.contains_transition_target(xml_tree):
-            assert target_state is None, (
-                f"Found multiple target declaration for {cls.get_tag_name()} ",
-                f"with name {interface_name}.",
-            )
-            transition_targets.extend(
-                [
-                    ScxmlTransitionTarget.from_xml_tree(entry)
-                    for entry in xml_tree
-                    if not is_comment(entry)
-                ]
-            )
-            assert len(transition_targets) <= 1 or condition is None, (
-                f"SCXML {cls.get_tag_name()} error: conditions and multiple targets ",
-                "are not supported together.",
-            )
-        else:
-            assert is_non_empty_string(cls, "target", target_state)
-            transition_targets.append(
-                ScxmlTransitionTarget(target_state, body=execution_body_from_xml(xml_tree))
-            )
+        transition_targets = cls.load_transition_targets_from_xml(xml_tree)
         return cls(interface_name, transition_targets, condition)
 
     @classmethod
@@ -278,6 +255,12 @@ class RosCallback(ScxmlTransition):
         )
         if not valid_targets:
             print(f"Error: SCXML {self.get_tag_name()}: invalid target entries.")
+        if valid_targets and len(self._targets) > 1 and self._condition is not None:
+            print(
+                "Error: SCXML {self.get_tag_name()}: No support for conditional callbacks "
+                "with multiple targets."
+            )
+            valid_targets = False
         return valid_name and valid_targets and valid_condition
 
     def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
