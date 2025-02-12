@@ -87,6 +87,17 @@ class ScxmlParam(ScxmlBase):
     def get_location(self) -> Optional[str]:
         return self._location
 
+    def get_expr_or_location(self) -> str:
+        """
+        Return either the expr or location argument, depending on which one is None.
+
+        Ensures that at least one is valid.
+        """
+        if self._expr is not None:
+            return self._expr
+        assert is_non_empty_string(ScxmlParam, "location", self._location)
+        return self._location
+
     def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
         return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
             bt_ports_handler.get_port_value(self._expr.get_key_name())

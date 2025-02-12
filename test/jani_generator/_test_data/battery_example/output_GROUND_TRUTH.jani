@@ -46,13 +46,13 @@
                     "name": "use_battery"
                 },
                 {
-                    "name": "use_battery-1-8056b156"
+                    "name": "use_battery-8056b156-1"
                 },
                 {
                     "name": "use_battery-first-exec"
                 },
                 {
-                    "name": "use_battery-first-exec-0-766fa6e4"
+                    "name": "use_battery-first-exec-766fa6e4-0"
                 }
             ],
             "initial-locations": [
@@ -63,7 +63,7 @@
                     "location": "use_battery",
                     "destinations": [
                         {
-                            "location": "use_battery-1-8056b156",
+                            "location": "use_battery-8056b156-1",
                             "probability": {
                                 "exp": 1.0
                             },
@@ -86,7 +86,7 @@
                     }
                 },
                 {
-                    "location": "use_battery-1-8056b156",
+                    "location": "use_battery-8056b156-1",
                     "destinations": [
                         {
                             "location": "use_battery",
@@ -110,7 +110,7 @@
                     "location": "use_battery-first-exec",
                     "destinations": [
                         {
-                            "location": "use_battery-first-exec-0-766fa6e4",
+                            "location": "use_battery-first-exec-766fa6e4-0",
                             "probability": {
                                 "exp": 1.0
                             },
@@ -120,7 +120,7 @@
                     "action": "use_battery-first-exec-use_battery-parent-766fa6e4"
                 },
                 {
-                    "location": "use_battery-first-exec-0-766fa6e4",
+                    "location": "use_battery-first-exec-766fa6e4-0",
                     "destinations": [
                         {
                             "location": "use_battery",

@@ -242,6 +242,7 @@ def _append_scxml_body_to_jani_edge(
     # Reference to the latest created edge
     last_edge = jani_edge
     for i, ec in enumerate(body):
+        intermediate_location = f"{original_source}-{hash_str}-{i}"
         if isinstance(ec, ScxmlAssign):
             assign_idx = len(last_edge.destinations[-1]["assignments"])
             jani_assigns = _interpret_scxml_assign(ec, jani_automaton, data_event, assign_idx)
@@ -249,11 +250,10 @@ def _append_scxml_body_to_jani_edge(
         elif isinstance(ec, ScxmlSend):
             event_name = ec.get_event()
             event_send_action_name = event_name + "_on_send"
-            interm_loc = f"{original_source}-{i}-{hash_str}"
-            last_edge.destinations[-1]["location"] = interm_loc
+            last_edge.destinations[-1]["location"] = intermediate_location
             last_edge = JaniEdge(
                 {
-                    "location": interm_loc,
+                    "location": intermediate_location,
                     "action": event_send_action_name,
                     "guard": None,
                 }
@@ -262,8 +262,7 @@ def _append_scxml_body_to_jani_edge(
             data_structure_for_event: Dict[str, type] = {}
             for param in ec.get_params():
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"
-                expr = param.get_expr() if param.get_expr() is not None else param.get_location()
-                assert expr is not None, "Expected expression or location in param."
+                expr = param.get_expr_or_location()
                 # Update the events holder
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
                 variables = get_all_variables_and_instantiations(jani_automaton)
@@ -322,11 +321,10 @@ def _append_scxml_body_to_jani_edge(
             send_event.add_sender_edge(jani_automaton.get_name(), event_send_action_name)
             last_edge.append_destination(assignments=new_edge_dest_assignments)
             additional_edges.append(last_edge)
-            additional_locations.append(interm_loc)
+            additional_locations.append(intermediate_location)
         elif isinstance(ec, ScxmlIf):
-            if_prefix = f"{original_source}_{hash_str}_{i}"
-            interm_loc_before = f"{if_prefix}_before_if"
-            interm_loc_after = f"{if_prefix}_after_if"
+            interm_loc_before = f"{intermediate_location}_before_if"
+            interm_loc_after = f"{intermediate_location}_after_if"
             last_edge.destinations[-1]["location"] = interm_loc_before
             previous_conditions: List[JaniExpression] = []
             for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
