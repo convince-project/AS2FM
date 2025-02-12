@@ -314,7 +314,6 @@ class RosCallback(ScxmlTransition):
         """Convert the ROS callback to an XML element."""
         assert self.check_validity(), f"Error: SCXML {self.get_tag_name()}: invalid parameters."
         xml_element = super().as_xml()
-        xml_element.tag = self.get_tag_name()
         if len(self._events) > 0:
             _ = xml_element.attrib.pop("event")
         xml_element.set("name", self._interface_name)
