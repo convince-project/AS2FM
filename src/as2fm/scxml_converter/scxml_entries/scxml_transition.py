@@ -17,7 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from lxml import etree as ET
 
@@ -40,6 +40,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     get_plain_expression,
     is_non_empty_string,
 )
+from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_argument
 
 
 class ScxmlTransition(ScxmlBase):
@@ -62,42 +63,44 @@ class ScxmlTransition(ScxmlBase):
                 return False  # Found an entry that isn't a target: return
         return targets_found
 
+    @classmethod
+    def load_transition_targets_from_xml(
+        cls: Type["ScxmlTransition"], xml_tree: ET.Element
+    ) -> List[ScxmlTransitionTarget]:
+        """Loads all transition targets contained in the transition-like tags."""
+        target = get_xml_argument(cls, xml_tree, "target", none_allowed=True)
+        has_targets_children = cls.contains_transition_target(xml_tree)
+        assert (target is not None) != has_targets_children, (
+            f"Error: SCXML {cls.get_tag_name()}: target must can be either "
+            "an attribute or a child."
+        )
+        target_children: List[ScxmlTransitionTarget] = []
+        if has_targets_children:
+            target_children.extend(
+                [
+                    ScxmlTransitionTarget.from_xml_tree(entry)
+                    for entry in xml_tree
+                    if not is_comment(entry)
+                ]
+            )
+        else:
+            assert is_non_empty_string(cls, "target", target)
+            target_children.append(
+                ScxmlTransitionTarget(target, body=execution_body_from_xml(xml_tree))
+            )
+        return target_children
+
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
         ), f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
-        target = xml_tree.get("target")
-        events_str = xml_tree.get("event")
+        events_str = get_xml_argument(ScxmlTransition, xml_tree, "event", none_allowed=True)
         events = events_str.split(" ") if events_str is not None else []
-        condition = xml_tree.get("cond")
-
-        contains_stt: bool = ScxmlTransition.contains_transition_target(xml_tree)
-        # Make sure that only one of the two holds true (XOR)
-        if contains_stt:
-            assert target is None, (
-                "Error: SCXML transition: Can have either target attribute or ",
-                "(probabilistic) transition targets",
-            )
-            if len(events) > 0:
-                raise NotImplementedError(
-                    "events are not supported for probabilistic transition targets right now."
-                )  # TODO: Consider enabling this
-            if condition is not None:
-                raise NotImplementedError(
-                    "conditions are not supported for probabilistic transition targets right now."
-                )  # TODO: Consider enabling this
-            targets = [
-                ScxmlTransitionTarget.from_xml_tree(entry)
-                for entry in xml_tree
-                if not is_comment(entry)
-            ]
-            return ScxmlTransition(targets, events, condition)
-        assert target is not None, "Error: SCXML transition: target attribute not found."
-        return ScxmlTransition.make_single_target_transition(
-            target, events, condition, execution_body_from_xml(xml_tree)
-        )
+        condition = get_xml_argument(ScxmlTransition, xml_tree, "cond", none_allowed=True)
+        transition_targets = ScxmlTransition.load_transition_targets_from_xml(xml_tree)
+        return ScxmlTransition(transition_targets, events, condition)
 
     @staticmethod
     def make_single_target_transition(
@@ -249,6 +252,12 @@ class ScxmlTransition(ScxmlBase):
             print("Error: SCXML transition: events are not valid.\nList of events:")
             for event in self._events:
                 print(f"\t-'{event}'.")
+        if valid_targets and len(self._targets) > 1 and self._condition is not None:
+            print(
+                "Error: SCXML transition: No support for conditional transitions "
+                "with multiple targets."
+            )
+            valid_targets = False
         return valid_targets and valid_events and valid_condition
 
     def check_valid_ros_instantiations(

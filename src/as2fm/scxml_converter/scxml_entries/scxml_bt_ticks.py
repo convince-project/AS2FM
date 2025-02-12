@@ -22,7 +22,6 @@ from typing import List, Optional, Type, Union
 
 from lxml import etree as ET
 
-from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutionBody,
@@ -38,12 +37,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     generate_bt_response_event,
     generate_bt_tick_event,
 )
-from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
-    get_plain_expression,
-    is_non_empty_string,
-    to_integer,
-)
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression, to_integer
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
 
 
@@ -82,26 +76,8 @@ class BtTick(ScxmlTransition):
     def from_xml_tree(xml_tree: ET.Element) -> "BtTick":
         assert_xml_tag_ok(BtTick, xml_tree)
         # Check if the tag defines a transition target or not
-        target: str = get_xml_argument(BtTick, xml_tree, "target", none_allowed=True)
         condition: Optional[str] = get_xml_argument(BtTick, xml_tree, "cond", none_allowed=True)
-        has_target_children = ScxmlTransition.contains_transition_target(xml_tree)
-        transition_targets: List[ScxmlTransitionTarget] = []
-        if has_target_children:
-            transition_targets.extend(
-                [
-                    ScxmlTransitionTarget.from_xml_tree(entry)
-                    for entry in xml_tree
-                    if not is_comment(entry)
-                ]
-            )
-            assert (
-                len(transition_targets) <= 1 or condition is None
-            ), "SCXML bt_tick error: conditions with multiple tick targets are not supported"
-        else:
-            assert is_non_empty_string(BtTick, "target", target)
-            transition_targets.append(
-                ScxmlTransitionTarget(target, body=execution_body_from_xml(xml_tree))
-            )
+        transition_targets = BtTick.load_transition_targets_from_xml(xml_tree)
         return BtTick(transition_targets, condition)
 
     def __init__(
