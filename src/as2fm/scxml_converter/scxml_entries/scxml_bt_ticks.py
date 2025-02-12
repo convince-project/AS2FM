@@ -125,13 +125,10 @@ class BtTick(ScxmlTransition):
         return [ScxmlTransition(self._targets, self._events, self._condition)]
 
     def as_xml(self) -> ET.Element:
-        xml_bt_tick = ET.Element(BtTick.get_tag_name(), {"target": self._target})
-        if self._condition is not None:
-            xml_bt_tick.set("cond", self._condition)
-        if self._body is not None:
-            for executable_entry in self._body:
-                xml_bt_tick.append(executable_entry.as_xml())
-        return xml_bt_tick
+        xml_element = super().as_xml()
+        xml_element.tag = BtTick.get_tag_name()
+        _ = xml_element.attrib.pop("event")
+        return xml_element
 
 
 class BtTickChild(ScxmlSend):
