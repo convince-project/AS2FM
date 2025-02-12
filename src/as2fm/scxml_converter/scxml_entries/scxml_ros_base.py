@@ -261,9 +261,8 @@ class RosCallback(ScxmlTransition):
         Constructor of ROS callback.
 
         :param interface_decl: ROS interface declaration to be used in the callback, or its name.
-        :param target_state: Name of the state to transition to after the callback.
+        :param targets: A list of targets reachable from this callback.
         :param condition: Condition to be met for the callback to be executed.
-        :param exec_body: Executable body of the callback.
         """
         super().__init__(targets, condition=condition)
         self._interface_name = self.get_interface_name(interface_decl)
@@ -333,7 +332,8 @@ class RosCallback(ScxmlTransition):
         assert self.check_validity(), f"Error: SCXML {self.get_tag_name()}: invalid parameters."
         xml_element = super().as_xml()
         xml_element.tag = self.get_tag_name()
-        _ = xml_element.attrib.pop("event")
+        if len(self._events) > 0:
+            _ = xml_element.attrib.pop("event")
         xml_element.set("name", self._interface_name)
         return xml_element
 

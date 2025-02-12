@@ -27,11 +27,11 @@ from as2fm.scxml_converter.scxml_entries import (
     RosField,
     ScxmlBase,
     ScxmlDataModel,
-    ScxmlExecutionBody,
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
     ScxmlTransition,
+    ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
@@ -223,19 +223,17 @@ class RosActionHandleThreadStart(RosCallback):
     def __init__(
         self,
         server_alias: Union[str, RosActionServer],
-        target_state: str,
+        targets: List[ScxmlTransitionTarget],
         condition: Optional[str] = None,
-        exec_body: Optional[ScxmlExecutionBody] = None,
     ) -> None:
         """
         Initialize a new RosActionHandleResult object.
 
         :param server_alias: Action Server used by this handler, or its name.
-        :param target_state: Target state to transition to after the start trigger is received.
+        :param targets: A list of targets reachable when after the start trigger is received.
         :param condition: Condition to be met for the callback to be executed. Expected None.
-        :param exec_body: Execution body to be executed upon thread start (before transition).
         """
-        super().__init__(server_alias, target_state, condition, exec_body)
+        super().__init__(server_alias, targets, condition)
         # The thread ID depends on the plain scxml instance, so it is set later
         self._thread_id: Optional[int] = None
 
