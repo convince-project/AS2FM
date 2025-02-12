@@ -192,6 +192,7 @@ class BtChildStatus(ScxmlTransition):
         """
         Generate a BtChildStatus with exactly one target.
 
+        :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
         :param target: The state transition goes to. Required (unlike in SCXML specifications)
         :param events: The events that trigger this transition.
         :param condition: The condition guard to enable/disable the transition
