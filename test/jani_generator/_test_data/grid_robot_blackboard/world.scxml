@@ -47,26 +47,28 @@
 
     <state id="running">
         <!-- Topics and transitions boil down to the same interface -->
-        <!-- This one gives a 20% prob the robot won't move -->
-        <ros_topic_callback name="move" target="running" prob="0.2" />
-        <ros_topic_callback name="move" target="running" prob="0.8">
-            <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
-                <!-- right -->
-                <assign location="pose_x" expr="pose_x + 1" />
-                <elseif cond="_msg.data == 1 &amp;&amp; pose_x &gt; 0" />
-                <!-- left -->
-                <assign location="pose_x" expr="pose_x - 1" />
-                <elseif cond="_msg.data == 2 &amp;&amp; pose_y &lt; n - 1" />
-                <!-- up -->
-                <assign location="pose_y" expr="pose_y + 1" />
-                <elseif cond="_msg.data == 3 &amp;&amp; pose_y &gt; 0" />
-                <!-- down -->
-                <assign location="pose_y" expr="pose_y - 1" />
-            </if>
-            <ros_topic_publish name="pose">
-                <field name="x" expr="pose_x" />
-                <field name="y" expr="pose_y" />
-            </ros_topic_publish>
+        <ros_topic_callback name="move">
+            <!-- This one gives a 20% prob the robot won't move -->
+            <target id="running" prob="0.2" />
+            <target id="running" prob="0.8">
+                <if cond="_msg.data == 0 &amp;&amp; pose_x &lt; n - 1">
+                    <!-- right -->
+                    <assign location="pose_x" expr="pose_x + 1" />
+                    <elseif cond="_msg.data == 1 &amp;&amp; pose_x &gt; 0" />
+                    <!-- left -->
+                    <assign location="pose_x" expr="pose_x - 1" />
+                    <elseif cond="_msg.data == 2 &amp;&amp; pose_y &lt; n - 1" />
+                    <!-- up -->
+                    <assign location="pose_y" expr="pose_y + 1" />
+                    <elseif cond="_msg.data == 3 &amp;&amp; pose_y &gt; 0" />
+                    <!-- down -->
+                    <assign location="pose_y" expr="pose_y - 1" />
+                </if>
+                <ros_topic_publish name="pose">
+                    <field name="x" expr="pose_x" />
+                    <field name="y" expr="pose_y" />
+                </ros_topic_publish>
+            </target>
         </ros_topic_callback>
     </state>
 </scxml>

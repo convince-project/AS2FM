@@ -186,7 +186,9 @@ def generate_bt_root_scxml(
     idle_state = ScxmlState(
         "idle",
         body=[
-            RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]),
+            RosRateCallback.make_single_target_transition(
+                ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]
+            ),
             BtChildStatus(0, "error"),
         ],
     )
