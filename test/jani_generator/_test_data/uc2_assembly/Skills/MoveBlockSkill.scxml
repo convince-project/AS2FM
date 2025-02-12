@@ -32,25 +32,11 @@
             <assign location="time" expr="_msg.data" />
         </ros_topic_callback>
         <!-- If action server is called ... -->
-        <ros_action_handle_goal name="MoveBlock_action_srv" target="idle">
+        <ros_action_handle_goal name="MoveBlock_action_srv" target="process_block">
             <assign location="goal_id" expr="_action.goal_id" />
             <assign location="block_id" expr="_goal.block_id" />
             <!-- accept goal -->
             <ros_action_accept_goal name="MoveBlock_action_srv" goal_id="goal_id" />
-            <!-- ~~~~ Option 1: We have a new tag "prob" -->
-            <prob value="0.7" />
-                <!-- then success -->
-                <assign location="block_down" expr="0" />
-                <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
-            <else/>  <!-- This is elseprob value=0.3 -->
-                <!-- else abort -->
-                <assign location="block_down" expr="1" />
-                <!-- publish abort time -->
-                <ros_topic_publish name="moveblock_abort_time_pub">
-                    <field name="data" expr="time" />
-                </ros_topic_publish>
-                <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
-            </prob>
         </ros_action_handle_goal>
         <!-- If service server get_block_status_srv is called ... -->
         <ros_service_handle_request name="get_block_status_srv" target="idle">
@@ -64,5 +50,24 @@
             <ros_service_send_response name="reset_block_status_srv">
             </ros_service_send_response>
         </ros_service_handle_request>
+    </state>
+
+    <state id="process_block">
+        <transition>
+            <target id="idle" prob="0.7">
+                <!-- success -->
+                <assign location="block_down" expr="0" />
+                <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
+            </target>
+            <target id="idle" prob="0.3">
+                <!-- else abort -->
+                <assign location="block_down" expr="1" />
+                <!-- publish abort time -->
+                <ros_topic_publish name="moveblock_abort_time_pub">
+                    <field name="data" expr="time" />
+                </ros_topic_publish>
+                <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
+            </target>
+        </transition>
     </state>
 </scxml>
