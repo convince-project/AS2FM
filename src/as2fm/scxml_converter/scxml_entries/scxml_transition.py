@@ -62,11 +62,6 @@ class ScxmlTransition(ScxmlBase):
                 return False  # Found an entry that isn't a target: return
         return targets_found
 
-    # @staticmethod
-    # def _contains_executable_content(xml_tree: ET.Element) -> bool:
-    #     """Check if the children of the ScxmlTransition contain executable content."""
-    #     return all(valid_execution_body([entry]) for entry in xml_tree)
-
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
@@ -78,9 +73,7 @@ class ScxmlTransition(ScxmlBase):
         events = events_str.split(" ") if events_str is not None else []
         condition = xml_tree.get("cond")
 
-        # Differentiate between children being targets or being executable content
         contains_stt: bool = ScxmlTransition.contains_transition_target(xml_tree)
-        # contains_ec: bool = ScxmlTransition._contains_executable_content(xml_tree)
         # Make sure that only one of the two holds true (XOR)
         if contains_stt:
             assert target is None, (
@@ -203,6 +196,11 @@ class ScxmlTransition(ScxmlBase):
         """Check if the transition contains references to blackboard inputs."""
         return any(target.has_bt_blackboard_input(bt_ports_handler) for target in self._targets)
 
+    def _instantiate_bt_events_in_targets(self, instance_id: int, children_ids: List[int]):
+        """Instantiate (in place) all bt events for all transitions targets."""
+        for target in self._targets:
+            target.instantiate_bt_events(instance_id, children_ids)
+
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> List["ScxmlTransition"]:
@@ -214,8 +212,7 @@ class ScxmlTransition(ScxmlBase):
                 "Use the 'bt_tick' ROS-scxml tag instead.",
             )
         # The body of a transition needs to be replaced on derived classes, too
-        for target in self._targets:
-            target.instantiate_bt_events(instance_id, children_ids)
+        self._instantiate_bt_events_in_targets(instance_id, children_ids)
         return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:

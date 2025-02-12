@@ -121,7 +121,7 @@ class BtTick(ScxmlTransition):
         self, instance_id: int, children_ids: List[int]
     ) -> List[ScxmlTransition]:
         self._events = [generate_bt_tick_event(instance_id)]
-        self._targets[0].instantiate_bt_events(instance_id, children_ids)
+        self._instantiate_bt_events_in_targets(instance_id, children_ids)
         return [ScxmlTransition(self._targets, self._events, self._condition)]
 
     def as_xml(self) -> ET.Element:

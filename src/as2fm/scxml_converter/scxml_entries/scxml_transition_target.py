@@ -199,7 +199,7 @@ class ScxmlTransitionTarget(ScxmlBase):
         assert self.check_validity(), "Error: SCXML transition target: invalid."
         xml_target = ET.Element(ScxmlTransitionTarget.get_tag_name(), {"id": self._target_id})
         if self._probability is not None:
-            xml_target.set("prob", self._probability)
+            xml_target.set("prob", str(self._probability))
         if self._body is not None:
             for executable_entry in self._body:
                 xml_target.append(executable_entry.as_xml())

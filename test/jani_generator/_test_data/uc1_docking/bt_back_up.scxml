@@ -11,7 +11,9 @@
     <state id="initial">
         <bt_tick>
             <!-- Another option -->
-            <target id="fail" prob="0.2"/>
+            <target id="initial" prob="0.2">
+                <bt_return_status status="FAILURE" />
+            </target>
             <target id="initial" prob="0.8">
                 <ros_topic_publish name="cmd">
                     <field name="data" expr="-1" />
@@ -20,12 +22,5 @@
             </target>
         </bt_tick>
     </state>
-
-    <state id="fail">
-        <transition target="initial">
-            <bt_return_status status="SUCCESS" />
-        </transition>
-    </state>
-
 
 </scxml>

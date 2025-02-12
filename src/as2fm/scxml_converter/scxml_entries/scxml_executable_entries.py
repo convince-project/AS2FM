@@ -64,10 +64,12 @@ def instantiate_exec_body_bt_events(
     :param instance_id: The instance ID of the BT node
     """
     if exec_body is not None:
-        for id in range(len(exec_body)):
-            entry = exec_body[id].instantiate_bt_events(instance_id, children_ids)
-            assert entry is not None, f"Error instantiating BT events in {exec_body[id]}: got None."
-            exec_body[id] = entry
+        for entry_id in range(len(exec_body)):
+            event_tag = exec_body[entry_id].get_tag_name()
+            exec_body[entry_id] = exec_body[entry_id].instantiate_bt_events(
+                instance_id, children_ids
+            )
+            assert exec_body[entry_id] is not None, f"Error instantiating BT events in {event_tag}."
 
 
 def update_exec_body_bt_ports_values(
@@ -345,11 +347,10 @@ class ScxmlSend(ScxmlBase):
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        if type(self) is ScxmlSend:
-            assert not is_bt_event(self._event), (
-                "Error: SCXML send: BT events should not be found in SCXML send. "
-                "Use the 'bt_return_status' ROS-scxml tag instead."
-            )
+        assert type(self) is not ScxmlSend or not is_bt_event(self._event), (
+            "Error: SCXML send: BT events should not be found in SCXML send. "
+            "Use the 'bt_return_status' ROS-scxml tag instead."
+        )
         return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
