@@ -37,7 +37,11 @@
             </if>
         </bt_tick>
         <ros_rate_callback name="wait_timer" target="initial">
-            <assign location="n_waited" expr="n_waited + 1" />
+            <if cond="waiting == true">
+                <assign location="n_waited" expr="n_waited + 1" />
+                <else/>
+                <assign location="n_waited" expr="0" />
+            </if>
         </ros_rate_callback>
     </state>
 
