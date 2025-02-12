@@ -421,6 +421,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main_with_problem.xml",
             property_name="tree_success",
             success=False,
+            size_limit=1_000_000,
         )
 
     def test_uc2_assembly(self):
