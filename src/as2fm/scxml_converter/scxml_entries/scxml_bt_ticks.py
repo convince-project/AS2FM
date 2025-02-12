@@ -30,7 +30,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlTransition,
     ScxmlTransitionTarget,
-    execution_body_from_xml,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
@@ -75,7 +74,6 @@ class BtTick(ScxmlTransition):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtTick":
         assert_xml_tag_ok(BtTick, xml_tree)
-        # Check if the tag defines a transition target or not
         condition: Optional[str] = get_xml_argument(BtTick, xml_tree, "cond", none_allowed=True)
         transition_targets = BtTick.load_transition_targets_from_xml(xml_tree)
         return BtTick(transition_targets, condition)
@@ -102,7 +100,6 @@ class BtTick(ScxmlTransition):
 
     def as_xml(self) -> ET.Element:
         xml_element = super().as_xml()
-        xml_element.tag = BtTick.get_tag_name()
         _ = xml_element.attrib.pop("event")
         return xml_element
 
@@ -181,29 +178,42 @@ class BtChildStatus(ScxmlTransition):
         assert_xml_tag_ok(BtChildStatus, xml_tree)
         # Same as in BtTickChild
         child_seq_id = get_xml_argument(BtChildStatus, xml_tree, "id")
-        target = get_xml_argument(BtChildStatus, xml_tree, "target")
         condition = get_xml_argument(BtChildStatus, xml_tree, "cond", none_allowed=True)
-        body = execution_body_from_xml(xml_tree)
-        return BtChildStatus(child_seq_id, target, condition, body)
+        targets = BtChildStatus.load_transition_targets_from_xml(xml_tree)
+        return BtChildStatus(child_seq_id, targets, condition)
 
-    def __init__(
-        self,
+    @staticmethod
+    def make_single_target_transition(
         child_seq_id: Union[str, int],
         target: str,
         condition: Optional[str] = None,
         body: Optional[ScxmlExecutionBody] = None,
     ):
         """
+        Generate a BtChildStatus with exactly one target.
+
+        :param target: The state transition goes to. Required (unlike in SCXML specifications)
+        :param events: The events that trigger this transition.
+        :param condition: The condition guard to enable/disable the transition
+        :param body: Content that is executed when the transition happens
+        """
+        targets = [ScxmlTransitionTarget(target, None, body)]
+        return BtChildStatus(child_seq_id, targets, condition)
+
+    def __init__(
+        self,
+        child_seq_id: Union[str, int],
+        targets: List[ScxmlTransitionTarget],
+        condition: Optional[str] = None,
+    ):
+        """
         Generate a BtChildStatus instance.
 
         :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
-        :param target: The target state to transition to.
+        :param targets: The targets to use for transitioning to new states.
         :param condition: The condition to check before transitioning.
-        :param body: The body to execute before the transition.
         """
-        self.__dict__.update(
-            ScxmlTransition.make_single_target_transition(target, [], condition, body).__dict__
-        )
+        super().__init__(targets, condition=condition)
         self._child_seq_id = _process_child_seq_id(BtChildStatus, child_seq_id)
         if self._condition is not None:
             # Substitute the responses string with the corresponding integer
@@ -243,16 +253,10 @@ class BtChildStatus(ScxmlTransition):
             return generated_transitions
 
     def as_xml(self) -> ET.Element:
-        xml_bt_child_status = ET.Element(
-            BtChildStatus.get_tag_name(),
-            {"id": str(self._child_seq_id), "target": self._targets[0].get_target_id()},
-        )
-        if self._condition is not None:
-            xml_bt_child_status.set("cond", self._condition)
-        if self._targets[0].get_body() is not None:
-            for executable_entry in self._targets[0].get_body():
-                xml_bt_child_status.append(executable_entry.as_xml())
-        return xml_bt_child_status
+        xml_element = super().as_xml()
+        assert self._events is None, f"Error: SCXML {self.get_tag_name()}: Expected no events."
+        xml_element.set("id", str(self._child_seq_id))
+        return xml_element
 
 
 class BtReturnStatus(ScxmlSend):

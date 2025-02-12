@@ -189,18 +189,18 @@ def generate_bt_root_scxml(
             RosRateCallback.make_single_target_transition(
                 ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]
             ),
-            BtChildStatus(0, "error"),
+            BtChildStatus.make_single_target_transition(0, "error"),
         ],
     )
     tick_res_body: ScxmlExecutionBody = (
         # In case we keep ticking after BT root finishes running
-        [BtChildStatus(0, "idle")]
+        [BtChildStatus.make_single_target_transition(0, "idle")]
         if tick_if_not_running
         # In case we stop the BT after the BT root result is not RUNNING
         else [
-            BtChildStatus(0, "idle", "_bt.status == RUNNING"),
+            BtChildStatus.make_single_target_transition(0, "idle", "_bt.status == RUNNING"),
             # This is the case in which BT-status != RUNNING
-            BtChildStatus(0, "done"),
+            BtChildStatus.make_single_target_transition(0, "done"),
         ]
     )
     wait_res_state = ScxmlState(
