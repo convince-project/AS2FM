@@ -212,7 +212,8 @@ class TestConversion(unittest.TestCase):
         store_generated_scxmls: bool = False,
         skip_smc: bool = False,
         property_name: str,
-        success: bool,
+        expected_result_probability: float,
+        result_probability_tolerance: float = 0.0,
         size_limit: int = 10_000,
     ):
         """
@@ -255,13 +256,13 @@ class TestConversion(unittest.TestCase):
         ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
-            pos_res = "Result: 1" if success else "Result: 0"  # TODO: pass a value and epsilon
-            neg_res = "Result: 0" if success else "Result: 1"
             run_smc_storm_with_output(
                 f"--model {output_path} --properties-names {property_name} "
                 + f"--max-trace-length {size_limit} --max-n-traces {size_limit}",
-                [property_name, output_path, pos_res],
-                [neg_res],
+                [property_name, output_path],
+                [],
+                expected_result_probability,
+                result_probability_tolerance,
             )
         if os.path.exists(output_path):
             os.remove(output_path)
@@ -272,15 +273,21 @@ class TestConversion(unittest.TestCase):
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
-        self._test_with_main("ros_example", property_name="battery_depleted", success=True)
+        self._test_with_main(
+            "ros_example", property_name="battery_depleted", expected_result_probability=1.0
+        )
 
     def test_battery_ros_example_over_depleted_fail(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main("ros_example", property_name="battery_over_depleted", success=False)
+        self._test_with_main(
+            "ros_example", property_name="battery_over_depleted", expected_result_probability=0.0
+        )
 
     def test_battery_ros_example_alarm_on(self):
         """Here we expect the property to be *not* satisfied."""
-        self._test_with_main("ros_example", property_name="alarm_on", success=False)
+        self._test_with_main(
+            "ros_example", property_name="alarm_on", expected_result_probability=0.0
+        )
 
     @pytest.mark.xfail(reason="Expect removed functionalities not to work anymore.", strict=True)
     def test_battery_example_w_bt_battery_depleted_removed(self):
@@ -289,14 +296,16 @@ class TestConversion(unittest.TestCase):
             "ros_example_w_bt_removed",
             store_generated_scxmls=True,
             property_name="battery_depleted",
-            success=False,
+            expected_result_probability=0.0,
         )
 
     @pytest.mark.xfail(reason="Expect removed functionalities not to work anymore.", strict=True)
     def test_battery_example_w_bt_main_alarm_and_charge_removed(self):
         """Here we expect the property to be *not* satisfied."""
         self._test_with_main(
-            "ros_example_w_bt_removed", property_name="battery_alarm_on", success=True
+            "ros_example_w_bt_removed",
+            property_name="battery_alarm_on",
+            expected_result_probability=1.0,
         )
 
     def test_battery_example_w_bt_battery_depleted(self):
@@ -306,47 +315,65 @@ class TestConversion(unittest.TestCase):
             "ros_example_w_bt",
             store_generated_scxmls=True,
             property_name="battery_depleted",
-            success=False,
+            expected_result_probability=0.0,
         )
 
     def test_battery_example_w_bt_main_battery_under_twenty(self):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
-        self._test_with_main("ros_example_w_bt", property_name="battery_below_20", success=False)
+        self._test_with_main(
+            "ros_example_w_bt", property_name="battery_below_20", expected_result_probability=0.0
+        )
 
     def test_battery_example_w_bt_main_alarm_and_charge(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
-        self._test_with_main("ros_example_w_bt", property_name="battery_alarm_on", success=True)
+        self._test_with_main(
+            "ros_example_w_bt", property_name="battery_alarm_on", expected_result_probability=1.0
+        )
 
     def test_battery_example_w_bt_main_charged_after_time(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
-        self._test_with_main("ros_example_w_bt", property_name="battery_charged", success=True)
+        self._test_with_main(
+            "ros_example_w_bt", property_name="battery_charged", expected_result_probability=1.0
+        )
 
     def test_events_sync_handling(self):
         """Here we make sure, the synchronization can handle events
         being sent in different orders without deadlocks."""
-        self._test_with_main("events_sync_examples", property_name="seq_check", success=True)
+        self._test_with_main(
+            "events_sync_examples", property_name="seq_check", expected_result_probability=1.0
+        )
 
     def test_multiple_senders_same_event(self):
         """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
-        self._test_with_main("multiple_senders_same_event", property_name="seq_check", success=True)
+        self._test_with_main(
+            "multiple_senders_same_event",
+            property_name="seq_check",
+            expected_result_probability=1.0,
+        )
 
     def test_conditional_transitions(self):
         """Test transitions upon same event with multiple conditions."""
         self._test_with_main(
-            "conditional_transitions", property_name="destination_reached", success=True
+            "conditional_transitions",
+            property_name="destination_reached",
+            expected_result_probability=1.0,
         )
 
     def test_array_model_basic(self):
         """Test the array model."""
-        self._test_with_main("array_model_basic", property_name="array_check", success=True)
+        self._test_with_main(
+            "array_model_basic", property_name="array_check", expected_result_probability=1.0
+        )
 
     def test_array_model_additional(self):
         """Test the array model."""
-        self._test_with_main("array_model_additional", property_name="array_check", success=True)
+        self._test_with_main(
+            "array_model_additional", property_name="array_check", expected_result_probability=1.0
+        )
 
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
@@ -354,7 +381,7 @@ class TestConversion(unittest.TestCase):
             "ros_add_int_srv_example",
             store_generated_scxmls=True,
             property_name="happy_clients",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_ros_fibonacci_action_example(self):
@@ -363,7 +390,7 @@ class TestConversion(unittest.TestCase):
             "fibonacci_action_example",
             store_generated_scxmls=True,
             property_name="clients_ok",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_ros_fibonacci_action_single_client_example(self):
@@ -372,7 +399,7 @@ class TestConversion(unittest.TestCase):
             "fibonacci_action_single_thread",
             store_generated_scxmls=True,
             property_name="client1_ok",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_ros_delib_ws_2024_p1(self):
@@ -381,7 +408,7 @@ class TestConversion(unittest.TestCase):
             "delibws24_p1",
             store_generated_scxmls=True,
             property_name="snack_at_table",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_robot_navigation_demo(self):
@@ -390,7 +417,7 @@ class TestConversion(unittest.TestCase):
             "robot_navigation_tutorial",
             store_generated_scxmls=True,
             property_name="goal_reached",
-            success=True,
+            expected_result_probability=1.0,
             skip_smc=True,
         )
 
@@ -400,7 +427,7 @@ class TestConversion(unittest.TestCase):
             "robot_navigation_with_bt",
             store_generated_scxmls=True,
             property_name="goal_reached",
-            success=True,
+            expected_result_probability=1.0,
             skip_smc=True,
         )
 
@@ -410,7 +437,7 @@ class TestConversion(unittest.TestCase):
             "uc1_docking",
             store_generated_scxmls=True,
             property_name="tree_success",
-            success=True,
+            expected_result_probability=1.0,
             size_limit=1_000_000,
         )
 
@@ -420,7 +447,7 @@ class TestConversion(unittest.TestCase):
             "uc1_docking",
             model_xml="main_with_problem.xml",
             property_name="tree_success",
-            success=False,
+            expected_result_probability=0.0,
             size_limit=1_000_000,
         )
 
@@ -430,7 +457,7 @@ class TestConversion(unittest.TestCase):
             os.path.join("uc2_assembly", "Main"),
             model_xml="main.xml",
             property_name="executes_recovery_branch_or_success",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_uc2_assembly_with_bug(self):
@@ -439,7 +466,7 @@ class TestConversion(unittest.TestCase):
             os.path.join("uc2_assembly", "Main"),
             model_xml="main_bug.xml",
             property_name="executes_recovery_branch_or_success",
-            success=False,
+            expected_result_probability=0.0,
         )
 
     def test_blackboard_features(self):
@@ -448,7 +475,7 @@ class TestConversion(unittest.TestCase):
             "blackboard_test",
             model_xml="main.xml",
             property_name="tree_success",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_grid_robot_blackboard(self):
@@ -457,7 +484,7 @@ class TestConversion(unittest.TestCase):
             "grid_robot_blackboard",
             model_xml="main.xml",
             property_name="at_goal",
-            success=True,
+            expected_result_probability=1.0,
         )
 
     def test_grid_robot_blackboard_simple(self):
@@ -466,7 +493,7 @@ class TestConversion(unittest.TestCase):
             "grid_robot_blackboard_simple",
             model_xml="main.xml",
             property_name="tree_success",
-            success=True,
+            expected_result_probability=1.0,
             size_limit=1_000_000,
         )
 
@@ -476,7 +503,8 @@ class TestConversion(unittest.TestCase):
             "probabilistic_transitions",
             model_xml="main.xml",
             property_name="expected_counts",
-            success=True,
+            expected_result_probability=1.0,
+            result_probability_tolerance=0.01,
         )
 
     def test_command_line_output_with_line_numbers(self):

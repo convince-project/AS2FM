@@ -31,7 +31,13 @@ class TestConversion(unittest.TestCase):
     Test the conversion of SCXML to JANI.
     """
 
-    def _test_with_main(self, path_to_main_xml: str, property_name: str, success: bool):
+    def _test_with_main(
+        self,
+        path_to_main_xml: str,
+        property_name: str,
+        expected_result_probability: float,
+        result_probability_tolerance: float = 0.0,
+    ):
         """
         Testing the model resulting from the main xml file with the entrypoint.
 
@@ -48,12 +54,12 @@ class TestConversion(unittest.TestCase):
         jani_file_path = os.path.join(test_folder, jani_file)
         generated_scxml_path = os.path.join(test_folder, generated_scxml_path)
         self.assertTrue(os.path.exists(jani_file_path))
-        pos_res = "Result: 1" if success else "Result: 0"
-        neg_res = "Result: 0" if success else "Result: 1"
         run_smc_storm_with_output(
             f"--model {jani_file_path} --properties-names {property_name}",
-            [property_name, jani_file_path, pos_res],
-            [neg_res],
+            [property_name, jani_file_path],
+            [],
+            expected_result_probability,
+            result_probability_tolerance,
         )
         # Remove generated file (in case of test passed)
         if os.path.exists(jani_file_path):
@@ -69,7 +75,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_reactive_sequence.xml"),
             "ten_tick_zero_no_tick_one",
-            True,
+            expected_result_probability=1.0,
         )
 
     def test_reactive_fallback(self):
@@ -77,7 +83,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_reactive_fallback.xml"),
             "ten_tick_zero_no_tick_one",
-            True,
+            expected_result_probability=1.0,
         )
 
     def test_sequence(self):
@@ -85,7 +91,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_sequence.xml"),
             "regular_bt_test",
-            True,
+            expected_result_probability=1.0,
         )
 
     def test_fallback(self):
@@ -93,7 +99,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_fallback.xml"),
             "regular_bt_test",
-            True,
+            expected_result_probability=1.0,
         )
 
 
