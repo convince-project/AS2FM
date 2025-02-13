@@ -36,7 +36,19 @@ def get_xml_argument(
     none_allowed=False,
     empty_allowed=False,
 ) -> Optional[str]:
-    """Load an argument from the xml tree's root tag."""
+    """
+    Load an attribute from the XML tree's root tag.
+
+    Args:
+        scxml_type: The class of the SCXML element this is defined in.
+        xml_tree: The XML tree element to extract the attribute from.
+        arg_name: The name of the attribute to retrieve.
+        none_allowed: If True, allows the attribute to not exist in XML. Defaults to False.
+        empty_allowed: If True, allows the attribute to be an empty string. Defaults to False.
+
+    Returns:
+        The string defined in the attribute if found, otherwise None.
+    """
     arg_value = xml_tree.get(arg_name)
     error_prefix = f"SCXML conversion of {scxml_type.get_tag_name()}"
     if arg_value is None:
