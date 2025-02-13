@@ -6,6 +6,12 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
+    <!-- TODO
+        The purpose of this file is do aid the discussion about syntax for specifying probabilities.
+        Right now only the multiple target (here from line :56) is implemented in scxml_converter/scxml_entries/scxml_transition_target.py
+        We probably delete this when we implemented the probabilities in executable content (here from line :34), too.
+    -->
+
     <datamodel>
         <data id="progress" expr="0" type="int16" />
     </datamodel>
