@@ -14,8 +14,8 @@
         <data id="count_tr_a" expr="0" type="int32" />
         <data id="count_tr_b" expr="0" type="int32" />
         <data id="count_tr_c" expr="0" type="int32" /> -->
-        <!-- [ count_ec_a, count_ec_b, count_ec_c, count_tr_a, count_tr_b, count_tr_c ]" /> -->
-        <data id="counts" expr="[0, 0, 0, 0, 0, 0]" type="int32[6]" />
+        <!-- [ count_ec_a, count_ec_b, count_ec_c, count_tr_a, count_tr_b, count_tr_c, TOTAL]" /> -->
+        <data id="counts" expr="[0, 0, 0, 0, 0, 0, 0]" type="int32[7]" />
     </datamodel>
 
     <!-- <ros_topic_subscriber topic="ec_a" type="std_msgs/Empty" />
@@ -34,6 +34,11 @@
                 <field name="data" expr="counts"/>
             </ros_topic_publish>
         </onentry>
+
+        <onexit>
+            <!-- Total number of messages -->
+            <assign location="counts[6]" expr="counts[6] + 1" />
+        </onexit>
 
         <!-- <ros_topic_callback name="ec_a" target="init">
             <assign location="counts[0]" expr="counts[0] + 1" />

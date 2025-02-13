@@ -10,19 +10,52 @@
                     "exp": {
                         "op": "F",
                         "exp": {
-                            "op": "∨",
+                            "op": "∧",
                             "left": {
-                                "op": "¬",
-                                "exp": "topic_state_msg.valid"
+                                "op": "∧",
+                                "left": {
+                                    "op": "≥",
+                                    "left": {
+                                        "op": "aa",
+                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "index": 3
+                                    },
+                                    "right": 70,
+                                    "comment": ".1 probability"
+                                },
+                                "right": {
+                                    "op": "≥",
+                                    "left": {
+                                        "op": "aa",
+                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "index": 4
+                                    },
+                                    "right": 210,
+                                    "comment": ".3 probability"
+                                }
                             },
                             "right": {
-                                "op": "≥",
+                                "op": "∧",
                                 "left": {
-                                    "op": "aa",
-                                    "exp": "topic_state_msg.ros_fields__data",
-                                    "index": 3
+                                    "op": "≥",
+                                    "left": {
+                                        "op": "aa",
+                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "index": 5
+                                    },
+                                    "right": 420,
+                                    "comment": ".6 probability"
                                 },
-                                "right": 1
+                                "right": {
+                                    "op": "=",
+                                    "left": {
+                                        "op": "aa",
+                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "index": 6
+                                    },
+                                    "right": 1000,
+                                    "comment": "total number of messages"
+                                }
                             }
                         }
                     }
