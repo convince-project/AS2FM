@@ -1,82 +1,29 @@
 {
     "properties": [
         {
-            "name": "battery_depleted",
+            "name": "expected_counts",
             "expression": {
                 "op": "filter",
                 "fun": "values",
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "left": true,
-                        "op": "U",
-                        "right": {
-                            "left": {
-                                "op": "≤",
-                                "left": "topic_level_msg.ros_fields__data",
-                                "right": 0
-                            },
-                            "op": "∧",
-                            "right": "topic_level_msg.valid"
-                        }
-                    }
-                },
-                "states": {
-                    "op": "initial"
-                }
-            }
-        },
-        {
-            "name": "battery_over_depleted",
-            "expression": {
-                "op": "filter",
-                "fun": "values",
-                "values": {
-                    "op": "Pmin",
-                    "exp": {
-                        "left": true,
-                        "op": "U",
-                        "right": {
-                            "left": {
-                                "op": "≤",
-                                "left": "topic_level_msg.ros_fields__data",
-                                "right": -1
-                            },
-                            "op": "∧",
-                            "right": "topic_level_msg.valid"
-                        }
-                    }
-                },
-                "states": {
-                    "op": "initial"
-                }
-            }
-        },
-        {
-            "name": "alarm_on",
-            "expression": {
-                "op": "filter",
-                "fun": "values",
-                "values": {
-                    "op": "Pmin",
-                    "exp": {
-                        "op": "U",
-                        "left": {
+                        "op": "F",
+                        "exp": {
                             "op": "∨",
                             "left": {
                                 "op": "¬",
-                                "exp": "topic_level_msg.valid"
+                                "exp": "topic_state_msg.valid"
                             },
                             "right": {
                                 "op": "≥",
-                                "left": "topic_level_msg.ros_fields__data",
-                                "right": 29
+                                "left": {
+                                    "op": "aa",
+                                    "exp": "topic_state_msg.ros_fields__data",
+                                    "index": 3
+                                },
+                                "right": 1
                             }
-                        },
-                        "right": {
-                            "op": "∧",
-                            "left": "topic_alarm_msg.ros_fields__data",
-                            "right": "topic_alarm_msg.valid"
                         }
                     }
                 },

@@ -6,9 +6,9 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_topic_publisher topic="ec_a" type="std_msgs/Empty" />
+    <!-- <ros_topic_publisher topic="ec_a" type="std_msgs/Empty" />
     <ros_topic_publisher topic="ec_b" type="std_msgs/Empty" />
-    <ros_topic_publisher topic="ec_c" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="ec_c" type="std_msgs/Empty" /> -->
 
     <ros_topic_publisher topic="tr_a" type="std_msgs/Empty" />
     <ros_topic_publisher topic="tr_b" type="std_msgs/Empty" />

@@ -470,6 +470,15 @@ class TestConversion(unittest.TestCase):
             size_limit=1_000_000,
         )
 
+    def test_probabilistic_transitions(self):
+        """Test the simpler grid_robot_blackboard model (BT + Blackboard)."""
+        self._test_with_main(
+            "probabilistic_transitions",
+            model_xml="main.xml",
+            property_name="expected_counts",
+            success=True,
+        )
+
     def test_command_line_output_with_line_numbers(self):
         """Test the command line output with line numbers for the main.xml file."""
         tmp_test_dir = os.path.join("/tmp", "test_as2fm")
