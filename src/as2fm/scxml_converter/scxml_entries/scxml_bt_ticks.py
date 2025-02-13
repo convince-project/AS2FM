@@ -78,6 +78,19 @@ class BtTick(ScxmlTransition):
         transition_targets = BtTick.load_transition_targets_from_xml(xml_tree)
         return BtTick(transition_targets, condition)
 
+    @staticmethod
+    def make_single_target_transition(
+        target: str, condition: Optional[str] = None, body=Optional[ScxmlExecutionBody]
+    ):
+        """
+        Generate a "traditional" bt_tick transition with exactly one target.
+
+        :param target: The state transition goes to. Required (unlike in SCXML specifications)
+        :param condition: The condition guard to enable/disable the transition
+        :param body: Content that is executed when the transition happens
+        """
+        return BtTick([ScxmlTransitionTarget(target, body=body), condition])
+
     def __init__(
         self,
         targets: List[ScxmlTransitionTarget],
