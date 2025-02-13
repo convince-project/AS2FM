@@ -255,7 +255,7 @@ class TestConversion(unittest.TestCase):
         ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
-            pos_res = "Result: 1" if success else "Result: 0"
+            pos_res = "Result: 1" if success else "Result: 0"  # TODO: pass a value and epsilon
             neg_res = "Result: 0" if success else "Result: 1"
             run_smc_storm_with_output(
                 f"--model {output_path} --properties-names {property_name} "
