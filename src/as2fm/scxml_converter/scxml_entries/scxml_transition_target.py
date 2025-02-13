@@ -39,6 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body_entry_types,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_argument
 
 
 class ScxmlTransitionTarget(ScxmlBase):
@@ -48,18 +49,22 @@ class ScxmlTransitionTarget(ScxmlBase):
     def get_tag_name() -> str:
         return "target"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransitionTarget":
+    @classmethod
+    def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
         assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
             "Error: SCXML transition target: XML root tag name is "
             + f"not {ScxmlTransitionTarget.get_tag_name()}."
         )
-        target_id = xml_tree.get("id")
+        target_id = get_xml_argument(cls, xml_tree, "id")
         assert target_id is not None, "Error: SCXML transition target: id not found."
-        probability = float(xml_tree.get("prob"))
-        if probability == 0.0:
-            warn("Warning: SCXML transition target: Probability is zero.")
+        probability_str: Optional[str] = get_xml_argument(cls, xml_tree, "prob", none_allowed=True)
+        if probability_str is None:
+            probability = None
+        else:
+            probability = float(probability_str)
+            if probability == 0.0:
+                warn("Warning: SCXML transition target: Probability is zero.")
         exec_body = execution_body_from_xml(xml_tree)
         return ScxmlTransitionTarget(target_id, probability, exec_body)
 
