@@ -21,7 +21,7 @@
     </state>
 
     <state id="fork">
-        <onentry>
+        <!-- <onentry>
             <prob>
                 <option value="0.1">
                     <ros_topic_publish name="ec_a" />
@@ -33,7 +33,7 @@
                     <ros_topic_publish name="ec_c" />
                 </option>
             </prob>
-        </onentry>
+        </onentry> -->
 
         <transition>
             <target id="t_a" prob="0.1" />
