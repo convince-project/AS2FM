@@ -33,7 +33,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 
@@ -78,8 +78,8 @@ class ScxmlData(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element, comment_above: Optional[str] = None) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
         assert_xml_tag_ok(ScxmlData, xml_tree)
-        data_id = get_xml_argument(ScxmlData, xml_tree, "id")
-        data_type = get_xml_argument(ScxmlData, xml_tree, "type", none_allowed=True)
+        data_id = get_xml_attribute(ScxmlData, xml_tree, "id")
+        data_type = get_xml_attribute(ScxmlData, xml_tree, "type", undefined_allowed=True)
         if data_type is None:
             if is_comment(comment_above):
                 pass

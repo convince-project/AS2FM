@@ -28,7 +28,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_blackboard_reference,
 )
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 class BtSetValueOutputPort(ScxmlSend):
@@ -43,8 +43,8 @@ class BtSetValueOutputPort(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
-        key_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "key")
-        expr_str = get_xml_argument(BtSetValueOutputPort, xml_tree, "expr")
+        key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
+        expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")
         return BtSetValueOutputPort(key_str, expr_str)
 
     def __init__(self, key_str: str, expr_str: str):

@@ -21,7 +21,7 @@ from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 class BtGetValueInputPort(ScxmlBase):
@@ -36,7 +36,7 @@ class BtGetValueInputPort(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
-        key_str = get_xml_argument(BtGetValueInputPort, xml_tree, "key")
+        key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")
         return BtGetValueInputPort(key_str)
 
     def __init__(self, key_str: str):

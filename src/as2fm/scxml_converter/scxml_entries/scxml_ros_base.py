@@ -42,7 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 
@@ -75,8 +75,8 @@ class RosDeclaration(ScxmlBase):
         interface_name = read_value_from_xml_arg_or_child(
             cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str)
         )
-        interface_type = get_xml_argument(cls, xml_tree, "type")
-        interface_alias = get_xml_argument(cls, xml_tree, "name", none_allowed=True)
+        interface_type = get_xml_attribute(cls, xml_tree, "type")
+        interface_alias = get_xml_attribute(cls, xml_tree, "name", undefined_allowed=True)
         return cls(interface_name, interface_type, interface_alias)
 
     def __init__(
@@ -189,8 +189,8 @@ class RosCallback(ScxmlTransition):
     def from_xml_tree(cls: Type["RosCallback"], xml_tree: ET.Element) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
-        interface_name = get_xml_argument(cls, xml_tree, "name")
-        condition = get_xml_argument(cls, xml_tree, "cond", none_allowed=True)
+        interface_name = get_xml_attribute(cls, xml_tree, "name")
+        condition = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
         transition_targets = cls.load_transition_targets_from_xml(xml_tree)
         return cls(interface_name, transition_targets, condition)
 
@@ -351,10 +351,10 @@ class RosTrigger(ScxmlSend):
         :param additional_args: Additional arguments to be parsed from the SCXML-ROS tag.
         """
         assert_xml_tag_ok(cls, xml_tree)
-        interface_name = get_xml_argument(cls, xml_tree, "name")
+        interface_name = get_xml_attribute(cls, xml_tree, "name")
         additional_arg_values: Dict[str, str] = {}
         for arg_name in cls.get_additional_arguments():
-            additional_arg_values[arg_name] = get_xml_argument(cls, xml_tree, arg_name)
+            additional_arg_values[arg_name] = get_xml_attribute(cls, xml_tree, arg_name)
         fields = [RosField.from_xml_tree(field) for field in xml_tree if not is_comment(field)]
         return cls(interface_name, fields, additional_arg_values)
 

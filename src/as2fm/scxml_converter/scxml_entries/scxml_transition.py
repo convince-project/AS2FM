@@ -40,7 +40,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     get_plain_expression,
     is_non_empty_string,
 )
-from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 
 
 class ScxmlTransition(ScxmlBase):
@@ -68,7 +68,7 @@ class ScxmlTransition(ScxmlBase):
         cls: Type["ScxmlTransition"], xml_tree: ET.Element
     ) -> List[ScxmlTransitionTarget]:
         """Loads all transition targets contained in the transition-like tags."""
-        target = get_xml_argument(cls, xml_tree, "target", none_allowed=True)
+        target = get_xml_attribute(cls, xml_tree, "target", undefined_allowed=True)
         has_targets_children = cls.contains_transition_target(xml_tree)
         assert (target is not None) != has_targets_children, (
             f"Error: SCXML {cls.get_tag_name()}: target must can be either "
@@ -96,9 +96,9 @@ class ScxmlTransition(ScxmlBase):
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
         ), f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
-        events_str = get_xml_argument(ScxmlTransition, xml_tree, "event", none_allowed=True)
+        events_str = get_xml_attribute(ScxmlTransition, xml_tree, "event", undefined_allowed=True)
         events = events_str.split(" ") if events_str is not None else []
-        condition = get_xml_argument(ScxmlTransition, xml_tree, "cond", none_allowed=True)
+        condition = get_xml_attribute(ScxmlTransition, xml_tree, "cond", undefined_allowed=True)
         transition_targets = ScxmlTransition.load_transition_targets_from_xml(xml_tree)
         return ScxmlTransition(transition_targets, events, condition)
 

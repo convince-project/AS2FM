@@ -24,7 +24,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosDeclaration
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 class RosTimeRate(RosDeclaration):
@@ -38,8 +38,8 @@ class RosTimeRate(RosDeclaration):
     def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)
-        timer_name = get_xml_argument(RosTimeRate, xml_tree, "name")
-        timer_rate_str = get_xml_argument(RosTimeRate, xml_tree, "rate_hz")
+        timer_name = get_xml_attribute(RosTimeRate, xml_tree, "name")
+        timer_rate_str = get_xml_attribute(RosTimeRate, xml_tree, "rate_hz")
         try:
             timer_rate = float(timer_rate_str)
         except ValueError as e:

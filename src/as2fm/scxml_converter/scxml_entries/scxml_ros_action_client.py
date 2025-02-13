@@ -39,7 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
     RosTrigger,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 class RosActionClient(RosDeclaration):
@@ -101,9 +101,9 @@ class RosActionHandleGoalResponse(ScxmlTransition):
     def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
-        action_name = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "name")
-        accept_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "accept")
-        reject_target = get_xml_argument(RosActionHandleGoalResponse, xml_tree, "reject")
+        action_name = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "name")
+        accept_target = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "accept")
+        reject_target = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "reject")
         assert len(xml_tree) == 0, (
             "Error: SCXML RosActionHandleGoalResponse can not have any children. "
             "(Neither executable content nor probabilistic targets)"

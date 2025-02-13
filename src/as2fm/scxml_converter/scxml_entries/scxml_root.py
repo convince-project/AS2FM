@@ -42,7 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_children_as_scxml,
-    get_xml_argument,
+    get_xml_attribute,
 )
 
 
@@ -58,12 +58,12 @@ class ScxmlRoot(ScxmlBase):
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
-        scxml_name = get_xml_argument(ScxmlRoot, xml_tree, "name")
-        scxml_version = get_xml_argument(ScxmlRoot, xml_tree, "version")
+        scxml_name = get_xml_attribute(ScxmlRoot, xml_tree, "name")
+        scxml_version = get_xml_attribute(ScxmlRoot, xml_tree, "version")
         assert (
             scxml_version == "1.0"
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
-        scxml_init_state = get_xml_argument(ScxmlRoot, xml_tree, "initial")
+        scxml_init_state = get_xml_attribute(ScxmlRoot, xml_tree, "initial")
         # Data Model
         datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
         assert (

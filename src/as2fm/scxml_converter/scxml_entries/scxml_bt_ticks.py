@@ -37,7 +37,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     generate_bt_tick_event,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression, to_integer
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 def _process_child_seq_id(
@@ -74,7 +74,9 @@ class BtTick(ScxmlTransition):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtTick":
         assert_xml_tag_ok(BtTick, xml_tree)
-        condition: Optional[str] = get_xml_argument(BtTick, xml_tree, "cond", none_allowed=True)
+        condition: Optional[str] = get_xml_attribute(
+            BtTick, xml_tree, "cond", undefined_allowed=True
+        )
         transition_targets = BtTick.load_transition_targets_from_xml(xml_tree)
         return BtTick(transition_targets, condition)
 
@@ -129,7 +131,7 @@ class BtTickChild(ScxmlSend):
         assert_xml_tag_ok(BtTickChild, xml_tree)
         # Proposal: to avoid confusion, we could name the xml argument seq_id, too
         # child_seq_id = n -> the n-th children of the control node in the BT XML
-        child_seq_id: str = get_xml_argument(BtTickChild, xml_tree, "id")
+        child_seq_id: str = get_xml_attribute(BtTickChild, xml_tree, "id")
         return BtTickChild(child_seq_id)
 
     def __init__(self, child_seq_id: Union[str, int]):
@@ -190,8 +192,8 @@ class BtChildStatus(ScxmlTransition):
     def from_xml_tree(xml_tree):
         assert_xml_tag_ok(BtChildStatus, xml_tree)
         # Same as in BtTickChild
-        child_seq_id = get_xml_argument(BtChildStatus, xml_tree, "id")
-        condition = get_xml_argument(BtChildStatus, xml_tree, "cond", none_allowed=True)
+        child_seq_id = get_xml_attribute(BtChildStatus, xml_tree, "id")
+        condition = get_xml_attribute(BtChildStatus, xml_tree, "cond", undefined_allowed=True)
         targets = BtChildStatus.load_transition_targets_from_xml(xml_tree)
         return BtChildStatus(child_seq_id, targets, condition)
 
@@ -285,7 +287,7 @@ class BtReturnStatus(ScxmlSend):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtReturnStatus":
         assert_xml_tag_ok(BtReturnStatus, xml_tree)
-        status = get_xml_argument(BtReturnStatus, xml_tree, "status")
+        status = get_xml_attribute(BtReturnStatus, xml_tree, "status")
         return BtReturnStatus(status)
 
     def __init__(self, status: str):

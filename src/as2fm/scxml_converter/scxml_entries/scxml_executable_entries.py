@@ -42,7 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_child,
 )
 
@@ -422,8 +422,8 @@ class ScxmlAssign(ScxmlBase):
         :param cb_type: The kind of callback executing this SCXML entry.
         """
         assert_xml_tag_ok(ScxmlAssign, xml_tree)
-        location = get_xml_argument(ScxmlAssign, xml_tree, "location")
-        expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
+        location = get_xml_attribute(ScxmlAssign, xml_tree, "location")
+        expr = get_xml_attribute(ScxmlAssign, xml_tree, "expr", undefined_allowed=True)
         if expr is None:
             expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
             assert expr is not None, "Error: SCXML assign: expr is not valid."

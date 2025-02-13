@@ -39,7 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body_entry_types,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 
 
 class ScxmlTransitionTarget(ScxmlBase):
@@ -56,9 +56,11 @@ class ScxmlTransitionTarget(ScxmlBase):
             "Error: SCXML transition target: XML root tag name is "
             + f"not {ScxmlTransitionTarget.get_tag_name()}."
         )
-        target_id = get_xml_argument(cls, xml_tree, "id")
+        target_id = get_xml_attribute(cls, xml_tree, "id")
         assert target_id is not None, "Error: SCXML transition target: id not found."
-        probability_str: Optional[str] = get_xml_argument(cls, xml_tree, "prob", none_allowed=True)
+        probability_str: Optional[str] = get_xml_attribute(
+            cls, xml_tree, "prob", undefined_allowed=True
+        )
         if probability_str is None:
             probability = None
         else:
