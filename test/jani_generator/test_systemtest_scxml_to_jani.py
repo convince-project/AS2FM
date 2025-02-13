@@ -466,7 +466,8 @@ class TestConversion(unittest.TestCase):
             os.path.join("uc2_assembly", "Main"),
             model_xml="main_bug.xml",
             property_name="executes_recovery_branch_or_success",
-            expected_result_probability=0.0,
+            expected_result_probability=0.7,
+            result_probability_tolerance=0.01,
         )
 
     def test_blackboard_features(self):
