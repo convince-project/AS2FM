@@ -89,7 +89,7 @@ class BtTick(ScxmlTransition):
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
-        return BtTick([ScxmlTransitionTarget(target, body=body), condition])
+        return BtTick([ScxmlTransitionTarget(target, body=body)], condition)
 
     def __init__(
         self,
