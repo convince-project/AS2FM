@@ -284,9 +284,9 @@ class TestConversion(unittest.TestCase):
         )
 
     def test_battery_ros_example_alarm_on(self):
-        """Here we expect the property to be *not* satisfied."""
+        """Test the alarm turns on before the battery level gets below 28%."""
         self._test_with_main(
-            "ros_example", property_name="alarm_on", expected_result_probability=0.0
+            "ros_example", property_name="alarm_on", expected_result_probability=1.0
         )
 
     @pytest.mark.xfail(reason="Expect removed functionalities not to work anymore.", strict=True)
