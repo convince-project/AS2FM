@@ -19,13 +19,29 @@ the desired output.
 """
 
 
+import re
 import subprocess
 from typing import List, Tuple
 
 import pytest
 
 
-def _interpret_output(output: str, expected_content: List[str], not_expected_content: List[str]):
+def _get_probability_from_output(output: str) -> float:
+    """
+    Interpret the output of the command's stdout and return a float.
+
+    The expected pattern of a result is 'Result: 0.934'
+    """
+    results = re.findall(r"Result\: ([0-9]+\.?[0-9]*)", output)
+    assert len(results) == 1, f"Expected to find exactly one result, {len(results)} found."
+    result = float(results[0])
+    assert result <= 1.0 and result >= 0.0, f"Result {result} not in [0, 1] set."
+    return result
+
+
+def _check_output_for_strings(
+    output: str, expected_content: List[str], not_expected_content: List[str]
+):
     """Interpret the output of the command. Make
     sure that the expected content is present and
     that the not expected content is not present."""
@@ -53,14 +69,24 @@ def _run_smc_storm(args: str) -> Tuple[str, str, int]:
 
 
 def run_smc_storm_with_output(
-    args: str, expected_content: List[str], not_expected_content: List[str]
+    args: str,
+    expected_content: List[str],
+    not_expected_content: List[str],
+    expected_result_probability: float,
+    result_probability_tolerance: float,
 ):
     """Run smc_storm with the given arguments and check
     if the output is as expected."""
     stdout, stderr, result = _run_smc_storm(args)
     assert result == 0, "smc_storm failed to run"
-    _interpret_output(stdout, expected_content, not_expected_content)
-    _interpret_output(stderr, [], not_expected_content)
+    prob = _get_probability_from_output(stdout)
+    error = abs(prob - expected_result_probability)
+    assert error <= result_probability_tolerance, (
+        f"Probability {prob} out of expected bounds: "
+        f"{expected_result_probability} ± {result_probability_tolerance}"
+    )
+    _check_output_for_strings(stdout, expected_content, not_expected_content)
+    _check_output_for_strings(stderr, [], not_expected_content)
 
 
 def test_run_smc_storm():

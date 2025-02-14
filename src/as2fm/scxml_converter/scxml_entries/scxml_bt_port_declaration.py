@@ -23,7 +23,7 @@ from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_argument
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
 class BtInputPortDeclaration(ScxmlBase):
@@ -38,8 +38,8 @@ class BtInputPortDeclaration(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtInputPortDeclaration":
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
-        key_str = get_xml_argument(BtInputPortDeclaration, xml_tree, "key")
-        type_str = get_xml_argument(BtInputPortDeclaration, xml_tree, "type")
+        key_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "key")
+        type_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "type")
         return BtInputPortDeclaration(key_str, type_str)
 
     def __init__(self, key_str: str, type_str: str):
@@ -81,8 +81,8 @@ class BtOutputPortDeclaration(ScxmlBase):
     @staticmethod
     def from_xml_tree(xml_tree: ET.Element) -> "BtOutputPortDeclaration":
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
-        key_str = get_xml_argument(BtOutputPortDeclaration, xml_tree, "key")
-        type_str = get_xml_argument(BtOutputPortDeclaration, xml_tree, "type")
+        key_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "key")
+        type_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "type")
         return BtOutputPortDeclaration(key_str, type_str)
 
     def __init__(self, key_str: str, type_str: str):

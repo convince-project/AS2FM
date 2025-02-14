@@ -262,7 +262,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
                 ]
             )
         )
-    timer_step_transition = ScxmlTransition(
+    timer_step_transition = ScxmlTransition.make_single_target_transition(
         "idle", [], f"current_time < {max_time}", global_timer_tick_body
     )
     idle_state.add_transition(timer_step_transition)

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="init"
+    version="1.0"
+    name="sender"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- <ros_topic_publisher topic="ec_a" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="ec_b" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="ec_c" type="std_msgs/Empty" /> -->
+
+    <ros_topic_publisher topic="tr_a" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="tr_b" type="std_msgs/Empty" />
+    <ros_topic_publisher topic="tr_c" type="std_msgs/Empty" />
+
+    <ros_time_rate name="my_timer" rate_hz="10" />
+
+    <state id="init">
+        <ros_rate_callback name="my_timer" target="fork" />
+    </state>
+
+    <state id="fork">
+        <!-- <onentry>
+            <prob>
+                <option value="0.1">
+                    <ros_topic_publish name="ec_a" />
+                </option>
+                <option value="0.3">
+                    <ros_topic_publish name="ec_b" />
+                </option>
+                <option>
+                    <ros_topic_publish name="ec_c" />
+                </option>
+            </prob>
+        </onentry> -->
+
+        <transition>
+            <target id="t_a" prob="0.1" />
+            <target id="t_b" prob="0.3" />
+            <target id="t_c" />
+        </transition>
+    </state>
+
+    <state id="t_a">
+        <onentry>
+            <ros_topic_publish name="tr_a" />
+        </onentry>
+        <transition target="init" />
+    </state>
+
+    <state id="t_b">
+        <onentry>
+            <ros_topic_publish name="tr_b" />
+        </onentry>
+        <transition target="init" />
+    </state>
+
+    <state id="t_c">
+        <onentry>
+            <ros_topic_publish name="tr_c" />
+        </onentry>
+        <transition target="init" />
+    </state>
+</scxml>

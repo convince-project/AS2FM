@@ -28,19 +28,31 @@ def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
     ), f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}"
 
 
-def get_xml_argument(
+def get_xml_attribute(
     scxml_type: Type[ScxmlBase],
     xml_tree: ET.Element,
     arg_name: str,
     *,
-    none_allowed=False,
+    undefined_allowed=False,
     empty_allowed=False,
 ) -> Optional[str]:
-    """Load an argument from the xml tree's root tag."""
+    """
+    Load an attribute from the XML tree's root tag.
+
+    Args:
+        scxml_type: The class of the SCXML element this is defined in.
+        xml_tree: The XML tree element to extract the attribute from.
+        arg_name: The name of the attribute to retrieve.
+        undefined_allowed: If True, allows the attribute to not exist in XML. Defaults to False.
+        empty_allowed: If True, allows the attribute to be an empty string. Defaults to False.
+
+    Returns:
+        The string defined in the attribute if found, otherwise None.
+    """
     arg_value = xml_tree.get(arg_name)
     error_prefix = f"SCXML conversion of {scxml_type.get_tag_name()}"
     if arg_value is None:
-        assert none_allowed, f"{error_prefix}: Expected argument {arg_name} in {xml_tree.tag}"
+        assert undefined_allowed, f"{error_prefix}: Expected argument {arg_name} in {xml_tree.tag}"
     elif len(arg_value) == 0:
         assert (
             empty_allowed
@@ -125,7 +137,7 @@ def read_value_from_xml_arg_or_child(
         "Error: read_value_from_arg_or_child: valid_types must include str. "
         "If strings are not expected, use 'read_value_from_xml_child'."
     )
-    read_value = get_xml_argument(scxml_type, xml_tree, tag_name, none_allowed=True)
+    read_value = get_xml_attribute(scxml_type, xml_tree, tag_name, undefined_allowed=True)
     if read_value is None:
         read_value = read_value_from_xml_child(
             xml_tree, tag_name, valid_types, none_allowed=none_allowed

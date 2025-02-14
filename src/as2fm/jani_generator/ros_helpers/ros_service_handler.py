@@ -65,7 +65,7 @@ class RosServiceHandler(RosCommunicationHandler):
             field_w_pref = ROS_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
-        return ScxmlTransition(
+        return ScxmlTransition.make_single_target_transition(
             f"processing_client_{client_id}",
             [generate_srv_request_event(self._interface_name, client_id)],
             body=assignments
@@ -84,7 +84,7 @@ class RosServiceHandler(RosCommunicationHandler):
             field_w_pref = ROS_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
-        return ScxmlTransition(
+        return ScxmlTransition.make_single_target_transition(
             "waiting",
             [generate_srv_server_response_event(self._interface_name)],
             body=assignments

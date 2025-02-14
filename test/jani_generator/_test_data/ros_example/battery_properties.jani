@@ -70,7 +70,7 @@
                             "right": {
                                 "op": "≥",
                                 "left": "topic_level_msg.ros_fields__data",
-                                "right": 29
+                                "right": 28
                             }
                         },
                         "right": {

@@ -28,7 +28,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 
@@ -44,7 +44,7 @@ class RosField(ScxmlParam):
     def from_xml_tree(xml_tree: ET.Element) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
-        name = get_xml_argument(RosField, xml_tree, "name")
+        name = get_xml_attribute(RosField, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(
             RosField, xml_tree, "expr", (BtGetValueInputPort, str)
         )

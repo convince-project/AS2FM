@@ -91,14 +91,14 @@ def generate_blackboard_scxml(bt_blackboard_vars: Dict[str, str]) -> ScxmlRoot:
         bt_data.append(ScxmlData(bb_key, default_value, bb_type))
         bt_bb_param_list.append(ScxmlParam(bb_key, expr=bb_key))
         idle_state.add_transition(
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 state_name,
                 [generate_bt_blackboard_set(bb_key)],
                 body=[ScxmlAssign(bb_key, BT_BLACKBOARD_EVENT_VALUE)],
             )
         )
     idle_state.add_transition(
-        ScxmlTransition(
+        ScxmlTransition.make_single_target_transition(
             state_name,
             [BT_BLACKBOARD_REQUEST],
             body=[ScxmlSend(BT_BLACKBOARD_GET, bt_bb_param_list)],
@@ -186,19 +186,21 @@ def generate_bt_root_scxml(
     idle_state = ScxmlState(
         "idle",
         body=[
-            RosRateCallback(ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]),
-            BtChildStatus(0, "error"),
+            RosRateCallback.make_single_target_transition(
+                ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]
+            ),
+            BtChildStatus.make_single_target_transition(0, "error"),
         ],
     )
     tick_res_body: ScxmlExecutionBody = (
         # In case we keep ticking after BT root finishes running
-        [BtChildStatus(0, "idle")]
+        [BtChildStatus.make_single_target_transition(0, "idle")]
         if tick_if_not_running
         # In case we stop the BT after the BT root result is not RUNNING
         else [
-            BtChildStatus(0, "idle", "_bt.status == RUNNING"),
+            BtChildStatus.make_single_target_transition(0, "idle", "_bt.status == RUNNING"),
             # This is the case in which BT-status != RUNNING
-            BtChildStatus(0, "done"),
+            BtChildStatus.make_single_target_transition(0, "done"),
         ]
     )
     wait_res_state = ScxmlState(

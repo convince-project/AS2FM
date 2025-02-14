@@ -42,7 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_children_as_scxml,
-    get_xml_argument,
+    get_xml_attribute,
 )
 
 
@@ -58,12 +58,12 @@ class ScxmlRoot(ScxmlBase):
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
-        scxml_name = get_xml_argument(ScxmlRoot, xml_tree, "name")
-        scxml_version = get_xml_argument(ScxmlRoot, xml_tree, "version")
+        scxml_name = get_xml_attribute(ScxmlRoot, xml_tree, "name")
+        scxml_version = get_xml_attribute(ScxmlRoot, xml_tree, "version")
         assert (
             scxml_version == "1.0"
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
-        scxml_init_state = get_xml_argument(ScxmlRoot, xml_tree, "initial")
+        scxml_init_state = get_xml_attribute(ScxmlRoot, xml_tree, "initial")
         # Data Model
         datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
         assert (
@@ -164,13 +164,16 @@ class ScxmlRoot(ScxmlBase):
         return transition_events
 
     def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
+        """
+        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
+
+        :param events_to_targets: Mapping between the event name and the automata recipients.
+        """
         for state in self._states:
             state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
             state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
             for transition in state.get_body():
-                transition.set_body(
-                    add_targets_to_scxml_send(transition.get_body(), events_to_targets)
-                )
+                transition.add_targets_to_scxml_sends(events_to_targets)
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:

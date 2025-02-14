@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="select_corridor"
+    version="1.0"
+    name="CorridorsEnvironment"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- TODO
+        The purpose of this file is do aid the discussion about syntax for specifying probabilities.
+        Right now only the multiple target (here from line :56) is implemented in scxml_converter/scxml_entries/scxml_transition_target.py
+        We probably delete this when we implemented the probabilities in executable content (here from line :34), too.
+    -->
+
+    <datamodel>
+        <data id="progress" expr="0" type="int16" />
+    </datamodel>
+
+    <state id="select_corridor">
+        <transition target="corridor_one" event="go_to_one" />
+        <!-- <transition target="corridor_two" event="go_to_two" /> -->
+        <transition target="corridor_three" event="go_to_three" />
+    </state>
+
+    <state id="corridor_one">
+        <transition target="corridor_one" event="step_fw">
+            <assign location="corridor" expr="..." />
+            <!-- <prob value="0.3">
+                <assign location="progress" expr="progress + 1" />
+            <elseprob value="0.4" />
+                <assign location="progress" expr="progress + 2" />
+            <else />
+                <assign location="progress" expr="progress" />
+            </prob> -->
+            <prob>
+                <option value="0.3">
+                    <assign location="progress" expr="progress + 1" />
+                </option>
+                <option value="0.4">
+                    <assign location="progress" expr="progress + 2" />
+                </option>
+                <option>
+                    <assign location="progress" expr="progress" />
+                </option>
+            </prob>
+            <prob>
+                <option value="0.3">
+                    <assign location="corridor" expr="2" />
+                </option>
+            </prob>
+            <assign location="corridor" expr="..." />
+        </transition>
+    </state>
+
+    <!-- <state id="corridor_two">
+        <transition target="corridor_two" event="step_fw" prob="0.5">
+            <assign location="progress" expr="progress + 2" />
+        </transition>
+        <transition target="corridor_two" event="step_fw">
+            <assign location="progress" expr="progress" />
+        </transition>
+    </state> -->
+
+    <state id="corridor_three">
+        <transition event="step_fw" cond="something">
+            <target id="corridor_three" prob="0.7">
+                <assign location="progress" expr="progress + 1" />
+            </target>
+            <!-- <target id="corridor_one" prob="0.3">
+                <assign location="progress" expr="progress - 1" />
+            </target> -->
+            <!-- Implicitly added -->
+            <!-- Note: Need to ensure those automatically added transitions are
+            not executing on_entry / on_exit blocks -->
+            <target id="corridor_three" prob="{remaining_prob}" />
+        </transition>
+    </state>
+</scxml>

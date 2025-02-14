@@ -27,11 +27,11 @@ from as2fm.scxml_converter.scxml_entries import (
     RosField,
     ScxmlBase,
     ScxmlDataModel,
-    ScxmlExecutionBody,
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
     ScxmlTransition,
+    ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
@@ -49,7 +49,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_children_as_scxml,
-    get_xml_argument,
+    get_xml_attribute,
 )
 
 
@@ -66,11 +66,11 @@ class RosActionThread(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
-        action_alias = get_xml_argument(RosActionThread, xml_tree, "name")
-        n_threads = get_xml_argument(RosActionThread, xml_tree, "n_threads")
+        action_alias = get_xml_attribute(RosActionThread, xml_tree, "name")
+        n_threads = get_xml_attribute(RosActionThread, xml_tree, "n_threads")
         n_threads = int(n_threads)
         assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
-        initial_state = get_xml_argument(RosActionThread, xml_tree, "initial")
+        initial_state = get_xml_attribute(RosActionThread, xml_tree, "initial")
         datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
         scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
@@ -223,19 +223,17 @@ class RosActionHandleThreadStart(RosCallback):
     def __init__(
         self,
         server_alias: Union[str, RosActionServer],
-        target_state: str,
+        targets: List[ScxmlTransitionTarget],
         condition: Optional[str] = None,
-        exec_body: Optional[ScxmlExecutionBody] = None,
     ) -> None:
         """
         Initialize a new RosActionHandleResult object.
 
         :param server_alias: Action Server used by this handler, or its name.
-        :param target_state: Target state to transition to after the start trigger is received.
+        :param targets: A list of targets reachable when after the start trigger is received.
         :param condition: Condition to be met for the callback to be executed. Expected None.
-        :param exec_body: Execution body to be executed upon thread start (before transition).
         """
-        super().__init__(server_alias, target_state, condition, exec_body)
+        super().__init__(server_alias, targets, condition)
         # The thread ID depends on the plain scxml instance, so it is set later
         self._thread_id: Optional[int] = None
 

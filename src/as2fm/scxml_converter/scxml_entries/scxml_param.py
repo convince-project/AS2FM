@@ -30,7 +30,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 
@@ -46,11 +46,11 @@ class ScxmlParam(ScxmlBase):
     def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
-        name = get_xml_argument(ScxmlParam, xml_tree, "name")
+        name = get_xml_attribute(ScxmlParam, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(
             ScxmlParam, xml_tree, "expr", (BtGetValueInputPort, str), True
         )
-        location = get_xml_argument(ScxmlParam, xml_tree, "location", none_allowed=True)
+        location = get_xml_attribute(ScxmlParam, xml_tree, "location", undefined_allowed=True)
         return ScxmlParam(name, expr=expr, location=location)
 
     def __init__(
@@ -85,6 +85,17 @@ class ScxmlParam(ScxmlBase):
         return self._expr
 
     def get_location(self) -> Optional[str]:
+        return self._location
+
+    def get_expr_or_location(self) -> str:
+        """
+        Return either the expr or location argument, depending on which one is None.
+
+        Ensures that at least one is valid.
+        """
+        if self._expr is not None:
+            return self._expr
+        assert is_non_empty_string(ScxmlParam, "location", self._location)
         return self._location
 
     def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):

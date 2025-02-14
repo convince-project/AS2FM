@@ -42,7 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
-    get_xml_argument,
+    get_xml_attribute,
     read_value_from_xml_child,
 )
 
@@ -64,10 +64,12 @@ def instantiate_exec_body_bt_events(
     :param instance_id: The instance ID of the BT node
     """
     if exec_body is not None:
-        for id in range(len(exec_body)):
-            entry = exec_body[id].instantiate_bt_events(instance_id, children_ids)
-            assert entry is not None, f"Error instantiating BT events in {exec_body[id]}: got None."
-            exec_body[id] = entry
+        for entry_id in range(len(exec_body)):
+            event_tag = exec_body[entry_id].get_tag_name()
+            exec_body[entry_id] = exec_body[entry_id].instantiate_bt_events(
+                instance_id, children_ids
+            )
+            assert exec_body[entry_id] is not None, f"Error instantiating BT events in {event_tag}."
 
 
 def update_exec_body_bt_ports_values(
@@ -345,11 +347,10 @@ class ScxmlSend(ScxmlBase):
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        if type(self) is ScxmlSend:
-            assert not is_bt_event(self._event), (
-                "Error: SCXML send: BT events should not be found in SCXML send. "
-                "Use the 'bt_return_status' ROS-scxml tag instead."
-            )
+        assert type(self) is not ScxmlSend or not is_bt_event(self._event), (
+            "Error: SCXML send: BT events should not be found in SCXML send. "
+            "Use the 'bt_return_status' ROS-scxml tag instead."
+        )
         return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
@@ -421,8 +422,8 @@ class ScxmlAssign(ScxmlBase):
         :param cb_type: The kind of callback executing this SCXML entry.
         """
         assert_xml_tag_ok(ScxmlAssign, xml_tree)
-        location = get_xml_argument(ScxmlAssign, xml_tree, "location")
-        expr = get_xml_argument(ScxmlAssign, xml_tree, "expr", none_allowed=True)
+        location = get_xml_attribute(ScxmlAssign, xml_tree, "location")
+        expr = get_xml_attribute(ScxmlAssign, xml_tree, "expr", undefined_allowed=True)
         if expr is None:
             expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
             assert expr is not None, "Error: SCXML assign: expr is not valid."
@@ -463,6 +464,11 @@ class ScxmlAssign(ScxmlBase):
             )
 
     def check_validity(self) -> bool:
+        """
+        Check that the ScxmlAssign instance is valid.
+
+        Note that this assumes all values from BT ports are already substituted.
+        """
         # TODO: Check that the location to assign exists in the data-model
         valid_location = is_non_empty_string(ScxmlAssign, "location", self._location)
         valid_expr = is_non_empty_string(ScxmlAssign, "expr", self._expr)
@@ -497,15 +503,17 @@ _ResolvedScxmlExecutableEntry = tuple(
 )
 
 
-def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
+def valid_execution_body_entry_types(exec_body: Optional[ScxmlExecutionBody]) -> bool:
     """
     Check if the type of the entries in an execution body are valid.
 
     :param exec_body: The execution body to check
     :return: True if all types of the body entries are the expected ones, False otherwise
     """
+    if exec_body is None:
+        return True
     if not isinstance(exec_body, list):
-        print("Error: SCXML execution body: invalid type found: expected a list.")
+        print(f"Error: SCXML execution body: invalid type found: {type(exec_body)} is not a list.")
         return False
     for entry in exec_body:
         if not isinstance(entry, _ResolvedScxmlExecutableEntry):
@@ -517,20 +525,20 @@ def valid_execution_body_entry_types(exec_body: ScxmlExecutionBody) -> bool:
     return True
 
 
-def valid_execution_body(execution_body: ScxmlExecutionBody) -> bool:
+def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
     """
     Check if an execution body is valid.
 
     :param execution_body: The execution body to check
     :return: True if the execution body is valid, False otherwise
     """
-    if valid_execution_body_entry_types(execution_body):
-        for entry in execution_body:
-            if not entry.check_validity():
-                print(f"Error: SCXML execution body: content of {entry.get_tag_name()} is invalid.")
-                return False
-        return True
-    return False
+    if not valid_execution_body_entry_types(exec_body):
+        return False
+    for entry in exec_body:
+        if not entry.check_validity():
+            print(f"Error: SCXML execution body: content of {entry.get_tag_name()} is invalid.")
+            return False
+    return True
 
 
 def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:

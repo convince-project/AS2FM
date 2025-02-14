@@ -84,12 +84,12 @@ def test_battery_drainer_from_code():
             )
         ],
         body=[
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 "use_battery",
                 ["ros_time_rate.my_timer"],
                 body=[ScxmlAssign("battery_percent", "battery_percent - 1")],
             ),
-            ScxmlTransition(
+            ScxmlTransition.make_single_target_transition(
                 "use_battery", ["topic_charge_msg"], body=[ScxmlAssign("battery_percent", "100")]
             ),
         ],
@@ -147,12 +147,12 @@ def test_battery_drainer_ros_from_code():
         RosTopicPublish(ros_topic_pub, [RosField("data", "battery_percent")])
     )
     use_battery_state.add_transition(
-        RosRateCallback(
+        RosRateCallback.make_single_target_transition(
             ros_timer, "use_battery", None, [ScxmlAssign("battery_percent", "battery_percent - 1")]
         )
     )
     use_battery_state.add_transition(
-        RosTopicCallback(
+        RosTopicCallback.make_single_target_transition(
             ros_topic_sub, "use_battery", None, [ScxmlAssign("battery_percent", "100")]
         )
     )
@@ -178,10 +178,9 @@ def test_bt_action_with_ports_from_code():
     init_state = ScxmlState(
         "initial",
         body=[
-            BtTick(
+            BtTick.make_single_target_transition(
                 "initial",
-                None,
-                [
+                body=[
                     ScxmlAssign("number", BtGetValueInputPort("data")),
                     RosTopicPublish(topic_publisher, [RosField("data", "number")]),
                 ],

@@ -14,7 +14,7 @@
         <data id="dock_attempt" expr="0" type="int16" />
         <data id="last_cmd" expr="0" type="int16" />
         <data id="docked_time" expr="0" type="int16" />
-        <data id="charge_delay" expr="2" type="int16" />
+        <data id="charge_delay" expr="5" type="int16" />
     </datamodel>
 
     <ros_topic_publisher name="bumper" topic="/bumper" type="std_msgs/Empty" />
@@ -25,7 +25,7 @@
 
     <ros_service_server name="reset_bump" service_name="/reset_bump" type="std_srvs/Empty" />
 
-    <ros_time_rate rate_hz="5" name="status_update" />
+    <ros_time_rate rate_hz="10" name="status_update" />
 
     <state id="running">
         <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
@@ -40,11 +40,13 @@
             <else />
                 <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
             </if>
+            <if cond="last_cmd != 0">
+                <assign location="docked_time" expr="0" />
+            </if>
             <!-- Track how often we reach the dock -->
             <if cond="dist_to_dock == 0">
                 <if cond="last_cmd != 0">
                     <assign location="dock_attempt" expr="dock_attempt + 1" />
-                    <assign location="docked_time" expr="0" />
                 <else />
                     <assign location="docked_time" expr="docked_time + 1" />
                 </if>

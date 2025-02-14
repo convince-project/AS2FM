@@ -9,11 +9,17 @@
     <ros_topic_publisher name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
 
     <state id="initial">
-        <bt_tick target="initial">
-            <ros_topic_publish name="cmd">
-                <field name="data" expr="-1" />
-            </ros_topic_publish>
-            <bt_return_status status="SUCCESS" />
+        <bt_tick>
+            <!-- Another option -->
+            <target id="initial" prob="0.2">
+                <bt_return_status status="FAILURE" />
+            </target>
+            <target id="initial" prob="0.8">
+                <ros_topic_publish name="cmd">
+                    <field name="data" expr="-1" />
+                </ros_topic_publish>
+                <bt_return_status status="SUCCESS" />
+            </target>
         </bt_tick>
     </state>
 
