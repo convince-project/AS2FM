@@ -32,9 +32,11 @@ def _get_probability_from_output(output: str) -> float:
 
     The expected pattern of a result is 'Result: 0.934'
     """
-    res_match = re.search(r"Result\: ([0-9]+\.?[0-9]*)", output)
-    assert res_match is not None, f"Cannot find result in Storm output '{output}'"
-    return float(res_match.group(1))
+    results = re.findall(r"Result\: ([0-9]+\.?[0-9]*)", output)
+    assert len(results) == 1, f"Expected to find exactly one result, {len(results)} found."
+    result = float(results[0])
+    assert result <= 1.0 and result >= 0.0, f"Result {result} not in [0, 1] set."
+    return result
 
 
 def _check_output_for_strings(
