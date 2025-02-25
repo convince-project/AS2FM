@@ -17,6 +17,7 @@
             <!-- Let's assume this is always successful. -->
             <bt_return_status status="SUCCESS" />
         </bt_tick>
+        <bt_halt target="initial"/>
     </state>
 
 </scxml>

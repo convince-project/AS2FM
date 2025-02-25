@@ -7,5 +7,6 @@
                 <param name="status" expr="1"/>
             </send>
         </transition>
+        <transition event="bt_1003_halt" target="initial"/>
     </state>
 </scxml>
