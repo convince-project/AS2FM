@@ -41,7 +41,7 @@ from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_ex
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
-class BtGenericTransition(ScxmlTransition):
+class BtGenericRequestHandle(ScxmlTransition):
     """
     A generic class representing a transition triggered using BT interfaces.
     """
@@ -51,7 +51,7 @@ class BtGenericTransition(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
 
     @classmethod
-    def from_xml_tree(cls: ScxmlTransition, xml_tree: ET.Element) -> "BtGenericTransition":
+    def from_xml_tree(cls: ScxmlTransition, xml_tree: ET.Element) -> "BtGenericRequestHandle":
         assert_xml_tag_ok(cls, xml_tree)
         condition: Optional[str] = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
         transition_targets = cls.load_transition_targets_from_xml(xml_tree)
@@ -109,7 +109,7 @@ class BtGenericTransition(ScxmlTransition):
         return xml_element
 
 
-class BtTick(BtGenericTransition):
+class BtTick(BtGenericRequestHandle):
     """
     Process a BT plugin/control node tick, triggering the related transition.
     """
@@ -126,7 +126,7 @@ class BtTick(BtGenericTransition):
         return generate_bt_tick_event(instance_id)
 
 
-class BtHalt(BtGenericTransition):
+class BtHalt(BtGenericRequestHandle):
     """
     Process a BT plugin/control node halt / reset, triggering the related transition.
     """
