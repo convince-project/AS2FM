@@ -101,30 +101,23 @@ class Event:
     def must_be_skipped_in_jani_conversion(self):
         """Indicate whether this must be considered in the conversion to jani."""
         return (
+            # If the event is a timer event, there is only a receiver.
+            # It is the edge that the user declared with the `ros_rate_callback` tag.
+            # It will be handled in the `scxml_event_processor` module differently.
             self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
-            or
-            # If the event is a timer event, there is only a receiver
-            # It is the edge that the user declared with the
-            # `ros_rate_callback` tag. It will be handled in the
-            # `scxml_event_processor` module differently.
-            self.is_bt_response_event()
-            and len(self.senders) == 0
-            or self.is_optional_action_event()
-            and len(self.senders) == 0
+            or self.is_removable_interface()
         )
 
-    def is_bt_response_event(self):
-        """Check if the event is a behavior tree response event (running, success, failure).
-        They may have no sender if the plugin does not implement it."""
-        # TODO: Remove it when deprecated support for running, success, failure BT events is removed
-        return self.name.startswith("bt_") and (
-            self.name.endswith("_running")
-            or self.name.endswith("_success")
-            or self.name.endswith("_failure")
-        )
+    def is_removable_interface(self):
+        """Indicate if the interface contained by this event shall be removed."""
+        # TODO: Check if it makes sense to auto-generate the bt_halt handling
+        return self.is_removable_action_event() or self.is_removable_bt_interface()
 
-    def is_optional_action_event(self):
-        return self.is_action_feedback_event() or self.is_action_rejected_event()
+    def is_removable_action_event(self):
+        """Check if the action interface is to be ignored."""
+        return (self.is_action_feedback_event() or self.is_action_rejected_event()) and (
+            len(self.senders) == 0
+        )
 
     def is_action_feedback_event(self):
         """Check if the event is an action feedback event."""
@@ -133,6 +126,12 @@ class Event:
     def is_action_rejected_event(self):
         """Check if the event is an action rejected event."""
         return re.match(r"^action_.*_goal_rejected$", self.name) is not None
+
+    def is_removable_bt_interface(self):
+        """Check if the BT interface is to be ignored."""
+        return is_bt_halt_event(self.name) and (
+            len(self.senders) == 0 or (len(self.receivers) == 0)
+        )
 
 
 class EventsHolder:
