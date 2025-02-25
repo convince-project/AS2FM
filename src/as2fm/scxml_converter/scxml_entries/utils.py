@@ -104,6 +104,21 @@ class CallbackType(Enum):
             return CallbackType.TRANSITION
 
 
+def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
+    """
+    Extract the tags and the associated classes from the provided class and related subclasses.
+    """
+    ret_dict: Dict[str, Type[ScxmlBase]] = {}
+    try:
+        tag_name = cls.get_tag_name()
+        ret_dict.update({tag_name: cls})
+    except NotImplementedError:
+        pass
+    for sub_cls in cls.__subclasses__():
+        ret_dict.update(generate_tag_to_class_map(sub_cls))
+    return ret_dict
+
+
 def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str]) -> str:
     """
     Given an expression with the ROS entries from a list, it generates a plain SCXML expression.

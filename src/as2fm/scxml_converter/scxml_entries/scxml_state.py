@@ -45,7 +45,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
     valid_execution_body,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, generate_tag_to_class_map
 
 
 class ScxmlState(ScxmlBase):
@@ -57,18 +57,8 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from as2fm.scxml_converter.scxml_entries.scxml_bt_ticks import BtGenericTransition
-        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback
-
         transitions: List[ScxmlTransition] = []
-        tag_to_cls = {
-            cls.get_tag_name(): cls
-            for cls in ScxmlTransition.__subclasses__()
-            if cls not in (RosCallback, BtGenericTransition)
-        }
-        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
-        tag_to_cls.update({cls.get_tag_name(): cls for cls in BtGenericTransition.__subclasses__()})
-        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
+        tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
         for child in xml_tree:
             if is_comment(child):
                 continue
