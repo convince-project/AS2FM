@@ -26,6 +26,7 @@
                 <bt_return_status status="FAILURE" />
             </if>
         </bt_tick>
+        <bt_halt target="initial"/>
     </state>
 
 </scxml>

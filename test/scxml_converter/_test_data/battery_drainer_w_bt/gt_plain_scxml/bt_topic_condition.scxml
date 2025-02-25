@@ -19,6 +19,7 @@
                 </send>
             </if>
         </transition>
+        <transition event="bt_1002_halt" target="initial"/>
     </state>
 
 </scxml>

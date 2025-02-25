@@ -37,6 +37,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
+    generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
 )
@@ -548,16 +549,11 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :param xml_tree: The XML tree to create the execution entry from.
     :return: The execution entry
     """
-    from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
-
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {
         cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry
     }
-    tag_to_cls.update(
-        {cls.get_tag_name(): cls for cls in ScxmlSend.__subclasses__() if cls != RosTrigger}
-    )
-    tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
+    tag_to_cls.update(generate_tag_to_class_map(ScxmlSend))
     exec_tag = xml_tree.tag
     assert (
         exec_tag in tag_to_cls

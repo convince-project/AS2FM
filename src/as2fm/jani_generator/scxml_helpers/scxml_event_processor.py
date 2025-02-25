@@ -60,7 +60,7 @@ def implement_scxml_events_as_jani_syncs(
         # Special case handling for events that must be skipped, e.g. BT responses and timers
         if event.must_be_skipped_in_jani_conversion():
             # if this is a bt or an action event, we have to get rid of all edges receiving it
-            if event.is_bt_response_event() or event.is_optional_action_event():
+            if event.is_removable_interface():
                 jani_model.remove_edges_with_action(event_name_on_receive)
             continue
         assert event.has_senders(), f"Event {event_name} must have at least one sender"
