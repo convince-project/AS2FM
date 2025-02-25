@@ -17,11 +17,13 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, Union
 
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     SCXML_DATA_STR_TO_TYPE,
+    to_integer,
 )
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string": str}
@@ -61,6 +63,28 @@ class BtResponse(Enum):
         return expr
 
 
+def process_bt_child_seq_id(
+    scxml_type: Type[ScxmlBase], child_seq_id: Union[str, int]
+) -> Union[str, int]:
+    """
+    Convert the child sequence ID to int or string depending on the content.
+    """
+    if isinstance(child_seq_id, int):
+        return child_seq_id
+    elif isinstance(child_seq_id, str):
+        child_seq_id = child_seq_id.strip()
+        int_seq_id = to_integer(scxml_type, "id", child_seq_id)
+        if int_seq_id is not None:
+            return int_seq_id
+        assert (
+            child_seq_id.isidentifier()
+        ), f"Error: {scxml_type.get_tag_name()}: invalid child seq id name '{child_seq_id}'."
+        return child_seq_id
+    raise TypeError(
+        f"Error: {scxml_type.get_tag_name()}: invalid child seq id type '{type(child_seq_id)}'."
+    )
+
+
 def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     """
     Generate  the name of the evnt setting a specific Blackboard variable.
@@ -79,6 +103,16 @@ def generate_bt_tick_event(instance_id: str) -> str:
 def is_bt_tick_event(event_name: str) -> bool:
     """Check is the event is used for ticking a BT node."""
     return re.match(r"^bt_.+_tick$", event_name) is not None
+
+
+def generate_bt_halt_event(instance_id: str) -> str:
+    """Generate the BT halt event name for a given BT node instance."""
+    return f"bt_{instance_id}_halt"
+
+
+def is_bt_halt_event(event_name: str) -> bool:
+    """Check is the event is used for halting a BT node."""
+    return re.match(r"^bt_.+_halt$", event_name) is not None
 
 
 def generate_bt_response_event(instance_id: str) -> str:

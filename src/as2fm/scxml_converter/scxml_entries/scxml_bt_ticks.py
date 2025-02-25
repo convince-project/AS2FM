@@ -18,12 +18,11 @@ SCXML entries related to Behavior Tree Ticks and related responses.
 """
 
 from copy import deepcopy
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Union
 
 from lxml import etree as ET
 
 from as2fm.scxml_converter.scxml_entries import (
-    ScxmlBase,
     ScxmlExecutionBody,
     ScxmlIf,
     ScxmlParam,
@@ -33,36 +32,84 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
+    generate_bt_halt_event,
     generate_bt_response_event,
     generate_bt_tick_event,
+    process_bt_child_seq_id,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression, to_integer
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
-def _process_child_seq_id(
-    scxml_type: Type[ScxmlBase], child_seq_id: Union[str, int]
-) -> Union[str, int]:
+class BtGenericTransition(ScxmlTransition):
     """
-    Convert the child sequence ID to int or string depending on the content.
+    A generic class representing a transition triggered using BT interfaces.
     """
-    if isinstance(child_seq_id, int):
-        return child_seq_id
-    elif isinstance(child_seq_id, str):
-        child_seq_id = child_seq_id.strip()
-        int_seq_id = to_integer(scxml_type, "id", child_seq_id)
-        if int_seq_id is not None:
-            return int_seq_id
-        assert (
-            child_seq_id.isidentifier()
-        ), f"Error: {scxml_type.get_tag_name()}: invalid child seq id name '{child_seq_id}'."
-        return child_seq_id
-    raise TypeError(
-        f"Error: {scxml_type.get_tag_name()}: invalid child seq id type '{type(child_seq_id)}'."
-    )
+
+    @classmethod
+    def get_tag_name(cls: ScxmlTransition):
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+
+    @classmethod
+    def from_xml_tree(cls: ScxmlTransition, xml_tree: ET.Element) -> "BtGenericTransition":
+        assert_xml_tag_ok(cls, xml_tree)
+        condition: Optional[str] = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
+        transition_targets = cls.load_transition_targets_from_xml(xml_tree)
+        return cls(transition_targets, condition)
+
+    @classmethod
+    def make_single_target_transition(
+        cls: ScxmlTransition,
+        target: str,
+        condition: Optional[str] = None,
+        body=Optional[ScxmlExecutionBody],
+    ):
+        """
+        Generate a "traditional" bt transition with exactly one target.
+
+        :param target: The state transition goes to. Required (unlike in SCXML specifications)
+        :param condition: The condition guard to enable/disable the transition
+        :param body: Content that is executed when the transition happens
+        """
+        return cls([ScxmlTransitionTarget(target, body=body)], condition)
+
+    @classmethod
+    def generate_bt_event_name(cls: ScxmlTransition, instance_id: int):
+        """
+        Generate the plain scxml event associated to the BT Transition instance_id.
+        """
+        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+
+    def __init__(
+        self,
+        targets: List[ScxmlTransitionTarget],
+        condition: Optional[str] = None,
+    ):
+        super().__init__(targets, [self.get_tag_name()], condition)
+
+    def check_validity(self) -> bool:
+        if len(self._targets) != 1:
+            print(
+                f"SCXML {self.get_tag_name()} error: "
+                f"there are {len(self._targets)} targets, expecting 1."
+            )
+            return False
+        return super().check_validity()
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> List[ScxmlTransition]:
+        self._events = [self.generate_bt_event_name(instance_id)]
+        self._instantiate_bt_events_in_targets(instance_id, children_ids)
+        return [ScxmlTransition(self._targets, self._events, self._condition)]
+
+    def as_xml(self) -> ET.Element:
+        xml_element = super().as_xml()
+        _ = xml_element.attrib.pop("event")
+        return xml_element
 
 
-class BtTick(ScxmlTransition):
+class BtTick(BtGenericTransition):
     """
     Process a BT plugin/control node tick, triggering the related transition.
     """
@@ -72,51 +119,37 @@ class BtTick(ScxmlTransition):
         return "bt_tick"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtTick":
-        assert_xml_tag_ok(BtTick, xml_tree)
-        condition: Optional[str] = get_xml_attribute(
-            BtTick, xml_tree, "cond", undefined_allowed=True
-        )
-        transition_targets = BtTick.load_transition_targets_from_xml(xml_tree)
-        return BtTick(transition_targets, condition)
+    def generate_bt_event_name(instance_id: int):
+        """
+        Generate the plain scxml event name for this Bt Tick instance_id.
+        """
+        return generate_bt_tick_event(instance_id)
+
+
+class BtHalt(BtGenericTransition):
+    """
+    Process a BT plugin/control node halt / reset, triggering the related transition.
+    """
 
     @staticmethod
-    def make_single_target_transition(
-        target: str, condition: Optional[str] = None, body=Optional[ScxmlExecutionBody]
-    ):
-        """
-        Generate a "traditional" bt_tick transition with exactly one target.
+    def get_tag_name() -> str:
+        return "bt_halt"
 
-        :param target: The state transition goes to. Required (unlike in SCXML specifications)
-        :param condition: The condition guard to enable/disable the transition
-        :param body: Content that is executed when the transition happens
+    @staticmethod
+    def generate_bt_event_name(instance_id: int):
         """
-        return BtTick([ScxmlTransitionTarget(target, body=body)], condition)
-
-    def __init__(
-        self,
-        targets: List[ScxmlTransitionTarget],
-        condition: Optional[str] = None,
-    ):
-        super().__init__(targets, ["bt_tick"], condition)
+        Generate the plain scxml event name for this Bt Tick instance_id.
+        """
+        return generate_bt_halt_event(instance_id)
 
     def check_validity(self) -> bool:
-        if len(self._targets) != 1:
-            print(f"SCXML bt_tick error: there are {len(self._targets)} targets, expecting 1.")
+        if self._condition is not None:
+            print(
+                f"SCXML {self.get_tag_name()} error: "
+                f"no conditions expected when halting a BT Node."
+            )
             return False
         return super().check_validity()
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> List[ScxmlTransition]:
-        self._events = [generate_bt_tick_event(instance_id)]
-        self._instantiate_bt_events_in_targets(instance_id, children_ids)
-        return [ScxmlTransition(self._targets, self._events, self._condition)]
-
-    def as_xml(self) -> ET.Element:
-        xml_element = super().as_xml()
-        _ = xml_element.attrib.pop("event")
-        return xml_element
 
 
 class BtTickChild(ScxmlSend):
@@ -140,7 +173,7 @@ class BtTickChild(ScxmlSend):
 
         :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
         """
-        self._child_seq_id = _process_child_seq_id(BtTickChild, child_seq_id)
+        self._child_seq_id = process_bt_child_seq_id(BtTickChild, child_seq_id)
 
     def check_validity(self) -> bool:
         return True
@@ -230,7 +263,7 @@ class BtChildStatus(ScxmlTransition):
         :param condition: The condition to check before transitioning.
         """
         super().__init__(targets, condition=condition)
-        self._child_seq_id = _process_child_seq_id(BtChildStatus, child_seq_id)
+        self._child_seq_id = process_bt_child_seq_id(BtChildStatus, child_seq_id)
         if self._condition is not None:
             # Substitute the responses string with the corresponding integer
             self._condition = BtResponse.process_expr(self._condition)
