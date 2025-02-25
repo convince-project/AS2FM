@@ -43,7 +43,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get
 
 class BtGenericRequestHandle(ScxmlTransition):
     """
-    A generic class representing a transition triggered using BT interfaces.
+    A generic class representing a transition triggered using BT interfaces (i.e. tick and halt).
     """
 
     @classmethod
@@ -109,6 +109,76 @@ class BtGenericRequestHandle(ScxmlTransition):
         return xml_element
 
 
+class BtGenericRequestSend(ScxmlSend):
+    """
+    A generic class representing the sender of a BT related request (i.e. tick and halt)
+    """
+
+    @classmethod
+    def get_tag_name(cls: ScxmlSend):
+        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+
+    @classmethod
+    def generate_bt_event_name(cls: ScxmlSend, instance_id: int):
+        """
+        Generate the plain scxml event associated to the BT Transition instance_id.
+        """
+        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+
+    @classmethod
+    def from_xml_tree(cls: ScxmlSend, xml_tree: ET.Element) -> "BtGenericRequestSend":
+        assert_xml_tag_ok(cls, xml_tree)
+        # child_seq_id = n -> the n-th children of the control node in the BT XML
+        child_seq_id: str = get_xml_attribute(cls, xml_tree, "id")
+        return cls(child_seq_id)
+
+    def __init__(self, child_seq_id: Union[str, int]):
+        """
+        Generate a new BtGenericRequestSend instance.
+
+        :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
+        """
+        self._child_seq_id = process_bt_child_seq_id(type(self), child_seq_id)
+
+    def check_validity(self) -> bool:
+        return isinstance(self._child_seq_id, (int, str))
+
+    def has_bt_blackboard_input(self, _):
+        """Check whether the If entry reads content from the BT Blackboard."""
+        return False
+
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> Union[ScxmlIf, ScxmlSend]:
+        """
+        Convert the BtGenericRequestSend to plain SCXML.
+
+        Returns a ScxmlSend if the child id is constant and an ScxmlIf otherwise.
+        """
+        if isinstance(self._child_seq_id, int):
+            # We know the exact child ID we want to tick
+            assert self._child_seq_id < len(children_ids), (
+                f"Error: SCXML {self.get_tag_name()}: invalid child ID {self._child_seq_id} "
+                f"for {len(children_ids)} children."
+            )
+            return ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))
+        else:
+            # The children to tick depends on the index of the self._child variable at runtime
+            if_bodies = []
+            for child_seq_n, child_id in enumerate(children_ids):
+                if_bodies.append(
+                    (
+                        f"{self._child_seq_id} == {child_seq_n}",
+                        [ScxmlSend(self.generate_bt_event_name(child_id))],
+                    )
+                )
+            return ScxmlIf(if_bodies).instantiate_bt_events(instance_id, children_ids)
+
+    def as_xml(self) -> ET.Element:
+        xml_bt_tick_child = ET.Element(self.get_tag_name(), {"id": str(self._child_seq_id)})
+        return xml_bt_tick_child
+
+
 class BtTick(BtGenericRequestHandle):
     """
     Process a BT plugin/control node tick, triggering the related transition.
@@ -152,64 +222,34 @@ class BtHalt(BtGenericRequestHandle):
         return super().check_validity()
 
 
-class BtTickChild(ScxmlSend):
-    """Tick one child of a control node."""
+class BtTickChild(BtGenericRequestSend):
+    """Tick one child of a BT control node."""
 
     @staticmethod
     def get_tag_name() -> str:
         return "bt_tick_child"
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtTickChild":
-        assert_xml_tag_ok(BtTickChild, xml_tree)
-        # Proposal: to avoid confusion, we could name the xml argument seq_id, too
-        # child_seq_id = n -> the n-th children of the control node in the BT XML
-        child_seq_id: str = get_xml_attribute(BtTickChild, xml_tree, "id")
-        return BtTickChild(child_seq_id)
-
-    def __init__(self, child_seq_id: Union[str, int]):
+    def generate_bt_event_name(instance_id: int):
         """
-        Generate a new BtTickChild instance.
-
-        :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
+        Generate the plain scxml event name for this Bt Tick instance_id.
         """
-        self._child_seq_id = process_bt_child_seq_id(BtTickChild, child_seq_id)
+        return generate_bt_tick_event(instance_id)
 
-    def check_validity(self) -> bool:
-        return True
 
-    def has_bt_blackboard_input(self, _):
-        """Check whether the If entry reads content from the BT Blackboard."""
-        return False
+class BtHaltChild(BtGenericRequestSend):
+    """Halt one child of a BT control node."""
 
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> Union[ScxmlIf, ScxmlSend]:
+    @staticmethod
+    def get_tag_name() -> str:
+        return "bt_halt_child"
+
+    @staticmethod
+    def generate_bt_event_name(instance_id: int):
         """
-        Convert the BtTickChild to ScxmlSend if the child id is constant and an ScxmlIf otherwise.
+        Generate the plain scxml event name for this Bt Tick instance_id.
         """
-        if isinstance(self._child_seq_id, int):
-            # We know the exact child ID we want to tick
-            assert self._child_seq_id < len(children_ids), (
-                f"Error: SCXML BT Tick Child: invalid child ID {self._child_seq_id} "
-                f"for {len(children_ids)} children."
-            )
-            return ScxmlSend(generate_bt_tick_event(children_ids[self._child_seq_id]))
-        else:
-            # The children to tick depends on the index of the self._child variable at runtime
-            if_bodies = []
-            for child_seq_n, child_id in enumerate(children_ids):
-                if_bodies.append(
-                    (
-                        f"{self._child_seq_id} == {child_seq_n}",
-                        [ScxmlSend(generate_bt_tick_event(child_id))],
-                    )
-                )
-            return ScxmlIf(if_bodies).instantiate_bt_events(instance_id, children_ids)
-
-    def as_xml(self) -> ET.Element:
-        xml_bt_tick_child = ET.Element(BtTickChild.get_tag_name(), {"id": str(self._child_seq_id)})
-        return xml_bt_tick_child
+        return generate_bt_halt_event(instance_id)
 
 
 class BtChildStatus(ScxmlTransition):
