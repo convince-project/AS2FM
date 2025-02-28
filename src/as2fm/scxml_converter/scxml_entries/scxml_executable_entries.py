@@ -57,20 +57,23 @@ EventsToAutomata = Dict[str, Set[str]]
 
 def instantiate_exec_body_bt_events(
     exec_body: Optional[ScxmlExecutionBody], instance_id: int, children_ids: List[int]
-) -> None:
+) -> Optional[ScxmlExecutionBody]:
     """
     Instantiate the behavior tree events in the execution body.
 
     :param exec_body: The execution body to instantiate the BT events in
     :param instance_id: The instance ID of the BT node
     """
-    if exec_body is not None:
-        for entry_id in range(len(exec_body)):
-            event_tag = exec_body[entry_id].get_tag_name()
-            exec_body[entry_id] = exec_body[entry_id].instantiate_bt_events(
-                instance_id, children_ids
-            )
-            assert exec_body[entry_id] is not None, f"Error instantiating BT events in {event_tag}."
+    if exec_body is None:
+        return None
+    processed_body: ScxmlExecutionBody = []
+    for entry in exec_body:
+        processed_entry = entry.instantiate_bt_events(instance_id, children_ids)
+        assert processed_entry is not None and valid_execution_body_entry_types(
+            processed_entry
+        ), f"Error instantiating BT events in {entry.get_tag_name()}: expected to get a list."
+        processed_body.extend(processed_entry)
+    return processed_body
 
 
 def update_exec_body_bt_ports_values(
@@ -185,10 +188,15 @@ class ScxmlIf(ScxmlBase):
 
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
         """Instantiate the behavior tree events in the If action, if available."""
-        for _, exec_body in self._conditional_executions:
-            instantiate_exec_body_bt_events(exec_body, instance_id, children_ids)
-        instantiate_exec_body_bt_events(self._else_execution, instance_id, children_ids)
-        return self
+        expanded_condition_bodies: List[ConditionalExecutionBody] = []
+        for condition, exec_body in self._conditional_executions:
+            expanded_condition_bodies.append(
+                (condition, instantiate_exec_body_bt_events(exec_body, instance_id, children_ids))
+            )
+        expanded_else_body = instantiate_exec_body_bt_events(
+            self._else_execution, instance_id, children_ids
+        )
+        return [ScxmlIf(expanded_condition_bodies, expanded_else_body)]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         for _, exec_body in self._conditional_executions:
@@ -352,7 +360,7 @@ class ScxmlSend(ScxmlBase):
             "Error: SCXML send: BT events should not be found in SCXML send. "
             "Use the 'bt_return_status' ROS-scxml tag instead."
         )
-        return self
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
@@ -455,7 +463,7 @@ class ScxmlAssign(ScxmlBase):
 
     def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
         """This functionality is not needed in this class."""
-        return self
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""

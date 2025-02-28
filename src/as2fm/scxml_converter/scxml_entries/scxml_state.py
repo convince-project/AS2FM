@@ -188,8 +188,8 @@ class ScxmlState(ScxmlBase):
             ), f"Error: SCXML state {self._id}: found invalid transition in state body."
             instantiated_transitions.extend(new_transitions)
         self._body = instantiated_transitions
-        instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
-        instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
+        self._on_entry = instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
+        self._on_exit = instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
         self._update_bt_ports_values(bt_ports_handler)
 
     def _update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:

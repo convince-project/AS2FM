@@ -149,7 +149,7 @@ class BtGenericRequestSend(ScxmlSend):
 
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
-    ) -> Union[ScxmlIf, ScxmlSend]:
+    ) -> ScxmlExecutionBody:
         """
         Convert the BtGenericRequestSend to plain SCXML.
 
@@ -161,7 +161,7 @@ class BtGenericRequestSend(ScxmlSend):
                 f"Error: SCXML {self.get_tag_name()}: invalid child ID {self._child_seq_id} "
                 f"for {len(children_ids)} children."
             )
-            return ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))
+            return [ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))]
         else:
             # The children to tick depends on the index of the self._child variable at runtime
             if_bodies = []
@@ -235,6 +235,15 @@ class BtTickChild(BtGenericRequestSend):
         Generate the plain scxml event name for this Bt Tick instance_id.
         """
         return generate_bt_tick_event(instance_id)
+
+    def check_validity(self) -> bool:
+        if self._child_seq_id == "ALL":
+            print(
+                f"SCXML {self.get_tag_name()} error: "
+                f"cannot send tick to all the node's children at once."
+            )
+            return False
+        return super().check_validity()
 
 
 class BtHaltChild(BtGenericRequestSend):
@@ -374,11 +383,13 @@ class BtReturnStatus(ScxmlSend):
         """We do not expect reading from BT Ports here. Return False!"""
         return False
 
-    def instantiate_bt_events(self, instance_id: int, _) -> ScxmlSend:
-        return ScxmlSend(
-            generate_bt_response_event(instance_id),
-            [ScxmlParam("status", expr=f"{self._status_id}")],
-        )
+    def instantiate_bt_events(self, instance_id: int, _) -> List[ScxmlSend]:
+        return [
+            ScxmlSend(
+                generate_bt_response_event(instance_id),
+                [ScxmlParam("status", expr=f"{self._status_id}")],
+            )
+        ]
 
     def as_xml(self) -> ET.Element:
         return ET.Element(BtReturnStatus.get_tag_name(), {"status": self._status})
