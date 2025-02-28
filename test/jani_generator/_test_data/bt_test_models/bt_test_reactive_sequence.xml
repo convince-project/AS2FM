@@ -2,9 +2,9 @@
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
         <ReactiveSequence name="root_sequence">
-            <Action ID="BtCountTicks" topic_name="tick_count_0" n_ticks_running="0" />
+            <Action ID="BtCountTicks" topic_name="tick_count_0" reset_name="reset_count_0" n_ticks_running="0" />
             <Action ID="AlwaysFailure" />
-            <Action ID="BtCountTicks" topic_name="tick_count_1" n_ticks_running="0" />
+            <Action ID="BtCountTicks" topic_name="tick_count_1" reset_name="reset_count_1" n_ticks_running="0" />
         </ReactiveSequence>
     </BehaviorTree>
 </root>

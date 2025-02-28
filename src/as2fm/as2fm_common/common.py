@@ -107,6 +107,14 @@ def value_to_string(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
+def string_to_bool(value_str: str) -> bool:
+    """
+    Special case for boolean conversion.
+    """
+    assert value_str in ("true", "false"), f"Invalid bool string: {value_str} != 'true'/'false'"
+    return value_str == "true"
+
+
 def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
     """Convert a string to a value of the desired type."""
     value_str = value_str.strip()
@@ -121,6 +129,8 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
             int,
             float,
         ), f"Error: the value {value_str} shall be converted to a base type."
+        if value_type is bool:
+            return string_to_bool(value_str)
         return value_type(value_str)
     else:
         str_entries = value_str.strip("[]").split(",")
