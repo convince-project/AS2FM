@@ -8,13 +8,19 @@
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "comment": "As soon as tick_count_3 is published, all previous tick_counts should be at th expected value",
-                        "step-bounds": {
-                            "lower": 100
-                        },
+                        "comment": "As soon as tick_count_3 is published, all previous tick_counts should be at the expected value",
                         "left": {
-                            "op": "¬",
-                            "exp": "topic_tick_count_3_msg.valid"
+                            "op": "∨",
+                            "left": {
+                                "op": "¬",
+                                "exp": "bt_1000_response.valid"
+                            },
+                            "right": {
+                                "op": "=",
+                                "left": "bt_1000_response.status",
+                                "right": 3,
+                                "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                            }
                         },
                         "op": "U",
                         "right": {
@@ -40,8 +46,9 @@
                                     },
                                     "right": {
                                         "op": "=",
-                                        "left": "topic_tick_count_3_msg.ros_fields__data",
-                                        "right": 1
+                                        "left": "bt_1000_response.status",
+                                        "right": 1,
+                                        "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
                                     }
                                 }
                             }

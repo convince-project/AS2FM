@@ -13,10 +13,12 @@
 
     <!-- The topic used to publish the tick count -->
     <bt_declare_port_in key="topic_name" type="string" />
+    <bt_declare_port_in key="reset_name" type="string" />
     <!-- How many ticks to get before sending out a success -->
     <bt_declare_port_in key="n_ticks_running" type="int8" />
 
     <datamodel>
+        <data id="resets" type="int16" expr="0" />
         <data id="counter" type="int16" expr="0" />
         <!-- Assign this for accessing the port value in conditions... -->
         <data id="ticks_before_success" type="int8">

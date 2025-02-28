@@ -129,9 +129,7 @@ class Event:
 
     def is_removable_bt_interface(self):
         """Check if the BT interface is to be ignored."""
-        return is_bt_halt_event(self.name) and (
-            len(self.senders) == 0 or (len(self.receivers) == 0)
-        )
+        return is_bt_halt_event(self.name) and len(self.senders) == 0
 
 
 class EventsHolder:

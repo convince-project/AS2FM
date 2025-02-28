@@ -8,12 +8,8 @@
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "step-bounds": {
-                            "lower": 100
-                        },
-                        "left": true,
-                        "op": "U",
-                        "right": {
+                        "op": "F",
+                        "exp": {
                             "left": {
                                 "op": "=",
                                 "left": "topic_tick_count_0_msg.ros_fields__data",
