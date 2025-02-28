@@ -156,14 +156,17 @@ class BtGenericRequestSend(ScxmlSend):
         Returns a ScxmlSend if the child id is constant and an ScxmlIf otherwise.
         """
         if isinstance(self._child_seq_id, int):
-            # We know the exact child ID we want to tick
+            # We know the exact child ID we want to send the request to
             assert self._child_seq_id < len(children_ids), (
                 f"Error: SCXML {self.get_tag_name()}: invalid child ID {self._child_seq_id} "
                 f"for {len(children_ids)} children."
             )
             return [ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))]
+        elif self._child_seq_id == "ALL":
+            # We want to send a request to each child
+            return [ScxmlSend(self.generate_bt_event_name(child_id)) for child_id in children_ids]
         else:
-            # The children to tick depends on the index of the self._child variable at runtime
+            # The children id to reach depends on the runtime value of self._child_seq_id
             if_bodies = []
             for child_seq_n, child_id in enumerate(children_ids):
                 if_bodies.append(
@@ -175,6 +178,9 @@ class BtGenericRequestSend(ScxmlSend):
             return ScxmlIf(if_bodies).instantiate_bt_events(instance_id, children_ids)
 
     def as_xml(self) -> ET.Element:
+        """
+        Return the instance content as an XML Element.
+        """
         xml_bt_tick_child = ET.Element(self.get_tag_name(), {"id": str(self._child_seq_id)})
         return xml_bt_tick_child
 
