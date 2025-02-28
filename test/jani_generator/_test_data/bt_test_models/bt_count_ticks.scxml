@@ -34,6 +34,12 @@
         </topic>
     </ros_topic_publisher>
 
+    <ros_topic_publisher type="std_msgs/Int16" name="reset_pub">
+        <topic>
+            <bt_get_input key="reset_name" />
+        </topic>
+    </ros_topic_publisher>
+
     <state id="initial">
         <transition target="error" cond="ticks_before_success &lt; 0" />
         <bt_tick target="initial">
@@ -47,6 +53,13 @@
                 <bt_return_status status="SUCCESS" />
             </if>
         </bt_tick>
+        <bt_halt target="initial">
+            <!-- In a real reset, we should set the counter to 0. For the sake of testing, we do not do it! -->
+            <assign location="resets" expr="resets + 1" />
+            <ros_topic_publish name="reset_pub">
+                <field name="data" expr="resets" />
+            </ros_topic_publish>
+        </bt_halt>
     </state>
 
     <state id="error" />
