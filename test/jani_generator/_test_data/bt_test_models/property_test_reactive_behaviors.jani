@@ -10,15 +10,32 @@
                     "exp": {
                         "op": "F",
                         "exp": {
-                            "left": {
-                                "op": "=",
-                                "left": "topic_tick_count_0_msg.ros_fields__data",
-                                "right": 10
-                            },
                             "op": "∧",
+                            "left": {
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_tick_count_0_msg.ros_fields__data",
+                                    "right": 10
+                                },
+                                "op": "∧",
+                                "right": {
+                                    "op": "¬",
+                                    "exp": "topic_tick_count_1_msg.valid"
+                                }
+                            },
                             "right": {
-                                "op": "¬",
-                                "exp": "topic_tick_count_1_msg.valid"
+                                "comment": "For each tick (that fails), a reset is requested for both children.",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_reset_count_0_msg.ros_fields__data",
+                                    "right": 10
+                                },
+                                "op": "∧",
+                                "right": {
+                                    "op": "=",
+                                    "left": "topic_reset_count_1_msg.ros_fields__data",
+                                    "right": 10
+                                }
                             }
                         }
                     }
