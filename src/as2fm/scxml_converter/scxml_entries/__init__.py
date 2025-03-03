@@ -35,7 +35,7 @@ from .scxml_transition import ScxmlTransition  # noqa: F401
 from .scxml_bt_ticks import (  # noqa: F401
     BtTick,
     BtTickChild,
-    BtChildStatus,
+    BtChildTickStatus,
     BtReturnStatus,
     BtHalt,
     BtHaltChild,
