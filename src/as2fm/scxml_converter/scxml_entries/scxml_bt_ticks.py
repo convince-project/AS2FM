@@ -25,6 +25,7 @@ from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend, ScxmlTran
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
     generate_bt_halt_event,
+    generate_bt_halt_response_event,
     generate_bt_tick_event,
     generate_bt_tick_response_event,
 )
@@ -154,6 +155,23 @@ class BtChildTickStatus(BtGenericStatusHandle):
             self._condition = BtResponse.process_expr(self._condition)
 
 
+class BtChildHaltedHandle(BtGenericStatusHandle):
+    """
+    Process the response received from a BT child.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "bt_child_halted"
+
+    @staticmethod
+    def generate_bt_event_name(instance_id: int):
+        """
+        Generate the plain scxml event name for this Bt Tick Status handler.
+        """
+        return generate_bt_halt_response_event(instance_id)
+
+
 class BtReturnTickStatus(BtGenericStatusSend):
     """
     Send a Bt Tick status response to the BT parent node.
@@ -193,3 +211,24 @@ class BtReturnTickStatus(BtGenericStatusSend):
         ret_xml = super().as_xml()
         ret_xml.set("status", self._status)
         return ret_xml
+
+
+class BtReturnHalted(BtGenericStatusSend):
+    """
+    Send a Bt Tick status response to the BT parent node.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "bt_return_halted"
+
+    @staticmethod
+    def generate_bt_event_name(instance_id: int) -> str:
+        return generate_bt_halt_response_event(instance_id)
+
+    def check_validity(self) -> bool:
+        return True
+
+    def has_bt_blackboard_input(self, _) -> bool:
+        """We do not expect reading from BT Ports here. Return False!"""
+        return False

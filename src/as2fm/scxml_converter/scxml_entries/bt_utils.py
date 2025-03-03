@@ -95,46 +95,54 @@ def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     return f"bt_blackboard_set_{bt_bb_ref_name}"
 
 
-def generate_bt_tick_event(instance_id: str) -> str:
+def generate_bt_tick_event(instance_id: int) -> str:
     """Generate the BT tick event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
     return f"bt_{instance_id}_tick"
 
 
 def is_bt_tick_event(event_name: str) -> bool:
     """Check is the event is used for ticking a BT node."""
-    return re.match(r"^bt_.+_tick$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_tick$", event_name) is not None
 
 
-def generate_bt_halt_event(instance_id: str) -> str:
+def generate_bt_halt_event(instance_id: int) -> str:
     """Generate the BT halt event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
     return f"bt_{instance_id}_halt"
 
 
 def is_bt_halt_event(event_name: str) -> bool:
     """Check is the event is used for halting a BT node."""
-    return re.match(r"^bt_.+_halt$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_halt$", event_name) is not None
 
 
-def generate_bt_tick_response_event(instance_id: str) -> str:
+def generate_bt_tick_response_event(instance_id: int) -> str:
     """Generate the BT response event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
     return f"bt_{instance_id}_response"
 
 
 def is_bt_tick_response_event(event_name: str) -> bool:
     """Check if the event name is for BT node's responses(success, failure, running)."""
-    return re.match(r"^bt_.+_response$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_response$", event_name) is not None
 
 
-def is_bt_event(event_name: str) -> bool:
+def generate_bt_halt_response_event(instance_id: int) -> str:
+    """Generate the BT response event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
+    return f"bt_{instance_id}_halt_response"
+
+
+def is_bt_halt_response_event(event_name: str) -> bool:
+    """Check if the event name is for a BT node's halt response."""
+    return re.match(r"^bt_[0-9]+_halt$", event_name) is not None
+
+
+def is_removed_bt_event(event_name: str) -> bool:
     """Given an event name, returns whether it is related to a BT event or not."""
     bt_events = [f"bt_{suffix}" for suffix in ["tick", "running", "success", "failure"]]
     return event_name in bt_events
-
-
-def replace_bt_event(event_name: str, instance_id: str) -> str:
-    """Given a BT event name, returns the same event including the BT node instance."""
-    assert is_bt_event(event_name), "Error: BT event instantiation: invalid BT event name."
-    return f"bt_{instance_id}_{event_name.removeprefix('bt_')}"
 
 
 def is_blackboard_reference(port_value: str) -> bool:

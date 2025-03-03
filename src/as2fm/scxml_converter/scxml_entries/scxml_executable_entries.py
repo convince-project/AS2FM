@@ -33,7 +33,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
     get_input_variable_as_scxml_expression,
     is_blackboard_reference,
-    is_bt_event,
+    is_removed_bt_event,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
@@ -356,7 +356,7 @@ class ScxmlSend(ScxmlBase):
     def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        assert type(self) is not ScxmlSend or not is_bt_event(self._event), (
+        assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
             "Error: SCXML send: BT events should not be found in SCXML send. "
             "Use the 'bt_return_status' ROS-scxml tag instead."
         )

@@ -28,7 +28,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlRosDeclarationsContainer,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_bt_event
+from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_removed_bt_event
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     EventsToAutomata,
     ScxmlExecutableEntry,
@@ -210,7 +210,7 @@ class ScxmlTransition(ScxmlBase):
         """Instantiate the BT events of this transition."""
         # Make sure to replace received events only for ScxmlTransition objects.
         if type(self) is ScxmlTransition:
-            assert not any(is_bt_event(event) for event in self._events), (
+            assert not any(is_removed_bt_event(event) for event in self._events), (
                 "Error SCXML transition: BT events should not be found in SCXML transitions.",
                 "Use the 'bt_tick' ROS-scxml tag instead.",
             )
