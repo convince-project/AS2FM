@@ -43,9 +43,14 @@
 
     <state id="reset_children">
         <onentry>
-            <bt_halt_child id="child_idx" />
+            <if cond="child_idx &lt; children_count">
+                <bt_halt_child id="child_idx" />
+            </if>
         </onentry>
-        <bt_child_halted id="child_idx" cond="child_idx == (children_count - 1)" target="wait_for_tick">
+        <bt_child_halted id="child_idx" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1" />
+        </bt_child_halted>
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
             <if cond="success_count == children_count">
                 <bt_return_status status="SUCCESS" />
             <elseif cond="failed_child &gt;= 0" />
@@ -57,10 +62,7 @@
             <assign location="success_count" expr="0" />
             <assign location="running_child" expr="-1" />
             <assign location="failed_child" expr="-1" />
-        </bt_child_halted>
-        <bt_child_halted id="child_idx" target="reset_children">
-            <assign location="child_idx" expr="child_idx + 1" />
-        </bt_child_halted>
+        </transition>
     </state>
 
     <state id="tick_children">
