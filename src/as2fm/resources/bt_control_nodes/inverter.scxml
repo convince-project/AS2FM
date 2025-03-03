@@ -27,9 +27,16 @@
     <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
         <bt_tick target="tick_child" />
-        <bt_halt target="wait_for_tick">
+        <bt_halt target="halting_child" />
+    </state>
+
+    <state id="halting_child">
+        <onentry>
             <bt_halt_child id="0" />
-        </bt_halt>
+        </onentry>
+        <bt_child_halted id="0" target="wait_for_tick">
+            <bt_return_halted/>
+        </bt_child_halted>
     </state>
 
     <state id="tick_child">
