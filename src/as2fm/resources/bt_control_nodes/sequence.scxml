@@ -28,6 +28,10 @@
     <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
         <bt_tick target="tick_children"/>
+        <bt_halt target="wait_for_tick">
+            <bt_halt_child id="ALL" />
+            <assign location="current_child_idx" expr="0" />
+        </bt_halt>
     </state>
 
     <state id="tick_children">
@@ -41,6 +45,7 @@
         </bt_child_status>
         <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="wait_for_tick">
             <assign location="current_child_idx" expr="0" />
+            <bt_halt_child id="ALL" />
             <bt_return_status status="FAILURE" />
         </bt_child_status>
         <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
@@ -49,6 +54,7 @@
         <!-- All children returned success -->
         <transition target="wait_for_tick" cond="current_child_idx == children_count">
             <assign location="current_child_idx" expr="0" />
+            <bt_halt_child id="ALL" />
             <bt_return_status status="SUCCESS" />
         </transition>
         <!-- The current_child_idx is out of bounds -->
