@@ -1,6 +1,7 @@
 <scxml name="1000_ReactiveSequence" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
         <data id="success_count" expr="0" type="int8"/>
+        <data expr="-1" id="running_child" type="int8"/>
         <data id="child_idx" expr="0" type="int8"/>
         <data id="children_count" expr="2" type="int8"/>
     </datamodel>
@@ -12,6 +13,13 @@
         <transition target="tick_children" event="bt_1000_tick">
             <assign location="success_count" expr="0"/>
             <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition event="bt_1000_halt" target="wait_for_tick">
+            <send event="bt_1001_halt"/>
+            <send event="bt_1003_halt"/>
+            <assign expr="0" location="success_count"/>
+            <assign expr="0" location="child_idx"/>
+            <assign expr="-1" location="running_child"/>
         </transition>
     </state>
     <state id="tick_children">
@@ -33,31 +41,55 @@
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
         <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 0)">
+            <send event="bt_1001_halt"/>
+            <send event="bt_1003_halt"/>
+            <assign expr="-1" location="running_child"/>
             <send event="bt_1000_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
         <transition target="wait_for_tick" event="bt_1003_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 1)">
+            <send event="bt_1001_halt"/>
+            <send event="bt_1003_halt"/>
+            <assign expr="-1" location="running_child"/>
             <send event="bt_1000_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 0)">
-            <send event="bt_1000_response">
-                <param name="status" expr="3"/>
-            </send>
+        <transition target="reset_other_children" event="bt_1001_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 0)">
+            <assign expr="child_idx" location="running_child"/>
+            <assign expr="0" location="child_idx"/>
         </transition>
-        <transition target="wait_for_tick" event="bt_1003_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 1)">
-            <send event="bt_1000_response">
-                <param name="status" expr="3"/>
-            </send>
+        <transition target="reset_other_children" event="bt_1003_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 1)">
+            <assign expr="child_idx" location="running_child"/>
+            <assign expr="0" location="child_idx"/>
         </transition>
         <transition target="wait_for_tick" cond="success_count == children_count">
+            <send event="bt_1001_halt"/>
+            <send event="bt_1003_halt"/>
+            <assign expr="-1" location="running_child"/>
             <send event="bt_1000_response">
                 <param name="status" expr="1"/>
             </send>
         </transition>
         <transition target="error" cond="child_idx &lt; 0 || child_idx &gt;= children_count"/>
+    </state>
+    <state id="reset_other_children">
+        <transition cond="child_idx &lt; children_count" target="reset_other_children">
+            <if cond="child_idx != running_child">
+                <if cond="child_idx == 0">
+                    <send event="bt_1001_halt"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1003_halt"/>
+                </if>
+            </if>
+            <assign expr="child_idx + 1" location="child_idx"/>
+        </transition>
+        <transition target="wait_for_tick">
+            <send event="bt_1000_response">
+                <param expr="3" name="status"/>
+            </send>
+        </transition>
     </state>
     <state id="error"/>
 </scxml>

@@ -76,6 +76,7 @@
             <if cond="child_idx != running_child">
                 <bt_halt_child id="child_idx"/>
             </if>
+            <assign location="child_idx" expr="child_idx + 1" />
         </transition>
         <transition target="wait_for_tick">
             <bt_return_status status="RUNNING" />

@@ -8,6 +8,9 @@
     </state>
     <state id="wait_for_tick">
         <transition target="tick_child" event="bt_1001_tick"/>
+        <transition event="bt_1001_halt" target="wait_for_tick">
+            <send event="bt_1002_halt"/>
+        </transition>
     </state>
     <state id="tick_child">
         <onentry>
