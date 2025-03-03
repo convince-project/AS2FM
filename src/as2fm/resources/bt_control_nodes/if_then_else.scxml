@@ -29,6 +29,10 @@
         <!-- React to an incoming BT Tick -->
         <bt_tick cond="child_idx == 0" target="tick_condition_child" />
         <bt_tick cond="child_idx > 0" target="tick_exec_child" />
+        <bt_halt target="wait_for_tick">
+            <bt_halt_child id="ALL" />
+            <assign location="child_idx" expr="0" />
+        </bt_halt>
     </state>
 
     <state id="tick_condition_child">
@@ -67,6 +71,12 @@
         <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </bt_child_status>
+        <onexit>
+            <!-- If the child execution finished, reset the children nodes -->
+            <if cond="child_idx == 0">
+                <bt_halt_child id="ALL" />
+            </if>
+        </onexit>
     </state>
 
     <!-- A state to transition to when something did not work -->

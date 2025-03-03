@@ -11,6 +11,7 @@
 
     <datamodel>
         <data id="failure_count" type="int8" expr="0" />
+        <data id="running_child" type="int8" expr="-1" />
         <data id="child_idx" type="int8" expr="0" />
         <data id="children_count" type="int8">
             <expr>
@@ -32,6 +33,12 @@
             <assign location="failure_count" expr="0" />
             <assign location="child_idx" expr="0" />
         </bt_tick>
+        <bt_halt target="wait_for_tick">
+            <bt_halt_child id="ALL" />
+            <assign location="failure_count" expr="0" />
+            <assign location="child_idx" expr="0" />
+            <assign location="running_child" expr="-1" />
+        </bt_halt>
     </state>
 
     <state id="tick_children">
@@ -40,27 +47,40 @@
                 <bt_tick_child id="child_idx"/>
             </if>
         </onentry>
-        <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
-            <bt_return_status status="RUNNING" />
+        <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="reset_other_children">
+            <assign location="running_child" expr="child_idx" />
+            <assign location="child_idx" expr="0" />
         </bt_child_status>
         <bt_child_status id="child_idx" cond="_bt.status == FAILURE" target="tick_children">
             <assign location="failure_count" expr="failure_count + 1" />
             <assign location="child_idx" expr="child_idx + 1" />
         </bt_child_status>
         <bt_child_status id="child_idx" cond="_bt.status == SUCCESS" target="wait_for_tick">
+            <bt_halt_child id="ALL" />
+            <assign location="running_child" expr="-1" />
             <bt_return_status status="SUCCESS" />
         </bt_child_status>
         <!-- Exit conditions -->
-        <!-- All children returned success -->
+        <!-- All children returned failure -->
         <transition target="wait_for_tick" cond="failure_count == children_count">
+            <bt_halt_child id="ALL" />
+            <assign location="running_child" expr="-1" />
             <bt_return_status status="FAILURE" />
         </transition>
-        <!-- We looped over all children, but not enough failures (will never happen) -->
-        <transition target="wait_for_tick" cond="child_idx == children_count">
+        <!-- The child_idx is out of bounds -->
+        <transition target="error" cond="child_idx &lt; 0 || child_idx &gt;= children_count" />
+    </state>
+
+    <state id="reset_other_children">
+        <!-- Reset all children that are not running -->
+        <transition target="reset_other_children" cond="child_idx &lt; children_count">
+            <if cond="child_idx != running_child">
+                <bt_halt_child id="child_idx"/>
+            </if>
+        </transition>
+        <transition target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </transition>
-        <!-- The child_idx is out of bounds -->
-        <transition target="error" cond="child_idx &lt; 0 || child_idx > children_count" />
     </state>
 
     <!-- A state to transition to when something did not work -->
