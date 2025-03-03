@@ -115,12 +115,12 @@ def is_bt_halt_event(event_name: str) -> bool:
     return re.match(r"^bt_.+_halt$", event_name) is not None
 
 
-def generate_bt_response_event(instance_id: str) -> str:
+def generate_bt_tick_response_event(instance_id: str) -> str:
     """Generate the BT response event name for a given BT node instance."""
     return f"bt_{instance_id}_response"
 
 
-def is_bt_response_event(event_name: str) -> bool:
+def is_bt_tick_response_event(event_name: str) -> bool:
     """Check if the event name is for BT node's responses(success, failure, running)."""
     return re.match(r"^bt_.+_response$", event_name) is not None
 

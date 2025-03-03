@@ -33,8 +33,8 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
     generate_bt_halt_event,
-    generate_bt_response_event,
     generate_bt_tick_event,
+    generate_bt_tick_response_event,
     process_bt_child_seq_id,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
@@ -337,7 +337,7 @@ class BtChildStatus(ScxmlTransition):
             )
             target_child_id = children_ids[self._child_seq_id]
             return ScxmlTransition(
-                self._targets, [generate_bt_response_event(target_child_id)], plain_cond_expr
+                self._targets, [generate_bt_tick_response_event(target_child_id)], plain_cond_expr
             ).instantiate_bt_events(instance_id, children_ids)
         else:
             # Handling a generic child ID, return a transition for each child
@@ -347,7 +347,7 @@ class BtChildStatus(ScxmlTransition):
                 # Make a copy per set of targets: might create issues when adding targets otherwise
                 generated_transition = ScxmlTransition(
                     deepcopy(self._targets),
-                    [generate_bt_response_event(child_id)],
+                    [generate_bt_tick_response_event(child_id)],
                     condition_prefix + f"({self._child_seq_id} == {child_seq_n})",
                 ).instantiate_bt_events(instance_id, children_ids)
                 assert (
@@ -392,7 +392,7 @@ class BtReturnStatus(ScxmlSend):
     def instantiate_bt_events(self, instance_id: int, _) -> List[ScxmlSend]:
         return [
             ScxmlSend(
-                generate_bt_response_event(instance_id),
+                generate_bt_tick_response_event(instance_id),
                 [ScxmlParam("status", expr=f"{self._status_id}")],
             )
         ]
