@@ -36,7 +36,7 @@ from .scxml_bt_ticks import (  # noqa: F401
     BtTick,
     BtTickChild,
     BtChildTickStatus,
-    BtReturnStatus,
+    BtReturnTickStatus,
     BtHalt,
     BtHaltChild,
 )  # noqa: F401
