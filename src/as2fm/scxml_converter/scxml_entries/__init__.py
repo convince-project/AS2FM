@@ -32,7 +32,7 @@ from .scxml_executable_entries import (  # noqa: F401
 )  # noqa: F401
 from .scxml_transition_target import ScxmlTransitionTarget  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
-from .scxml_bt_ticks import (  # noqa: F401
+from .scxml_bt_comm_interfaces import (  # noqa: F401
     BtTick,
     BtTickChild,
     BtChildTickStatus,
