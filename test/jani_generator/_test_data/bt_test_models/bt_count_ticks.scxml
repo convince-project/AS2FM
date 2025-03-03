@@ -59,6 +59,7 @@
             <ros_topic_publish name="reset_pub">
                 <field name="data" expr="resets" />
             </ros_topic_publish>
+            <bt_return_halted/>
         </bt_halt>
     </state>
 

@@ -155,9 +155,6 @@ class BtGenericRequestSend(ScxmlSend):
                 f"for {len(children_ids)} children."
             )
             return [ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))]
-        elif self._child_seq_id == "ALL":
-            # We want to send a request to each child
-            return [ScxmlSend(self.generate_bt_event_name(child_id)) for child_id in children_ids]
         else:
             # The children id to reach depends on the runtime value of self._child_seq_id
             if_bodies = []

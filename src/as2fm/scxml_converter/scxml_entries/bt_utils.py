@@ -136,7 +136,7 @@ def generate_bt_halt_response_event(instance_id: int) -> str:
 
 def is_bt_halt_response_event(event_name: str) -> bool:
     """Check if the event name is for a BT node's halt response."""
-    return re.match(r"^bt_[0-9]+_halt$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_halt_response$", event_name) is not None
 
 
 def is_removed_bt_event(event_name: str) -> bool:

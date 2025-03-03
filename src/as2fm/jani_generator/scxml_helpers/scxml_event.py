@@ -23,6 +23,7 @@ from typing import Dict, List, Optional
 from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_bt_halt_event,
+    is_bt_halt_response_event,
     is_bt_tick_event,
     is_bt_tick_response_event,
 )
@@ -111,13 +112,13 @@ class Event:
     def is_removable_interface(self):
         """Indicate if the interface contained by this event shall be removed."""
         # TODO: Check if it makes sense to auto-generate the bt_halt handling
-        return self.is_removable_action_event() or self.is_removable_bt_interface()
+        return (self.is_removable_action_event() or self.is_removable_bt_interface()) and (
+            len(self.senders) == 0
+        )
 
     def is_removable_action_event(self):
         """Check if the action interface is to be ignored."""
-        return (self.is_action_feedback_event() or self.is_action_rejected_event()) and (
-            len(self.senders) == 0
-        )
+        return self.is_action_feedback_event() or self.is_action_rejected_event()
 
     def is_action_feedback_event(self):
         """Check if the event is an action feedback event."""
@@ -129,7 +130,7 @@ class Event:
 
     def is_removable_bt_interface(self):
         """Check if the BT interface is to be ignored."""
-        return is_bt_halt_event(self.name) and len(self.senders) == 0
+        return is_bt_halt_event(self.name)
 
 
 class EventsHolder:
@@ -163,6 +164,7 @@ def is_event_synched(event_name: str) -> bool:
         is_bt_tick_event(event_name)
         or is_bt_halt_event(event_name)
         or is_bt_tick_response_event(event_name)
+        or is_bt_halt_response_event(event_name)
         or is_action_request_event(event_name)
         or is_action_result_event(event_name)
         or is_action_thread_event(event_name)

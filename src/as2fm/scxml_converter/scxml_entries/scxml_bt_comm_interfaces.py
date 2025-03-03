@@ -95,15 +95,6 @@ class BtTickChild(BtGenericRequestSend):
         """
         return generate_bt_tick_event(instance_id)
 
-    def check_validity(self) -> bool:
-        if self._child_seq_id == "ALL":
-            print(
-                f"SCXML {self.get_tag_name()} error: "
-                f"cannot send tick to all the node's children at once."
-            )
-            return False
-        return super().check_validity()
-
 
 class BtHaltChild(BtGenericRequestSend):
     """Halt one child of a BT control node."""
