@@ -1,7 +1,8 @@
 <scxml name="1000_ReactiveSequence" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
         <data id="success_count" expr="0" type="int8"/>
-        <data expr="-1" id="running_child" type="int8"/>
+        <data id="running_child" expr="-1" type="int8"/>
+        <data id="failed_child" expr="-1" type="int8"/>
         <data id="child_idx" expr="0" type="int8"/>
         <data id="children_count" expr="2" type="int8"/>
     </datamodel>
@@ -10,16 +11,48 @@
         <transition target="wait_for_tick"/>
     </state>
     <state id="wait_for_tick">
-        <transition target="tick_children" event="bt_1000_tick">
+        <transition event="bt_1000_tick" target="tick_children">
             <assign location="success_count" expr="0"/>
             <assign location="child_idx" expr="0"/>
+            <assign location="failed_child" expr="-1"/>
         </transition>
-        <transition event="bt_1000_halt" target="wait_for_tick">
-            <send event="bt_1001_halt"/>
-            <send event="bt_1002_halt"/>
-            <assign expr="0" location="success_count"/>
-            <assign expr="0" location="child_idx"/>
-            <assign expr="-1" location="running_child"/>
+        <transition event="bt_1000_halt" target="reset_children">
+            <assign location="child_idx" expr="0"/>
+            <assign location="failed_child" expr="-1"/>
+        </transition>
+    </state>
+    <state id="reset_children">
+        <onentry>
+            <if cond="child_idx &lt; children_count">
+                <if cond="child_idx == 0">
+                    <send event="bt_1001_halt"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1002_halt"/>
+                </if>
+            </if>
+        </onentry>
+        <transition event="bt_1001_halt_response" cond="(child_idx == 0)" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition event="bt_1002_halt_response" cond="(child_idx == 1)" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
+            <if cond="success_count == children_count">
+                <send event="bt_1000_response">
+                    <param name="status" expr="1"/>
+                </send>
+                <elseif cond="failed_child &gt;= 0"/>
+                <send event="bt_1000_response">
+                    <param name="status" expr="2"/>
+                </send>
+                <else/>
+                <send event="bt_1000_halt_response"/>
+            </if>
+            <assign location="child_idx" expr="0"/>
+            <assign location="success_count" expr="0"/>
+            <assign location="running_child" expr="-1"/>
+            <assign location="failed_child" expr="-1"/>
         </transition>
     </state>
     <state id="tick_children">
@@ -32,62 +65,57 @@
                 </if>
             </if>
         </onentry>
-        <transition target="tick_children" event="bt_1001_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 0)">
+        <transition event="bt_1001_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 0)" target="tick_children">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition target="tick_children" event="bt_1002_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 1)">
+        <transition event="bt_1002_response" cond="(_event.data.status == 1) &amp;&amp; (child_idx == 1)" target="tick_children">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition target="wait_for_tick" event="bt_1001_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 0)">
-            <send event="bt_1001_halt"/>
-            <send event="bt_1002_halt"/>
-            <assign expr="-1" location="running_child"/>
-            <send event="bt_1000_response">
-                <param name="status" expr="2"/>
-            </send>
+        <transition event="bt_1001_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 0)" target="reset_children">
+            <assign location="failed_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 1)">
-            <send event="bt_1001_halt"/>
-            <send event="bt_1002_halt"/>
-            <assign expr="-1" location="running_child"/>
-            <send event="bt_1000_response">
-                <param name="status" expr="2"/>
-            </send>
+        <transition event="bt_1002_response" cond="(_event.data.status == 2) &amp;&amp; (child_idx == 1)" target="reset_children">
+            <assign location="failed_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
         </transition>
-        <transition target="reset_other_children" event="bt_1001_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 0)">
-            <assign expr="child_idx" location="running_child"/>
-            <assign expr="0" location="child_idx"/>
+        <transition event="bt_1001_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 0)" target="reset_other_children">
+            <assign location="running_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
         </transition>
-        <transition target="reset_other_children" event="bt_1002_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 1)">
-            <assign expr="child_idx" location="running_child"/>
-            <assign expr="0" location="child_idx"/>
+        <transition event="bt_1002_response" cond="(_event.data.status == 3) &amp;&amp; (child_idx == 1)" target="reset_other_children">
+            <assign location="running_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
         </transition>
-        <transition target="wait_for_tick" cond="success_count == children_count">
-            <send event="bt_1001_halt"/>
-            <send event="bt_1002_halt"/>
-            <assign expr="-1" location="running_child"/>
-            <send event="bt_1000_response">
-                <param name="status" expr="1"/>
-            </send>
+        <transition cond="success_count == children_count" target="reset_children">
+            <assign location="child_idx" expr="0"/>
         </transition>
-        <transition target="error" cond="child_idx &lt; 0 || child_idx &gt;= children_count"/>
+        <transition cond="child_idx &lt; 0 || child_idx &gt;= children_count" target="error"/>
     </state>
     <state id="reset_other_children">
-        <transition cond="child_idx &lt; children_count" target="reset_other_children">
-            <if cond="child_idx != running_child">
+        <onentry>
+            <if cond="child_idx == running_child">
+                <assign location="child_idx" expr="child_idx + 1"/>
+            </if>
+            <if cond="child_idx &lt; children_count">
                 <if cond="child_idx == 0">
                     <send event="bt_1001_halt"/>
                     <elseif cond="child_idx == 1"/>
                     <send event="bt_1002_halt"/>
                 </if>
             </if>
-            <assign expr="child_idx + 1" location="child_idx"/>
+        </onentry>
+        <transition event="bt_1001_halt_response" cond="(child_idx == 0)" target="reset_other_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition target="wait_for_tick">
+        <transition event="bt_1002_halt_response" cond="(child_idx == 1)" target="reset_other_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
             <send event="bt_1000_response">
-                <param expr="3" name="status"/>
+                <param name="status" expr="3"/>
             </send>
         </transition>
     </state>

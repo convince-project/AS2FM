@@ -4,10 +4,10 @@
     </datamodel>
     <ros_topic_subscriber name="alarm" topic="alarm" type="std_msgs/Bool"/>
     <state id="initial">
-        <ros_topic_callback name="alarm" target="initial">
+        <ros_topic_callback target="initial" name="alarm">
             <assign location="last_msg" expr="_msg.data"/>
         </ros_topic_callback>
-        <transition target="initial" event="bt_1002_tick">
+        <transition event="bt_1002_tick" target="initial">
             <if cond="last_msg">
                 <send event="bt_1002_response">
                     <param name="status" expr="1"/>

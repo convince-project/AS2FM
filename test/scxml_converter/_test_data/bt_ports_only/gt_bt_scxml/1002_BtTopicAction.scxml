@@ -4,7 +4,7 @@
     </datamodel>
     <ros_topic_publisher name="answer_pub" topic="answer_incremented" type="std_msgs/Int16"/>
     <state id="initial">
-        <transition target="initial" event="bt_1002_tick">
+        <transition event="bt_1002_tick" target="initial">
             <assign location="number" expr="43"/>
             <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number"/>

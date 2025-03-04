@@ -1,7 +1,7 @@
 <scxml name="1003_BtTopicAction" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
     <ros_topic_publisher name="charge" topic="charge" type="std_msgs/Empty"/>
     <state id="initial">
-        <transition target="initial" event="bt_1003_tick">
+        <transition event="bt_1003_tick" target="initial">
             <ros_topic_publish name="charge"/>
             <send event="bt_1003_response">
                 <param name="status" expr="1"/>
