@@ -28,6 +28,21 @@ from as2fm.as2fm_common.common import is_comment
 INTERNAL_FILEPATH_ATTR = "_filepath"
 
 
+class AS2FM_SCXML_Parsing_Error(Exception):
+    """
+    Custom exception to report problems when parsing an SCXML File.
+    """
+
+    def __init__(self, element: "lxml.etree._Element", message: str):
+        """
+        Initialize with:
+
+        :param element: The XML element that caused the error
+        :param message: The message to display
+        """
+        super().__init__(error(element, message))
+
+
 class Severity(Enum):
     """
     Enum to represent the severity of the error.
@@ -76,6 +91,7 @@ def _assemble_message(severity: Severity, element: "lxml.etree._Element", messag
         "The element must have a filepath attribute. This is set by "
         "`as2fm_common.logging.set_filepath_for_all_elements`."
     )
+
     severity_initial = severity.name[0]
     path = element.attrib[INTERNAL_FILEPATH_ATTR]
     return f"{severity_initial} ({path}:{element.sourceline}) {message}"

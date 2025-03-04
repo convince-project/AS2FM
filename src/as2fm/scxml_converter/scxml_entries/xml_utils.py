@@ -18,6 +18,7 @@ from typing import Iterable, List, Optional, Type, Union
 import lxml.etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import AS2FM_SCXML_Parsing_Error, error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
@@ -93,7 +94,10 @@ def read_value_from_xml_child(
     xml_child = xml_tree.findall(child_tag)
     if xml_child is None or len(xml_child) == 0:
         if not none_allowed:
-            print(f"Error: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
+            raise AS2FM_SCXML_Parsing_Error(
+                xml_tree,
+                f"Error: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.",
+            )
         return None
     if len(xml_child) > 1:
         print(f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
@@ -143,7 +147,10 @@ def read_value_from_xml_arg_or_child(
             xml_tree, tag_name, valid_types, none_allowed=none_allowed
         )
     if not none_allowed:
-        assert (
-            read_value is not None
-        ), f"Error: SCXML conversion of {scxml_type.get_tag_name()}: Missing argument {tag_name}."
+        if read_value is None:
+            error(
+                xml_tree,
+                f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
+                + f"Missing argument {tag_name}.",
+            )
     return read_value
