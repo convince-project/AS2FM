@@ -51,6 +51,11 @@
             </if>
             <bt_return_status status="SUCCESS" />
         </bt_tick>
+        <bt_halt target="running">
+            <assign location="curr_x" expr="0" />
+            <assign location="curr_y" expr="0" />
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>
