@@ -11,6 +11,7 @@
 
     <datamodel>
         <data id="current_child_idx" type="int8" expr="0" />
+        <data id="seq_success" type="bool" expr="false" />
         <data id="children_count" type="int8">
             <expr>
                 <bt_get_input key="CHILDREN_COUNT" />
@@ -28,10 +29,29 @@
     <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
         <bt_tick target="tick_children"/>
-        <bt_halt target="wait_for_tick">
-            <bt_halt_child id="ALL" />
+        <bt_halt target="reset_children">
             <assign location="current_child_idx" expr="0" />
         </bt_halt>
+    </state>
+
+    <state id="reset_children">
+        <onentry>
+            <if cond="current_child_idx &lt; children_count">
+                <bt_halt_child id="current_child_idx" />
+            </if>
+        </onentry>
+        <bt_child_halted id="current_child_idx" target="reset_children">
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </bt_child_halted>
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <if cond="seq_success">
+                <bt_return_status status="SUCCESS" />
+            <else/>
+                <bt_return_halted/>
+            </if>
+            <assign location="current_child_idx" expr="0" />
+            <assign location="seq_success" expr="false" />
+        </transition>
     </state>
 
     <state id="tick_children">
@@ -43,24 +63,29 @@
         <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="tick_children">
             <assign location="current_child_idx" expr="current_child_idx + 1" />
         </bt_child_status>
-        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="wait_for_tick">
-            <!-- Corresponding to 1st iteration from here:
-            https://github.com/BehaviorTree/BehaviorTree.CPP/blob/4.6.2/src/controls/sequence_with_memory_node.cpp#L51
-            The next iterations shall play no role... -->
-            <bt_halt_child id="current_child_idx" />
-            <bt_return_status status="FAILURE" />
-        </bt_child_status>
+        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="halt_current_child" />
         <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </bt_child_status>
         <!-- All children returned success -->
-        <transition target="wait_for_tick" cond="current_child_idx == children_count">
+        <transition target="reset_children" cond="current_child_idx == children_count">
             <assign location="current_child_idx" expr="0" />
-            <bt_halt_child id="ALL" />
-            <bt_return_status status="SUCCESS" />
+            <assign location="seq_success" expr="true" />
         </transition>
         <!-- The current_child_idx is out of bounds -->
         <transition target="error" cond="current_child_idx &lt; 0 || current_child_idx &gt; children_count" />
+    </state>
+
+    <state id="halt_current_child">
+        <!-- The halt here corresponds to the 1st iteration from here:
+        https://github.com/BehaviorTree/BehaviorTree.CPP/blob/4.6.2/src/controls/sequence_with_memory_node.cpp#L51
+        The next iterations shall play no role... -->
+        <onentry>
+            <bt_halt_child id="current_child_idx" />
+        </onentry>
+        <bt_child_halted id="current_child_idx" target="wait_for_tick">
+            <bt_return_status status="FAILURE" />
+        </bt_child_halted>
     </state>
 
     <!-- A state to transition to when something did not work -->
