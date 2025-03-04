@@ -29,6 +29,10 @@
                 <bt_return_status status="SUCCESS" />
             </if>
         </bt_tick>
+        <bt_halt target="initial">
+            <!-- Do not reset the dock_dist here -->
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>
