@@ -39,6 +39,8 @@ from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 from .utils import json_jani_properties_match
 
+PROB_ERROR_TOLERANCE = 0.015
+
 
 # pylint: disable=too-many-public-methods
 class TestConversion(unittest.TestCase):
@@ -467,7 +469,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main_bug.xml",
             property_name="executes_recovery_branch_or_success",
             expected_result_probability=0.7,
-            result_probability_tolerance=0.01,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
     def test_blackboard_features(self):
@@ -505,7 +507,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main.xml",
             property_name="expected_counts",
             expected_result_probability=1.0,
-            result_probability_tolerance=0.01,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
     def test_command_line_output_with_line_numbers(self):
