@@ -18,6 +18,9 @@
             <bt_set_output key="bb_var" expr="bb_var" />
             <bt_return_status status="SUCCESS" />
         </bt_tick>
+        <bt_halt target="running">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>
