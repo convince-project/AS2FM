@@ -42,8 +42,8 @@ class ScxmlParam(ScxmlBase):
     def get_tag_name() -> str:
         return "param"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlParam":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_attribute(ScxmlParam, xml_tree, "name")

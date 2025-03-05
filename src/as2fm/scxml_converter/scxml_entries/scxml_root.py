@@ -54,8 +54,8 @@ class ScxmlRoot(ScxmlBase):
     def get_tag_name() -> str:
         return "scxml"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)

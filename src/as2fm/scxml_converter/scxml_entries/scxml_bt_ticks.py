@@ -71,8 +71,8 @@ class BtTick(ScxmlTransition):
     def get_tag_name() -> str:
         return "bt_tick"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtTick":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtTick":
         assert_xml_tag_ok(BtTick, xml_tree)
         condition: Optional[str] = get_xml_attribute(
             BtTick, xml_tree, "cond", undefined_allowed=True
@@ -126,8 +126,8 @@ class BtTickChild(ScxmlSend):
     def get_tag_name() -> str:
         return "bt_tick_child"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtTickChild":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtTickChild":
         assert_xml_tag_ok(BtTickChild, xml_tree)
         # Proposal: to avoid confusion, we could name the xml argument seq_id, too
         # child_seq_id = n -> the n-th children of the control node in the BT XML
@@ -188,8 +188,8 @@ class BtChildStatus(ScxmlTransition):
     def get_tag_name() -> str:
         return "bt_child_status"
 
-    @staticmethod
-    def from_xml_tree(xml_tree):
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtChildStatus":
         assert_xml_tag_ok(BtChildStatus, xml_tree)
         # Same as in BtTickChild
         child_seq_id = get_xml_attribute(BtChildStatus, xml_tree, "id")
@@ -284,8 +284,8 @@ class BtReturnStatus(ScxmlSend):
     def get_tag_name() -> str:
         return "bt_return_status"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtReturnStatus":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtReturnStatus":
         assert_xml_tag_ok(BtReturnStatus, xml_tree)
         status = get_xml_attribute(BtReturnStatus, xml_tree, "status")
         return BtReturnStatus(status)

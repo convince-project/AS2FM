@@ -34,8 +34,8 @@ class RosTimeRate(RosDeclaration):
     def get_tag_name() -> str:
         return "ros_time_rate"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosTimeRate":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)
         timer_name = get_xml_attribute(RosTimeRate, xml_tree, "name")

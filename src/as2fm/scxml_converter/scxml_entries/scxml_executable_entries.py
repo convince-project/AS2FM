@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     ScxmlBase,
@@ -105,8 +106,8 @@ class ScxmlIf(ScxmlBase):
     def get_tag_name() -> str:
         return "if"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlIf":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
 
@@ -276,8 +277,8 @@ class ScxmlSend(ScxmlBase):
     def get_tag_name() -> str:
         return "send"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlSend":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
 
@@ -413,13 +414,12 @@ class ScxmlAssign(ScxmlBase):
     def get_tag_name() -> str:
         return "assign"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlAssign":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
 
         :param xml_tree: The XML tree to create the object from.
-        :param cb_type: The kind of callback executing this SCXML entry.
         """
         assert_xml_tag_ok(ScxmlAssign, xml_tree)
         location = get_xml_attribute(ScxmlAssign, xml_tree, "location")
@@ -559,9 +559,9 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     )
     tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
     exec_tag = xml_tree.tag
-    assert (
-        exec_tag in tag_to_cls
-    ), f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
+    assert exec_tag in tag_to_cls, get_error_msg(
+        xml_tree, f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
+    )
     return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 

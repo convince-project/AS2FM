@@ -17,6 +17,8 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from typing import Optional
+
 from lxml import etree as ET
 
 
@@ -28,10 +30,28 @@ class ScxmlBase:
         """Get the tag name of the XML element."""
         raise NotImplementedError
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlBase":
-        """Create a ScxmlBase object from an XML tree."""
+    @classmethod
+    def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlBase":
+        """External interface to create a ScxmlBase object from an XML tree."""
+        instance = cls.from_xml_tree_impl(xml_tree)
+        instance.set_xml_tree(xml_tree)
+        return instance
+
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlBase":
+        """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
+
+    def set_xml_tree(self, xml_tree: ET.Element):
+        """Set the xml_element this object was made from"""
+        self.xml_tree = xml_tree
+
+    def get_xml_tree(self) -> Optional[ET.Element]:
+        """Get the xml_element this object was made from."""
+        try:
+            return self.xml_tree
+        except AttributeError:
+            return None
 
     def check_validity(self) -> bool:
         """Check if the object is valid."""

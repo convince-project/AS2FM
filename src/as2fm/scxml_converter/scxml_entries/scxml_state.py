@@ -22,6 +22,7 @@ from typing import List, Sequence, Union
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutableEntry,
@@ -76,11 +77,13 @@ class ScxmlState(ScxmlBase):
                 assert child.tag in (
                     "onentry",
                     "onexit",
-                ), f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
+                ), get_error_msg(
+                    xml_tree, f"Error: SCXML state {state_id}: unexpected tag {child.tag}."
+                )
         return transitions
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlState":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlState.get_tag_name()

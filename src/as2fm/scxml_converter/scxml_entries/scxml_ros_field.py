@@ -40,8 +40,8 @@ class RosField(ScxmlParam):
     def get_tag_name() -> str:
         return "field"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosField":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_attribute(RosField, xml_tree, "name")
