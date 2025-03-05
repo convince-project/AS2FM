@@ -1,4 +1,4 @@
-# Copyright (c) 2024 - for information on the respective copyright owner
+# Copyright (c) 2025 - for information on the respective copyright owner
 # see the NOTICE file
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -146,7 +146,7 @@ class BtGenericRequestSend(ScxmlSend):
         """
         Convert the BtGenericRequestSend to plain SCXML.
 
-        Returns a ScxmlSend if the child id is constant and an ScxmlIf otherwise.
+        Returns an ScxmlSend if the child id is constant and an ScxmlIf otherwise.
         """
         if isinstance(self._child_seq_id, int):
             # We know the exact child ID we want to send the request to
@@ -226,9 +226,9 @@ class BtGenericStatusHandle(ScxmlTransition):
         condition: Optional[str] = None,
     ):
         """
-        Generate an instance of an handler for a generic BT Child reply.
+        Generate an instance of a handler for a generic BT Child reply.
 
-        :param child_seq_id: Which BT children is the response related to.
+        :param child_seq_id: Which BT child is the response related to.
         :param targets: The targets to use for transitioning to new states.
         :param condition: The condition to check before transitioning.
         """

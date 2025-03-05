@@ -50,7 +50,7 @@ class BtTick(BtGenericRequestHandle):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick instance_id.
+        Generate the plain scxml event name for this BT tick instance_id.
         """
         return generate_bt_tick_event(instance_id)
 
@@ -67,7 +67,7 @@ class BtHalt(BtGenericRequestHandle):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick instance_id.
+        Generate the plain scxml event name for this BT tick instance_id.
         """
         return generate_bt_halt_event(instance_id)
 
@@ -91,7 +91,7 @@ class BtTickChild(BtGenericRequestSend):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick instance_id.
+        Generate the plain scxml event name for this BT tick instance_id.
         """
         return generate_bt_tick_event(instance_id)
 
@@ -106,7 +106,7 @@ class BtHaltChild(BtGenericRequestSend):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick instance_id.
+        Generate the plain scxml event name for this BT tick instance_id.
         """
         return generate_bt_halt_event(instance_id)
 
@@ -123,7 +123,7 @@ class BtChildTickStatus(BtGenericStatusHandle):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick Status handler.
+        Generate the plain scxml event name for this BT tick Status handler.
         """
         return generate_bt_tick_response_event(instance_id)
 
@@ -136,9 +136,9 @@ class BtChildTickStatus(BtGenericStatusHandle):
         """
         Generate a BtChildTickStatus instance.
 
-        :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
-        :param targets: The targets to use for transitioning to new states.
-        :param condition: The condition to check before transitioning.
+        :param child_seq_id: Which BT control node children to tick (relative to the BT-XML file).
+        :param targets: All possible targets available when executing this transition.
+        :param condition: A condition that must be satisfied before executing this transition.
         """
         super().__init__(child_seq_id, targets, condition)
         if self._condition is not None:
@@ -158,14 +158,14 @@ class BtChildHaltedHandle(BtGenericStatusHandle):
     @staticmethod
     def generate_bt_event_name(instance_id: int):
         """
-        Generate the plain scxml event name for this Bt Tick Status handler.
+        Generate the plain scxml event name for this BT tick Status handler.
         """
         return generate_bt_halt_response_event(instance_id)
 
 
 class BtReturnTickStatus(BtGenericStatusSend):
     """
-    Send a Bt Tick status response to the BT parent node.
+    Send a BT tick status response to the BT parent node.
     """
 
     @staticmethod
@@ -206,7 +206,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
 
 class BtReturnHalted(BtGenericStatusSend):
     """
-    Send a Bt Tick status response to the BT parent node.
+    Send a BT tick status response to the BT parent node.
     """
 
     @staticmethod

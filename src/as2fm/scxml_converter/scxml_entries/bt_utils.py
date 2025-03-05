@@ -113,7 +113,7 @@ def generate_bt_halt_event(instance_id: int) -> str:
 
 
 def is_bt_halt_event(event_name: str) -> bool:
-    """Check is the event is used for halting a BT node."""
+    """Check if the event is used for halting a BT node."""
     return re.match(r"^bt_[0-9]+_halt$", event_name) is not None
 
 
