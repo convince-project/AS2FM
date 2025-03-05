@@ -28,21 +28,6 @@ from as2fm.as2fm_common.common import is_comment
 INTERNAL_FILEPATH_ATTR = "_filepath"
 
 
-class AS2FM_SCXML_Parsing_Error(Exception):
-    """
-    Custom exception to report problems when parsing an SCXML File.
-    """
-
-    def __init__(self, element: "lxml.etree._Element", message: str):
-        """
-        Initialize with:
-
-        :param element: The XML element that caused the error
-        :param message: The message to display
-        """
-        super().__init__(error(element, message))
-
-
 class Severity(Enum):
     """
     Enum to represent the severity of the error.
@@ -97,7 +82,7 @@ def _assemble_message(severity: Severity, element: "lxml.etree._Element", messag
     return f"{severity_initial} ({path}:{element.sourceline}) {message}"
 
 
-def error(element: "lxml.etree._Element", message: str) -> str:
+def get_error_msg(element: "lxml.etree._Element", message: str) -> str:
     """
     Log an error message.
 
@@ -108,7 +93,7 @@ def error(element: "lxml.etree._Element", message: str) -> str:
     return _assemble_message(Severity.ERROR, element, message)
 
 
-def warn(element: "lxml.etree._Element", message: str) -> str:
+def get_warn_msg(element: "lxml.etree._Element", message: str) -> str:
     """
     Log a warning message.
 
@@ -119,7 +104,7 @@ def warn(element: "lxml.etree._Element", message: str) -> str:
     return _assemble_message(Severity.WARNING, element, message)
 
 
-def info(element: "lxml.etree._Element", message: str) -> str:
+def get_info_msg(element: "lxml.etree._Element", message: str) -> str:
     """
     Log an info message.
 
@@ -128,3 +113,14 @@ def info(element: "lxml.etree._Element", message: str) -> str:
     :return: The message with the line number
     """
     return _assemble_message(Severity.INFO, element, message)
+
+
+def log_error(element: "lxml.etree._Element", message: str) -> None:
+    """
+    Log an error message and print it.
+
+    :param element: The element that caused the error
+    :param message: The message
+    """
+    error_msg = get_error_msg(element, message)
+    print(error_msg)
