@@ -243,11 +243,19 @@ The BT plugin `AlwaysSuccess`, that returns `SUCCESS` each time it is ticked, ca
             <bt_tick target="idle">
                 <bt_return_status status="SUCCESS" />
             </bt_tick>
+            <bt_halt target="idle">
+                <bt_return_halted/>
+            </bt_halt>
         </state>
     </scxml>
 
 In this example, there is only the `idle` state, always listening for an incoming `bt_tick` event.
 When the tick is received, the plugin starts executing the body of the `bt_tick` tag, that returns a `SUCCESS` response and starts listening for a new `bt_tick`.
+
+The BT plugin could receive also an `halt` request from the BT controller, that starts the execution of the `bt_halt` body.
+In this example the `bt_halt` body contains only the `bt_return_halted` tag, that signals to the node that requested the halt that this was handled.
+
+All BT plugins are expected to contain at least `bt_tick` and `bt_halt` tags.
 
 Additionally, it is possible to model BT control nodes, that can send ticks to their children (that, in turns, are BT nodes as well) and receive their responses:
 
@@ -270,6 +278,16 @@ Additionally, it is possible to model BT control nodes, that can send ticks to t
             <transition target="error" cond="children_count != 1" />
             <!-- React to an incoming BT Tick -->
             <bt_tick target="tick_child" />
+            <bt_halt target="reset_child" />
+        </state>
+
+        <state id="reset_child">
+            <onentry>
+                <bt_halt_child id="0" />
+            </onentry>
+            <bt_child_halted id="0" target="wait_for_tick">
+                <bt_return_halted/>
+            </bt_child_halted>
         </state>
 
         <state id="tick_child">
@@ -294,6 +312,8 @@ Additionally, it is possible to model BT control nodes, that can send ticks to t
 
 In this example, the `Inverter` control node waits for a tick, then sends a tick to its child (identified by the id `0`), and waits for the response.
 Once the child response is available, the control node inverts the response and sends it back to the control node that ticked it in the first place.
+
+Similarly, in case it receives a halt request, the node sends a halt request to its child and waits for its response, before responding to its parent node that the halting request was fulfilled.
 
 In this model, the `CHILDREN_COUNT` BT port is used to access the number of children of a control node instance, to check it is correctly configured.
 
