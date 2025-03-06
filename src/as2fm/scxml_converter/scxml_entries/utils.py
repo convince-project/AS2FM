@@ -109,7 +109,9 @@ class CallbackType(Enum):
 
 def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
     """
-    Extract the tags and the associated classes from the provided class and related subclasses.
+    Generate a map from (xml) tags to their associated classes.
+
+    The map is generated for the provided class and all its subclasses.
     """
     ret_dict: Dict[str, Type[ScxmlBase]] = {}
     try:

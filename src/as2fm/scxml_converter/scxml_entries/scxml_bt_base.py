@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-SCXML entries related to Behavior Tree Ticks and related responses.
+SCXML base classes for BT-related classes.
 """
 
 from copy import deepcopy

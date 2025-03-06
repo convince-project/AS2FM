@@ -353,7 +353,7 @@ class ScxmlSend(ScxmlBase):
                 return True
         return False
 
-    def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
+    def instantiate_bt_events(self, instance_id: int, _) -> List["ScxmlSend"]:
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
@@ -461,7 +461,7 @@ class ScxmlAssign(ScxmlBase):
             bt_ports_handler.get_port_value(self._expr.get_key_name())
         )
 
-    def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
+    def instantiate_bt_events(self, _, __) -> List["ScxmlAssign"]:
         """This functionality is not needed in this class."""
         return [self]
 

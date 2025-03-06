@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-SCXML entries related to Behavior Tree Ticks and related responses.
+SCXML entries related to BT communication interfaces (i.e. tick and halt) and related responses.
 """
 
 from typing import List, Optional, Union

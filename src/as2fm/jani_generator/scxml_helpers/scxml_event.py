@@ -129,7 +129,12 @@ class Event:
         return re.match(r"^action_.*_goal_rejected$", self.name) is not None
 
     def is_removable_bt_interface(self):
-        """Check if the BT interface is to be ignored."""
+        """
+        Check if the BT interface is to be ignored.
+
+        Relevant when an event receiver defined, but no sender is available.
+        This is the case for BT nodes whose parent is never sending a halt request.
+        """
         return is_bt_halt_event(self.name)
 
 
