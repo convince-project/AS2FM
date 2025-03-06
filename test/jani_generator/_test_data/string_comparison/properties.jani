@@ -1,0 +1,29 @@
+{
+    "properties": [
+        {
+            "name": "strings_match",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "left": {
+                                "op": "=",
+                                "left": "string_event.string",
+                                "right": "'some information'"
+                            },
+                            "op": "∧",
+                            "right": "string_eval.comparison"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

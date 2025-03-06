@@ -59,6 +59,7 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int64[]": MutableSequence[int],
     "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
     "float64[]": MutableSequence[float],
+    "string": str,
 }
 
 

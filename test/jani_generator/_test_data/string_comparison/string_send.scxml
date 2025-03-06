@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    name="string_send"
+    version="1.0"
+    initial="current"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <state id="current">
+        <transition target="done">
+            <send event="string_event">
+                <param name="string" expr="'some information'" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="done" />
+</scxml>

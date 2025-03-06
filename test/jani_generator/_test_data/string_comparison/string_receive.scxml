@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    name="string_receive"
+    version="1.0"
+    initial="check_battery"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="string_store" expr="''" type="string" />
+    </datamodel>
+
+    <state id="init">
+        <transition target="done" event="string_event">
+            <send event="string_eval">
+                <param name="comparison" expr="_event.data.string == 'some information'" />
+            </send>
+        </transition>
+    </state>
+    <state id="done" />
+</scxml>
