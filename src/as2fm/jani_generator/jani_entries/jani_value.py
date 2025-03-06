@@ -18,7 +18,7 @@ Values in Jani
 """
 
 from math import e, pi
-from typing import Union
+from typing import Type, Union
 
 
 class JaniValue:
@@ -36,7 +36,16 @@ class JaniValue:
                 ), f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
         elif isinstance(self._value, list):
-            return all(JaniValue(v).is_valid() for v in self._value)
+            # Make sure that all entries have the same type
+            first_entry_value = JaniValue(self._value[0])
+            if not first_entry_value.is_valid():
+                return False
+            first_entry_type = first_entry_value._get_py_type()
+            for v in self._value:
+                single_val = JaniValue(v)
+                if not (single_val._get_py_type() is first_entry_type and single_val.is_valid()):
+                    return False
+            return True
         return isinstance(self._value, (int, float, bool))
 
     def value(self) -> Union[int, float, bool]:
@@ -48,6 +57,16 @@ class JaniValue:
             if constant_id == "π":
                 return pi
         return self._value
+
+    def _get_py_type(self) -> Type[Union[int, float, bool, list]]:
+        """
+        Get the python type of the entry stored in the JaniValue.
+
+        Constants are mapped to floats.
+        """
+        if isinstance(self._value, dict):
+            return float
+        return type(self._value)
 
     def as_dict(self) -> Union[dict, int, float, bool, list]:
         # Note: this might be a value or a dictionary

@@ -68,7 +68,12 @@ class JaniExpression:
                 expression, SupportedExp
             ), f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
-                self._init_expression_from_string(expression)
+                # self._init_expression_from_string(expression)
+                assert (
+                    expression.isidentifier()
+                ), f"Expression string {expression} is not a valid identifier."
+                # If it is a reference to a constant or variable, we do not need to expand further
+                self.identifier = expression
             elif JaniValue(expression).is_valid():
                 # If it is a value, then we don't need to expand further
                 self.value = JaniValue(expression)
@@ -81,13 +86,16 @@ class JaniExpression:
                 self.op = expression["op"]
                 self.operands = self._get_operands(expression)
 
-    def _init_expression_from_string(self, input_str: str) -> None:
-        """Validate the input string and use it for initializing the expression instance."""
-        if input_str.isidentifier():
-            # If it is a reference to a constant or variable, we do not need to expand further
-            self.identifier = input_str
-        else:
-            raise NotImplementedError("Trying to use a string expression, this is not done yet!")
+    # def _init_expression_from_string(self, input_str: str) -> None:
+    #     """Validate the input string and use it for initializing the expression instance."""
+    #     if input_str.isidentifier():
+    #         # If it is a reference to a constant or variable, we do not need to expand further
+    #         self.identifier = input_str
+    #     else:
+    #         # Ensure strings from input expressions are starting and ending with a "'"
+    #         assert re.match(r"^\'.*\'$", input_str) is not None, (
+    #             f"Input string {input_str} is neither an identifier nor a valid json string.")
+    #         # Convert the string to an array of integers
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""

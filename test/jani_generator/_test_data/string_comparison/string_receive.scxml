@@ -2,7 +2,7 @@
 <scxml
     name="string_receive"
     version="1.0"
-    initial="check_battery"
+    initial="init"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
