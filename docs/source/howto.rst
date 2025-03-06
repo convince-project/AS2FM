@@ -6,8 +6,8 @@ How To Guides
 
 .. _scxml_howto:
 
-(ROS) SCXML Model Implementation
----------------------------------
+High Level SCXML Model Implementation
+-------------------------------------
 
 SCXML is the language of choice to model the autonomous systems that are processed by AS2FM.
 
