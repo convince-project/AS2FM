@@ -34,10 +34,11 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
     get_input_variable_as_scxml_expression,
     is_blackboard_reference,
-    is_bt_event,
+    is_removed_bt_event,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
+    generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
 )
@@ -57,20 +58,23 @@ EventsToAutomata = Dict[str, Set[str]]
 
 def instantiate_exec_body_bt_events(
     exec_body: Optional[ScxmlExecutionBody], instance_id: int, children_ids: List[int]
-) -> None:
+) -> Optional[ScxmlExecutionBody]:
     """
     Instantiate the behavior tree events in the execution body.
 
     :param exec_body: The execution body to instantiate the BT events in
     :param instance_id: The instance ID of the BT node
     """
-    if exec_body is not None:
-        for entry_id in range(len(exec_body)):
-            event_tag = exec_body[entry_id].get_tag_name()
-            exec_body[entry_id] = exec_body[entry_id].instantiate_bt_events(
-                instance_id, children_ids
-            )
-            assert exec_body[entry_id] is not None, f"Error instantiating BT events in {event_tag}."
+    if exec_body is None:
+        return None
+    processed_body: ScxmlExecutionBody = []
+    for entry in exec_body:
+        processed_entry = entry.instantiate_bt_events(instance_id, children_ids)
+        assert processed_entry is not None and valid_execution_body_entry_types(
+            processed_entry
+        ), f"Error instantiating BT events in {entry.get_tag_name()}: expected to get a list."
+        processed_body.extend(processed_entry)
+    return processed_body
 
 
 def update_exec_body_bt_ports_values(
@@ -185,10 +189,15 @@ class ScxmlIf(ScxmlBase):
 
     def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
         """Instantiate the behavior tree events in the If action, if available."""
-        for _, exec_body in self._conditional_executions:
-            instantiate_exec_body_bt_events(exec_body, instance_id, children_ids)
-        instantiate_exec_body_bt_events(self._else_execution, instance_id, children_ids)
-        return self
+        expanded_condition_bodies: List[ConditionalExecutionBody] = []
+        for condition, exec_body in self._conditional_executions:
+            expanded_condition_bodies.append(
+                (condition, instantiate_exec_body_bt_events(exec_body, instance_id, children_ids))
+            )
+        expanded_else_body = instantiate_exec_body_bt_events(
+            self._else_execution, instance_id, children_ids
+        )
+        return [ScxmlIf(expanded_condition_bodies, expanded_else_body)]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         for _, exec_body in self._conditional_executions:
@@ -345,14 +354,14 @@ class ScxmlSend(ScxmlBase):
                 return True
         return False
 
-    def instantiate_bt_events(self, instance_id: int, _) -> "ScxmlSend":
+    def instantiate_bt_events(self, instance_id: int, _) -> List["ScxmlSend"]:
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        assert type(self) is not ScxmlSend or not is_bt_event(self._event), (
+        assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
             "Error: SCXML send: BT events should not be found in SCXML send. "
             "Use the 'bt_return_status' ROS-scxml tag instead."
         )
-        return self
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         """Update the values of potential entries making use of BT ports."""
@@ -452,9 +461,9 @@ class ScxmlAssign(ScxmlBase):
             bt_ports_handler.get_port_value(self._expr.get_key_name())
         )
 
-    def instantiate_bt_events(self, _, __) -> "ScxmlAssign":
+    def instantiate_bt_events(self, _, __) -> List["ScxmlAssign"]:
         """This functionality is not needed in this class."""
-        return self
+        return [self]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
         """Update the values of potential entries making use of BT ports."""
@@ -548,16 +557,11 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     :param xml_tree: The XML tree to create the execution entry from.
     :return: The execution entry
     """
-    from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosTrigger
-
     # TODO: This should be generated only once, since it stays as it is
     tag_to_cls: Dict[str, ScxmlExecutableEntry] = {
         cls.get_tag_name(): cls for cls in _ResolvedScxmlExecutableEntry
     }
-    tag_to_cls.update(
-        {cls.get_tag_name(): cls for cls in ScxmlSend.__subclasses__() if cls != RosTrigger}
-    )
-    tag_to_cls.update({cls.get_tag_name(): cls for cls in RosTrigger.__subclasses__()})
+    tag_to_cls.update(generate_tag_to_class_map(ScxmlSend))
     exec_tag = xml_tree.tag
     assert exec_tag in tag_to_cls, get_error_msg(
         xml_tree, f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."

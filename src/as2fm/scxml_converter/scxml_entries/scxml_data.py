@@ -26,6 +26,7 @@ from as2fm.as2fm_common.common import is_array_type, is_comment
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.utils import (
+    RESERVED_NAMES,
     convert_string_to_type,
     get_array_max_size,
     get_data_type_from_string,
@@ -170,6 +171,9 @@ class ScxmlData(ScxmlBase):
 
     def check_validity(self) -> bool:
         valid_id = is_non_empty_string(ScxmlData, "id", self._id)
+        if valid_id in RESERVED_NAMES:
+            print(f"Error: SCXML data: name '{self._id}' in reserved IDs list: {RESERVED_NAMES}.")
+            return False
         if get_data_type_from_string(self._data_type) is None:
             print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
             return False

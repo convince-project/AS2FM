@@ -13,10 +13,12 @@
 
     <!-- The topic used to publish the tick count -->
     <bt_declare_port_in key="topic_name" type="string" />
+    <bt_declare_port_in key="reset_name" type="string" />
     <!-- How many ticks to get before sending out a success -->
     <bt_declare_port_in key="n_ticks_running" type="int8" />
 
     <datamodel>
+        <data id="resets" type="int16" expr="0" />
         <data id="counter" type="int16" expr="0" />
         <!-- Assign this for accessing the port value in conditions... -->
         <data id="ticks_before_success" type="int8">
@@ -29,6 +31,12 @@
     <ros_topic_publisher type="std_msgs/Int16" name="counter_pub">
         <topic>
             <bt_get_input key="topic_name" />
+        </topic>
+    </ros_topic_publisher>
+
+    <ros_topic_publisher type="std_msgs/Int16" name="reset_pub">
+        <topic>
+            <bt_get_input key="reset_name" />
         </topic>
     </ros_topic_publisher>
 
@@ -45,6 +53,14 @@
                 <bt_return_status status="SUCCESS" />
             </if>
         </bt_tick>
+        <bt_halt target="initial">
+            <!-- In a real reset, we should set the counter to 0. For the sake of testing, we do not do it! -->
+            <assign location="resets" expr="resets + 1" />
+            <ros_topic_publish name="reset_pub">
+                <field name="data" expr="resets" />
+            </ros_topic_publish>
+            <bt_return_halted/>
+        </bt_halt>
     </state>
 
     <state id="error" />

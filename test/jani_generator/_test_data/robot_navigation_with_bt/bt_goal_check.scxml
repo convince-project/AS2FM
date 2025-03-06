@@ -30,6 +30,9 @@
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />
         </ros_topic_callback>
+        <bt_halt target="wait_first_msg">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="ready_to_check">
@@ -44,6 +47,9 @@
             <assign location="goal_x" expr="_msg.x" />
             <assign location="goal_y" expr="_msg.y" />
         </ros_topic_callback>
+        <bt_halt target="wait_first_msg">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>

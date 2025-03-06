@@ -20,8 +20,13 @@
         <!-- If ticked, start the RecoverBlockSkill -->
         <bt_tick target="startSkill" />
         <!-- If halted, do nothing-->
-        <!-- Do we expect a BT return from a halt request? -->
-        <!--<bt_halt target="idle" />-->
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <!-- Just handle possible responses in case of halting -->
+        <ros_action_handle_goal_response name="RecoverBlock_action" accept="idle" reject="idle" />
+        <ros_action_handle_success_result name="RecoverBlock_action" target="idle" />
+        <ros_action_handle_aborted_result name="RecoverBlock_action" target="idle" />
     </state>
 
     <state id="startSkill">
@@ -36,7 +41,7 @@
             </ros_action_send_goal>
             <bt_return_status status="RUNNING" />
         </onentry>
-        <ros_action_handle_goal_response name="RecoverBlock_action" accept="running" reject="startSkill" />
+        <ros_action_handle_goal_response name="RecoverBlock_action" accept="running" reject="idle" />
     </state>
 
     <state id="running">
@@ -56,14 +61,17 @@
             <bt_return_status status="RUNNING" />
         </bt_tick>
         <!-- If halted, send stop request to skill and go to idle state -->
-        <!--<bt_halt target="idle">
-            <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME
-        </bt_halt>-->
+        <bt_halt target="idle">
+            <!-- <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME -->
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="answer">
         <!-- If halted, return to the idle state -->
-        <!--<bt_halt target="idle" />-->
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
         <!-- If ticked, send back an answer to the BT and go to idle state -->
         <bt_tick target="idle">
             <if cond="skillResponse == true">

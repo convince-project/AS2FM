@@ -25,7 +25,7 @@ from typing import Dict, List, Optional, Tuple
 
 import lxml.etree as ET
 
-from as2fm.as2fm_common.common import remove_namespace
+from as2fm.as2fm_common.common import remove_namespace, string_to_bool
 from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
@@ -105,7 +105,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_if_not_running":
-                    model.bt_tick_when_not_running = bool(mc_parameter.attrib["value"])
+                    model.bt_tick_when_not_running = string_to_bool(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
                         get_error_msg(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")

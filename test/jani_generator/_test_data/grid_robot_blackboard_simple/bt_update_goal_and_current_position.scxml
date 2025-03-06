@@ -72,6 +72,9 @@
                 <bt_return_status status="FAILURE" />
             </if>
         </bt_tick>
+        <bt_halt target="running">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>

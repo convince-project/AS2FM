@@ -33,6 +33,9 @@
             </ros_topic_publish>
             <bt_return_status status="SUCCESS" />
         </bt_tick>
+        <bt_halt target="running">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>
