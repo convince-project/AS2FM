@@ -22,6 +22,9 @@ from typing import Any, Dict, List, MutableSequence, Optional, Type
 from as2fm.as2fm_common.common import is_array_type, string_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
+# List of names that shall not be used for variable names
+RESERVED_NAMES = []
+
 PLAIN_SCXML_EVENT_PREFIX: str = "_event."
 PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
 
@@ -102,6 +105,23 @@ class CallbackType(Enum):
             return CallbackType.STATE
         else:
             return CallbackType.TRANSITION
+
+
+def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
+    """
+    Generate a map from (xml) tags to their associated classes.
+
+    The map is generated for the provided class and all its subclasses.
+    """
+    ret_dict: Dict[str, Type[ScxmlBase]] = {}
+    try:
+        tag_name = cls.get_tag_name()
+        ret_dict.update({tag_name: cls})
+    except NotImplementedError:
+        pass
+    for sub_cls in cls.__subclasses__():
+        ret_dict.update(generate_tag_to_class_map(sub_cls))
+    return ret_dict
 
 
 def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str]) -> str:

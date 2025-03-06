@@ -132,7 +132,7 @@ class ScxmlTransitionTarget(ScxmlBase):
         self, instance_id: int, children_ids: List[int]
     ) -> "ScxmlTransitionTarget":
         """Instantiate the BT events in the object's body."""
-        instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
+        self._body = instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
         return self
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:

@@ -21,7 +21,12 @@ import re
 from typing import Dict, List, Optional
 
 from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
-from as2fm.scxml_converter.scxml_entries.bt_utils import is_bt_response_event, is_bt_tick_event
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    is_bt_halt_event,
+    is_bt_halt_response_event,
+    is_bt_tick_event,
+    is_bt_tick_response_event,
+)
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
     is_action_request_event,
     is_action_result_event,
@@ -97,29 +102,22 @@ class Event:
     def must_be_skipped_in_jani_conversion(self):
         """Indicate whether this must be considered in the conversion to jani."""
         return (
+            # If the event is a timer event, there is only a receiver.
+            # It is the edge that the user declared with the `ros_rate_callback` tag.
+            # It will be handled in the `scxml_event_processor` module differently.
             self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
-            or
-            # If the event is a timer event, there is only a receiver
-            # It is the edge that the user declared with the
-            # `ros_rate_callback` tag. It will be handled in the
-            # `scxml_event_processor` module differently.
-            self.is_bt_response_event()
-            and len(self.senders) == 0
-            or self.is_optional_action_event()
-            and len(self.senders) == 0
+            or self.is_removable_interface()
         )
 
-    def is_bt_response_event(self):
-        """Check if the event is a behavior tree response event (running, success, failure).
-        They may have no sender if the plugin does not implement it."""
-        # TODO: Remove it when deprecated support for running, success, failure BT events is removed
-        return self.name.startswith("bt_") and (
-            self.name.endswith("_running")
-            or self.name.endswith("_success")
-            or self.name.endswith("_failure")
+    def is_removable_interface(self):
+        """Indicate if the interface contained by this event shall be removed."""
+        # TODO: Check if it makes sense to auto-generate the bt_halt handling
+        return (self.is_removable_action_event() or self.is_removable_bt_interface()) and (
+            len(self.senders) == 0
         )
 
-    def is_optional_action_event(self):
+    def is_removable_action_event(self):
+        """Check if the action interface is to be ignored."""
         return self.is_action_feedback_event() or self.is_action_rejected_event()
 
     def is_action_feedback_event(self):
@@ -129,6 +127,15 @@ class Event:
     def is_action_rejected_event(self):
         """Check if the event is an action rejected event."""
         return re.match(r"^action_.*_goal_rejected$", self.name) is not None
+
+    def is_removable_bt_interface(self):
+        """
+        Check if the BT interface is to be ignored.
+
+        Relevant when an event receiver defined, but no sender is available.
+        This is the case for BT nodes whose parent is never sending a halt request.
+        """
+        return is_bt_halt_event(self.name)
 
 
 class EventsHolder:
@@ -160,7 +167,9 @@ def is_event_synched(event_name: str) -> bool:
     # Action feedbacks are not considered synched, since a client might discard one or more of them
     return (
         is_bt_tick_event(event_name)
-        or is_bt_response_event(event_name)
+        or is_bt_halt_event(event_name)
+        or is_bt_tick_response_event(event_name)
+        or is_bt_halt_response_event(event_name)
         or is_action_request_event(event_name)
         or is_action_result_event(event_name)
         or is_action_thread_event(event_name)

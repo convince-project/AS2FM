@@ -25,12 +25,20 @@
             </ros_action_send_goal>
             <bt_return_status status="RUNNING" />
         </bt_tick>
+        <bt_halt target="initial">
+            <assign location="tmp_result" expr="false" />
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="wait_result">
         <bt_tick target="wait_result">
             <bt_return_status status="RUNNING" />
         </bt_tick>
+        <bt_halt target="initial">
+            <assign location="tmp_result" expr="false" />
+            <bt_return_halted />
+        </bt_halt>
         <ros_action_handle_success_result name="act" target="result_available">
             <assign location="tmp_result" expr="true" />
         </ros_action_handle_success_result>
@@ -48,6 +56,10 @@
                 <bt_return_status status="FAILURE" />
             </if>
         </bt_tick>
+        <bt_halt target="initial">
+            <assign location="tmp_result" expr="false" />
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
 </scxml>

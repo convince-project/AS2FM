@@ -26,7 +26,7 @@ from lxml import etree as ET
 
 from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string
 from as2fm.scxml_converter.scxml_entries import (
-    BtChildStatus,
+    BtChildTickStatus,
     BtTickChild,
     RosRateCallback,
     RosTimeRate,
@@ -189,18 +189,18 @@ def generate_bt_root_scxml(
             RosRateCallback.make_single_target_transition(
                 ros_rate_decl, "wait_tick_res", None, [BtTickChild(0)]
             ),
-            BtChildStatus.make_single_target_transition(0, "error"),
+            BtChildTickStatus.make_single_target_transition(0, "error"),
         ],
     )
     tick_res_body: ScxmlExecutionBody = (
         # In case we keep ticking after BT root finishes running
-        [BtChildStatus.make_single_target_transition(0, "idle")]
+        [BtChildTickStatus.make_single_target_transition(0, "idle")]
         if tick_if_not_running
         # In case we stop the BT after the BT root result is not RUNNING
         else [
-            BtChildStatus.make_single_target_transition(0, "idle", "_bt.status == RUNNING"),
+            BtChildTickStatus.make_single_target_transition(0, "idle", "_bt.status == RUNNING"),
             # This is the case in which BT-status != RUNNING
-            BtChildStatus.make_single_target_transition(0, "done"),
+            BtChildTickStatus.make_single_target_transition(0, "done"),
         ]
     )
     wait_res_state = ScxmlState(

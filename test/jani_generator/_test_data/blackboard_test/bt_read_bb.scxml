@@ -16,7 +16,9 @@
 
     <state id="wait_for_tick">
         <bt_tick target="running" />
-        <!-- New robot goal -->
+        <bt_halt target="wait_for_tick">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="running">

@@ -45,7 +45,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
     valid_execution_body,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType
+from as2fm.scxml_converter.scxml_entries.utils import CallbackType, generate_tag_to_class_map
 
 
 class ScxmlState(ScxmlBase):
@@ -57,16 +57,8 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
-        from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback
-
         transitions: List[ScxmlTransition] = []
-        tag_to_cls = {
-            cls.get_tag_name(): cls
-            for cls in ScxmlTransition.__subclasses__()
-            if cls != RosCallback
-        }
-        tag_to_cls.update({cls.get_tag_name(): cls for cls in RosCallback.__subclasses__()})
-        tag_to_cls.update({ScxmlTransition.get_tag_name(): ScxmlTransition})
+        tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
         for child in xml_tree:
             if is_comment(child):
                 continue
@@ -196,8 +188,8 @@ class ScxmlState(ScxmlBase):
             ), f"Error: SCXML state {self._id}: found invalid transition in state body."
             instantiated_transitions.extend(new_transitions)
         self._body = instantiated_transitions
-        instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
-        instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
+        self._on_entry = instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
+        self._on_exit = instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
         self._update_bt_ports_values(bt_ports_handler)
 
     def _update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:

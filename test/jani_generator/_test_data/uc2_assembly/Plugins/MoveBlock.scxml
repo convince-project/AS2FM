@@ -20,9 +20,13 @@
     <state id="idle">
         <!-- If ticked, start the MoveBlockSkill -->
         <bt_tick target="startSkill" />
-        <!-- If halted, do nothing-->
-        <!-- Do we expect a BT return from a halt request? -->
-        <!--<bt_halt target="idle" />-->
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <!-- Just handle possible responses in case of halting -->
+        <ros_action_handle_goal_response name="MoveBlock_action" accept="idle" reject="idle" />
+        <ros_action_handle_success_result name="MoveBlock_action" target="idle" />
+        <ros_action_handle_aborted_result name="MoveBlock_action" target="idle" />
     </state>
 
     <state id="startSkill">
@@ -44,7 +48,10 @@
             <bt_return_status status="RUNNING" />
         </onentry>
         <bt_tick target="waitAccept" />
-        <ros_action_handle_goal_response name="MoveBlock_action" accept="running" reject="startSkill" />
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <ros_action_handle_goal_response name="MoveBlock_action" accept="running" reject="idle" />
     </state>
 
     <state id="running">
@@ -64,14 +71,18 @@
             <bt_return_status status="RUNNING" />
         </bt_tick>
         <!-- If halted, send stop request to skill and go to idle state -->
-        <!--<bt_halt target="idle">
-            <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME
-        </bt_halt>-->
+        <bt_halt target="idle">
+            <!-- <ros_service_send_request service_name="/BatteryDrainerSkill/stop" /> FIXME -->
+            <!-- This should be in charge of requesting the action cancellation -->
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="answer">
         <!-- If halted, return to the idle state -->
-        <!--<bt_halt target="idle" />-->
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
         <!-- If ticked, send back an answer to the BT and go to idle state -->
         <bt_tick target="idle">
             <if cond="skillResponse == true">

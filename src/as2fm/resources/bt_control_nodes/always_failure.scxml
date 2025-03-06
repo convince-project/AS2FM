@@ -29,6 +29,9 @@
         <bt_tick target="idle">
             <bt_return_status status="FAILURE" />
         </bt_tick>
+        <bt_halt target="idle">
+            <bt_return_halted/>
+        </bt_halt>
     </state>
 
     <!-- A state to transition to when something did not work -->

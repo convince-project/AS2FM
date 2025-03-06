@@ -14,6 +14,9 @@
 
     <state id="idle">
         <bt_tick target="send_req" />
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
     </state>
 
     <state id="send_req">

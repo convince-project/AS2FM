@@ -32,7 +32,14 @@ from .scxml_executable_entries import (  # noqa: F401
 )  # noqa: F401
 from .scxml_transition_target import ScxmlTransitionTarget  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
-from .scxml_bt_ticks import BtTick, BtTickChild, BtChildStatus, BtReturnStatus  # noqa: F401
+from .scxml_bt_comm_interfaces import (  # noqa: F401
+    BtTick,
+    BtTickChild,
+    BtChildTickStatus,
+    BtReturnTickStatus,
+    BtHalt,
+    BtHaltChild,
+)  # noqa: F401
 from .scxml_state import ScxmlState  # noqa: F401
 from .scxml_ros_timer import RosTimeRate, RosRateCallback  # noqa: F401
 from .scxml_ros_topic import (  # noqa: F401

@@ -17,11 +17,13 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, Union
 
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     SCXML_DATA_STR_TO_TYPE,
+    to_integer,
 )
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE | {"string": str}
@@ -61,6 +63,28 @@ class BtResponse(Enum):
         return expr
 
 
+def process_bt_child_seq_id(
+    scxml_type: Type[ScxmlBase], child_seq_id: Union[str, int]
+) -> Union[str, int]:
+    """
+    Convert the child sequence ID to int or string depending on the content.
+    """
+    if isinstance(child_seq_id, int):
+        return child_seq_id
+    elif isinstance(child_seq_id, str):
+        child_seq_id = child_seq_id.strip()
+        int_seq_id = to_integer(scxml_type, "id", child_seq_id)
+        if int_seq_id is not None:
+            return int_seq_id
+        assert (
+            child_seq_id.isidentifier()
+        ), f"Error: {scxml_type.get_tag_name()}: invalid child seq id name '{child_seq_id}'."
+        return child_seq_id
+    raise TypeError(
+        f"Error: {scxml_type.get_tag_name()}: invalid child seq id type '{type(child_seq_id)}'."
+    )
+
+
 def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     """
     Generate  the name of the evnt setting a specific Blackboard variable.
@@ -71,36 +95,54 @@ def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     return f"bt_blackboard_set_{bt_bb_ref_name}"
 
 
-def generate_bt_tick_event(instance_id: str) -> str:
+def generate_bt_tick_event(instance_id: int) -> str:
     """Generate the BT tick event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
     return f"bt_{instance_id}_tick"
 
 
 def is_bt_tick_event(event_name: str) -> bool:
     """Check is the event is used for ticking a BT node."""
-    return re.match(r"^bt_.+_tick$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_tick$", event_name) is not None
 
 
-def generate_bt_response_event(instance_id: str) -> str:
+def generate_bt_halt_event(instance_id: int) -> str:
+    """Generate the BT halt event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
+    return f"bt_{instance_id}_halt"
+
+
+def is_bt_halt_event(event_name: str) -> bool:
+    """Check if the event is used for halting a BT node."""
+    return re.match(r"^bt_[0-9]+_halt$", event_name) is not None
+
+
+def generate_bt_tick_response_event(instance_id: int) -> str:
     """Generate the BT response event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
     return f"bt_{instance_id}_response"
 
 
-def is_bt_response_event(event_name: str) -> bool:
+def is_bt_tick_response_event(event_name: str) -> bool:
     """Check if the event name is for BT node's responses(success, failure, running)."""
-    return re.match(r"^bt_.+_response$", event_name) is not None
+    return re.match(r"^bt_[0-9]+_response$", event_name) is not None
 
 
-def is_bt_event(event_name: str) -> bool:
+def generate_bt_halt_response_event(instance_id: int) -> str:
+    """Generate the BT response event name for a given BT node instance."""
+    assert isinstance(instance_id, int)
+    return f"bt_{instance_id}_halt_response"
+
+
+def is_bt_halt_response_event(event_name: str) -> bool:
+    """Check if the event name is for a BT node's halt response."""
+    return re.match(r"^bt_[0-9]+_halt_response$", event_name) is not None
+
+
+def is_removed_bt_event(event_name: str) -> bool:
     """Given an event name, returns whether it is related to a BT event or not."""
     bt_events = [f"bt_{suffix}" for suffix in ["tick", "running", "success", "failure"]]
     return event_name in bt_events
-
-
-def replace_bt_event(event_name: str, instance_id: str) -> str:
-    """Given a BT event name, returns the same event including the BT node instance."""
-    assert is_bt_event(event_name), "Error: BT event instantiation: invalid BT event name."
-    return f"bt_{instance_id}_{event_name.removeprefix('bt_')}"
 
 
 def is_blackboard_reference(port_value: str) -> bool:

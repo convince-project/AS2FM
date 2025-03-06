@@ -7,23 +7,32 @@
         <transition target="wait_for_tick"/>
     </state>
     <state id="wait_for_tick">
-        <transition target="tick_child" event="bt_1001_tick"/>
+        <transition event="bt_1001_tick" target="tick_child"/>
+        <transition event="bt_1001_halt" target="halting_child"/>
+    </state>
+    <state id="halting_child">
+        <onentry>
+            <send event="bt_1002_halt"/>
+        </onentry>
+        <transition event="bt_1002_halt_response" target="wait_for_tick">
+            <send event="bt_1001_halt_response"/>
+        </transition>
     </state>
     <state id="tick_child">
         <onentry>
             <send event="bt_1002_tick"/>
         </onentry>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 1">
+        <transition event="bt_1002_response" cond="_event.data.status == 1" target="wait_for_tick">
             <send event="bt_1001_response">
                 <param name="status" expr="2"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 2">
+        <transition event="bt_1002_response" cond="_event.data.status == 2" target="wait_for_tick">
             <send event="bt_1001_response">
                 <param name="status" expr="1"/>
             </send>
         </transition>
-        <transition target="wait_for_tick" event="bt_1002_response" cond="_event.data.status == 3">
+        <transition event="bt_1002_response" cond="_event.data.status == 3" target="wait_for_tick">
             <send event="bt_1001_response">
                 <param name="status" expr="3"/>
             </send>
