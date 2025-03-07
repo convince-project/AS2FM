@@ -12,8 +12,9 @@
 
     <state id="init">
         <transition target="done" event="string_event">
+            <assign location="string_store" expr="_event.data.string" />
             <send event="string_eval">
-                <param name="comparison" expr="_event.data.string == 'some information'" />
+                <param name="comparison" expr="string_store == 'some information'" />
             </send>
         </transition>
     </state>

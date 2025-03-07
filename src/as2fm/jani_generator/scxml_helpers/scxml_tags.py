@@ -274,7 +274,8 @@ def _append_scxml_body_to_jani_edge(
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
                 variables = get_all_variables_and_instantiations(jani_automaton)
                 # TODO: This might contain reference to event variables, that have no type specified
-                # For now, we avoid the problem by using support variables
+                # For now, we avoid the problem by using support variables in the model...
+                # See https://github.com/convince-project/AS2FM/issues/84
                 res_eval_value = interpret_ecma_script_expr(expr, variables)
                 # Special handling for strings...
                 if isinstance(res_eval_value, str):
@@ -535,7 +536,7 @@ class DatamodelTag(BaseTag):
             # It should be ported to scxml_entries.ScxmlDataModel
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
-            if expected_type not in (int, float, bool):
+            if expected_type not in (int, float, bool, str):
                 # Not a basic type: we are dealing with an array
                 array_type = get_args(expected_type)[0]
                 assert array_type in (int, float), f"Type {expected_type} not supported in arrays."
