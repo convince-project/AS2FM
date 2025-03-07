@@ -17,6 +17,7 @@
 Common functionalities used throughout the toolchain.
 """
 
+import re
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
 
@@ -154,3 +155,16 @@ def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes])
 def is_array_type(field_type: Type[ValidTypes]) -> bool:
     """Check if the field type is an array type."""
     return get_origin(field_type) == get_origin(MutableSequence)
+
+
+def is_valid_variable_name(var_name: str) -> bool:
+    """
+    Check if a string can represent a variable name in JANI and SCXML.
+
+    This differs from the string.isidentifier() python function, since we allow more possibilities:
+    * A variable name must start with a character -> [a-zA-Z];
+    * Can continue with any number of alphanumerical values plus (. - _) -> [a-zA-Z0-9._-];
+    * Must finish with an alphanumerical value -> [a-zA-Z0-9].
+    Alternatively, a variable name can be a single character.
+    """
+    return re.match(r"^[a-zA-Z][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None

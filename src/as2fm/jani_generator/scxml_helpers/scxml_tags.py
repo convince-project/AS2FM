@@ -17,9 +17,9 @@
 Module defining SCXML tags to match against.
 """
 
-from array import ArrayType
+from array import ArrayType, array
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, get_args
+from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union, get_args
 
 import lxml.etree as ET
 from lxml.etree import _Element as Element
@@ -93,6 +93,13 @@ def _hash_element(element: Union[Element, ScxmlBase, List[str]]) -> str:
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
     return sha256(s).hexdigest()[:8]
+
+
+def _convert_string_to_int_array(value: str) -> MutableSequence[int]:
+    """
+    Convert a string to a list of integers.
+    """
+    return array("i", [int(x) for x in value.encode()])
 
 
 def _interpret_scxml_assign(
@@ -269,6 +276,9 @@ def _append_scxml_body_to_jani_edge(
                 # TODO: This might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables
                 res_eval_value = interpret_ecma_script_expr(expr, variables)
+                # Special handling for strings...
+                if isinstance(res_eval_value, str):
+                    res_eval_value = _convert_string_to_int_array(res_eval_value)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
                 array_info = None
@@ -540,20 +550,23 @@ class DatamodelTag(BaseTag):
                 f"Invalid value for {scxml_data.get_name()}: "
                 f"Expected type {expected_type}, got {type(evaluated_expr)}."
             )
+            # Special case for strings: treat them as array of integers
+            if isinstance(evaluated_expr, str):
+                expected_type = MutableSequence[int]
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
-                JaniVariable(scxml_data.get_name(), scxml_data.get_type(), init_value)
+                JaniVariable(scxml_data.get_name(), expected_type, init_value)
             )
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
             if expected_type is ArrayType:
-                init_expr = string_to_value(scxml_data.get_expr(), scxml_data.get_type())
+                init_expr = string_to_value(scxml_data.get_expr(), expected_type)
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
             read_vars.update(
-                {scxml_data.get_name(): get_default_expression_for_type(scxml_data.get_type())}
+                {scxml_data.get_name(): get_default_expression_for_type(expected_type)}
             )
 
 

@@ -20,6 +20,7 @@ Expressions in Jani
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.jani_generator.jani_entries import JaniValue
 from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
@@ -69,9 +70,9 @@ class JaniExpression:
             ), f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
                 # self._init_expression_from_string(expression)
-                assert (
-                    expression.isidentifier()
-                ), f"Expression string {expression} is not a valid identifier."
+                assert is_valid_variable_name(
+                    expression
+                ), f"Expression string {expression} is not a valid variable name."
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
             elif JaniValue(expression).is_valid():
