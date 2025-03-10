@@ -26,7 +26,6 @@ from lxml.etree import _Element as Element
 from as2fm.as2fm_common.common import (
     EPSILON,
     check_value_type_compatible,
-    get_default_expression_for_type,
     string_to_value,
     value_to_type,
 )
@@ -465,6 +464,17 @@ class BaseTag:
             raise NotImplementedError(f"Support for SCXML type >{type(element)}< not implemented.")
         return CLASS_BY_TYPE[type(element)](element, call_trace, model, max_array_size)
 
+    def generate_tag_element(self, child: ScxmlBase) -> "BaseTag":
+        """
+        Simplified version of the "from_element" call.
+        """
+        return self.from_element(
+            child,
+            self.call_trace + [self.element],
+            (self.automaton, self.events_holder),
+            self.max_array_size,
+        )
+
     def __init__(
         self,
         element: ScxmlBase,
@@ -484,10 +494,7 @@ class BaseTag:
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
-        self.children = [
-            BaseTag.from_element(child, call_trace + [element], model, max_array_size)
-            for child in scxml_children
-        ]
+        self.children = [self.generate_tag_element(child) for child in scxml_children]
 
     def get_children(
         self,
@@ -633,7 +640,7 @@ class ScxmlTag(BaseTag):
         # A map from the variable name to its default value
         self.internal_variables: Dict[str, Any] = {}
         if data_model is not None:
-            data_element: DatamodelTag = self.from_element(data_model, self.call_trace + [data_model], (self.automaton, self.events_holder), self.max_array_size)
+            data_element: DatamodelTag = self.generate_tag_element(data_model)
             data_element.write_model()
             self.internal_variables = data_element.get_variables()
         super().write_model()
