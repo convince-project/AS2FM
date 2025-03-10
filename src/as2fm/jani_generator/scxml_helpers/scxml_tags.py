@@ -47,7 +47,6 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     plus_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_all_variables_and_instantiations,
     get_array_type_and_size,
     get_variable_type,
     is_variable_array,
@@ -266,11 +265,10 @@ def _append_scxml_body_to_jani_edge(
                 expr = param.get_expr_or_location()
                 # Update the events holder
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
-                variables = get_all_variables_and_instantiations(jani_automaton)
-                # TODO: This might contain reference to event variables, that have no type specified
+                # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
-                res_eval_value = interpret_ecma_script_expr(expr, variables)
+                res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
                 array_info = None
@@ -583,7 +581,7 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
-            self.model_variables.update({scxml_data.get_name(): scxml_data.get_type()})
+            self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 
 class ScxmlTag(BaseTag):
