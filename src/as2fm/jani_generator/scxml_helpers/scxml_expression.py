@@ -68,6 +68,33 @@ def parse_ecmascript_to_jani_expression(
     return jani_expression
 
 
+def _generate_array_expression(array_info: ArrayInfo, array_values: list) -> JaniExpression:
+    """
+    Make the JaniExpression generating the desired array.
+
+    :param array_info: Type and size of the array we are generating.
+    :array_values: The values to initialize the array with. Padding added to read the desired size.
+    """
+    assert isinstance(
+        array_info, ArrayInfo
+    ), f"Unexpected type for input argument 'array_info', found {type(array_info)}"
+    assert isinstance(
+        array_values, list
+    ), f"Unexpected type '{type(array_values)}' for input argument 'array_values'."
+    array_type = array_info.array_type
+    max_size = array_info.array_max_size
+    assert array_type in (int, float), f"Array type {array_type} != (int, float)."
+    if len(array_values) == 0:
+        return array_create_operator("__array_iterator", max_size, array_type(0))
+    else:
+        padding_size = max_size - len(array_values)
+        assert (
+            padding_size >= 0
+        ), f"The size for the provided array {array_values} is larger than {max_size}."
+        array_values.extend([array_type(0)] * padding_size)
+        return array_value_operator(array_values)
+
+
 def _parse_ecmascript_to_jani_expression(
     ast: esprima.nodes.Script, array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
@@ -81,6 +108,9 @@ def _parse_ecmascript_to_jani_expression(
     if ast.type == "ExpressionStatement":
         return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
     elif ast.type == "Literal":
+        if isinstance(ast.value, str):
+            # This needs to be treated as an array of integers
+            pass
         return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
@@ -113,22 +143,11 @@ def _parse_ecmascript_to_jani_expression(
     elif ast.type == "ArrayExpression":
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         entry_type: Type = array_info.array_type
-        if len(ast.elements) == 0:
-            return array_create_operator(
-                "__array_iterator", array_info.array_max_size, entry_type(0)
-            )
-        else:
-            elements_to_add = array_info.array_max_size - len(ast.elements)
-            assert (
-                elements_to_add >= 0
-            ), "Array size must be less than or equal to the recipient max size."
-            elements_list = []
-            for element in ast.elements:
-                assert element.type == "Literal", "Array elements must be literals."
-                elements_list.append(entry_type(element.value))
-            # Add dummy elements to make sure the full array is assigned
-            elements_list.extend([entry_type(0)] * elements_to_add)
-            return array_value_operator(elements_list)
+        assert all(
+            element.type == "Literal" for element in ast.elements
+        ), "All array elements are expected to be a 'Literal'"
+        elements_list = [entry_type(element.value) for element in ast.elements]
+        return _generate_array_expression(array_info, elements_list)
     elif ast.type == "MemberExpression":
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, array_info)
         if ast.computed:
