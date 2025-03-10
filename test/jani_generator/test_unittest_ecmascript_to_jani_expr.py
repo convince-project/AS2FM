@@ -69,7 +69,6 @@ def test_parse_ecmascript_to_jani_expression_with_array():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
-@pytest.mark.skip(reason="Strings are not yet supported in our ecmascript converter.")
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
     expected_jani_expr = array_create_operator("__array_iterator", 10, 0)

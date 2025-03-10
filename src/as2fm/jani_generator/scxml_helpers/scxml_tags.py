@@ -17,7 +17,6 @@
 Module defining SCXML tags to match against.
 """
 
-from array import array
 from hashlib import sha256
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union, get_args
 
@@ -74,6 +73,8 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 
+# The supported MutableSequence instances
+SupportedMutableSequence = (MutableSequence[int], MutableSequence[float])
 # The resulting types from the SCXML conversion to Jani
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
@@ -93,13 +94,6 @@ def _hash_element(element: Union[Element, ScxmlBase, List[str]]) -> str:
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
     return sha256(s).hexdigest()[:8]
-
-
-def _convert_string_to_int_array(value: str) -> MutableSequence[int]:
-    """
-    Convert a string to a list of integers.
-    """
-    return array("i", [int(x) for x in value.encode()])
 
 
 def _interpret_scxml_assign(
@@ -277,13 +271,10 @@ def _append_scxml_body_to_jani_edge(
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
                 res_eval_value = interpret_ecma_script_expr(expr, variables)
-                # Special handling for strings...
-                if isinstance(res_eval_value, str):
-                    res_eval_value = _convert_string_to_int_array(res_eval_value)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
                 array_info = None
-                if isinstance(res_eval_value, MutableSequence):
+                if res_eval_type in SupportedMutableSequence:
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
                 jani_expr = parse_ecmascript_to_jani_expression(expr, array_info).replace_event(
                     data_event
@@ -308,9 +299,9 @@ def _append_scxml_body_to_jani_edge(
                 elif jani_expr_type == JaniExpressionType.OPERATOR:
                     op_type, _ = jani_expr.as_operator()
                     if op_type == "av":
-                        assert isinstance(
-                            res_eval_value, MutableSequence
-                        ), f"Expected array value, got {res_eval_value}."
+                        assert (
+                            res_eval_type in SupportedMutableSequence
+                        ), f"Expected array value, got {res_eval_type}."
                         new_edge_dest_assignments.append(
                             JaniAssignment(
                                 {
@@ -557,7 +548,7 @@ class DatamodelTag(BaseTag):
             )
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
-            if expected_type in (MutableSequence[int], MutableSequence[float]):
+            if expected_type in SupportedMutableSequence:
                 init_expr = string_to_value(scxml_data.get_expr(), expected_type)
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(

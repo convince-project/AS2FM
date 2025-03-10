@@ -80,7 +80,7 @@ def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
         return field_type()
 
 
-def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
+def value_to_type(value: ValidTypes | str) -> Type[ValidTypes]:
     """Convert a value to a type."""
     if isinstance(value, array):
         if value.typecode == "i":
@@ -91,6 +91,8 @@ def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
             raise ValueError(f"Type of array '{value.typecode}' not supported.")
     elif isinstance(value, (int, float, bool)):
         return type(value)
+    elif isinstance(value, str):  # Strings are interpreted as arrays of integers
+        return MutableSequence[int]
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
@@ -171,3 +173,10 @@ def is_valid_variable_name(var_name: str) -> bool:
     Alternatively, a variable name can be a single character.
     """
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
+
+
+def convert_string_to_int_array(value: str) -> MutableSequence[int]:
+    """
+    Convert a string to a list of integers.
+    """
+    return array("i", [int(x) for x in value.encode()])

@@ -18,10 +18,11 @@ Module producing jani expressions from ecmascript.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union
+from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
 
+from as2fm.as2fm_common.common import convert_string_to_int_array
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
@@ -68,7 +69,9 @@ def parse_ecmascript_to_jani_expression(
     return jani_expression
 
 
-def _generate_array_expression(array_info: ArrayInfo, array_values: list) -> JaniExpression:
+def _generate_array_expression(
+    array_info: ArrayInfo, array_values: MutableSequence
+) -> JaniExpression:
     """
     Make the JaniExpression generating the desired array.
 
@@ -79,7 +82,7 @@ def _generate_array_expression(array_info: ArrayInfo, array_values: list) -> Jan
         array_info, ArrayInfo
     ), f"Unexpected type for input argument 'array_info', found {type(array_info)}"
     assert isinstance(
-        array_values, list
+        array_values, MutableSequence
     ), f"Unexpected type '{type(array_values)}' for input argument 'array_values'."
     array_type = array_info.array_type
     max_size = array_info.array_max_size
@@ -110,8 +113,10 @@ def _parse_ecmascript_to_jani_expression(
     elif ast.type == "Literal":
         if isinstance(ast.value, str):
             # This needs to be treated as an array of integers
-            pass
-        return JaniExpression(JaniValue(ast.value))
+            string_as_array = convert_string_to_int_array(ast.value)
+            return _generate_array_expression(array_info, string_as_array)
+        else:
+            return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
         # If it is an identifier, we do not need to expand further
         assert ast.name not in ("True", "False"), (
