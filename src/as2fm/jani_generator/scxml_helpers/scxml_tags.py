@@ -211,6 +211,7 @@ def _append_scxml_body_to_jani_edge(
     jani_edge: JaniEdge,
     jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
+    datamodel_vars: Dict[str, Any],
     body: ScxmlExecutionBody,
     target: str,
     probability: float,
@@ -336,6 +337,7 @@ def _append_scxml_body_to_jani_edge(
                 sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                     jani_automaton,
                     events_holder,
+                    datamodel_vars,
                     conditional_body,
                     interm_loc_before,
                     interm_loc_after,
@@ -357,6 +359,7 @@ def _append_scxml_body_to_jani_edge(
             sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                 jani_automaton,
                 events_holder,
+                datamodel_vars,
                 ec.get_else_execution(),
                 interm_loc_before,
                 interm_loc_after,
@@ -388,6 +391,7 @@ def _append_scxml_body_to_jani_edge(
 def _append_scxml_body_to_jani_automaton(
     jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
+    datamodel_vars: Dict[str, Any],
     body: ScxmlExecutionBody,
     source: str,
     target: str,
@@ -433,6 +437,7 @@ def _append_scxml_body_to_jani_automaton(
         start_edge,
         jani_automaton,
         events_holder,
+        datamodel_vars,
         body,
         target,
         1.0,
@@ -489,12 +494,24 @@ class BaseTag:
         :param model: The model to write the tag to.
         :param max_array_size: The maximum index of the arrays in the model.
         """
+        self.model_variables: Optional[Dict[str, Any]] = None
         self.max_array_size = max_array_size
         self.element = element
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
         self.children = [self.generate_tag_element(child) for child in scxml_children]
+
+    def set_model_variables(self, mod_vars: Optional[Dict[str, Any]]):
+        """
+        Instantiate the internal variables defined in the SCXML model.
+
+        :param mod_vars: A mapping from the variable name to its default value.
+        """
+        assert mod_vars is None or isinstance(mod_vars, Dict), f"Unexpected input {mod_vars}"
+        self.model_variables = mod_vars
+        for child in self.children:
+            child.set_model_variables(mod_vars)
 
     def get_children(
         self,
@@ -524,15 +541,10 @@ class DatamodelTag(BaseTag):
     def get_children(self) -> List[ScxmlBase]:
         return []
 
-    def get_variables(self) -> Dict[str, Any]:
-        """
-        Get a map from the loaded variable names to the related initial value.
-        """
-        return self._loaded_vars
-
     def write_model(self):
         # A collection of the variables read from the datamodel so far
-        self._loaded_vars: Dict[str, Any] = {}
+        assert self.model_variables is None, "Expected model_variables to be unset at this stage."
+        self.model_variables: Dict[str, Any] = {}
         for scxml_data in self.element.get_data_entries():
             assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
             assert scxml_data.check_validity(), "Found invalid data entry."
@@ -551,7 +563,7 @@ class DatamodelTag(BaseTag):
                     max_array_size = self.max_array_size
                 array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
-            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self._loaded_vars)
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             assert check_value_type_compatible(evaluated_expr, expected_type), (
                 f"Invalid value for {scxml_data.get_name()}: "
                 f"Expected type {expected_type}, got {type(evaluated_expr)}."
@@ -571,7 +583,7 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
-            self._loaded_vars.update({scxml_data.get_name(): scxml_data.get_type()})
+            self.model_variables.update({scxml_data.get_name(): scxml_data.get_type()})
 
 
 class ScxmlTag(BaseTag):
@@ -599,6 +611,7 @@ class ScxmlTag(BaseTag):
             new_edges, new_locations = _append_scxml_body_to_jani_automaton(
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 onentry_body,
                 source_state,
                 target_state,
@@ -638,11 +651,12 @@ class ScxmlTag(BaseTag):
         # Extract information from ScxmlDatamodel
         data_model = self.element.get_data_model()
         # A map from the variable name to its default value
-        self.internal_variables: Dict[str, Any] = {}
         if data_model is not None:
             data_element: DatamodelTag = self.generate_tag_element(data_model)
             data_element.write_model()
-            self.internal_variables = data_element.get_variables()
+            self.model_variables = data_element.model_variables
+        for state_entry in self.children:
+            state_entry.set_model_variables(self.model_variables)
         super().write_model()
         self.add_unhandled_transitions()
         self.handle_entry_state()
@@ -700,6 +714,7 @@ class StateTag(BaseTag):
             edges, locations = _append_scxml_body_to_jani_automaton(
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 [],
                 self.element.get_id(),
                 self.element.get_id(),
@@ -870,6 +885,7 @@ class TransitionTag(BaseTag):
                 transition_edge,
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 merged_transition_body,
                 target_state_id,
                 target_probability,
