@@ -49,7 +49,7 @@ def test_parse_ecmascript_to_jani_expression_with_function():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr)
 
 
-@pytest.skip("Test skipped since PI is not yet supported in our ecmascript converter.")
+@pytest.mark.skip(reason="PI is not yet supported in our ecmascript converter.")
 def test_parse_ecmascript_to_jani_expression_with_constants():
     ecmascript_expr = "Math.PI"
     expected_jani_expr = JaniExpression({"constant": "π"})
@@ -69,13 +69,9 @@ def test_parse_ecmascript_to_jani_expression_with_array():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
-@pytest.skip("Test skipped since strings are not yet supported in our ecmascript converter.")
+@pytest.mark.skip(reason="Strings are not yet supported in our ecmascript converter.")
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
     expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
     array_info = ArrayInfo(int, 10)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
-
-
-if __name__ == "__main__":
-    pytest.main(["-s", "-v", __file__])
