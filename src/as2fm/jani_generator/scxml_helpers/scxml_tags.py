@@ -516,7 +516,7 @@ class DatamodelTag(BaseTag):
 
     def get_children(self) -> List[ScxmlBase]:
         return []
-    
+
     def get_variables(self) -> Dict[str, Any]:
         """
         Get a map from the loaded variable names to the related initial value.
@@ -564,19 +564,14 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
-            self._loaded_vars.update(
-                {scxml_data.get_name(): scxml_data.get_type()}
-            )
+            self._loaded_vars.update({scxml_data.get_name(): scxml_data.get_type()})
 
 
 class ScxmlTag(BaseTag):
     """Object representing the root SCXML tag."""
 
-    def get_children(self) -> List[Union[ScxmlDataModel, ScxmlState]]:
+    def get_children(self) -> List[ScxmlState]:
         root_children = []
-        data_model = self.element.get_data_model()
-        if data_model is not None:
-            root_children.append(data_model)
         root_children.extend(self.element.get_states())
         return root_children
 
@@ -633,6 +628,14 @@ class ScxmlTag(BaseTag):
     def write_model(self):
         assert isinstance(self.element, ScxmlRoot), f"Expected ScxmlRoot, got {type(self.element)}."
         self.automaton.set_name(self.element.get_name())
+        # Extract information from ScxmlDatamodel
+        data_model = self.element.get_data_model()
+        # A map from the variable name to its default value
+        self.internal_variables: Dict[str, Any] = {}
+        if data_model is not None:
+            data_element: DatamodelTag = self.from_element(data_model, self.call_trace + [data_model], (self.automaton, self.events_holder), self.max_array_size)
+            data_element.write_model()
+            self.internal_variables = data_element.get_variables()
         super().write_model()
         self.add_unhandled_transitions()
         self.handle_entry_state()
