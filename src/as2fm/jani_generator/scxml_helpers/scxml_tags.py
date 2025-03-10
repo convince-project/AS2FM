@@ -491,7 +491,7 @@ class BaseTag:
 
     def get_children(
         self,
-    ) -> Union[List[ScxmlBase], List[ScxmlTransition], List[Union[ScxmlDataModel, ScxmlState]]]:
+    ) -> List[ScxmlBase]:
         """Method extracting all children from a specific Scxml Tag."""
         raise NotImplementedError("Method get_children not implemented.")
 
@@ -516,10 +516,16 @@ class DatamodelTag(BaseTag):
 
     def get_children(self) -> List[ScxmlBase]:
         return []
+    
+    def get_variables(self) -> Dict[str, Any]:
+        """
+        Get a map from the loaded variable names to the related initial value.
+        """
+        return self._loaded_vars
 
     def write_model(self):
         # A collection of the variables read from the datamodel so far
-        read_vars: Dict[str, Any] = {}
+        self._loaded_vars: Dict[str, Any] = {}
         for scxml_data in self.element.get_data_entries():
             assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
             assert scxml_data.check_validity(), "Found invalid data entry."
@@ -538,7 +544,7 @@ class DatamodelTag(BaseTag):
                     max_array_size = self.max_array_size
                 array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
-            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), read_vars)
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self._loaded_vars)
             assert check_value_type_compatible(evaluated_expr, expected_type), (
                 f"Invalid value for {scxml_data.get_name()}: "
                 f"Expected type {expected_type}, got {type(evaluated_expr)}."
@@ -558,8 +564,8 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
-            read_vars.update(
-                {scxml_data.get_name(): get_default_expression_for_type(expected_type)}
+            self._loaded_vars.update(
+                {scxml_data.get_name(): scxml_data.get_type()}
             )
 
 
