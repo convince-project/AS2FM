@@ -125,8 +125,9 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
         value_str, str
     ), f"Error: provided value is of type {type(value_str)}, expected a string."
     assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
-    is_array_value = value_str.startswith("[") and value_str.endswith("]")
-    if not is_array_value:
+    is_array_value = re.match(r"^\[.*\]$", value_str) is not None
+    is_string_value = re.match(r"^\'.*\'$", value_str) is not None
+    if not (is_array_value or is_string_value):
         assert value_type in (
             bool,
             int,
@@ -135,7 +136,7 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
         if value_type is bool:
             return string_to_bool(value_str)
         return value_type(value_str)
-    else:
+    elif is_array_value:
         str_entries = value_str.strip("[]").split(",")
         if str_entries == [""]:
             str_entries = []
@@ -145,6 +146,10 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
             return array("d", [float(v) for v in str_entries])
         else:
             raise ValueError(f"Unsupported value type {value_type}.")
+    else:
+        raw_str = value_str.strip("'")
+        assert value_type is MutableSequence[int], "Error: unexpected type for string arrays."
+        return convert_string_to_int_array(raw_str)
 
 
 def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:

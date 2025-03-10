@@ -525,11 +525,15 @@ class DatamodelTag(BaseTag):
             assert scxml_data.check_validity(), "Found invalid data entry."
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
-            if expected_type not in (int, float, bool, str):
-                # Not a basic type: we are dealing with an array
-                array_type = get_args(expected_type)[0]
+            if expected_type not in (int, float, bool):
+                # Not a basic type: we are dealing with an array or a string
+                if expected_type is str:
+                    array_type = int
+                    max_array_size = None
+                else:
+                    array_type = get_args(expected_type)[0]
+                    max_array_size = scxml_data.get_array_max_size()
                 assert array_type in (int, float), f"Type {expected_type} not supported in arrays."
-                max_array_size = scxml_data.get_array_max_size()
                 if max_array_size is None:
                     max_array_size = self.max_array_size
                 array_info = ArrayInfo(array_type, max_array_size)

@@ -17,6 +17,7 @@
 Expressions in Jani
 """
 
+from array import array
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -24,7 +25,7 @@ from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.jani_generator.jani_entries import JaniValue
 from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
-SupportedExp = Union[str, int, float, bool, dict, list]
+SupportedExp = Union[str, int, float, bool, dict, list, array]
 
 
 class JaniExpressionType(Enum):

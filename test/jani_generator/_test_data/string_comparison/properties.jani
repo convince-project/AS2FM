@@ -13,7 +13,32 @@
                             "left": {
                                 "op": "=",
                                 "left": "string_event.string",
-                                "right": "'some information'"
+                                "right": {
+                                    "comment": "'some information'",
+                                    "op": "av",
+                                    "elements": [
+                                        115,
+                                        111,
+                                        109,
+                                        101,
+                                        32,
+                                        105,
+                                        110,
+                                        102,
+                                        111,
+                                        114,
+                                        109,
+                                        97,
+                                        116,
+                                        105,
+                                        111,
+                                        110,
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ]
+                                  }
                             },
                             "op": "∧",
                             "right": "string_eval.comparison"
