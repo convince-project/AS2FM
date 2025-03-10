@@ -17,7 +17,7 @@
 Module defining SCXML tags to match against.
 """
 
-from array import ArrayType, array
+from array import array
 from hashlib import sha256
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union, get_args
 
@@ -283,7 +283,7 @@ def _append_scxml_body_to_jani_edge(
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
                 array_info = None
-                if isinstance(res_eval_value, ArrayType):
+                if isinstance(res_eval_value, MutableSequence):
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
                 jani_expr = parse_ecmascript_to_jani_expression(expr, array_info).replace_event(
                     data_event
@@ -309,7 +309,7 @@ def _append_scxml_body_to_jani_edge(
                     op_type, _ = jani_expr.as_operator()
                     if op_type == "av":
                         assert isinstance(
-                            res_eval_value, ArrayType
+                            res_eval_value, MutableSequence
                         ), f"Expected array value, got {res_eval_value}."
                         new_edge_dest_assignments.append(
                             JaniAssignment(
@@ -532,8 +532,6 @@ class DatamodelTag(BaseTag):
         for scxml_data in self.element.get_data_entries():
             assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
             assert scxml_data.check_validity(), "Found invalid data entry."
-            # TODO: ScxmlData from scxml_helpers provide many more options.
-            # It should be ported to scxml_entries.ScxmlDataModel
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
             if expected_type not in (int, float, bool, str):
@@ -543,7 +541,6 @@ class DatamodelTag(BaseTag):
                 max_array_size = scxml_data.get_array_max_size()
                 if max_array_size is None:
                     max_array_size = self.max_array_size
-                expected_type = ArrayType
                 array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), read_vars)
@@ -560,7 +557,7 @@ class DatamodelTag(BaseTag):
             )
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
-            if expected_type is ArrayType:
+            if expected_type in (MutableSequence[int], MutableSequence[float]):
                 init_expr = string_to_value(scxml_data.get_expr(), expected_type)
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(

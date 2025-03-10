@@ -277,6 +277,14 @@ class JaniExpression:
             op_dict.update({op_key: op_value.as_dict()})
         return op_dict
 
+    def __eq__(self, value: "JaniExpression"):
+        """Equality operator between two JaniExpressions."""
+        assert isinstance(value, JaniExpression)
+        return self.as_dict() == value.as_dict()
+
+    def __str__(self):
+        return f"JaniExpression({self.as_dict()})"
+
 
 class JaniDistribution(JaniExpression):
     """

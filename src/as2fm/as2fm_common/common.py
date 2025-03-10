@@ -149,6 +149,9 @@ def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes])
     """Check if the value is compatible with the field type."""
     if field_type is float:
         return isinstance(value, (int, float))
+    # MutableSequence requires a special handling...
+    if field_type in (MutableSequence[int], MutableSequence[float]):
+        return isinstance(value, MutableSequence)
     return isinstance(value, field_type)
 
 
@@ -162,9 +165,9 @@ def is_valid_variable_name(var_name: str) -> bool:
     Check if a string can represent a variable name in JANI and SCXML.
 
     This differs from the string.isidentifier() python function, since we allow more possibilities:
-    * A variable name must start with a character -> [a-zA-Z];
+    * A variable name must start with a character or an underscore -> [a-zA-Z_];
     * Can continue with any number of alphanumerical values plus (. - _) -> [a-zA-Z0-9._-];
     * Must finish with an alphanumerical value -> [a-zA-Z0-9].
     Alternatively, a variable name can be a single character.
     """
-    return re.match(r"^[a-zA-Z][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
+    return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None

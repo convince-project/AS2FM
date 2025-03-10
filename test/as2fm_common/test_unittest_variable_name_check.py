@@ -32,7 +32,7 @@ def test_variable_names_check():
         ("-", False),
         ("'asd", False),
         (".asd", False),
-        ("_asd", False),
+        ("_asd", True),
         ("-asd", False),
         ("asd", True),
         ("as-d", True),
