@@ -76,7 +76,7 @@ def parse_ecmascript_to_jani_expression(
 
 
 def _generate_array_expression(
-    array_info: ArrayInfo, parent_script: esprima.nodes.Script, array_values: MutableSequence
+    array_info: ArrayInfo, parent_script: esprima.nodes.Node, array_values: MutableSequence
 ) -> JaniExpression:
     """
     Make the JaniExpression generating the desired array.
@@ -90,10 +90,13 @@ def _generate_array_expression(
     assert isinstance(
         array_values, MutableSequence
     ), f"Unexpected type '{type(array_values)}' for input argument 'array_values'."
+    assert isinstance(
+        parent_script, esprima.nodes.Node
+    ), f"Unexpected type '{type(parent_script)}' for input argument 'parent_script'."
     # Expression for generating array are supported only for assignments (elementary expression)!
-    assert isinstance(parent_script, esprima.nodes.ExpressionStatement), (
+    assert parent_script.type == "ExpressionStatement", (
         "Error: array generators can only be used for assignments: "
-        f"{type(parent_script)} != ExpressionStatement."
+        f"{parent_script.type} != ExpressionStatement."
     )
     array_type = array_info.array_type
     max_size = array_info.array_max_size
@@ -110,8 +113,8 @@ def _generate_array_expression(
 
 
 def _parse_ecmascript_to_jani_expression(
-    ast: esprima.nodes.Script,
-    parent_script: Optional[esprima.nodes.Script],
+    ast: esprima.nodes.Node,
+    parent_script: Optional[esprima.nodes.Node],
     array_info: Optional[ArrayInfo] = None,
 ) -> JaniExpression:
     """
