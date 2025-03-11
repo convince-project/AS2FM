@@ -17,11 +17,16 @@
 Module handling the conversion from SCXML to Jani.
 """
 
-from typing import List
+from typing import Dict, List
 
-from as2fm.jani_generator.jani_entries.jani_automaton import JaniAutomaton
+from as2fm.jani_generator.jani_entries import (
+    JaniAssignment,
+    JaniAutomaton,
+    JaniExpression,
+    JaniModel,
+    JaniVariable,
+)
 from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
-from as2fm.jani_generator.jani_entries.jani_model import JaniModel
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
@@ -85,3 +90,26 @@ def convert_multiple_scxmls_to_jani(
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)
     expand_random_variables_in_jani_model(base_model, n_options=100)
     return base_model
+
+
+def preprocess_jani_expressions(jani_model: JaniModel):
+    """Preprocess JANI expressions in the model to be compatible with the standard JANI format."""
+    global_variables = jani_model.get_variables()
+    for jani_automaton in jani_model.get_automata():
+        context_variables = global_variables | jani_automaton.get_variables()
+        for jani_edge in jani_automaton.get_edges():
+            for jani_destination in jani_edge.destinations:
+                assignments: List[JaniAssignment] = jani_destination["assignments"]
+                for assignment in assignments:
+                    assignment.set_expression(
+                        _preprocess_jani_expression(assignment.get_expression(), context_variables)
+                    )
+    for property in jani_model.get_properties():
+        # TODO
+        pass
+
+
+def _preprocess_jani_expression(
+    jani_expression: JaniExpression, context_vars: Dict[str, JaniVariable]
+) -> JaniExpression:
+    return jani_expression
