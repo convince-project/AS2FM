@@ -112,6 +112,19 @@ def _generate_array_expression_for_assignment(
         return array_value_operator(array_values)
 
 
+def _generate_constant_array_expression(
+    p_node: esprima.nodes.Node, array_values: MutableSequence
+) -> JaniExpression:
+    # If here, we are dealing with a constant array, that can only be used for eq. checks
+    assert (
+        p_node.type == "BinaryExpression"
+    ), f"Constant string parent node is a {p_node.type} != BinaryExpression."
+    assert (
+        p_node.operator == "=="
+    ), f"Constant strings support only the equality operator, found '{p_node.operator}'."
+    return array_value_operator(array_values)
+
+
 def _parse_ecmascript_to_jani_expression(
     ast: esprima.nodes.Node,
     parent_script: Optional[esprima.nodes.Node],
@@ -129,10 +142,13 @@ def _parse_ecmascript_to_jani_expression(
         return _parse_ecmascript_to_jani_expression(ast.expression, ast, array_info)
     elif ast.type == "Literal":
         if isinstance(ast.value, str):
-            # This needs to be treated as a list of integers.
-            # arrays are not compatible with jani_entries, use lists
+            # This needs to be treated as a list (not array) of integers.
             string_as_list = list(convert_string_to_int_array(ast.value))
-            return array_value_operator(string_as_list)
+            if parent_script.type == "ExpressionStatement":  # This is an assignment, add padding
+                return _generate_array_expression_for_assignment(
+                    array_info, parent_script, string_as_list
+                )
+            return _generate_constant_array_expression(parent_script, string_as_list)
         else:
             return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
