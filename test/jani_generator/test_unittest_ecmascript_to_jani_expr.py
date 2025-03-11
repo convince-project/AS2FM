@@ -33,7 +33,7 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
 def check_ecmascript_matches_gt_expression(
     ecmascript: str, gt_expr: JaniExpression, array_info: Optional[ArrayInfo] = None
 ):
-    ecmascript_expr = parse_ecmascript_to_jani_expression(ecmascript, array_info)
+    ecmascript_expr = parse_ecmascript_to_jani_expression(ecmascript, None, array_info)
     assert ecmascript_expr == gt_expr, f"{ecmascript_expr} is not matching with {gt_expr}"
 
 

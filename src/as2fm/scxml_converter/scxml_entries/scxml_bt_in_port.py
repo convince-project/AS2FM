@@ -33,8 +33,8 @@ class BtGetValueInputPort(ScxmlBase):
     def get_tag_name() -> str:
         return "bt_get_input"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtGetValueInputPort":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")
         return BtGetValueInputPort(key_str)

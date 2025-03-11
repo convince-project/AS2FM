@@ -24,6 +24,7 @@ from typing import List, Optional, Set, Tuple, get_args
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
+from as2fm.as2fm_common.logging import set_filepath_for_all_elements
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -53,8 +54,8 @@ class ScxmlRoot(ScxmlBase):
     def get_tag_name() -> str:
         return "scxml"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlRoot":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
@@ -107,6 +108,7 @@ class ScxmlRoot(ScxmlBase):
         print(f"{xml_file=}")
         if isfile(xml_file):
             xml_element = ET.parse(xml_file).getroot()
+            set_filepath_for_all_elements(xml_element, xml_file)
         elif xml_file.startswith("<?xml"):
             raise NotImplementedError("Can only parse files, not strings.")
         else:

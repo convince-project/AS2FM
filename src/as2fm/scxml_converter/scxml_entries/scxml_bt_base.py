@@ -44,7 +44,7 @@ class BtGenericRequestHandle(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
 
     @classmethod
-    def from_xml_tree(cls: ScxmlTransition, xml_tree: ET.Element) -> "BtGenericRequestHandle":
+    def from_xml_tree_impl(cls: ScxmlTransition, xml_tree: ET.Element) -> "BtGenericRequestHandle":
         assert_xml_tag_ok(cls, xml_tree)
         condition: Optional[str] = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
         transition_targets = cls.load_transition_targets_from_xml(xml_tree)
@@ -119,7 +119,7 @@ class BtGenericRequestSend(ScxmlSend):
         raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
 
     @classmethod
-    def from_xml_tree(cls: ScxmlSend, xml_tree: ET.Element) -> "BtGenericRequestSend":
+    def from_xml_tree_impl(cls: ScxmlSend, xml_tree: ET.Element) -> "BtGenericRequestSend":
         assert_xml_tag_ok(cls, xml_tree)
         # child_seq_id = n -> the n-th children of the control node in the BT XML
         child_seq_id: str = get_xml_attribute(cls, xml_tree, "id")
@@ -192,7 +192,7 @@ class BtGenericStatusHandle(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
 
     @classmethod
-    def from_xml_tree(cls: ScxmlTransition, xml_tree) -> "BtGenericStatusHandle":
+    def from_xml_tree_impl(cls: ScxmlTransition, xml_tree) -> "BtGenericStatusHandle":
         assert_xml_tag_ok(cls, xml_tree)
         # Same as in BtTickChild
         child_seq_id = get_xml_attribute(cls, xml_tree, "id")
@@ -285,16 +285,15 @@ class BtGenericStatusSend(ScxmlSend):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
 
     @classmethod
+    def from_xml_tree_impl(cls: ScxmlSend, xml_tree: ET.Element) -> "BtGenericStatusSend":
+        assert_xml_tag_ok(cls, xml_tree)
+        return cls()
+
     def generate_bt_event_name(cls: ScxmlSend, instance_id: int):
         """
         Generate the plain scxml event associated to the BT Transition instance_id.
         """
         raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
-
-    @classmethod
-    def from_xml_tree(cls: ScxmlSend, xml_tree: ET.Element) -> "BtGenericStatusSend":
-        assert_xml_tag_ok(cls, xml_tree)
-        return cls()
 
     def __init__(self):
         pass

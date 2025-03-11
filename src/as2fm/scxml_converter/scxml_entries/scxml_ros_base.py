@@ -69,7 +69,7 @@ class RosDeclaration(ScxmlBase):
         return f"{cls.get_communication_interface()}_name"
 
     @classmethod
-    def from_xml_tree(cls: Type["RosDeclaration"], xml_tree: ET.Element) -> "RosDeclaration":
+    def from_xml_tree_impl(cls: Type["RosDeclaration"], xml_tree: ET.Element) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = read_value_from_xml_arg_or_child(
@@ -186,7 +186,7 @@ class RosCallback(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_callback_type.")
 
     @classmethod
-    def from_xml_tree(cls: Type["RosCallback"], xml_tree: ET.Element) -> "RosCallback":
+    def from_xml_tree_impl(cls: Type["RosCallback"], xml_tree: ET.Element) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_attribute(cls, xml_tree, "name")
@@ -343,7 +343,7 @@ class RosTrigger(ScxmlSend):
         return []
 
     @classmethod
-    def from_xml_tree(cls: Type["RosTrigger"], xml_tree: ET.Element) -> "RosTrigger":
+    def from_xml_tree_impl(cls: Type["RosTrigger"], xml_tree: ET.Element) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.
 

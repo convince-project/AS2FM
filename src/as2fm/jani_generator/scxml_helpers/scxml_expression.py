@@ -21,8 +21,10 @@ from dataclasses import dataclass
 from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
+import lxml.etree
 
 from as2fm.as2fm_common.common import convert_string_to_int_array
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
@@ -45,7 +47,7 @@ class ArrayInfo:
 
 
 def parse_ecmascript_to_jani_expression(
-    ecmascript: str, array_info: Optional[ArrayInfo] = None
+    ecmascript: str, elem: Optional["lxml.etree._Element"], array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
@@ -57,15 +59,19 @@ def parse_ecmascript_to_jani_expression(
     try:
         ast = esprima.parseScript(ecmascript)
     except esprima.error_handler.Error as e:
-        raise RuntimeError(f"Failed parsing ecmascript: {ecmascript}. Error: {e}.")
-    assert len(ast.body) == 1, "The ecmascript must contain exactly one expression."
+        raise RuntimeError(
+            get_error_msg(elem, f"Failed parsing ecmascript: {ecmascript}. Error: {e}.")
+        )
+    assert len(ast.body) == 1, get_error_msg(
+        elem, "The ecmascript must contain exactly one expression."
+    )
     ast = ast.body[0]
     try:
         jani_expression = _parse_ecmascript_to_jani_expression(ast, array_info)
     except NotImplementedError:
-        raise RuntimeError(f"Unsupported ecmascript: {ecmascript}")
+        raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript: {ecmascript}"))
     except AssertionError:
-        raise RuntimeError(f"Assertion from ecmascript: {ecmascript}")
+        raise RuntimeError(get_error_msg(elem, f"Assertion from ecmascript: {ecmascript}"))
     return jani_expression
 
 

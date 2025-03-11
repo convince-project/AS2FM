@@ -35,8 +35,8 @@ class BtInputPortDeclaration(ScxmlBase):
     def get_tag_name() -> str:
         return "bt_declare_port_in"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtInputPortDeclaration":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtInputPortDeclaration":
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "type")
@@ -78,8 +78,8 @@ class BtOutputPortDeclaration(ScxmlBase):
     def get_tag_name() -> str:
         return "bt_declare_port_out"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtOutputPortDeclaration":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtOutputPortDeclaration":
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "type")
