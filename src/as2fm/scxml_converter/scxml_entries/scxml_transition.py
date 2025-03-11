@@ -90,8 +90,8 @@ class ScxmlTransition(ScxmlBase):
             )
         return target_children
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlTransition":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()

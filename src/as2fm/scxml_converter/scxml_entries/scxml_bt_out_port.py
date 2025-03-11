@@ -40,8 +40,8 @@ class BtSetValueOutputPort(ScxmlSend):
     def get_tag_name() -> str:
         return "bt_set_output"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtSetValueOutputPort":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")

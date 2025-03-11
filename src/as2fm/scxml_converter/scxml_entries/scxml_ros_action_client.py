@@ -97,8 +97,8 @@ class RosActionHandleGoalResponse(ScxmlTransition):
     def get_tag_name() -> str:
         return "ros_action_handle_goal_response"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionHandleGoalResponse":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
         action_name = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "name")

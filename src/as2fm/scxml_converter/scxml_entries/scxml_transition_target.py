@@ -50,7 +50,7 @@ class ScxmlTransitionTarget(ScxmlBase):
         return "target"
 
     @classmethod
-    def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlTransitionTarget":
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
         assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
             "Error: SCXML transition target: XML root tag name is "

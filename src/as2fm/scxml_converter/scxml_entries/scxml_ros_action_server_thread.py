@@ -62,8 +62,8 @@ class RosActionThread(ScxmlBase):
     def get_tag_name() -> str:
         return "ros_action_thread"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "RosActionThread":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_attribute(RosActionThread, xml_tree, "name")

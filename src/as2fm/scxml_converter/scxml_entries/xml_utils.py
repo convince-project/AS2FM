@@ -18,14 +18,16 @@ from typing import Iterable, List, Optional, Type, Union
 import lxml.etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
 def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
     """Ensures the xml_tree we are trying to parse has the expected name."""
-    assert (
-        xml_tree.tag == scxml_type.get_tag_name()
-    ), f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}"
+    assert xml_tree.tag == scxml_type.get_tag_name(), get_error_msg(
+        xml_tree,
+        f"SCXML conversion: Expected tag {scxml_type.get_tag_name()}, but got {xml_tree.tag}",
+    )
 
 
 def get_xml_attribute(
@@ -52,11 +54,13 @@ def get_xml_attribute(
     arg_value = xml_tree.get(arg_name)
     error_prefix = f"SCXML conversion of {scxml_type.get_tag_name()}"
     if arg_value is None:
-        assert undefined_allowed, f"{error_prefix}: Expected argument {arg_name} in {xml_tree.tag}"
+        assert undefined_allowed, get_error_msg(
+            xml_tree, f"{error_prefix}: Expected argument {arg_name} in {xml_tree.tag}"
+        )
     elif len(arg_value) == 0:
-        assert (
-            empty_allowed
-        ), f"{error_prefix}: Expected non-empty argument {arg_name} in {xml_tree.tag}"
+        assert empty_allowed, get_error_msg(
+            xml_tree, f"{error_prefix}: Expected non-empty argument {arg_name} in {xml_tree.tag}"
+        )
     return arg_value
 
 
@@ -93,10 +97,16 @@ def read_value_from_xml_child(
     xml_child = xml_tree.findall(child_tag)
     if xml_child is None or len(xml_child) == 0:
         if not none_allowed:
-            print(f"Error: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.")
+            log_error(
+                xml_tree,
+                f"Error: reading from {xml_tree.tag}: Cannot find child '{child_tag}'.",
+            )
         return None
     if len(xml_child) > 1:
-        print(f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.")
+        log_error(
+            xml_tree,
+            f"Error: reading from {xml_tree.tag}: multiple children '{child_tag}', expected one.",
+        )
         return None
     tag_children = [child for child in xml_child[0] if not is_comment(child)]
     n_tag_children = len(tag_children)
@@ -104,19 +114,28 @@ def read_value_from_xml_child(
         # Try to read the text value
         text_value = xml_child[0].text
         if text_value is None or len(text_value) == 0:
-            print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has no text value.")
+            log_error(
+                xml_tree,
+                f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has no text value.",
+            )
             return None
         return text_value
     if n_tag_children > 1:
-        print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children:")
+        log_error(
+            xml_tree,
+            f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children:",
+        )
         for child in tag_children:
-            print(f"\t- {child.tag}")
+            log_error(xml_tree, f"\t- {child.tag}")
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
     scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
     if len(scxml_entry) == 0:
-        print(f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.")
+        log_error(
+            xml_tree,
+            f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has no valid children.",
+        )
         return None
     return scxml_entry[0]
 
@@ -133,9 +152,12 @@ def read_value_from_xml_arg_or_child(
 
     To read the value from the xml arguments, valid_types must include string.
     """
-    assert str in valid_types, (
-        "Error: read_value_from_arg_or_child: valid_types must include str. "
-        "If strings are not expected, use 'read_value_from_xml_child'."
+    assert str in valid_types, get_error_msg(
+        xml_tree,
+        (
+            "read_value_from_arg_or_child: valid_types must include str. "
+            "If strings are not expected, use 'read_value_from_xml_child'."
+        ),
     )
     read_value = get_xml_attribute(scxml_type, xml_tree, tag_name, undefined_allowed=True)
     if read_value is None:
@@ -143,7 +165,10 @@ def read_value_from_xml_arg_or_child(
             xml_tree, tag_name, valid_types, none_allowed=none_allowed
         )
     if not none_allowed:
-        assert (
-            read_value is not None
-        ), f"Error: SCXML conversion of {scxml_type.get_tag_name()}: Missing argument {tag_name}."
+        if read_value is None:
+            log_error(
+                xml_tree,
+                f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
+                + f"Missing argument {tag_name}.",
+            )
     return read_value

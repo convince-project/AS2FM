@@ -26,7 +26,7 @@ from typing import Dict, List, Optional, Tuple
 import lxml.etree as ET
 
 from as2fm.as2fm_common.common import remove_namespace, string_to_bool
-from as2fm.as2fm_common.logging import error, set_filepath_for_all_elements
+from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -89,7 +89,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
     with open(xml_path, "r", encoding="utf-8") as f:
         xml = ET.parse(f, parser=parser_wo_comments)
     set_filepath_for_all_elements(xml.getroot(), xml_path)
-    assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", error(
+    assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", get_error_msg(
         xml.getroot(), "The top-level XML element must be convince_mc_tc."
     )
     model = FullModel()
@@ -108,9 +108,11 @@ def parse_main_xml(xml_path: str) -> FullModel:
                     model.bt_tick_when_not_running = string_to_bool(mc_parameter.attrib["value"])
                 else:
                     raise ValueError(
-                        error(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
+                        get_error_msg(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
                     )
-            assert model.max_time is not None, error(first_level, "`max_time` must be defined.")
+            assert model.max_time is not None, get_error_msg(
+                first_level, "`max_time` must be defined."
+            )
         elif remove_namespace(first_level.tag) == "behavior_tree":
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
@@ -121,37 +123,41 @@ def parse_main_xml(xml_path: str) -> FullModel:
                         model.plugins.append(os.path.join(folder_of_xml, child.attrib["src"]))
                     else:
                         raise ValueError(
-                            error(child, f"Invalid input type: {child.attrib['type']}")
+                            get_error_msg(child, f"Invalid input type: {child.attrib['type']}")
                         )
                 else:
                     raise ValueError(
-                        error(child, f"Invalid behavior_tree tag: {child.tag} != input")
+                        get_error_msg(child, f"Invalid behavior_tree tag: {child.tag} != input")
                     )
-            assert model.bt is not None, error(first_level, "A Behavior Tree must be defined.")
+            assert model.bt is not None, get_error_msg(
+                first_level, "A Behavior Tree must be defined."
+            )
         elif remove_namespace(first_level.tag) == "node_models":
             for node_model in first_level:
-                assert remove_namespace(node_model.tag) == "input", error(
+                assert remove_namespace(node_model.tag) == "input", get_error_msg(
                     node_model, "Only input tags are supported."
                 )
-                assert node_model.attrib["type"] == "ros-scxml", error(
+                assert node_model.attrib["type"] == "ros-scxml", get_error_msg(
                     node_model, "Only ROS-SCXML node models are supported."
                 )
                 model.skills.append(os.path.join(folder_of_xml, node_model.attrib["src"]))
         elif remove_namespace(first_level.tag) == "properties":
             for jani_property in first_level:
-                assert remove_namespace(jani_property.tag) == "input", error(
+                assert remove_namespace(jani_property.tag) == "input", get_error_msg(
                     jani_property, "Only input tags are supported."
                 )
-                assert jani_property.attrib["type"] == "jani", error(
+                assert jani_property.attrib["type"] == "jani", get_error_msg(
                     jani_property,
                     "Only Jani properties are supported, not {jani_property.attrib['type']}.",
                 )
                 model.properties.append(os.path.join(folder_of_xml, jani_property.attrib["src"]))
-            assert len(model.properties) == 1, error(
+            assert len(model.properties) == 1, get_error_msg(
                 first_level, "Only exactly one Jani property is supported."
             )
         else:
-            raise ValueError(error(first_level, f"Invalid main point tag: {first_level.tag}"))
+            raise ValueError(
+                get_error_msg(first_level, f"Invalid main point tag: {first_level.tag}")
+            )
     return model
 
 

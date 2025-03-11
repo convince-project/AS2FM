@@ -21,7 +21,9 @@ from dataclasses import dataclass
 from typing import List, Optional, Type, Union
 
 import esprima
+import lxml.etree
 
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
@@ -44,7 +46,7 @@ class ArrayInfo:
 
 
 def parse_ecmascript_to_jani_expression(
-    ecmascript: str, array_info: Optional[ArrayInfo] = None
+    ecmascript: str, elem: Optional["lxml.etree._Element"], array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
@@ -56,20 +58,24 @@ def parse_ecmascript_to_jani_expression(
     try:
         ast = esprima.parseScript(ecmascript)
     except esprima.error_handler.Error as e:
-        raise RuntimeError(f"Failed parsing ecmascript: {ecmascript}. Error: {e}.")
-    assert len(ast.body) == 1, "The ecmascript must contain exactly one expression."
+        raise RuntimeError(
+            get_error_msg(elem, f"Failed parsing ecmascript: {ecmascript}. Error: {e}.")
+        )
+    assert len(ast.body) == 1, get_error_msg(
+        elem, "The ecmascript must contain exactly one expression."
+    )
     ast = ast.body[0]
     try:
-        jani_expression = _parse_ecmascript_to_jani_expression(ast, array_info)
+        jani_expression = _parse_ecmascript_to_jani_expression(ast, elem, array_info)
     except NotImplementedError:
-        raise RuntimeError(f"Unsupported ecmascript: {ecmascript}")
+        raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript: {ecmascript}"))
     except AssertionError:
-        raise RuntimeError(f"Assertion from ecmascript: {ecmascript}")
+        raise RuntimeError(get_error_msg(elem, f"Assertion from ecmascript: {ecmascript}"))
     return jani_expression
 
 
 def _parse_ecmascript_to_jani_expression(
-    ast: esprima.nodes.Script, array_info: Optional[ArrayInfo] = None
+    ast: esprima.nodes.Script, elem: "lxml.etree._Element", array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
@@ -79,7 +85,7 @@ def _parse_ecmascript_to_jani_expression(
     :return: The jani expression.
     """
     if ast.type == "ExpressionStatement":
-        return _parse_ecmascript_to_jani_expression(ast.expression, array_info)
+        return _parse_ecmascript_to_jani_expression(ast.expression, elem, array_info)
     elif ast.type == "Literal":
         return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
@@ -95,7 +101,7 @@ def _parse_ecmascript_to_jani_expression(
             {
                 "op": OPERATORS_TO_JANI_MAP[ast.operator],
                 "left": JaniValue(0),
-                "right": _parse_ecmascript_to_jani_expression(ast.argument, array_info),
+                "right": _parse_ecmascript_to_jani_expression(ast.argument, elem, array_info),
             }
         )
     elif ast.type == "BinaryExpression" or ast.type == "LogicalExpression":
@@ -106,8 +112,8 @@ def _parse_ecmascript_to_jani_expression(
         return JaniExpression(
             {
                 "op": OPERATORS_TO_JANI_MAP[ast.operator],
-                "left": _parse_ecmascript_to_jani_expression(ast.left, array_info),
-                "right": _parse_ecmascript_to_jani_expression(ast.right, array_info),
+                "left": _parse_ecmascript_to_jani_expression(ast.left, elem, array_info),
+                "right": _parse_ecmascript_to_jani_expression(ast.right, elem, array_info),
             }
         )
     elif ast.type == "ArrayExpression":
@@ -130,10 +136,10 @@ def _parse_ecmascript_to_jani_expression(
             elements_list.extend([entry_type(0)] * elements_to_add)
             return array_value_operator(elements_list)
     elif ast.type == "MemberExpression":
-        object_expr = _parse_ecmascript_to_jani_expression(ast.object, array_info)
+        object_expr = _parse_ecmascript_to_jani_expression(ast.object, elem, array_info)
         if ast.computed:
             # This is an array access, like array[0]
-            array_index = _parse_ecmascript_to_jani_expression(ast.property, array_info)
+            array_index = _parse_ecmascript_to_jani_expression(ast.property, elem, array_info)
             return array_access_operator(object_expr, array_index)
         else:
             # Access to the member of an object through dot notation
@@ -168,7 +174,7 @@ def _parse_ecmascript_to_jani_expression(
         ), f"Unsupported function call {function_name}."
         expression_args: List[JaniExpression] = []
         for arg in ast.arguments:
-            expression_args.append(_parse_ecmascript_to_jani_expression(arg, array_info))
+            expression_args.append(_parse_ecmascript_to_jani_expression(arg, elem, array_info))
         return CALLABLE_OPERATORS_MAP[function_name](*expression_args)
     else:
         raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")

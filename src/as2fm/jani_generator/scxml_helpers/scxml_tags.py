@@ -109,7 +109,9 @@ def _interpret_scxml_assign(
     :return: The action or expression to be executed.
     """
     assert isinstance(elem, ScxmlAssign), f"Expected ScxmlAssign, got {type(elem)}"
-    assignment_target = parse_ecmascript_to_jani_expression(elem.get_location())
+    assignment_target = parse_ecmascript_to_jani_expression(
+        elem.get_location(), elem.get_xml_tree()
+    )
     target_expr_type = assignment_target.get_expression_type()
     is_target_array = target_expr_type == JaniExpressionType.IDENTIFIER and is_variable_array(
         jani_automaton, assignment_target.as_identifier()
@@ -120,7 +122,7 @@ def _interpret_scxml_assign(
         array_info = ArrayInfo(*var_info)
     # Check if the target is an array, in case copy the length too
     assignment_value = parse_ecmascript_to_jani_expression(
-        elem.get_expr(), array_info
+        elem.get_expr(), elem.get_xml_tree(), array_info
     ).replace_event(event_substitution)
     assignments: List[JaniAssignment] = [
         JaniAssignment({"ref": assignment_target, "value": assignment_value, "index": assign_index})
@@ -274,9 +276,9 @@ def _append_scxml_body_to_jani_edge(
                 array_info = None
                 if isinstance(res_eval_value, ArrayType):
                     array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
-                jani_expr = parse_ecmascript_to_jani_expression(expr, array_info).replace_event(
-                    data_event
-                )
+                jani_expr = parse_ecmascript_to_jani_expression(
+                    expr, param.get_xml_tree(), array_info
+                ).replace_event(data_event)
                 new_edge_dest_assignments.append(
                     JaniAssignment({"ref": param_assign_name, "value": jani_expr})
                 )
@@ -328,7 +330,7 @@ def _append_scxml_body_to_jani_edge(
             last_edge.destinations[-1]["location"] = interm_loc_before
             previous_conditions: List[JaniExpression] = []
             for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
-                current_cond = parse_ecmascript_to_jani_expression(cond_str)
+                current_cond = parse_ecmascript_to_jani_expression(cond_str, ec.get_xml_tree())
                 jani_cond = _merge_conditions(previous_conditions, current_cond).replace_event(
                     data_event
                 )
@@ -534,7 +536,9 @@ class DatamodelTag(BaseTag):
                     max_array_size = self.max_array_size
                 expected_type = ArrayType
                 array_info = ArrayInfo(array_type, max_array_size)
-            init_value = parse_ecmascript_to_jani_expression(scxml_data.get_expr(), array_info)
+            init_value = parse_ecmascript_to_jani_expression(
+                scxml_data.get_expr(), scxml_data.get_xml_tree(), array_info
+            )
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), read_vars)
             assert check_value_type_compatible(evaluated_expr, expected_type), (
                 f"Invalid value for {scxml_data.get_name()}: "
@@ -656,7 +660,7 @@ class StateTag(BaseTag):
         <transition event="a" cond="_event.X <= 5" target="self" />
         """
         previous_expressions = [
-            parse_ecmascript_to_jani_expression(cond)
+            parse_ecmascript_to_jani_expression(cond, None)
             for cond in self._event_to_conditions.get(event_name, [])
         ]
         if len(previous_expressions) > 0:
@@ -787,11 +791,14 @@ class TransitionTag(BaseTag):
         transition_targets: List[ScxmlTransitionTarget] = self.element.get_targets()
         # Transition condition (guard) processing
         previous_conditions_expr = [
-            parse_ecmascript_to_jani_expression(cond) for cond in self._previous_conditions
+            parse_ecmascript_to_jani_expression(cond, self.element.get_xml_tree())
+            for cond in self._previous_conditions
         ]
         current_condition_expr = None
         if current_condition is not None:
-            current_condition_expr = parse_ecmascript_to_jani_expression(current_condition)
+            current_condition_expr = parse_ecmascript_to_jani_expression(
+                current_condition, self.element.get_xml_tree()
+            )
         if trigger_event is not None:
             for single_cond_expr in previous_conditions_expr:
                 single_cond_expr.replace_event(trigger_event)

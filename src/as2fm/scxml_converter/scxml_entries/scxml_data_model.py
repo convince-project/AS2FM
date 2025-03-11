@@ -38,8 +38,8 @@ class ScxmlDataModel(ScxmlBase):
     def get_tag_name() -> str:
         return "datamodel"
 
-    @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "ScxmlDataModel":
+    @classmethod
+    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert_xml_tag_ok(ScxmlDataModel, xml_tree)
         data_entries = []
@@ -48,11 +48,13 @@ class ScxmlDataModel(ScxmlBase):
             if is_comment(data_entry_xml):
                 prev_xml_comment = data_entry_xml.text.strip()
             else:
-                data_entries.append(ScxmlData.from_xml_tree(data_entry_xml, prev_xml_comment))
+                data_entries.append(ScxmlData.data_from_xml_tree(data_entry_xml, prev_xml_comment))
                 prev_xml_comment = None
         return ScxmlDataModel(data_entries)
 
-    def get_data_entries(self) -> Optional[List[ScxmlData]]:
+    def get_data_entries(self) -> List[ScxmlData]:
+        if self._data_entries is None:
+            return []
         return self._data_entries
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
