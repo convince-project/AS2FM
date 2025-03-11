@@ -75,11 +75,11 @@ def parse_ecmascript_to_jani_expression(
     return jani_expression
 
 
-def _generate_array_expression(
+def _generate_array_expression_for_assignment(
     array_info: ArrayInfo, parent_script: esprima.nodes.Node, array_values: MutableSequence
 ) -> JaniExpression:
     """
-    Make the JaniExpression generating the desired array.
+    Make the JaniExpression generating the array_values to ba assigned to a variable.
 
     :param array_info: Type and size of the array we are generating.
     :array_values: The values to initialize the array with. Padding added to read the desired size.
@@ -129,9 +129,10 @@ def _parse_ecmascript_to_jani_expression(
         return _parse_ecmascript_to_jani_expression(ast.expression, ast, array_info)
     elif ast.type == "Literal":
         if isinstance(ast.value, str):
-            # This needs to be treated as an array of integers
-            string_as_array = convert_string_to_int_array(ast.value)
-            return _generate_array_expression(array_info, parent_script, string_as_array)
+            # This needs to be treated as a list of integers.
+            # arrays are not compatible with jani_entries, use lists
+            string_as_list = list(convert_string_to_int_array(ast.value))
+            return array_value_operator(string_as_list)
         else:
             return JaniExpression(JaniValue(ast.value))
     elif ast.type == "Identifier":
@@ -169,7 +170,7 @@ def _parse_ecmascript_to_jani_expression(
             element.type == "Literal" for element in ast.elements
         ), "All array elements are expected to be a 'Literal'"
         elements_list = [entry_type(element.value) for element in ast.elements]
-        return _generate_array_expression(array_info, parent_script, elements_list)
+        return _generate_array_expression_for_assignment(array_info, parent_script, elements_list)
     elif ast.type == "MemberExpression":
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
         if ast.computed:

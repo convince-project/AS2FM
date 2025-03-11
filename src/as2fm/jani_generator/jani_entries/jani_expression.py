@@ -17,7 +17,6 @@
 Expressions in Jani
 """
 
-from array import array
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -25,7 +24,7 @@ from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.jani_generator.jani_entries import JaniValue
 from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
-SupportedExp = Union[str, int, float, bool, dict, list, array]
+SupportedExp = Union[str, int, float, bool, dict, list]
 
 
 class JaniExpressionType(Enum):
@@ -87,17 +86,6 @@ class JaniExpression:
                 assert "op" in expression, "Expected either a value or an operator"
                 self.op = expression["op"]
                 self.operands = self._get_operands(expression)
-
-    # def _init_expression_from_string(self, input_str: str) -> None:
-    #     """Validate the input string and use it for initializing the expression instance."""
-    #     if input_str.isidentifier():
-    #         # If it is a reference to a constant or variable, we do not need to expand further
-    #         self.identifier = input_str
-    #     else:
-    #         # Ensure strings from input expressions are starting and ending with a "'"
-    #         assert re.match(r"^\'.*\'$", input_str) is not None, (
-    #             f"Input string {input_str} is neither an identifier nor a valid json string.")
-    #         # Convert the string to an array of integers
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""

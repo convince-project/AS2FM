@@ -17,7 +17,6 @@
 Values in Jani
 """
 
-from array import array
 from math import e, pi
 from typing import Type, Union
 
@@ -36,7 +35,9 @@ class JaniValue:
                     "π",
                 ), f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
-        elif isinstance(self._value, (list, array)):
+        elif isinstance(self._value, list):
+            if len(self._value) == 0:
+                return True
             # Make sure that all entries have the same type
             first_entry_value = JaniValue(self._value[0])
             if not first_entry_value.is_valid():
