@@ -581,6 +581,10 @@ class DatamodelTag(BaseTag):
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
+            if isinstance(evaluated_expr, MutableSequence):
+                # Add padding to the evaluated expression, for the JS evaluator to work
+                padding_size = array_info.array_max_size - len(evaluated_expr)
+                evaluated_expr.extend([array_info.array_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 
