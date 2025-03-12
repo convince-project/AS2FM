@@ -23,10 +23,15 @@ from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
     JaniExpression,
+    JaniExpressionType,
     JaniModel,
     JaniVariable,
 )
 from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
+from as2fm.jani_generator.jani_entries.jani_utils import (
+    get_array_variable_info,
+    is_expression_array,
+)
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
@@ -112,4 +117,39 @@ def preprocess_jani_expressions(jani_model: JaniModel):
 def _preprocess_jani_expression(
     jani_expression: JaniExpression, context_vars: Dict[str, JaniVariable]
 ) -> JaniExpression:
+    exp_operator, exp_operands = jani_expression.as_operator()
+    if exp_operator is None:
+        return jani_expression
+    has_array_operator = any(is_expression_array(exp_op) for exp_op in exp_operands.values())
+    if has_array_operator:
+        assert (
+            exp_operator == "="
+        ), "Array operators can be only used for assignments and comparisons."
+        return _preprocess_array_comparison(jani_expression, context_vars)
+    new_expr_dict: Dict[str, JaniExpression] = {"op": exp_operator}
+    for operand_name, operand_expr in exp_operands.items():
+        new_expr_dict.update(
+            {operand_name: _preprocess_jani_expression(operand_expr, context_vars)}
+        )
+    return JaniExpression(new_expr_dict)
+
+
+def _preprocess_array_comparison(
+    jani_expression: JaniExpression, context_vars: Dict[str, JaniVariable]
+) -> JaniExpression:
+    """Preprocess comparison between a constant array and a variable."""
+    exp_operator, exp_operands = jani_expression.as_operator()
+    assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
+    array_expr = None
+    var_entry = None
+    for operand in exp_operands.values():
+        expr_type = operand.get_expression_type()
+        if expr_type == JaniExpressionType.IDENTIFIER:
+            var_entry = context_vars.get(operand.as_identifier())
+        else:
+            assert is_expression_array(operand), f"Expected {operand.as_dict()} to be an array."
+            array_expr = operand
+    assert array_expr is not None
+    assert var_entry is not None
+    v_array_type, v_array_size = get_array_variable_info(var_entry)
     return jani_expression

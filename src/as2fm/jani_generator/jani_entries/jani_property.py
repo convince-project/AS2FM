@@ -18,7 +18,7 @@ Properties in Jani
 """
 
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
@@ -56,8 +56,8 @@ class FilterProperty:
         return {
             "op": "filter",
             "fun": self._fun,
-            "states": {"op": "initial"},
             "values": self._values.as_dict(constants),
+            "states": {"op": "initial"},
         }
 
 
@@ -104,9 +104,10 @@ class PathProperty:
 
     def __init__(self, prop_values: Dict[str, Any]):
         self._valid = False
-        if "op" not in prop_values:
+        self._comment: Optional[str] = prop_values.get("comment")
+        self._op: Optional[str] = prop_values.get("op")
+        if self._op is None:
             return
-        self._op: str = prop_values["op"]
         self._operands: Dict[str, JaniExpression] = {}
         if self._op == "F":
             self._operands = {"exp": JaniExpression(prop_values["exp"])}
@@ -130,7 +131,10 @@ class PathProperty:
         return self._valid
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
-        ret_dict = {"op": self._op}
+        ret_dict = {}
+        if self._comment is not None:
+            ret_dict.update({"comment": self._comment})
+        ret_dict.update({"op": self._op})
         ret_dict.update(
             {
                 operand: expand_expression(expr, constants).as_dict()

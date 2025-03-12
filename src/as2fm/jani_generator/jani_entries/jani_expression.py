@@ -54,6 +54,7 @@ class JaniExpression:
         self.value: Optional[JaniValue] = None
         self.op: Optional[str] = None
         self.operands: Dict[str, JaniExpression] = {}
+        self.comment: Optional[str] = None
         if isinstance(expression, JaniExpression):
             assert (
                 expression.get_expression_type() != JaniExpressionType.DISTRIBUTION
@@ -62,6 +63,7 @@ class JaniExpression:
             self.value = expression.value
             self.op = expression.op
             self.operands = expression.operands
+            self.comment = self.comment
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
@@ -84,6 +86,7 @@ class JaniExpression:
                 # Operands need to be expanded further, until we encounter a value expression
                 assert isinstance(expression, dict), "Expected a dictionary"
                 assert "op" in expression, "Expected either a value or an operator"
+                self.comment = expression.get("comment")
                 self.op = expression["op"]
                 self.operands = self._get_operands(expression)
 
@@ -241,11 +244,11 @@ class JaniExpression:
         assert self.is_valid(), "Expression is not valid"
         return self.identifier
 
-    def as_operator(self) -> Optional[Tuple[str, Dict[str, "JaniExpression"]]]:
+    def as_operator(self) -> Tuple[Optional[str], Optional[Dict[str, "JaniExpression"]]]:
         """Provide the expression as an operator, if possible. None otherwise."""
         assert self.is_valid(), "Expression is not valid"
         if self.op is None:
-            return None
+            return (None, None)
         return (self.op, self.operands)
 
     def as_dict(self) -> Union[str, int, float, bool, dict]:
@@ -255,9 +258,10 @@ class JaniExpression:
             return self.identifier
         if self.value is not None:
             return self.value.as_dict()
-        op_dict: Dict[str, Any] = {
-            "op": self.op,
-        }
+        op_dict: Dict[str, Any] = {}
+        if self.comment is not None:
+            op_dict.update({"comment": self.comment})
+        op_dict.update({"op": self.op})
         for op_key, op_value in self.operands.items():
             assert isinstance(
                 op_value, JaniExpression
@@ -317,9 +321,9 @@ class JaniDistribution(JaniExpression):
         """Provide the expression as an identifier, if possible. None otherwise."""
         return None
 
-    def as_operator(self) -> None:
+    def as_operator(self) -> Tuple[None, None]:
         """Provide the expression as an operator, if possible. None otherwise."""
-        return None
+        return (None, None)
 
     def get_dist_type(self) -> str:
         """Return the distribution type set in the object."""

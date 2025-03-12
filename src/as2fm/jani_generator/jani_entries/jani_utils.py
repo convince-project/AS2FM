@@ -18,10 +18,12 @@
 from typing import Any, Dict, MutableSequence, Optional, Tuple, Type, get_args
 
 from as2fm.as2fm_common.common import get_default_expression_for_type, is_array_type
-from as2fm.jani_generator.jani_entries import JaniAutomaton
+from as2fm.jani_generator.jani_entries import JaniAutomaton, JaniExpression, JaniVariable
 
 
-def get_variable_type(jani_automaton: JaniAutomaton, variable_name: Optional[str]) -> type:
+def get_automaton_variable_type(
+    jani_automaton: JaniAutomaton, variable_name: Optional[str]
+) -> type:
     """
     Retrieve the variable type from the Jani automaton.
 
@@ -37,14 +39,41 @@ def get_variable_type(jani_automaton: JaniAutomaton, variable_name: Optional[str
     return variable.get_type()
 
 
-def is_variable_array(jani_automaton: JaniAutomaton, variable_name: Optional[str]) -> bool:
+def is_automaton_variable_array(
+    jani_automaton: JaniAutomaton, variable_name: Optional[str]
+) -> bool:
     """Check if a variable is an array.
 
     :param jani_automaton: The Jani automaton to check the variable in.
     :param variable_name: The name of the variable to check.
     :return: True if the variable is an array, False otherwise.
     """
-    return is_array_type(get_variable_type(jani_automaton, variable_name))
+    return is_array_type(get_automaton_variable_type(jani_automaton, variable_name))
+
+
+def is_expression_array(expr: JaniExpression) -> bool:
+    """Determine is an expression is an array operator ('av' or 'ac')."""
+    exp_operator, _ = expr.as_operator()
+    return exp_operator is not None and exp_operator in ("ac", "av")
+
+
+def get_array_variable_info(jani_var: JaniVariable) -> Tuple[Type, int]:
+    """Extract the array type and max size from a jani variable."""
+    var_type = jani_var.get_type()
+    assert is_array_type(var_type), f"Input JANI variable {jani_var.name()} is not an array."
+    array_type = get_args(var_type)[0]
+    assert array_type in (
+        int,
+        float,
+    ), f"Unsupported array type {array_type} found in JANI variable {jani_var.name()}."
+    init_operator, init_operands = jani_var.get_init_expr().as_operator()
+    if init_operator == "av":
+        max_size = len(init_operands["elements"].as_literal().value())
+    elif init_operator == "ac":
+        max_size = init_operands["length"].as_literal().value()
+    else:
+        raise ValueError(f"Unexpected operator {init_operator} for {jani_var.name()} init expr.")
+    return (array_type, max_size)
 
 
 def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tuple[Type, int]:
@@ -57,19 +86,7 @@ def get_array_type_and_size(jani_automaton: JaniAutomaton, var_name: str) -> Tup
     """
     assert var_name is not None, "Variable name must be provided."
     variable = jani_automaton.get_variables().get(var_name)
-    var_type = variable.get_type()
-    assert is_array_type(var_type), f"Variable {var_name} not an array, cannot extract array info."
-    array_type = get_args(var_type)[0]
-    assert array_type in (int, float), f"Array type {array_type} not supported."
-    init_operator = variable.get_init_expr().as_operator()
-    assert init_operator is not None, f"Expected init expr of {var_name} to be an operator expr."
-    if init_operator[0] == "av":
-        max_size = len(init_operator[1]["elements"].as_literal().value())
-    elif init_operator[0] == "ac":
-        max_size = init_operator[1]["length"].as_literal().value()
-    else:
-        raise ValueError(f"Unexpected operator {init_operator[0]} for {var_name} init expr.")
-    return (array_type, max_size)
+    return get_array_variable_info(variable)
 
 
 def get_all_variables_and_instantiations(jani_automaton: JaniAutomaton) -> Dict[str, Any]:

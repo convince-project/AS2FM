@@ -48,8 +48,8 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
     get_array_type_and_size,
-    get_variable_type,
-    is_variable_array,
+    get_automaton_variable_type,
+    is_automaton_variable_array,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
@@ -108,12 +108,14 @@ def _interpret_scxml_assign(
     :return: The action or expression to be executed.
     """
     assert isinstance(elem, ScxmlAssign), f"Expected ScxmlAssign, got {type(elem)}"
+    # TODO: Refactor completely: Swap the two ifs, and merge things together for better clarity
     assignment_target = parse_ecmascript_to_jani_expression(
         elem.get_location(), elem.get_xml_tree()
     )
     target_expr_type = assignment_target.get_expression_type()
-    is_target_array = target_expr_type == JaniExpressionType.IDENTIFIER and is_variable_array(
-        jani_automaton, assignment_target.as_identifier()
+    is_target_array = (
+        target_expr_type == JaniExpressionType.IDENTIFIER
+        and is_automaton_variable_array(jani_automaton, assignment_target.as_identifier())
     )
     array_info = None
     if is_target_array:
@@ -152,7 +154,7 @@ def _interpret_scxml_assign(
             ), f"Array assignment expects an array value (av) operator, found {op_type}."
             array_length = len(
                 string_to_value(
-                    elem.get_expr(), get_variable_type(jani_automaton, target_identifier)
+                    elem.get_expr(), get_automaton_variable_type(jani_automaton, target_identifier)
                 )
             )
             assignments.append(
@@ -287,7 +289,7 @@ def _append_scxml_body_to_jani_edge(
                 jani_expr_type = jani_expr.get_expression_type()
                 if jani_expr_type == JaniExpressionType.IDENTIFIER:
                     variable_name = jani_expr.as_identifier()
-                    if is_variable_array(jani_automaton, variable_name):
+                    if is_automaton_variable_array(jani_automaton, variable_name):
                         new_edge_dest_assignments.append(
                             JaniAssignment(
                                 {
