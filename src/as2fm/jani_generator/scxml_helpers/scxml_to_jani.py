@@ -134,7 +134,9 @@ def _preprocess_jani_expression(
         new_expr_dict.update(
             {operand_name: _preprocess_jani_expression(operand_expr, context_vars)}
         )
-    return JaniExpression(new_expr_dict)
+    new_expr = JaniExpression(new_expr_dict)
+    new_expr.comment = jani_expression.comment
+    return new_expr
 
 
 def _preprocess_array_comparison(
@@ -171,4 +173,6 @@ def _preprocess_array_comparison(
         last_expr = and_operator(
             last_expr, equal_operator(array_elements[idx], array_access_operator(array_var_id, idx))
         )
+    # Preserve the comment in the JANI file
+    last_expr.comment = jani_expression.comment
     return last_expr

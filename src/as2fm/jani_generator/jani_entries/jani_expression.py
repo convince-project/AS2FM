@@ -92,7 +92,7 @@ class JaniExpression:
         self.value = new_expr.value
         self.op = new_expr.op
         self.operands = new_expr.operands
-        self.comment = self.comment
+        self.comment = new_expr.comment
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""
