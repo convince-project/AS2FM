@@ -17,7 +17,7 @@
 Module defining SCXML tags to match against.
 """
 
-from typing import Dict, List, Optional, get_args
+from typing import Dict, List, Optional, Union, get_args
 
 from lxml.etree import _Element as XmlElement
 
@@ -50,14 +50,15 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
 
 
 def generate_jani_assignments(
-    target_expr: JaniExpression,
+    target_expr: Union[JaniExpression, JaniVariable],
     assign_expr: str,
     context_vars: Dict[str, JaniVariable],
     event_substitution: Optional[str],
     assign_index: int,
     elem_xml: XmlElement,
 ) -> List[JaniAssignment]:
-    """Interpret SCXML assign element.
+    """
+    Interpret SCXML assign element.
 
     :param element: The SCXML element to interpret.
     :param jani_automaton: The Jani automaton related to the current scxml. Used for variable types.
@@ -65,7 +66,13 @@ def generate_jani_assignments(
     :return: The action or expression to be executed.
     """
     assignments: List[JaniAssignment] = []
-    target_expr_type = target_expr.get_expression_type()
+    if isinstance(target_expr, JaniExpression):
+        target_expr_type = target_expr.get_expression_type()
+    else:
+        assert isinstance(
+            target_expr, JaniVariable
+        ), f"target_expr is {type(target_expr)} != (JaniExpression, JaniVariable)"
+        target_expr_type = JaniExpressionType.IDENTIFIER
     # An assignment target must be either a variable or a single array entry
     if target_expr_type is JaniExpressionType.OPERATOR:
         # If here, the target expression must be an array access (aa) operator
@@ -92,32 +99,35 @@ def generate_jani_assignments(
         )
     else:
         # In this case, we expect the assign target to be a variable
-        assignment_target_id = target_expr.as_identifier()
-        assert (
-            assignment_target_id is not None
-        ), "Assignment targets must be either variables or array elements"
-        assignment_target_variable = context_vars.get(assignment_target_id)
-        assert (
-            assignment_target_variable is not None
-        ), f"Can't find variable {assignment_target_id} in the provided context {context_vars}."
+        if isinstance(target_expr, JaniVariable):
+            assignment_target_var = target_expr
+        else:
+            assignment_target_var = context_vars.get(target_expr.as_identifier())
+            assert (
+                assignment_target_var is not None
+            ), f"Variable {target_expr.as_identifier()} not in provided context {context_vars}."
+        assignment_target_id = assignment_target_var.name()
+
         array_info = None
-        if is_variable_array(assignment_target_variable):
-            array_info = ArrayInfo(*get_array_variable_info(assignment_target_variable))
+        if is_variable_array(assignment_target_var):
+            array_info = ArrayInfo(*get_array_variable_info(assignment_target_var))
         assignment_value = parse_ecmascript_to_jani_expression(
             assign_expr, elem_xml, array_info
         ).replace_event(event_substitution)
         assignments.append(
-            JaniAssignment({"ref": target_expr, "value": assignment_value, "index": assign_index})
+            JaniAssignment(
+                {"ref": assignment_target_id, "value": assignment_value, "index": assign_index}
+            )
         )
         # In case this is an array assignment, the length must be adapted too
-        if is_variable_array(assignment_target_variable):
+        if is_variable_array(assignment_target_var):
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type is JaniExpressionType.OPERATOR:
                 assert is_expression_array(
                     assignment_value
                 ), "Array variables must be assigned array expressions."
                 value_array_length = len(
-                    string_to_value(assign_expr, assignment_target_variable.get_type())
+                    string_to_value(assign_expr, assignment_target_var.get_type())
                 )
             else:
                 assert assignment_value_type is JaniExpressionType.IDENTIFIER

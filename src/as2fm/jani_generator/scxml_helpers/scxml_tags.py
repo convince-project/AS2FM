@@ -192,7 +192,6 @@ def _append_scxml_body_to_jani_edge(
             )
             new_edge_dest_assignments: List[ScxmlAssign] = []
             data_structure_for_event: Dict[str, type] = {}
-            send_context = jani_automaton.get_variables()
             for param in ec.get_params():
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"
                 expr = param.get_expr_or_location()
@@ -204,17 +203,14 @@ def _append_scxml_body_to_jani_edge(
                 res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
-                send_context = send_context | {
-                    param_assign_name: generate_jani_variable(
-                        param_assign_name, res_eval_type, max_array_size
-                    )
-                }
-                # TODO: Here wa always pass a JaniVariable: split generate_jani_assignments in 2
+                param_variable = generate_jani_variable(
+                    param_assign_name, res_eval_type, max_array_size
+                )
                 new_edge_dest_assignments.extend(
                     generate_jani_assignments(
-                        JaniExpression(param_assign_name),
+                        param_variable,
                         expr,
-                        send_context,
+                        jani_automaton.get_variables(),
                         data_event,
                         0,
                         param.get_xml_tree(),
