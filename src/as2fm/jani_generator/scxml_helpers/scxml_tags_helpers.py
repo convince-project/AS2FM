@@ -17,18 +17,27 @@
 Module defining SCXML tags to match against.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, get_args
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import string_to_value
+from as2fm.as2fm_common.common import (
+    ValidTypes,
+    get_default_expression_for_type,
+    is_array_type,
+    string_to_value,
+)
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniExpression,
     JaniExpressionType,
     JaniVariable,
 )
-from as2fm.jani_generator.jani_entries.jani_expression_generator import max_operator, plus_operator
+from as2fm.jani_generator.jani_entries.jani_expression_generator import (
+    array_create_operator,
+    max_operator,
+    plus_operator,
+)
 from as2fm.jani_generator.jani_entries.jani_utils import (
     get_array_variable_info,
     is_expression_array,
@@ -123,3 +132,14 @@ def generate_jani_assignments(
                 )
             )
     return assignments
+
+
+def generate_jani_variable(var_name: str, var_type: ValidTypes, array_size: int):
+    """Helper to make a JaniVariable object."""
+    # TODO: Move it to jani_utils.py
+    if is_array_type(var_type):
+        array_type = get_args(var_type)[0]
+        init_value = array_create_operator("__array_iterator", array_size, array_type(0))
+    else:
+        init_value = JaniExpression(get_default_expression_for_type(var_type))
+    return JaniVariable(var_name, var_type, init_value)

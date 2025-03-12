@@ -35,19 +35,20 @@ from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniEdge,
     JaniExpression,
-    JaniExpressionType,
     JaniGuard,
     JaniValue,
     JaniVariable,
 )
 from as2fm.jani_generator.jani_entries.jani_expression_generator import and_operator, not_operator
-from as2fm.jani_generator.jani_entries.jani_utils import is_automaton_variable_array
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_tags_helpers import generate_jani_assignments
+from as2fm.jani_generator.scxml_helpers.scxml_tags_helpers import (
+    generate_jani_assignments,
+    generate_jani_variable,
+)
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
@@ -191,6 +192,7 @@ def _append_scxml_body_to_jani_edge(
             )
             new_edge_dest_assignments: List[ScxmlAssign] = []
             data_structure_for_event: Dict[str, type] = {}
+            send_context = jani_automaton.get_variables()
             for param in ec.get_params():
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"
                 expr = param.get_expr_or_location()
@@ -202,43 +204,22 @@ def _append_scxml_body_to_jani_edge(
                 res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
-                array_info = None
-                if res_eval_type in SupportedMutableSequence:
-                    array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
-                jani_expr = parse_ecmascript_to_jani_expression(
-                    expr, param.get_xml_tree(), array_info
-                ).replace_event(data_event)
-                new_edge_dest_assignments.append(
-                    JaniAssignment({"ref": param_assign_name, "value": jani_expr})
+                send_context = send_context | {
+                    param_assign_name: generate_jani_variable(
+                        param_assign_name, res_eval_type, max_array_size
+                    )
+                }
+                # TODO: Here wa always pass a JaniVariable: split generate_jani_assignments in 2
+                new_edge_dest_assignments.extend(
+                    generate_jani_assignments(
+                        JaniExpression(param_assign_name),
+                        expr,
+                        send_context,
+                        data_event,
+                        0,
+                        param.get_xml_tree(),
+                    )
                 )
-                # TODO: Try to reuse as much as possible from _interpret_scxml_assign
-                # If we are sending an array, set the length as well
-                jani_expr_type = jani_expr.get_expression_type()
-                if jani_expr_type == JaniExpressionType.IDENTIFIER:
-                    variable_name = jani_expr.as_identifier()
-                    if is_automaton_variable_array(jani_automaton, variable_name):
-                        new_edge_dest_assignments.append(
-                            JaniAssignment(
-                                {
-                                    "ref": f"{param_assign_name}.length",
-                                    "value": f"{variable_name}.length",
-                                }
-                            )
-                        )
-                elif jani_expr_type == JaniExpressionType.OPERATOR:
-                    op_type, _ = jani_expr.as_operator()
-                    if op_type == "av":
-                        assert (
-                            res_eval_type in SupportedMutableSequence
-                        ), f"Expected array value, got {res_eval_type}."
-                        new_edge_dest_assignments.append(
-                            JaniAssignment(
-                                {
-                                    "ref": f"{param_assign_name}.length",
-                                    "value": JaniValue(len(res_eval_value)),
-                                }
-                            )
-                        )
             new_edge_dest_assignments.append(
                 JaniAssignment({"ref": f"{ec.get_event()}.valid", "value": True})
             )
