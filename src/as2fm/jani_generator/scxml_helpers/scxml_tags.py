@@ -47,9 +47,10 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     plus_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_array_type_and_size,
-    get_automaton_variable_type,
+    get_array_variable_info,
     is_automaton_variable_array,
+    is_expression_array,
+    is_variable_array,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
@@ -108,81 +109,79 @@ def _interpret_scxml_assign(
     :return: The action or expression to be executed.
     """
     assert isinstance(elem, ScxmlAssign), f"Expected ScxmlAssign, got {type(elem)}"
-    # TODO: Refactor completely: Swap the two ifs, and merge things together for better clarity
+    assignments: List[JaniAssignment] = []
     assignment_target = parse_ecmascript_to_jani_expression(
         elem.get_location(), elem.get_xml_tree()
     )
-    target_expr_type = assignment_target.get_expression_type()
-    is_target_array = (
-        target_expr_type == JaniExpressionType.IDENTIFIER
-        and is_automaton_variable_array(jani_automaton, assignment_target.as_identifier())
-    )
-    array_info = None
-    if is_target_array:
-        var_info = get_array_type_and_size(jani_automaton, assignment_target.as_identifier())
-        array_info = ArrayInfo(*var_info)
-    # Check if the target is an array, in case copy the length too
-    assignment_value = parse_ecmascript_to_jani_expression(
-        elem.get_expr(), elem.get_xml_tree(), array_info
-    ).replace_event(event_substitution)
-    assignments: List[JaniAssignment] = [
-        JaniAssignment({"ref": assignment_target, "value": assignment_value, "index": assign_index})
-    ]
-    # Handle array types
-    if is_target_array:
-        target_identifier = assignment_target.as_identifier()
-        # We are assigning a new value to a complete array. We need to update the length too
-        value_expr_type = assignment_value.get_expression_type()
-        if value_expr_type == JaniExpressionType.IDENTIFIER:
-            # Copy one array into another: simply copy the length from the source to the target
-            value_identifier = assignment_value.as_identifier()
+    assignment_target_type = assignment_target.get_expression_type()
+    # An assignment target must be either a variable or a single array entry
+    if assignment_target_type is JaniExpressionType.OPERATOR:
+        # If here, the target expression must be an array access (aa) operator
+        assign_op_name, assign_operands = assignment_target.as_operator()
+        assert assign_op_name == "aa", f"Unexpected assignment target: {assign_op_name} != 'aa'."
+        assignment_value = parse_ecmascript_to_jani_expression(
+            elem.get_expr(), elem.get_xml_tree(), None
+        ).replace_event(event_substitution)
+        assignments.append(
+            JaniAssignment(
+                {"ref": assignment_target, "value": assignment_value, "index": assign_index}
+            )
+        )
+        assignment_target_length = f"{assign_operands['exp'].as_identifier()}.length"
+        new_array_legth_expr = max_operator(
+            plus_operator(assign_operands["index"], 1), assignment_target_length
+        )
+        assignments.append(
+            JaniAssignment(
+                {
+                    "ref": assignment_target_length,
+                    "value": new_array_legth_expr,
+                    "index": assign_index,
+                }
+            )
+        )
+    else:
+        # In this case, we expect the assign target to be a variable
+        assignment_target_id = assignment_target.as_identifier()
+        assert (
+            assignment_target_id is not None
+        ), "Assignment targets must be either variables or array elements"
+        assignment_target_variable = jani_automaton.get_variables().get(assignment_target_id)
+        assert (
+            assignment_target_variable is not None
+        ), f"Can't find variable {assignment_target_id} in the automaton."
+        array_info = None
+        if is_variable_array(assignment_target_variable):
+            array_info = ArrayInfo(*get_array_variable_info(assignment_target_variable))
+        assignment_value = parse_ecmascript_to_jani_expression(
+            elem.get_expr(), elem.get_xml_tree(), array_info
+        ).replace_event(event_substitution)
+        assignments.append(
+            JaniAssignment(
+                {"ref": assignment_target, "value": assignment_value, "index": assign_index}
+            )
+        )
+        # In case this is an array assignment, the length must be adapted too
+        if is_variable_array(assignment_target_variable):
+            assignment_value_type = assignment_value.get_expression_type()
+            if assignment_value_type is JaniExpressionType.OPERATOR:
+                assert is_expression_array(
+                    assignment_value
+                ), "Array variables must be assigned array expressions."
+                value_array_length = len(
+                    string_to_value(elem.get_expr(), assignment_target_variable.get_type())
+                )
+            else:
+                assert assignment_value_type is JaniExpressionType.IDENTIFIER
+                value_array_length = JaniExpression(f"{assignment_value.as_identifier()}.length")
             assignments.append(
                 JaniAssignment(
                     {
-                        "ref": f"{target_identifier}.length",
-                        "value": JaniExpression(f"{value_identifier}.length"),
+                        "ref": f"{assignment_target_id}.length",
+                        "value": value_array_length,
                         "index": assign_index,
                     }
                 )
-            )
-        elif value_expr_type == JaniExpressionType.OPERATOR:
-            # Explicit array assignment: set the new length of the variable, too
-            # This makes sense only if the operator is of type "av" (array value)
-            op_type, operands = assignment_value.as_operator()
-            assert (
-                op_type == "av"
-            ), f"Array assignment expects an array value (av) operator, found {op_type}."
-            array_length = len(
-                string_to_value(
-                    elem.get_expr(), get_automaton_variable_type(jani_automaton, target_identifier)
-                )
-            )
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{target_identifier}.length",
-                        "value": JaniValue(array_length),
-                        "index": assign_index,
-                    }
-                )
-            )
-        else:
-            raise ValueError(
-                f"Cannot assign expression {elem.get_expr()} to the array {target_identifier}."
-            )
-    elif target_expr_type == JaniExpressionType.OPERATOR:
-        op_type, operands = assignment_target.as_operator()
-        if op_type == "aa":
-            # We are dealing with an array assignment. Update the length too
-            array_name = operands["exp"].as_identifier()
-            assert array_name is not None, "Array assignments expects an array identifier exp."
-            array_length_id = f"{array_name}.length"
-            array_idx = operands["index"]
-            # Note: we do not make sure the max length increase is 1 (that is our assumption)
-            # One way to do it could be to set the array length to -1 in case of broken assumptions
-            new_length = max_operator(plus_operator(array_idx, 1), array_length_id)
-            assignments.append(
-                JaniAssignment({"ref": array_length_id, "value": new_length, "index": assign_index})
             )
     return assignments
 
