@@ -27,11 +27,13 @@ from as2fm.jani_generator.jani_entries import (
     JaniModel,
     JaniVariable,
 )
-from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
-from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_array_variable_info,
-    is_expression_array,
+from as2fm.jani_generator.jani_entries.jani_expression_generator import (
+    and_operator,
+    array_access_operator,
+    equal_operator,
 )
+from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
+from as2fm.jani_generator.jani_entries.jani_utils import is_expression_array, is_variable_array
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
@@ -140,16 +142,31 @@ def _preprocess_array_comparison(
     """Preprocess comparison between a constant array and a variable."""
     exp_operator, exp_operands = jani_expression.as_operator()
     assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
-    array_expr = None
-    var_entry = None
+    array_elements = None
+    array_var_id = None
+    array_length_var_id = None
     for operand in exp_operands.values():
         expr_type = operand.get_expression_type()
         if expr_type == JaniExpressionType.IDENTIFIER:
-            var_entry = context_vars.get(operand.as_identifier())
+            array_var_id = operand.as_identifier()
+            array_variable = context_vars.get(array_var_id)
+            assert array_variable is not None, f"Cannot find {array_var_id} in context."
+            assert is_variable_array(array_variable), f"Variable {array_var_id} is not an array."
+            array_length_var_id = f"{array_var_id}.length"
+            assert (
+                array_length_var_id in context_vars
+            ), f"Variable {array_length_var_id} not in context"
         else:
-            assert is_expression_array(operand), f"Expected {operand.as_dict()} to be an array."
-            array_expr = operand
-    assert array_expr is not None
-    assert var_entry is not None
-    v_array_type, v_array_size = get_array_variable_info(var_entry)
-    return jani_expression
+            array_operator, array_operands = operand.as_operator()
+            assert array_operator == "av", f"Expected {operand.as_dict()} has op=='av'."
+            array_elements = array_operands["elements"]
+    assert array_operator is not None, "No array operator found in the eq. operator."
+    assert array_var_id is not None, "No array variable found in the eq. operator."
+    # Turn equality into a series of quality checks (exp. length and entry values)
+    n_elements = len(array_elements)
+    last_expr = equal_operator(array_length_var_id, n_elements)
+    for idx in range(n_elements):
+        last_expr = and_operator(
+            last_expr, equal_operator(array_elements[idx], array_access_operator(array_var_id, idx))
+        )
+    return last_expr

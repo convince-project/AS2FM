@@ -57,6 +57,10 @@ def is_expression_array(expr: JaniExpression) -> bool:
     return exp_operator is not None and exp_operator in ("ac", "av")
 
 
+def is_variable_array(variable: JaniVariable) -> bool:
+    return is_array_type(variable.get_type())
+
+
 def get_array_variable_info(jani_var: JaniVariable) -> Tuple[Type, int]:
     """Extract the array type and max size from a jani variable."""
     var_type = jani_var.get_type()

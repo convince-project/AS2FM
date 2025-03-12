@@ -145,7 +145,7 @@ def array_access_operator(exp, index) -> JaniExpression:
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
 
 
-def array_value_operator(elements) -> JaniExpression:
+def array_value_operator(elements: list) -> JaniExpression:
     """
     Generate an array value expression
 
