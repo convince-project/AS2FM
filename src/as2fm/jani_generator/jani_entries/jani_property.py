@@ -18,7 +18,7 @@ Properties in Jani
 """
 
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
@@ -38,9 +38,7 @@ class FilterProperty:
         self._process_values(property_filter_exp["values"])
 
     def _process_values(self, prop_values: Dict[str, Any]) -> None:
-        self._values: Union[ProbabilityProperty, RewardProperty, NumPathsProperty] = (
-            ProbabilityProperty(prop_values)
-        )
+        self._values: PropertyEntry = ProbabilityProperty(prop_values)
         if self._values.is_valid():
             return
         self._values = RewardProperty(prop_values)
@@ -48,6 +46,9 @@ class FilterProperty:
             return
         self._values = NumPathsProperty(prop_values)
         assert self._values.is_valid(), "Unexpected values in FilterProperty"
+
+    def get_property_operands(self) -> Dict[str, JaniExpression]:
+        return self._values.get_exp_operands()
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
         assert isinstance(
@@ -61,42 +62,57 @@ class FilterProperty:
         }
 
 
-class ProbabilityProperty:
+class PropertyEntry:
+    """Generic entry that must be contained in the PropertyFilter class."""
+
+    def __init__(self):
+        self._op = None
+        self._exp = None
+        self._valid = False
+
+    def is_valid(self) -> bool:
+        return self._valid
+
+    def get_op(self):
+        return self._op
+
+    def get_exp(self):
+        return self._exp
+
+    def get_exp_operands(self) -> Dict[str, JaniExpression]:
+        raise NotImplementedError(f"Class {type(self)} does not implement 'get_exp_operands'")
+
+
+class ProbabilityProperty(PropertyEntry):
     """Pmin / Pmax"""
 
     def __init__(self, prop_values: Dict[str, Any]):
-        self._valid = False
+        super().__init__()
         if "op" in prop_values and "exp" in prop_values:
             if prop_values["op"] in ("Pmin", "Pmax"):
                 self._op = prop_values["op"]
                 self._exp = PathProperty(prop_values["exp"])
                 self._valid = self._exp.is_valid()
 
-    def is_valid(self) -> bool:
-        return self._valid
+    def get_exp_operands(self) -> Dict[str, JaniExpression]:
+        return self._exp.get_operands()
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
         return {"op": self._op, "exp": self._exp.as_dict(constants)}
 
 
-class RewardProperty:
+class RewardProperty(PropertyEntry):
     """E properties"""
 
     def __init__(self, prop_values: Dict[str, Any]):
-        self._valid = False
-
-    def is_valid(self) -> bool:
-        return self._valid
+        super().__init__()
 
 
-class NumPathsProperty:
+class NumPathsProperty(PropertyEntry):
     """This address properties where we want the property verified on all / at least one case."""
 
     def __init__(self, prop_values: Dict[str, Any]):
-        self._valid = False
-
-    def is_valid(self) -> bool:
-        return self._valid
+        super().__init__()
 
 
 class PathProperty:
@@ -129,6 +145,10 @@ class PathProperty:
 
     def is_valid(self) -> bool:
         return self._valid
+
+    def get_operands(self) -> Dict[str, JaniExpression]:
+        """Return the reference to the property operands."""
+        return self._operands
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
         ret_dict = {}
@@ -177,8 +197,11 @@ class JaniProperty:
 
     def __init__(self, name, expression):
         self._name = name
-        # TODO: For now copy as it is. Later we might expand it to support more functionalities
         self._expression = FilterProperty(expression)
+
+    def get_property_operands(self) -> Dict[str, JaniExpression]:
+        """Get the expressions defined in the property (as LTL property operands)."""
+        return self._expression.get_property_operands()
 
     def as_dict(self, constants: Dict[str, JaniConstant]):
         return {"name": self._name, "expression": self._expression.as_dict(constants)}

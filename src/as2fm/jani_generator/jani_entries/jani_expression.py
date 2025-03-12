@@ -56,14 +56,7 @@ class JaniExpression:
         self.operands: Dict[str, JaniExpression] = {}
         self.comment: Optional[str] = None
         if isinstance(expression, JaniExpression):
-            assert (
-                expression.get_expression_type() != JaniExpressionType.DISTRIBUTION
-            ), "Cannot convert a JaniDistribution to a JaniExpression explicitly."
-            self.identifier = expression.identifier
-            self.value = expression.value
-            self.op = expression.op
-            self.operands = expression.operands
-            self.comment = self.comment
+            self.reset(expression)
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
@@ -89,6 +82,17 @@ class JaniExpression:
                 self.comment = expression.get("comment")
                 self.op = expression["op"]
                 self.operands = self._get_operands(expression)
+
+    def reset(self, new_expr: "JaniExpression"):
+        """Replace the current expression instance with the provided one."""
+        assert (
+            new_expr.get_expression_type() != JaniExpressionType.DISTRIBUTION
+        ), "Cannot convert a JaniDistribution to a JaniExpression explicitly."
+        self.identifier = new_expr.identifier
+        self.value = new_expr.value
+        self.op = new_expr.op
+        self.operands = new_expr.operands
+        self.comment = self.comment
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""

@@ -112,8 +112,9 @@ def preprocess_jani_expressions(jani_model: JaniModel):
                         _preprocess_jani_expression(assignment.get_expression(), context_variables)
                     )
     for property in jani_model.get_properties():
-        # TODO
-        pass
+        property_operands = property.get_property_operands()
+        for property_exp in property_operands.values():
+            property_exp.reset(_preprocess_jani_expression(property_exp, global_variables))
 
 
 def _preprocess_jani_expression(
