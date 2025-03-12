@@ -50,7 +50,7 @@ class JaniValue:
             return True
         return isinstance(self._value, (int, float, bool))
 
-    def value(self) -> Union[int, float, bool]:
+    def value(self) -> Union[int, float, bool, list]:
         assert self.is_valid(), "The expression cannot be evaluated to a constant value"
         if isinstance(self._value, dict):
             constant_id = self._value["constant"]

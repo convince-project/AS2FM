@@ -159,7 +159,8 @@ def _preprocess_array_comparison(
         else:
             array_operator, array_operands = operand.as_operator()
             assert array_operator == "av", f"Expected {operand.as_dict()} has op=='av'."
-            array_elements = array_operands["elements"]
+            array_elements = array_operands["elements"].as_literal().value()
+            assert array_elements is not None, "'av' operator expects a literal in its elements."
     assert array_operator is not None, "No array operator found in the eq. operator."
     assert array_var_id is not None, "No array variable found in the eq. operator."
     # Turn equality into a series of quality checks (exp. length and entry values)
