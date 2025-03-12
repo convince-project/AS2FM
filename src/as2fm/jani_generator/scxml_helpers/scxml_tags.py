@@ -40,23 +40,14 @@ from as2fm.jani_generator.jani_entries import (
     JaniValue,
     JaniVariable,
 )
-from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    and_operator,
-    max_operator,
-    not_operator,
-    plus_operator,
-)
-from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_array_variable_info,
-    is_automaton_variable_array,
-    is_expression_array,
-    is_variable_array,
-)
+from as2fm.jani_generator.jani_entries.jani_expression_generator import and_operator, not_operator
+from as2fm.jani_generator.jani_entries.jani_utils import is_automaton_variable_array
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
+from as2fm.jani_generator.scxml_helpers.scxml_tags_helpers import generate_jani_assignments
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
@@ -109,81 +100,18 @@ def _interpret_scxml_assign(
     :return: The action or expression to be executed.
     """
     assert isinstance(elem, ScxmlAssign), f"Expected ScxmlAssign, got {type(elem)}"
-    assignments: List[JaniAssignment] = []
     assignment_target = parse_ecmascript_to_jani_expression(
         elem.get_location(), elem.get_xml_tree()
     )
-    assignment_target_type = assignment_target.get_expression_type()
-    # An assignment target must be either a variable or a single array entry
-    if assignment_target_type is JaniExpressionType.OPERATOR:
-        # If here, the target expression must be an array access (aa) operator
-        assign_op_name, assign_operands = assignment_target.as_operator()
-        assert assign_op_name == "aa", f"Unexpected assignment target: {assign_op_name} != 'aa'."
-        assignment_value = parse_ecmascript_to_jani_expression(
-            elem.get_expr(), elem.get_xml_tree(), None
-        ).replace_event(event_substitution)
-        assignments.append(
-            JaniAssignment(
-                {"ref": assignment_target, "value": assignment_value, "index": assign_index}
-            )
-        )
-        assignment_target_length = f"{assign_operands['exp'].as_identifier()}.length"
-        new_array_legth_expr = max_operator(
-            plus_operator(assign_operands["index"], 1), assignment_target_length
-        )
-        assignments.append(
-            JaniAssignment(
-                {
-                    "ref": assignment_target_length,
-                    "value": new_array_legth_expr,
-                    "index": assign_index,
-                }
-            )
-        )
-    else:
-        # In this case, we expect the assign target to be a variable
-        assignment_target_id = assignment_target.as_identifier()
-        assert (
-            assignment_target_id is not None
-        ), "Assignment targets must be either variables or array elements"
-        assignment_target_variable = jani_automaton.get_variables().get(assignment_target_id)
-        assert (
-            assignment_target_variable is not None
-        ), f"Can't find variable {assignment_target_id} in the automaton."
-        array_info = None
-        if is_variable_array(assignment_target_variable):
-            array_info = ArrayInfo(*get_array_variable_info(assignment_target_variable))
-        assignment_value = parse_ecmascript_to_jani_expression(
-            elem.get_expr(), elem.get_xml_tree(), array_info
-        ).replace_event(event_substitution)
-        assignments.append(
-            JaniAssignment(
-                {"ref": assignment_target, "value": assignment_value, "index": assign_index}
-            )
-        )
-        # In case this is an array assignment, the length must be adapted too
-        if is_variable_array(assignment_target_variable):
-            assignment_value_type = assignment_value.get_expression_type()
-            if assignment_value_type is JaniExpressionType.OPERATOR:
-                assert is_expression_array(
-                    assignment_value
-                ), "Array variables must be assigned array expressions."
-                value_array_length = len(
-                    string_to_value(elem.get_expr(), assignment_target_variable.get_type())
-                )
-            else:
-                assert assignment_value_type is JaniExpressionType.IDENTIFIER
-                value_array_length = JaniExpression(f"{assignment_value.as_identifier()}.length")
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{assignment_target_id}.length",
-                        "value": value_array_length,
-                        "index": assign_index,
-                    }
-                )
-            )
-    return assignments
+
+    return generate_jani_assignments(
+        assignment_target,
+        elem.get_expr(),
+        jani_automaton.get_variables(),
+        event_substitution,
+        assign_index,
+        elem.get_xml_tree(),
+    )
 
 
 def _merge_conditions(
