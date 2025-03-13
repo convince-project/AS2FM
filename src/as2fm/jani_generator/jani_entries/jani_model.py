@@ -165,7 +165,12 @@ class JaniModel:
                     self._system.add_sync(action, {automaton.get_name(): action})
 
     def add_jani_property(self, property: JaniProperty):
+        """Add a single property to the model."""
         self._properties.append(property)
+
+    def get_properties(self) -> List[JaniProperty]:
+        """Get all the properties in the model."""
+        return self._properties
 
     def as_dict(self):
         assert self._system is not None, "The system composition is not set"
