@@ -105,6 +105,12 @@ def preprocess_jani_expressions(jani_model: JaniModel):
     for jani_automaton in jani_model.get_automata():
         context_variables = global_variables | jani_automaton.get_variables()
         for jani_edge in jani_automaton.get_edges():
+            if jani_edge.guard is not None:
+                guard_exp = jani_edge.guard.get_expression()
+                if guard_exp is not None:
+                    jani_edge.guard.set_expression(
+                        _preprocess_jani_expression(guard_exp, context_variables)
+                    )
             for jani_destination in jani_edge.destinations:
                 assignments: List[JaniAssignment] = jani_destination["assignments"]
                 for assignment in assignments:
