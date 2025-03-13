@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "name": "string_one_sent",
+            "name": "string_two_sent",
             "expression": {
                 "op": "filter",
                 "fun": "values",

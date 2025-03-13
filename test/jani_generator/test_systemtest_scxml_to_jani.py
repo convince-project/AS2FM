@@ -515,13 +515,47 @@ class TestConversion(unittest.TestCase):
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
-    def test_string_support(self):
+    def test_string_support_two_sent(self):
         """Test the support for string assignments and comparisons in SCXML."""
         self._test_with_main(
             "string_comparison",
             model_xml="main.xml",
-            property_name="strings_match",
-            expected_result_probability=1.0,
+            property_name="string_two_sent",
+            expected_result_probability=0.6,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_one(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_one",
+            expected_result_probability=0.3,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_two(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_two",
+            expected_result_probability=0.6,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_min_one(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_min_one",
+            expected_result_probability=0.1,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
             skip_properties_load_check=True,
         )
 
