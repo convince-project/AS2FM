@@ -12,13 +12,15 @@
     </datamodel>
 
     <state id="init">
+        <onentry>
+            <send event="string_eval">
+                <param name="comparison" expr="string_store == 'some information'" />
+            </send>
+        </onentry>
         <transition target="init" event="string_event" cond="_event.data.string == 'more information'">
             <assign location="string_store" expr="_event.data.string" />
             <send event="comp_result">
                 <param name="res" expr="1" />
-            </send>
-            <send event="string_eval">
-                <param name="comparison" expr="string_store == 'some information'" />
             </send>
         </transition>
         <transition target="init" event="string_event">
@@ -33,18 +35,6 @@
                     <param name="res" expr="-1" />
                 </send>
             </if>
-            <send event="string_eval">
-                <param name="comparison" expr="string_store == 'some information'" />
-            </send>
         </transition>
-        <onexit>
-            <!--
-            The send-event should be here, not in the transitions above.
-            However, due to a bug, that gets executed only after a new event in the state is received...
-             -->
-            <!-- <send event="string_eval">
-                <param name="comparison" expr="string_store == 'some information'" />
-            </send> -->
-        </onexit>
     </state>
 </scxml>
