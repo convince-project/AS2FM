@@ -7,10 +7,22 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <state id="current">
-        <transition target="done">
-            <send event="string_event">
-                <param name="string" expr="'some information'" />
-            </send>
+        <transition>
+            <target id="done" prob="0.6">
+                <send event="string_event">
+                    <param name="string" expr="'some information'" />
+                </send>
+            </target>
+            <target id="done" prob="0.3">
+                <send event="string_event">
+                    <param name="string" expr="'more information'" />
+                </send>
+            </target>
+            <target id="done" prob="0.1">
+                <send event="string_event">
+                    <param name="string" expr="''" />
+                </send>
+            </target>
         </transition>
     </state>
 

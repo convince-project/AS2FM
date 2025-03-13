@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "name": "strings_match",
+            "name": "string_one_sent",
             "expression": {
                 "op": "filter",
                 "fun": "values",
@@ -37,7 +37,78 @@
                                   }
                             },
                             "op": "∧",
-                            "right": "string_eval.comparison"
+                            "right": "string_event.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "strings_res_one",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "left": {
+                                "op": "=",
+                                "left": "comp_result.res",
+                                "right": 1
+                            },
+                            "op": "∧",
+                            "right": "comp_result.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "strings_res_two",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "left": "string_eval.comparison",
+                            "op": "∧",
+                            "right": "string_eval.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "strings_res_min_one",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "left": {
+                                "op": "=",
+                                "left": "comp_result.res",
+                                "right": -1
+                            },
+                            "op": "∧",
+                            "right": "comp_result.valid"
                         }
                     }
                 },
