@@ -44,6 +44,9 @@ class JaniAssignment:
         """Return the expression assigned to the target variable (or array entry)"""
         return self._value
 
+    def set_expression(self, expr: JaniExpression):
+        self._value = expr
+
     def get_index(self) -> int:
         """Returns the index, i.e. the number that defines the order of execution in Jani."""
         return self._index

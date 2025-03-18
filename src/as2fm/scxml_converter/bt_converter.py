@@ -24,7 +24,7 @@ from typing import Dict, List, Tuple
 
 from lxml import etree as ET
 
-from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string
+from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
 from as2fm.scxml_converter.scxml_entries import (
     BtChildTickStatus,
     BtTickChild,
@@ -85,7 +85,7 @@ def generate_blackboard_scxml(bt_blackboard_vars: Dict[str, str]) -> ScxmlRoot:
     bt_data: List[ScxmlData] = []
     bt_bb_param_list: List[ScxmlParam] = []
     for bb_key, bb_type in bt_blackboard_vars.items():
-        default_value = value_to_string(
+        default_value = value_to_string_expr(
             get_default_expression_for_type(SCXML_DATA_STR_TO_TYPE[bb_type])
         )
         bt_data.append(ScxmlData(bb_key, default_value, bb_type))

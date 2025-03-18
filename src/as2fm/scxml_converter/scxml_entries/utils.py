@@ -19,7 +19,7 @@ import re
 from enum import Enum, auto
 from typing import Any, Dict, List, MutableSequence, Optional, Type
 
-from as2fm.as2fm_common.common import is_array_type, string_to_value
+from as2fm.as2fm_common.common import is_array_type, string_expr_to_value
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 # List of names that shall not be used for variable names
@@ -59,6 +59,7 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int64[]": MutableSequence[int],
     "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
     "float64[]": MutableSequence[float],
+    "string": str,
 }
 
 
@@ -260,7 +261,7 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     Convert a value to the provided data type.
     """
     python_type = get_data_type_from_string(data_type)
-    return string_to_value(value, python_type)
+    return string_expr_to_value(value, python_type)
 
 
 def get_array_max_size(data_type: str) -> Optional[int]:

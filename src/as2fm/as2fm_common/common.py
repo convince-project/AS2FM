@@ -17,6 +17,7 @@
 Common functionalities used throughout the toolchain.
 """
 
+import re
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
 
@@ -79,7 +80,7 @@ def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
         return field_type()
 
 
-def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
+def value_to_type(value: ValidTypes | str) -> Type[ValidTypes]:
     """Convert a value to a type."""
     if isinstance(value, array):
         if value.typecode == "i":
@@ -90,11 +91,13 @@ def value_to_type(value: ValidTypes) -> Type[ValidTypes]:
             raise ValueError(f"Type of array '{value.typecode}' not supported.")
     elif isinstance(value, (int, float, bool)):
         return type(value)
+    elif isinstance(value, str):  # Strings are interpreted as arrays of integers
+        return MutableSequence[int]
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def value_to_string(value: ValidTypes) -> str:
+def value_to_string_expr(value: ValidTypes) -> str:
     """Convert a value to a string."""
     if isinstance(value, MutableSequence):
         # Expect value to be an array
@@ -107,7 +110,7 @@ def value_to_string(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def string_to_bool(value_str: str) -> bool:
+def string_expr_to_bool(value_str: str) -> bool:
     """
     Special case for boolean conversion.
     """
@@ -115,24 +118,25 @@ def string_to_bool(value_str: str) -> bool:
     return value_str == "true"
 
 
-def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
+def string_expr_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
     """Convert a string to a value of the desired type."""
     value_str = value_str.strip()
     assert isinstance(
         value_str, str
     ), f"Error: provided value is of type {type(value_str)}, expected a string."
     assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
-    is_array_value = value_str.startswith("[") and value_str.endswith("]")
-    if not is_array_value:
+    is_array_value = re.match(r"^\[.*\]$", value_str) is not None
+    is_string_value = re.match(r"^\'.*\'$", value_str) is not None
+    if not (is_array_value or is_string_value):
         assert value_type in (
             bool,
             int,
             float,
         ), f"Error: the value {value_str} shall be converted to a base type."
         if value_type is bool:
-            return string_to_bool(value_str)
+            return string_expr_to_bool(value_str)
         return value_type(value_str)
-    else:
+    elif is_array_value:
         str_entries = value_str.strip("[]").split(",")
         if str_entries == [""]:
             str_entries = []
@@ -142,15 +146,42 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
             return array("d", [float(v) for v in str_entries])
         else:
             raise ValueError(f"Unsupported value type {value_type}.")
+    else:
+        raw_str = value_str.strip("'")
+        assert value_type is MutableSequence[int], "Error: unexpected type for string arrays."
+        return convert_string_to_int_array(raw_str)
 
 
 def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
     """Check if the value is compatible with the field type."""
     if field_type is float:
         return isinstance(value, (int, float))
+    # MutableSequence requires a special handling...
+    if field_type in (MutableSequence[int], MutableSequence[float]):
+        return isinstance(value, MutableSequence)
     return isinstance(value, field_type)
 
 
 def is_array_type(field_type: Type[ValidTypes]) -> bool:
     """Check if the field type is an array type."""
     return get_origin(field_type) == get_origin(MutableSequence)
+
+
+def is_valid_variable_name(var_name: str) -> bool:
+    """
+    Check if a string can represent a variable name in JANI and SCXML.
+
+    This differs from the string.isidentifier() python function, since we allow more possibilities:
+    * A variable name must start with a character or an underscore -> [a-zA-Z_];
+    * Can continue with any number of alphanumerical values plus (. - _) -> [a-zA-Z0-9._-];
+    * Must finish with an alphanumerical value -> [a-zA-Z0-9].
+    Alternatively, a variable name can be a single character.
+    """
+    return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
+
+
+def convert_string_to_int_array(value: str) -> MutableSequence[int]:
+    """
+    Convert a string to a list of integers.
+    """
+    return array("i", [int(x) for x in value.encode()])

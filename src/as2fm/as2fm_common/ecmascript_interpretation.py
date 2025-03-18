@@ -24,7 +24,7 @@ import js2py
 
 from as2fm.as2fm_common.common import ValidTypes
 
-BasicJsTypes = Union[int, float, bool]
+BasicJsTypes = Union[int, float, bool, str]
 
 
 def interpret_ecma_script_expr(

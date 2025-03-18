@@ -20,6 +20,7 @@ Expressions in Jani
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.jani_generator.jani_entries import JaniValue
 from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
@@ -53,14 +54,9 @@ class JaniExpression:
         self.value: Optional[JaniValue] = None
         self.op: Optional[str] = None
         self.operands: Dict[str, JaniExpression] = {}
+        self.comment: Optional[str] = None
         if isinstance(expression, JaniExpression):
-            assert (
-                expression.get_expression_type() != JaniExpressionType.DISTRIBUTION
-            ), "Cannot convert a JaniDistribution to a JaniExpression explicitly."
-            self.identifier = expression.identifier
-            self.value = expression.value
-            self.op = expression.op
-            self.operands = expression.operands
+            self.reset(expression)
         elif isinstance(expression, JaniValue):
             self.value = expression
         else:
@@ -68,6 +64,10 @@ class JaniExpression:
                 expression, SupportedExp
             ), f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
+                # self._init_expression_from_string(expression)
+                assert is_valid_variable_name(
+                    expression
+                ), f"Expression string {expression} is not a valid variable name."
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
             elif JaniValue(expression).is_valid():
@@ -79,8 +79,20 @@ class JaniExpression:
                 # Operands need to be expanded further, until we encounter a value expression
                 assert isinstance(expression, dict), "Expected a dictionary"
                 assert "op" in expression, "Expected either a value or an operator"
+                self.comment = expression.get("comment")
                 self.op = expression["op"]
                 self.operands = self._get_operands(expression)
+
+    def reset(self, new_expr: "JaniExpression"):
+        """Replace the current expression instance with the provided one."""
+        assert (
+            new_expr.get_expression_type() != JaniExpressionType.DISTRIBUTION
+        ), "Cannot convert a JaniDistribution to a JaniExpression explicitly."
+        self.identifier = new_expr.identifier
+        self.value = new_expr.value
+        self.op = new_expr.op
+        self.operands = new_expr.operands
+        self.comment = new_expr.comment
 
     def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""
@@ -236,11 +248,11 @@ class JaniExpression:
         assert self.is_valid(), "Expression is not valid"
         return self.identifier
 
-    def as_operator(self) -> Optional[Tuple[str, Dict[str, "JaniExpression"]]]:
-        """Provide the expression as an operator, if possible. None otherwise."""
+    def as_operator(self) -> Tuple[Optional[str], Optional[Dict[str, "JaniExpression"]]]:
+        """Provide the expression as an operator, if possible. (None, None) otherwise."""
         assert self.is_valid(), "Expression is not valid"
         if self.op is None:
-            return None
+            return (None, None)
         return (self.op, self.operands)
 
     def as_dict(self) -> Union[str, int, float, bool, dict]:
@@ -250,9 +262,10 @@ class JaniExpression:
             return self.identifier
         if self.value is not None:
             return self.value.as_dict()
-        op_dict: Dict[str, Any] = {
-            "op": self.op,
-        }
+        op_dict: Dict[str, Any] = {}
+        if self.comment is not None:
+            op_dict.update({"comment": self.comment})
+        op_dict.update({"op": self.op})
         for op_key, op_value in self.operands.items():
             assert isinstance(
                 op_value, JaniExpression
@@ -260,6 +273,14 @@ class JaniExpression:
             assert op_value.is_valid(), f"Expression's {op_key}'s value is invalid: {op_value}"
             op_dict.update({op_key: op_value.as_dict()})
         return op_dict
+
+    def __eq__(self, value: "JaniExpression"):
+        """Equality operator between two JaniExpressions."""
+        assert isinstance(value, JaniExpression)
+        return self.as_dict() == value.as_dict()
+
+    def __str__(self):
+        return f"JaniExpression({self.as_dict()})"
 
 
 class JaniDistribution(JaniExpression):
@@ -304,9 +325,9 @@ class JaniDistribution(JaniExpression):
         """Provide the expression as an identifier, if possible. None otherwise."""
         return None
 
-    def as_operator(self) -> None:
+    def as_operator(self) -> Tuple[None, None]:
         """Provide the expression as an operator, if possible. None otherwise."""
-        return None
+        return (None, None)
 
     def get_dist_type(self) -> str:
         """Return the distribution type set in the object."""
