@@ -48,7 +48,9 @@ class ScxmlDataModel(ScxmlBase):
             if is_comment(data_entry_xml):
                 prev_xml_comment = data_entry_xml.text.strip()
             else:
-                data_entries.append(ScxmlData.data_from_xml_tree(data_entry_xml, prev_xml_comment))
+                data_entries.append(
+                    ScxmlData.from_xml_tree(data_entry_xml, comment_above=prev_xml_comment)
+                )
                 prev_xml_comment = None
         return ScxmlDataModel(data_entries)
 

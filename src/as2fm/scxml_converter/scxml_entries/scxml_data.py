@@ -76,7 +76,7 @@ class ScxmlData(ScxmlBase):
         return type_match.group(1), type_match.group(2)
 
     @classmethod
-    def data_from_xml_tree(
+    def from_xml_tree_impl(
         cls, xml_tree: ET.Element, comment_above: Optional[str] = None
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""

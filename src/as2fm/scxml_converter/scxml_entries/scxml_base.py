@@ -31,9 +31,9 @@ class ScxmlBase:
         raise NotImplementedError
 
     @classmethod
-    def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlBase":
+    def from_xml_tree(cls, xml_tree: ET.Element, **kwargs) -> "ScxmlBase":
         """External interface to create a ScxmlBase object from an XML tree."""
-        instance = cls.from_xml_tree_impl(xml_tree)
+        instance = cls.from_xml_tree_impl(xml_tree, **kwargs)
         instance.set_xml_origin(xml_tree)
         return instance
 
