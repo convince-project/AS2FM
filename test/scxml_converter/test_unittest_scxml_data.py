@@ -118,7 +118,8 @@ class TestScxmlData(unittest.TestCase):
         """
         comment_above = "TYPE other:int32"
         tag = ET.fromstring('<data id="level" expr="0" />')
-        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag, comment_above)
+        with self.assertRaises(AssertionError):
+            ScxmlData.from_xml_tree(tag, comment_above=comment_above)
 
     def test_datamodel_loading(self):
         """
