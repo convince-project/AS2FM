@@ -34,7 +34,7 @@ class ScxmlBase:
     def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlBase":
         """External interface to create a ScxmlBase object from an XML tree."""
         instance = cls.from_xml_tree_impl(xml_tree)
-        instance.set_xml_tree(xml_tree)
+        instance.set_xml_origin(xml_tree)
         return instance
 
     @classmethod
@@ -42,14 +42,14 @@ class ScxmlBase:
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
-    def set_xml_tree(self, xml_tree: ET.Element):
-        """Set the xml_element this object was made from"""
-        self.xml_tree = xml_tree
+    def set_xml_origin(self, xml_origin: ET.Element):
+        """Set the xml_element this object was made from."""
+        self.xml_origin = xml_origin
 
-    def get_xml_tree(self) -> Optional[ET.Element]:
+    def get_xml_origin(self) -> Optional[ET.Element]:
         """Get the xml_element this object was made from."""
         try:
-            return self.xml_tree
+            return self.xml_origin
         except AttributeError:
             return None
 
