@@ -25,8 +25,9 @@ from as2fm.as2fm_common.common import (
     ValidTypes,
     get_default_expression_for_type,
     is_array_type,
-    string_to_value,
+    string_expr_to_value,
 )
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniExpression,
@@ -60,24 +61,28 @@ def generate_jani_assignments(
     """
     Interpret SCXML assign element.
 
-    :param element: The SCXML element to interpret.
-    :param jani_automaton: The Jani automaton related to the current scxml. Used for variable types.
-    :param event_substitution: The event to substitute in the expression.
-    :return: The action or expression to be executed.
+    :param target_expr: The expression to assign to the target expression.
+    :param assign_expr: The target expression, recipient of the target_expr.
+    :param context_vars: Context variables, used to evaluate the target_expr.
+    :param event_substitution: The event that is associated to the provided expression (if any).
+    :param assign_index: Priority index, to order the generated assignments.
+    :param elem_xml: The XML element this assignment originates from.
     """
     assignments: List[JaniAssignment] = []
     if isinstance(target_expr, JaniExpression):
         target_expr_type = target_expr.get_expression_type()
     else:
-        assert isinstance(
-            target_expr, JaniVariable
-        ), f"target_expr is {type(target_expr)} != (JaniExpression, JaniVariable)"
+        assert isinstance(target_expr, JaniVariable), get_error_msg(
+            elem_xml, f"target_expr is {type(target_expr)} != (JaniExpression, JaniVariable)"
+        )
         target_expr_type = JaniExpressionType.IDENTIFIER
     # An assignment target must be either a variable or a single array entry
     if target_expr_type is JaniExpressionType.OPERATOR:
         # If here, the target expression must be an array access (aa) operator
         assign_op_name, assign_operands = target_expr.as_operator()
-        assert assign_op_name == "aa", f"Unexpected assignment target: {assign_op_name} != 'aa'."
+        assert assign_op_name == "aa", get_error_msg(
+            elem_xml, f"Unexpected assignment target: {assign_op_name} != 'aa'."
+        )
         assignment_value = parse_ecmascript_to_jani_expression(
             assign_expr, elem_xml, None
         ).replace_event(event_substitution)
@@ -103,9 +108,10 @@ def generate_jani_assignments(
             assignment_target_var = target_expr
         else:
             assignment_target_var = context_vars.get(target_expr.as_identifier())
-            assert (
-                assignment_target_var is not None
-            ), f"Variable {target_expr.as_identifier()} not in provided context {context_vars}."
+            assert assignment_target_var is not None, get_error_msg(
+                elem_xml,
+                f"Variable {target_expr.as_identifier()} not in provided context {context_vars}.",
+            )
         assignment_target_id = assignment_target_var.name()
 
         array_info = None
@@ -123,14 +129,16 @@ def generate_jani_assignments(
         if is_variable_array(assignment_target_var):
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type is JaniExpressionType.OPERATOR:
-                assert is_expression_array(
-                    assignment_value
-                ), "Array variables must be assigned array expressions."
+                assert is_expression_array(assignment_value), get_error_msg(
+                    elem_xml, "Array variables must be assigned array expressions."
+                )
                 value_array_length = len(
-                    string_to_value(assign_expr, assignment_target_var.get_type())
+                    string_expr_to_value(assign_expr, assignment_target_var.get_type())
                 )
             else:
-                assert assignment_value_type is JaniExpressionType.IDENTIFIER
+                assert assignment_value_type is JaniExpressionType.IDENTIFIER, get_error_msg(
+                    elem_xml, "Expected an Identifier expression."
+                )
                 value_array_length = JaniExpression(f"{assignment_value.as_identifier()}.length")
             assignments.append(
                 JaniAssignment(

@@ -28,6 +28,12 @@ def is_expression_array(expr: JaniExpression) -> bool:
 
 
 def is_variable_array(variable: JaniVariable) -> bool:
+    """
+    Check if a variable is an array.
+
+    :param variable: The instance of the variable to check.
+    :return: True if the variable is an array, False otherwise.
+    """
     return is_array_type(variable.get_type())
 
 

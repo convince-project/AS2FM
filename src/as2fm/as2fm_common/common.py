@@ -97,7 +97,7 @@ def value_to_type(value: ValidTypes | str) -> Type[ValidTypes]:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def value_to_string(value: ValidTypes) -> str:
+def value_to_string_expr(value: ValidTypes) -> str:
     """Convert a value to a string."""
     if isinstance(value, MutableSequence):
         # Expect value to be an array
@@ -110,7 +110,7 @@ def value_to_string(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def string_to_bool(value_str: str) -> bool:
+def string_expr_to_bool(value_str: str) -> bool:
     """
     Special case for boolean conversion.
     """
@@ -118,7 +118,7 @@ def string_to_bool(value_str: str) -> bool:
     return value_str == "true"
 
 
-def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
+def string_expr_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
     """Convert a string to a value of the desired type."""
     value_str = value_str.strip()
     assert isinstance(
@@ -134,7 +134,7 @@ def string_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
             float,
         ), f"Error: the value {value_str} shall be converted to a base type."
         if value_type is bool:
-            return string_to_bool(value_str)
+            return string_expr_to_bool(value_str)
         return value_type(value_str)
     elif is_array_value:
         str_entries = value_str.strip("[]").split(",")

@@ -26,7 +26,7 @@ from lxml.etree import _Element as Element
 from as2fm.as2fm_common.common import (
     EPSILON,
     check_value_type_compatible,
-    string_to_value,
+    string_expr_to_value,
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
@@ -486,7 +486,7 @@ class DatamodelTag(BaseTag):
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
             if expected_type in SupportedMutableSequence:
-                init_expr = string_to_value(scxml_data.get_expr(), expected_type)
+                init_expr = string_expr_to_value(scxml_data.get_expr(), expected_type)
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))

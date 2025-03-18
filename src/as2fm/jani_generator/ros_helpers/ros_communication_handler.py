@@ -19,7 +19,7 @@ Generic class for generators of SCXML state machine for specific ROS communicati
 
 from typing import Dict, Iterator, List, Optional, Type
 
-from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string
+from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
 from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
 from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, get_data_type_from_string
@@ -128,7 +128,7 @@ class RosCommunicationHandler:
         for field_name, field_type in fields.items():
             field_w_pref = ROS_FIELD_PREFIX + field_name
             field_py_type = get_data_type_from_string(field_type)
-            default_expr = value_to_string(get_default_expression_for_type(field_py_type))
+            default_expr = value_to_string_expr(get_default_expression_for_type(field_py_type))
             scxml_fields.append(ScxmlData(field_w_pref, default_expr, field_type))
         return scxml_fields
 

@@ -249,7 +249,7 @@ class JaniExpression:
         return self.identifier
 
     def as_operator(self) -> Tuple[Optional[str], Optional[Dict[str, "JaniExpression"]]]:
-        """Provide the expression as an operator, if possible. None otherwise."""
+        """Provide the expression as an operator, if possible. (None, None) otherwise."""
         assert self.is_valid(), "Expression is not valid"
         if self.op is None:
             return (None, None)
