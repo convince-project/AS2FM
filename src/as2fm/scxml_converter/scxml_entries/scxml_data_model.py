@@ -22,6 +22,7 @@ from typing import List, Optional
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
@@ -32,7 +33,9 @@ class ScxmlDataModel(ScxmlBase):
 
     def __init__(self, data_entries: List[ScxmlData] = None):
         # TODO: Check ScxmlData from scxml_helpers, for alternative parsing
-        self._data_entries = data_entries
+        if data_entries is None:
+            data_entries = []
+        self._data_entries: List[ScxmlData] = data_entries
 
     @staticmethod
     def get_tag_name() -> str:
@@ -48,9 +51,11 @@ class ScxmlDataModel(ScxmlBase):
             if is_comment(data_entry_xml):
                 prev_xml_comment = data_entry_xml.text.strip()
             else:
-                data_entries.append(
-                    ScxmlData.from_xml_tree(data_entry_xml, comment_above=prev_xml_comment)
+                de = ScxmlData.from_xml_tree(data_entry_xml, comment_above=prev_xml_comment)
+                assert isinstance(de, ScxmlData), get_error_msg(
+                    xml_tree, "Must be a ScxmlData instance."
                 )
+                data_entries.append(de)
                 prev_xml_comment = None
         return ScxmlDataModel(data_entries)
 
