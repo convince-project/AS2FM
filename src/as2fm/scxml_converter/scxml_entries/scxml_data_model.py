@@ -22,7 +22,7 @@ from typing import List, Optional
 from lxml import etree as ET
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
@@ -69,16 +69,23 @@ class ScxmlDataModel(ScxmlBase):
             data_entry.update_bt_ports_values(bt_ports_handler)
 
     def check_validity(self) -> bool:
+        xml_origin = self.get_xml_origin()
         if self._data_entries is not None:
             if not isinstance(self._data_entries, list):
-                print("Error: SCXML datamodel: data entries are not a list.")
+                log_error(xml_origin, "Error: SCXML datamodel: data entries are not a list.")
                 return False
             for data_entry in self._data_entries:
                 if not isinstance(data_entry, ScxmlData):
-                    print(f"Error: SCXML datamodel: invalid data entry type {type(data_entry)}.")
+                    log_error(
+                        xml_origin,
+                        f"Error: SCXML datamodel: invalid data entry type {type(data_entry)}.",
+                    )
                     return False
                 if not data_entry.check_validity():
-                    print(f"Error: SCXML datamodel: invalid data entry '{data_entry.get_name()}'.")
+                    log_error(
+                        xml_origin,
+                        f"Error: SCXML datamodel: invalid data entry '{data_entry.get_name()}'.",
+                    )
                     return False
         return True
 
@@ -88,7 +95,9 @@ class ScxmlDataModel(ScxmlBase):
 
         :param type_as_attribute: If True, store data types as arguments, if False as Comments
         """
-        assert self.check_validity(), "SCXML: found invalid datamodel object."
+        assert self.check_validity(), get_error_msg(
+            self.get_xml_origin(), "SCXML: found invalid datamodel object."
+        )
         xml_datamodel = ET.Element(ScxmlDataModel.get_tag_name())
         for data_entry in self._data_entries:
             if not type_as_attribute:
