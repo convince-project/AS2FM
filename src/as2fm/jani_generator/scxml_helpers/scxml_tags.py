@@ -17,9 +17,8 @@
 Module defining SCXML tags to match against.
 """
 
-from array import ArrayType
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, get_args
+from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union, get_args
 
 import lxml.etree as ET
 from lxml.etree import _Element as Element
@@ -27,8 +26,7 @@ from lxml.etree import _Element as Element
 from as2fm.as2fm_common.common import (
     EPSILON,
     check_value_type_compatible,
-    get_default_expression_for_type,
-    string_to_value,
+    string_expr_to_value,
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
@@ -37,27 +35,19 @@ from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniEdge,
     JaniExpression,
-    JaniExpressionType,
     JaniGuard,
     JaniValue,
     JaniVariable,
 )
-from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    and_operator,
-    max_operator,
-    not_operator,
-    plus_operator,
-)
-from as2fm.jani_generator.jani_entries.jani_utils import (
-    get_all_variables_and_instantiations,
-    get_array_type_and_size,
-    get_variable_type,
-    is_variable_array,
-)
+from as2fm.jani_generator.jani_entries.jani_expression_generator import and_operator, not_operator
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
+)
+from as2fm.jani_generator.scxml_helpers.scxml_tags_helpers import (
+    generate_jani_assignments,
+    generate_jani_variable,
 )
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
 from as2fm.scxml_converter.scxml_entries import (
@@ -74,6 +64,8 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 
+# The supported MutableSequence instances
+SupportedMutableSequence = (MutableSequence[int], MutableSequence[float])
 # The resulting types from the SCXML conversion to Jani
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
@@ -112,78 +104,15 @@ def _interpret_scxml_assign(
     assignment_target = parse_ecmascript_to_jani_expression(
         elem.get_location(), elem.get_xml_tree()
     )
-    target_expr_type = assignment_target.get_expression_type()
-    is_target_array = target_expr_type == JaniExpressionType.IDENTIFIER and is_variable_array(
-        jani_automaton, assignment_target.as_identifier()
+
+    return generate_jani_assignments(
+        assignment_target,
+        elem.get_expr(),
+        jani_automaton.get_variables(),
+        event_substitution,
+        assign_index,
+        elem.get_xml_tree(),
     )
-    array_info = None
-    if is_target_array:
-        var_info = get_array_type_and_size(jani_automaton, assignment_target.as_identifier())
-        array_info = ArrayInfo(*var_info)
-    # Check if the target is an array, in case copy the length too
-    assignment_value = parse_ecmascript_to_jani_expression(
-        elem.get_expr(), elem.get_xml_tree(), array_info
-    ).replace_event(event_substitution)
-    assignments: List[JaniAssignment] = [
-        JaniAssignment({"ref": assignment_target, "value": assignment_value, "index": assign_index})
-    ]
-    # Handle array types
-    if is_target_array:
-        target_identifier = assignment_target.as_identifier()
-        # We are assigning a new value to a complete array. We need to update the length too
-        value_expr_type = assignment_value.get_expression_type()
-        if value_expr_type == JaniExpressionType.IDENTIFIER:
-            # Copy one array into another: simply copy the length from the source to the target
-            value_identifier = assignment_value.as_identifier()
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{target_identifier}.length",
-                        "value": JaniExpression(f"{value_identifier}.length"),
-                        "index": assign_index,
-                    }
-                )
-            )
-        elif value_expr_type == JaniExpressionType.OPERATOR:
-            # Explicit array assignment: set the new length of the variable, too
-            # This makes sense only if the operator is of type "av" (array value)
-            op_type, operands = assignment_value.as_operator()
-            assert (
-                op_type == "av"
-            ), f"Array assignment expects an array value (av) operator, found {op_type}."
-            array_length = len(
-                string_to_value(
-                    elem.get_expr(), get_variable_type(jani_automaton, target_identifier)
-                )
-            )
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{target_identifier}.length",
-                        "value": JaniValue(array_length),
-                        "index": assign_index,
-                    }
-                )
-            )
-        else:
-            raise ValueError(
-                f"Cannot assign expression {elem.get_expr()} to the array {target_identifier}."
-            )
-    elif target_expr_type == JaniExpressionType.OPERATOR:
-        op_type, operands = assignment_target.as_operator()
-        if op_type == "aa":
-            # We are dealing with an array assignment. Update the length too
-            array_name = operands["exp"].as_identifier()
-            assert array_name is not None, "Array assignments expects an array identifier exp."
-            array_length_id = f"{array_name}.length"
-            array_idx = operands["index"]
-            # Note: we do not make sure the max length increase is 1 (that is our assumption)
-            # One way to do it could be to set the array length to -1 in case of broken assumptions
-            new_length = max_operator(plus_operator(array_idx, 1), array_length_id)
-            assignments.append(
-                JaniAssignment({"ref": array_length_id, "value": new_length, "index": assign_index})
-            )
-    return assignments
 
 
 def _merge_conditions(
@@ -213,6 +142,7 @@ def _append_scxml_body_to_jani_edge(
     jani_edge: JaniEdge,
     jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
+    datamodel_vars: Dict[str, Any],
     body: ScxmlExecutionBody,
     target: str,
     probability: float,
@@ -267,49 +197,25 @@ def _append_scxml_body_to_jani_edge(
                 expr = param.get_expr_or_location()
                 # Update the events holder
                 # TODO: get the expected type from a jani expression, w/o setting dummy values
-                variables = get_all_variables_and_instantiations(jani_automaton)
-                # TODO: This might contain reference to event variables, that have no type specified
-                # For now, we avoid the problem by using support variables
-                res_eval_value = interpret_ecma_script_expr(expr, variables)
+                # TODO: expr might contain reference to event variables, that have no type specified
+                # For now, we avoid the problem by using support variables in the model...
+                # See https://github.com/convince-project/AS2FM/issues/84
+                res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
                 data_structure_for_event[param.get_name()] = res_eval_type
-                array_info = None
-                if isinstance(res_eval_value, ArrayType):
-                    array_info = ArrayInfo(get_args(res_eval_type)[0], max_array_size)
-                jani_expr = parse_ecmascript_to_jani_expression(
-                    expr, param.get_xml_tree(), array_info
-                ).replace_event(data_event)
-                new_edge_dest_assignments.append(
-                    JaniAssignment({"ref": param_assign_name, "value": jani_expr})
+                param_variable = generate_jani_variable(
+                    param_assign_name, res_eval_type, max_array_size
                 )
-                # TODO: Try to reuse as much as possible from _interpret_scxml_assign
-                # If we are sending an array, set the length as well
-                jani_expr_type = jani_expr.get_expression_type()
-                if jani_expr_type == JaniExpressionType.IDENTIFIER:
-                    variable_name = jani_expr.as_identifier()
-                    if is_variable_array(jani_automaton, variable_name):
-                        new_edge_dest_assignments.append(
-                            JaniAssignment(
-                                {
-                                    "ref": f"{param_assign_name}.length",
-                                    "value": f"{variable_name}.length",
-                                }
-                            )
-                        )
-                elif jani_expr_type == JaniExpressionType.OPERATOR:
-                    op_type, _ = jani_expr.as_operator()
-                    if op_type == "av":
-                        assert isinstance(
-                            res_eval_value, ArrayType
-                        ), f"Expected array value, got {res_eval_value}."
-                        new_edge_dest_assignments.append(
-                            JaniAssignment(
-                                {
-                                    "ref": f"{param_assign_name}.length",
-                                    "value": JaniValue(len(res_eval_value)),
-                                }
-                            )
-                        )
+                new_edge_dest_assignments.extend(
+                    generate_jani_assignments(
+                        param_variable,
+                        expr,
+                        jani_automaton.get_variables(),
+                        data_event,
+                        0,
+                        param.get_xml_tree(),
+                    )
+                )
             new_edge_dest_assignments.append(
                 JaniAssignment({"ref": f"{ec.get_event()}.valid", "value": True})
             )
@@ -337,6 +243,7 @@ def _append_scxml_body_to_jani_edge(
                 sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                     jani_automaton,
                     events_holder,
+                    datamodel_vars,
                     conditional_body,
                     interm_loc_before,
                     interm_loc_after,
@@ -358,6 +265,7 @@ def _append_scxml_body_to_jani_edge(
             sub_edges, sub_locs = _append_scxml_body_to_jani_automaton(
                 jani_automaton,
                 events_holder,
+                datamodel_vars,
                 ec.get_else_execution(),
                 interm_loc_before,
                 interm_loc_after,
@@ -389,6 +297,7 @@ def _append_scxml_body_to_jani_edge(
 def _append_scxml_body_to_jani_automaton(
     jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
+    datamodel_vars: Dict[str, Any],
     body: ScxmlExecutionBody,
     source: str,
     target: str,
@@ -434,6 +343,7 @@ def _append_scxml_body_to_jani_automaton(
         start_edge,
         jani_automaton,
         events_holder,
+        datamodel_vars,
         body,
         target,
         1.0,
@@ -465,6 +375,17 @@ class BaseTag:
             raise NotImplementedError(f"Support for SCXML type >{type(element)}< not implemented.")
         return CLASS_BY_TYPE[type(element)](element, call_trace, model, max_array_size)
 
+    def generate_tag_element(self, child: ScxmlBase) -> "BaseTag":
+        """
+        Simplified version of the "from_element" call.
+        """
+        return self.from_element(
+            child,
+            self.call_trace + [self.element],
+            (self.automaton, self.events_holder),
+            self.max_array_size,
+        )
+
     def __init__(
         self,
         element: ScxmlBase,
@@ -479,19 +400,28 @@ class BaseTag:
         :param model: The model to write the tag to.
         :param max_array_size: The maximum index of the arrays in the model.
         """
+        self.model_variables: Optional[Dict[str, Any]] = None
         self.max_array_size = max_array_size
         self.element = element
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
-        self.children = [
-            BaseTag.from_element(child, call_trace + [element], model, max_array_size)
-            for child in scxml_children
-        ]
+        self.children = [self.generate_tag_element(child) for child in scxml_children]
+
+    def set_model_variables(self, mod_vars: Optional[Dict[str, Any]]):
+        """
+        Instantiate the internal variables defined in the SCXML model.
+
+        :param mod_vars: A mapping from the variable name to its default value.
+        """
+        assert mod_vars is None or isinstance(mod_vars, Dict), f"Unexpected input {mod_vars}"
+        self.model_variables = mod_vars
+        for child in self.children:
+            child.set_model_variables(mod_vars)
 
     def get_children(
         self,
-    ) -> Union[List[ScxmlBase], List[ScxmlTransition], List[Union[ScxmlDataModel, ScxmlState]]]:
+    ) -> List[ScxmlBase]:
         """Method extracting all children from a specific Scxml Tag."""
         raise NotImplementedError("Method get_children not implemented.")
 
@@ -519,56 +449,60 @@ class DatamodelTag(BaseTag):
 
     def write_model(self):
         # A collection of the variables read from the datamodel so far
-        read_vars: Dict[str, Any] = {}
+        assert self.model_variables is None, "Expected model_variables to be unset at this stage."
+        self.model_variables: Dict[str, Any] = {}
         for scxml_data in self.element.get_data_entries():
             assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
             assert scxml_data.check_validity(), "Found invalid data entry."
-            # TODO: ScxmlData from scxml_helpers provide many more options.
-            # It should be ported to scxml_entries.ScxmlDataModel
             expected_type = scxml_data.get_type()
             array_info: Optional[ArrayInfo] = None
             if expected_type not in (int, float, bool):
-                # Not a basic type: we are dealing with an array
-                array_type = get_args(expected_type)[0]
+                # Not a basic type: we are dealing with an array or a string
+                if expected_type is str:
+                    array_type = int
+                    max_array_size = None
+                else:
+                    array_type = get_args(expected_type)[0]
+                    max_array_size = scxml_data.get_array_max_size()
                 assert array_type in (int, float), f"Type {expected_type} not supported in arrays."
-                max_array_size = scxml_data.get_array_max_size()
                 if max_array_size is None:
                     max_array_size = self.max_array_size
-                expected_type = ArrayType
                 array_info = ArrayInfo(array_type, max_array_size)
             init_value = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_data.get_xml_tree(), array_info
             )
-            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), read_vars)
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             assert check_value_type_compatible(evaluated_expr, expected_type), (
                 f"Invalid value for {scxml_data.get_name()}: "
                 f"Expected type {expected_type}, got {type(evaluated_expr)}."
             )
+            # Special case for strings: treat them as array of integers
+            if isinstance(evaluated_expr, str):
+                expected_type = MutableSequence[int]
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
-                JaniVariable(scxml_data.get_name(), scxml_data.get_type(), init_value)
+                JaniVariable(scxml_data.get_name(), expected_type, init_value)
             )
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
-            if expected_type is ArrayType:
-                init_expr = string_to_value(scxml_data.get_expr(), scxml_data.get_type())
+            if expected_type in SupportedMutableSequence:
+                init_expr = string_expr_to_value(scxml_data.get_expr(), expected_type)
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
                 )
-            read_vars.update(
-                {scxml_data.get_name(): get_default_expression_for_type(scxml_data.get_type())}
-            )
+            if isinstance(evaluated_expr, MutableSequence):
+                # Add padding to the evaluated expression, for the JS evaluator to work
+                padding_size = array_info.array_max_size - len(evaluated_expr)
+                evaluated_expr.extend([array_info.array_type(0)] * padding_size)
+            self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 
 class ScxmlTag(BaseTag):
     """Object representing the root SCXML tag."""
 
-    def get_children(self) -> List[Union[ScxmlDataModel, ScxmlState]]:
+    def get_children(self) -> List[ScxmlState]:
         root_children = []
-        data_model = self.element.get_data_model()
-        if data_model is not None:
-            root_children.append(data_model)
         root_children.extend(self.element.get_states())
         return root_children
 
@@ -589,6 +523,7 @@ class ScxmlTag(BaseTag):
             new_edges, new_locations = _append_scxml_body_to_jani_automaton(
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 onentry_body,
                 source_state,
                 target_state,
@@ -625,6 +560,15 @@ class ScxmlTag(BaseTag):
     def write_model(self):
         assert isinstance(self.element, ScxmlRoot), f"Expected ScxmlRoot, got {type(self.element)}."
         self.automaton.set_name(self.element.get_name())
+        # Extract information from ScxmlDatamodel
+        data_model = self.element.get_data_model()
+        # A map from the variable name to its default value
+        if data_model is not None:
+            data_element: DatamodelTag = self.generate_tag_element(data_model)
+            data_element.write_model()
+            self.model_variables = data_element.model_variables
+        for state_entry in self.children:
+            state_entry.set_model_variables(self.model_variables)
         super().write_model()
         self.add_unhandled_transitions()
         self.handle_entry_state()
@@ -682,6 +626,7 @@ class StateTag(BaseTag):
             edges, locations = _append_scxml_body_to_jani_automaton(
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 [],
                 self.element.get_id(),
                 self.element.get_id(),
@@ -855,6 +800,7 @@ class TransitionTag(BaseTag):
                 transition_edge,
                 self.automaton,
                 self.events_holder,
+                self.model_variables,
                 merged_transition_body,
                 target_state_id,
                 target_probability,

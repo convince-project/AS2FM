@@ -25,8 +25,9 @@ from typing import Dict, List, Optional, Tuple
 
 import lxml.etree as ET
 
-from as2fm.as2fm_common.common import remove_namespace, string_to_bool
+from as2fm.as2fm_common.common import remove_namespace, string_expr_to_bool
 from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
+from as2fm.jani_generator.jani_entries import JaniModel, JaniProperty
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -35,7 +36,10 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 )
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
-from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_multiple_scxmls_to_jani
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
+    convert_multiple_scxmls_to_jani,
+    preprocess_jani_expressions,
+)
 from as2fm.scxml_converter.bt_converter import (
     bt_converter,
     generate_blackboard_scxml,
@@ -105,7 +109,9 @@ def parse_main_xml(xml_path: str) -> FullModel:
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_rate":
                     model.bt_tick_rate = float(mc_parameter.attrib["value"])
                 elif remove_namespace(mc_parameter.tag) == "bt_tick_if_not_running":
-                    model.bt_tick_when_not_running = string_to_bool(mc_parameter.attrib["value"])
+                    model.bt_tick_when_not_running = string_expr_to_bool(
+                        mc_parameter.attrib["value"]
+                    )
                 else:
                     raise ValueError(
                         get_error_msg(mc_parameter, f"Invalid mc_parameter tag: {mc_parameter.tag}")
@@ -270,14 +276,17 @@ def interpret_top_level_xml(
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models, all_timers, model.max_time)
 
-    jani_model = convert_multiple_scxmls_to_jani(
+    jani_model: JaniModel = convert_multiple_scxmls_to_jani(
         plain_scxml_models, all_timers, model.max_time, model.max_array_size
     )
-
-    jani_dict = jani_model.as_dict()
     with open(model.properties[0], "r", encoding="utf-8") as f:
-        jani_dict["properties"] = json.load(f)["properties"]
+        all_properties = json.load(f)["properties"]
+        for property_dict in all_properties:
+            jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
+
+    # Preprocess the JANI file, to remove non-standard artifacts
+    preprocess_jani_expressions(jani_model)
 
     output_path = os.path.join(model_dir, jani_file)
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(jani_dict, f, indent=2, ensure_ascii=False)
+        json.dump(jani_model.as_dict(), f, indent=2, ensure_ascii=False)

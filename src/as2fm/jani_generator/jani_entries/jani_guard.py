@@ -47,6 +47,11 @@ class JaniGuard:
                 "Should be None, JaniExpression or Dict."
             )
 
+    def set_expression(self, expr: JaniExpression):
+        """Overwrite the expression in the guard."""
+        assert isinstance(expr, JaniExpression), f"Unexpected type of input expr.: {type(expr)}."
+        self._expression = expr
+
     def get_expression(self) -> Optional[JaniExpression]:
         return self._expression
 
