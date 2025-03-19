@@ -290,7 +290,7 @@ def append_scxml_body_to_jani_edge(
                     "guard": None,
                 }
             )
-            new_edge_dest_assignments: List[ScxmlAssign] = []
+            new_edge_dest_assignments: List[JaniAssignment] = []
             data_structure_for_event: Dict[str, type] = {}
             for param in ec.get_params():
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"

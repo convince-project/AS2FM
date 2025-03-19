@@ -21,7 +21,7 @@ import re
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
 
-from lxml.etree import _Comment
+from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
 
 # Set of basic types that are supported by the Jani language.
@@ -43,6 +43,7 @@ ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float
 # When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
 # Strings.
 SupportedECMAScriptSequences = (MutableSequence, str)
+ValidScxmlTypes = Union[bool, int, float, MutableSequence, str]
 
 # Small number used for float comparison.
 EPSILON = 1e-3
@@ -71,7 +72,7 @@ def is_comment(element: XmlElement) -> bool:
     :param element: The element to check.
     :return: True if the element is a comment, False otherwise.
     """
-    return isinstance(element, _Comment) or "function Comment" in str(element)
+    return isinstance(element, XmlComment) or "function Comment" in str(element)
 
 
 def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
