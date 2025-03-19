@@ -18,18 +18,12 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Tuple, Union, get_args
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import (
-    SupportedECMAScriptSequences,
-    ValidTypes,
-    get_default_expression_for_type,
-    is_array_type,
-    value_to_type,
-)
+from as2fm.as2fm_common.common import SupportedECMAScriptSequences, value_to_type
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
@@ -43,12 +37,12 @@ from as2fm.jani_generator.jani_entries import (
 )
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     and_operator,
-    array_create_operator,
     max_operator,
     not_operator,
     plus_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
+    generate_jani_variable,
     get_array_variable_info,
     is_expression_array,
     is_variable_array,
@@ -170,17 +164,6 @@ def generate_jani_assignments(
                 )
             )
     return assignments
-
-
-def generate_jani_variable(var_name: str, var_type: ValidTypes, array_size: int):
-    """Helper to make a JaniVariable object."""
-    # TODO: Move it to jani_utils.py
-    if is_array_type(var_type):
-        array_type = get_args(var_type)[0]
-        init_value = array_create_operator("__array_iterator", array_size, array_type(0))
-    else:
-        init_value = JaniExpression(get_default_expression_for_type(var_type))
-    return JaniVariable(var_name, var_type, init_value)
 
 
 def hash_element(element: Union[XmlElement, ScxmlBase, List[str]]) -> str:
