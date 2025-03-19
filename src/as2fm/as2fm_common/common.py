@@ -115,46 +115,12 @@ def value_to_string_expr(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def string_expr_to_bool(value_str: str) -> bool:
+def string_as_bool(value_str: str) -> bool:
     """
-    Special case for boolean conversion.
+    Special case for boolean conversion for configuration parameters.
     """
     assert value_str in ("true", "false"), f"Invalid bool string: {value_str} != 'true'/'false'"
     return value_str == "true"
-
-
-def string_expr_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
-    """Convert a string to a value of the desired type."""
-    value_str = value_str.strip()
-    assert isinstance(
-        value_str, str
-    ), f"Error: provided value is of type {type(value_str)}, expected a string."
-    assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
-    is_array_value = re.match(r"^\[.*\]$", value_str) is not None
-    is_string_value = re.match(r"^\'.*\'$", value_str) is not None
-    if not (is_array_value or is_string_value):
-        assert value_type in (
-            bool,
-            int,
-            float,
-        ), f"Error: the value {value_str} shall be converted to a base type."
-        if value_type is bool:
-            return string_expr_to_bool(value_str)
-        return value_type(value_str)
-    elif is_array_value:
-        str_entries = value_str.strip("[]").split(",")
-        if str_entries == [""]:
-            str_entries = []
-        if value_type is MutableSequence[int]:
-            return array("i", [int(v) for v in str_entries])
-        elif value_type is MutableSequence[float]:
-            return array("d", [float(v) for v in str_entries])
-        else:
-            raise ValueError(f"Unsupported value type {value_type}.")
-    else:
-        raw_str = value_str.strip("'")
-        assert value_type is MutableSequence[int], "Error: unexpected type for string arrays."
-        return convert_string_to_int_array(raw_str)
 
 
 def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
