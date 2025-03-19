@@ -20,7 +20,7 @@ that caused the error.
 import os
 from enum import Enum, auto
 
-import lxml.etree
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 
@@ -38,7 +38,7 @@ class Severity(Enum):
     INFO = auto()
 
 
-def set_filepath_for_all_elements(root: "lxml.etree._Element", filepath: str) -> None:
+def set_filepath_for_all_elements(root: XmlElement, filepath: str) -> None:
     """
     Set the filepath for all elements in the XML tree.
 
@@ -59,7 +59,7 @@ def set_filepath_for_all_elements(root: "lxml.etree._Element", filepath: str) ->
             raise e
 
 
-def _assemble_message(severity: Severity, element: "lxml.etree._Element", message: str) -> str:
+def _assemble_message(severity: Severity, element: XmlElement, message: str) -> str:
     """
     Produce an logging message with the line number of the element.
 
@@ -82,7 +82,7 @@ def _assemble_message(severity: Severity, element: "lxml.etree._Element", messag
     return f"{severity_initial} ({path}:{element.sourceline}) {message}"
 
 
-def get_error_msg(element: "lxml.etree._Element", message: str) -> str:
+def get_error_msg(element: XmlElement, message: str) -> str:
     """
     Log an error message.
 
@@ -93,7 +93,7 @@ def get_error_msg(element: "lxml.etree._Element", message: str) -> str:
     return _assemble_message(Severity.ERROR, element, message)
 
 
-def get_warn_msg(element: "lxml.etree._Element", message: str) -> str:
+def get_warn_msg(element: XmlElement, message: str) -> str:
     """
     Log a warning message.
 
@@ -104,7 +104,7 @@ def get_warn_msg(element: "lxml.etree._Element", message: str) -> str:
     return _assemble_message(Severity.WARNING, element, message)
 
 
-def get_info_msg(element: "lxml.etree._Element", message: str) -> str:
+def get_info_msg(element: XmlElement, message: str) -> str:
     """
     Log an info message.
 
@@ -115,7 +115,7 @@ def get_info_msg(element: "lxml.etree._Element", message: str) -> str:
     return _assemble_message(Severity.INFO, element, message)
 
 
-def log_error(element: "lxml.etree._Element", message: str) -> None:
+def log_error(element: XmlElement, message: str) -> None:
     """
     Log an error message and print it.
 

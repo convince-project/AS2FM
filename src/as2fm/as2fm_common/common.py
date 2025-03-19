@@ -21,7 +21,8 @@ import re
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
 
-from lxml.etree import _Comment, _Element
+from lxml.etree import _Comment
+from lxml.etree import _Element as XmlElement
 
 # Set of basic types that are supported by the Jani language.
 # Basic types (from Jani docs):
@@ -59,7 +60,7 @@ def remove_namespace(tag: str) -> str:
     return tag_wo_ns
 
 
-def is_comment(element: _Element) -> bool:
+def is_comment(element: XmlElement) -> bool:
     """
     Check if an element is a comment.
 

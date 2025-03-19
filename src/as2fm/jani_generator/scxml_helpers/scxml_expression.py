@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
-import lxml.etree
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import convert_string_to_int_array
 from as2fm.as2fm_common.logging import get_error_msg
@@ -47,7 +47,7 @@ class ArrayInfo:
 
 
 def parse_ecmascript_to_jani_expression(
-    ecmascript: str, elem: Optional["lxml.etree._Element"], array_info: Optional[ArrayInfo] = None
+    ecmascript: str, elem: Optional[XmlElement], array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.

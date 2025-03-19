@@ -21,7 +21,7 @@ from hashlib import sha256
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union, get_args
 
 import lxml.etree as ET
-from lxml.etree import _Element as Element
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import (
     EPSILON,
@@ -30,6 +30,7 @@ from as2fm.as2fm_common.common import (
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -70,13 +71,13 @@ SupportedMutableSequence = (MutableSequence[int], MutableSequence[float])
 ModelTupleType = Tuple[JaniAutomaton, EventsHolder]
 
 
-def _hash_element(element: Union[Element, ScxmlBase, List[str]]) -> str:
+def _hash_element(element: Union[XmlElement, ScxmlBase, List[str]]) -> str:
     """
     Hash an ElementTree element.
     :param element: The element to hash.
     :return: The hash of the element.
     """
-    if isinstance(element, Element):
+    if isinstance(element, XmlElement):
         s = ET.tostring(element, encoding="utf-8", method="xml")
     elif isinstance(element, ScxmlBase):
         s = ET.tostring(element.as_xml(), encoding="utf-8", method="xml")
@@ -104,10 +105,14 @@ def _interpret_scxml_assign(
     assignment_target = parse_ecmascript_to_jani_expression(
         elem.get_location(), elem.get_xml_origin()
     )
+    assign_expr = elem.get_expr()
+    assert isinstance(assign_expr, str), get_error_msg(
+        elem.get_xml_origin(), "Error: expected plain-scxml here."
+    )
 
     return generate_jani_assignments(
         assignment_target,
-        elem.get_expr(),
+        assign_expr,
         jani_automaton.get_variables(),
         event_substitution,
         assign_index,
