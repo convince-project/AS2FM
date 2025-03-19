@@ -71,12 +71,11 @@ def convert_multiple_scxmls_to_jani(
     events_holder = EventsHolder()
     for input_scxml in scxmls:
         assert isinstance(input_scxml, ScxmlRoot)
-        scxml_root = input_scxml
         assert (
-            scxml_root.is_plain_scxml()
-        ), f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
+            input_scxml.is_plain_scxml()
+        ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
         automaton = JaniAutomaton()
-        convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_size)
+        convert_scxml_root_to_jani_automaton(input_scxml, automaton, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
     timer_automaton = make_global_timer_automaton(timers, max_time_ns)
     if timer_automaton is not None:

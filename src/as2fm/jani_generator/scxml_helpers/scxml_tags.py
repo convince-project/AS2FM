@@ -481,6 +481,7 @@ class BaseTag:
         """
         self.max_array_size = max_array_size
         self.element = element
+        self.element.xml_tree = element
         self.automaton, self.events_holder = model
         self.call_trace = call_trace
         scxml_children = self.get_children()
