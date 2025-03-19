@@ -149,7 +149,7 @@ def bt_converter(
     :param tick_if_not_running: If true, keep ticking the BT root after it stops returning RUNNING.
     """
     available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths)
-    xml_tree: ET.ElementBase = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
+    xml_tree: XmlElement = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
     root_children = xml_tree.getchildren()
     assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
     assert (
