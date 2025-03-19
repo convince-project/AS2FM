@@ -25,7 +25,7 @@
         </transition>
         <transition target="init" event="string_event">
             <assign location="string_store" expr="_event.data.string" />
-            <assign location="comparison" expr="string_store == 'some information'" />
+            <assign location="comparison" expr="string_store == &quot;some information&quot;" />
             <if cond="comparison">
                 <send event="comp_result">
                     <param name="res" expr="2" />

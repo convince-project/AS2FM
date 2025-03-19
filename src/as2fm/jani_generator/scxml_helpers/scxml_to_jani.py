@@ -14,7 +14,9 @@
 # limitations under the License.
 
 """
-Module handling the conversion from SCXML to Jani.
+Functions for the conversion from SCXML to Jani.
+
+The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
 from typing import Dict, List
@@ -42,7 +44,7 @@ from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
     implement_scxml_events_as_jani_syncs,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_tags import BaseTag
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces import BaseTag
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 

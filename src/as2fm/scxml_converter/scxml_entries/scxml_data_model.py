@@ -31,8 +31,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 class ScxmlDataModel(ScxmlBase):
     """This class represents the variables defined in the model."""
 
-    def __init__(self, data_entries: List[ScxmlData] = None):
-        # TODO: Check ScxmlData from scxml_helpers, for alternative parsing
+    def __init__(self, data_entries: Optional[List[ScxmlData]] = None):
         if data_entries is None:
             data_entries = []
         self._data_entries: List[ScxmlData] = data_entries

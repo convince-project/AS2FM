@@ -74,3 +74,11 @@ def test_parse_ecmascript_to_jani_expression_with_string():
     expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
     array_info = ArrayInfo(int, 10)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
+
+
+def test_parse_ecmascript_to_jani_expression_with_escaped_string():
+    # Check if double quotes are handled as well
+    ecmascript_expr = '""'
+    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
+    array_info = ArrayInfo(int, 10)
+    check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)

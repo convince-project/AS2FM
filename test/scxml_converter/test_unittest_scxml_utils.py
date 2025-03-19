@@ -143,7 +143,8 @@ def test_action_result_good_expressions():
 
 def test_type_string_conversion():
     """Test the various types string are converted to the expected value."""
-    type_strings = [
+    # Test expected array types
+    type_strings_ok = [
         ("float64", float),
         ("int32", int),
         ("bool", bool),
@@ -153,8 +154,14 @@ def test_type_string_conversion():
         ("float64[4]", MutableSequence[float]),
         ("int32[10]", MutableSequence[int]),
         ("int8[01]", MutableSequence[int]),
-        ("float64[-4]", None),
     ]
-    for type_str, gt_type in type_strings:
+    for type_str, gt_type in type_strings_ok:
         conv_type = get_data_type_from_string(type_str)
         assert conv_type == gt_type
+    # Test unexpected array types
+    type_strings_fail = [
+        "float64[-4]",
+    ]
+    for type_str in type_strings_fail:
+        with pytest.raises(KeyError):
+            get_data_type_from_string(type_str)

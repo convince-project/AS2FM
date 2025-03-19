@@ -21,7 +21,8 @@ import re
 from array import array
 from typing import MutableSequence, Type, Union, get_args, get_origin
 
-from lxml.etree import _Comment, _Element
+from lxml.etree import _Comment as XmlComment
+from lxml.etree import _Element as XmlElement
 
 # Set of basic types that are supported by the Jani language.
 # Basic types (from Jani docs):
@@ -38,6 +39,11 @@ from lxml.etree import _Comment, _Element
 #     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
 # Additionally, we support the array types from the array extension.
 ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
+
+# When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
+# Strings.
+SupportedECMAScriptSequences = (MutableSequence, str)
+ValidScxmlTypes = Union[bool, int, float, MutableSequence, str]
 
 # Small number used for float comparison.
 EPSILON = 1e-3
@@ -59,14 +65,14 @@ def remove_namespace(tag: str) -> str:
     return tag_wo_ns
 
 
-def is_comment(element: _Element) -> bool:
+def is_comment(element: XmlElement) -> bool:
     """
     Check if an element is a comment.
 
     :param element: The element to check.
     :return: True if the element is a comment, False otherwise.
     """
-    return isinstance(element, _Comment) or "function Comment" in str(element)
+    return isinstance(element, XmlComment) or "function Comment" in str(element)
 
 
 def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
@@ -110,46 +116,12 @@ def value_to_string_expr(value: ValidTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def string_expr_to_bool(value_str: str) -> bool:
+def string_as_bool(value_str: str) -> bool:
     """
-    Special case for boolean conversion.
+    Special case for boolean conversion for configuration parameters.
     """
     assert value_str in ("true", "false"), f"Invalid bool string: {value_str} != 'true'/'false'"
     return value_str == "true"
-
-
-def string_expr_to_value(value_str: str, value_type: Type[ValidTypes]) -> ValidTypes:
-    """Convert a string to a value of the desired type."""
-    value_str = value_str.strip()
-    assert isinstance(
-        value_str, str
-    ), f"Error: provided value is of type {type(value_str)}, expected a string."
-    assert len(value_str) > 0, "Error: provided value is an empty string, cannot convert."
-    is_array_value = re.match(r"^\[.*\]$", value_str) is not None
-    is_string_value = re.match(r"^\'.*\'$", value_str) is not None
-    if not (is_array_value or is_string_value):
-        assert value_type in (
-            bool,
-            int,
-            float,
-        ), f"Error: the value {value_str} shall be converted to a base type."
-        if value_type is bool:
-            return string_expr_to_bool(value_str)
-        return value_type(value_str)
-    elif is_array_value:
-        str_entries = value_str.strip("[]").split(",")
-        if str_entries == [""]:
-            str_entries = []
-        if value_type is MutableSequence[int]:
-            return array("i", [int(v) for v in str_entries])
-        elif value_type is MutableSequence[float]:
-            return array("d", [float(v) for v in str_entries])
-        else:
-            raise ValueError(f"Unsupported value type {value_type}.")
-    else:
-        raw_str = value_str.strip("'")
-        assert value_type is MutableSequence[int], "Error: unexpected type for string arrays."
-        return convert_string_to_int_array(raw_str)
 
 
 def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
