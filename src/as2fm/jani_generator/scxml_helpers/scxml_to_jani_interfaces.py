@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Module defining SCXML tags to match against.
+Interface classes between SCXML tags and related JANI output.
 """
 
 from hashlib import sha256
@@ -41,7 +41,7 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_tags_helpers import (
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
     generate_jani_assignments,
     generate_jani_variable,
 )
