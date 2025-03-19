@@ -23,12 +23,7 @@ from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, Union
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import (
-    EPSILON,
-    check_value_type_compatible,
-    string_expr_to_value,
-    value_to_type,
-)
+from as2fm.as2fm_common.common import EPSILON, check_value_type_compatible, value_to_type
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
@@ -491,7 +486,7 @@ class DatamodelTag(BaseTag):
             # In case of arrays, declare an additional 'length' variable
             # In this case, use dot notation, as in JS arrays
             if expected_type in SupportedMutableSequence:
-                init_expr = string_expr_to_value(scxml_data.get_expr(), expected_type)
+                init_expr = interpret_ecma_script_expr(scxml_data.get_expr())
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
                     JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))

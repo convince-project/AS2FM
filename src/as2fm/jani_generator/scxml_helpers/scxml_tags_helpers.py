@@ -22,11 +22,12 @@ from typing import Dict, List, Optional, Union, get_args
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import (
+    SupportedECMAScriptSequences,
     ValidTypes,
     get_default_expression_for_type,
     is_array_type,
-    string_expr_to_value,
 )
+from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -132,9 +133,12 @@ def generate_jani_assignments(
                 assert is_expression_array(assignment_value), get_error_msg(
                     elem_xml, "Array variables must be assigned array expressions."
                 )
-                value_array_length = len(
-                    string_expr_to_value(assign_expr, assignment_target_var.get_type())
+                interpreted_expr = interpret_ecma_script_expr(assign_expr)
+                assert isinstance(interpreted_expr, SupportedECMAScriptSequences), get_error_msg(
+                    elem_xml,
+                    f"Expected an array as interpretation result, got {type(interpreted_expr)}.",
                 )
+                value_array_length = len(interpreted_expr)
             else:
                 assert assignment_value_type is JaniExpressionType.IDENTIFIER, get_error_msg(
                     elem_xml, "Expected an Identifier expression."
