@@ -123,10 +123,9 @@ def read_value_from_xml_child(
     if n_tag_children > 1:
         log_error(
             xml_tree,
-            f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children:",
+            f"Error: reading from {xml_tree.tag}: Child '{child_tag}' has multiple children:"
+            + "\n".join(f"\t- {child.tag}" for child in tag_children),
         )
-        for child in tag_children:
-            log_error(xml_tree, f"\t- {child.tag}")
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)

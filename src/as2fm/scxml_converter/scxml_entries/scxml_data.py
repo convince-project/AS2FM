@@ -76,7 +76,7 @@ class ScxmlData(ScxmlBase):
         return type_match.group(1), type_match.group(2)
 
     @classmethod
-    def data_from_xml_tree(
+    def from_xml_tree_impl(
         cls, xml_tree: ET.Element, comment_above: Optional[str] = None
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
@@ -103,7 +103,7 @@ class ScxmlData(ScxmlBase):
             ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True
         )
         instance = ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
-        instance.set_xml_tree(xml_tree)
+        instance.set_xml_origin(xml_tree)
         return instance
 
     def __init__(
