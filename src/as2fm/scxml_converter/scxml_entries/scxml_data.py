@@ -21,6 +21,7 @@ import re
 from typing import Any, Optional, Tuple, Union
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_array_type, is_comment
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
@@ -77,7 +78,7 @@ class ScxmlData(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: ET.Element, comment_above: Optional[str] = None
+        cls, xml_tree: XmlElement, comment_above: Optional[str] = None
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
         assert_xml_tag_ok(ScxmlData, xml_tree)
@@ -189,7 +190,7 @@ class ScxmlData(ScxmlBase):
         valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_bounds
 
-    def as_xml(self, type_as_attribute: bool = True) -> ET.Element:
+    def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
         """
         Generate the XML element representing the single data entry.
 

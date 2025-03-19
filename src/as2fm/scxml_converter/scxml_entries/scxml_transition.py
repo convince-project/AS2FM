@@ -20,6 +20,7 @@ A single transition in SCXML. In XML, it has the tag `transition`.
 from typing import List, Optional, Type
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
 from as2fm.scxml_converter.scxml_entries import (
@@ -51,7 +52,7 @@ class ScxmlTransition(ScxmlBase):
         return "transition"
 
     @staticmethod
-    def contains_transition_target(xml_tree: ET.Element) -> bool:
+    def contains_transition_target(xml_tree: XmlElement) -> bool:
         """Check if the children of the ScxmlTransition contain ScxmlTransitionTarget tags."""
         targets_found = False
         for entry in xml_tree:
@@ -65,7 +66,7 @@ class ScxmlTransition(ScxmlBase):
 
     @classmethod
     def load_transition_targets_from_xml(
-        cls: Type["ScxmlTransition"], xml_tree: ET.Element
+        cls: Type["ScxmlTransition"], xml_tree: XmlElement
     ) -> List[ScxmlTransitionTarget]:
         """Loads all transition targets contained in the transition-like tags."""
         target = get_xml_attribute(cls, xml_tree, "target", undefined_allowed=True)
@@ -91,7 +92,7 @@ class ScxmlTransition(ScxmlBase):
         return target_children
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlTransition":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
@@ -295,7 +296,7 @@ class ScxmlTransition(ScxmlBase):
             self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
         return ScxmlTransition(plain_targets, self._events, self._condition)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid transition."
         xml_transition = ET.Element(self.get_tag_name())
         if len(self._events) > 0:

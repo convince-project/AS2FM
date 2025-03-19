@@ -22,6 +22,7 @@ from os.path import isfile
 from typing import List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
 from as2fm.as2fm_common.logging import set_filepath_for_all_elements
@@ -55,7 +56,7 @@ class ScxmlRoot(ScxmlBase):
         return "scxml"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlRoot":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
@@ -376,7 +377,7 @@ class ScxmlRoot(ScxmlBase):
             )
         return (converted_scxmls, ros_declarations)
 
-    def as_xml(self, **kwargs) -> ET.Element:
+    def as_xml(self, **kwargs) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid root object."
         assert self._initial_state is not None, "Error: SCXML root: no initial state set."
         data_type_as_attribute = kwargs.get("data_type_as_attribute", True)

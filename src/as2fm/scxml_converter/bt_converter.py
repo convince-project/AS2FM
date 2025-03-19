@@ -23,6 +23,7 @@ from importlib.resources import files as resource_files
 from typing import Dict, List, Tuple
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
 from as2fm.scxml_converter.scxml_entries import (
@@ -218,7 +219,7 @@ def generate_bt_root_scxml(
     return bt_scxml_root
 
 
-def get_bt_plugin_type(bt_xml_subtree: ET.ElementBase) -> str:
+def get_bt_plugin_type(bt_xml_subtree: XmlElement) -> str:
     """
     Get the BT plugin node type from the XML subtree.
     """
@@ -233,7 +234,7 @@ def get_bt_plugin_type(bt_xml_subtree: ET.ElementBase) -> str:
     return plugin_type
 
 
-def get_bt_child_ports(bt_xml_subtree: ET.ElementBase) -> List[Tuple[str, str]]:
+def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
     """
     Get the ports of a BT child node.
     """
@@ -242,7 +243,7 @@ def get_bt_child_ports(bt_xml_subtree: ET.ElementBase) -> List[Tuple[str, str]]:
 
 
 def generate_bt_children_scxmls(
-    bt_xml_subtree: ET.ElementBase,
+    bt_xml_subtree: XmlElement,
     subtree_tick_idx: int,
     available_bt_plugins: Dict[str, ScxmlRoot],
 ) -> List[ScxmlRoot]:

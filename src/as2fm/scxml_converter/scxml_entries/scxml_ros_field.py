@@ -18,6 +18,7 @@
 from typing import Optional, Union
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -41,7 +42,7 @@ class RosField(ScxmlParam):
         return "field"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosField":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_attribute(RosField, xml_tree, "name")
@@ -71,7 +72,7 @@ class RosField(ScxmlParam):
         plain_field_name = ROS_FIELD_PREFIX + self._name
         return ScxmlParam(plain_field_name, expr=get_plain_expression(self._expr, self._cb_type))
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
         xml_field = ET.Element(RosField.get_tag_name(), {"name": self._name, "expr": self._expr})
         return xml_field
