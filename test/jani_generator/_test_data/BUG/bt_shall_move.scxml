@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="running"
+    version="1.0"
+    name="ShallMove"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!--
+        Movement enum in the world.
+        0: right,
+        1: left,
+        2: up,
+        3: down
+    -->
+    <bt_declare_port_in key="direction" type="int32" />
+    <bt_declare_port_in key="goal_x" type="int32" />
+    <bt_declare_port_in key="goal_y" type="int32" />
+    <bt_declare_port_in key="curr_x" type="int32" />
+    <bt_declare_port_in key="curr_y" type="int32" />
+
+    <datamodel>
+        <data id="shall_move" expr="false" type="bool" />
+        <data id="goal_x" expr="0" type="int32" />
+        <data id="goal_y" expr="0" type="int32" />
+        <data id="curr_x" expr="0" type="int32" />
+        <data id="curr_y" expr="0" type="int32" />
+        <data id="direction" expr="0" type="int32" />
+    </datamodel>
+
+    <state id="running">
+        <bt_tick target="running">
+            <!-- TODO: Fetch Blackboard variables. The most correct way would be a request / reply, this would require splitting this into two states -->
+            <assign location="direction">
+                <expr>
+                    <bt_get_input key="direction" />
+                </expr>
+            </assign>
+            <assign location="goal_x">
+                <expr>
+                    <bt_get_input key="goal_x" />
+                </expr>
+            </assign>
+            <assign location="goal_y">
+                <expr>
+                    <bt_get_input key="goal_y" />
+                </expr>
+            </assign>
+            <assign location="curr_x">
+                <expr>
+                    <bt_get_input key="curr_x" />
+                </expr>
+            </assign>
+            <assign location="curr_y">
+                <expr>
+                    <bt_get_input key="curr_y" />
+                </expr>
+            </assign>
+            <if cond="direction == 0">
+                <assign location="shall_move" expr="goal_x &gt; curr_x" />
+            <elseif cond="direction == 1" />
+                <assign location="shall_move" expr="goal_x &lt; curr_x" />
+            <elseif cond="direction == 2" />
+                <assign location="shall_move" expr="goal_y &gt; curr_y" />
+            <else />
+                <assign location="shall_move" expr="goal_y &lt; curr_y" />
+            </if>
+            <if cond="shall_move">
+                <bt_return_status status="SUCCESS" />
+            <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+        <bt_halt target="running">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</scxml>
