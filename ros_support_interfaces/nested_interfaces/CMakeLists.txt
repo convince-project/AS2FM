@@ -25,7 +25,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Internal.msg"
-  "msg/InternalArr.msg"
+  "msg/InternalArrDynamic.msg"
+  "msg/InternalArrStatic.msg"
   "msg/InternalObj.msg"
   DEPENDENCIES std_msgs
  )
