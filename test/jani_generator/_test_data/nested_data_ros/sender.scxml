@@ -19,11 +19,11 @@
         <onentry>
             <ros_topic_publish name="atomic">
                 <field name="i" expr="counter" />
-                <field name="text" expr="counter" />
+                <field name="text" expr="'42'" />
             </ros_topic_publish>
             <ros_topic_publish name="object">
                 <field name="i_obj.i" expr="counter" />
-                <field name="i_obj.text" expr="counter" />
+                <field name="i_obj.text" expr="'hi!'" />
             </ros_topic_publish>
             <!-- <ros_topic_publish name="array_static">
                 <field name="i_arr[0].i" expr="counter" />

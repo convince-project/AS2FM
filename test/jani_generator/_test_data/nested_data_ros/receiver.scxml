@@ -33,7 +33,7 @@
         </ros_topic_callback>
         <ros_topic_callback name="object" target="check_counter">
             <if cond="!('' == _msg.i_obj.text)">
-                <assign location="recv_atomic" expr="_msg.i_obj.i" />
+                <assign location="recv_object" expr="_msg.i_obj.i" />
             </if>
         </ros_topic_callback>
         <!-- <ros_topic_callback name="array_static" target="check_counter">
