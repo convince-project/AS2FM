@@ -26,6 +26,7 @@ from as2fm.as2fm_common.common import is_comment
 
 # This is the name of an internal attribute that is used to store the filepath of an element.
 INTERNAL_FILEPATH_ATTR = "_filepath"
+SOURCELINE = "sourceline"
 
 
 class Severity(Enum):
@@ -68,18 +69,23 @@ def _assemble_message(severity: Severity, element: XmlElement, message: str) -> 
     :param message: The message
     :return: The message with path and line number
     """
-    assert hasattr(element, "sourceline"), (
-        "The element must have a sourceline attribute. This is set by the parser, "
-        "i. e. when `lxml.etree.ElementTree` is used."
-    )
-    assert INTERNAL_FILEPATH_ATTR in element.attrib.keys(), (
-        "The element must have a filepath attribute. This is set by "
-        "`as2fm_common.logging.set_filepath_for_all_elements`."
-    )
+    # assert hasattr(element, SOURCELINE), (
+    #     "The element must have a sourceline attribute. This is set by the parser, "
+    #     "i. e. when `lxml.etree.ElementTree` is used."
+    # )
+    # assert INTERNAL_FILEPATH_ATTR in element.attrib.keys(), (
+    #     "The element must have a filepath attribute. This is set by "
+    #     "`as2fm_common.logging.set_filepath_for_all_elements`."
+    # )
+    # TODO: At some point this should be set everywhere.
 
     severity_initial = severity.name[0]
-    path = element.attrib[INTERNAL_FILEPATH_ATTR]
-    return f"{severity_initial} ({path}:{element.sourceline}) {message}"
+    if hasattr(element, SOURCELINE):
+        path = element.attrib[INTERNAL_FILEPATH_ATTR]
+        locator: str = f"{path}:{element.sourceline}"
+    else:
+        locator = "UNKNOWN_LOCATION"
+    return f"{severity_initial} ({locator}) {message}"
 
 
 def get_error_msg(element: XmlElement, message: str) -> str:

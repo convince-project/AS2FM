@@ -1,5 +1,5 @@
 {
-    "properties": [
+  "properties": [
     {
       "name": "destination_reached",
       "expression": {
@@ -8,29 +8,8 @@
         "values": {
           "op": "Pmin",
           "exp": {
-            "op": "U",
-            "left": {
-              "op": "⇒",
-              "left": {
-                  "op": ">",
-                  "left": 0,
-                  "right": 0
-              },
-              "right": {
-                "op": ">",
-                "left": 0,
-                "right": 0
-              }
-            },
-            "right": {
-              "op": "∧",
-              "left": {
-                "op": ">",
-                "left": "counter.data",
-                "right": 9
-              },
-              "right": "success.valid"
-            }
+            "op": "F",
+            "exp": "success.valid"
           }
         },
         "states": {
