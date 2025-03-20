@@ -9,23 +9,30 @@
     <datamodel>
         <data id="recv_atomic" expr="0" type="int16" />
         <data id="recv_object" expr="0" type="int16" />
-        <data id="recv_array" expr="0" type="int16" />
+        <data id="recv_array_static" expr="0" type="int16" />
+        <data id="recv_array_dynamic" expr="0" type="int16" />
     </datamodel>
 
     <ros_topic_subscriber topic="atomic" type="nested_interfaces/Internal" />
     <ros_topic_subscriber topic="object" type="nested_interfaces/InternalObj" />
-    <ros_topic_subscriber topic="array" type="nested_interfaces/InternalArr" />
+    <ros_topic_subscriber topic="array_static" type="nested_interfaces/InternalArrStatic" />
+    <ros_topic_subscriber topic="array_dynamic" type="nested_interfaces/InternalArrDynamic" />
 
     <state id="check_counter">
-        <transition cond="recv_atomic == 100 and recv_object == 100 and recv_array == 100" target="end" />
+        <transition
+            cond="recv_atomic == 100 and recv_object == 100 and recv_array_static == 100 and recv_array_dynamic == 100"
+            target="end" />
         <ros_topic_callback name="atomic" target="check_battery">
             <assign location="recv_atomic" expr="_msg.i" />
         </ros_topic_callback>
         <ros_topic_callback name="object" target="check_battery">
             <assign location="recv_object" expr="_msg.obj_i.i" />
         </ros_topic_callback>
-        <ros_topic_callback name="array" target="check_battery">
-            <assign location="recv_array" expr="_msg.arr_i[0].i" />
+        <ros_topic_callback name="array_static" target="check_battery">
+            <assign location="recv_array_static" expr="_msg.arr_i[0].i" />
+        </ros_topic_callback>
+        <ros_topic_callback name="array_dynamic" target="check_battery">
+            <assign location="recv_array_dynamic" expr="_msg.arr_i[0].i" />
         </ros_topic_callback>
     </state>
 

@@ -12,7 +12,8 @@
 
     <ros_topic_publisher topic="atomic" type="nested_interfaces/Internal" />
     <ros_topic_publisher topic="object" type="nested_interfaces/InternalObj" />
-    <ros_topic_publisher topic="array" type="nested_interfaces/InternalArr" />
+    <ros_topic_publisher topic="array_static" type="nested_interfaces/InternalArrStatic" />
+    <ros_topic_publisher topic="array_dynamic" type="nested_interfaces/InternalArrDynamic" />
 
     <state id="increase">
         <onentry>
@@ -22,7 +23,10 @@
             <ros_topic_publish name="object">
                 <field name="i_obj.i" expr="counter" />
             </ros_topic_publish>
-            <ros_topic_publish name="array">
+            <ros_topic_publish name="array_static">
+                <field name="i_arr[0].i" expr="counter" />
+            </ros_topic_publish>
+            <ros_topic_publish name="array_dynamic">
                 <field name="i_arr[0].i" expr="counter" />
             </ros_topic_publish>
         </onentry>
