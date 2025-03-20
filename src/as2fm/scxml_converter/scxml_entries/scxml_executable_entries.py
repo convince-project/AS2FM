@@ -21,6 +21,7 @@ from copy import deepcopy
 from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
@@ -111,7 +112,7 @@ class ScxmlIf(ScxmlBase):
         return "if"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlIf":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
 
@@ -264,7 +265,7 @@ class ScxmlIf(ScxmlBase):
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
         return ScxmlIf(conditional_executions, else_execution)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
         first_conditional_execution = self._conditional_executions[0]
@@ -287,7 +288,7 @@ class ScxmlSend(ScxmlBase):
         return "send"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlSend":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
 
@@ -406,7 +407,7 @@ class ScxmlSend(ScxmlBase):
         # param.as_plain_scxml()
         return ScxmlSend(self._event, self._params)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
         if self._target_automaton is not None:
@@ -424,7 +425,7 @@ class ScxmlAssign(ScxmlBase):
         return "assign"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlAssign":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
 
@@ -499,7 +500,7 @@ class ScxmlAssign(ScxmlBase):
         expr = get_plain_expression(self._expr, self._cb_type)
         return ScxmlAssign(self._location, expr)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
         return ET.Element(
             ScxmlAssign.get_tag_name(), {"location": self._location, "expr": self._expr}
@@ -550,7 +551,7 @@ def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
     return True
 
 
-def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
+def execution_entry_from_xml(xml_tree: XmlElement) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
 
@@ -569,7 +570,7 @@ def execution_entry_from_xml(xml_tree: ET.Element) -> ScxmlExecutableEntry:
     return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
 
 
-def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
+def execution_body_from_xml(xml_tree: XmlElement) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
@@ -583,7 +584,7 @@ def execution_body_from_xml(xml_tree: ET.Element) -> ScxmlExecutionBody:
     return exec_body
 
 
-def append_execution_body_to_xml(xml_parent: ET.Element, exec_body: ScxmlExecutionBody) -> None:
+def append_execution_body_to_xml(xml_parent: XmlElement, exec_body: ScxmlExecutionBody) -> None:
     """
     Append an execution body to an existing XML element.
 

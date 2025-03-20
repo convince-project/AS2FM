@@ -22,7 +22,7 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Type
 
 from action_msgs.msg import GoalStatus
-from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
@@ -118,7 +118,7 @@ class RosActionAcceptGoal(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_fields_validity(None), "Error: SCXML RosActionAcceptGoal: invalid fields."
         return super().as_xml()
 
@@ -152,7 +152,7 @@ class RosActionRejectGoal(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_fields_validity(None), "Error: SCXML RosActionRejectGoal: invalid fields."
         return super().as_xml()
 

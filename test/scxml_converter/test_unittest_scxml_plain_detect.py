@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""""Test the SCXML data conversion from all possible declaration types"""
+"""Test the SCXML data conversion from all possible declaration types"""
 
 import os
 

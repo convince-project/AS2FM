@@ -18,6 +18,7 @@
 from typing import Dict, List, Optional, Type, Union
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.scxml_converter.scxml_entries import (
@@ -69,7 +70,7 @@ class RosDeclaration(ScxmlBase):
         return f"{cls.get_communication_interface()}_name"
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosDeclaration"], xml_tree: ET.Element) -> "RosDeclaration":
+    def from_xml_tree_impl(cls: Type["RosDeclaration"], xml_tree: XmlElement) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = read_value_from_xml_arg_or_child(
@@ -150,7 +151,7 @@ class RosDeclaration(ScxmlBase):
             f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML."
         )
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
         xml_declaration = ET.Element(
             self.get_tag_name(),
@@ -186,7 +187,7 @@ class RosCallback(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_callback_type.")
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosCallback"], xml_tree: ET.Element) -> "RosCallback":
+    def from_xml_tree_impl(cls: Type["RosCallback"], xml_tree: XmlElement) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_attribute(cls, xml_tree, "name")
@@ -310,7 +311,7 @@ class RosCallback(ScxmlTransition):
             condition = get_plain_expression(condition, self.get_callback_type())
         return ScxmlTransition(new_targets, [event_name], condition)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         """Convert the ROS callback to an XML element."""
         assert self.check_validity(), f"Error: SCXML {self.get_tag_name()}: invalid parameters."
         xml_element = super().as_xml()
@@ -343,7 +344,7 @@ class RosTrigger(ScxmlSend):
         return []
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosTrigger"], xml_tree: ET.Element) -> "RosTrigger":
+    def from_xml_tree_impl(cls: Type["RosTrigger"], xml_tree: XmlElement) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.
 
@@ -478,7 +479,7 @@ class RosTrigger(ScxmlSend):
             params.append(ScxmlParam(param_name, expr=param_value))
         return ScxmlSend(event_name, params)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
         xml_trigger = ET.Element(self.get_tag_name(), {"name": self._interface_name})
         for arg_name, arg_value in self._additional_args.items():

@@ -20,6 +20,7 @@ Container for the variables defined in the SCXML model. In XML, it has the tag `
 from typing import List, Optional
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
@@ -41,7 +42,7 @@ class ScxmlDataModel(ScxmlBase):
         return "datamodel"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlDataModel":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert_xml_tag_ok(ScxmlDataModel, xml_tree)
         data_entries = []
@@ -88,7 +89,7 @@ class ScxmlDataModel(ScxmlBase):
                     return False
         return True
 
-    def as_xml(self, type_as_attribute: bool = True) -> Optional[ET.Element]:
+    def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:
         """
         Store the datamodel, containing all model's data entries, as an XML element.
 

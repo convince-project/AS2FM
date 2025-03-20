@@ -162,7 +162,7 @@ def update_ros_communication_handlers(
 
 
 def generate_plain_scxml_from_handlers(
-    handlers_dict: Dict[str, RosCommunicationHandler]
+    handlers_dict: Dict[str, RosCommunicationHandler],
 ) -> Iterator[ScxmlRoot]:
     """
     Generate the plain SCXML models from the ROS communication handlers.

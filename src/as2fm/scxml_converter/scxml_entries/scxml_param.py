@@ -20,6 +20,7 @@ Container for a single parameter, sent within an event. In XML, it has the tag `
 from typing import Optional, Union
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
@@ -43,7 +44,7 @@ class ScxmlParam(ScxmlBase):
         return "param"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlParam":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_attribute(ScxmlParam, xml_tree, "name")
@@ -121,7 +122,7 @@ class ScxmlParam(ScxmlBase):
             print("Error: SCXML param: expr and location are both set.")
         return valid_name and valid_expr
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid param."
         xml_param = ET.Element(ScxmlParam.get_tag_name(), {"name": self._name})
         if self._expr is not None:

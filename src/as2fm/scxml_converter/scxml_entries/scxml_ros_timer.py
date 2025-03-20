@@ -18,6 +18,7 @@
 from typing import Type
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
@@ -35,7 +36,7 @@ class RosTimeRate(RosDeclaration):
         return "ros_time_rate"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosTimeRate":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)
         timer_name = get_xml_attribute(RosTimeRate, xml_tree, "name")
@@ -77,7 +78,7 @@ class RosTimeRate(RosDeclaration):
         """Check if the timer has undefined entries (i.e. from BT ports)."""
         return True
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML rate timer: invalid parameters."
         xml_time_rate = ET.Element(
             RosTimeRate.get_tag_name(), {"rate_hz": str(self._rate_hz), "name": self._name}

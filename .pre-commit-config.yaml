@@ -29,32 +29,30 @@ repos:
       - id: trailing-whitespace
   # black for auto-formatting
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.1.0
     hooks:
       - id: black
         language_version: python3.10
-  # same as lint.yml
   # - repo: https://github.com/pycqa/pylint
-  #   rev: v3.3.1
+  #   rev: v3.3.5
   #   hooks:
   #       - id: pylint
-  # TODO: add pycodestyle
   # Finds spelling issues in code.
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         additional_dependencies:
           - tomli # required to read config from pyproject.toml
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.1.2
     hooks:
       - id: flake8
   # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.11.2
+  #   rev: v1.15.0
   #   hooks:
   #       - id: mypy
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
