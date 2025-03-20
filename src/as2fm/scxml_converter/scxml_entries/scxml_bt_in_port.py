@@ -18,6 +18,7 @@ SCXML get input for Behavior Trees' Ports.
 """
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -34,7 +35,7 @@ class BtGetValueInputPort(ScxmlBase):
         return "bt_get_input"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtGetValueInputPort":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")
         return BtGetValueInputPort(key_str)
@@ -52,7 +53,7 @@ class BtGetValueInputPort(ScxmlBase):
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML BT Input Port: invalid parameters."
         xml_bt_in_port = ET.Element(BtGetValueInputPort.get_tag_name(), {"key": self._key})
         return xml_bt_in_port

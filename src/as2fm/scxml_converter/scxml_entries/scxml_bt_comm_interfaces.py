@@ -19,7 +19,7 @@ SCXML entries related to BT communication interfaces (i.e. tick and halt) and re
 
 from typing import List, Optional, Union
 
-from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend, ScxmlTransitionTarget
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
@@ -177,7 +177,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
         return generate_bt_tick_response_event(instance_id)
 
     @staticmethod
-    def from_xml_tree(xml_tree: ET.Element) -> "BtReturnTickStatus":
+    def from_xml_tree(xml_tree: XmlElement) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")
         return BtReturnTickStatus(status)
@@ -198,7 +198,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
         plain_send[0].append_param(ScxmlParam("status", expr=f"{self._status_id}"))
         return plain_send
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         ret_xml = super().as_xml()
         ret_xml.set("status", self._status)
         return ret_xml

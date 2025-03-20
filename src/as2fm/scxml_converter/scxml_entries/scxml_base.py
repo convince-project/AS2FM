@@ -19,7 +19,7 @@ Base SCXML class, defining the methods all SCXML entries shall implement.
 
 from typing import Optional
 
-from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 
 class ScxmlBase:
@@ -31,25 +31,25 @@ class ScxmlBase:
         raise NotImplementedError
 
     @classmethod
-    def from_xml_tree(cls, xml_tree: ET.Element) -> "ScxmlBase":
+    def from_xml_tree(cls, xml_tree: XmlElement, **kwargs) -> "ScxmlBase":
         """External interface to create a ScxmlBase object from an XML tree."""
-        instance = cls.from_xml_tree_impl(xml_tree)
-        instance.set_xml_tree(xml_tree)
+        instance = cls.from_xml_tree_impl(xml_tree, **kwargs)
+        instance.set_xml_origin(xml_tree)
         return instance
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlBase":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlBase":
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
-    def set_xml_tree(self, xml_tree: ET.Element):
-        """Set the xml_element this object was made from"""
-        self.xml_tree = xml_tree
+    def set_xml_origin(self, xml_origin: XmlElement):
+        """Set the xml_element this object was made from."""
+        self.xml_origin = xml_origin
 
-    def get_xml_tree(self) -> Optional[ET.Element]:
+    def get_xml_origin(self) -> Optional[XmlElement]:
         """Get the xml_element this object was made from."""
         try:
-            return self.xml_tree
+            return self.xml_origin
         except AttributeError:
             return None
 

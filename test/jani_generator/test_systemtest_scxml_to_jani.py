@@ -217,6 +217,7 @@ class TestConversion(unittest.TestCase):
         expected_result_probability: float,
         result_probability_tolerance: float = 0.0,
         size_limit: int = 10_000,
+        skip_properties_load_check: bool = False,
     ):
         """
         Testing the conversion of the model xml file with the entrypoint.
@@ -224,9 +225,12 @@ class TestConversion(unittest.TestCase):
         :param folder: The folder containing the test data.
         :param model_xml: the name of the xml file containing the model to evaluate.
         :param store_generated_scxmls: If the generated SCXMLs should be stored.
-        :param property_name: The property name to test.
-        :param success: If the property is expected to be always satisfied or always not satisfied.
         :param skip_smc: If the model shall be executed using SMC (uses smc_storm).
+        :param property_name: The property name to test.
+        :param expected_result_probability: The expected probability the prop. is verified from SMC.
+        :param result_probability_tolerance: The allowed error for the prob. result.
+        :param size_limit: The max. number of iterations to run in SMC.
+        :param skip_properties_load_check: Disable the equality check for the loaded properties.
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
         xml_main_path = os.path.join(test_data_dir, model_xml)
@@ -253,9 +257,10 @@ class TestConversion(unittest.TestCase):
                         self.assertIn("target=", content)
         self.assertTrue(os.path.exists(output_path))
         properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
-        assert json_jani_properties_match(
-            properties_file, output_path
-        ), "Properties from input json and generated jani file do not match."
+        if not skip_properties_load_check:
+            assert json_jani_properties_match(
+                properties_file, output_path
+            ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
             run_smc_storm_with_output(
@@ -508,6 +513,50 @@ class TestConversion(unittest.TestCase):
             property_name="expected_counts",
             expected_result_probability=1.0,
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
+        )
+
+    def test_string_support_two_sent(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="string_two_sent",
+            expected_result_probability=0.6,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_one(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_one",
+            expected_result_probability=0.3,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_two(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_two",
+            expected_result_probability=0.6,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
+        )
+
+    def test_string_support_res_min_one(self):
+        """Test the support for string assignments and comparisons in SCXML."""
+        self._test_with_main(
+            "string_comparison",
+            model_xml="main.xml",
+            property_name="strings_res_min_one",
+            expected_result_probability=0.1,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            skip_properties_load_check=True,
         )
 
     def test_command_line_output_with_line_numbers(self):

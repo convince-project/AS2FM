@@ -18,6 +18,7 @@ SCXML set output for Behavior Trees' Ports.
 """
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
@@ -41,7 +42,7 @@ class BtSetValueOutputPort(ScxmlSend):
         return "bt_set_output"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "BtSetValueOutputPort":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")
@@ -81,7 +82,7 @@ class BtSetValueOutputPort(ScxmlSend):
             [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
         )
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML BT Output Port: invalid parameters."
         xml_bt_in_port = ET.Element(
             BtSetValueOutputPort.get_tag_name(), {"key": self._key, "expr": self._expr}

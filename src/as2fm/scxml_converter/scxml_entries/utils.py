@@ -19,7 +19,8 @@ import re
 from enum import Enum, auto
 from typing import Any, Dict, List, MutableSequence, Optional, Type
 
-from as2fm.as2fm_common.common import is_array_type, string_to_value
+from as2fm.as2fm_common.common import is_array_type
+from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 # List of names that shall not be used for variable names
@@ -59,6 +60,7 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int64[]": MutableSequence[int],
     "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
     "float64[]": MutableSequence[float],
+    "string": str,
 }
 
 
@@ -241,7 +243,7 @@ def to_integer(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> Op
 
 
 # ------------ Datatype-related utilities ------------
-def get_data_type_from_string(data_type: str) -> Optional[Type]:
+def get_data_type_from_string(data_type: str) -> Type:
     """
     Convert a data type string description to the matching python type.
 
@@ -252,7 +254,7 @@ def get_data_type_from_string(data_type: str) -> Optional[Type]:
     # If the data type is an array, remove the bound value
     if "[" in data_type:
         data_type = re.sub(r"(^[a-z0-9]*\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
-    return SCXML_DATA_STR_TO_TYPE.get(data_type, None)
+    return SCXML_DATA_STR_TO_TYPE[data_type]
 
 
 def convert_string_to_type(value: str, data_type: str) -> Any:
@@ -260,7 +262,9 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     Convert a value to the provided data type.
     """
     python_type = get_data_type_from_string(data_type)
-    return string_to_value(value, python_type)
+    interpreted_value = interpret_ecma_script_expr(value)
+    assert isinstance(interpreted_value, python_type), f"Failed interpreting {value}"
+    return interpreted_value
 
 
 def get_array_max_size(data_type: str) -> Optional[int]:

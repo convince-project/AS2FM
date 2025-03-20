@@ -18,18 +18,18 @@ Module for interpreting ecmascript.
 """
 
 from array import array
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, get_args
 
 import js2py
 
-from as2fm.as2fm_common.common import ValidTypes
+from as2fm.as2fm_common.common import ValidScxmlTypes
 
-BasicJsTypes = Union[int, float, bool]
+BasicJsTypes = Union[int, float, bool, str]
 
 
 def interpret_ecma_script_expr(
-    expr: str, variables: Optional[Dict[str, ValidTypes]] = None
-) -> object:
+    expr: str, variables: Optional[Dict[str, ValidScxmlTypes]] = None
+) -> ValidScxmlTypes:
     """
     Interpret the ECMA script expression.
 
@@ -50,7 +50,7 @@ def interpret_ecma_script_expr(
             f"'result = {expr}'. {msg_addition}",
         )
     expr_result = context.result
-    if isinstance(expr_result, BasicJsTypes):
+    if isinstance(expr_result, get_args(BasicJsTypes)):
         return expr_result
     elif isinstance(expr_result, js2py.base.JsObjectWrapper):
         if isinstance(expr_result._obj, js2py.base.PyJsArray):

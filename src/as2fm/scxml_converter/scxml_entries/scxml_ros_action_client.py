@@ -23,6 +23,7 @@ from typing import List, Type, Union
 
 from action_msgs.msg import GoalStatus
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer, ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
@@ -98,7 +99,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         return "ros_action_handle_goal_response"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosActionHandleGoalResponse":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
         action_name = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "name")
@@ -187,7 +188,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         )
         return [accept_transition, reject_transition]
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML Service Handle Response: invalid parameters."
         return ET.Element(
             RosActionHandleGoalResponse.get_tag_name(),
