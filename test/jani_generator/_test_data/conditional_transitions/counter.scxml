@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="increase"
+    version="1.0"
+    name="Counter"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="counter" expr="0" type="int16" />
+    </datamodel>
+
+    <state id="increase">
+        <onentry>
+            <send event="counter">
+                <param name="data" expr="counter" />
+            </send>
+        </onentry>
+        <transition target="increase">
+            <assign location="counter" expr="counter + 1" />
+        </transition>
+    </state>
+</scxml>
