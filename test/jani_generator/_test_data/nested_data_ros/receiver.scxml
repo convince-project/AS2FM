@@ -23,13 +23,18 @@
             cond="recv_atomic == 100 &amp;&amp; recv_object == 100"
             target="end" />
         <!-- <transition
-            cond="recv_atomic == 100 &amp;&amp; recv_object == 100 &amp;&amp; recv_array_static == 100 &amp;&amp; recv_array_dynamic == 100"
+            cond="recv_atomic == 100 &amp;&amp; recv_object == 100 &amp;&amp; recv_array_static == 100
+        &amp;&amp; recv_array_dynamic == 100"
             target="end" /> -->
         <ros_topic_callback name="atomic" target="check_counter">
-            <assign location="recv_atomic" expr="_msg.i" />
+            <if cond="!('' == _msg.text)">
+                <assign location="recv_atomic" expr="_msg.i" />
+            </if>
         </ros_topic_callback>
         <ros_topic_callback name="object" target="check_counter">
-            <assign location="recv_object" expr="_msg.i_obj.i" />
+            <if cond="!('' == _msg.i_obj.text)">
+                <assign location="recv_atomic" expr="_msg.i_obj.i" />
+            </if>
         </ros_topic_callback>
         <!-- <ros_topic_callback name="array_static" target="check_counter">
             <assign location="recv_array_static" expr="_msg.arr_i[0].i" />
