@@ -1,0 +1,41 @@
+{
+    "properties": [
+        {
+            "name": "working",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "left": {
+                                "op": "=",
+                                "left": "new_int.data",
+                                "right": 20
+                            },
+                            "op": "∧",
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "entry.data",
+                                    "right": 10
+                                },
+                                "right": {
+                                    "op": "=",
+                                    "left": "exit.data",
+                                    "right": 9
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}
