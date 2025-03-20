@@ -15,14 +15,14 @@
 
 from typing import Iterable, List, Optional, Type, Union
 
-import lxml.etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
-def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
+def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: XmlElement):
     """Ensures the xml_tree we are trying to parse has the expected name."""
     assert xml_tree.tag == scxml_type.get_tag_name(), get_error_msg(
         xml_tree,
@@ -32,7 +32,7 @@ def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: ET.Element):
 
 def get_xml_attribute(
     scxml_type: Type[ScxmlBase],
-    xml_tree: ET.Element,
+    xml_tree: XmlElement,
     arg_name: str,
     *,
     undefined_allowed=False,
@@ -65,7 +65,7 @@ def get_xml_attribute(
 
 
 def get_children_as_scxml(
-    xml_tree: ET.Element, scxml_types: Iterable[Type[ScxmlBase]]
+    xml_tree: XmlElement, scxml_types: Iterable[Type[ScxmlBase]]
 ) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
@@ -85,7 +85,7 @@ def get_children_as_scxml(
 
 
 def read_value_from_xml_child(
-    xml_tree: ET.Element,
+    xml_tree: XmlElement,
     child_tag: str,
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     *,
@@ -141,7 +141,7 @@ def read_value_from_xml_child(
 
 def read_value_from_xml_arg_or_child(
     scxml_type: Type[ScxmlBase],
-    xml_tree: ET.Element,
+    xml_tree: XmlElement,
     tag_name: str,
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     none_allowed: bool = False,

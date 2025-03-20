@@ -21,7 +21,7 @@ Based loosely on https://design.ros2.org/articles/actions.html
 
 from typing import List, Optional, Type, Union
 
-from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import (
     RosField,
@@ -63,7 +63,7 @@ class RosActionThread(ScxmlBase):
         return "ros_action_thread"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "RosActionThread":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_attribute(RosActionThread, xml_tree, "name")
@@ -193,7 +193,7 @@ class RosActionThread(ScxmlBase):
             thread_instances.append(plain_thread_instance)
         return thread_instances
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."
         # TODO
         pass

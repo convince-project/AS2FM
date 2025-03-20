@@ -20,6 +20,7 @@ A single state in SCXML. In XML, it has the tag `state`.
 from typing import List, Sequence, Union
 
 from lxml import etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
@@ -57,7 +58,7 @@ class ScxmlState(ScxmlBase):
         return "state"
 
     @staticmethod
-    def _transitions_from_xml(state_id: str, xml_tree: ET.Element) -> List[ScxmlTransition]:
+    def _transitions_from_xml(state_id: str, xml_tree: XmlElement) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
         tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
         for child in xml_tree:
@@ -75,7 +76,7 @@ class ScxmlState(ScxmlBase):
         return transitions
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: ET.Element) -> "ScxmlState":
+    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlState.get_tag_name()
@@ -308,7 +309,7 @@ class ScxmlState(ScxmlBase):
                 )
         return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
 
-    def as_xml(self) -> ET.Element:
+    def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."
         xml_state = ET.Element(ScxmlState.get_tag_name(), {"id": self._id})
         if len(self._on_entry) > 0:

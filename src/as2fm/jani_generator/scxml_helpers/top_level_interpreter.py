@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import lxml.etree as ET
+from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import remove_namespace, string_as_bool
 from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
@@ -70,7 +71,7 @@ class FullModel:
     properties: List[str] = field(default_factory=list)
 
 
-def _parse_time_element(time_element: ET.Element) -> int:
+def _parse_time_element(time_element: XmlElement) -> int:
     """
     Interpret a time element. Output is in nanoseconds.
 
