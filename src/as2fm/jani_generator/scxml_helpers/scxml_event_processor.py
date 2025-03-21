@@ -30,8 +30,8 @@ from as2fm.jani_generator.jani_entries import (
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
 from as2fm.jani_generator.ros_helpers.ros_timer import (
     GLOBAL_TIMER_AUTOMATON,
-    GLOBAL_TIMER_NAME,
     GLOBAL_TIMER_TICK_ACTION,
+    ROS_TIMER_RATE_EVENT_PREFIX,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 
@@ -100,6 +100,35 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
     return jani_vars
 
 
+def _preprocess_global_timer_automaton(jani_model: JaniModel):
+    """
+    Modify the global timer automaton to meet different assumptions.
+
+    - We expect no assignments to timer_name.valid variables.
+    - We expect the action associated to a global timer step to have a different name.
+
+    Note: timer_name.valid vars are auto-generated for each event, when translating from scxml.
+    However, they are not required in the case of a global_timer automaton.
+    """
+    jani_automaton = jani_model.get_automaton(GLOBAL_TIMER_AUTOMATON)
+    assert jani_automaton is not None
+    global_timer_edges = jani_automaton.get_edges()
+    for jani_edge in global_timer_edges:
+        action_name = jani_edge.get_action()
+        if action_name is not None:
+            if action_name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
+                assert (
+                    len(jani_edge.destinations) == 1
+                ), f"Unexpected n. of destination for timer edge '{action_name}'"
+                assert (
+                    len(jani_edge.destinations[0]["assignments"]) == 1
+                ), f"Unexpected n. of assignments for timer edge '{action_name}'"
+                # Get rid of the assignment
+                jani_edge.destinations[0]["assignments"] = []
+            elif action_name.startswith("transition-idle-eventless"):
+                jani_edge.set_action(GLOBAL_TIMER_TICK_ACTION)
+
+
 def implement_scxml_events_as_jani_syncs(
     events_holder: EventsHolder, max_array_size: int, jani_model: JaniModel
 ) -> List[str]:
@@ -119,10 +148,12 @@ def implement_scxml_events_as_jani_syncs(
         automaton_name = automaton.get_name()
         has_timer_automaton |= automaton_name == GLOBAL_TIMER_AUTOMATON
         jc.add_element(automaton_name)
-    # Split the events into timer and non-timer ones
     timer_enable_syncs: Dict[str, str] = {}
     timer_events: List[Event] = []
+    if has_timer_automaton:
+        _preprocess_global_timer_automaton(jani_model)
     for event_obj in events_holder.get_events().values():
+        # Distinguish between timer and non-timer events
         if event_obj.is_timer_event():
             timer_events.append(event_obj)
         else:
@@ -168,18 +199,18 @@ def implement_scxml_events_as_jani_syncs(
         # Add sync action for global timer tick
         jc.add_sync(
             GLOBAL_TIMER_TICK_ACTION,
-            timer_enable_syncs | {GLOBAL_TIMER_NAME: GLOBAL_TIMER_TICK_ACTION},
+            timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
         )
     # Add syncs for rate timers
     for timer_event in timer_events:
-        _, timer_recv_event = _generate_event_action_names(timer_event)
+        timer_send_event, timer_recv_event = _generate_event_action_names(timer_event)
         assert len(timer_event.get_senders()) == 1
         # TODO: Check if having the same timer name in multiple automata creates problems
         assert len(timer_event.get_receivers()) == 1
-        recv_automaton_name = event_obj.get_receivers()[0].automaton_name
+        recv_automaton_name = timer_event.get_receivers()[0].automaton_name
         timer_trigger_syncs = {
-            GLOBAL_TIMER_NAME: timer_recv_event,
-            recv_automaton_name: recv_automaton_name,
+            GLOBAL_TIMER_AUTOMATON: timer_send_event,
+            recv_automaton_name: timer_recv_event,
         } | timer_enable_syncs
         jc.add_sync(timer_recv_event, timer_trigger_syncs)
     jani_model.add_system_sync(jc)
