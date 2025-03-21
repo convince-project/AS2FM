@@ -21,6 +21,9 @@ from math import floor, gcd
 from typing import List, Optional, Tuple
 
 from as2fm.scxml_converter.scxml_entries import (
+    RosField,
+    RosTopicPublish,
+    RosTopicPublisher,
     ScxmlAssign,
     ScxmlData,
     ScxmlDataModel,
@@ -123,27 +126,51 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
             f"Max time {max_time_ns}ns cannot be converted to '{global_timer_period_unit}'. "
             "The max_time must have a unit that is greater or equal to the smallest timer period."
         )
+    curr_time_var = "current_time"
     scxml_root = ScxmlRoot(GLOBAL_TIMER_AUTOMATON)
-    scxml_root.set_data_model(ScxmlDataModel([ScxmlData("current_time", "0", "int64")]))
+    clock_topic_decl = RosTopicPublisher("clock", "builtin_interfaces/Time")
+    scxml_root.add_ros_declaration(clock_topic_decl)
+    scxml_root.set_data_model(ScxmlDataModel([ScxmlData(curr_time_var, "0", "int64")]))
     idle_state = ScxmlState("idle")
-    global_timer_tick_body: ScxmlExecutionBody = []
-    global_timer_tick_body.append(
-        ScxmlAssign("current_time", f"current_time + {global_timer_period}")
-    )
+    global_timer_tick_body: ScxmlExecutionBody = [
+        ScxmlAssign(curr_time_var, f"{curr_time_var} + {global_timer_period}"),
+        _get_current_time_to_clock_msg_publish(
+            clock_topic_decl, curr_time_var, global_timer_period_unit
+        ),
+    ]
     for timer_name, timer_period in timers_map.items():
         global_timer_tick_body.append(
             ScxmlIf(
                 [
                     (
-                        f"(current_time % {timer_period}) == 0",
+                        f"({curr_time_var} % {timer_period}) == 0",
                         [ScxmlSend(f"{ROS_TIMER_RATE_EVENT_PREFIX}{timer_name}")],
                     )
                 ]
             )
         )
     timer_step_transition = ScxmlTransition.make_single_target_transition(
-        "idle", [], f"current_time < {max_time}", global_timer_tick_body
+        "idle", [], f"{curr_time_var} < {max_time}", global_timer_tick_body
     )
     idle_state.add_transition(timer_step_transition)
     scxml_root.add_state(idle_state, initial=True)
     return scxml_root
+
+
+def _get_current_time_to_clock_msg_publish(
+    clock_decl: RosTopicPublisher, curr_time_var: str, time_unit: str
+) -> RosTopicPublish:
+    assert time_unit in TIME_UNITS
+    if time_unit == "s":
+        return RosTopicPublish(
+            clock_decl, [RosField("sec", curr_time_var), RosField("nanosec", "0")]
+        )
+    time_sec_to_unit = round(TIME_UNITS[time_unit] ** -1)
+    time_unit_to_nsec = 1e9 / time_sec_to_unit
+    return RosTopicPublish(
+        clock_decl,
+        [
+            RosField("sec", f"Math.floor({curr_time_var} / {time_sec_to_unit})"),
+            RosField("nanosec", f"({curr_time_var} % {time_sec_to_unit}) * {time_unit_to_nsec}"),
+        ],
+    )
