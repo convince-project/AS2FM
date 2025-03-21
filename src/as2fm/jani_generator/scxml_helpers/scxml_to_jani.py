@@ -19,7 +19,7 @@ Functions for the conversion from SCXML to Jani.
 The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -125,13 +125,14 @@ def _preprocess_jani_expression(
     exp_operator, exp_operands = jani_expression.as_operator()
     if exp_operator is None:
         return jani_expression
+    assert exp_operands is not None
     has_array_operator = any(is_expression_array(exp_op) for exp_op in exp_operands.values())
     if has_array_operator:
         assert (
             exp_operator == "="
         ), "Array operators can be only used for assignments and comparisons."
         return _preprocess_array_comparison(jani_expression, context_vars)
-    new_expr_dict: Dict[str, JaniExpression] = {"op": exp_operator}
+    new_expr_dict: Dict[str, Any] = {"op": exp_operator}
     for operand_name, operand_expr in exp_operands.items():
         new_expr_dict.update(
             {operand_name: _preprocess_jani_expression(operand_expr, context_vars)}
@@ -147,6 +148,7 @@ def _preprocess_array_comparison(
     """Preprocess comparison between a constant array and a variable."""
     exp_operator, exp_operands = jani_expression.as_operator()
     assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
+    assert exp_operands is not None
     array_elements = None
     array_var_id = None
     array_length_var_id = None
