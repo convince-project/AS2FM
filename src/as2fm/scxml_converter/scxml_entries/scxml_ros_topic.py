@@ -22,6 +22,7 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 
 from typing import Type
 
+from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.ros_utils import generate_topic_event, is_msg_type_known
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
@@ -45,7 +46,10 @@ class RosTopicPublisher(RosDeclaration):
 
     def check_valid_interface_type(self) -> bool:
         if not is_msg_type_known(self._interface_type):
-            print(f"Error: SCXML RosTopicPublisher: invalid msg type {self._interface_type}.")
+            log_error(
+                self.get_xml_origin(),
+                f"Error: SCXML RosTopicPublisher: invalid msg type {self._interface_type}.",
+            )
             return False
         return True
 
@@ -63,7 +67,10 @@ class RosTopicSubscriber(RosDeclaration):
 
     def check_valid_interface_type(self) -> bool:
         if not is_msg_type_known(self._interface_type):
-            print(f"Error: SCXML RosTopicSubscriber: invalid msg type {self._interface_type}.")
+            log_error(
+                self.get_xml_origin(),
+                f"Error: SCXML RosTopicSubscriber: invalid msg type {self._interface_type}.",
+            )
             return False
         return True
 
@@ -105,7 +112,7 @@ class RosTopicPublish(RosTrigger):
         return ros_declarations.is_publisher_defined(self._interface_name)
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        # TODO: CHeck fields for topics, too
+        # TODO: Check fields for topics, too
         return True
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
