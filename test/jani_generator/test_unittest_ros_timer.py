@@ -66,10 +66,12 @@ def generic_global_timer_check(timer_rates: List[float], expected_time_step: int
     timers: List[RosTimer] = []
     for i, rate in enumerate(timer_rates):
         timers.append(RosTimer(f"timer{i}", rate))
-    timer_scxml = make_global_timer_scxml(timers, max_time_ns)
-    assert timer_scxml is not None
+    ros_timer_scxml = make_global_timer_scxml(timers, max_time_ns)
+    assert ros_timer_scxml is not None
+    timer_scxmls, _ = ros_timer_scxml.to_plain_scxml_and_declarations()
+    assert len(timer_scxmls) == 1
     events_holder = EventsHolder()
-    jani_automaton = convert_scxml_root_to_jani_automaton(timer_scxml, events_holder, 0)
+    jani_automaton = convert_scxml_root_to_jani_automaton(timer_scxmls[0], events_holder, 0)
     _preprocess_global_timer_automaton(jani_automaton)
     time_step = get_time_step_from_timer_automaton(jani_automaton)
     assert (
