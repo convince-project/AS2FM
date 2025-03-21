@@ -58,7 +58,7 @@ def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
         interface_importer = __import__(interface_ns + f".{ros_interface}", fromlist=[""])
         _ = getattr(interface_importer, interface_type)
     except (ImportError, AttributeError):
-        print(f"Error: SCXML ROS declarations: topic type {type_definition} not found.")
+        print(f"Error: SCXML ROS declarations: interface type {type_definition} not found.")
         return False
     return True
 
