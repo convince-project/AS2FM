@@ -100,7 +100,7 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
     return jani_vars
 
 
-def _preprocess_global_timer_automaton(jani_model: JaniModel):
+def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
     """
     Modify the global timer automaton to meet different assumptions.
 
@@ -110,9 +110,7 @@ def _preprocess_global_timer_automaton(jani_model: JaniModel):
     Note: timer_name.valid vars are auto-generated for each event, when translating from scxml.
     However, they are not required in the case of a global_timer automaton.
     """
-    jani_automaton = jani_model.get_automaton(GLOBAL_TIMER_AUTOMATON)
-    assert jani_automaton is not None
-    global_timer_edges = jani_automaton.get_edges()
+    global_timer_edges = timer_automaton.get_edges()
     for jani_edge in global_timer_edges:
         action_name = jani_edge.get_action()
         if action_name is not None:
@@ -146,12 +144,12 @@ def implement_scxml_events_as_jani_syncs(
     # Determine if we have timers
     for automaton in jani_model.get_automata():
         automaton_name = automaton.get_name()
-        has_timer_automaton |= automaton_name == GLOBAL_TIMER_AUTOMATON
+        if automaton_name == GLOBAL_TIMER_AUTOMATON:
+            has_timer_automaton = True
+            _preprocess_global_timer_automaton(automaton)
         jc.add_element(automaton_name)
     timer_enable_syncs: Dict[str, str] = {}
     timer_events: List[Event] = []
-    if has_timer_automaton:
-        _preprocess_global_timer_automaton(jani_model)
     for event_obj in events_holder.get_events().values():
         # Distinguish between timer and non-timer events
         if event_obj.is_timer_event():

@@ -49,10 +49,9 @@ from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 def convert_scxml_root_to_jani_automaton(
     scxml_root: ScxmlRoot,
-    jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
     max_array_size: int,
-) -> None:
+) -> JaniAutomaton:
     """
     Convert an SCXML element to a Jani automaton.
 
@@ -61,9 +60,11 @@ def convert_scxml_root_to_jani_automaton(
     :param events_holder: The holder for the events to be implemented as Jani syncs.
     :param max_array_size: The max size of the arrays in the model.
     """
+    jani_automaton = JaniAutomaton()
     BaseTag.from_element(
         scxml_root, [], (jani_automaton, events_holder), max_array_size
     ).write_model()
+    return jani_automaton
 
 
 def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int) -> JaniModel:
@@ -86,8 +87,7 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
         assert (
             scxml_root.is_plain_scxml()
         ), f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
-        automaton = JaniAutomaton()
-        convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_size)
+        automaton = convert_scxml_root_to_jani_automaton(scxml_root, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
     implement_scxml_events_as_jani_syncs(events_holder, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)

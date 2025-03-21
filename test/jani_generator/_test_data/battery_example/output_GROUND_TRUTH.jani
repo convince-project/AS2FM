@@ -11,16 +11,16 @@
     },
     "variables": [
         {
-            "name": "level.data",
-            "type": "int",
-            "transient": false,
-            "initial-value": 0
-        },
-        {
             "name": "level.valid",
             "type": "bool",
             "transient": false,
             "initial-value": false
+        },
+        {
+            "name": "level.data",
+            "type": "int",
+            "transient": false,
+            "initial-value": 0
         }
     ],
     "constants": [],

@@ -24,7 +24,6 @@ import unittest
 import lxml.etree as ET
 import pytest
 
-from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
@@ -67,11 +66,10 @@ class TestConversion(unittest.TestCase):
             </state>
         </scxml>"""
         scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 2)
         locations = [loc["name"] for loc in automaton["locations"]]
         self.assertIn("Initial-first-exec", locations)
@@ -86,11 +84,10 @@ class TestConversion(unittest.TestCase):
         )
 
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
         self.assertEqual(len(automaton["locations"]), 4)
         self.assertEqual(len(automaton["initial-locations"]), 1)
@@ -114,11 +111,10 @@ class TestConversion(unittest.TestCase):
         )
 
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
         self.assertEqual(len(automaton["locations"]), 1)
         self.assertEqual(len(automaton["initial-locations"]), 1)
@@ -144,9 +140,8 @@ class TestConversion(unittest.TestCase):
         scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path)
         scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path)
 
-        jani_model = convert_multiple_scxmls_to_jani(
-            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100
-        )
+        in_scxmls = [scxml_battery_drainer, scxml_battery_manager]
+        jani_model = convert_multiple_scxmls_to_jani(in_scxmls, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
