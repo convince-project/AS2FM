@@ -38,7 +38,7 @@ from lxml.etree import _Element as XmlElement
 # src https://docs.google.com/document/d/\
 #     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
 # Additionally, we support the array types from the array extension.
-ValidTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
+ValidJaniTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
 
 # When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
 # Strings.
@@ -75,9 +75,9 @@ def is_comment(element: XmlElement) -> bool:
     return isinstance(element, XmlComment) or "function Comment" in str(element)
 
 
-def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
+def get_default_expression_for_type(field_type: Type[ValidJaniTypes]) -> ValidJaniTypes:
     """Generate a default expression for a field type."""
-    assert field_type in get_args(ValidTypes), f"Error: Unsupported data type {field_type}."
+    assert field_type in get_args(ValidJaniTypes), f"Error: Unsupported data type {field_type}."
     if field_type is MutableSequence[int]:
         return array("i")
     elif field_type is MutableSequence[float]:
@@ -86,7 +86,7 @@ def get_default_expression_for_type(field_type: Type[ValidTypes]) -> ValidTypes:
         return field_type()
 
 
-def value_to_type(value: ValidTypes | str) -> Type[ValidTypes]:
+def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
     """Convert a value to a type."""
     if isinstance(value, array):
         if value.typecode == "i":
@@ -103,7 +103,7 @@ def value_to_type(value: ValidTypes | str) -> Type[ValidTypes]:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def value_to_string_expr(value: ValidTypes) -> str:
+def value_to_string_expr(value: ValidJaniTypes) -> str:
     """Convert a value to a string."""
     if isinstance(value, MutableSequence):
         # Expect value to be an array
@@ -124,7 +124,7 @@ def string_as_bool(value_str: str) -> bool:
     return value_str == "true"
 
 
-def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes]) -> bool:
+def check_value_type_compatible(value: ValidJaniTypes, field_type: Type[ValidJaniTypes]) -> bool:
     """Check if the value is compatible with the field type."""
     if field_type is float:
         return isinstance(value, (int, float))
@@ -134,7 +134,7 @@ def check_value_type_compatible(value: ValidTypes, field_type: Type[ValidTypes])
     return isinstance(value, field_type)
 
 
-def is_array_type(field_type: Type[ValidTypes]) -> bool:
+def is_array_type(field_type: Type[ValidScxmlTypes]) -> bool:
     """Check if the field type is an array type."""
     return get_origin(field_type) == get_origin(MutableSequence)
 

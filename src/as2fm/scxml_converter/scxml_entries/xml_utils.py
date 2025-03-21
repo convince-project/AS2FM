@@ -22,6 +22,10 @@ from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
+class XmlUtilsError(Exception):
+    pass
+
+
 def assert_xml_tag_ok(scxml_type: Type[ScxmlBase], xml_tree: XmlElement):
     """Ensures the xml_tree we are trying to parse has the expected name."""
     assert xml_tree.tag == scxml_type.get_tag_name(), get_error_msg(
@@ -165,9 +169,11 @@ def read_value_from_xml_arg_or_child(
         )
     if not none_allowed:
         if read_value is None:
-            log_error(
-                xml_tree,
-                f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
-                + f"Missing argument {tag_name}.",
+            raise XmlUtilsError(
+                get_error_msg(
+                    xml_tree,
+                    f"Error: SCXML conversion of {scxml_type.get_tag_name()}: "
+                    + f"Missing argument {tag_name}.",
+                )
             )
     return read_value

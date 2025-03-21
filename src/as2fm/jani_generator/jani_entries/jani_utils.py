@@ -17,7 +17,7 @@
 
 from typing import Tuple, Type, get_args
 
-from as2fm.as2fm_common.common import ValidTypes, get_default_expression_for_type, is_array_type
+from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
 
@@ -60,7 +60,7 @@ def get_array_variable_info(jani_var: JaniVariable) -> Tuple[Type, int]:
     return (array_type, max_size)
 
 
-def generate_jani_variable(var_name: str, var_type: Type[ValidTypes], array_size: int):
+def generate_jani_variable(var_name: str, var_type: Type[ValidJaniTypes], array_size: int):
     """Helper to make a JaniVariable object."""
     # TODO: Move it to jani_utils.py
     if is_array_type(var_type):

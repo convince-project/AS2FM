@@ -22,6 +22,7 @@ import lxml.etree as ET
 import pytest
 
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
+from as2fm.scxml_converter.scxml_entries.xml_utils import XmlUtilsError
 
 
 class TestScxmlData(unittest.TestCase):
@@ -40,10 +41,11 @@ class TestScxmlData(unittest.TestCase):
 
     def test_no_expr_information(self):
         """
-        Test with no expr information should raise a AssertionError.
+        Test with no expr information should raise a XmlUtilsError, because the attribute is
+        missing.
         """
         tag = ET.fromstring('<data id="level" type="int32" />')
-        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
+        self.assertRaises(XmlUtilsError, ScxmlData.from_xml_tree, tag)
 
     def test_no_id_information(self):
         """
@@ -146,4 +148,4 @@ class TestScxmlData(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    pytest.main(["-s", "-v", __file__, "-k", "test_datamodel_loading"])
+    pytest.main(["-s", "-v", __file__])

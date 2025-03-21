@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="increase"
+    version="1.0"
+    name="sender"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="counter" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_topic_publisher topic="atomic" type="nested_interfaces/Internal" />
+    <ros_topic_publisher topic="object" type="nested_interfaces/InternalObj" />
+    <!-- <ros_topic_publisher topic="array_static" type="nested_interfaces/InternalArrStatic" />
+    <ros_topic_publisher topic="array_dynamic" type="nested_interfaces/InternalArrDynamic" /> -->
+
+    <state id="increase">
+        <onentry>
+            <ros_topic_publish name="atomic">
+                <field name="i" expr="counter" />
+                <field name="text" expr="'42'" />
+            </ros_topic_publish>
+            <ros_topic_publish name="object">
+                <field name="i_obj.i" expr="counter" />
+                <field name="i_obj.text" expr="'hi!'" />
+            </ros_topic_publish>
+            <!-- <ros_topic_publish name="array_static">
+                <field name="i_arr[0].i" expr="counter" />
+            </ros_topic_publish>
+            <ros_topic_publish name="array_dynamic">
+                <field name="i_arr[0].i" expr="counter" />
+            </ros_topic_publish> -->
+        </onentry>
+        <transition target="increase" cond="counter &lt; 100">
+            <assign location="counter" expr="counter + 1" />
+        </transition>
+    </state>
+</scxml>

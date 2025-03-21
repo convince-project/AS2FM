@@ -43,10 +43,12 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     minus_operator,
     modulo_operator,
     multiply_operator,
+    not_operator,
     or_operator,
     plus_operator,
     pow_operator,
     sin_operator,
+    unary_minus_operator,
 )
 
 # Map each operator to the corresponding one in Jani
@@ -563,3 +565,6 @@ CALLABLE_OPERATORS_MAP: Dict[str, Callable] = {
     "max": max_operator,
     "random": random_operator,
 }
+
+# Map each function name to the corresponding Expression generator
+UNARY_OPERATORS_MAP: Dict[str, Callable] = {"-": unary_minus_operator, "!": not_operator}
