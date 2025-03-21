@@ -39,7 +39,6 @@ from as2fm.jani_generator.jani_entries.jani_utils import is_expression_array, is
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
-from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_automaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
     implement_scxml_events_as_jani_syncs,
@@ -67,9 +66,7 @@ def convert_scxml_root_to_jani_automaton(
     ).write_model()
 
 
-def convert_multiple_scxmls_to_jani(
-    scxmls: List[ScxmlRoot], timers: List[RosTimer], max_time_ns: int, max_array_size: int
-) -> JaniModel:
+def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
 
@@ -92,10 +89,7 @@ def convert_multiple_scxmls_to_jani(
         automaton = JaniAutomaton()
         convert_scxml_root_to_jani_automaton(scxml_root, automaton, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
-    timer_automaton = make_global_timer_automaton(timers, max_time_ns)
-    if timer_automaton is not None:
-        base_model.add_jani_automaton(timer_automaton)
-    implement_scxml_events_as_jani_syncs(events_holder, timers, max_array_size, base_model)
+    implement_scxml_events_as_jani_syncs(events_holder, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)
     expand_random_variables_in_jani_model(base_model, n_options=100)
     return base_model

@@ -197,7 +197,7 @@ def generate_srv_server_response_event(service_name: str) -> str:
     return f"srv_{sanitize_ros_interface_name(service_name)}_response"
 
 
-def is_srv_event(event_name) -> str:
+def is_srv_event(event_name) -> bool:
     """Check whether the event name matches the ROS service plain events pattern."""
     return re.match(r"^srv_.+_(response|request|req_client).*$", event_name) is not None
 

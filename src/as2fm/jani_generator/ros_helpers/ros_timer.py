@@ -55,6 +55,7 @@ TIME_UNITS = {
     "ns": 1e-9,
 }
 
+GLOBAL_TIMER_AUTOMATON = "global_timer_automata"
 GLOBAL_TIMER_NAME = "global_timer"
 GLOBAL_TIMER_TICK_ACTION = "global_timer_tick"
 ROS_TIMER_RATE_EVENT_PREFIX = "ros_time_rate."
@@ -147,9 +148,6 @@ def make_global_timer_automaton(
     timer_automaton = JaniAutomaton()
     timer_automaton.set_name(GLOBAL_TIMER_NAME)
     timer_automaton.add_location(LOC_NAME, is_initial=True)
-
-    # Check if timers are correctly defined
-    assert len(timers) > 0, "At least one timer is required."
 
     # variables
     variable_names = [f"{timer.name}_needed" for timer in timers]
@@ -244,7 +242,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
             f"Max time {max_time_ns}ns cannot be converted to '{global_timer_period_unit}'. "
             "The max_time must have a unit that is greater or equal to the smallest timer period."
         )
-    scxml_root = ScxmlRoot("global_timer_automata")
+    scxml_root = ScxmlRoot(GLOBAL_TIMER_AUTOMATON)
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData("current_time", "0", "int64")]))
     idle_state = ScxmlState("idle")
     global_timer_tick_body: ScxmlExecutionBody = []
@@ -257,7 +255,7 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
                 [
                     (
                         f"(current_time % {timer_period}) == 0",
-                        [ScxmlSend(f"ros_time_rate.{timer_name}")],
+                        [ScxmlSend(f"{ROS_TIMER_RATE_EVENT_PREFIX}{timer_name}")],
                     )
                 ]
             )

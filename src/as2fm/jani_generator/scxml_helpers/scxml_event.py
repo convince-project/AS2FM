@@ -99,15 +99,17 @@ class Event:
         """Check if the event has one or more receivers."""
         return len(self.receivers) > 0
 
+    def is_timer_event(self) -> bool:
+        """Check if this is a timer event."""
+        return self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
+
     def must_be_skipped_in_jani_conversion(self):
-        """Indicate whether this must be considered in the conversion to jani."""
-        return (
-            # If the event is a timer event, there is only a receiver.
-            # It is the edge that the user declared with the `ros_rate_callback` tag.
-            # It will be handled in the `scxml_event_processor` module differently.
-            self.name.startswith(ROS_TIMER_RATE_EVENT_PREFIX)
-            or self.is_removable_interface()
-        )
+        """
+        Check if the event must be ignored.
+
+        Those are events related to specific interfaces providing only receivers, and no senders.
+        """
+        return self.is_removable_interface()
 
     def is_removable_interface(self):
         """Indicate if the interface contained by this event shall be removed."""

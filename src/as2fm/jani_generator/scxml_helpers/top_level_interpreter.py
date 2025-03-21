@@ -21,7 +21,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
@@ -166,12 +166,8 @@ def parse_main_xml(xml_path: str) -> FullModel:
     return model
 
 
-def generate_plain_scxml_models_and_timers(
-    model: FullModel,
-) -> Tuple[List[ScxmlRoot], List[RosTimer]]:
-    """
-    Generate plain SCXML models and ROS timers from the full model dictionary.
-    """
+def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
+    """Generate all plain SCXML models loaded from the full model dictionary."""
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
     ros_scxmls: List[ScxmlRoot] = []
@@ -219,21 +215,21 @@ def generate_plain_scxml_models_and_timers(
     # Generate sync SCXML models for services and actions
     for plain_scxml in generate_plain_scxml_from_handlers(all_services | all_actions):
         plain_scxml_models.append(plain_scxml)
-    return plain_scxml_models, all_timers
+    assert model.max_time is not None, "Expected model.max_time to be defined here."
+    timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
+    if timer_scxml is not None:
+        plain_scxmls, _ = timer_scxml.to_plain_scxml_and_declarations()
+        plain_scxml_models.extend(plain_scxmls)
+    return plain_scxml_models
 
 
 def export_plain_scxml_models(
     generated_scxml_path: str,
     plain_scxml_models: List[ScxmlRoot],
-    all_timers: List[RosTimer],
-    max_time: int,
 ):
     """Generate the plain SCXML files adding all compatibility entries to fit the SCXML standard."""
     os.makedirs(generated_scxml_path, exist_ok=True)
     models_to_export = deepcopy(plain_scxml_models)
-    global_timer_scxml = make_global_timer_scxml(all_timers, max_time)
-    if global_timer_scxml is not None:
-        models_to_export.append(global_timer_scxml)
     # Compute the set of target automaton for each event
     event_targets: EventsToAutomata = {}
     for scxml_model in models_to_export:
@@ -269,14 +265,14 @@ def interpret_top_level_xml(
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
     assert model.max_time is not None, f"Max time must be defined in {xml_path}."
-    plain_scxml_models, all_timers = generate_plain_scxml_models_and_timers(model)
+    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
-        export_plain_scxml_models(plain_scxml_dir, plain_scxml_models, all_timers, model.max_time)
+        export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
 
     jani_model: JaniModel = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, all_timers, model.max_time, model.max_array_size
+        plain_scxml_models, model.max_array_size
     )
     with open(model.properties[0], "r", encoding="utf-8") as f:
         all_properties = json.load(f)["properties"]

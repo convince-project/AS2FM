@@ -83,6 +83,10 @@ class JaniModel:
     def add_jani_variable(self, variable: JaniVariable):
         self._variables.update({variable.name(): variable})
 
+    def add_jani_variables(self, variables: List[JaniVariable]):
+        for jani_var in variables:
+            self.add_jani_variable(jani_var)
+
     def add_variable(
         self,
         variable_name: str,
