@@ -80,7 +80,7 @@ def _assemble_message(severity: Severity, element: XmlElement, message: str) -> 
     # TODO: At some point this should be set everywhere.
 
     severity_initial = severity.name[0]
-    if hasattr(element, SOURCELINE):
+    if hasattr(element, SOURCELINE) and INTERNAL_FILEPATH_ATTR in element.attrib.keys():
         path = element.attrib[INTERNAL_FILEPATH_ATTR]
         locator: str = f"{path}:{element.sourceline}"
     else:
