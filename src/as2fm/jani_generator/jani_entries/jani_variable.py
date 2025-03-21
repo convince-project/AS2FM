@@ -64,7 +64,9 @@ class JaniVariable:
         init_value: Optional[Union[JaniExpression, JaniValue, SupportedExp]] = None,
         v_transient: bool = False,
     ):
-        assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), (
+        assert init_value is None or isinstance(
+            init_value, (JaniExpression, JaniValue, int, float, bool)
+        ), (
             f"Expected {v_name} init_value {init_value} to be of type "
             f"(JaniExpression, JaniValue), found {type(init_value)} instead."
         )
