@@ -211,7 +211,8 @@ class TestConversion(unittest.TestCase):
         property_name: str,
         expected_result_probability: float,
         result_probability_tolerance: float = 0.0,
-        size_limit: int = 10_000,
+        trace_length_limit: int = 10_000,
+        n_traces_limit: int = 10_000,
         skip_properties_load_check: bool = False,
     ):
         """
@@ -224,7 +225,8 @@ class TestConversion(unittest.TestCase):
         :param property_name: The property name to test.
         :param expected_result_probability: The expected probability the prop. is verified from SMC.
         :param result_probability_tolerance: The allowed error for the prob. result.
-        :param size_limit: The max. number of iterations to run in SMC.
+        :param trace_length_limit: the max length a single trace can reach
+        :param n_traces_limit: The max. number of iterations to run in SMC.
         :param skip_properties_load_check: Disable the equality check for the loaded properties.
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
@@ -260,7 +262,7 @@ class TestConversion(unittest.TestCase):
             assert len(property_name) > 0, "Property name must be provided for SMC."
             run_smc_storm_with_output(
                 f"--model {output_path} --properties-names {property_name} "
-                + f"--max-trace-length {size_limit} --max-n-traces {size_limit}",
+                + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}",
                 [property_name, output_path],
                 [],
                 expected_result_probability,
@@ -448,7 +450,7 @@ class TestConversion(unittest.TestCase):
             store_generated_scxmls=True,
             property_name="tree_success",
             expected_result_probability=1.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
     def test_uc1_docking_bugged(self):
@@ -458,7 +460,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main_with_problem.xml",
             property_name="tree_success",
             expected_result_probability=0.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
     def test_uc2_assembly(self):
@@ -505,7 +507,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main.xml",
             property_name="tree_success",
             expected_result_probability=1.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
     def test_probabilistic_transitions(self):
@@ -516,6 +518,7 @@ class TestConversion(unittest.TestCase):
             property_name="expected_counts",
             expected_result_probability=1.0,
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            trace_length_limit=20_000,
         )
 
     def test_string_support_two_sent(self):
