@@ -463,12 +463,21 @@ class TestConversion(unittest.TestCase):
             trace_length_limit=1_000_000,
         )
 
-    def test_uc2_assembly(self):
+    def test_uc2_assembly_trigger_recovery(self):
         """Test the UC2 BT example."""
         self._test_with_main(
             os.path.join("uc2_assembly", "Main"),
             model_xml="main.xml",
             property_name="executes_recovery_branch_or_success",
+            expected_result_probability=1.0,
+        )
+
+    def test_uc2_assembly_always_success(self):
+        """Test the UC2 BT example."""
+        self._test_with_main(
+            os.path.join("uc2_assembly", "Main"),
+            model_xml="main.xml",
+            property_name="move_success",
             expected_result_probability=1.0,
         )
 

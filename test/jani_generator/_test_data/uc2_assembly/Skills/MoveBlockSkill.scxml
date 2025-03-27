@@ -25,6 +25,7 @@
         <!-- global time info -->
         <data id="time_sec" type="int32" expr="0" />
         <data id="time_nsec" type="int32" expr="0" />
+        <data id="attempt_count" type="int32" expr="0" />
     </datamodel>
 
     <state id="idle">
@@ -55,6 +56,9 @@
     </state>
 
     <state id="process_block">
+        <onentry>
+            <assign location="attempt_count" expr="attempt_count + 1" />
+        </onentry>
         <transition>
             <target id="idle" prob="0.7">
                 <!-- success -->
@@ -62,14 +66,20 @@
                 <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
             </target>
             <target id="idle" prob="0.3">
-                <!-- else abort -->
-                <assign location="block_down" expr="1" />
-                <!-- publish abort time -->
-                <ros_topic_publish name="moveblock_abort_time_pub">
-                    <field name="sec" expr="time_sec" />
-                    <field name="nanosec" expr="time_nsec" />
-                </ros_topic_publish>
-                <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
+                <!-- else abort (if n attempts l.t. 3) -->
+                <if cond="attempt_count &lt; 3">
+                    <assign location="block_down" expr="1" />
+                    <!-- publish abort time -->
+                    <ros_topic_publish name="moveblock_abort_time_pub">
+                        <field name="sec" expr="time_sec" />
+                        <field name="nanosec" expr="time_nsec" />
+                    </ros_topic_publish>
+                    <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
+                <else/>
+                    <!-- after 3 attempts, make sure to succeed -->
+                    <assign location="block_down" expr="0" />
+                    <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
+                </if>
             </target>
         </transition>
     </state>
