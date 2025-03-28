@@ -68,7 +68,7 @@
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "comment": "The tree succeeds only in case MoveBlock succeeds, but currently not working, since after recovery the plugin MoveAction will FAIL anyway! This is a problem with the missing reset: when RecoverBlock runs, the MoveAction plugin shall be reset, preventing failure from happening...",
+                        "comment": "The tree succeeds only in case MoveBlock succeeds: from how we modeled the environment, this will be always the case after 3 attempts.",
                         "op": "F",
                         "exp": {
                             "op": "=",
