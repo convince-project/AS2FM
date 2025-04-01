@@ -350,6 +350,12 @@ class TestConversion(unittest.TestCase):
             "events_sync_examples", property_name="seq_check", expected_result_probability=1.0
         )
 
+    def test_different_rate_senders(self):
+        """Test that multiple rates in the same system are handled fine."""
+        self._test_with_main(
+            "different_rate_senders", property_name="counter_check", expected_result_probability=1.0
+        )
+
     def test_multiple_senders_same_event(self):
         """Test topic synchronization, handling events
         being sent in different orders without deadlocks."""
