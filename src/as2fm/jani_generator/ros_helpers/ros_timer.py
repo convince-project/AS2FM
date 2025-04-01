@@ -165,12 +165,12 @@ def _get_current_time_to_clock_msg_publish(
         return RosTopicPublish(
             clock_decl, [RosField("sec", curr_time_var), RosField("nanosec", "0")]
         )
-    time_sec_to_unit = round(TIME_UNITS[time_unit] ** -1)
-    time_unit_to_nsec = 1e9 / time_sec_to_unit
+    n_units_per_sec = round(1.0 / TIME_UNITS[time_unit])
+    time_unit_in_nsec = 1e9 / n_units_per_sec
     return RosTopicPublish(
         clock_decl,
         [
-            RosField("sec", f"Math.floor({curr_time_var} / {time_sec_to_unit})"),
-            RosField("nanosec", f"({curr_time_var} % {time_sec_to_unit}) * {time_unit_to_nsec}"),
+            RosField("sec", f"Math.floor({curr_time_var} / {n_units_per_sec})"),
+            RosField("nanosec", f"({curr_time_var} % {n_units_per_sec}) * {time_unit_in_nsec}"),
         ],
     )
