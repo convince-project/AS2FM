@@ -12,12 +12,12 @@
                   "exp": {
                     "op": "∧",
                     "left": {
-                      "op": "<",
+                      "op": "=",
                       "left": "topic_sender_a_counter_msg.ros_fields__data",
                       "right": 100
                     },
                     "right": {
-                      "op": "<",
+                      "op": "=",
                       "left": "topic_sender_b_counter_msg.ros_fields__data",
                       "right": 10
                     }
