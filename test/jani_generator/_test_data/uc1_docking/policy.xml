@@ -1,6 +1,6 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="docking_uc1">
-        <Fallback name="test_target">
+        <Fallback name="perform_docking">
             <ReactiveSequence name="perform_docking_until_bump">
                 <Inverter>
                     <Action ID="IsBumpDetected" name="bump_detector" /> <!-- topic="/bumper"/> -->
