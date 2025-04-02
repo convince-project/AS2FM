@@ -27,7 +27,7 @@
     <ros_time_rate rate_hz="10" name="status_update" />
 
     <!--
-        The robot received the (integer) cmd_vel input from the BT.
+        The robot receives the (integer) cmd_vel input from the BT.
         The motion command is processed within the timer-based callback. During this phase, the following can happen:
             - the robot drives towards the goal
             - the robot bumps
