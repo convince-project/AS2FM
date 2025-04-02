@@ -8,13 +8,12 @@
 
     <datamodel>
         <!-- Counter for timer callbacks, for "random" bump event -->
-        <data id="cb_counter" expr="0" type="int64" />
         <data id="dist_to_dock" expr="20" type="int16" />
         <data id="has_bumped" expr="false" type="bool" />
-        <data id="dock_attempt" expr="0" type="int16" />
         <data id="last_cmd" expr="0" type="int16" />
         <data id="docked_time" expr="0" type="int16" />
         <data id="charge_delay" expr="5" type="int16" />
+        <data id="is_charging" expr="false" type="bool" />
     </datamodel>
 
     <ros_topic_publisher name="bumper" topic="/bumper" type="std_msgs/Empty" />
@@ -27,61 +26,85 @@
 
     <ros_time_rate rate_hz="10" name="status_update" />
 
+    <!--
+        The robot received the (integer) cmd_vel input from the BT.
+        The motion command is processed within the timer-based callback. During this phase, the following can happen:
+            - the robot drives towards the goal
+            - the robot bumps
+            - the robot reaches the dock and detects it
+            - the robot reaches the target, but fails detecting it
+        In case of bumps, the robot needs to backup and reset the bumped flag, before being able to advance again
+    -->
     <state id="running">
-        <!-- There is a cmd_vel input, that is an integer and each time step (from timer), moves the robot towards the goal by the specified distance. When dist_to_dock is zero, the robot might start charging. If the has_bumped flag is true, the robot is prevented to drive forward, until the reset is performed.
-        The charging is enabled only the second time the robot reached the dock. -->
-        <ros_rate_callback name="status_update" target="running">
-            <assign location="cb_counter" expr="cb_counter + 1" />
-            <!-- After bumps, the robot cannot go forward -->
-            <if cond="has_bumped">
-                <if cond="last_cmd &lt; 0" >
-                    <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
-                </if>
-            <else />
-                <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
-            </if>
-            <if cond="last_cmd != 0">
-                <assign location="docked_time" expr="0" />
-            </if>
-            <!-- Track how often we reach the dock -->
-            <if cond="dist_to_dock == 0">
-                <if cond="last_cmd != 0">
-                    <assign location="dock_attempt" expr="dock_attempt + 1" />
-                <else />
-                    <assign location="docked_time" expr="docked_time + 1" />
-                </if>
-            </if>
-            <!-- Prevent the robot from going past the dock: raise a bump instead -->
-            <if cond="dist_to_dock &lt; 0">
-                <!-- Upon bump, the robot reacts by going back a bit -->
-                <assign location="dist_to_dock" expr="1" />
-                <assign location="has_bumped" expr="true" />
-                <ros_topic_publish name="bumper" />
-            </if>
-            <!-- Make sure that a cmd_vel command is used only once -->
-            <assign location="last_cmd" expr="0" />
-            <!-- Predictive bump event: it happens at the 5th callback -->
-            <if cond="cb_counter == 5" >
-                <assign location="has_bumped" expr="true" />
-                <ros_topic_publish name="bumper" />
-            </if>
-            <!-- Publish the robot pose -->
-            <ros_topic_publish name="dock_dist">
-                <field name="data" expr="dist_to_dock" />
-            </ros_topic_publish>
-            <!-- Publish whether it is charging: it will do so only at the second attempt (fake randomness) -->
-            <ros_topic_publish name="charging">
-                <field name="data" expr="dist_to_dock == 0 &amp;&amp; dock_attempt &gt; 1 &amp;&amp; docked_time &gt; charge_delay" />
-            </ros_topic_publish>
-        </ros_rate_callback>
         <!-- Store the cmd_vel received by the controller -->
         <ros_topic_callback name="cmd" target="running">
             <assign location="last_cmd" expr="_msg.data"/>
         </ros_topic_callback>
-        <!-- Handle the reset bumper request -->
+        <!-- Handle the reset bumper request (by clearing the has_bumped flag) -->
         <ros_service_handle_request name="reset_bump" target="running">
             <assign location="has_bumped" expr="false" />
             <ros_service_send_response name="reset_bump" />
         </ros_service_handle_request>
+        <!-- Handle the timer-based callback in a different state -->
+        <ros_rate_callback name="status_update" cond="dist_to_dock == 0 &amp;&amp; last_cmd == 0" target="handle_docked" />
+        <ros_rate_callback name="status_update" target="handle_undocked" />
     </state>
+
+    <state id="handle_docked">
+        <onentry>
+            <assign location="docked_time" expr="docked_time + 1" />
+        </onentry>
+        <transition>
+            <target id="update_state" prob="0.85">
+                <assign location="is_charging" expr="docked_time &gt; charge_delay" />
+            </target>
+            <target id="update_state">
+                <assign location="is_charging" expr="false" />
+            </target>
+        </transition>
+    </state>
+
+    <state id="handle_undocked">
+        <onentry>
+            <assign location="is_charging" expr="false" />
+            <assign location="docked_time" expr="0" />
+            <if cond="has_bumped">
+                <!-- In case the robot has bumped, it can be moved only backwards -->
+                <assign location="last_cmd" expr="Math.min(0, last_cmd)" />
+            </if>
+        </onentry>
+        <transition>
+            <!-- Case 1: process the command correctly -->
+            <target id="update_state" prob="0.65">
+                <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
+            </target>
+            <!-- Case 2: Do not move the robot -->
+            <target id="update_state" prob="0.25" />
+            <!-- Case 3: Raise the bump -->
+            <target id="update_state">
+                <assign location="has_bumped" expr="true" />
+            </target>
+        </transition>
+    </state>
+
+    <state id="update_state">
+        <transition target="running">
+            <assign location="last_cmd" expr="0" />
+            <if cond="dist_to_dock &lt; 0">
+                <!-- Upon bump, the robot reacts by going back a bit -->
+                <assign location="dist_to_dock" expr="1" />
+                <assign location="has_bumped" expr="true" />
+            </if>
+            <if cond="has_bumped">
+                <ros_topic_publish name="bumper" />
+            </if>
+            <ros_topic_publish name="dock_dist">
+                <field name="data" expr="dist_to_dock" />
+            </ros_topic_publish>
+            <ros_topic_publish name="charging">
+                <field name="data" expr="is_charging" />
+            </ros_topic_publish>
+        </transition>
+    </state>
+
 </scxml>
