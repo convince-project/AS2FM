@@ -12,7 +12,7 @@
         <data id="has_bumped" expr="false" type="bool" />
         <data id="last_cmd" expr="0" type="int16" />
         <data id="docked_time" expr="0" type="int16" />
-        <data id="charge_delay" expr="5" type="int16" />
+        <data id="charge_delay" expr="10" type="int16" />
         <data id="is_charging" expr="false" type="bool" />
     </datamodel>
 
