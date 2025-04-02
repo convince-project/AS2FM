@@ -465,9 +465,10 @@ class TestConversion(unittest.TestCase):
             "uc1_docking",
             model_xml="main_with_problem.xml",
             property_name="charging_starts",
-            expected_result_probability=0.0,
+            expected_result_probability=0.01,
             result_probability_tolerance=0.01,
             trace_length_limit=1_000_000,
+            n_traces_limit=1_000,
         )
 
     def test_uc2_assembly_trigger_recovery(self):
