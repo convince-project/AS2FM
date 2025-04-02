@@ -15,7 +15,6 @@
     <node_models>
         <input type="ros-scxml" src="../Skills/MoveBlockSkill.scxml" />
         <input type="ros-scxml" src="../Skills/RecoverBlockSkill.scxml" />
-        <input type="ros-scxml" src="../Components/Clock.scxml" />
     </node_models>
 
     <properties>

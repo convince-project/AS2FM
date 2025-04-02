@@ -22,7 +22,7 @@
     <state id="idle">
         <onentry>
             <ros_topic_publish name="recover_block_running_pub">
-				        <field name="data" expr="0" />
+                <field name="data" expr="0" />
             </ros_topic_publish>
         </onentry>
         <!-- If action called, accept goal -->
@@ -37,21 +37,16 @@
         <!-- send the query to reset the block status -->
         <onentry>
             <ros_topic_publish name="recover_block_running_pub">
-				        <field name="data" expr="1" />
+                <field name="data" expr="1" />
             </ros_topic_publish>
             <ros_service_send_request name="reset_block_status">
             </ros_service_send_request>
         </onentry>
-        <ros_service_handle_response name="reset_block_status" target="done">
-        </ros_service_handle_response>
-    </state>
-
-    <state id="done">
-        <onentry>
+        <ros_service_handle_response name="reset_block_status" target="idle">
             <ros_action_succeed name="RecoverBlock_action_srv" goal_id="goal_id" />
             <ros_topic_publish name="recover_block_running_pub">
-				        <field name="data" expr="0" />
+                <field name="data" expr="0" />
             </ros_topic_publish>
-        </onentry>
+        </ros_service_handle_response>
     </state>
 </scxml>

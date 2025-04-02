@@ -13,8 +13,8 @@
     <ros_service_server name="reset_block_status_srv" service_name="/uc2/world/reset_block_status" type="std_srvs/Empty" />
 
     <!-- listen time info and publish abort_time info -->
-    <ros_topic_subscriber name="clock_sub" topic="/uc2/info/clock" type="std_msgs/Int32" />
-    <ros_topic_publisher name="moveblock_abort_time_pub" topic="/uc2/info/properties/move_block_abort_time" type="std_msgs/Int32" />
+    <ros_topic_subscriber name="clock_sub" topic="clock" type="builtin_interfaces/Time" />
+    <ros_topic_publisher name="moveblock_abort_time_pub" topic="/uc2/info/properties/move_block_abort_time" type="builtin_interfaces/Time" />
 
     <datamodel>
         <!-- world info -->
@@ -23,13 +23,16 @@
         <data id="block_id" type="int32" expr="0" />
         <data id="goal_id" type="int32" expr="0" />
         <!-- global time info -->
-        <data id="time" type="int32" expr="0" />
+        <data id="time_sec" type="int32" expr="0" />
+        <data id="time_nsec" type="int32" expr="0" />
+        <data id="attempt_count" type="int32" expr="0" />
     </datamodel>
 
     <state id="idle">
         <!-- listen for time -->
         <ros_topic_callback name="clock_sub" target="idle">
-            <assign location="time" expr="_msg.data" />
+            <assign location="time_sec" expr="_msg.sec" />
+            <assign location="time_nsec" expr="_msg.nanosec" />
         </ros_topic_callback>
         <!-- If action server is called ... -->
         <ros_action_handle_goal name="MoveBlock_action_srv" target="process_block">
@@ -53,6 +56,9 @@
     </state>
 
     <state id="process_block">
+        <onentry>
+            <assign location="attempt_count" expr="attempt_count + 1" />
+        </onentry>
         <transition>
             <target id="idle" prob="0.7">
                 <!-- success -->
@@ -60,13 +66,20 @@
                 <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
             </target>
             <target id="idle" prob="0.3">
-                <!-- else abort -->
-                <assign location="block_down" expr="1" />
-                <!-- publish abort time -->
-                <ros_topic_publish name="moveblock_abort_time_pub">
-                    <field name="data" expr="time" />
-                </ros_topic_publish>
-                <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
+                <!-- else abort (if n attempts l.t. 3) -->
+                <if cond="attempt_count &lt; 3">
+                    <assign location="block_down" expr="1" />
+                    <!-- publish abort time -->
+                    <ros_topic_publish name="moveblock_abort_time_pub">
+                        <field name="sec" expr="time_sec" />
+                        <field name="nanosec" expr="time_nsec" />
+                    </ros_topic_publish>
+                    <ros_action_aborted name="MoveBlock_action_srv" goal_id="goal_id" />
+                <else/>
+                    <!-- after 3 attempts, make sure to succeed -->
+                    <assign location="block_down" expr="0" />
+                    <ros_action_succeed name="MoveBlock_action_srv" goal_id="goal_id" />
+                </if>
             </target>
         </transition>
     </state>

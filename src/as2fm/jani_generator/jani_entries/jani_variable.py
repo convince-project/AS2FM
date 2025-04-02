@@ -21,6 +21,7 @@ from typing import MutableSequence, Optional, Type, Union, get_args
 
 from as2fm.as2fm_common.common import ValidTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniValue
+from as2fm.jani_generator.jani_entries.jani_expression import SupportedExp
 
 
 class JaniVariable:
@@ -28,7 +29,7 @@ class JaniVariable:
     def from_dict(variable_dict: dict) -> "JaniVariable":
         variable_name = variable_dict["name"]
         initial_value = variable_dict.get("initial-value", None)
-        variable_type: type = JaniVariable.python_type_from_json(variable_dict["type"])
+        variable_type = JaniVariable.python_type_from_json(variable_dict["type"])
         if initial_value is None:
             return JaniVariable(
                 variable_name, variable_type, None, variable_dict.get("transient", False)
@@ -60,10 +61,12 @@ class JaniVariable:
         self,
         v_name: str,
         v_type: Type[ValidTypes],
-        init_value: Optional[Union[JaniExpression, JaniValue]] = None,
+        init_value: Optional[Union[JaniExpression, JaniValue, SupportedExp]] = None,
         v_transient: bool = False,
     ):
-        assert init_value is None or isinstance(init_value, (JaniExpression, JaniValue)), (
+        assert init_value is None or isinstance(
+            init_value, (JaniExpression, JaniValue, int, float, bool)
+        ), (
             f"Expected {v_name} init_value {init_value} to be of type "
             f"(JaniExpression, JaniValue), found {type(init_value)} instead."
         )
@@ -116,7 +119,7 @@ class JaniVariable:
         return d
 
     @staticmethod
-    def python_type_from_json(json_type: Union[str, dict]) -> ValidTypes:
+    def python_type_from_json(json_type: Union[str, dict]) -> Type[ValidTypes]:
         """
         Translate a (Jani) type string or dict to a Python type.
         """

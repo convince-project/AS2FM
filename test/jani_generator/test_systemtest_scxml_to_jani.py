@@ -24,7 +24,6 @@ import unittest
 import lxml.etree as ET
 import pytest
 
-from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
@@ -67,11 +66,10 @@ class TestConversion(unittest.TestCase):
             </state>
         </scxml>"""
         scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(len(automaton["locations"]), 2)
         locations = [loc["name"] for loc in automaton["locations"]]
         self.assertIn("Initial-first-exec", locations)
@@ -86,11 +84,10 @@ class TestConversion(unittest.TestCase):
         )
 
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryDrainer")
         self.assertEqual(len(automaton["locations"]), 4)
         self.assertEqual(len(automaton["initial-locations"]), 1)
@@ -114,11 +111,10 @@ class TestConversion(unittest.TestCase):
         )
 
         scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
-        jani_a = JaniAutomaton()
         eh = EventsHolder()
-        convert_scxml_root_to_jani_automaton(scxml_root, jani_a, eh, 100)
+        jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
-        automaton = jani_a.as_dict(constant={})
+        automaton = jani_automaton.as_dict(constant={})
         self.assertEqual(automaton["name"], "BatteryManager")
         self.assertEqual(len(automaton["locations"]), 1)
         self.assertEqual(len(automaton["initial-locations"]), 1)
@@ -144,9 +140,8 @@ class TestConversion(unittest.TestCase):
         scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path)
         scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path)
 
-        jani_model = convert_multiple_scxmls_to_jani(
-            [scxml_battery_drainer, scxml_battery_manager], [], 0, 100
-        )
+        in_scxmls = [scxml_battery_drainer, scxml_battery_manager]
+        jani_model = convert_multiple_scxmls_to_jani(in_scxmls, 100)
         jani_dict = jani_model.as_dict()
         # pprint(jani_dict)
 
@@ -216,7 +211,8 @@ class TestConversion(unittest.TestCase):
         property_name: str,
         expected_result_probability: float,
         result_probability_tolerance: float = 0.0,
-        size_limit: int = 10_000,
+        trace_length_limit: int = 10_000,
+        n_traces_limit: int = 10_000,
         skip_properties_load_check: bool = False,
     ):
         """
@@ -229,7 +225,8 @@ class TestConversion(unittest.TestCase):
         :param property_name: The property name to test.
         :param expected_result_probability: The expected probability the prop. is verified from SMC.
         :param result_probability_tolerance: The allowed error for the prob. result.
-        :param size_limit: The max. number of iterations to run in SMC.
+        :param trace_length_limit: the max length a single trace can reach
+        :param n_traces_limit: The max. number of iterations to run in SMC.
         :param skip_properties_load_check: Disable the equality check for the loaded properties.
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
@@ -265,7 +262,7 @@ class TestConversion(unittest.TestCase):
             assert len(property_name) > 0, "Property name must be provided for SMC."
             run_smc_storm_with_output(
                 f"--model {output_path} --properties-names {property_name} "
-                + f"--max-trace-length {size_limit} --max-n-traces {size_limit}",
+                + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}",
                 [property_name, output_path],
                 [],
                 expected_result_probability,
@@ -351,6 +348,12 @@ class TestConversion(unittest.TestCase):
         being sent in different orders without deadlocks."""
         self._test_with_main(
             "events_sync_examples", property_name="seq_check", expected_result_probability=1.0
+        )
+
+    def test_different_rate_senders(self):
+        """Test that multiple rates in the same system are handled fine."""
+        self._test_with_main(
+            "different_rate_senders", property_name="counter_check", expected_result_probability=1.0
         )
 
     def test_multiple_senders_same_event(self):
@@ -453,7 +456,7 @@ class TestConversion(unittest.TestCase):
             store_generated_scxmls=True,
             property_name="tree_success",
             expected_result_probability=1.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
     def test_uc1_docking_bugged(self):
@@ -463,15 +466,24 @@ class TestConversion(unittest.TestCase):
             model_xml="main_with_problem.xml",
             property_name="tree_success",
             expected_result_probability=0.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
-    def test_uc2_assembly(self):
+    def test_uc2_assembly_trigger_recovery(self):
         """Test the UC2 BT example."""
         self._test_with_main(
             os.path.join("uc2_assembly", "Main"),
             model_xml="main.xml",
             property_name="executes_recovery_branch_or_success",
+            expected_result_probability=1.0,
+        )
+
+    def test_uc2_assembly_always_success(self):
+        """Test the UC2 BT example."""
+        self._test_with_main(
+            os.path.join("uc2_assembly", "Main"),
+            model_xml="main.xml",
+            property_name="move_success",
             expected_result_probability=1.0,
         )
 
@@ -510,7 +522,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main.xml",
             property_name="tree_success",
             expected_result_probability=1.0,
-            size_limit=1_000_000,
+            trace_length_limit=1_000_000,
         )
 
     def test_probabilistic_transitions(self):
@@ -521,6 +533,7 @@ class TestConversion(unittest.TestCase):
             property_name="expected_counts",
             expected_result_probability=1.0,
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
+            trace_length_limit=20_000,
         )
 
     def test_string_support_two_sent(self):

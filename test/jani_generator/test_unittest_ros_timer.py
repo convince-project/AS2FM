@@ -21,8 +21,13 @@ from as2fm.jani_generator.jani_entries import JaniAutomaton
 from as2fm.jani_generator.ros_helpers.ros_timer import (
     GLOBAL_TIMER_TICK_ACTION,
     RosTimer,
-    make_global_timer_automaton,
+    make_global_timer_scxml,
 )
+from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
+    _preprocess_global_timer_automaton,
+)
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_scxml_root_to_jani_automaton
 
 
 def generic_ros_timer_check(rate_hz: float, expected_unit: str, expected_int_period: int):
@@ -61,7 +66,13 @@ def generic_global_timer_check(timer_rates: List[float], expected_time_step: int
     timers: List[RosTimer] = []
     for i, rate in enumerate(timer_rates):
         timers.append(RosTimer(f"timer{i}", rate))
-    jani_automaton = make_global_timer_automaton(timers, max_time_ns)
+    ros_timer_scxml = make_global_timer_scxml(timers, max_time_ns)
+    assert ros_timer_scxml is not None
+    timer_scxmls, _ = ros_timer_scxml.to_plain_scxml_and_declarations()
+    assert len(timer_scxmls) == 1
+    events_holder = EventsHolder()
+    jani_automaton = convert_scxml_root_to_jani_automaton(timer_scxmls[0], events_holder, 0)
+    _preprocess_global_timer_automaton(jani_automaton)
     time_step = get_time_step_from_timer_automaton(jani_automaton)
     assert (
         time_step == expected_time_step

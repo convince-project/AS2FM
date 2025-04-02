@@ -8,22 +8,34 @@
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "comment": "((abort_time > 0) ⇒ (clock < abort_time + 5000)) U (recover_block_running > 0 || tree_success)",
+                        "comment": "((abort_time > 0) ⇒ (clock < abort_time + 20)) U (recover_block_running > 0 || tree_success)",
                         "op": "U",
                         "left": {
                             "op": "⇒",
-                            "left": {
-                                "op": ">",
-                                "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__data",
-                                "right": 0
-                            },
+                            "left": "topic_uc2__info__properties__move_block_abort_time_msg.valid",
                             "right": {
                                 "op": "<",
-                                "left": "topic_uc2__info__clock_msg.ros_fields__data",
+                                "left": {
+                                    "op": "+",
+                                    "left": "topic_clock_msg.ros_fields__sec",
+                                    "right": {
+                                        "op": "*",
+                                        "left": "topic_clock_msg.ros_fields__nanosec",
+                                        "right": 0.000000001
+                                    }
+                                },
                                 "right": {
-                                  "op": "+",
-                                  "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__data",
-                                  "right": 5000
+                                    "op": "+",
+                                    "left": {
+                                        "op": "+",
+                                        "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__sec",
+                                        "right": {
+                                            "op": "*",
+                                            "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__nanosec",
+                                            "right": 0.000000001
+                                        }
+                                    },
+                                    "right": 20.0
                                 }
                             }
                         },
@@ -56,7 +68,7 @@
                 "values": {
                     "op": "Pmin",
                     "exp": {
-                        "comment": "The tree succeeds only in case MoveBlock succeeds, but currently not working, since after recovery the plugin MoveAction will FAIL anyway! This is a problem with the missing reset: when RecoverBlock runs, the MoveAction plugin shall be reset, preventing failure from happening...",
+                        "comment": "The tree succeeds only in case MoveBlock succeeds: from how we modeled the environment, this will be always the case after 3 attempts.",
                         "op": "F",
                         "exp": {
                             "op": "=",
