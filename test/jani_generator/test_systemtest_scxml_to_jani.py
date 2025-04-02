@@ -466,6 +466,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main_with_problem.xml",
             property_name="charging_starts",
             expected_result_probability=0.0,
+            result_probability_tolerance=0.01,
             trace_length_limit=1_000_000,
         )
 

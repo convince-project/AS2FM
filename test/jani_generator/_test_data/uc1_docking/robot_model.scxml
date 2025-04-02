@@ -75,11 +75,11 @@
         </onentry>
         <transition>
             <!-- Case 1: process the command correctly -->
-            <target id="update_state" prob="0.65">
+            <target id="update_state" prob="0.8">
                 <assign location="dist_to_dock" expr="dist_to_dock - last_cmd" />
             </target>
             <!-- Case 2: Do not move the robot -->
-            <target id="update_state" prob="0.25" />
+            <target id="update_state" prob="0.15" />
             <!-- Case 3: Raise the bump -->
             <target id="update_state">
                 <assign location="has_bumped" expr="true" />
