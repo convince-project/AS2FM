@@ -14,6 +14,8 @@ Using AS2FM, we can convert the model described using SCXML to JANI, that is a J
 
 The main difference between SCXML and JANI is that in JANI there is no concept of events, so synchronization must be achieved using the global variables and composition description.
 
+.. _hl_scxml:
+
 High-Level (ROS) SCXML Implementation
 ---------------------------------------
 
