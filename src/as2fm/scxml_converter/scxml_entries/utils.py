@@ -258,6 +258,17 @@ def get_type_string_of_array(data_type: str) -> str:
     return match_type
 
 
+def is_type_string_base_type(data_type: str) -> bool:
+    """
+    Check if the string is a base type.
+    """
+    data_type = data_type.strip()
+    # If the data type is an array, remove the bound value
+    if is_type_string_array(data_type):
+        data_type = f"{get_type_string_of_array(data_type)}[]"
+    return data_type in SCXML_DATA_STR_TO_TYPE
+
+
 def get_data_type_from_string(data_type: str) -> Type:
     """
     Convert a data type string description to the matching python type.

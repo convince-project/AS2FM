@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from as2fm.scxml_converter.scxml_entries.utils import (
+    get_type_string_of_array,
+    is_type_string_array,
+    is_type_string_base_type,
+)
 
 ExpandedDataStructType = Dict[str, Union[str, Dict[str, "ExpandedDataStructType"]]]
 
@@ -41,6 +45,8 @@ class XmlStructDefinition:
         # This needs to be generated once all struct definitions are loaded.
         # Each key can be linked to a base type or another dictionary, containing other subfields
         self._expanded_members: Optional[ExpandedDataStructType] = None
+        # Generate a number of variables with an SCXML base-type to represent the data in the struct
+        self._members_as_list: Optional[List[Dict[str, str]]] = None
 
     @classmethod
     def from_xml(cls, xml_element: XmlElement):
@@ -60,7 +66,12 @@ class XmlStructDefinition:
             )
             members[member_name] = member_type
         assert len(members) > 0, get_error_msg(xml_element, "struct definition with no members.")
-        return cls(name, members)
+        instance = cls(name, members)
+        instance.set_xml_origin(xml_element)
+
+    def set_xml_origin(self, xml_origin: XmlElement):
+        """Set the xml_element this object was made from."""
+        self.xml_origin = xml_origin
 
     def get_expanded_members(self) -> ExpandedDataStructType:
         """
@@ -77,23 +88,41 @@ class XmlStructDefinition:
         """
         if self._expanded_members is not None:
             return  # Already expanded
-
+        # Do the expansion
         self._expanded_members = {}
         for member_name, member_type in self.members.items():
-            if member_type in SCXML_DATA_STR_TO_TYPE:
+            if is_type_string_base_type(member_type):
                 # Base type, directly map it
                 self._expanded_members[member_name] = member_type
-            elif member_type in all_structs:
-                # Reference to another struct, recursively expand it
-                all_structs[member_type].expand_members(all_structs)
-                self._expanded_members[member_name] = all_structs[
-                    member_type
-                ].get_expanded_members()
             else:
-                raise ValueError(
-                    f"Unknown type '{member_type}' for member "
-                    f"'{member_name}' in struct '{self.name}'."
-                )
+                member_type_proc = member_type
+                if is_type_string_array(member_type):
+                    member_type_proc = get_type_string_of_array(member_type)
+                if member_type_proc not in all_structs:
+                    raise ValueError(
+                        get_error_msg(
+                            self.xml_origin,
+                            f"Unknown type '{member_type_proc}' for member "
+                            f"'{member_name}' in struct '{self.name}'.",
+                        )
+                    )
+                all_structs[member_type_proc].expand_members(all_structs)
+                self._expanded_members[member_name] = all_structs[
+                    member_type_proc
+                ].get_expanded_members()
+        self._generate_members_list()
+
+    def _generate_members_list(self):
+        """
+        Generate a list of all base variables required to represent this struct.
+        """
+        if self._members_as_list is not None:
+            return
+        assert (
+            self._expanded_members is not None
+        ), "The XmlStructDefinition has to be expanded before calling self._generate_members_list"
+        # TODO
+        pass
 
     def get_instance_from_expression(self, expr: str) -> Dict[str, Any]:
         """
@@ -102,7 +131,7 @@ class XmlStructDefinition:
         :param expr: The expression defining the instance.
         :return: A dictionary representing the instance.
         """
-        if self._expanded_members is None:
+        if self._members_as_list is None:
             raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
 
         # Interpret the expression
