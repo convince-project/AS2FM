@@ -15,7 +15,7 @@
 
 """And edge defining the possible transition from one state to another in jani."""
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -35,7 +35,7 @@ class JaniEdge:
         self.guard = None
         if "guard" in edge_dict:
             self.guard = JaniGuard(edge_dict["guard"])
-        self.destinations = []
+        self.destinations: List[Dict[str, Any]] = []
         if "destinations" not in edge_dict:
             return
         for dest in edge_dict["destinations"]:

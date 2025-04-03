@@ -19,7 +19,7 @@ Functions for the conversion from SCXML to Jani.
 The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -39,7 +39,6 @@ from as2fm.jani_generator.jani_entries.jani_utils import is_expression_array, is
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
-from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_automaton
 from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
     implement_scxml_events_as_jani_syncs,
@@ -50,10 +49,9 @@ from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 def convert_scxml_root_to_jani_automaton(
     scxml_root: ScxmlRoot,
-    jani_automaton: JaniAutomaton,
     events_holder: EventsHolder,
     max_array_size: int,
-) -> None:
+) -> JaniAutomaton:
     """
     Convert an SCXML element to a Jani automaton.
 
@@ -62,14 +60,14 @@ def convert_scxml_root_to_jani_automaton(
     :param events_holder: The holder for the events to be implemented as Jani syncs.
     :param max_array_size: The max size of the arrays in the model.
     """
+    jani_automaton = JaniAutomaton()
     BaseTag.from_element(
         scxml_root, [], (jani_automaton, events_holder), max_array_size
     ).write_model()
+    return jani_automaton
 
 
-def convert_multiple_scxmls_to_jani(
-    scxmls: List[ScxmlRoot], timers: List[RosTimer], max_time_ns: int, max_array_size: int
-) -> JaniModel:
+def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int) -> JaniModel:
     """
     Assemble automata from multiple SCXML files into a Jani model.
 
@@ -88,13 +86,9 @@ def convert_multiple_scxmls_to_jani(
         assert (
             input_scxml.is_plain_scxml()
         ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
-        automaton = JaniAutomaton()
-        convert_scxml_root_to_jani_automaton(input_scxml, automaton, events_holder, max_array_size)
+        automaton = convert_scxml_root_to_jani_automaton(input_scxml, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
-    timer_automaton = make_global_timer_automaton(timers, max_time_ns)
-    if timer_automaton is not None:
-        base_model.add_jani_automaton(timer_automaton)
-    implement_scxml_events_as_jani_syncs(events_holder, timers, max_array_size, base_model)
+    implement_scxml_events_as_jani_syncs(events_holder, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)
     expand_random_variables_in_jani_model(base_model, n_options=100)
     return base_model
@@ -130,13 +124,14 @@ def _preprocess_jani_expression(
     exp_operator, exp_operands = jani_expression.as_operator()
     if exp_operator is None:
         return jani_expression
+    assert exp_operands is not None
     has_array_operator = any(is_expression_array(exp_op) for exp_op in exp_operands.values())
     if has_array_operator:
         assert (
             exp_operator == "="
         ), "Array operators can be only used for assignments and comparisons."
         return _preprocess_array_comparison(jani_expression, context_vars)
-    new_expr_dict: Dict[str, JaniExpression] = {"op": exp_operator}
+    new_expr_dict: Dict[str, Any] = {"op": exp_operator}
     for operand_name, operand_expr in exp_operands.items():
         new_expr_dict.update(
             {operand_name: _preprocess_jani_expression(operand_expr, context_vars)}
@@ -152,6 +147,7 @@ def _preprocess_array_comparison(
     """Preprocess comparison between a constant array and a variable."""
     exp_operator, exp_operands = jani_expression.as_operator()
     assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
+    assert exp_operands is not None
     array_elements = None
     array_var_id = None
     array_length_var_id = None

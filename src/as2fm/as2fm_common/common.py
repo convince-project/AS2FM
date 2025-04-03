@@ -144,9 +144,9 @@ def is_valid_variable_name(var_name: str) -> bool:
     Check if a string can represent a variable name in JANI and SCXML.
 
     This differs from the string.isidentifier() python function, since we allow more possibilities:
-    * A variable name must start with a character or an underscore -> [a-zA-Z_];
-    * Can continue with any number of alphanumerical values plus (. - _) -> [a-zA-Z0-9._-];
-    * Must finish with an alphanumerical value -> [a-zA-Z0-9].
+    * A variable name must start with a character or an underscore;
+    * Can continue with any number of alphanumerical values plus (. - _);
+    * Must finish with an alphanumerical value.
     Alternatively, a variable name can be a single character.
     """
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
