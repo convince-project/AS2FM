@@ -586,6 +586,12 @@ class TestConversion(unittest.TestCase):
             "nested_data_ros", property_name="success", expected_result_probability=1.0
         )
 
+    def test_data_structs(self):
+        """Test support for custom struct declarations."""
+        self._test_with_main(
+            "data_structs", property_name="success", expected_result_probability=1.0
+        )
+
     def test_command_line_output_with_line_numbers(self):
         """Test the command line output with line numbers for the main.xml file."""
         tmp_test_dir = os.path.join("/tmp", "test_as2fm")
