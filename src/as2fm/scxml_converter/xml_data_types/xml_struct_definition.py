@@ -17,16 +17,14 @@ from typing import Any, Dict, Optional, Union
 
 from lxml.etree import _Element as XmlElement
 
-# from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
-
-# from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 
 ExpandedDataStructType = Dict[str, Union[str, Dict[str, "ExpandedDataStructType"]]]
 
 
-class ScxmlDataStruct:
+class XmlStructDefinition:
     """
     Represents a custom data type defined in SCXML, loaded from an XML element.
     """
@@ -55,7 +53,7 @@ class ScxmlDataStruct:
         name = xml_element.get("id")
         members = {}
         for member in xml_element.findall("member"):
-            member_name = member.get("id")  # get_xml_attribute
+            member_name = member.get("id")
             member_type = member.get("type")
             assert member_name and member_type, get_error_msg(
                 xml_element, "Member with no id or type defined."
@@ -71,7 +69,7 @@ class ScxmlDataStruct:
         assert self._expanded_members is not None
         return self._expanded_members
 
-    def expand_members(self, all_structs: Dict[str, "ScxmlDataStruct"]):
+    def expand_members(self, all_structs: Dict[str, "XmlStructDefinition"]):
         """
         Expands the members dictionary to resolve all fields to their base types.
 
@@ -108,6 +106,8 @@ class ScxmlDataStruct:
             raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
 
         # Interpret the expression
-        # interpreted_expr = interpret_non_base_ecma_script_expr(expr)
+        interpreted_expr = interpret_non_base_ecma_script_expr(expr)
+        if interpreted_expr:
+            pass
         # TODO: All
         return {}
