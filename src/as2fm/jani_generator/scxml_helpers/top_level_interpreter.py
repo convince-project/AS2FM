@@ -59,6 +59,8 @@ class FullModel:
     bt_tick_rate: float = field(default=1.0)
     # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
     bt_tick_when_not_running: bool = field(default=False)
+    # Paths to custom data declarations
+    data_declarations: List[str] = field(default_factory=list)
     # Path to the behavior tree loaded in the model
     bt: Optional[str] = None
     # Paths to the SCXML models of the BT nodes used in the model
@@ -118,6 +120,22 @@ def parse_main_xml(xml_path: str) -> FullModel:
             assert model.max_time is not None, get_error_msg(
                 first_level, "`max_time` must be defined."
             )
+        elif remove_namespace(first_level.tag) == "data_declarations":
+            for child in first_level:
+                if remove_namespace(child.tag) == "input":
+                    if child.attrib["type"] != "type-declarations":
+                        raise ValueError(
+                            get_error_msg(
+                                child,
+                                "Only `type-declarations` are supported under the "
+                                + "`data_declarations` tag.",
+                            )
+                        )
+                    model.data_declarations.append(os.path.join(folder_of_xml, child.attrib["src"]))
+                else:
+                    raise ValueError(
+                        get_error_msg(child, f"Invalid data_declarations tag: {child.tag} != input")
+                    )
         elif remove_namespace(first_level.tag) == "behavior_tree":
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
