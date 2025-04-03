@@ -17,11 +17,12 @@
             expr="
             {'polygons': [
                 {'points': [
-                    a_point,
+                    // a_point,  (not in declarations)
                     {'x': 1, 'y': 2},
                     {'x': 3, 'y': 4}
                 ]},
-                a_polygon]
+                // a_polygon,  (not in declarations)
+                ]
             }"
             type="Polygon"
         />
@@ -37,7 +38,9 @@
         </onentry>
         <transition target="increase" cond="a_point.x &lt; 100.0">
             <assign location="a_point.x" expr="a_point.x + 1.0" />
+            <assign location="a_polygon.points[1]" expr="a_point" />
             <assign location="a_polygon.points[0].x" expr="a_polygon.points[0].x + 1.0" />
+            <assign location="two_polygons.polygons[2]" expr="a_polygon" />
             <assign location="two_polygons.polygons[1].points[1].y"
                 expr="two_polygons.polygons[1].points[1].y + 1.0" />
         </transition>
