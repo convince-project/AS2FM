@@ -47,6 +47,8 @@ from as2fm.scxml_converter.bt_converter import (
     get_blackboard_variables_from_models,
 )
 from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.xml_data_types.xml_types import read_types_file
 
 
 @dataclass()
@@ -282,7 +284,11 @@ def interpret_top_level_xml(
     """
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
-    assert model.max_time is not None, f"Max time must be defined in {xml_path}."
+
+    custom_data_types: List[XmlStructDefinition] = []
+    for path in model.data_declarations:
+        custom_data_types.extend(read_types_file(path))
+
     plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
     if generated_scxmls_dir is not None:
