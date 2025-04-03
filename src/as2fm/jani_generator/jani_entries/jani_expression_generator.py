@@ -25,6 +25,10 @@ def minus_operator(left, right) -> JaniExpression:
     return JaniExpression({"op": "-", "left": left, "right": right})
 
 
+def unary_minus_operator(exp) -> JaniExpression:
+    return JaniExpression({"op": "-", "left": 0, "right": exp})
+
+
 def plus_operator(left, right) -> JaniExpression:
     return JaniExpression({"op": "+", "left": left, "right": right})
 

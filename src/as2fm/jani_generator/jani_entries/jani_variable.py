@@ -19,7 +19,7 @@ Variables in Jani
 
 from typing import MutableSequence, Optional, Type, Union, get_args
 
-from as2fm.as2fm_common.common import ValidTypes
+from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniValue
 from as2fm.jani_generator.jani_entries.jani_expression import SupportedExp
 
@@ -60,7 +60,7 @@ class JaniVariable:
     def __init__(
         self,
         v_name: str,
-        v_type: Type[ValidTypes],
+        v_type: Type[ValidJaniTypes],
         init_value: Optional[Union[JaniExpression, JaniValue, SupportedExp]] = None,
         v_transient: bool = False,
     ):
@@ -71,7 +71,7 @@ class JaniVariable:
             f"(JaniExpression, JaniValue), found {type(init_value)} instead."
         )
         self._name: str = v_name
-        self._type: Type[ValidTypes] = v_type
+        self._type: Type[ValidJaniTypes] = v_type
         self._transient: bool = v_transient
         self._init_expr: Optional[JaniExpression] = None
         if init_value is not None:
@@ -88,7 +88,7 @@ class JaniVariable:
                 raise ValueError(
                     f"JaniVariable {self._name} of type {self._type} needs an initial value"
                 )
-        assert v_type in get_args(ValidTypes), f"Type {v_type} not supported by Jani"
+        assert v_type in get_args(ValidJaniTypes), f"Type {v_type} not supported by Jani"
         if not self._transient and self._type in (float, MutableSequence[float]):
             print(
                 f"Warning: Variable {self._name} is not transient and has type float."
@@ -99,7 +99,7 @@ class JaniVariable:
         """Get name."""
         return self._name
 
-    def get_type(self) -> Type[ValidTypes]:
+    def get_type(self) -> Type[ValidJaniTypes]:
         """Get type."""
         return self._type
 
@@ -119,7 +119,7 @@ class JaniVariable:
         return d
 
     @staticmethod
-    def python_type_from_json(json_type: Union[str, dict]) -> Type[ValidTypes]:
+    def python_type_from_json(json_type: Union[str, dict]) -> Type[ValidJaniTypes]:
         """
         Translate a (Jani) type string or dict to a Python type.
         """
@@ -143,7 +143,7 @@ class JaniVariable:
         raise ValueError(f"Type {json_type} not supported by Jani")
 
     @staticmethod
-    def python_type_to_json(v_type: Type[ValidTypes]) -> Union[str, dict]:
+    def python_type_to_json(v_type: Type[ValidJaniTypes]) -> Union[str, dict]:
         """
         Translate a Python type to the name of the type in Jani.
 
