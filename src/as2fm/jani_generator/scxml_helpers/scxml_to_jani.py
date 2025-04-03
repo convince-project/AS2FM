@@ -83,11 +83,10 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
     events_holder = EventsHolder()
     for input_scxml in scxmls:
         assert isinstance(input_scxml, ScxmlRoot)
-        scxml_root = input_scxml
         assert (
-            scxml_root.is_plain_scxml()
-        ), f"Input model {scxml_root.get_name()} does not contain a plain SCXML model."
-        automaton = convert_scxml_root_to_jani_automaton(scxml_root, events_holder, max_array_size)
+            input_scxml.is_plain_scxml()
+        ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
+        automaton = convert_scxml_root_to_jani_automaton(input_scxml, events_holder, max_array_size)
         base_model.add_jani_automaton(automaton)
     implement_scxml_events_as_jani_syncs(events_holder, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)

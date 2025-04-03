@@ -25,7 +25,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
-from as2fm.as2fm_common.logging import set_filepath_for_all_elements
+from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -334,7 +334,9 @@ class ScxmlRoot(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check whether there are ROS or BT specific tags in the SCXML model."""
-        assert self.check_validity(), "SCXML: found invalid root object."
+        assert self.check_validity(), get_error_msg(
+            self.get_xml_origin(), "SCXML: found invalid root object."
+        )
         no_ros_declarations = (len(self._ros_declarations) + len(self._additional_threads)) == 0
         all_states_plain = all(state.is_plain_scxml() for state in self._states)
         return no_ros_declarations and all_states_plain

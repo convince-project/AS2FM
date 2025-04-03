@@ -580,6 +580,12 @@ class TestConversion(unittest.TestCase):
             skip_properties_load_check=True,
         )
 
+    def test_nested_data_ros(self):
+        """Test support for nested objects in ros types."""
+        self._test_with_main(
+            "nested_data_ros", property_name="success", expected_result_probability=1.0
+        )
+
     def test_command_line_output_with_line_numbers(self):
         """Test the command line output with line numbers for the main.xml file."""
         tmp_test_dir = os.path.join("/tmp", "test_as2fm")

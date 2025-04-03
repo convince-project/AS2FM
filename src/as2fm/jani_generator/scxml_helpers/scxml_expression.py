@@ -28,6 +28,7 @@ from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
+    UNARY_OPERATORS_MAP,
 )
 from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
@@ -159,13 +160,13 @@ def _parse_ecmascript_to_jani_expression(
         )
         return JaniExpression(ast.name)
     elif ast.type == "UnaryExpression":
-        assert ast.prefix is True and ast.operator == "-", "Only unary minus is supported."
-        return JaniExpression(
-            {
-                "op": OPERATORS_TO_JANI_MAP[ast.operator],
-                "left": JaniValue(0),
-                "right": _parse_ecmascript_to_jani_expression(ast.argument, ast, array_info),
-            }
+        assert ast.prefix is True, "only prefixes are supported"
+        assert ast.operator in UNARY_OPERATORS_MAP, (
+            f"Operator {ast.operator} is not supported. "
+            + f"Only {UNARY_OPERATORS_MAP.keys()} are supported."
+        )
+        return UNARY_OPERATORS_MAP[ast.operator](
+            _parse_ecmascript_to_jani_expression(ast.argument, ast, array_info)
         )
     elif ast.type == "BinaryExpression" or ast.type == "LogicalExpression":
         # It is a more complex expression
