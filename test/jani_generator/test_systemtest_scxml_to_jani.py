@@ -454,7 +454,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             "uc1_docking",
             store_generated_scxmls=True,
-            property_name="tree_success",
+            property_name="charging_starts",
             expected_result_probability=1.0,
             trace_length_limit=1_000_000,
         )
@@ -464,7 +464,7 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             "uc1_docking",
             model_xml="main_with_problem.xml",
-            property_name="tree_success",
+            property_name="charging_starts",
             expected_result_probability=0.0,
             trace_length_limit=1_000_000,
         )
