@@ -15,6 +15,7 @@
 
 from typing import Any, Dict, Optional, Union
 
+from js2py.base import JsObjectWrapper
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
@@ -124,7 +125,7 @@ class XmlStructDefinition:
                         expanded_type = child_type_only + array_info + child_array_info
                     self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
-    def get_instance_from_expression(self, expr: str) -> Dict[str, Any]:
+    def get_instance_from_expression(self, expr: str) -> Dict[str, str]:
         """
         Creates an instance of the data structure from an ECMAScript-like expression.
 
@@ -136,7 +137,35 @@ class XmlStructDefinition:
 
         # Interpret the expression
         interpreted_expr = interpret_non_base_ecma_script_expr(expr)
-        if interpreted_expr:
-            pass
-        # TODO: All
-        return {}
+        assert isinstance(interpreted_expr, JsObjectWrapper)
+        instance_as_dict = interpreted_expr.to_dict()
+
+        def expand_object_dict(instance_as_dict: Dict[str, Any], prefix: str) -> Dict[str, Any]:
+            ret_dict: Dict[str, Any] = {}
+            for obj_key, obj_value in instance_as_dict.items():
+                obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
+                if isinstance(obj_value, dict):
+                    ret_dict.update(expand_object_dict(obj_value, obj_full_name))
+                if isinstance(obj_value, list):
+                    ret_dict[obj_full_name] = []
+                    is_object_list = isinstance(obj_value[0], dict)
+                    for obj_entry in obj_value:
+                        # Ensure we are not mixing types in the same list
+                        if is_object_list:
+                            assert isinstance(obj_entry, dict)
+                            ret_dict[obj_full_name].append(
+                                expand_object_dict(obj_entry, obj_full_name)
+                            )
+                        else:
+                            assert not isinstance(obj_entry, dict)
+                            ret_dict[obj_full_name].append(obj_value)
+                    if is_object_list:
+                        # We need to convert this into an array of arrays
+                        # objects_list = ret_dict.pop(obj_value)
+                        # TODO: Fill ret_dict[obj_full_name.single_entry] properly
+                        pass  # Distinguish on the list content (dict or non-dict)
+                else:
+                    ret_dict[obj_full_name] = obj_value
+            return ret_dict
+
+        return expand_object_dict(instance_as_dict, "")
