@@ -23,9 +23,9 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
-    get_data_type_from_string,
     get_plain_expression,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
 
 
 def test_standard_good_expressions():

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="receive"
+    version="1.0"
+    name="Receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="recv_point" expr="{'x': 0, 'y': 0}" type="Point2D" />
+        <data
+            id="recv_polygon"
+            expr="{'points': []}"
+            type="Polygon"
+        />
+        <data
+            id="recv_polygons"
+            expr="{'polygons': []}"
+            type="Polygon"
+        />
+    </datamodel>
+
+    <state id="receive">
+        <transition event="data" target="receive">
+            <assign location="recv_point" expr="_event.data.point" />
+            <assign location="recv_polygon" expr="_event.data.polygon" />
+            <assign location="recv_polygons" expr="_event.data.polygons" />
+        </transition>
+
+        <transition
+            cond="
+                recv_point.x &gt;= 100 &amp;&amp;
+                recv__polygon.points[0].x &gt;= 100 &amp;&amp;
+                recv_polygons.polygons[1].points[1].y &gt;= 100"
+            target="end" />
+    </state>
+
+    <state id="end">
+        <onentry>
+            <send event="success" />
+        </onentry>
+    </state>
+</scxml>

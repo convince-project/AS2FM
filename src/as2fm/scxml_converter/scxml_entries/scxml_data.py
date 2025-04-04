@@ -18,7 +18,7 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 """
 
 import re
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -28,9 +28,6 @@ from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.utils import (
     RESERVED_NAMES,
-    convert_string_to_type,
-    get_array_max_size,
-    get_data_type_from_string,
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
@@ -38,6 +35,12 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    convert_string_to_type,
+    get_array_max_size,
+    get_data_type_from_string,
+)
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
 ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
@@ -78,7 +81,10 @@ class ScxmlData(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, comment_above: Optional[str] = None
+        cls,
+        xml_tree: XmlElement,
+        custom_data_types: List[XmlStructDefinition],
+        comment_above: Optional[str] = None,
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
         assert_xml_tag_ok(ScxmlData, xml_tree)
@@ -95,16 +101,27 @@ class ScxmlData(ScxmlBase):
             )
             data_type = comment_tuple[1]
         data_expr = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str)
+            ScxmlData, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
         )
         lower_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "lower_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+            ScxmlData,
+            xml_tree,
+            "lower_bound_incl",
+            custom_data_types,
+            (BtGetValueInputPort, str),
+            none_allowed=True,
         )
         upper_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+            ScxmlData,
+            xml_tree,
+            "upper_bound_incl",
+            custom_data_types,
+            (BtGetValueInputPort, str),
+            none_allowed=True,
         )
         instance = ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
         instance.set_xml_origin(xml_tree)
+        instance.set_custom_data_types(custom_data_types)
         return instance
 
     def __init__(

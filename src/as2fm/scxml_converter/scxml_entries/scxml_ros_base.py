@@ -46,6 +46,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosDeclaration(ScxmlBase):
@@ -70,11 +71,19 @@ class RosDeclaration(ScxmlBase):
         return f"{cls.get_communication_interface()}_name"
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosDeclaration"], xml_tree: XmlElement) -> "RosDeclaration":
+    def from_xml_tree_impl(
+        cls: Type["RosDeclaration"],
+        xml_tree: XmlElement,
+        custom_data_types: List[XmlStructDefinition],
+    ) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = read_value_from_xml_arg_or_child(
-            cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str)
+            cls,
+            xml_tree,
+            cls.get_xml_arg_interface_name(),
+            custom_data_types,
+            (BtGetValueInputPort, str),
         )
         interface_type = get_xml_attribute(cls, xml_tree, "type")
         interface_alias = get_xml_attribute(cls, xml_tree, "name", undefined_allowed=True)
@@ -187,12 +196,14 @@ class RosCallback(ScxmlTransition):
         raise NotImplementedError(f"{cls.__name__} doesn't implement get_callback_type.")
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosCallback"], xml_tree: XmlElement) -> "RosCallback":
+    def from_xml_tree_impl(
+        cls: Type["RosCallback"], xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = get_xml_attribute(cls, xml_tree, "name")
         condition = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
-        transition_targets = cls.load_transition_targets_from_xml(xml_tree)
+        transition_targets = cls.load_transition_targets_from_xml(xml_tree, custom_data_types)
         return cls(interface_name, transition_targets, condition)
 
     @classmethod
@@ -344,7 +355,9 @@ class RosTrigger(ScxmlSend):
         return []
 
     @classmethod
-    def from_xml_tree_impl(cls: Type["RosTrigger"], xml_tree: XmlElement) -> "RosTrigger":
+    def from_xml_tree_impl(
+        cls: Type["RosTrigger"], xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.
 
@@ -356,7 +369,11 @@ class RosTrigger(ScxmlSend):
         additional_arg_values: Dict[str, str] = {}
         for arg_name in cls.get_additional_arguments():
             additional_arg_values[arg_name] = get_xml_attribute(cls, xml_tree, arg_name)
-        fields = [RosField.from_xml_tree(field) for field in xml_tree if not is_comment(field)]
+        fields = [
+            RosField.from_xml_tree(field, custom_data_types)
+            for field in xml_tree
+            if not is_comment(field)
+        ]
         return cls(interface_name, fields, additional_arg_values)
 
     def __init__(

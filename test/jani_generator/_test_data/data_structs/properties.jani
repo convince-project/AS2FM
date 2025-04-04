@@ -1,0 +1,21 @@
+{
+  "properties": [
+    {
+      "name": "success",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": "success.valid"
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    }
+  ]
+}

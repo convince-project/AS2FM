@@ -26,13 +26,13 @@ TEST_FOLDER: str = os.path.join(os.path.dirname(__file__), "_test_data", "batter
 
 def test_scxml_detect_non_plain():
     test_scxml = os.path.join(TEST_FOLDER, "battery_manager.scxml")
-    scxml_root = ScxmlRoot.from_scxml_file(test_scxml)
+    scxml_root = ScxmlRoot.from_scxml_file(test_scxml, [])
     assert not scxml_root.is_plain_scxml(), "Expected the loaded scxml model to be non-plain SCXML."
 
 
 def test_scxml_detect_plain():
     test_scxml = os.path.join(TEST_FOLDER, "gt_plain_scxml", "battery_manager.scxml")
-    scxml_root = ScxmlRoot.from_scxml_file(test_scxml)
+    scxml_root = ScxmlRoot.from_scxml_file(test_scxml, [])
     assert scxml_root.is_plain_scxml(), "Expected the loaded scxml model to be plain SCXML."
 
 

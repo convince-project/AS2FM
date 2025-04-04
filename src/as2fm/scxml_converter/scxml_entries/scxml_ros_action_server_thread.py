@@ -51,6 +51,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_children_as_scxml,
     get_xml_attribute,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosActionThread(ScxmlBase):
@@ -63,7 +64,9 @@ class RosActionThread(ScxmlBase):
         return "ros_action_thread"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosActionThread":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_attribute(RosActionThread, xml_tree, "name")
@@ -71,9 +74,9 @@ class RosActionThread(ScxmlBase):
         n_threads = int(n_threads)
         assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
         initial_state = get_xml_attribute(RosActionThread, xml_tree, "initial")
-        datamodel = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        datamodel = get_children_as_scxml(xml_tree, [], (ScxmlDataModel,))
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, [], (ScxmlState,))
         assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
         assert len(scxml_states) > 0, "Error: SCXML Action Thread: no states defined."
         # The non-plain SCXML Action thread has the same name as the action
