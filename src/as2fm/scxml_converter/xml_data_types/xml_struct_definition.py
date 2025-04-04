@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from lxml.etree import _Element as XmlElement
 
@@ -44,10 +44,7 @@ class XmlStructDefinition:
         self.name = name
         self.members: Dict[str, str] = members
         # This needs to be generated once all struct definitions are loaded.
-        # Each key can be linked to a base type or another dictionary, containing other subfields
-        self._expanded_members: Optional[ExpandedDataStructType] = None
-        # Generate a number of variables with an SCXML base-type to represent the data in the struct
-        self._members_as_list: Optional[List[Dict[str, str]]] = None
+        self._members_list: Optional[Dict[str, str]] = None
 
     @classmethod
     def from_xml(cls, xml_element: XmlElement):
@@ -81,39 +78,29 @@ class XmlStructDefinition:
         except AttributeError:
             return None
 
-    def get_expanded_members(self) -> ExpandedDataStructType:
-        """
-        Retrieve the expanded members of the data structure.
-        """
-        assert self._expanded_members is not None
-        return self._expanded_members
+    def get_expanded_members(self) -> Dict[str, str]:
+        assert self._members_list is not None
+        return self._members_list
 
-    def expand_members(
-        self, all_structs: Dict[str, "XmlStructDefinition"], array_signature: str = ""
-    ):
+    def expand_members(self, all_structs: Dict[str, "XmlStructDefinition"]):
         """
         Expands the members dictionary to resolve all fields to their base types.
 
         :param all_structs: A dictionary of all ScxmlDataStruct instances by their names.
         :param array_signature: Array information to be appended to the last, expanded base entry.
         """
-        if self._expanded_members is not None:
-            return  # Already expanded
-        # Do the expansion
-        assert isinstance(
-            all_structs, dict
-        ), "Unexpected type of `all_structs` argument in `expand_members`."
-        self._expanded_members = {}
+        if self._members_list is not None:
+            return
+        self._members_list = {}
         for member_name, member_type in self.members.items():
             if is_type_string_base_type(member_type):
-                # Base type, directly map it
-                self._expanded_members[member_name] = member_type + array_signature
+                self._members_list.update({member_name: member_type})
             else:
                 member_type_proc = member_type
+                array_info = ""
                 if is_type_string_array(member_type):
                     array_size = get_array_max_size(member_type)
-                    if array_size is None:
-                        array_signature += "[]" if array_size is None else f"[{array_size}]"
+                    array_info = "[]" if array_size is None else f"[{array_size}]"
                     member_type_proc = get_type_string_of_array(member_type)
                 if member_type_proc not in all_structs:
                     raise ValueError(
@@ -123,23 +110,19 @@ class XmlStructDefinition:
                             f"'{member_name}' in struct '{self.name}'.",
                         )
                     )
-                all_structs[member_type_proc].expand_members(all_structs, array_signature)
-                self._expanded_members[member_name] = all_structs[
-                    member_type_proc
-                ].get_expanded_members()
-        self._generate_members_list()
-
-    def _generate_members_list(self):
-        """
-        Generate a list of all base variables required to represent this struct.
-        """
-        if self._members_as_list is not None:
-            return
-        assert (
-            self._expanded_members is not None
-        ), "The XmlStructDefinition has to be expanded before calling self._generate_members_list"
-        # TODO
-        pass
+                all_structs[member_type_proc].expand_members(all_structs)
+                for child_m_name, child_m_type in (
+                    all_structs[member_type_proc].get_expanded_members().items()
+                ):
+                    # We need to add member's array bit before the ones from previous expansions
+                    array_bracket_idx = child_m_type.find("[")
+                    if array_bracket_idx < 0:
+                        expanded_type = child_m_type + array_info
+                    else:
+                        child_type_only = child_m_type[:array_bracket_idx]
+                        child_array_info = child_m_type[array_bracket_idx:]
+                        expanded_type = child_type_only + array_info + child_array_info
+                    self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
     def get_instance_from_expression(self, expr: str) -> Dict[str, Any]:
         """
@@ -148,7 +131,7 @@ class XmlStructDefinition:
         :param expr: The expression defining the instance.
         :return: A dictionary representing the instance.
         """
-        if self._members_as_list is None:
+        if self._members_list is None:
             raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
 
         # Interpret the expression
