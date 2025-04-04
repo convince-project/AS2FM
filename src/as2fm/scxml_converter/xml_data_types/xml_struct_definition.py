@@ -73,6 +73,13 @@ class XmlStructDefinition:
         """Set the xml_element this object was made from."""
         self.xml_origin = xml_origin
 
+    def get_xml_origin(self) -> Optional[XmlElement]:
+        """Get the xml_element this object was made from."""
+        try:
+            return self.xml_origin
+        except AttributeError:
+            return None
+
     def get_expanded_members(self) -> ExpandedDataStructType:
         """
         Retrieve the expanded members of the data structure.
@@ -80,15 +87,21 @@ class XmlStructDefinition:
         assert self._expanded_members is not None
         return self._expanded_members
 
-    def expand_members(self, all_structs: Dict[str, "XmlStructDefinition"]):
+    def expand_members(
+        self, all_structs: Dict[str, "XmlStructDefinition"], array_signature: str = ""
+    ):
         """
         Expands the members dictionary to resolve all fields to their base types.
 
         :param all_structs: A dictionary of all ScxmlDataStruct instances by their names.
+        :param array_signature: Array information to be appended to the last, expanded base entry.
         """
         if self._expanded_members is not None:
             return  # Already expanded
         # Do the expansion
+        assert isinstance(
+            all_structs, dict
+        ), "Unexpected type of `all_structs` argument in `expand_members`."
         self._expanded_members = {}
         for member_name, member_type in self.members.items():
             if is_type_string_base_type(member_type):
@@ -101,7 +114,7 @@ class XmlStructDefinition:
                 if member_type_proc not in all_structs:
                     raise ValueError(
                         get_error_msg(
-                            self.xml_origin,
+                            self.get_xml_origin(),
                             f"Unknown type '{member_type_proc}' for member "
                             f"'{member_name}' in struct '{self.name}'.",
                         )
