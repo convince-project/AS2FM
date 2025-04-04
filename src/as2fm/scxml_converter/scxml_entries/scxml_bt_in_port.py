@@ -17,12 +17,15 @@
 SCXML get input for Behavior Trees' Ports.
 """
 
+from typing import List
+
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtGetValueInputPort(ScxmlBase):
@@ -35,7 +38,9 @@ class BtGetValueInputPort(ScxmlBase):
         return "bt_get_input"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtGetValueInputPort":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")
         return BtGetValueInputPort(key_str)

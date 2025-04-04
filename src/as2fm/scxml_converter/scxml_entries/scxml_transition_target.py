@@ -41,6 +41,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlTransitionTarget(ScxmlBase):
@@ -51,7 +52,9 @@ class ScxmlTransitionTarget(ScxmlBase):
         return "target"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlTransitionTarget":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
         assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
             "Error: SCXML transition target: XML root tag name is "
@@ -68,7 +71,7 @@ class ScxmlTransitionTarget(ScxmlBase):
             probability = float(probability_str)
             if probability == 0.0:
                 warn("Warning: SCXML transition target: Probability is zero.")
-        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = execution_body_from_xml(xml_tree, custom_data_types)
         return ScxmlTransitionTarget(target_id, probability, exec_body)
 
     def __init__(

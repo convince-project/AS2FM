@@ -48,6 +48,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_child,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union["ScxmlAssign", "ScxmlIf", "ScxmlSend"]
@@ -112,7 +113,9 @@ class ScxmlIf(ScxmlBase):
         return "if"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlIf":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
 
@@ -139,7 +142,7 @@ class ScxmlIf(ScxmlBase):
                 exec_bodies.append(current_body)
                 current_body = []
             else:
-                current_body.append(execution_entry_from_xml(child))
+                current_body.append(execution_entry_from_xml(child, custom_data_types))
         else_body: Optional[ScxmlExecutionBody] = None
         if else_tag_found:
             else_body = current_body
@@ -288,7 +291,9 @@ class ScxmlSend(ScxmlBase):
         return "send"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlSend":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
 
@@ -305,7 +310,7 @@ class ScxmlSend(ScxmlBase):
         for param_xml in xml_tree:
             if is_comment(param_xml):
                 continue
-            params.append(ScxmlParam.from_xml_tree(param_xml))
+            params.append(ScxmlParam.from_xml_tree(param_xml, custom_data_types))
         return ScxmlSend(event, params, target)
 
     def __init__(
@@ -425,7 +430,9 @@ class ScxmlAssign(ScxmlBase):
         return "assign"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlAssign":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
 
@@ -551,7 +558,9 @@ def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
     return True
 
 
-def execution_entry_from_xml(xml_tree: XmlElement) -> ScxmlExecutableEntry:
+def execution_entry_from_xml(
+    xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
 
@@ -567,10 +576,12 @@ def execution_entry_from_xml(xml_tree: XmlElement) -> ScxmlExecutableEntry:
     assert exec_tag in tag_to_cls, get_error_msg(
         xml_tree, f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
     )
-    return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
+    return tag_to_cls[exec_tag].from_xml_tree(xml_tree, custom_data_types)
 
 
-def execution_body_from_xml(xml_tree: XmlElement) -> ScxmlExecutionBody:
+def execution_body_from_xml(
+    xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
@@ -580,7 +591,7 @@ def execution_body_from_xml(xml_tree: XmlElement) -> ScxmlExecutionBody:
     exec_body: ScxmlExecutionBody = []
     for exec_elem_xml in xml_tree:
         if not is_comment(exec_elem_xml):
-            exec_body.append(execution_entry_from_xml(exec_elem_xml))
+            exec_body.append(execution_entry_from_xml(exec_elem_xml, custom_data_types))
     return exec_body
 
 

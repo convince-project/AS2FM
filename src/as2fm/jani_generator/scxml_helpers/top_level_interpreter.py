@@ -186,13 +186,15 @@ def parse_main_xml(xml_path: str) -> FullModel:
     return model
 
 
-def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
+def generate_plain_scxml_models_and_timers(
+    model: FullModel, custom_data_types: List[XmlStructDefinition]
+) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
     ros_scxmls: List[ScxmlRoot] = []
     for fname in scxml_files_to_convert:
-        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
+        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname, custom_data_types))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
         ros_scxmls.extend(
@@ -289,7 +291,7 @@ def interpret_top_level_xml(
     for path in model.data_declarations:
         custom_data_types.extend(read_types_file(path))
 
-    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
+    plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)

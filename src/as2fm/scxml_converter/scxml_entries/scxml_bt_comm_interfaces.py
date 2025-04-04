@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_bt_base import (
     BtGenericStatusSend,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtTick(BtGenericRequestHandle):
@@ -177,7 +178,9 @@ class BtReturnTickStatus(BtGenericStatusSend):
         return generate_bt_tick_response_event(instance_id)
 
     @staticmethod
-    def from_xml_tree(xml_tree: XmlElement) -> "BtReturnTickStatus":
+    def from_xml_tree(
+        xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")
         return BtReturnTickStatus(status)

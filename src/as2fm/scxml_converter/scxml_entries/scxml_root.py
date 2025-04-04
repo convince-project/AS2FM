@@ -46,6 +46,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_children_as_scxml,
     get_xml_attribute,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlRoot(ScxmlBase):
@@ -56,7 +57,9 @@ class ScxmlRoot(ScxmlBase):
         return "scxml"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlRoot":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
@@ -67,22 +70,24 @@ class ScxmlRoot(ScxmlBase):
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
         scxml_init_state = get_xml_attribute(ScxmlRoot, xml_tree, "initial")
         # Data Model
-        datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        datamodel_elements = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         assert (
             len(datamodel_elements) <= 1
         ), f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
         ros_declarations: List[RosDeclaration] = get_children_as_scxml(
-            xml_tree, RosDeclaration.__subclasses__()
+            xml_tree, custom_data_types, RosDeclaration.__subclasses__()
         )
         # BT Declarations
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
-            xml_tree, get_args(BtPortDeclarations)
+            xml_tree, custom_data_types, get_args(BtPortDeclarations)
         )
         # Additional threads
-        additional_threads = get_children_as_scxml(xml_tree, (RosActionThread,))
+        additional_threads = get_children_as_scxml(xml_tree, custom_data_types, (RosActionThread,))
         # States
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(
+            xml_tree, custom_data_types, (ScxmlState,)
+        )
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the ScxmlRoot object
         scxml_root = ScxmlRoot(scxml_name)
@@ -104,7 +109,7 @@ class ScxmlRoot(ScxmlBase):
         return scxml_root
 
     @staticmethod
-    def from_scxml_file(xml_file: str) -> "ScxmlRoot":
+    def from_scxml_file(xml_file: str, custom_data_types: List[XmlStructDefinition]) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         print(f"{xml_file=}")
         if isfile(xml_file):
@@ -120,7 +125,7 @@ class ScxmlRoot(ScxmlBase):
                 continue
             child.tag = remove_namespace(child.tag)
         # Do the conversion
-        return ScxmlRoot.from_xml_tree(xml_element)
+        return ScxmlRoot.from_xml_tree(xml_element, custom_data_types)
 
     def __init__(self, name: str):
         self._name = name

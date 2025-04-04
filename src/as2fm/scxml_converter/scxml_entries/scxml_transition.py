@@ -42,6 +42,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlTransition(ScxmlBase):
@@ -66,7 +67,9 @@ class ScxmlTransition(ScxmlBase):
 
     @classmethod
     def load_transition_targets_from_xml(
-        cls: Type["ScxmlTransition"], xml_tree: XmlElement
+        cls: Type["ScxmlTransition"],
+        xml_tree: XmlElement,
+        custom_data_types: List[XmlStructDefinition],
     ) -> List[ScxmlTransitionTarget]:
         """Loads all transition targets contained in the transition-like tags."""
         target = get_xml_attribute(cls, xml_tree, "target", undefined_allowed=True)
@@ -79,7 +82,7 @@ class ScxmlTransition(ScxmlBase):
         if has_targets_children:
             target_children.extend(
                 [
-                    ScxmlTransitionTarget.from_xml_tree(entry)
+                    ScxmlTransitionTarget.from_xml_tree(entry, custom_data_types)
                     for entry in xml_tree
                     if not is_comment(entry)
                 ]
@@ -87,12 +90,16 @@ class ScxmlTransition(ScxmlBase):
         else:
             assert is_non_empty_string(cls, "target", target)
             target_children.append(
-                ScxmlTransitionTarget(target, body=execution_body_from_xml(xml_tree))
+                ScxmlTransitionTarget(
+                    target, body=execution_body_from_xml(xml_tree, custom_data_types)
+                )
             )
         return target_children
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlTransition":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
@@ -100,7 +107,9 @@ class ScxmlTransition(ScxmlBase):
         events_str = get_xml_attribute(ScxmlTransition, xml_tree, "event", undefined_allowed=True)
         events = events_str.split(" ") if events_str is not None else []
         condition = get_xml_attribute(ScxmlTransition, xml_tree, "cond", undefined_allowed=True)
-        transition_targets = ScxmlTransition.load_transition_targets_from_xml(xml_tree)
+        transition_targets = ScxmlTransition.load_transition_targets_from_xml(
+            xml_tree, custom_data_types
+        )
         return ScxmlTransition(transition_targets, events, condition)
 
     @staticmethod

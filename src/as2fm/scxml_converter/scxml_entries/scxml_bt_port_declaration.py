@@ -17,7 +17,7 @@
 SCXML entries related to Behavior Trees' Ports declaration.
 """
 
-from typing import Union
+from typing import List, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -25,6 +25,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtInputPortDeclaration(ScxmlBase):
@@ -37,7 +38,9 @@ class BtInputPortDeclaration(ScxmlBase):
         return "bt_declare_port_in"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtInputPortDeclaration":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "BtInputPortDeclaration":
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "type")
@@ -80,7 +83,9 @@ class BtOutputPortDeclaration(ScxmlBase):
         return "bt_declare_port_out"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtOutputPortDeclaration":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "BtOutputPortDeclaration":
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "type")
