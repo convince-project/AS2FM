@@ -244,7 +244,7 @@ def to_integer(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> 
 # ------------ Datatype-related utilities ------------
 def is_type_string_array(data_type: str) -> bool:
     """Check if the data type defined in the string is related to an array."""
-    return re.match(r"\[[0-9]*\]$", data_type) is not None
+    return re.match(r"^.+\[[0-9]*\]$", data_type) is not None
 
 
 def get_type_string_of_array(data_type: str) -> str:
