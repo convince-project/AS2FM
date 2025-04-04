@@ -50,7 +50,7 @@ class RosField(ScxmlParam):
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_attribute(RosField, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(
-            RosField, xml_tree, "expr", (BtGetValueInputPort, str)
+            RosField, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
         )
         return RosField(name, expr)
 

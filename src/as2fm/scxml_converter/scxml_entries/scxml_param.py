@@ -52,7 +52,7 @@ class ScxmlParam(ScxmlBase):
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_attribute(ScxmlParam, xml_tree, "name")
         expr = read_value_from_xml_arg_or_child(
-            ScxmlParam, xml_tree, "expr", (BtGetValueInputPort, str), True
+            ScxmlParam, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str), True
         )
         location = get_xml_attribute(ScxmlParam, xml_tree, "location", undefined_allowed=True)
         return ScxmlParam(name, expr=expr, location=location)

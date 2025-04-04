@@ -199,7 +199,11 @@ def generate_plain_scxml_models_and_timers(
     if model.bt is not None:
         ros_scxmls.extend(
             bt_converter(
-                model.bt, model.plugins, model.bt_tick_rate, model.bt_tick_when_not_running
+                model.bt,
+                model.plugins,
+                model.bt_tick_rate,
+                model.bt_tick_when_not_running,
+                custom_data_types,
             )
         )
     # Convert the loaded entries to plain SCXML
