@@ -19,7 +19,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.scxml_entries.utils import (
+from as2fm.scxml_converter.xml_data_types.type_utils import (
     get_type_string_of_array,
     is_type_string_array,
     is_type_string_base_type,

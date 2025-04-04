@@ -49,7 +49,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     get_blackboard_variable_name,
     is_blackboard_reference,
 )
-from as2fm.scxml_converter.scxml_entries.utils import SCXML_DATA_STR_TO_TYPE
+from as2fm.scxml_converter.xml_data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
 

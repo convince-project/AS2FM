@@ -28,15 +28,17 @@ from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.utils import (
     RESERVED_NAMES,
-    convert_string_to_type,
-    get_array_max_size,
-    get_data_type_from_string,
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
+)
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    convert_string_to_type,
+    get_array_max_size,
+    get_data_type_from_string,
 )
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 

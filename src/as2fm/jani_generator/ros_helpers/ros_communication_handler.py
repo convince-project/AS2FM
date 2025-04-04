@@ -22,7 +22,8 @@ from typing import Dict, Iterator, List, Optional, Type
 from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
 from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
-from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX, get_data_type_from_string
+from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
+from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
 
 
 class RosCommunicationHandler:
