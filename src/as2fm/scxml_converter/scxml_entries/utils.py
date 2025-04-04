@@ -17,9 +17,9 @@
 
 import re
 from enum import Enum, auto
-from typing import Any, Dict, List, MutableSequence, Optional, Type
+from typing import Dict, List, Optional, Type
 
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
@@ -40,26 +40,6 @@ ROS_EVENT_PREFIXES = [
     "_wrapped_result.",
     "_action.",  # Action-related
 ]
-
-
-# TODO: add lower and upper bounds depending on the n. of bits used.
-# TODO: add support to uint
-SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
-    "bool": bool,
-    "float32": float,
-    "float64": float,
-    "int8": int,
-    "int16": int,
-    "int32": int,
-    "int64": int,
-    "int8[]": MutableSequence[int],  # array('i'): https://stackoverflow.com/a/67775675
-    "int16[]": MutableSequence[int],
-    "int32[]": MutableSequence[int],
-    "int64[]": MutableSequence[int],
-    "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
-    "float64[]": MutableSequence[float],
-    "string": str,
-}
 
 
 # ------------ Expression-conversion functionalities ------------
@@ -239,68 +219,3 @@ def to_integer(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> 
         return int(arg_value)
     except ValueError:
         return None
-
-
-# ------------ Datatype-related utilities ------------
-def is_type_string_array(data_type: str) -> bool:
-    """Check if the data type defined in the string is related to an array."""
-    return re.match(r"^.+\[[0-9]*\]$", data_type) is not None
-
-
-def get_type_string_of_array(data_type: str) -> str:
-    """Remove the array bit from the type string (works only with 1D array declarations)."""
-    assert is_type_string_array(data_type)
-    matches = re.match(r"^(.+)(\[[0-9]*\])$", data_type)
-    assert matches is not None
-    match_type = matches.group(1)
-    assert match_type.count("[") == 0, "Currently only 1D arrays are supported."
-    return match_type
-
-
-def is_type_string_base_type(data_type: str) -> bool:
-    """
-    Check if the string is a base type.
-    """
-    data_type = data_type.strip()
-    # If the data type is an array, remove the bound value
-    if is_type_string_array(data_type):
-        data_type = f"{get_type_string_of_array(data_type)}[]"
-    return data_type in SCXML_DATA_STR_TO_TYPE
-
-
-def get_data_type_from_string(data_type: str) -> Type:
-    """
-    Convert a data type string description to the matching python type.
-
-    :param data_type: The data type to check.
-    :return: the type matching the string, if that is valid. None otherwise.
-    """
-    data_type = data_type.strip()
-    # If the data type is an array, remove the bound value
-    if is_type_string_array(data_type):
-        data_type = f"{get_type_string_of_array(data_type)}[]"
-    return SCXML_DATA_STR_TO_TYPE[data_type]
-
-
-def convert_string_to_type(value: str, data_type: str) -> Any:
-    """
-    Convert a value to the provided data type.
-    """
-    python_type = get_data_type_from_string(data_type)
-    interpreted_value = interpret_ecma_script_expr(value)
-    assert isinstance(interpreted_value, python_type), f"Failed interpreting {value}"
-    return interpreted_value
-
-
-def get_array_max_size(data_type: str) -> Optional[int]:
-    """
-    Get the maximum size of an array, if the data type is an array.
-    """
-    assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
-    match_obj = re.search(r"\[([0-9]+)\]", data_type)
-    if match_obj is not None:
-        return int(match_obj.group(1))
-    return None
-
-
-from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase  # noqa: E402
