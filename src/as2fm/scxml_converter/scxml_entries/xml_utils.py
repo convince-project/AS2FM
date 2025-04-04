@@ -20,6 +20,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class XmlUtilsError(Exception):
@@ -69,7 +70,9 @@ def get_xml_attribute(
 
 
 def get_children_as_scxml(
-    xml_tree: XmlElement, scxml_types: Iterable[Type[ScxmlBase]]
+    xml_tree: XmlElement,
+    custom_data_types: List[XmlStructDefinition],
+    scxml_types: Iterable[Type[ScxmlBase]],
 ) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
@@ -84,7 +87,7 @@ def get_children_as_scxml(
         if is_comment(child):
             continue
         if child.tag in tag_to_type:
-            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
+            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child, custom_data_types))
     return scxml_list
 
 

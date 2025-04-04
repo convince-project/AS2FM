@@ -41,6 +41,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosActionClient(RosDeclaration):
@@ -99,7 +100,9 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         return "ros_action_handle_goal_response"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosActionHandleGoalResponse":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
         action_name = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "name")

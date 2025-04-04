@@ -20,7 +20,6 @@ from enum import Enum, auto
 from typing import Any, Dict, List, MutableSequence, Optional, Type
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
@@ -109,13 +108,13 @@ class CallbackType(Enum):
             return CallbackType.TRANSITION
 
 
-def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
+def generate_tag_to_class_map(cls: Type["ScxmlBase"]) -> Dict[str, Type["ScxmlBase"]]:
     """
     Generate a map from (xml) tags to their associated classes.
 
     The map is generated for the provided class and all its subclasses.
     """
-    ret_dict: Dict[str, Type[ScxmlBase]] = {}
+    ret_dict: Dict[str, Type["ScxmlBase"]] = {}
     try:
         tag_name = cls.get_tag_name()
         ret_dict.update({tag_name: cls})
@@ -212,7 +211,7 @@ def all_non_empty_strings(*in_args) -> bool:
     return True
 
 
-def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> bool:
+def is_non_empty_string(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> bool:
     """
     Check if a string is non-empty.
 
@@ -230,7 +229,7 @@ def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: s
     return valid_str
 
 
-def to_integer(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> Optional[int]:
+def to_integer(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> Optional[int]:
     """
     Try to convert a string to an integer. Return None if not possible.
     """
@@ -302,3 +301,6 @@ def get_array_max_size(data_type: str) -> Optional[int]:
     if match_obj is not None:
         return int(match_obj.group(1))
     return None
+
+
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase  # noqa: E402

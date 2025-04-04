@@ -17,6 +17,8 @@
 SCXML set output for Behavior Trees' Ports.
 """
 
+from typing import List
+
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
@@ -30,6 +32,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtSetValueOutputPort(ScxmlSend):
@@ -42,7 +45,9 @@ class BtSetValueOutputPort(ScxmlSend):
         return "bt_set_output"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtSetValueOutputPort":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")

@@ -15,7 +15,7 @@
 
 """Declaration of the ROS Field SCXML tag extension."""
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -32,6 +32,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosField(ScxmlParam):
@@ -42,7 +43,9 @@ class RosField(ScxmlParam):
         return "field"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosField":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)
         name = get_xml_attribute(RosField, xml_tree, "name")

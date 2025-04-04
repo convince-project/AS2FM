@@ -51,6 +51,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_children_as_scxml,
     get_xml_attribute,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosActionThread(ScxmlBase):
@@ -63,7 +64,9 @@ class RosActionThread(ScxmlBase):
         return "ros_action_thread"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "RosActionThread":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    ) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
         action_alias = get_xml_attribute(RosActionThread, xml_tree, "name")
