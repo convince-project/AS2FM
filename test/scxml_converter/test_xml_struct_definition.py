@@ -16,12 +16,12 @@ def test_expand_members():
         struct_definitions[single_struct_name].expand_members(struct_definitions)
     # Check expansion of PolygonsArray
     assert (
-        struct_definitions["PolygonsArray"]._expanded_members["polygons"]["points"]["x"]
+        struct_definitions["PolygonsArray"].get_expanded_members()["polygons.points.x"]
         == "float32[][]"
     )
     assert (
-        struct_definitions["PolygonsArray"]._expanded_members["polygons"]["points"]["y"]
+        struct_definitions["PolygonsArray"].get_expanded_members()["polygons.points.y"]
         == "float32[][]"
     )
-    assert struct_definitions["Hexagon"]._expanded_members["points"]["x"] == "float32[6]"
-    assert struct_definitions["Hexagon"]._expanded_members["points"]["y"] == "float32[6]"
+    assert struct_definitions["Hexagon"].get_expanded_members()["points.x"] == "float32[6]"
+    assert struct_definitions["Hexagon"].get_expanded_members()["points.y"] == "float32[6]"
