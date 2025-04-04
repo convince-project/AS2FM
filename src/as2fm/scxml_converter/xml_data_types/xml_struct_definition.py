@@ -20,6 +20,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.xml_data_types.type_utils import (
+    get_array_max_size,
     get_type_string_of_array,
     is_type_string_array,
     is_type_string_base_type,
@@ -106,10 +107,13 @@ class XmlStructDefinition:
         for member_name, member_type in self.members.items():
             if is_type_string_base_type(member_type):
                 # Base type, directly map it
-                self._expanded_members[member_name] = member_type
+                self._expanded_members[member_name] = member_type + array_signature
             else:
                 member_type_proc = member_type
                 if is_type_string_array(member_type):
+                    array_size = get_array_max_size(member_type)
+                    if array_size is None:
+                        array_signature += "[]" if array_size is None else f"[{array_size}]"
                     member_type_proc = get_type_string_of_array(member_type)
                 if member_type_proc not in all_structs:
                     raise ValueError(
@@ -119,7 +123,7 @@ class XmlStructDefinition:
                             f"'{member_name}' in struct '{self.name}'.",
                         )
                     )
-                all_structs[member_type_proc].expand_members(all_structs)
+                all_structs[member_type_proc].expand_members(all_structs, array_signature)
                 self._expanded_members[member_name] = all_structs[
                     member_type_proc
                 ].get_expanded_members()
