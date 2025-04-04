@@ -79,7 +79,11 @@ class RosDeclaration(ScxmlBase):
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
         interface_name = read_value_from_xml_arg_or_child(
-            cls, xml_tree, cls.get_xml_arg_interface_name(), (BtGetValueInputPort, str)
+            cls,
+            xml_tree,
+            cls.get_xml_arg_interface_name(),
+            custom_data_types,
+            (BtGetValueInputPort, str),
         )
         interface_type = get_xml_attribute(cls, xml_tree, "type")
         interface_alias = get_xml_attribute(cls, xml_tree, "name", undefined_allowed=True)

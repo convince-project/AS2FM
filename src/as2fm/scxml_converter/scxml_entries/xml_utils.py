@@ -94,6 +94,7 @@ def get_children_as_scxml(
 def read_value_from_xml_child(
     xml_tree: XmlElement,
     child_tag: str,
+    custom_data_types: List[XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     *,
     none_allowed: bool = False,
@@ -136,7 +137,7 @@ def read_value_from_xml_child(
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
-    scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
+    scxml_entry = get_children_as_scxml(xml_child[0], custom_data_types, valid_types)
     if len(scxml_entry) == 0:
         log_error(
             xml_tree,
@@ -150,6 +151,7 @@ def read_value_from_xml_arg_or_child(
     scxml_type: Type[ScxmlBase],
     xml_tree: XmlElement,
     tag_name: str,
+    custom_data_types: List[XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:
@@ -168,7 +170,7 @@ def read_value_from_xml_arg_or_child(
     read_value = get_xml_attribute(scxml_type, xml_tree, tag_name, undefined_allowed=True)
     if read_value is None:
         read_value = read_value_from_xml_child(
-            xml_tree, tag_name, valid_types, none_allowed=none_allowed
+            xml_tree, tag_name, custom_data_types, valid_types, none_allowed=none_allowed
         )
     if not none_allowed:
         if read_value is None:

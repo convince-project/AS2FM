@@ -101,13 +101,23 @@ class ScxmlData(ScxmlBase):
             )
             data_type = comment_tuple[1]
         data_expr = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "expr", (BtGetValueInputPort, str)
+            ScxmlData, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
         )
         lower_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "lower_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+            ScxmlData,
+            xml_tree,
+            "lower_bound_incl",
+            custom_data_types,
+            (BtGetValueInputPort, str),
+            none_allowed=True,
         )
         upper_bound = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "upper_bound_incl", (BtGetValueInputPort, str), none_allowed=True
+            ScxmlData,
+            xml_tree,
+            "upper_bound_incl",
+            custom_data_types,
+            (BtGetValueInputPort, str),
+            none_allowed=True,
         )
         instance = ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
         instance.set_xml_origin(xml_tree)
