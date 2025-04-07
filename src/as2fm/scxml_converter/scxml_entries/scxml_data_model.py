@@ -74,23 +74,22 @@ class ScxmlDataModel(ScxmlBase):
 
     def check_validity(self) -> bool:
         xml_origin = self.get_xml_origin()
-        if self._data_entries is not None:
-            if not isinstance(self._data_entries, list):
-                log_error(xml_origin, "Error: SCXML datamodel: data entries are not a list.")
+        if not isinstance(self._data_entries, list):
+            log_error(xml_origin, "Error: SCXML datamodel: data entries are not a list.")
+            return False
+        for data_entry in self._data_entries:
+            if not isinstance(data_entry, ScxmlData):
+                log_error(
+                    xml_origin,
+                    f"Error: SCXML datamodel: invalid data entry type {type(data_entry)}.",
+                )
                 return False
-            for data_entry in self._data_entries:
-                if not isinstance(data_entry, ScxmlData):
-                    log_error(
-                        xml_origin,
-                        f"Error: SCXML datamodel: invalid data entry type {type(data_entry)}.",
-                    )
-                    return False
-                if not data_entry.check_validity():
-                    log_error(
-                        xml_origin,
-                        f"Error: SCXML datamodel: invalid data entry '{data_entry.get_name()}'.",
-                    )
-                    return False
+            if not data_entry.check_validity():
+                log_error(
+                    xml_origin,
+                    f"Error: SCXML datamodel: invalid data entry '{data_entry.get_name()}'.",
+                )
+                return False
         return True
 
     def is_plain_scxml(self) -> bool:
@@ -98,11 +97,10 @@ class ScxmlDataModel(ScxmlBase):
         return all(data.is_plain_scxml() for data in self._data_entries)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlDataModel":
-        old_data_entries = self._data_entries
-        self._data_entries = []
-        for data_entry in old_data_entries:
-            self._data_entries.extend(data_entry.as_plain_scxml(ros_declarations))
-        return self
+        plain_data_entries = []
+        for data_entry in self._data_entries:
+            plain_data_entries.extend(data_entry.as_plain_scxml(ros_declarations))
+        return ScxmlDataModel(plain_data_entries)
 
     def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:
         """

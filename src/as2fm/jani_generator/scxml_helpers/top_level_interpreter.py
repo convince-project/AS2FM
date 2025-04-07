@@ -295,6 +295,10 @@ def interpret_top_level_xml(
     for path in model.data_declarations:
         custom_data_types.extend(read_types_file(path))
 
+    custom_types_dict = {type_class.get_name(): type_class for type_class in custom_data_types}
+    for custom_type in custom_data_types:
+        custom_type.expand_members(custom_types_dict)
+
     plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
 
     if generated_scxmls_dir is not None:
