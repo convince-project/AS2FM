@@ -15,43 +15,19 @@
                             "left": "topic_uc2__info__properties__move_block_abort_time_msg.valid",
                             "right": {
                                 "op": "<",
-                                "left": {
-                                    "op": "+",
-                                    "left": "topic_clock_msg.ros_fields__sec",
-                                    "right": {
-                                        "op": "*",
-                                        "left": "topic_clock_msg.ros_fields__nanosec",
-                                        "right": 0.000000001
-                                    }
-                                },
+                                "left": "topic_clock_msg.ros_fields__sec",
                                 "right": {
                                     "op": "+",
-                                    "left": {
-                                        "op": "+",
-                                        "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__sec",
-                                        "right": {
-                                            "op": "*",
-                                            "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__nanosec",
-                                            "right": 0.000000001
-                                        }
-                                    },
+                                    "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__sec",
                                     "right": 20.0
                                 }
                             }
                         },
                         "right": {
-                            "op": "∨",
-                            "left": {
-                                "op": ">",
-                                "left": "topic_uc2__info__properties__recover_block_running_msg.ros_fields__data",
-                                "right": 0
-                            },
-                            "right": {
-                                "op": "=",
-                                "left": "bt_1000_response.status",
-                                "right": 1,
-                                "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
-                            }
+                            "op": "=",
+                            "left": "action_uc2__skills__move_block_result.code",
+                            "right": 4,
+                            "comment": "This uses the action_msgs.GoalStatus values. Check if contains the STATUS_SUCCEEDED value (4)"
                         }
                     }
                 },
@@ -75,6 +51,33 @@
                             "left": "bt_1000_response.status",
                             "right": 1,
                             "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "move_action_success",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "comment": "The tree succeeds only in case MoveBlock succeeds: from how we modeled the environment, this will be always the case after 3 attempts.",
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": "action_uc2__skills__move_block_result.valid",
+                            "right": {
+                                "op": "=",
+                                "left": "action_uc2__skills__move_block_result.code",
+                                "right": 4,
+                                "comment": "This uses the action_msgs.GoalStatus values. Check if contains the STATUS_SUCCEEDED value (4)"
+                            }
                         }
                     }
                 },
