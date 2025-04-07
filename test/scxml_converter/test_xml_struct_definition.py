@@ -52,4 +52,7 @@ def test_instance_evaluation():
                 {'x': -2.0, 'y': 5}
             ]},
         ]}"""
-    struct_definitions["PolygonsArray"].get_instance_from_expression(js_expression)
+    poly_instance = struct_definitions["PolygonsArray"].get_instance_from_expression(js_expression)
+    assert len(poly_instance) == 2
+    assert poly_instance["polygons.points.x"] == [[1, 3], [-1.5, -2.0]]
+    assert poly_instance["polygons.points.y"] == [[2, 4], [3, 5]]

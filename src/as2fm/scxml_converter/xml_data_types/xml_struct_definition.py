@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from js2py.base import JsObjectWrapper
 from lxml.etree import _Element as XmlElement
@@ -134,38 +134,42 @@ class XmlStructDefinition:
         """
         if self._members_list is None:
             raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
-
         # Interpret the expression
         interpreted_expr = interpret_non_base_ecma_script_expr(expr)
         assert isinstance(interpreted_expr, JsObjectWrapper)
         instance_as_dict = interpreted_expr.to_dict()
+        return self._expand_object_dict(instance_as_dict, "")
 
-        def expand_object_dict(instance_as_dict: Dict[str, Any], prefix: str) -> Dict[str, Any]:
-            ret_dict: Dict[str, Any] = {}
-            for obj_key, obj_value in instance_as_dict.items():
-                obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
-                if isinstance(obj_value, dict):
-                    ret_dict.update(expand_object_dict(obj_value, obj_full_name))
-                if isinstance(obj_value, list):
-                    ret_dict[obj_full_name] = []
-                    is_object_list = isinstance(obj_value[0], dict)
-                    for obj_entry in obj_value:
-                        # Ensure we are not mixing types in the same list
-                        if is_object_list:
-                            assert isinstance(obj_entry, dict)
-                            ret_dict[obj_full_name].append(
-                                expand_object_dict(obj_entry, obj_full_name)
-                            )
-                        else:
-                            assert not isinstance(obj_entry, dict)
-                            ret_dict[obj_full_name].append(obj_value)
+    def _expand_object_dict(self, object_to_convert: Dict[str, Any], prefix: str) -> Dict[str, Any]:
+        ret_dict: Dict[str, Any] = {}
+        for obj_key, obj_value in object_to_convert.items():
+            obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
+            if isinstance(obj_value, dict):
+                ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))
+            if isinstance(obj_value, list):
+                ret_dict[obj_full_name] = []
+                assert not isinstance(
+                    obj_value[0], list
+                ), "An object list entry can only contain other objects or base types."
+                is_object_list = isinstance(obj_value[0], dict)
+                for obj_entry in obj_value:
+                    # Ensure we are not mixing types in the same list
                     if is_object_list:
-                        # We need to convert this into an array of arrays
-                        # objects_list = ret_dict.pop(obj_value)
-                        # TODO: Fill ret_dict[obj_full_name.single_entry] properly
-                        pass  # Distinguish on the list content (dict or non-dict)
-                else:
-                    ret_dict[obj_full_name] = obj_value
-            return ret_dict
-
-        return expand_object_dict(instance_as_dict, "")
+                        assert isinstance(obj_entry, dict)
+                        ret_dict[obj_full_name].append(
+                            self._expand_object_dict(obj_entry, obj_full_name)
+                        )
+                    else:
+                        assert not isinstance(obj_entry, dict)
+                        ret_dict[obj_full_name].append(obj_value)
+                if is_object_list:
+                    # We need to convert this array of dicts into multiple arrays
+                    objects_list: List[Any] = ret_dict.pop(obj_full_name)
+                    for obj_key in objects_list[0]:
+                        ret_dict[obj_key] = []
+                    for obj_instance in objects_list:
+                        for obj_instance_key, obj_instance_value in obj_instance.items():
+                            ret_dict[obj_instance_key].append(obj_instance_value)
+            else:
+                ret_dict[obj_full_name] = obj_value
+        return ret_dict
