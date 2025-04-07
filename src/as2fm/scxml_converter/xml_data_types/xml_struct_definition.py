@@ -145,31 +145,66 @@ class XmlStructDefinition:
         for obj_key, obj_value in object_to_convert.items():
             obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
             if isinstance(obj_value, dict):
+                assert len(obj_value) > 0, "Unexpected empty dictionary in value definition."
                 ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))
             if isinstance(obj_value, list):
-                ret_dict[obj_full_name] = []
-                assert not isinstance(
-                    obj_value[0], list
-                ), "An object list entry can only contain other objects or base types."
-                is_object_list = isinstance(obj_value[0], dict)
-                for obj_entry in obj_value:
-                    # Ensure we are not mixing types in the same list
-                    if is_object_list:
-                        assert isinstance(obj_entry, dict)
-                        ret_dict[obj_full_name].append(
-                            self._expand_object_dict(obj_entry, obj_full_name)
-                        )
+                if len(obj_value) > 0:
+                    assert not isinstance(
+                        obj_value[0], list
+                    ), "An object list entry can only contain other objects or base types."
+                    if isinstance(obj_value[0], dict):
+                        # List of dictionaries
+                        tmp_instances_list: List[Any] = []
+                        for obj_entry in obj_value:
+                            # Ensure we are not mixing types in the same list
+                            assert isinstance(obj_entry, dict)
+                            tmp_instances_list.append(
+                                self._expand_object_dict(obj_entry, obj_full_name)
+                            )
+                        # Check tmp_instances_list[0] has all sub-keys of obj_full_name
+                        self._validate_object(tmp_instances_list[0], obj_full_name)
+                        for tmp_key in tmp_instances_list[0]:
+                            tmp_values_list = [
+                                tmp_instance[tmp_key] for tmp_instance in tmp_instances_list
+                            ]
+                            self._update_instance_dictionary(ret_dict, tmp_key, tmp_values_list)
                     else:
-                        assert not isinstance(obj_entry, dict)
-                        ret_dict[obj_full_name].append(obj_value)
-                if is_object_list:
-                    # We need to convert this array of dicts into multiple arrays
-                    objects_list: List[Any] = ret_dict.pop(obj_full_name)
-                    for obj_key in objects_list[0]:
-                        ret_dict[obj_key] = []
-                    for obj_instance in objects_list:
-                        for obj_instance_key, obj_instance_value in obj_instance.items():
-                            ret_dict[obj_instance_key].append(obj_instance_value)
+                        # List of base types
+                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
+                else:
+                    # Empty list
+                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
             else:
-                ret_dict[obj_full_name] = obj_value
+                self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
         return ret_dict
+
+    def _update_instance_dictionary(self, instance_dict, entry_key, entry_value):
+        if entry_key in self._members_list:
+            assert entry_key not in instance_dict
+            instance_dict[entry_key] = entry_value
+        else:
+            # Check if the entry key is found as a prefix
+            sub_keys = self._get_list_keys_with_prefix(entry_key)
+            assert len(sub_keys) > 0, f"Provided key {entry_key} is invalid."
+            # Check for compatible entry_value
+            assert (
+                isinstance(entry_value, list) and len(entry_value) == 0
+            ), f"The provided incomplete key '{entry_key}' can be used only with empty lists."
+            for sub_key in sub_keys:
+                assert sub_key not in instance_dict, f"Error: found duplicate key {sub_key}."
+                instance_dict[sub_key] = []
+
+    def _get_list_keys_with_prefix(self, prefix: str):
+        return [
+            matching_key
+            for matching_key in self.get_expanded_members()
+            if matching_key.startswith(prefix)
+        ]
+
+    def _validate_object(self, obj_instance: Dict[str, Any], prefix: str):
+        expected_keys = self._get_list_keys_with_prefix(prefix)
+        assert len(obj_instance) == len(expected_keys)
+        for expected_key in expected_keys:
+            assert (
+                expected_key in obj_instance
+            ), f"The object {obj_instance} has no key {expected_key}"
