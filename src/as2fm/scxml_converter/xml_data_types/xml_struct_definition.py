@@ -67,6 +67,11 @@ class XmlStructDefinition:
         assert len(members) > 0, get_error_msg(xml_element, "struct definition with no members.")
         instance = cls(name, members)
         instance.set_xml_origin(xml_element)
+        return instance
+
+    def get_name(self) -> str:
+        """Get the name of the custom struct."""
+        return self.name
 
     def set_xml_origin(self, xml_origin: XmlElement):
         """Set the xml_element this object was made from."""

@@ -26,6 +26,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.common import is_array_type, is_comment
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
+from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     RESERVED_NAMES,
     is_non_empty_string,
@@ -39,6 +40,7 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     convert_string_to_type,
     get_array_max_size,
     get_data_type_from_string,
+    is_type_string_base_type,
 )
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -146,7 +148,11 @@ class ScxmlData(ScxmlBase):
         return self._data_type
 
     def get_type(self) -> type:
-        """Get the type of the data as a Python type."""
+        """
+        Get the type of the data as a Python type.
+
+        Use this only after substitution of custom data types.
+        """
         python_type = get_data_type_from_string(self._data_type)
         assert (
             python_type is not None
@@ -192,7 +198,9 @@ class ScxmlData(ScxmlBase):
         if valid_id in RESERVED_NAMES:
             print(f"Error: SCXML data: name '{self._id}' in reserved IDs list: {RESERVED_NAMES}.")
             return False
-        if get_data_type_from_string(self._data_type) is None:
+        if not is_type_string_base_type(self._data_type) and self._data_type not in [
+            custom_struct.get_name() for custom_struct in self.get_custom_data_types()
+        ]:
             print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
             return False
         if isinstance(self._expr, str):
@@ -223,8 +231,27 @@ class ScxmlData(ScxmlBase):
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
 
-    def as_plain_scxml(self, _):
-        raise RuntimeError("Error: SCXML data: unexpected call to as_plain_scxml.")
+    def is_plain_scxml(self):
+        """Check if the data type is a base type."""
+        return is_type_string_base_type(self._data_type)
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlData"]:
+        # TODO: Using ROS declarations (in _), we can add the support for the ROS types as well.
+        if is_type_string_base_type(self._data_type):
+            return [self]
+        data_type = None
+        for custom_struct in self.get_custom_data_types():
+            if custom_struct.get_name() == self._data_type:
+                data_type = custom_struct
+                break
+        assert data_type is not None, f"Cannot find custom data type {self._data_type}."
+        assert isinstance(self._expr, str), "We only support string init expr. for custom types."
+        expanded_data_values = data_type.get_instance_from_expression(self._expr)
+        expanded_data_types = data_type.get_expanded_members()
+        return [
+            ScxmlData(key, expanded_data_values[key], expanded_data_types[key])
+            for key in expanded_data_types
+        ]
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         if isinstance(self._expr, BtGetValueInputPort):

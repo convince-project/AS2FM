@@ -26,6 +26,7 @@ from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -65,8 +66,6 @@ class ScxmlDataModel(ScxmlBase):
         return ScxmlDataModel(data_entries)
 
     def get_data_entries(self) -> List[ScxmlData]:
-        if self._data_entries is None:
-            return []
         return self._data_entries
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
@@ -93,6 +92,17 @@ class ScxmlDataModel(ScxmlBase):
                     )
                     return False
         return True
+
+    def is_plain_scxml(self) -> bool:
+        """Check if all data entries are already plain-scxml (using only base types)."""
+        return all(data.is_plain_scxml() for data in self._data_entries)
+
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlDataModel":
+        old_data_entries = self._data_entries
+        self._data_entries = []
+        for data_entry in old_data_entries:
+            self._data_entries.extend(data_entry.as_plain_scxml(ros_declarations))
+        return self
 
     def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:
         """
