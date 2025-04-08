@@ -17,14 +17,12 @@
             expr="
             {'polygons': [
                 {'points': [
-                    // a_point,  (not in declarations)
                     {'x': 1, 'y': 2},
                     {'x': 3, 'y': 4}
                 ]},
-                // a_polygon,  (not in declarations)
                 ]
             }"
-            type="Polygon"
+            type="PolygonArray"
         />
     </datamodel>
 

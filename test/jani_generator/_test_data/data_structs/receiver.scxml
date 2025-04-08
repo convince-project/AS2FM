@@ -16,7 +16,7 @@
         <data
             id="recv_polygons"
             expr="{'polygons': []}"
-            type="Polygon"
+            type="PolygonArray"
         />
     </datamodel>
 

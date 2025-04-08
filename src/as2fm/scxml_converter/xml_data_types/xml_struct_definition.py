@@ -190,7 +190,11 @@ class XmlStructDefinition:
         else:
             # Check if the entry key is found as a prefix
             sub_keys = self._get_list_keys_with_prefix(entry_key)
-            assert len(sub_keys) > 0, f"Provided key {entry_key} is invalid."
+            assert len(sub_keys) > 0, get_error_msg(
+                self.get_xml_origin(),
+                f"Provided key '{entry_key}' is incompatible with {self.name} type."
+                f"Expected keys shall be in {[x for x in self._members_list.keys()]} set.",
+            )
             # Check for compatible entry_value
             assert (
                 isinstance(entry_value, list) and len(entry_value) == 0
