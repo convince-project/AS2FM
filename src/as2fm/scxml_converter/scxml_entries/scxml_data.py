@@ -135,7 +135,10 @@ class ScxmlData(ScxmlBase):
         upper_bound: ValidBound = None,
     ):
         self._id: str = id_
-        self._expr: ValidExpr = expr
+        if isinstance(expr, (str, BtGetValueInputPort)):
+            self._expr = expr
+        else:
+            self._expr = str(expr)
         self._data_type: str = data_type
         self._lower_bound: ValidBound = lower_bound
         self._upper_bound: ValidBound = upper_bound
@@ -209,8 +212,8 @@ class ScxmlData(ScxmlBase):
             valid_expr = isinstance(self._expr, (int, float, bool))
             if not valid_expr:
                 print(
-                    f"Error: SCXML data: '{self._id}': initial expression ",
-                    f"evaluates to an invalid type '{type(self._expr)}'.",
+                    f"Error: SCXML data: '{self._id}': initial expression for type ",
+                    f"{self._data_type} evaluates to an invalid type '{type(self._expr)}'.",
                 )
         valid_bounds = self.check_valid_bounds()
         return valid_id and valid_expr and valid_bounds
