@@ -17,10 +17,11 @@
 Interface classes between SCXML tags and related JANI output.
 """
 
-from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple, get_args
+from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple
 
-from as2fm.as2fm_common.common import EPSILON, check_value_type_compatible
+from as2fm.as2fm_common.common import EPSILON
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.logging import check_assertion
 from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniEdge,
@@ -30,7 +31,6 @@ from as2fm.jani_generator.jani_entries import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
-    ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
@@ -42,12 +42,17 @@ from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import 
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
-    ScxmlData,
     ScxmlDataModel,
     ScxmlRoot,
     ScxmlState,
     ScxmlTransition,
     ScxmlTransitionTarget,
+)
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    ArrayInfo,
+    check_variable_base_type_ok,
+    get_array_info,
+    get_data_type_from_string,
 )
 
 # The supported MutableSequence instances
@@ -151,48 +156,57 @@ class DatamodelTag(BaseTag):
         # A collection of the variables read from the datamodel so far
         assert self.model_variables is None, "Expected model_variables to be unset at this stage."
         self.model_variables: Dict[str, Any] = {}
+        assert isinstance(self.element, ScxmlDataModel)
+        check_assertion(
+            self.element.is_plain_scxml(),
+            self.element.get_xml_origin(),
+            "Invalid data_model element found.",
+        )
         for scxml_data in self.element.get_data_entries():
-            assert isinstance(scxml_data, ScxmlData), "Unexpected element in the DataModel."
-            assert scxml_data.check_validity(), "Found invalid data entry."
-            expected_type = scxml_data.get_type()
+            expected_type_str = scxml_data.get_type_str()
+            expected_type = get_data_type_from_string(expected_type_str)
             array_info: Optional[ArrayInfo] = None
-            if expected_type not in (int, float, bool):
-                # Not a basic type: we are dealing with an array or a string
+            if expected_type is MutableSequence:
+                array_info = get_array_info(expected_type_str)
+                array_info.substitute_unbounded_dims(self.max_array_size)
+            else:
+                expected_type = get_data_type_from_string()
+                # Special handling of strings: treat them as array of integers
                 if expected_type is str:
-                    array_type = int
-                    max_array_size = None
+                    array_info = ArrayInfo(int, 1, [self.max_array_size])
                 else:
-                    array_type = get_args(expected_type)[0]
-                    max_array_size = scxml_data.get_array_max_size()
-                assert array_type in (int, float), f"Type {expected_type} not supported in arrays."
-                if max_array_size is None:
-                    max_array_size = self.max_array_size
-                array_info = ArrayInfo(array_type, max_array_size)
-            init_value = parse_ecmascript_to_jani_expression(
+                    check_assertion(
+                        expected_type in (int, float, bool),
+                        scxml_data.get_xml_origin(),
+                        f"Unexpected data type {expected_type} found.",
+                        ValueError,
+                    )
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
+            check_assertion(
+                check_variable_base_type_ok(evaluated_expr, expected_type, array_info),
+                scxml_data.get_xml_origin(),
+                f"Invalid type of '{scxml_data.get_name()}': expected type "
+                f"{expected_type} != {type(evaluated_expr)}",
+            )
+            evaluated_jani_value = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_data.get_xml_origin(), array_info
             )
-            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
-            assert check_value_type_compatible(evaluated_expr, expected_type), (
-                f"Invalid value for {scxml_data.get_name()}: "
-                f"Expected type {expected_type}, got {type(evaluated_expr)}."
-            )
-            # Special case for strings: treat them as array of integers
-            if isinstance(evaluated_expr, str):
-                expected_type = MutableSequence[int]
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
-                JaniVariable(scxml_data.get_name(), expected_type, init_value)
+                JaniVariable(scxml_data.get_name(), expected_type, evaluated_jani_value)
             )
-            # In case of arrays, declare an additional 'length' variable
-            # In this case, use dot notation, as in JS arrays
-            if expected_type in SupportedMutableSequence:
-                init_expr = interpret_ecma_script_expr(scxml_data.get_expr())
+            # In case of arrays, declare a number of additional 'length' variables is required
+            if array_info is not None:
+                # Add the array-length values in the model
+                raise NotImplementedError("We are switching to n-dimensional arrays...")
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
-                    JaniVariable(f"{scxml_data.get_name()}.length", int, JaniValue(len(init_expr)))
+                    JaniVariable(
+                        f"{scxml_data.get_name()}.length", int, JaniValue(len(evaluated_expr))
+                    )
                 )
-            if isinstance(evaluated_expr, MutableSequence):
                 # Add padding to the evaluated expression, for the JS evaluator to work
+                raise NotImplementedError("Padding is required for all array dimensions")
                 padding_size = array_info.array_max_size - len(evaluated_expr)
                 evaluated_expr.extend([array_info.array_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})

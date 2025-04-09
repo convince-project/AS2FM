@@ -38,7 +38,7 @@ from lxml.etree import _Element as XmlElement
 # src https://docs.google.com/document/d/\
 #     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
 # Additionally, we support the array types from the array extension.
-ValidJaniTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
+ValidJaniTypes = Union[bool, int, float, MutableSequence]
 
 # When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
 # Strings.
@@ -122,16 +122,6 @@ def string_as_bool(value_str: str) -> bool:
     """
     assert value_str in ("true", "false"), f"Invalid bool string: {value_str} != 'true'/'false'"
     return value_str == "true"
-
-
-def check_value_type_compatible(value: ValidJaniTypes, field_type: Type[ValidJaniTypes]) -> bool:
-    """Check if the value is compatible with the field type."""
-    if field_type is float:
-        return isinstance(value, (int, float))
-    # MutableSequence requires a special handling...
-    if field_type in (MutableSequence[int], MutableSequence[float]):
-        return isinstance(value, MutableSequence)
-    return isinstance(value, field_type)
 
 
 def is_array_type(field_type: Type[ValidScxmlTypes]) -> bool:

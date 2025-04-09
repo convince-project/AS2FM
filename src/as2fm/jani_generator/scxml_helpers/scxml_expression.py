@@ -17,7 +17,6 @@
 Module producing jani expressions from ecmascript.
 """
 
-from dataclasses import dataclass
 from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
@@ -37,14 +36,9 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_value_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 JS_CALLABLE_PREFIX = "Math"
-
-
-@dataclass()
-class ArrayInfo:
-    array_type: Type[Union[int, float]]
-    array_max_size: int
 
 
 def parse_ecmascript_to_jani_expression(
@@ -99,22 +93,24 @@ def _generate_array_expression_for_assignment(
         "Error: array generators can only be used for assignments: "
         f"{parent_script.type} != ExpressionStatement."
     )
-    array_type = array_info.array_type
-    max_size = array_info.array_max_size
-    assert array_type in (int, float), f"Array type {array_type} != (int, float)."
+    default_entry_value = array_info.array_type(0)
     if len(array_values) == 0:
-        return array_create_operator("__array_iterator", max_size, array_type(0))
+        return array_create_operator(
+            "__array_iterator", array_info.array_max_sizes, default_entry_value
+        )
     else:
-        padding_size = max_size - len(array_values)
-        assert (
-            padding_size >= 0
-        ), f"The size for the provided array {array_values} is larger than {max_size}."
-        array_values.extend([array_type(0)] * padding_size)
-        return array_value_operator(array_values)
+        NotImplementedError("Take care of n-dimensional arrays")
+        # padding_size = max_size - len(array_values)
+        # assert (
+        #     padding_size >= 0
+        # ), f"The size for the provided array {array_values} is larger than {max_size}."
+        # array_values.extend([array_type(0)] * padding_size)
+        # return array_value_operator(array_values)
+        return array_value_operator([])
 
 
 def _generate_constant_array_expression(
-    p_node: esprima.nodes.Node, array_values: MutableSequence
+    p_node: esprima.nodes.Node, array_values: MutableSequence[Union[MutableSequence, int, float]]
 ) -> JaniExpression:
     # If here, we are dealing with a constant array, that can only be used for eq. checks
     assert (

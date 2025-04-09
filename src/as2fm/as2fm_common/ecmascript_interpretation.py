@@ -17,7 +17,6 @@
 Module for interpreting ecmascript.
 """
 
-from array import array
 from typing import Dict, Optional, Union, get_args
 
 import js2py
@@ -29,7 +28,7 @@ BasicJsTypes = Union[int, float, bool, str]
 
 def _interpret_ecmascript_expr(
     expr: str, variables: Dict[str, ValidScxmlTypes]
-) -> Union[ValidScxmlTypes, js2py.base.JsObjectWrapper]:
+) -> Union[ValidScxmlTypes, dict]:
     """
     Process a JS expression and return the resulting outcome.
 
@@ -51,16 +50,11 @@ def _interpret_ecmascript_expr(
     if isinstance(expr_result, get_args(BasicJsTypes)):
         return expr_result
     elif isinstance(expr_result, js2py.base.JsObjectWrapper):
+        # This is just to control the 1st operation to execute. All others are done recursively.
         if isinstance(expr_result._obj, js2py.base.PyJsArray):
-            res_as_list = expr_result.to_list()
-            if all(isinstance(x, int) for x in res_as_list):
-                return array("i", res_as_list)
-            else:
-                return array("d", res_as_list)
+            return expr_result.to_list()
         else:
-            return expr_result
-    elif isinstance(expr_result, array):
-        return expr_result
+            return expr_result.to_dict()
     else:
         raise ValueError(
             f"Expected expr. {expr} to be of type {BasicJsTypes} or "
@@ -81,17 +75,16 @@ def interpret_ecma_script_expr(
     if variables is None:
         variables = {}
     expr_result = _interpret_ecmascript_expr(expr, variables)
-    if isinstance(expr_result, js2py.base.JsObjectWrapper):
+    if isinstance(expr_result, dict):
         raise ValueError(
-            f"Expected expr. {expr} to be of type {BasicJsTypes} or "
-            f"an array, got '{type(expr_result._obj)}'"
+            f"Expected expr. {expr} to be of type {BasicJsTypes} or a list, got a dictionary."
         )
     return expr_result
 
 
 def interpret_non_base_ecma_script_expr(
     expr: str, variables: Optional[Dict[str, ValidScxmlTypes]] = None
-) -> Union[ValidScxmlTypes, js2py.base.JsObjectWrapper]:
+) -> Union[ValidScxmlTypes, dict]:
     """
     Interpret the ECMA script expression. Returns also complex objects.
 

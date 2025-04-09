@@ -23,7 +23,8 @@ from typing import Any, List, Optional, Tuple, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import is_array_type, is_comment
+from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
@@ -38,7 +39,6 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     convert_string_to_type,
-    get_array_max_size,
     get_data_type_from_string,
     is_type_string_base_type,
 )
@@ -140,8 +140,8 @@ class ScxmlData(ScxmlBase):
         else:
             self._expr = str(expr)
         self._data_type: str = data_type
-        self._lower_bound: ValidBound = lower_bound
-        self._upper_bound: ValidBound = upper_bound
+        self._lower_bound: Optional[str] = None if lower_bound is None else str(lower_bound)
+        self._upper_bound: Optional[str] = None if upper_bound is None else str(upper_bound)
 
     def get_name(self) -> str:
         return self._id
@@ -162,12 +162,6 @@ class ScxmlData(ScxmlBase):
         ), f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'."
         return python_type
 
-    def get_array_max_size(self) -> Optional[int]:
-        assert is_array_type(
-            self.get_type()
-        ), f"Error: SCXML data: '{self._id}' type is not an array."
-        return get_array_max_size(self._data_type)
-
     def get_expr(self) -> ValidExpr:
         return self._expr
 
@@ -176,9 +170,10 @@ class ScxmlData(ScxmlBase):
             # Nothing to check
             return True
         if self.get_type() not in (float, int):
-            print(
+            log_error(
+                self.get_xml_origin(),
                 f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
-                "not a number."
+                "not a number.",
             )
             return False
         lower_bound = None
@@ -234,9 +229,9 @@ class ScxmlData(ScxmlBase):
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
 
-    def is_plain_scxml(self):
+    def is_plain_scxml(self) -> bool:
         """Check if the data type is a base type."""
-        return is_type_string_base_type(self._data_type)
+        return self.check_validity() and is_type_string_base_type(self._data_type)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlData"]:
         # TODO: Using ROS declarations (in _), we can add the support for the ROS types as well.

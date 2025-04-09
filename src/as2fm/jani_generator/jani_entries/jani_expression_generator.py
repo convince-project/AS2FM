@@ -17,6 +17,8 @@
 Generate full expressions in Jani
 """
 
+from typing import MutableSequence, Union
+
 from as2fm.jani_generator.jani_entries import JaniDistribution, JaniExpression
 
 
@@ -136,6 +138,7 @@ def array_create_operator(var, length, exp) -> JaniExpression:
     :param length: The length of the array
     :param exp: The expression to initialize the array with, based on the variable in var
     """
+    raise NotImplementedError("Need to handle N-Dimensional arrays here!")
     return JaniExpression({"op": "ac", "var": var, "length": length, "exp": exp})
 
 
@@ -149,12 +152,15 @@ def array_access_operator(exp, index) -> JaniExpression:
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
 
 
-def array_value_operator(elements: list) -> JaniExpression:
+def array_value_operator(
+    elements: MutableSequence[Union[MutableSequence, float, int]],
+) -> JaniExpression:
     """
     Generate an array value expression
 
     :param elements: The elements of the array
     """
+    raise NotImplementedError("N-Dimensional arrays are not implemented")
     return JaniExpression({"op": "av", "elements": elements})
 
 
