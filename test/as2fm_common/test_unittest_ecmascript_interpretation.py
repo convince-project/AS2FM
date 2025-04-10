@@ -16,7 +16,6 @@
 """Test the SCXML data conversion"""
 
 import unittest
-from array import array
 
 import pytest
 
@@ -39,7 +38,7 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertEqual(interpret_ecma_script_expr("1.1"), 1.1)
         self.assertEqual(interpret_ecma_script_expr("true"), True)
         self.assertEqual(interpret_ecma_script_expr("false"), False)
-        self.assertEqual(interpret_ecma_script_expr("[1,2,3]"), array("i", [1, 2, 3]))
+        self.assertEqual(interpret_ecma_script_expr("[1,2,3]"), [1, 2, 3])
         self.assertEqual(interpret_ecma_script_expr("'this is a string'"), str("this is a string"))
 
     def test_ecmascript_unsupported(self):

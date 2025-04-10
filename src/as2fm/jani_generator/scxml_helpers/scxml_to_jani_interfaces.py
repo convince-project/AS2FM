@@ -53,6 +53,8 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     check_variable_base_type_ok,
     get_array_info,
     get_data_type_from_string,
+    is_type_string_array,
+    is_type_string_base_type,
 )
 
 # The supported MutableSequence instances
@@ -164,23 +166,23 @@ class DatamodelTag(BaseTag):
         )
         for scxml_data in self.element.get_data_entries():
             expected_type_str = scxml_data.get_type_str()
-            expected_type = get_data_type_from_string(expected_type_str)
             array_info: Optional[ArrayInfo] = None
-            if expected_type is MutableSequence:
+            expected_type: type = None
+            if is_type_string_array(expected_type_str):
                 array_info = get_array_info(expected_type_str)
                 array_info.substitute_unbounded_dims(self.max_array_size)
+                expected_type = MutableSequence
             else:
-                expected_type = get_data_type_from_string()
+                check_assertion(
+                    is_type_string_base_type(expected_type_str),
+                    scxml_data.get_xml_origin(),
+                    f"Unexpected type {expected_type_str} found in scxml data.",
+                )
+                expected_type = get_data_type_from_string(expected_type_str)
                 # Special handling of strings: treat them as array of integers
                 if expected_type is str:
-                    array_info = ArrayInfo(int, 1, [self.max_array_size])
-                else:
-                    check_assertion(
-                        expected_type in (int, float, bool),
-                        scxml_data.get_xml_origin(),
-                        f"Unexpected data type {expected_type} found.",
-                        ValueError,
-                    )
+                    # Keep expected_type == str, since we use it for the JS evaluation.
+                    array_info = ArrayInfo("int32", 1, [self.max_array_size])
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             check_assertion(
                 check_variable_base_type_ok(evaluated_expr, expected_type, array_info),
@@ -188,17 +190,17 @@ class DatamodelTag(BaseTag):
                 f"Invalid type of '{scxml_data.get_name()}': expected type "
                 f"{expected_type} != {type(evaluated_expr)}",
             )
-            evaluated_jani_value = parse_ecmascript_to_jani_expression(
+            jani_data_init_expr = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_data.get_xml_origin(), array_info
             )
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
-                JaniVariable(scxml_data.get_name(), expected_type, evaluated_jani_value)
+                JaniVariable(scxml_data.get_name(), expected_type, jani_data_init_expr)
             )
             # In case of arrays, declare a number of additional 'length' variables is required
             if array_info is not None:
                 # Add the array-length values in the model
-                raise NotImplementedError("We are switching to n-dimensional arrays...")
+                assert array_info.array_dimensions == 1, "TODO: Implement multi-dimensional support"
                 # TODO: The length variable NEEDS to be bounded
                 self.automaton.add_variable(
                     JaniVariable(
@@ -206,8 +208,7 @@ class DatamodelTag(BaseTag):
                     )
                 )
                 # Add padding to the evaluated expression, for the JS evaluator to work
-                raise NotImplementedError("Padding is required for all array dimensions")
-                padding_size = array_info.array_max_size - len(evaluated_expr)
+                padding_size = array_info.array_max_sizes[0] - len(evaluated_expr)
                 evaluated_expr.extend([array_info.array_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 

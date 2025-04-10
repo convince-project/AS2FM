@@ -17,6 +17,8 @@
 Module producing jani expressions from ecmascript.
 """
 
+# TODO: Rename this file to something more meaningful, like ecmascript_to_jani.py
+
 from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
@@ -32,11 +34,10 @@ from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import
 from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_access_operator,
-    array_create_operator,
     array_value_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, get_data_type_from_string
 
 JS_CALLABLE_PREFIX = "Math"
 
@@ -93,20 +94,16 @@ def _generate_array_expression_for_assignment(
         "Error: array generators can only be used for assignments: "
         f"{parent_script.type} != ExpressionStatement."
     )
-    default_entry_value = array_info.array_type(0)
-    if len(array_values) == 0:
-        return array_create_operator(
-            "__array_iterator", array_info.array_max_sizes, default_entry_value
-        )
-    else:
-        NotImplementedError("Take care of n-dimensional arrays")
-        # padding_size = max_size - len(array_values)
-        # assert (
-        #     padding_size >= 0
-        # ), f"The size for the provided array {array_values} is larger than {max_size}."
-        # array_values.extend([array_type(0)] * padding_size)
-        # return array_value_operator(array_values)
-        return array_value_operator([])
+
+    array_base_type: Type[Union[int, float]] = get_data_type_from_string(array_info.array_type)
+    assert array_info.array_dimensions == 1, "TODO: Implement N-Dimensional array support."
+    assert isinstance(array_info.array_max_sizes[0], int), "Unexpected error: undefined size found."
+    padding_size = array_info.array_max_sizes[0] - len(array_values)
+    assert (
+        padding_size >= 0
+    ), f"Provided array {array_values} is longer than max value: {array_info.array_max_sizes[0]}."
+    array_values.extend([array_base_type(0)] * padding_size)
+    return array_value_operator(array_values)
 
 
 def _generate_constant_array_expression(

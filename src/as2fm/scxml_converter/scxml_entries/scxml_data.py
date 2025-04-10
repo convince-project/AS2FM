@@ -234,7 +234,8 @@ class ScxmlData(ScxmlBase):
         return self.check_validity() and is_type_string_base_type(self._data_type)
 
     def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlData"]:
-        # TODO: Using ROS declarations (in _), we can add the support for the ROS types as well.
+        # TODO: By using ROS declarations, we can add the support for the ROS types as well.
+        # TODO: This is fine also in case it is an array of base types...
         if is_type_string_base_type(self._data_type):
             return [self]
         data_type = None

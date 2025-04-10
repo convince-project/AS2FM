@@ -294,7 +294,7 @@ def interpret_top_level_xml(
     custom_data_types: List[XmlStructDefinition] = []
     for path in model.data_declarations:
         custom_data_types.extend(read_types_file(path))
-
+    # TODO: Future Marco or Christian, please decide for List or Dict for this entry!
     custom_types_dict = {type_class.get_name(): type_class for type_class in custom_data_types}
     for custom_type in custom_data_types:
         custom_type.expand_members(custom_types_dict)
