@@ -15,13 +15,12 @@
 
 from typing import Any, Dict, List, Optional, Union
 
-from js2py.base import JsObjectWrapper
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.xml_data_types.type_utils import (
-    get_array_max_size,
+    get_array_info,
     get_type_string_of_array,
     is_type_string_array,
     is_type_string_base_type,
@@ -105,7 +104,13 @@ class XmlStructDefinition:
                 member_type_proc = member_type
                 array_info = ""
                 if is_type_string_array(member_type):
-                    array_size = get_array_max_size(member_type)
+                    array_info_struct = get_array_info(member_type, False)
+                    check_assertion(
+                        array_info_struct.array_dimensions == 1,
+                        self.get_xml_origin(),
+                        "Expected only 1D arrays in complex struct definitions.",
+                    )
+                    array_size = array_info_struct.array_max_sizes[0]
                     array_info = "[]" if array_size is None else f"[{array_size}]"
                     member_type_proc = get_type_string_of_array(member_type)
                 if member_type_proc not in all_structs:
@@ -141,9 +146,8 @@ class XmlStructDefinition:
             raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
         # Interpret the expression
         interpreted_expr = interpret_non_base_ecma_script_expr(expr)
-        assert isinstance(interpreted_expr, JsObjectWrapper)
-        instance_as_dict = interpreted_expr.to_dict()
-        return self._expand_object_dict(instance_as_dict, "")
+        assert isinstance(interpreted_expr, dict)
+        return self._expand_object_dict(interpreted_expr, "")
 
     def _expand_object_dict(self, object_to_convert: Dict[str, Any], prefix: str) -> Dict[str, Any]:
         ret_dict: Dict[str, Any] = {}

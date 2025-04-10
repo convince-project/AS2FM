@@ -22,6 +22,7 @@ from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_e
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
+# TODO: Maybe rename, after this bloodbath is over...
 SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "bool": bool,
     "float32": float,
@@ -40,24 +41,28 @@ class ArrayInfo:
     A class to represent metadata about an array, including its type, dimensions,
     and maximum sizes for each dimension.
     Attributes:
-        array_type (Type[Union[int, float]]): The data type of the array elements,
-            which can be either `int` or `float`.
+        array_type (str): The data type string of the array elements.
         array_dimensions (int): The number of dimensions of the array.
         array_max_sizes (List[int]): A list specifying the maximum size for each
             dimension of the array.
+        is_base_type (bool): Whether we expect the type string to relate to a float/int or not.
     """
 
-    array_type: Type[Union[int, float]]
+    array_type: Union[str]
     array_dimensions: int
     array_max_sizes: List[Optional[int]]
+    is_base_type: bool = True
 
     def __post_init__(self):
-        assert self.array_type in (int, float), f"array_type '{self.array_type}' != (int, float)"
+        if self.is_base_type:
+            evaluated_type = SCXML_DATA_STR_TO_TYPE[self.array_type]
+            assert evaluated_type in (int, float), f"array_type '{self.array_type}' != (int, float)"
         assert (
             isinstance(self.array_dimensions, int) and self.array_dimensions > 0
         ), f"array_dimension is {self.array_dimensions}, but should be at least 1"
         assert all(
-            isinstance(d_size, int) and d_size > 0 for d_size in self.array_max_sizes
+            d_size is None or (isinstance(d_size, int) and d_size > 0)
+            for d_size in self.array_max_sizes
         ), f"Invalid 'array_max_sizes': {self.array_max_sizes}"
 
     def substitute_unbounded_dims(self, max_size: int):
@@ -119,19 +124,22 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     return interpreted_value
 
 
-def get_array_info(data_type: str) -> ArrayInfo:
+def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
     """
     Given an array type string, return the related ArrayInfo.
 
     E.g. float[][5][10] will return n_dims=3 and dim_bounds=(None, 5, 10).
+
+    :param data_type: A string representing the array type. Must be a valid array type string.
+    :param expect_base_type: A flag indicating whether to expect a base type in the type string.
+    :return: An ArrayInfo object containing all required info.
     """
     assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
     array_type_str = get_type_string_of_array(data_type)
-    array_type = get_data_type_from_string(array_type_str)
     dim_matches = re.findall(r"(\[([0-9]*)\])", data_type)
     n_dims = len(dim_matches)
     dim_bounds = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
-    return ArrayInfo(array_type, n_dims, dim_bounds)
+    return ArrayInfo(array_type_str, n_dims, dim_bounds, expect_base_type)
 
 
 def check_variable_base_type_ok(
