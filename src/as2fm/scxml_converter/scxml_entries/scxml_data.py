@@ -30,7 +30,6 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blac
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     RESERVED_NAMES,
-    is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
@@ -40,6 +39,8 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     convert_string_to_type,
     get_data_type_from_string,
+    get_type_string_of_array,
+    is_type_string_array,
     is_type_string_base_type,
 )
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
@@ -150,30 +151,59 @@ class ScxmlData(ScxmlBase):
         """Get the type of the data as a string."""
         return self._data_type
 
-    def get_type(self) -> type:
-        """
-        Get the type of the data as a Python type.
-
-        Use this only after substitution of custom data types.
-        """
-        python_type = get_data_type_from_string(self._data_type)
-        assert (
-            python_type is not None
-        ), f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'."
-        return python_type
-
     def get_expr(self) -> ValidExpr:
         return self._expr
 
-    def check_valid_bounds(self) -> bool:
-        if all(bound is None for bound in [self._lower_bound, self._upper_bound]):
+    def _valid_id(self) -> bool:
+        """Check if the data ID is valid."""
+        valid_id = len(self._id) > 0 and self._id not in RESERVED_NAMES
+        if not valid_id:
+            log_error(self.get_xml_origin(), f"Data ID '{self._id}' is invalid.")
+        return valid_id
+
+    def _valid_type(self) -> bool:
+        """Check if the type string is valid."""
+        if len(self._data_type) == 0:
+            log_error(self.get_xml_origin(), "No data type found.")
+            return False
+        base_type = self._data_type
+        if is_type_string_array(self._data_type):
+            base_type = get_type_string_of_array(self._data_type)
+        if is_type_string_base_type(base_type):
+            return True
+        if base_type in [custom_type.get_name() for custom_type in self.get_custom_data_types()]:
+            return True
+        log_error(self.get_xml_origin(), f"Cannot find definition of type {self._data_type}.")
+        return False
+
+    def _valid_init_expr(self) -> bool:
+        """Check if the initial expression makes sense."""
+        if isinstance(self._expr, str):
+            if len(self._expr) == 0:
+                log_error(self.get_xml_origin(), "Empty init expr. found.")
+                return False
+            return True
+        log_error(
+            self.get_xml_origin(),
+            f"Expected init expr. to be strings, found {type(self._expr)} for data ID {self._id}",
+        )
+        return False
+
+    def _valid_bounds(self) -> bool:
+        if self._lower_bound is None and self._upper_bound is None:
             # Nothing to check
             return True
-        if self.get_type() not in (float, int):
+        if not is_type_string_base_type(self._data_type):
             log_error(
                 self.get_xml_origin(),
-                f"Error: SCXML data: '{self._id}' has bounds but has type {self._data_type}, "
-                "not a number.",
+                f"SCXML data: '{self._id}' has bounds, but type {self._data_type} is not a number.",
+            )
+            return False
+        py_type = get_data_type_from_string(self._data_type)
+        if py_type not in (float, int):
+            log_error(
+                self.get_xml_origin(),
+                f"SCXML data: '{self._id}' has bounds, but type {self._data_type} is not a number.",
             )
             return False
         lower_bound = None
@@ -182,36 +212,21 @@ class ScxmlData(ScxmlBase):
             lower_bound = convert_string_to_type(self._lower_bound, self._data_type)
         if self._upper_bound is not None:
             upper_bound = convert_string_to_type(self._upper_bound, self._data_type)
-        if all(bound is not None for bound in [lower_bound, upper_bound]):
+        if lower_bound is not None and upper_bound is not None:
             if lower_bound > upper_bound:
-                print(
-                    f"Error: SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
-                    f"than 'upper_bound_incl' {upper_bound}."
+                log_error(
+                    self.get_xml_origin(),
+                    f"SCXML data: 'lower_bound_incl' {lower_bound} is not smaller "
+                    f"than 'upper_bound_incl' {upper_bound}.",
                 )
                 return False
         return True
 
     def check_validity(self) -> bool:
-        valid_id = is_non_empty_string(ScxmlData, "id", self._id)
-        if valid_id in RESERVED_NAMES:
-            print(f"Error: SCXML data: name '{self._id}' in reserved IDs list: {RESERVED_NAMES}.")
-            return False
-        if not is_type_string_base_type(self._data_type) and self._data_type not in [
-            custom_struct.get_name() for custom_struct in self.get_custom_data_types()
-        ]:
-            print(f"Error: SCXML data: '{self._id}' has unknown type '{self._data_type}'.")
-            return False
-        if isinstance(self._expr, str):
-            valid_expr = is_non_empty_string(ScxmlData, "expr", self._expr)
-        else:
-            valid_expr = isinstance(self._expr, (int, float, bool))
-            if not valid_expr:
-                print(
-                    f"Error: SCXML data: '{self._id}': initial expression for type ",
-                    f"{self._data_type} evaluates to an invalid type '{type(self._expr)}'.",
-                )
-        valid_bounds = self.check_valid_bounds()
-        return valid_id and valid_expr and valid_bounds
+        """Check if the current scxml data instance is valid."""
+        return all(
+            [self._valid_id(), self._valid_type, self._valid_init_expr, self._valid_bounds()]
+        )
 
     def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
         """
