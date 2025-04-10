@@ -244,24 +244,44 @@ class ScxmlData(ScxmlBase):
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
 
+    def _is_plain_type(self):
+        """Check if the data type is a plain type, accounting for arrays too."""
+        data_type_str = self._data_type
+        if is_type_string_array(data_type_str):
+            data_type_str = get_type_string_of_array(data_type_str)
+        return is_type_string_base_type(data_type_str)
+
     def is_plain_scxml(self) -> bool:
         """Check if the data type is a base type."""
-        return self.check_validity() and is_type_string_base_type(self._data_type)
+        if not self.check_validity():
+            return False
+        if not self._is_plain_type():
+            log_error(
+                self.get_xml_origin(),
+                f"Non plain type '{self._data_type}' for data entry '{self._id}'.",
+            )
+            return False
+        return True
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlData"]:
+    def as_plain_scxml(  # type: ignore
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List["ScxmlData"]:
         # TODO: By using ROS declarations, we can add the support for the ROS types as well.
         # TODO: This is fine also in case it is an array of base types...
-        if is_type_string_base_type(self._data_type):
+        if self._is_plain_type():
             return [self]
-        data_type = None
+        custom_type_name = self._data_type
+        if is_type_string_array(custom_type_name):
+            custom_type_name = get_type_string_of_array(custom_type_name)
+        data_type_def = None
         for custom_struct in self.get_custom_data_types():
-            if custom_struct.get_name() == self._data_type:
-                data_type = custom_struct
+            if custom_struct.get_name() == custom_type_name:
+                data_type_def = custom_struct
                 break
-        assert data_type is not None, f"Cannot find custom data type {self._data_type}."
+        assert data_type_def is not None, f"Cannot find custom data type {custom_type_name}."
         assert isinstance(self._expr, str), "We only support string init expr. for custom types."
-        expanded_data_values = data_type.get_instance_from_expression(self._expr)
-        expanded_data_types = data_type.get_expanded_members()
+        expanded_data_values = data_type_def.get_instance_from_expression(self._expr)
+        expanded_data_types = data_type_def.get_expanded_members()
         return [
             ScxmlData(key, expanded_data_values[key], expanded_data_types[key])
             for key in expanded_data_types
