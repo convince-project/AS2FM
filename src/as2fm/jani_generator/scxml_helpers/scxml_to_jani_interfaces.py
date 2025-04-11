@@ -208,8 +208,9 @@ class DatamodelTag(BaseTag):
                     )
                 )
                 # Add padding to the evaluated expression, for the JS evaluator to work
+                array_base_type = get_data_type_from_string(array_info.array_type)
                 padding_size = array_info.array_max_sizes[0] - len(evaluated_expr)
-                evaluated_expr.extend([array_info.array_type(0)] * padding_size)
+                evaluated_expr.extend([array_base_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 

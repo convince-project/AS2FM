@@ -25,7 +25,7 @@ import esprima
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import convert_string_to_int_array
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
     OPERATORS_TO_JANI_MAP,
@@ -52,6 +52,7 @@ def parse_ecmascript_to_jani_expression(
     :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
+    check_assertion(isinstance(ecmascript, str), elem, f"Unexpected type {type(ecmascript)}.")
     try:
         ast = esprima.parseScript(ecmascript)
     except esprima.error_handler.Error as e:

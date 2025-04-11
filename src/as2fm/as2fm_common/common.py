@@ -19,7 +19,7 @@ Common functionalities used throughout the toolchain.
 
 import re
 from array import array
-from typing import MutableSequence, Type, Union, get_args, get_origin
+from typing import MutableSequence, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -78,27 +78,20 @@ def is_comment(element: XmlElement) -> bool:
 def get_default_expression_for_type(field_type: Type[ValidJaniTypes]) -> ValidJaniTypes:
     """Generate a default expression for a field type."""
     assert field_type in get_args(ValidJaniTypes), f"Error: Unsupported data type {field_type}."
-    if field_type is MutableSequence[int]:
-        return array("i")
-    elif field_type is MutableSequence[float]:
-        return array("d")
+    if field_type is MutableSequence:
+        return []
     else:
         return field_type()
 
 
 def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
     """Convert a value to a type."""
-    if isinstance(value, array):
-        if value.typecode == "i":
-            return MutableSequence[int]
-        elif value.typecode == "d":
-            return MutableSequence[float]
-        else:
-            raise ValueError(f"Type of array '{value.typecode}' not supported.")
+    if isinstance(value, MutableSequence):
+        return MutableSequence
     elif isinstance(value, (int, float, bool)):
         return type(value)
     elif isinstance(value, str):  # Strings are interpreted as arrays of integers
-        return MutableSequence[int]
+        return MutableSequence
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
@@ -126,7 +119,7 @@ def string_as_bool(value_str: str) -> bool:
 
 def is_array_type(field_type: Type[ValidScxmlTypes]) -> bool:
     """Check if the field type is an array type."""
-    return get_origin(field_type) == get_origin(MutableSequence)
+    return field_type is MutableSequence
 
 
 def is_valid_variable_name(var_name: str) -> bool:

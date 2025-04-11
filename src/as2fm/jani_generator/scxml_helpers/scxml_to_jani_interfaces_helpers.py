@@ -296,7 +296,6 @@ def append_scxml_body_to_jani_edge(
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"
                 expr = param.get_expr_or_location()
                 # Update the events holder
-                # TODO: get the expected type from a jani expression, w/o setting dummy values
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
