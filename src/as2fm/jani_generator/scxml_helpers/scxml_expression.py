@@ -37,7 +37,7 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_value_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, get_data_type_from_string
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 JS_CALLABLE_PREFIX = "Math"
 
@@ -96,7 +96,7 @@ def _generate_array_expression_for_assignment(
         f"{parent_script.type} != ExpressionStatement."
     )
 
-    array_base_type: Type[Union[int, float]] = get_data_type_from_string(array_info.array_type)
+    array_base_type: Type[Union[int, float]] = array_info.array_type
     assert array_info.array_dimensions == 1, "TODO: Implement N-Dimensional array support."
     assert isinstance(array_info.array_max_sizes[0], int), "Unexpected error: undefined size found."
     padding_size = array_info.array_max_sizes[0] - len(array_values)

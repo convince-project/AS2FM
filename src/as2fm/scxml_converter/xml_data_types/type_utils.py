@@ -139,10 +139,11 @@ def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
     """
     assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
     array_type_str = get_type_string_of_array(data_type)
+    array_py_type = SCXML_DATA_STR_TO_TYPE[array_type_str]
     dim_matches = re.findall(r"(\[([0-9]*)\])", data_type)
     n_dims = len(dim_matches)
     dim_bounds = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
-    return ArrayInfo(array_type_str, n_dims, dim_bounds, expect_base_type)
+    return ArrayInfo(array_py_type, n_dims, dim_bounds, expect_base_type)
 
 
 def check_variable_base_type_ok(

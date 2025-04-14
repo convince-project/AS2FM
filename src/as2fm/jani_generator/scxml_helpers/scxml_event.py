@@ -66,7 +66,7 @@ class EventParamType:
     def __post_init__(self):
         """Basic check for dataclass validity."""
         if self.p_type == MutableSequence:
-            assert self.p_array_type in (int, float)
+            assert self.p_array_type in (int, float), f"Unexpected array type {self.p_array_type}."
             assert self.p_dimensions > 0
         else:
             assert self.p_dimensions == 0

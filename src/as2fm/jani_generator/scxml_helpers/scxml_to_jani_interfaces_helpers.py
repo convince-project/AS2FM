@@ -305,8 +305,9 @@ def append_scxml_body_to_jani_edge(
                 res_eval_array_type: Optional[Type[Union[int, float]]] = None
                 array_info: Optional[ArrayInfo] = None
                 # In case of MutableSequences, we need to get the dimensionality of the result
-                if isinstance(res_eval_type, MutableSequence):
+                if res_eval_type == MutableSequence:
                     array_info = array_value_to_type_info(res_eval_value)
+                    array_info.substitute_unbounded_dims(max_array_size)
                     res_eval_dims = array_info.array_dimensions
                     res_eval_array_type = array_info.array_type
                 data_structure_for_event[param.get_name()] = EventParamType(

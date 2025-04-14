@@ -182,7 +182,7 @@ class DatamodelTag(BaseTag):
                 # Special handling of strings: treat them as array of integers
                 if expected_type is str:
                     # Keep expected_type == str, since we use it for the JS evaluation.
-                    array_info = ArrayInfo("int32", 1, [self.max_array_size])
+                    array_info = ArrayInfo(int, 1, [self.max_array_size])
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             check_assertion(
                 check_variable_base_type_ok(evaluated_expr, expected_type, array_info),
@@ -195,7 +195,9 @@ class DatamodelTag(BaseTag):
             )
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
-                JaniVariable(scxml_data.get_name(), expected_type, jani_data_init_expr)
+                JaniVariable(
+                    scxml_data.get_name(), expected_type, jani_data_init_expr, False, array_info
+                )
             )
             # In case of arrays, declare a number of additional 'length' variables is required
             if array_info is not None:
@@ -208,7 +210,7 @@ class DatamodelTag(BaseTag):
                     )
                 )
                 # Add padding to the evaluated expression, for the JS evaluator to work
-                array_base_type = get_data_type_from_string(array_info.array_type)
+                array_base_type = array_info.array_type
                 padding_size = array_info.array_max_sizes[0] - len(evaluated_expr)
                 evaluated_expr.extend([array_base_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
