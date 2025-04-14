@@ -18,8 +18,7 @@ Common functionalities used throughout the toolchain.
 """
 
 import re
-from array import array
-from typing import MutableSequence, Tuple, Type, Union, get_args
+from typing import List, MutableSequence, Tuple, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -114,7 +113,7 @@ def is_valid_array(in_sequence: MutableSequence) -> bool:
     """Check that the array is composed by a list of (int, float, list)."""
     assert isinstance(
         in_sequence, list
-    ), f"Input values are expected to be lists, found {type(in_sequence)}."
+    ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
     if len(in_sequence) == 0:
         return True
     if isinstance(in_sequence[0], MutableSequence):
@@ -176,8 +175,8 @@ def is_valid_variable_name(var_name: str) -> bool:
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
 
 
-def convert_string_to_int_array(value: str) -> MutableSequence[int]:
+def convert_string_to_int_array(value: str) -> List[int]:
     """
     Convert a string to a list of integers.
     """
-    return array("i", [int(x) for x in value.encode()])
+    return [int(x) for x in value.encode()]

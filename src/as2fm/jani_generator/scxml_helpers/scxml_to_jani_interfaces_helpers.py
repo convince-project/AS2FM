@@ -25,6 +25,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import (
     SupportedECMAScriptSequences,
+    convert_string_to_int_array,
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
@@ -306,6 +307,8 @@ def append_scxml_body_to_jani_edge(
                 array_info: Optional[ArrayInfo] = None
                 # In case of MutableSequences, we need to get the dimensionality of the result
                 if res_eval_type == MutableSequence:
+                    if isinstance(res_eval_value, str):
+                        res_eval_value = convert_string_to_int_array(res_eval_value)
                     array_info = array_value_to_type_info(res_eval_value)
                     array_info.substitute_unbounded_dims(max_array_size)
                     res_eval_dims = array_info.array_dimensions

@@ -165,38 +165,40 @@ class DatamodelTag(BaseTag):
             "Invalid data_model element found.",
         )
         for scxml_data in self.element.get_data_entries():
-            expected_type_str = scxml_data.get_type_str()
+            data_type_str = scxml_data.get_type_str()
             array_info: Optional[ArrayInfo] = None
-            expected_type: type = None
-            if is_type_string_array(expected_type_str):
-                array_info = get_array_info(expected_type_str)
+            data_type: type = None
+            if is_type_string_array(data_type_str):
+                array_info = get_array_info(data_type_str)
                 array_info.substitute_unbounded_dims(self.max_array_size)
-                expected_type = MutableSequence
+                data_type = MutableSequence
             else:
                 check_assertion(
-                    is_type_string_base_type(expected_type_str),
+                    is_type_string_base_type(data_type_str),
                     scxml_data.get_xml_origin(),
-                    f"Unexpected type {expected_type_str} found in scxml data.",
+                    f"Unexpected type {data_type_str} found in scxml data.",
                 )
-                expected_type = get_data_type_from_string(expected_type_str)
+                data_type = get_data_type_from_string(data_type_str)
                 # Special handling of strings: treat them as array of integers
-                if expected_type is str:
-                    # Keep expected_type == str, since we use it for the JS evaluation.
+                if data_type is str:
+                    # Keep data_type == str, since we use it for the JS evaluation.
                     array_info = ArrayInfo(int, 1, [self.max_array_size])
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             check_assertion(
-                check_variable_base_type_ok(evaluated_expr, expected_type, array_info),
+                check_variable_base_type_ok(evaluated_expr, data_type, array_info),
                 scxml_data.get_xml_origin(),
                 f"Invalid type of '{scxml_data.get_name()}': expected type "
-                f"{expected_type} != {type(evaluated_expr)}",
+                f"{data_type} != {type(evaluated_expr)}",
             )
             jani_data_init_expr = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_data.get_xml_origin(), array_info
             )
+            # JANI has no knowledge of strings, consider it an array of integers
+            jani_type = MutableSequence if data_type == str else data_type
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
                 JaniVariable(
-                    scxml_data.get_name(), expected_type, jani_data_init_expr, False, array_info
+                    scxml_data.get_name(), jani_type, jani_data_init_expr, False, array_info
                 )
             )
             # In case of arrays, declare a number of additional 'length' variables is required
@@ -212,7 +214,9 @@ class DatamodelTag(BaseTag):
                 # Add padding to the evaluated expression, for the JS evaluator to work
                 array_base_type = array_info.array_type
                 padding_size = array_info.array_max_sizes[0] - len(evaluated_expr)
-                evaluated_expr.extend([array_base_type(0)] * padding_size)
+                # Extending string is not required
+                if data_type != str:
+                    evaluated_expr.extend([array_base_type(0)] * padding_size)
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 
