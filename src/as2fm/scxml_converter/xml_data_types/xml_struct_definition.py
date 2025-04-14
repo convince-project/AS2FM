@@ -20,8 +20,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.xml_data_types.type_utils import (
-    get_array_info,
-    get_type_string_of_array,
+    get_array_type_and_dimensions_from_string,
     is_type_string_array,
     is_type_string_base_type,
 )
@@ -104,15 +103,17 @@ class XmlStructDefinition:
                 member_type_proc = member_type
                 array_info = ""
                 if is_type_string_array(member_type):
-                    array_info_struct = get_array_info(member_type, False)
+                    array_type_str, array_max_sizes = get_array_type_and_dimensions_from_string(
+                        member_type
+                    )
                     check_assertion(
-                        array_info_struct.array_dimensions == 1,
+                        len(array_max_sizes) == 1,
                         self.get_xml_origin(),
                         "Expected only 1D arrays in complex struct definitions.",
                     )
-                    array_size = array_info_struct.array_max_sizes[0]
+                    array_size = array_max_sizes[0]
                     array_info = "[]" if array_size is None else f"[{array_size}]"
-                    member_type_proc = get_type_string_of_array(member_type)
+                    member_type_proc = array_type_str
                 if member_type_proc not in all_structs:
                     raise ValueError(
                         get_error_msg(

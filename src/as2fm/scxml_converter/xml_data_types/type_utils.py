@@ -127,7 +127,20 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     return interpreted_value
 
 
-def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
+def get_array_type_and_dimensions_from_string(data_type: str) -> Tuple[str, List[Optional[int]]]:
+    """
+    Given an array type string, return its base type and each dimension's max size.
+
+    E.g. CustomType[][5][10] will return "CustomType" and [None, 5, 10].
+    """
+    assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
+    array_type_str = get_type_string_of_array(data_type)
+    dim_matches = re.findall(r"(\[([0-9]*)\])", data_type)
+    dim_bounds = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
+    return array_type_str, dim_bounds
+
+
+def get_array_info(data_type: str) -> ArrayInfo:
     """
     Given an array type string, return the related ArrayInfo.
 
@@ -138,12 +151,10 @@ def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
     :return: An ArrayInfo object containing all required info.
     """
     assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
-    array_type_str = get_type_string_of_array(data_type)
+    array_type_str, array_max_sizes = get_array_type_and_dimensions_from_string(data_type)
     array_py_type = SCXML_DATA_STR_TO_TYPE[array_type_str]
-    dim_matches = re.findall(r"(\[([0-9]*)\])", data_type)
-    n_dims = len(dim_matches)
-    dim_bounds = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
-    return ArrayInfo(array_py_type, n_dims, dim_bounds, expect_base_type)
+    n_dims = len(array_max_sizes)
+    return ArrayInfo(array_py_type, n_dims, array_max_sizes)
 
 
 def check_variable_base_type_ok(
