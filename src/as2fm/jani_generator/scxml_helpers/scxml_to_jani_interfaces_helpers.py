@@ -18,12 +18,15 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import SupportedECMAScriptSequences, value_to_type
+from as2fm.as2fm_common.common import (
+    SupportedECMAScriptSequences,
+    value_to_type,
+)
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import (
@@ -43,13 +46,11 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
     generate_jani_variable,
-    get_array_variable_info,
     is_expression_array,
     is_variable_array,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventParamType, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
-    ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
 from as2fm.scxml_converter.scxml_entries import (
@@ -59,6 +60,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlIf,
     ScxmlSend,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, array_value_to_type_info
 
 
 def generate_jani_assignments(
@@ -125,9 +127,7 @@ def generate_jani_assignments(
             )
         assignment_target_id = assignment_target_var.name()
 
-        array_info = None
-        if is_variable_array(assignment_target_var):
-            array_info = ArrayInfo(*get_array_variable_info(assignment_target_var))
+        array_info = assignment_target_var.get_array_info()
         assignment_value = parse_ecmascript_to_jani_expression(
             assign_expr, elem_xml, array_info
         ).replace_event(event_substitution)
@@ -291,7 +291,7 @@ def append_scxml_body_to_jani_edge(
                 }
             )
             new_edge_dest_assignments: List[JaniAssignment] = []
-            data_structure_for_event: Dict[str, type] = {}
+            data_structure_for_event: Dict[str, EventParamType] = {}
             for param in ec.get_params():
                 param_assign_name = f"{ec.get_event()}.{param.get_name()}"
                 expr = param.get_expr_or_location()
@@ -301,9 +301,19 @@ def append_scxml_body_to_jani_edge(
                 # See https://github.com/convince-project/AS2FM/issues/84
                 res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
-                data_structure_for_event[param.get_name()] = res_eval_type
+                res_eval_dims = 0
+                res_eval_array_type: Optional[Type[Union[int, float]]] = None
+                array_info: Optional[ArrayInfo] = None
+                # In case of MutableSequences, we need to get the dimensionality of the result
+                if isinstance(res_eval_type, MutableSequence):
+                    array_info = array_value_to_type_info(res_eval_value)
+                    res_eval_dims = array_info.array_dimensions
+                    res_eval_array_type = array_info.array_type
+                data_structure_for_event[param.get_name()] = EventParamType(
+                    res_eval_type, res_eval_array_type, res_eval_dims
+                )
                 param_variable = generate_jani_variable(
-                    param_assign_name, res_eval_type, max_array_size
+                    param_assign_name, res_eval_type, array_info
                 )
                 new_edge_dest_assignments.extend(
                     generate_jani_assignments(

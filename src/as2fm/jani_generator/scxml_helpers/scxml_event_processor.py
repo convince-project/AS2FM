@@ -93,9 +93,9 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
         var_name = f"{event_obj.name}.{param_name}"
         if is_array_type(param_info.p_type):
             ar_type = param_info.p_array_type
-            ar_type_str = "int32" if ar_type is int else "float32"
+            assert ar_type is not None, "None array type found: this is unexpected."
             array_dims = param_info.p_dimensions
-            array_info = ArrayInfo(ar_type_str, array_dims, [max_array_size] * array_dims)
+            array_info = ArrayInfo(ar_type, array_dims, [max_array_size] * array_dims)
             array_init = array_create_operator(array_info)
             jani_vars.append(
                 JaniVariable(var_name, param_info.p_type, array_init, False, array_info)

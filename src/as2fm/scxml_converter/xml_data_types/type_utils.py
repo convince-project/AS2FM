@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union, get_args
 
-from as2fm.as2fm_common.common import ValidScxmlTypes
+from as2fm.as2fm_common.common import ValidScxmlTypes, get_array_dimensionality_and_type
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
@@ -35,6 +35,8 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
 }
 
 
+# TODO: Move this class to as2fm common and use a python type instead of an scxml string for the
+# base type
 @dataclass()
 class ArrayInfo:
     """
@@ -48,15 +50,14 @@ class ArrayInfo:
         is_base_type (bool): Whether we expect the type string to relate to a float/int or not.
     """
 
-    array_type: Union[str]
+    array_type: Type[Union[int, float]]
     array_dimensions: int
     array_max_sizes: List[Optional[int]]
     is_base_type: bool = True
 
     def __post_init__(self):
         if self.is_base_type:
-            evaluated_type = SCXML_DATA_STR_TO_TYPE[self.array_type]
-            assert evaluated_type in (int, float), f"array_type '{self.array_type}' != (int, float)"
+            assert self.array_type in (int, float), f"array_type {self.array_type} != (int, float)"
         assert (
             isinstance(self.array_dimensions, int) and self.array_dimensions > 0
         ), f"array_dimension is {self.array_dimensions}, but should be at least 1"
@@ -72,6 +73,12 @@ class ArrayInfo:
         self.array_max_sizes = [
             max_size if curr_size is None else curr_size for curr_size in self.array_max_sizes
         ]
+
+
+def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
+    """Small helper function to generate the array info from a given value instance."""
+    array_dims, array_type = get_array_dimensionality_and_type(data_value)
+    return ArrayInfo(array_type, array_dims, [None] * array_dims)
 
 
 def is_type_string_array(data_type: str) -> bool:

@@ -64,21 +64,21 @@ def test_parse_ecmascript_to_jani_expression_with_complex_expression():
 
 def test_parse_ecmascript_to_jani_expression_with_array():
     ecmascript_expr = "[]"
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_create_operator(array_info)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_create_operator(array_info)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
 def test_parse_ecmascript_to_jani_expression_with_escaped_string():
     # Check if double quotes are handled as well
     ecmascript_expr = '""'
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_create_operator(array_info)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)

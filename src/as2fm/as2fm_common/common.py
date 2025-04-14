@@ -19,7 +19,7 @@ Common functionalities used throughout the toolchain.
 
 import re
 from array import array
-from typing import MutableSequence, Type, Union, get_args
+from typing import MutableSequence, Tuple, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -99,14 +99,55 @@ def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
 def value_to_string_expr(value: ValidJaniTypes) -> str:
     """Convert a value to a string."""
     if isinstance(value, MutableSequence):
-        # Expect value to be an array
-        return f'[{",".join(str(v) for v in value)}]'
+        assert is_valid_array(value), f"Found invalid input array {value}."
+        # Expect value to be a list, so casting to string is enough.
+        return str(value)
     elif isinstance(value, bool):
         return str(value).lower()
     elif isinstance(value, (int, float)):
         return str(value)
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def is_valid_array(in_sequence: MutableSequence) -> bool:
+    """Check that the array is composed by a list of (int, float, list)."""
+    assert isinstance(
+        in_sequence, list
+    ), f"Input values are expected to be lists, found {type(in_sequence)}."
+    if len(in_sequence) == 0:
+        return True
+    if isinstance(in_sequence[0], MutableSequence):
+        return all(
+            isinstance(seq_value, MutableSequence) and is_valid_array(seq_value)
+            for seq_value in in_sequence
+        )
+    return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
+
+
+def get_array_dimensionality_and_type(
+    in_sequence: MutableSequence,
+) -> Tuple[int, Type[Union[int, float]]]:
+    """
+    For a given array, return the deepest level it gets.
+
+    E.g.: [[], [[1], []]] has depth 3
+    """
+    assert is_valid_array(in_sequence)
+    if len(in_sequence) == 0:
+        # By default, assume an array of integers
+        return 1, int
+    if not isinstance(in_sequence[0], MutableSequence):
+        array_type = int if all(isinstance(seq_value, int) for seq_value in in_sequence) else float
+        return 1, array_type
+    sub_level_dim: int = 0
+    sub_level_type: Type[Union[int, float]] = int
+    for seq_value in in_sequence:
+        next_dim, next_type = get_array_dimensionality_and_type(seq_value)
+        sub_level_dim = max(next_dim, sub_level_dim)
+        if next_type is float:
+            sub_level_type = float
+    return 1 + sub_level_dim, sub_level_type
 
 
 def string_as_bool(value_str: str) -> bool:

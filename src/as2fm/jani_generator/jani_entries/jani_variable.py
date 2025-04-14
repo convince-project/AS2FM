@@ -22,7 +22,7 @@ from typing import MutableSequence, Optional, Tuple, Type, Union, get_args
 from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniValue
 from as2fm.jani_generator.jani_entries.jani_expression import SupportedExp
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, get_data_type_from_string
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 
 class JaniVariable:
@@ -112,6 +112,10 @@ class JaniVariable:
         """Get type."""
         return self._type
 
+    def get_array_info(self) -> Optional[ArrayInfo]:
+        """Return the array info associated to this JANI variable."""
+        return self._array_info
+
     def get_init_expr(self) -> Optional[JaniExpression]:
         """Get initial expression.  if available. None otherwise."""
         return self._init_expr
@@ -154,9 +158,9 @@ class JaniVariable:
                     curr_level = json_type["base"]
                 raise ValueError(f"Type {json_type} not supported by Jani")
             if curr_level == "int":
-                return MutableSequence, ArrayInfo("int32", n_dimensions, [1] * n_dimensions)
+                return MutableSequence, ArrayInfo(int, n_dimensions, [None] * n_dimensions)
             if curr_level == "real":
-                return MutableSequence, ArrayInfo("float32", n_dimensions, [1] * n_dimensions)
+                return MutableSequence, ArrayInfo(float, n_dimensions, [None] * n_dimensions)
         raise ValueError(f"Unsupported json type {json_type}")
 
     @staticmethod
@@ -186,7 +190,7 @@ class JaniVariable:
             return "real"
         elif v_type == MutableSequence:
             assert isinstance(v_array_info, ArrayInfo)
-            target_type = get_data_type_from_string(v_array_info.array_type)
+            target_type = v_array_info.array_type
             assert target_type in (int, float)
             jani_type_str = "int" if target_type is int else "real"
             n_dimensions = v_array_info.array_dimensions
