@@ -397,9 +397,10 @@ class ScxmlRoot(ScxmlBase):
                 "xmlns": "http://www.w3.org/2005/07/scxml",
             },
         )
-        data_model_xml = self._data_model.as_xml(data_type_as_attribute)
-        assert data_model_xml is not None, "Error: SCXML root: invalid data model."
-        xml_root.append(data_model_xml)
+        if len(self._data_model.get_data_entries()) > 0:
+            data_model_xml = self._data_model.as_xml(data_type_as_attribute)
+            assert data_model_xml is not None, "Error: SCXML root: invalid data model."
+            xml_root.append(data_model_xml)
         for ros_declaration in self._ros_declarations:
             xml_root.append(ros_declaration.as_xml())
         for scxml_thread in self._additional_threads:

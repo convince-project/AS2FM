@@ -148,12 +148,12 @@ def test_type_string_conversion():
         ("float64", float),
         ("int32", int),
         ("bool", bool),
-        ("float64[]", MutableSequence[float]),
-        ("int32[]", MutableSequence[int]),
-        ("int8[]", MutableSequence[int]),
-        ("float64[4]", MutableSequence[float]),
-        ("int32[10]", MutableSequence[int]),
-        ("int8[01]", MutableSequence[int]),
+        ("float64[]", MutableSequence),
+        ("int32[]", MutableSequence),
+        ("int8[]", MutableSequence),
+        ("float64[4]", MutableSequence),
+        ("int32[10]", MutableSequence),
+        ("int8[01]", MutableSequence),
     ]
     for type_str, gt_type in type_strings_ok:
         conv_type = get_data_type_from_string(type_str)
