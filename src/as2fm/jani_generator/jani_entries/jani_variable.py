@@ -156,7 +156,8 @@ class JaniVariable:
                     n_dimensions += 1
                     assert "base" in json_type, "Array type should contain a 'base' key"
                     curr_level = json_type["base"]
-                raise ValueError(f"Type {json_type} not supported by Jani")
+                else:
+                    raise ValueError(f"Type {json_type} not supported by Jani")
             if curr_level == "int":
                 return MutableSequence, ArrayInfo(int, n_dimensions, [None] * n_dimensions)
             if curr_level == "real":
