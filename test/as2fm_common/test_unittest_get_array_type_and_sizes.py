@@ -23,7 +23,10 @@ from as2fm.as2fm_common.common import get_array_type_and_sizes
 def test_array_dim_base_cases():
     assert get_array_type_and_sizes([]) == (None, [0])
     assert get_array_type_and_sizes([42]) == (int, [1])
+    assert get_array_type_and_sizes([42, 0]) == (int, [2])
     assert get_array_type_and_sizes([3.14]) == (float, [1])
+    assert get_array_type_and_sizes([3.14, 2]) == (float, [2])
+    assert get_array_type_and_sizes([[3.14]]) == (float, [1, [1]])
 
 
 def test_array_dim_2_dims():
@@ -35,6 +38,12 @@ def test_array_dim_2_dims():
 def test_array_dim_3_dims():
     input_array = [[], [[2, 0]]]
     expected_dims = [2, [0, 1], [[], [2]]]
+    assert get_array_type_and_sizes(input_array) == (int, expected_dims)
+
+
+def test_array_dim_4_dims():
+    input_array = [[], [[[2, 0]]]]
+    expected_dims = [2, [0, 1], [[], [1]], [[], [[2]]]]
     assert get_array_type_and_sizes(input_array) == (int, expected_dims)
 
 

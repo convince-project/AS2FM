@@ -134,7 +134,6 @@ def get_array_type_and_sizes(
     Exemplary output for 3-dimensional array [ [], [ [1], [1,2.0], [] ] ] is:
     tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])
     """
-    print(f"{in_sequence=}")
     assert is_valid_array(in_sequence)
     if len(in_sequence) == 0:
         return None, [0]
@@ -158,7 +157,6 @@ def get_array_type_and_sizes(
         # Store sizes recursively
         child_sizes.append(single_sizes)
         max_depth = max(max_depth, len(single_sizes) + 1)
-    print(f"{child_sizes=}")
     # At this point, we a nested structure of lists of length 2
     processed_sizes: List[Union[int, List]] = []
     for level in range(max_depth):
@@ -172,7 +170,6 @@ def get_array_type_and_sizes(
             else:
                 assert isinstance(processed_sizes[level], list), f"Unexpected type at {level=}."
                 processed_sizes[level].append(curr_size_entry[level - 1])
-    print(f"{processed_sizes=}")
     return curr_type, processed_sizes
 
 
