@@ -18,7 +18,7 @@ Common functionalities used throughout the toolchain.
 """
 
 import re
-from typing import List, MutableSequence, Tuple, Type, Union, get_args
+from typing import List, MutableSequence, Optional, Tuple, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -111,6 +111,7 @@ def value_to_string_expr(value: ValidJaniTypes) -> str:
 
 def is_valid_array(in_sequence: MutableSequence) -> bool:
     """Check that the array is composed by a list of (int, float, list)."""
+    # TODO: Corner case possible: [[1], [[1,2,3]]] <- The depth of the two branches is not the same
     assert isinstance(
         in_sequence, list
     ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
@@ -124,11 +125,62 @@ def is_valid_array(in_sequence: MutableSequence) -> bool:
     return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
 
 
+def get_array_type_and_sizes(
+    in_sequence: MutableSequence,
+) -> Tuple[Optional[Type[Union[int, float]]], MutableSequence]:
+    """
+    Extract the type and size of the provided multi-dimensional array.
+
+    Exemplary output for 3-dimensional array [ [], [ [1], [1,2.0], [] ] ] is:
+    tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])
+    """
+    print(f"{in_sequence=}")
+    assert is_valid_array(in_sequence)
+    if len(in_sequence) == 0:
+        return None, [0]
+    if not isinstance(in_sequence[0], MutableSequence):
+        ret_type: Optional[Type[Union[int, float]]] = float
+        if all(isinstance(seq_entry, int) for seq_entry in in_sequence):
+            ret_type = int
+        return ret_type, [len(in_sequence)]
+    # Recursive part
+    curr_type: Optional[Type[Union[int, float]]] = None
+    base_size = len(in_sequence)
+    max_depth = 0
+    child_sizes = []
+    for seq_entry in in_sequence:
+        single_type, single_sizes = get_array_type_and_sizes(seq_entry)
+        # Handle types
+        if curr_type is None:
+            curr_type = single_type
+        elif curr_type == int:
+            curr_type = single_type
+        # Store sizes recursively
+        child_sizes.append(single_sizes)
+        max_depth = max(max_depth, len(single_sizes) + 1)
+    print(f"{child_sizes=}")
+    # At this point, we a nested structure of lists of length 2
+    processed_sizes: List[Union[int, List]] = []
+    for level in range(max_depth):
+        if level == 0:
+            processed_sizes.append(base_size)
+            continue
+        processed_sizes.append([])
+        for curr_size_entry in child_sizes:
+            if len(curr_size_entry) < level:
+                processed_sizes[level].append([])
+            else:
+                assert isinstance(processed_sizes[level], list), f"Unexpected type at {level=}."
+                processed_sizes[level].append(curr_size_entry[level - 1])
+    print(f"{processed_sizes=}")
+    return curr_type, processed_sizes
+
+
 def get_array_dimensionality_and_type(
     in_sequence: MutableSequence,
 ) -> Tuple[int, Type[Union[int, float]]]:
     """
-    For a given array, return the deepest level it gets.
+    For a given array, return its deepest level and the type of the values in it.
 
     E.g.: [[], [[1], []]] has depth 3
     """
