@@ -29,8 +29,11 @@
 
         <transition
             cond="
+                recv_point.length == 1 &amp;&amp;
                 recv_point.x &gt;= 100 &amp;&amp;
-                recv__polygon.points[0].x &gt;= 100 &amp;&amp;
+                recv_polygon.length == 1 &amp;&amp;
+                recv_polygon.points[0].x &gt;= 100 &amp;&amp;
+                recv_polygons.length == 2 &amp;&amp;
                 recv_polygons.polygons[1].points[1].y &gt;= 100"
             target="end" />
     </state>

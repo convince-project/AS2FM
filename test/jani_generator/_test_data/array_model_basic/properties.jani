@@ -14,7 +14,7 @@
                     "left": {
                       "op": "=",
                       "left": 11,
-                      "right": "new_msg_array.msg.length"
+                      "right": "new_msg_array.msg.d1_len"
                     },
                     "right": {
                       "op": "=",
