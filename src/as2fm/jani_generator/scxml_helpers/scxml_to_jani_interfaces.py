@@ -19,7 +19,7 @@ Interface classes between SCXML tags and related JANI output.
 
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple
 
-from as2fm.as2fm_common.common import EPSILON
+from as2fm.as2fm_common.common import EPSILON, get_array_type_and_sizes, get_padded_array
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import check_assertion
 from as2fm.jani_generator.jani_entries import (
@@ -204,19 +204,26 @@ class DatamodelTag(BaseTag):
             # In case of arrays, declare a number of additional 'length' variables is required
             if array_info is not None:
                 # Add the array-length values in the model
-                assert array_info.array_dimensions == 1, "TODO: Implement multi-dimensional support"
-                # TODO: The length variable NEEDS to be bounded
-                self.automaton.add_variable(
-                    JaniVariable(
-                        f"{scxml_data.get_name()}.length", int, JaniValue(len(evaluated_expr))
-                    )
-                )
+                # TODO: The length variable NEEDS to be bounded in jani, between 0 and max_length
+                _, array_sizes = get_array_type_and_sizes(evaluated_expr)
+                for level in range(array_info.array_dimensions):
+                    level_name = f"{scxml_data.get_name()}.d{level+1}_len"
+                    if level == 0:
+                        self.automaton.add_variable(
+                            JaniVariable(level_name, int, JaniValue(array_sizes[level]))
+                        )
+                    else:
+                        assert level < 2, "TODO: For now, only 1 and 2D supported."
+                        padding = array_info.array_max_sizes[level] - len(array_sizes[level])
+                        assert padding >= 0, "Padding must be non-negative."
+                        array_sizes[level].extend([0] * padding)
                 # Add padding to the evaluated expression, for the JS evaluator to work
                 array_base_type = array_info.array_type
-                padding_size = array_info.array_max_sizes[0] - len(evaluated_expr)
                 # Extending string is not required
                 if data_type != str:
-                    evaluated_expr.extend([array_base_type(0)] * padding_size)
+                    evaluated_expr = get_padded_array(
+                        evaluated_expr, array_info.array_max_sizes, array_base_type
+                    )
             self.model_variables.update({scxml_data.get_name(): evaluated_expr})
 
 

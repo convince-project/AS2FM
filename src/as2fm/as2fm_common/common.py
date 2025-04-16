@@ -198,6 +198,27 @@ def get_array_dimensionality_and_type(
     return 1 + sub_level_dim, sub_level_type
 
 
+def get_padded_array(
+    array_to_pad: List[Union[int, float, List]],
+    size_per_level: List[int],
+    array_type: Type[Union[int, float]],
+) -> List[Union[int, float, List]]:
+    """Given a N-Dimensional list, add padding for each level, depending on the provided sizes."""
+    padding_size = size_per_level[0] - len(array_to_pad)
+    assert padding_size >= 0
+    if len(size_per_level) == 1:
+        # Lowest level -> only floats and integers allowed
+        assert all(not isinstance(entry, list) for entry in array_to_pad)
+        array_to_pad.extend([array_type(0)] * padding_size)
+    else:
+        # There are lower levels -> Here we expect only empty lists
+        assert all(isinstance(entry, list) for entry in array_to_pad)
+        array_to_pad.extend([[]] * padding_size)
+        for idx in range(size_per_level[0]):
+            array_to_pad[idx] = get_padded_array(array_to_pad[idx], size_per_level[1:], array_type)
+    return array_to_pad
+
+
 def string_as_bool(value_str: str) -> bool:
     """
     Special case for boolean conversion for configuration parameters.
