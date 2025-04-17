@@ -41,6 +41,7 @@ from as2fm.jani_generator.jani_entries import (
 )
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     and_operator,
+    array_access_operator,
     max_operator,
     not_operator,
     plus_operator,
@@ -52,6 +53,7 @@ from as2fm.jani_generator.jani_entries.jani_utils import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventParamType, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
+    get_array_length_var_name,
     parse_ecmascript_to_jani_expression,
 )
 from as2fm.scxml_converter.scxml_entries import (
@@ -62,6 +64,23 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, array_value_to_type_info
+
+
+def _generate_nested_array_access_expr(
+    array_name: str, access_indexes: List[JaniExpression]
+) -> JaniExpression:
+    """
+    Generate the array access operator for a nested array.
+
+    Example: array_name: 'ar_x', access_indexes: [1,2,3] will result in
+             ret_expr = aa(exp: aa(exp: aa(exp: 'ar_x', index: 1), index: 2), index: 3)
+    """
+    assert len(access_indexes) > 0
+    if len(access_indexes) == 1:
+        array_expression = JaniExpression(array_name)
+    else:
+        array_expression = _generate_nested_array_access_expr(array_name, access_indexes[0:-1])
+    return array_access_operator(array_expression, access_indexes[-1])
 
 
 def generate_jani_assignments(
@@ -92,6 +111,7 @@ def generate_jani_assignments(
         target_expr_type = JaniExpressionType.IDENTIFIER
     # An assignment target must be either a variable or a single array entry
     if target_expr_type is JaniExpressionType.OPERATOR:
+        assert isinstance(target_expr, JaniExpression)
         # If here, the target expression must be an array access (aa) operator
         assign_op_name, assign_operands = target_expr.as_operator()
         assert assign_op_name == "aa", get_error_msg(
@@ -103,19 +123,40 @@ def generate_jani_assignments(
         assignments.append(
             JaniAssignment({"ref": target_expr, "value": assignment_value, "index": assign_index})
         )
-        target_var_length = f"{assign_operands['exp'].as_identifier()}.length"
-        new_array_legth_expr = max_operator(
-            plus_operator(assign_operands["index"], 1), target_var_length
-        )
-        assignments.append(
-            JaniAssignment(
-                {
-                    "ref": target_var_length,
-                    "value": new_array_legth_expr,
-                    "index": assign_index,
-                }
+        # Update the length of the array
+        assert isinstance(assign_operands, dict)
+        array_assign_indexes: List[JaniExpression] = [assign_operands["index"]]
+        target_sub_entry = assign_operands["exp"]
+        target_array_name = target_sub_entry.as_identifier()
+        while target_array_name is None:
+            sub_op_name, sub_operands = target_sub_entry.as_operator()
+            assert sub_op_name == "aa", f"Expected an array access, found {sub_op_name}"
+            assert isinstance(sub_operands, dict)
+            array_assign_indexes = [sub_operands["index"]] + array_assign_indexes
+            target_sub_entry = sub_operands["exp"]
+            target_array_name = target_sub_entry.as_identifier()
+        # Update the length for all array levels
+        for curr_array_lv in range(len(array_assign_indexes), 0, -1):
+            target_len_var_name = get_array_length_var_name(target_array_name, curr_array_lv)
+            curr_lv_dim_idx = curr_array_lv - 1
+            if curr_array_lv == 1:
+                target_len_ref_expr = JaniExpression(target_len_var_name)
+            else:
+                target_len_ref_expr = _generate_nested_array_access_expr(
+                    target_len_var_name, array_assign_indexes[0:curr_lv_dim_idx]
+                )
+            new_array_length_expr = max_operator(
+                plus_operator(array_assign_indexes[curr_lv_dim_idx], 1), target_len_ref_expr
             )
-        )
+            assignments.append(
+                JaniAssignment(
+                    {
+                        "ref": target_len_ref_expr,
+                        "value": new_array_length_expr,
+                        "index": assign_index,
+                    }
+                )
+            )
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
