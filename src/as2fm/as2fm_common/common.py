@@ -109,13 +109,15 @@ def value_to_string_expr(value: ValidJaniTypes) -> str:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def is_valid_array(in_sequence: MutableSequence) -> bool:
+def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
     """Check that the array is composed by a list of (int, float, list)."""
     # TODO: Corner case possible: [[1], [[1,2,3]]] <- The depth of the two branches is not the same
     assert isinstance(
-        in_sequence, list
+        in_sequence, (list, str)
     ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
     if len(in_sequence) == 0:
+        return True
+    if isinstance(in_sequence, str):
         return True
     if isinstance(in_sequence[0], MutableSequence):
         return all(
@@ -126,7 +128,7 @@ def is_valid_array(in_sequence: MutableSequence) -> bool:
 
 
 def get_array_type_and_sizes(
-    in_sequence: MutableSequence,
+    in_sequence: Union[MutableSequence, str],
 ) -> Tuple[Optional[Type[Union[int, float]]], MutableSequence]:
     """
     Extract the type and size of the provided multi-dimensional array.
@@ -135,6 +137,8 @@ def get_array_type_and_sizes(
     tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])
     """
     assert is_valid_array(in_sequence)
+    if isinstance(in_sequence, str):
+        return get_array_type_and_sizes(convert_string_to_int_array(in_sequence))
     if len(in_sequence) == 0:
         return None, [0]
     if not isinstance(in_sequence[0], MutableSequence):

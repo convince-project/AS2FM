@@ -26,6 +26,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.common import (
     SupportedECMAScriptSequences,
     convert_string_to_int_array,
+    get_array_type_and_sizes,
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
@@ -42,6 +43,7 @@ from as2fm.jani_generator.jani_entries import (
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     and_operator,
     array_access_operator,
+    array_value_operator,
     max_operator,
     not_operator,
     plus_operator,
@@ -160,13 +162,17 @@ def generate_jani_assignments(
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
-            assignment_target_var = target_expr
+            assignment_target_var: Optional[JaniVariable] = target_expr
         else:
-            assignment_target_var = context_vars.get(target_expr.as_identifier())
+            assert isinstance(target_expr, JaniExpression)
+            target_var_name = target_expr.as_identifier()
+            assert target_var_name is not None
+            assignment_target_var = context_vars.get(target_var_name)
             assert assignment_target_var is not None, get_error_msg(
                 elem_xml,
-                f"Variable {target_expr.as_identifier()} not in provided context {context_vars}.",
+                f"Variable {target_var_name} not in provided context {context_vars}.",
             )
+        assert isinstance(assignment_target_var, JaniVariable)
         assignment_target_id = assignment_target_var.name()
 
         array_info = assignment_target_var.get_array_info()
@@ -180,6 +186,9 @@ def generate_jani_assignments(
         )
         # In case this is an array assignment, the length must be adapted too
         if is_variable_array(assignment_target_var):
+            assert array_info is not None, get_error_msg(
+                elem_xml, f"Expected array_info to be available for {assignment_target_id}"
+            )
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type is JaniExpressionType.OPERATOR:
                 assert is_expression_array(assignment_value), get_error_msg(
@@ -190,21 +199,43 @@ def generate_jani_assignments(
                     elem_xml,
                     f"Expected an array as interpretation result, got {type(interpreted_expr)}.",
                 )
-                value_array_length = len(interpreted_expr)
+                _, array_sizes = get_array_type_and_sizes(interpreted_expr)
+                assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
+                    elem_xml,
+                    "Mismatch between expected n. of dimension and result from JS interpreter.",
+                )
+                for level in range(array_info.array_dimensions):
+                    array_length_name = get_array_length_var_name(assignment_target_id, level + 1)
+                    if level == 0:
+                        array_length_expr = JaniExpression(array_sizes[level])
+                    else:
+                        array_length_expr = array_value_operator(array_sizes[level])
+                    assignments.append(
+                        JaniAssignment(
+                            {
+                                "ref": array_length_name,
+                                "value": array_length_expr,
+                                "index": assign_index,
+                            }
+                        )
+                    )
             else:
-                assert assignment_value_type is JaniExpressionType.IDENTIFIER, get_error_msg(
+                assignment_value_id = assignment_value.as_identifier()
+                assert assignment_value_id is not None, get_error_msg(
                     elem_xml, "Expected an Identifier expression."
                 )
-                value_array_length = JaniExpression(f"{assignment_value.as_identifier()}.length")
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{assignment_target_id}.length",
-                        "value": value_array_length,
-                        "index": assign_index,
-                    }
-                )
-            )
+                for level in range(array_info.array_dimensions):
+                    array_length_name = get_array_length_var_name(assignment_target_id, level + 1)
+                    value_length_name = get_array_length_var_name(assignment_value_id, level + 1)
+                    assignments.append(
+                        JaniAssignment(
+                            {
+                                "ref": array_length_name,
+                                "value": value_length_name,
+                                "index": assign_index,
+                            }
+                        )
+                    )
     return assignments
 
 
