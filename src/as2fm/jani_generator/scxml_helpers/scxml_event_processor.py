@@ -17,7 +17,7 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, MutableSequence, Optional, Tuple
 
 from as2fm.as2fm_common.common import is_array_type
 from as2fm.jani_generator.jani_entries import (
@@ -34,6 +34,7 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
     ROS_TIMER_RATE_EVENT_PREFIX,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
 from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
@@ -100,8 +101,18 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
             jani_vars.append(
                 JaniVariable(var_name, param_info.p_type, array_init, False, array_info)
             )
-            assert array_dims == 1, "Support for N-Dimensional arrays on the way"
-            jani_vars.append(JaniVariable(f"{var_name}.length", int, 0))
+            for dim in range(array_dims):
+                len_var_name = get_array_length_var_name(var_name, dim + 1)
+                if dim == 0:
+                    jani_vars.append(JaniVariable(len_var_name, int, 0))
+                else:
+                    len_array_info = ArrayInfo(int, dim, [max_array_size] * dim)
+                    len_array_init = array_create_operator(len_array_info)
+                    jani_vars.append(
+                        JaniVariable(
+                            len_var_name, MutableSequence, len_array_init, False, len_array_info
+                        )
+                    )
         else:
             jani_vars.append(JaniVariable(var_name, param_info.p_type))
     return jani_vars
