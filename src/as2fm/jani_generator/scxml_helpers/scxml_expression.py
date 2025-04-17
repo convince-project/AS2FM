@@ -216,7 +216,6 @@ def _parse_ecmascript_to_jani_expression(
             is_array_length = property_expr_str == ARRAY_LENGTH_SUFFIX
             if is_array_length:
                 # We are accessing the array length information, some renaming needs to be done
-                assert array_info is not None, "Using reserved keyword on a non-array variable."
                 if object_expr_str is not None:
                     # Accessing array dimension at level 1
                     return JaniExpression(get_array_length_var_name(object_expr_str, 1))
