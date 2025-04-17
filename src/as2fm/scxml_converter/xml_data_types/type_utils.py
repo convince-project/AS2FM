@@ -89,11 +89,10 @@ def is_type_string_array(data_type: str) -> bool:
 def get_type_string_of_array(data_type: str) -> str:
     """Remove the array bit from the type string (works only with 1D array declarations)."""
     assert is_type_string_array(data_type)
-    matches = re.match(r"^(.+)(\[[0-9]*\])$", data_type)
-    assert matches is not None
-    match_type = matches.group(1)
-    assert match_type.count("[") == 0, "Currently only 1D arrays are supported."
-    return match_type
+    brackets = "".join(re.findall(r"(\[[0-9]*\])", data_type))
+    # Make sure this is the end of the string
+    assert data_type.endswith(brackets), f"Expected '{brackets}' at the end of '{data_type}'"
+    return data_type.removesuffix(brackets)
 
 
 def is_type_string_base_type(data_type: str) -> bool:
