@@ -31,6 +31,7 @@ from as2fm.jani_generator.jani_entries import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
+    get_array_length_var_name,
     parse_ecmascript_to_jani_expression,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
@@ -207,10 +208,10 @@ class DatamodelTag(BaseTag):
                 # TODO: The length variable NEEDS to be bounded in jani, between 0 and max_length
                 _, array_sizes = get_array_type_and_sizes(evaluated_expr)
                 for level in range(array_info.array_dimensions):
-                    level_name = f"{scxml_data.get_name()}.d{level+1}_len"
+                    var_len_name = get_array_length_var_name(scxml_data.get_name(), level + 1)
                     if level == 0:
                         self.automaton.add_variable(
-                            JaniVariable(level_name, int, JaniValue(array_sizes[level]))
+                            JaniVariable(var_len_name, int, JaniValue(array_sizes[level]))
                         )
                     else:
                         assert level < 2, "TODO: For now, only 1 and 2D supported."

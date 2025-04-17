@@ -40,6 +40,20 @@ from as2fm.jani_generator.jani_entries.jani_value import JaniValue
 from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 JS_CALLABLE_PREFIX = "Math"
+ARRAY_LENGTH_SUFFIX = "length"
+
+
+def get_array_length_var_name(array_name: str, dimension: int) -> str:
+    """
+    Generate the name of the variable holding the lengths for a specific dimension.
+
+    :param array_name: The name of the array this variable refers to.
+    :param dimension: to which dimension the length variable refers to [1-N].
+    :return: The variable name
+    """
+    assert isinstance(array_name, str) and len(array_name) > 0
+    assert isinstance(dimension, int) and dimension > 0
+    return f"{array_name}.d{dimension}_len"
 
 
 def parse_ecmascript_to_jani_expression(
@@ -73,7 +87,9 @@ def parse_ecmascript_to_jani_expression(
 
 
 def _generate_array_expression_for_assignment(
-    array_info: ArrayInfo, parent_script: esprima.nodes.Node, array_values: MutableSequence
+    array_info: ArrayInfo,
+    parent_script: Optional[esprima.nodes.Node],
+    array_values: MutableSequence,
 ) -> JaniExpression:
     """
     Make the JaniExpression generating the array_values to ba assigned to a variable.
@@ -184,22 +200,35 @@ def _parse_ecmascript_to_jani_expression(
         return _generate_array_expression_for_assignment(array_info, parent_script, elements_list)
     elif ast.type == "MemberExpression":
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
+        property_expr = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)
         if ast.computed:
-            # This is an array access, like array[0]
-            array_index = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)
-            return array_access_operator(object_expr, array_index)
+            # This is an array access, like `array[0]`
+            return array_access_operator(object_expr, property_expr)
         else:
-            # Access to the member of an object through dot notation
-            # Check the object_expr is an identifier
+            # Access to the member of an object through dot notation. Two cases:
+            # 1: Generic dot notation, like `object.member`
+            # 2: Length access, like `array.length` or `array[2].length`
             object_expr_str = object_expr.as_identifier()
+            property_expr_str = property_expr.as_identifier()
             assert (
-                object_expr_str is not None
-            ), "Only identifiers can be accessed through dot notation."
-            assert (
-                ast.property.type == "Identifier"
-            ), "Dot notation can be used only to access object's members."
-            field_complete_name = f"{object_expr_str}.{ast.property.name}"
-            return JaniExpression(field_complete_name)
+                property_expr_str is not None
+            ), f"Unexpected value for property of {ast}. Shall be an Identifier."
+            is_array_length = property_expr_str == ARRAY_LENGTH_SUFFIX
+            if is_array_length:
+                # We are accessing the array length information, some renaming needs to be done
+                assert array_info is not None, "Using reserved keyword on a non-array variable."
+                if object_expr_str is not None:
+                    # Accessing array dimension at level 1
+                    return JaniExpression(get_array_length_var_name(object_expr_str, 1))
+                else:
+                    # We need to count how many levels deep we need to go (n. of `ac` in object)
+                    raise NotImplementedError("Multi-Dimensional arrays are work in progress.")
+            else:
+                # We are accessing a generic sub-field, just re-assemble the variable name
+                assert (
+                    object_expr_str is not None
+                ), "Only identifiers can be accessed through dot notation."
+                return JaniExpression(f"{object_expr_str}.{property_expr_str}")
     elif ast.type == "CallExpression":
         # We expect function calls to be of the form Math.function_name(args) (JavaScript-like)
         # The "." operator is represented as a MemberExpression
