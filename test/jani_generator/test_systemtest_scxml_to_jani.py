@@ -420,10 +420,10 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
-    def test_ros_delib_ws_2024_p1(self):
-        """Test the ROS Deliberation Workshop example works."""
+    def test_tutorial_fetch_carry(self):
+        """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "delibws24_p1",
+            "tutorial_fetch_and_carry",
             store_generated_scxmls=True,
             property_name="snack_at_table",
             expected_result_probability=1.0,
