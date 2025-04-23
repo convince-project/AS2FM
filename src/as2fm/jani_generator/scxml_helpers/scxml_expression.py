@@ -191,6 +191,8 @@ def _parse_ecmascript_to_jani_expression(
             }
         )
     elif ast.type == "ArrayExpression":
+        # TODO: Implement this in a separated function, using recursion and making sure to pad
+        # everything according to array_info.
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         entry_type: Type = array_info.array_type
         assert all(
