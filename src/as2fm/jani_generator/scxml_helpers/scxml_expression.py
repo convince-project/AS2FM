@@ -154,7 +154,7 @@ def _parse_ecmascript_to_jani_expression(
     elif ast.type == "Literal":
         if isinstance(ast.value, str):
             # This needs to be treated as a list (not array) of integers.
-            string_as_list = list(convert_string_to_int_array(ast.value))
+            string_as_list = convert_string_to_int_array(ast.value)
             if parent_script.type == "ExpressionStatement":  # This is an assignment, add padding
                 return _generate_array_expression_for_assignment(
                     array_info, parent_script, string_as_list
