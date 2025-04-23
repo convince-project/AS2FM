@@ -17,7 +17,7 @@
     <state id="initial">
         <bt_tick target="wait_result">
             <ros_action_send_goal name="act">
-                <field name="goal_id">
+                <field name="loc_id">
                     <expr>
                         <bt_get_input key="data" />
                     </expr>
@@ -45,7 +45,6 @@
         <ros_action_handle_aborted_result name="act" target="result_available">
             <assign location="tmp_result" expr="false" />
         </ros_action_handle_aborted_result>
-
     </state>
 
     <state id="result_available">
