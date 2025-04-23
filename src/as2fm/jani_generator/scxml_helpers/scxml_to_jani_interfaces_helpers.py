@@ -66,6 +66,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo, array_value_to_type_info
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 def _generate_nested_array_access_expr(
@@ -322,6 +323,7 @@ def append_scxml_body_to_jani_edge(
     hash_str: str,
     data_event: Optional[str],
     max_array_size: int,
+    custom_data_types: List[XmlStructDefinition],
 ) -> Tuple[List[JaniEdge], List[str]]:
     """
     Converts the body of an SCXML element to a JaniDestination and appends it to an existing edge.
@@ -372,7 +374,7 @@ def append_scxml_body_to_jani_edge(
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
-                res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
+                res_eval_value = interpret_ecma_script_expr(expr, custom_data_types, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
                 res_eval_dims = 0
                 res_eval_array_type: Optional[Type[Union[int, float]]] = None

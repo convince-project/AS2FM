@@ -537,6 +537,7 @@ class TransitionTag(BaseTag):
                 target_hash,
                 trigger_event,
                 self.max_array_size,
+                scxml_root.custom_data_types,
             )
             generated_edges.extend(additional_edges)
             generated_locations.extend(additional_locations)
