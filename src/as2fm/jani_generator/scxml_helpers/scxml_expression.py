@@ -113,14 +113,31 @@ def _generate_array_expression_for_assignment(
     )
 
     array_base_type: Type[Union[int, float]] = array_info.array_type
-    assert array_info.array_dimensions == 1, "TODO: Implement N-Dimensional array support."
     assert isinstance(array_info.array_max_sizes[0], int), "Unexpected error: undefined size found."
     padding_size = array_info.array_max_sizes[0] - len(array_values)
     assert (
         padding_size >= 0
     ), f"Provided array {array_values} is longer than max value: {array_info.array_max_sizes[0]}."
-    array_values.extend([array_base_type(0)] * padding_size)
+    padding_sizes = array_info.array_max_sizes.copy()
+    padding_sizes[0] = padding_size
+    the_padding = _make_padding(array_base_type, padding_sizes)
+    array_values.extend(the_padding)
     return array_value_operator(array_values)
+
+
+def _make_padding(array_base_type: Type[Union[int, float]], sizes: List[int]):
+    """
+    Recursively generates a nested list structure filled with zero values of the specified type.
+    Args:
+        array_base_type (Type[Union[int, float]]):
+            The data type of the zero values (e.g., int or float).
+        sizes (List[int]): A list of integers specifying the dimensions of the nested structure.
+    Returns:
+        List: A nested list filled with zero values, matching the specified dimensions.
+    """
+    if len(sizes) == 1:
+        return [array_base_type(0)] * sizes[0]
+    return [_make_padding(array_base_type, sizes[1:]) for _ in range(sizes[0])]
 
 
 def _generate_constant_array_expression(
@@ -195,11 +212,29 @@ def _parse_ecmascript_to_jani_expression(
         # everything according to array_info.
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         entry_type: Type = array_info.array_type
-        assert all(
-            element.type == "Literal" for element in ast.elements
-        ), "All array elements are expected to be a 'Literal'"
-        elements_list = [entry_type(element.value) for element in ast.elements]
-        return _generate_array_expression_for_assignment(array_info, parent_script, elements_list)
+        if array_info.array_dimensions == 1:
+            assert all(
+                element.type == "Literal" for element in ast.elements
+            ), "All array elements are expected to be a 'Literal'"
+            elements_list = [entry_type(element.value) for element in ast.elements]
+            return _generate_array_expression_for_assignment(
+                array_info, parent_script, elements_list
+            )
+        else:  # array_info.array_dimensions > 1
+            elem_exprs = []
+            for elem in ast.elements:
+                elem_array_info = ArrayInfo(
+                    array_type=array_info.array_type,
+                    array_dimensions=array_info.array_dimensions - 1,
+                    array_max_sizes=array_info.array_max_sizes[1:],
+                    is_base_type=array_info.is_base_type,
+                )
+                elem_expr = _parse_ecmascript_to_jani_expression(
+                    elem, parent_script, elem_array_info
+                )
+                elem_exprs.append(elem_expr)
+            return _generate_array_expression_for_assignment(array_info, parent_script, elem_exprs)
+
     elif ast.type == "MemberExpression":
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
         property_expr = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)

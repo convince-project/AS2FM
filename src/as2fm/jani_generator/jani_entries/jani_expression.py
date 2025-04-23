@@ -73,6 +73,11 @@ class JaniExpression:
             elif JaniValue(expression).is_valid():
                 # If it is a value, then we don't need to expand further
                 self.value = JaniValue(expression)
+            elif isinstance(expression, list) and all(
+                JaniExpression(x).is_valid() for x in expression
+            ):
+                # list of jani expressions
+                self.value = JaniValue(expression)
             else:
                 # If it isn't a value or an identifier, it must be a dictionary providing op and
                 # related operands
@@ -348,6 +353,9 @@ def generate_jani_expression(expr: SupportedExp) -> JaniExpression:
     if isinstance(expr, JaniExpression):
         return expr
     if isinstance(expr, (str, JaniValue)) or JaniValue(expr).is_valid():
+        return JaniExpression(expr)
+    if isinstance(expr, list) and all(JaniExpression(x).is_valid() for x in expr):
+        # list of jani expressions
         return JaniExpression(expr)
     assert isinstance(expr, dict), f"Unsupported expression provided: {expr}."
     if "distribution" in expr:
