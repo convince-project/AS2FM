@@ -161,6 +161,17 @@ def test_convert_expression_with_custom_structs():
     # also with length
     assert convert_expression_with_custom_structs("x.length") == "x.length"
     assert convert_expression_with_custom_structs("x[0].length") == "x[0].length"
+    assert convert_expression_with_custom_structs("x[0][1].length") == "x[0][1].length"
+    assert convert_expression_with_custom_structs("x[1].y.length") == "x.y[1].length"
+    assert (
+        convert_expression_with_custom_structs("x[1].y.length * c.length")
+        == "x.y[1].length * c.length"
+    )
+    assert convert_expression_with_custom_structs("x[x.length]") == "x[x.length]"
+    assert convert_expression_with_custom_structs("x[0][x[0].length]") == "x[0][x[0].length]"
+    assert (
+        convert_expression_with_custom_structs("x[0].y[x[0].y.length]") == "x.y[0][x.y[0].length]"
+    )
 
 
 def test_type_string_conversion():
