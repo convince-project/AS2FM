@@ -243,15 +243,12 @@ def _parse_ecmascript_to_jani_expression(
             # Access to the member of an object through dot notation. Two cases:
             # 1: Generic dot notation, like `object.member`
             # 2: Length access, like `array.length` or `array[2].length`
-            # 3: Accessing a property of one item in an array of custom objects, like
-            #    `array[2].x`
             object_expr_str = object_expr.as_identifier()
             property_expr_str = property_expr.as_identifier()
             assert (
                 property_expr_str is not None
             ), f"Unexpected value for property of {ast}. Shall be an Identifier."
             is_array_length = property_expr_str == ARRAY_LENGTH_SUFFIX
-            object_is_array = object_expr.op == "aa"
             if is_array_length:
                 # We are accessing the array length information, some renaming needs to be done
                 if object_expr_str is not None:
@@ -260,18 +257,6 @@ def _parse_ecmascript_to_jani_expression(
                 else:
                     # We need to count how many levels deep we need to go (n. of `ac` in object)
                     raise NotImplementedError("Multi-Dimensional arrays are work in progress.")
-            elif object_is_array:
-                # move the array access to the end of the call chain.
-                # i.e. `a_polygon.points[0].x` => `a_polygon.points.x[0]`
-                parent_object_expr = _parse_ecmascript_to_jani_expression(
-                    ast.object.object, ast, array_info
-                )
-                parent_object_expr_str = parent_object_expr.as_identifier()
-                array_expr = JaniExpression(f"{parent_object_expr_str}.{property_expr_str}")
-                array_index_expr = _parse_ecmascript_to_jani_expression(
-                    ast.object.property, ast, array_info
-                )
-                return array_access_operator(array_expr, array_index_expr)
             else:
                 # We are accessing a generic sub-field, just re-assemble the variable name
                 assert (
