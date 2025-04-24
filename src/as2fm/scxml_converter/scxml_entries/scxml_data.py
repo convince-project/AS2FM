@@ -256,10 +256,6 @@ class ScxmlData(ScxmlBase):
         if not self.check_validity():
             return False
         if not self._is_plain_type():
-            log_error(
-                self.get_xml_origin(),
-                f"Non plain type '{self._data_type}' for data entry '{self._id}'.",
-            )
             return False
         return True
 
