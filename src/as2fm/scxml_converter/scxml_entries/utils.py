@@ -17,8 +17,11 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Tuple, Type
 
+import esprima
+
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 
 # List of names that shall not be used for variable names
@@ -175,6 +178,69 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
     return new_expr
+
+
+def _separated_member_expression_to_str(obj, idxs) -> str:
+    return obj + "".join([f"[{x}]" for x in idxs])
+
+
+def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
+    """
+    `a[0]` => 'a', ['0']
+    `a[0].x` => 'a.x', ['0']
+    `a[0].x[2]` => 'a.x', ['0', '2']
+    `a` => 'a', []
+    """
+    if ast.type == "Identifier":
+        return ast.name, []
+    elif ast.type == "Literal":
+        return ast.raw, []
+    elif ast.type == "MemberExpression":
+        obj, idxs = _convert_ast_to_plain_str(ast.object)
+        if ast.computed:  # array index
+            return obj, idxs + [ast.property.raw]
+        else:  # actual member access
+            return f"{obj}.{ast.property.name}", idxs
+    elif ast.type == "BinaryExpression":
+        left_expr = _convert_ast_to_plain_str(ast.left)
+        right_expr = _convert_ast_to_plain_str(ast.right)
+        left_str = _separated_member_expression_to_str(*left_expr)
+        right_str = _separated_member_expression_to_str(*right_expr)
+        return f"{left_str} {ast.operator} {right_str}", []
+    elif ast.type == "CallExpression":
+        callee_expr = _convert_ast_to_plain_str(ast.callee)
+        argument_exprs = [_convert_ast_to_plain_str(a) for a in ast.arguments]
+        callee_str = _separated_member_expression_to_str(*callee_expr)
+        argument_strs = [_separated_member_expression_to_str(*a) for a in argument_exprs]
+        arguments_str = ", ".join(argument_strs)
+        return f"{callee_str}({arguments_str})", []
+    else:
+        raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
+
+
+def convert_expression_with_custom_structs(expr: str, elem=None) -> str:
+    """
+    e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons.polygons.points.y[0][1]`.
+    """
+    try:
+        ast = esprima.parseScript(expr)
+    except esprima.error_handler.Error as e:
+        raise RuntimeError(get_error_msg(elem, f"Failed parsing ecmascript: {expr}. Error: {e}."))
+    assert len(ast.body) == 1, get_error_msg(
+        elem, "The ecmascript must contain exactly one expression."
+    )
+    ast = ast.body[0]
+    assert ast.type == "ExpressionStatement", get_error_msg(
+        elem, "The ecmascript must contain exactly one expression."
+    )
+    ast = ast.expression
+    print(expr)
+    print(ast)
+    print(_convert_ast_to_plain_str(ast))
+
+    obj, idxs = _convert_ast_to_plain_str(ast)
+
+    return _separated_member_expression_to_str(obj, idxs)
 
 
 # ------------ String-related utilities ------------

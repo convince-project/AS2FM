@@ -23,6 +23,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
+    convert_expression_with_custom_structs,
     get_plain_expression,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
@@ -139,6 +140,16 @@ def test_action_result_good_expressions():
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT)
         assert conv_expr == gt_expr
+
+
+def test_convert_expression_with_custom_structs():
+    """Test handling of array indexes."""
+    assert convert_expression_with_custom_structs("x[0]") == "x[0]"
+    assert convert_expression_with_custom_structs("x[0].y") == "x.y[0]"
+    assert convert_expression_with_custom_structs("Math.sin(x[0].y)") == "Math.sin(x.y[0])"
+    assert convert_expression_with_custom_structs("x.y.z[1].y") == "x.y.z.y[1]"
+    assert convert_expression_with_custom_structs("x.y[0].z[1].y") == "x.y.z.y[0][1]"
+    assert convert_expression_with_custom_structs("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
 
 
 def test_type_string_conversion():
