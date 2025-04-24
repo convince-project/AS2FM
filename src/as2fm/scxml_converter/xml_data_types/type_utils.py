@@ -47,7 +47,8 @@ class ArrayInfo:
         array_dimensions (int): The number of dimensions of the array.
         array_max_sizes (List[int]): A list specifying the maximum size for each
             dimension of the array.
-        is_base_type (bool): Whether we expect the type string to relate to a float/int or not.
+        is_base_type (bool): Whether the array_type is assumed to be a float or int, i.e. not a
+            custom object.
     """
 
     array_type: Type[Union[int, float]]
