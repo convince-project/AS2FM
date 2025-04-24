@@ -153,6 +153,10 @@ def test_convert_expression_with_custom_structs():
     assert convert_expression_with_custom_structs("x.y.z[1].y") == "x.y.z.y[1]"
     assert convert_expression_with_custom_structs("x.y[0].z[1].y") == "x.y.z.y[0][1]"
     assert convert_expression_with_custom_structs("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
+    assert (
+        convert_expression_with_custom_structs("x.y[0].z[1].y ** my[l].c")
+        == "x.y.z.y[0][1] ** my.c[l]"
+    )
 
 
 def test_type_string_conversion():
