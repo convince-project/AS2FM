@@ -504,7 +504,6 @@ class ScxmlAssign(ScxmlBase):
         return False
 
     def as_plain_scxml(self, _) -> "ScxmlAssign":
-        # TODO: Might make sense to check if the assignment happens in a topic callback
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
         expr = get_plain_expression(self._expr, self._cb_type)
         return ScxmlAssign(self._location, expr)
