@@ -219,7 +219,7 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
         right_expr = _convert_ast_to_plain_str(ast.right)
         left_str = _separated_member_expression_to_str(*left_expr)
         right_str = _separated_member_expression_to_str(*right_expr)
-        return f"{left_str} {ast.operator} {right_str}", []
+        return f"({left_str} {ast.operator} {right_str})", []
     elif ast.type == "CallExpression":
         callee_expr = _convert_ast_to_plain_str(ast.callee)
         argument_exprs = [_convert_ast_to_plain_str(a) for a in ast.arguments]

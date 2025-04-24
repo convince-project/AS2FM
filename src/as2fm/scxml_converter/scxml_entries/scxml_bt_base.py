@@ -31,7 +31,11 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import process_bt_child_seq_id
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, get_plain_expression
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    convert_expression_with_object_arrays,
+    get_plain_expression,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -264,11 +268,14 @@ class BtGenericStatusHandle(ScxmlTransition):
             condition_prefix = "" if plain_cond_expr is None else f"({plain_cond_expr}) && "
             generated_transitions = []
             for child_seq_n, child_id in enumerate(children_ids):
+                child_cond = convert_expression_with_object_arrays(
+                    f"{condition_prefix} ({self._child_seq_id} == {child_seq_n})"
+                )
                 # Make a copy per set of targets: might create issues when adding targets otherwise
                 generated_transition = ScxmlTransition(
                     deepcopy(self._targets),
                     [self.generate_bt_event_name(child_id)],
-                    condition_prefix + f"({self._child_seq_id} == {child_seq_n})",
+                    child_cond,
                 ).instantiate_bt_events(instance_id, children_ids)
                 assert (
                     len(generated_transition) == 1

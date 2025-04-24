@@ -15,7 +15,7 @@
 
 """Test the SCXML data conversion from all possible declaration types"""
 
-from typing import List, MutableSequence
+from typing import List, MutableSequence, Tuple
 
 import pytest
 
@@ -31,15 +31,15 @@ from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_s
 
 def test_standard_good_expressions():
     """Test expressions that have no events at all (e.g. from state entries)."""
-    ok_expressions: List[str] = [
-        "1 + 1 == 2",
-        "variable_1 + cos(3.14)",
-        "sin(x.data) + 1.4",
-        "cos(x+y+z) > 0 && sin(z - y) <= 0",
+    test_expressions: List[Tuple[str, str]] = [
+        ("1 + 1 == 2", "((1 + 1) == 2)"),
+        ("variable_1 + cos(3.14)", "(variable_1 + cos(3.14))"),
+        ("sin(x.data) + 1.4", "(sin(x.data) + 1.4)"),
+        ("cos(x+y+z) > 0 && sin(z - y) <= 0", "((cos(((x + y) + z)) > 0) && (sin((z - y)) <= 0))"),
     ]
-    for expr in ok_expressions:
-        conv_expr = get_plain_expression(expr, CallbackType.STATE)
-        assert conv_expr == expr
+    for in_expr, gt_expr in test_expressions:
+        conv_expr = get_plain_expression(in_expr, CallbackType.STATE)
+        assert conv_expr == gt_expr
 
 
 def test_standard_bad_expressions():
@@ -58,7 +58,7 @@ def test_standard_bad_expressions():
 
 def test_topic_good_expressions():
     """Test expressions that have events related to topics."""
-    ok_expressions: List[str] = [
+    test_expressions: List[str] = [
         "_msg.data == 1",
         "cos(_msg.data) == 1.0",
         "some_msg.data + _msg.count",
@@ -66,15 +66,15 @@ def test_topic_good_expressions():
         "_msg.array_entry[_msg.index] == _msg.index",
     ]
     expected_expressions: List[str] = [
-        f"{PLAIN_FIELD_EVENT_PREFIX}data == 1",
-        f"cos({PLAIN_FIELD_EVENT_PREFIX}data) == 1.0",
-        f"some_msg.data + {PLAIN_FIELD_EVENT_PREFIX}count",
-        f"{PLAIN_FIELD_EVENT_PREFIX}x<1 && sin({PLAIN_FIELD_EVENT_PREFIX}angle.x+"
-        + f"{PLAIN_FIELD_EVENT_PREFIX}angle.y)>2",
-        f"{PLAIN_FIELD_EVENT_PREFIX}array_entry[{PLAIN_FIELD_EVENT_PREFIX}index] == "
-        + f"{PLAIN_FIELD_EVENT_PREFIX}index",
+        f"({PLAIN_FIELD_EVENT_PREFIX}data == 1)",
+        f"(cos({PLAIN_FIELD_EVENT_PREFIX}data) == 1.0)",
+        f"(some_msg.data + {PLAIN_FIELD_EVENT_PREFIX}count)",
+        f"(({PLAIN_FIELD_EVENT_PREFIX}x < 1) && (sin(({PLAIN_FIELD_EVENT_PREFIX}angle.x + "
+        + f"{PLAIN_FIELD_EVENT_PREFIX}angle.y)) > 2))",
+        f"({PLAIN_FIELD_EVENT_PREFIX}array_entry[{PLAIN_FIELD_EVENT_PREFIX}index] == "
+        + f"{PLAIN_FIELD_EVENT_PREFIX}index)",
     ]
-    for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
+    for test_expr, gt_expr in zip(test_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC)
         assert conv_expr == gt_expr
 
@@ -99,7 +99,7 @@ def test_action_goal_good_expressions():
     expected_expressions: List[str] = [
         "some_action.goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
-        f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
+        f"({PLAIN_FIELD_EVENT_PREFIX}x < 1)",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL)
@@ -114,7 +114,7 @@ def test_action_feedback_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle.x) == 1.0",
+        f"(cos({PLAIN_FIELD_EVENT_PREFIX}angle.x) == 1.0)",
         "some_action.goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
@@ -132,8 +132,8 @@ def test_action_result_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}code == 1",
-        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle) == 0.0",
+        f"({PLAIN_SCXML_EVENT_DATA_PREFIX}code == 1)",
+        f"(cos({PLAIN_FIELD_EVENT_PREFIX}angle) == 0.0)",
         "some_action.goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
@@ -152,12 +152,12 @@ def test_convert_expression_with_custom_structs():
     assert convert_expression_with_object_arrays("Math.sin(x[0].y)[6]") == "Math.sin(x.y[0])[6]"
     assert convert_expression_with_object_arrays("x.y.z[1].y") == "x.y.z.y[1]"
     assert convert_expression_with_object_arrays("x.y[0].z[1].y") == "x.y.z.y[0][1]"
-    assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
+    assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "(x.y.z.y[0][1] + 1)"
     assert (
         convert_expression_with_object_arrays("x.y[0].z[1].y ** my[l].c")
-        == "x.y.z.y[0][1] ** my.c[l]"
+        == "(x.y.z.y[0][1] ** my.c[l])"
     )
-    assert convert_expression_with_object_arrays("x[2].b && a") == "x.b[2] && a"
+    assert convert_expression_with_object_arrays("x[2].b && a") == "(x.b[2] && a)"
 
     # also with length
     assert convert_expression_with_object_arrays("x.length") == "x.length"
@@ -166,7 +166,7 @@ def test_convert_expression_with_custom_structs():
     assert convert_expression_with_object_arrays("x[1].y.length") == "x.y[1].length"
     assert (
         convert_expression_with_object_arrays("x[1].y.length * c.length")
-        == "x.y[1].length * c.length"
+        == "(x.y[1].length * c.length)"
     )
     assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
     assert convert_expression_with_object_arrays("x[0][x[0].length]") == "x[0][x[0].length]"
