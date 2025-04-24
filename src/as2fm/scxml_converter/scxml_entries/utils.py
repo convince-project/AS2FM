@@ -198,7 +198,9 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
     elif ast.type == "MemberExpression":
         obj, idxs = _convert_ast_to_plain_str(ast.object)
         if ast.computed:  # array index
-            return obj, idxs + [ast.property.raw]
+            idx_expr = _convert_ast_to_plain_str(ast.property)
+            idx_str = _separated_member_expression_to_str(*idx_expr)
+            return obj, idxs + [idx_str]
         else:  # actual member access
             return f"{obj}.{ast.property.name}", idxs
     elif ast.type == "BinaryExpression":
