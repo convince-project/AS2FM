@@ -23,7 +23,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
-    convert_expression_with_custom_structs,
+    convert_expression_with_object_arrays,
     get_plain_expression,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
@@ -144,34 +144,33 @@ def test_action_result_good_expressions():
 
 def test_convert_expression_with_custom_structs():
     """Test handling of array indexes."""
-    assert convert_expression_with_custom_structs("x[0]") == "x[0]"
-    assert convert_expression_with_custom_structs("x[0].y") == "x.y[0]"
-    assert convert_expression_with_custom_structs("x[c].y") == "x.y[c]"
-    assert convert_expression_with_custom_structs("x[c[2]].y") == "x.y[c[2]]"
-    assert convert_expression_with_custom_structs("Math.sin(x[0].y)") == "Math.sin(x.y[0])"
-    assert convert_expression_with_custom_structs("Math.sin(x[0].y)[6]") == "Math.sin(x.y[0])[6]"
-    assert convert_expression_with_custom_structs("x.y.z[1].y") == "x.y.z.y[1]"
-    assert convert_expression_with_custom_structs("x.y[0].z[1].y") == "x.y.z.y[0][1]"
-    assert convert_expression_with_custom_structs("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
+    assert convert_expression_with_object_arrays("x[0]") == "x[0]"
+    assert convert_expression_with_object_arrays("x[0].y") == "x.y[0]"
+    assert convert_expression_with_object_arrays("x[c].y") == "x.y[c]"
+    assert convert_expression_with_object_arrays("x[c[2]].y") == "x.y[c[2]]"
+    assert convert_expression_with_object_arrays("Math.sin(x[0].y)") == "Math.sin(x.y[0])"
+    assert convert_expression_with_object_arrays("Math.sin(x[0].y)[6]") == "Math.sin(x.y[0])[6]"
+    assert convert_expression_with_object_arrays("x.y.z[1].y") == "x.y.z.y[1]"
+    assert convert_expression_with_object_arrays("x.y[0].z[1].y") == "x.y.z.y[0][1]"
+    assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
     assert (
-        convert_expression_with_custom_structs("x.y[0].z[1].y ** my[l].c")
+        convert_expression_with_object_arrays("x.y[0].z[1].y ** my[l].c")
         == "x.y.z.y[0][1] ** my.c[l]"
     )
+    assert convert_expression_with_object_arrays("x[2].b && a") == "x.b[2] && a"
 
     # also with length
-    assert convert_expression_with_custom_structs("x.length") == "x.length"
-    assert convert_expression_with_custom_structs("x[0].length") == "x[0].length"
-    assert convert_expression_with_custom_structs("x[0][1].length") == "x[0][1].length"
-    assert convert_expression_with_custom_structs("x[1].y.length") == "x.y[1].length"
+    assert convert_expression_with_object_arrays("x.length") == "x.length"
+    assert convert_expression_with_object_arrays("x[0].length") == "x[0].length"
+    assert convert_expression_with_object_arrays("x[0][1].length") == "x[0][1].length"
+    assert convert_expression_with_object_arrays("x[1].y.length") == "x.y[1].length"
     assert (
-        convert_expression_with_custom_structs("x[1].y.length * c.length")
+        convert_expression_with_object_arrays("x[1].y.length * c.length")
         == "x.y[1].length * c.length"
     )
-    assert convert_expression_with_custom_structs("x[x.length]") == "x[x.length]"
-    assert convert_expression_with_custom_structs("x[0][x[0].length]") == "x[0][x[0].length]"
-    assert (
-        convert_expression_with_custom_structs("x[0].y[x[0].y.length]") == "x.y[0][x.y[0].length]"
-    )
+    assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
+    assert convert_expression_with_object_arrays("x[0][x[0].length]") == "x[0][x[0].length]"
+    assert convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x.y[0][x.y[0].length]"
 
 
 def test_type_string_conversion():

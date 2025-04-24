@@ -159,7 +159,10 @@ def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
 
 def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
     """
-    Convert a ROS interface expressions (using ROS-specific PREFIXES) to plain SCXML.
+    Convert ROS-specific PREFIXES, custom struct array indexing to plain SCXML.
+
+    e.g. `_msg.a` => `_event.data.a` and
+         `objects[2].x` => `objects.x[2]`
 
     :param in_expr: The expression to convert.
     :param cb_type: The type of callback the expression is used in.
@@ -179,6 +182,8 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
         "Error: SCXML-ROS expression conversion: "
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
+    # arrays of custom structs
+    new_expr = convert_expression_with_object_arrays(new_expr)
     return new_expr
 
 
@@ -208,7 +213,7 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
                 obj = _separated_member_expression_to_str(obj, idxs)
                 return f"{obj}.{ast.property.name}", []
             return f"{obj}.{ast.property.name}", idxs
-    elif ast.type == "BinaryExpression":
+    elif ast.type in ("BinaryExpression", "LogicalExpression"):
         left_expr = _convert_ast_to_plain_str(ast.left)
         right_expr = _convert_ast_to_plain_str(ast.right)
         left_str = _separated_member_expression_to_str(*left_expr)
@@ -225,7 +230,7 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
 
-def convert_expression_with_custom_structs(expr: str, elem=None) -> str:
+def convert_expression_with_object_arrays(expr: str, elem=None) -> str:
     """
     e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons.polygons.points.y[0][1]`.
     """

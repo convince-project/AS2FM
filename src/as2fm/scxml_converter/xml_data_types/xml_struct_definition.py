@@ -30,7 +30,7 @@ ExpandedDataStructType = Dict[str, Union[str, Dict[str, "ExpandedDataStructType"
 
 class XmlStructDefinition:
     """
-    Represents a custom data type defined in SCXML, loaded from an XML element.
+    Represents a custom data structs defined in SCXML, loaded from an XML element.
     """
 
     def __init__(self, name: str, members: dict):
