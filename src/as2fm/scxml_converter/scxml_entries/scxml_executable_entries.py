@@ -39,6 +39,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
+    convert_expression_with_object_arrays,
     generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
@@ -506,7 +507,8 @@ class ScxmlAssign(ScxmlBase):
     def as_plain_scxml(self, _) -> "ScxmlAssign":
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
         expr = get_plain_expression(self._expr, self._cb_type)
-        return ScxmlAssign(self._location, expr)
+        location = convert_expression_with_object_arrays(self._location)
+        return ScxmlAssign(location, expr)
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."

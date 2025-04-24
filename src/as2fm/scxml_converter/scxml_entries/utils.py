@@ -23,6 +23,7 @@ import esprima
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 ARRAY_LENGTH_SUFFIX = "length"
 
@@ -228,6 +229,17 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
         return f"{callee_str}({arguments_str})", []
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
+
+
+def convert_expression_with_object_assignment(
+    expr: str, custom_data_type: XmlStructDefinition, elem=None
+) -> List[str]:
+    """
+    e.g. `x.ps[0]` =>
+         `['x.ps[0].x', 'x.ps[0].y']`.
+
+    """
+    raise NotImplementedError("todo ...")
 
 
 def convert_expression_with_object_arrays(expr: str, elem=None) -> str:
