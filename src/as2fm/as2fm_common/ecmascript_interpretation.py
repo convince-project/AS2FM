@@ -17,12 +17,11 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, List, Optional, Union, get_args
+from typing import Dict, Optional, Union, get_args
 
 import js2py
 
 from as2fm.as2fm_common.common import ValidScxmlTypes
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 BasicJsTypes = Union[int, float, bool, str]
 
@@ -64,9 +63,7 @@ def _interpret_ecmascript_expr(
 
 
 def interpret_ecma_script_expr(
-    expr: str,
-    custom_data_types: List[XmlStructDefinition],
-    variables: Optional[Dict[str, ValidScxmlTypes]] = None,
+    expr: str, variables: Optional[Dict[str, ValidScxmlTypes]] = None
 ) -> ValidScxmlTypes:
     """
     Interpret the ECMA script expression. Return it only if result compatible with plain SCXML.
