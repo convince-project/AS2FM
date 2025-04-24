@@ -158,6 +158,10 @@ def test_convert_expression_with_custom_structs():
         == "x.y.z.y[0][1] ** my.c[l]"
     )
 
+    # also with length
+    assert convert_expression_with_custom_structs("x.length") == "x.length"
+    assert convert_expression_with_custom_structs("x[0].length") == "x[0].length"
+
 
 def test_type_string_conversion():
     """Test the various types string are converted to the expected value."""

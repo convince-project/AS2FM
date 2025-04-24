@@ -24,6 +24,8 @@ import esprima
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 
+ARRAY_LENGTH_SUFFIX = "length"
+
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
 
@@ -202,6 +204,9 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
             idx_str = _separated_member_expression_to_str(*idx_expr)
             return obj, idxs + [idx_str]
         else:  # actual member access
+            if ast.property.name == ARRAY_LENGTH_SUFFIX:
+                obj = _separated_member_expression_to_str(obj, idxs)
+                return f"{obj}.{ast.property.name}", []
             return f"{obj}.{ast.property.name}", idxs
     elif ast.type == "BinaryExpression":
         left_expr = _convert_ast_to_plain_str(ast.left)
