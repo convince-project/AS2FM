@@ -229,9 +229,7 @@ def _parse_ecmascript_to_jani_expression(
                     array_max_sizes=array_info.array_max_sizes[1:],
                     is_base_type=array_info.is_base_type,
                 )
-                elem_expr = _parse_ecmascript_to_jani_expression(
-                    elem, parent_script, elem_array_info
-                )
+                elem_expr = _parse_ecmascript_to_jani_expression(elem, ast, elem_array_info)
                 elem_exprs.append(elem_expr)
             return _generate_array_expression_for_assignment(array_info, parent_script, elem_exprs)
 
