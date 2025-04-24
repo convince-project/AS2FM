@@ -107,9 +107,10 @@ def _generate_array_expression_for_assignment(
         parent_script, esprima.nodes.Node
     ), f"Unexpected type '{type(parent_script)}' for input argument 'parent_script'."
     # Expression for generating array are supported only for assignments (elementary expression)!
-    assert parent_script.type == "ExpressionStatement", (
-        "Error: array generators can only be used for assignments: "
-        f"{parent_script.type} != ExpressionStatement."
+    assert parent_script.type in ("ExpressionStatement", "ArrayExpression"), (
+        "Error: array generators can only be used for assignments or in other array expressions "
+        "(for multi-dimensional arrays): "
+        f"{parent_script.type} not in (ExpressionStatement, ArrayExpression)."
     )
 
     array_base_type: Type[Union[int, float]] = array_info.array_type
