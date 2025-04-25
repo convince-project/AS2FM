@@ -122,7 +122,7 @@ class ScxmlStructDeclarationsContainer:
 
     def _get_data_type_for_property(
         self,
-        struct_type: Union[XmlStructDefinition, str],
+        struct_type: XmlStructDefinition,
         access_trace: List[Union[str, Type[ArrayAccess]]],
         elem,
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
@@ -132,7 +132,8 @@ class ScxmlStructDeclarationsContainer:
             assert property_name != ArrayAccess, get_error_msg(
                 elem, "Can not be only an array access."
             )
-            return struct_type, None
+            assert not isinstance(struct_type, str), "Must be struct"
+            return struct_type.get_members()[property_name], None
         if access_trace[-1] == ArrayAccess:
             # We are accessing an array at the end.
             # Then we can take the array type and treat it as a single object of that type.
