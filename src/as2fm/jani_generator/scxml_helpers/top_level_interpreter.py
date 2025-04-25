@@ -213,6 +213,7 @@ def generate_plain_scxml_models_and_timers(
     all_actions: Dict[str, RosCommunicationHandler] = {}
     bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_scxmls)
     for scxml_entry in ros_scxmls:
+        scxml_entry.set_custom_data_types(custom_data_types)
         plain_scxmls, ros_declarations = scxml_entry.to_plain_scxml_and_declarations()
         # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
@@ -244,6 +245,7 @@ def generate_plain_scxml_models_and_timers(
     assert model.max_time is not None, "Expected model.max_time to be defined here."
     timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
     if timer_scxml is not None:
+        timer_scxml.set_custom_data_types(custom_data_types)
         plain_scxmls, _ = timer_scxml.to_plain_scxml_and_declarations()
         plain_scxml_models.extend(plain_scxmls)
     return plain_scxml_models
