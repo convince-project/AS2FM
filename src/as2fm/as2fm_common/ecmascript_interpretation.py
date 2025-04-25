@@ -17,7 +17,7 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, Optional, Union, get_args
+from typing import Dict, List, Optional, Union, get_args
 
 import esprima
 import js2py
@@ -28,6 +28,10 @@ from as2fm.as2fm_common.common import ValidScxmlTypes
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 
 BasicJsTypes = Union[int, float, bool, str]
+
+
+class ArrayAccess:
+    pass
 
 
 def parse_expression_to_ast(expression: str, elem: XmlElement):
@@ -172,5 +176,30 @@ def _has_member_or_array_access(ast: esprima.nodes.Node, array_access: bool) -> 
             return True
         else:  # *Not* the type of access we are interested in.
             return _has_member_or_array_access(ast.object, array_access)
+    else:
+        raise MemberAccessCheckException(f"Can not evaluate {ast.type} to a variable identifier.")
+
+
+def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, ArrayAccess]]:
+    """
+    `a.b` => `['a', 'b']
+    `a[3].b` => `['a', ArrayAccess, 'b']
+    """
+    ast = parse_expression_to_ast(expr, elem)
+    try:
+        return _split_by_access(ast)
+    except MemberAccessCheckException as e:
+        print(get_error_msg(elem, e.args[0]))
+        raise e
+
+
+def _split_by_access(ast: esprima.nodes.Node) -> List:
+    if ast.type == Syntax.Identifier:
+        return [ast.name]
+    elif ast.type == Syntax.MemberExpression:
+        if ast.computed:  # array access
+            return _split_by_access(ast.object) + [ArrayAccess]
+        else:  # member access
+            return _split_by_access(ast.object) + _split_by_access(ast.object)
     else:
         raise MemberAccessCheckException(f"Can not evaluate {ast.type} to a variable identifier.")

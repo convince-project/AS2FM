@@ -519,12 +519,26 @@ class ScxmlAssign(ScxmlBase):
         self, struct_declarations: ScxmlStructDeclarationsContainer, _
     ) -> List["ScxmlAssign"]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
-        expr = get_plain_expression(self._expr, self._cb_type)
-
-        # location_type =
-
-        location = convert_expression_with_object_arrays(self._location)
-        return [ScxmlAssign(location, expr)]
+        location_type, array_info = struct_declarations.get_data_type(self._location)
+        expanded_expressions = []
+        expanded_locations = []
+        if isinstance(location_type, XmlStructDefinition):
+            # We are dealing with a custom type, more assignments in output
+            sub_types = location_type.get_expanded_members()
+            # Assumption: This appending of members works only if the expr is a single variable
+            # Currently, this is not enforced in this method.
+            for struct_member in sub_types.keys():
+                expanded_expressions.append(f"{self._expr}.{struct_member}")
+                expanded_locations.append(f"{self._location}.{struct_member}")
+        else:
+            expanded_expressions = [self._expr]
+            expanded_locations = [self._location]
+        plain_assignments: List[ScxmlAssign] = []
+        for single_expr, single_loc in zip(expanded_expressions, expanded_locations):
+            plain_expr = get_plain_expression(single_expr, self._cb_type)
+            plain_location = convert_expression_with_object_arrays(single_loc)
+            plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
+        return plain_assignments
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."

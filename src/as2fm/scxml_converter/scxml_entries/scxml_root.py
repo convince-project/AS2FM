@@ -365,8 +365,9 @@ class ScxmlRoot(ScxmlBase):
         main_scxml = ScxmlRoot(self._name)
         main_scxml._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
-        # TODO: Switch all custom data types to a mighty dictionary
-        declarations_container = ScxmlStructDeclarationsContainer(self._name, self._data_model, {})
+        declarations_container = ScxmlStructDeclarationsContainer(
+            self._name, self._data_model, self.get_custom_data_types()
+        )
         data_models = self._data_model.as_plain_scxml(declarations_container, ros_declarations)
         assert len(data_models) == 1, "There can only be on data model per SCXML."
         main_scxml._data_model = data_models[0]

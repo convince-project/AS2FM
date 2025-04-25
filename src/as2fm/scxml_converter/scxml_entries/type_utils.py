@@ -15,9 +15,9 @@
 
 """Collection of utilities for handling custom data structs in SCXML."""
 
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
-from as2fm.as2fm_common.ecmascript_interpretation import has_array_access, has_member_access
+from as2fm.as2fm_common.ecmascript_interpretation import ArrayAccess, split_by_access
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ArrayInfo,
     get_array_info,
@@ -87,10 +87,39 @@ class ScxmlStructDeclarationsContainer:
         e.g. `a_point` => (XmlStructDefinition(Point2D), None)` <-- retrieve from dict
         e.g. `polygon.points` => `(XmlStructDefinition(Point2D), ArrayInfo)` <- ???
         e.g. `polygon.points[1]` => `(XmlStructDefinition(Point2D), None)` <- ???
+        e.g. `polygon.points[1].x` => `(int32, None)` <- ???
 
         """
-        if has_array_access(variable_name, elem):
-            pass
-        if has_member_access(variable_name, elem):
-            pass
-        return self._type_per_variable[variable_name]
+        access_trace = split_by_access(variable_name, elem)
+        return self._get_data_type_for_variable(access_trace, elem)
+
+    def _get_data_type_for_variable(
+        self, access_trace: List[Union[str, ArrayAccess]], elem
+    ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
+        """leftmost string is variable"""
+        if len(access_trace) == 1:
+            return self._type_per_variable[access_trace[0]]
+        if access_trace[-1] == ArrayAccess:
+            # We are accessing an array at the end.
+            # -> Discard array info and treat as single item.
+            return self._get_data_type_for_variable[access_trace[:-1], elem]
+        if len(access_trace) >= 2:
+            # Accessing a property of a struct.
+            # -> Get struct type and their properties.
+            struct_type = self._type_per_variable[access_trace[0]]
+            if access_trace[1] == ArrayAccess:
+                # This is an array, but we access an instance
+                return self._get_data_type_for_property(struct_type, access_trace[2:])
+            else:
+                return self._get_data_type_for_property(struct_type, access_trace[1:])
+
+    def _get_data_type_for_property(
+        self, struct_type: XmlStructDefinition, access_trace: List[Union[str, ArrayAccess]], elem
+    ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
+        """leftmost string is property"""
+        if len(access_trace) == 1:
+            return self._type_per_property[access_trace[0]]
+        if access_trace[-1] == ArrayAccess:
+            # We are accessing an array at the end.
+            # Then we can take the array type and treat it as a single object of that type.
+            return self._get_data_type_for_property[access_trace[:-1], elem]

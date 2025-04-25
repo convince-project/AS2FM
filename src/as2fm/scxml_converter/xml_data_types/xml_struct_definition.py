@@ -40,13 +40,13 @@ class XmlStructDefinition:
         :param name: The name of the custom data type.
         :param members: A dictionary where keys are member names and values are their types.
         """
-        self.name = name
-        self.members: Dict[str, str] = members
+        self._name = name
+        self._members: Dict[str, str] = members
         # This needs to be generated once all struct definitions are loaded.
         self._members_list: Optional[Dict[str, str]] = None
 
-    @classmethod
-    def from_xml(cls, xml_element: XmlElement):
+    @staticmethod
+    def from_xml(xml_element: XmlElement):
         """
         Creates an ScxmlDataType instance from an `struct` XML element.
 
@@ -63,13 +63,13 @@ class XmlStructDefinition:
             )
             members[member_name] = member_type
         assert len(members) > 0, get_error_msg(xml_element, "struct definition with no members.")
-        instance = cls(name, members)
+        instance = XmlStructDefinition(name, members)
         instance.set_xml_origin(xml_element)
         return instance
 
     def get_name(self) -> str:
         """Get the name of the custom struct."""
-        return self.name
+        return self._name
 
     def set_xml_origin(self, xml_origin: XmlElement):
         """Set the xml_element this object was made from."""
@@ -82,7 +82,17 @@ class XmlStructDefinition:
         except AttributeError:
             return None
 
+    def get_members(self) -> Dict[str, str]:
+        """Get members and their type. e.g. `{'x': 'int', 's': 'Point2D'}`."""
+        return self._members
+
     def get_expanded_members(self) -> Dict[str, str]:
+        """
+        Return a dictionary containing the members belonging to that struct and the related types.
+
+        E.g., for a Point2D, the expanded members are {'x': float32, 'y': float32}
+        For a Polygon, the expanded members are {'points.x': float32[], 'points.y': float32[]}
+        """
         assert self._members_list is not None
         return self._members_list
 
@@ -96,7 +106,7 @@ class XmlStructDefinition:
         if self._members_list is not None:
             return
         self._members_list = {}
-        for member_name, member_type in self.members.items():
+        for member_name, member_type in self._members.items():
             if is_type_string_base_type(member_type):
                 self._members_list.update({member_name: member_type})
             else:
@@ -119,7 +129,7 @@ class XmlStructDefinition:
                         get_error_msg(
                             self.get_xml_origin(),
                             f"Unknown type '{member_type_proc}' for member "
-                            f"'{member_name}' in struct '{self.name}'.",
+                            f"'{member_name}' in struct '{self._name}'.",
                         )
                     )
                 all_structs[member_type_proc].expand_members(all_structs)
@@ -144,7 +154,7 @@ class XmlStructDefinition:
         :return: A dictionary representing the instance.
         """
         if self._members_list is None:
-            raise ValueError(f"Struct '{self.name}' has not been expanded yet.")
+            raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
         # Interpret the expression
         interpreted_expr = interpret_non_base_ecma_script_expr(expr)
         assert isinstance(interpreted_expr, dict)
@@ -197,7 +207,7 @@ class XmlStructDefinition:
             sub_keys = self._get_list_keys_with_prefix(entry_key)
             assert len(sub_keys) > 0, get_error_msg(
                 self.get_xml_origin(),
-                f"Provided key '{entry_key}' is incompatible with {self.name} type."
+                f"Provided key '{entry_key}' is incompatible with {self._name} type."
                 f"Expected keys shall be in {[x for x in self._members_list.keys()]} set.",
             )
             # Check for compatible entry_value
