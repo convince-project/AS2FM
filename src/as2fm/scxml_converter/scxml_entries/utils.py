@@ -19,7 +19,9 @@ import re
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Type
 
+import escodegen
 import esprima
+from esprima.nodes import ComputedMemberExpression
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
@@ -191,11 +193,17 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
     return new_expr
 
 
-def _separated_member_expression_to_str(obj, idxs) -> str:
-    return obj + "".join([f"[{x}]" for x in idxs])
+def _reassemble_expression(
+    array: esprima.nodes.Node, idxs: List[esprima.nodes.Node]
+) -> esprima.nodes.Node:
+    if len(idxs) == 0:
+        return array
+    return _reassemble_expression(ComputedMemberExpression(array, idxs[0]), idxs[1:])
 
 
-def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
+def _split_array_indexes_out(
+    ast: esprima.nodes.Node,
+) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
     """
     `a[0]` => 'a', ['0']
     `a[0].x` => 'a.x', ['0']
@@ -204,38 +212,30 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
     """
     # TODO: consider doing this symbolically and then turn it to a string using
     #       https://pypi.org/project/escodegen/
-    if ast.type == Syntax.Identifier:
-        return ast.name, []
-    elif ast.type == Syntax.Literal:
-        return ast.raw, []
+    if ast.type in (Syntax.Identifier, Syntax.Literal):
+        return ast, []
     elif ast.type == Syntax.MemberExpression:
-        obj, idxs = _convert_ast_to_plain_str(ast.object)
+        obj, obj_idxs = _split_array_indexes_out(ast.object)
         if ast.computed:  # array index
-            idx_expr = _convert_ast_to_plain_str(ast.property)
-            idx_str = _separated_member_expression_to_str(*idx_expr)
-            return obj, idxs + [idx_str]
-        else:  # actual member access
-            if ast.property.name == ARRAY_LENGTH_SUFFIX:
-                obj = _separated_member_expression_to_str(obj, idxs)
-                return f"{obj}.{ast.property.name}", []
-            return f"{obj}.{ast.property.name}", idxs
+            return obj, obj_idxs + [_reassemble_expression(*_split_array_indexes_out(ast.property))]
+        # actual member access
+        if ast.property.name == ARRAY_LENGTH_SUFFIX:
+            ast.object = _reassemble_expression(obj, obj_idxs)
+            return ast, []  # not indexes after length property
+        ast.object = _reassemble_expression(*_split_array_indexes_out(obj))
+        return ast, obj_idxs
     elif ast.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
-        left_expr = _convert_ast_to_plain_str(ast.left)
-        right_expr = _convert_ast_to_plain_str(ast.right)
-        left_str = _separated_member_expression_to_str(*left_expr)
-        right_str = _separated_member_expression_to_str(*right_expr)
-        return f"({left_str} {ast.operator} {right_str})", []
+        ast.left = _reassemble_expression(*_split_array_indexes_out(ast.left))
+        ast.right = _reassemble_expression(*_split_array_indexes_out(ast.right))
+        return ast, []
     elif ast.type == Syntax.CallExpression:
-        callee_expr = _convert_ast_to_plain_str(ast.callee)
-        argument_exprs = [_convert_ast_to_plain_str(a) for a in ast.arguments]
-        callee_str = _separated_member_expression_to_str(*callee_expr)
-        argument_strs = [_separated_member_expression_to_str(*a) for a in argument_exprs]
-        arguments_str = ", ".join(argument_strs)
-        return f"{callee_str}({arguments_str})", []
+        ast.arguments = [
+            _reassemble_expression(*_split_array_indexes_out(a)) for a in ast.arguments
+        ]
+        return ast, []
     elif ast.type == Syntax.UnaryExpression:
-        expr_vals = _convert_ast_to_plain_str(ast.argument)
-        expr_str = _separated_member_expression_to_str(*expr_vals)
-        return f"({ast.operator}{expr_str})", []
+        ast.argument = _reassemble_expression(*_split_array_indexes_out(ast.argument))
+        return ast, []
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
@@ -256,10 +256,9 @@ def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] 
     e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons.polygons.points.y[0][1]`.
     """
     ast = parse_expression_to_ast(expr, elem)
-
-    obj, idxs = _convert_ast_to_plain_str(ast)
-
-    return _separated_member_expression_to_str(obj, idxs)
+    obj, idxs = _split_array_indexes_out(ast)
+    exp = _reassemble_expression(obj, idxs)
+    return escodegen.generate(exp)
 
 
 # ------------ String-related utilities ------------

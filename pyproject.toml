@@ -24,6 +24,7 @@ dependencies = [
     # jani_generator
     "jsonschema",
     "esprima",
+    "escodegen",
     # jani_visualizer
     "webcolors",
     "plantuml",
