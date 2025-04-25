@@ -24,7 +24,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import log_error
+from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
@@ -270,11 +270,11 @@ class ScxmlData(ScxmlBase):
         if self._is_plain_type():
             return [self]
         data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
-        assert isinstance(data_type_def, XmlStructDefinition), log_error(
+        assert isinstance(data_type_def, XmlStructDefinition), get_error_msg(
             self.get_xml_origin(),
             f"Information for data variable {self.get_name()} has unexpected type.",
         )
-        assert isinstance(self._expr, str), log_error(
+        assert isinstance(self._expr, str), get_error_msg(
             self.get_xml_origin(), "We only support string init expr. for custom types."
         )
         expanded_data_values = data_type_def.get_instance_from_expression(self._expr)

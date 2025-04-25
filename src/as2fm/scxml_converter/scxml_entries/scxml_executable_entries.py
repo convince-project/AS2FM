@@ -519,7 +519,12 @@ class ScxmlAssign(ScxmlBase):
         self, struct_declarations: ScxmlStructDeclarationsContainer, _
     ) -> List["ScxmlAssign"]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
-        location_type, array_info = struct_declarations.get_data_type(self._location)
+        assert isinstance(self._expr, str), get_error_msg(
+            self.get_xml_origin(), "Unexpected expr. type."
+        )
+        location_type, array_info = struct_declarations.get_data_type(
+            self._location, self.get_xml_origin()
+        )
         expanded_expressions = []
         expanded_locations = []
         if isinstance(location_type, XmlStructDefinition):
