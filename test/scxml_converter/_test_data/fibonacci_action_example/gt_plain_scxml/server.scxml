@@ -13,19 +13,19 @@
             <assign location="order" expr="_event.data.ros_fields__order" />
         </transition>
         <transition target="idle" event="action_fibonacci_thread_free">
-            <if cond="_event.data.thread_id == 0">
+            <if cond="(_event.data.thread_id == 0)">
                 <assign location="thread_0_busy" expr="False" />
-                <elseif cond="_event.data.thread_id == 1" />
+                <elseif cond="(_event.data.thread_id == 1)" />
                 <assign location="thread_1_busy" expr="False" />
             </if>
         </transition>
     </state>
     <state id="check_goal">
         <onentry>
-            <if cond="thread_0_busy == False">
+            <if cond="(thread_0_busy == False)">
                 <assign location="thread_0_busy" expr="True" />
                 <assign location="thread_to_start" expr="0" />
-                <elseif cond="thread_1_busy == False" />
+                <elseif cond="(thread_1_busy == False)" />
                 <assign location="thread_1_busy" expr="True" />
                 <assign location="thread_to_start" expr="1" />
                 <else />
@@ -33,7 +33,7 @@
             </if>
         </onentry>
         <transition target="idle">
-            <if cond="thread_to_start &gt;= 0">
+            <if cond="(thread_to_start &gt;= 0)">
                 <send event="action_fibonacci_goal_accepted">
                     <param name="goal_id" expr="goal_id" />
                 </send>

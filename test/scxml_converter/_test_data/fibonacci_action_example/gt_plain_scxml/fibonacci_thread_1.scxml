@@ -20,15 +20,15 @@
     </state>
     <state id="execute">
         <onentry>
-            <if cond="sequence.length == 0">
+            <if cond="(sequence.length == 0)">
                 <assign location="sequence[0]" expr="0" />
-                <elseif cond="sequence.length == 1" />
+                <elseif cond="(sequence.length == 1)" />
                 <assign location="sequence[1]" expr="1" />
                 <else />
-                <assign location="sequence[sequence.length]" expr="sequence[sequence.length - 1] + sequence[sequence.length - 2]" />
+                <assign location="sequence[sequence.length]" expr="(sequence[(sequence.length - 1)] + sequence[(sequence.length - 2)])" />
             </if>
         </onentry>
-        <transition target="idle" cond="sequence.length == order + 1">
+        <transition target="idle" cond="(sequence.length == (order + 1))">
             <send event="action_fibonacci_result">
                 <param name="ros_fields__sequence" expr="sequence" />
                 <param name="goal_id" expr="goal_id" />

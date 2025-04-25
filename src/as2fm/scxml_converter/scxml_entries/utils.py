@@ -227,6 +227,13 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
         argument_strs = [_separated_member_expression_to_str(*a) for a in argument_exprs]
         arguments_str = ", ".join(argument_strs)
         return f"{callee_str}({arguments_str})", []
+    elif ast.type == "UnaryExpression":
+        operator = ast.operator
+        expr_vals = _convert_ast_to_plain_str(ast.argument)
+        expr_str = _separated_member_expression_to_str(*expr_vals)
+        if ast.argument.type not in ("Identifier", "Literal"):
+            expr_str = f"({expr_str})"
+        return f"{operator}{expr_str}", []
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
