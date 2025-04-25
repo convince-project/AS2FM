@@ -252,7 +252,9 @@ class RosActionHandleSuccessResult(RosCallback):
             ros_declarations.get_automaton_name(),
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
@@ -284,7 +286,9 @@ class RosActionHandleCanceledResult(RosCallback):
             ros_declarations.get_automaton_name(),
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
@@ -316,7 +320,9 @@ class RosActionHandleAbortedResult(RosCallback):
             ros_declarations.get_automaton_name(),
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."

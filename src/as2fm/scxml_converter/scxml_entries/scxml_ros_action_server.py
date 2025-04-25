@@ -245,10 +245,11 @@ class RosActionSendSuccessResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
-        return plain_send
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(ros_declarations)
+        for p_sends in plain_sends:
+            p_sends.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
+        return plain_sends
 
 
 class RosActionSendCanceledResult(RosTrigger):
@@ -278,10 +279,11 @@ class RosActionSendCanceledResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_CANCELED}"))
-        return plain_send
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(ros_declarations)
+        for p_send in plain_sends:
+            p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_CANCELED}"))
+        return plain_sends
 
 
 class RosActionSendAbortedResult(RosTrigger):
@@ -311,10 +313,11 @@ class RosActionSendAbortedResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
-        plain_send = super().as_plain_scxml(ros_declarations)
-        plain_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_ABORTED}"))
-        return plain_send
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(ros_declarations)
+        for p_send in plain_sends:
+            p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_ABORTED}"))
+        return plain_sends
 
 
 class RosActionHandleThreadFree(RosCallback):

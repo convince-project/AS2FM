@@ -192,7 +192,7 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def as_plain_scxml(
         self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> "ScxmlTransitionTarget":
+    ) -> List["ScxmlTransitionTarget"]:
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
         ), "Error: SCXML transition target: invalid ROS declarations container."
@@ -203,8 +203,10 @@ class ScxmlTransitionTarget(ScxmlBase):
         assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
         if self._body is not None:
             set_execution_body_callback_type(self._body, self._cb_type)
-            new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
-        return ScxmlTransitionTarget(self._target_id, self._probability, new_body)
+            new_body = []
+            for entry in self._body:
+                new_body.extend(entry.as_plain_scxml(ros_declarations))
+        return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML transition target: invalid."

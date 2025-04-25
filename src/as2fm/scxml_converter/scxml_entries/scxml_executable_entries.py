@@ -255,7 +255,7 @@ class ScxmlIf(ScxmlBase):
             ) and is_plain_execution_body(self._else_execution)
         return False
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlIf"]:
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
         conditional_executions = []
         for condition, execution in self._conditional_executions:
@@ -267,7 +267,7 @@ class ScxmlIf(ScxmlBase):
             )
         set_execution_body_callback_type(self._else_execution, self._cb_type)
         else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
-        return ScxmlIf(conditional_executions, else_execution)
+        return [ScxmlIf(conditional_executions, else_execution)]
 
     def as_xml(self) -> XmlElement:
         # Based on example in https://www.w3.org/TR/scxml/#if
@@ -404,14 +404,14 @@ class ScxmlSend(ScxmlBase):
             return all(isinstance(param.get_expr(), str) for param in self._params)
         return False
 
-    def as_plain_scxml(self, _) -> "ScxmlSend":
+    def as_plain_scxml(self, _) -> List["ScxmlSend"]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
         for param in self._params:
             param.set_callback_type(self._cb_type)
         # For now, no conversion to plain scxml is expected for params
         # param.as_plain_scxml()
-        return ScxmlSend(self._event, self._params)
+        return [ScxmlSend(self._event, self._params)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
@@ -504,11 +504,14 @@ class ScxmlAssign(ScxmlBase):
             return isinstance(self._expr, str)
         return False
 
-    def as_plain_scxml(self, _) -> "ScxmlAssign":
+    def as_plain_scxml(self, _) -> List["ScxmlAssign"]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
         expr = get_plain_expression(self._expr, self._cb_type)
+
+        # location_type =
+
         location = convert_expression_with_object_arrays(self._location)
-        return ScxmlAssign(location, expr)
+        return [ScxmlAssign(location, expr)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
@@ -639,7 +642,12 @@ def as_plain_execution_body(
     """
     if exec_body is None:
         return None
-    return [entry.as_plain_scxml(ros_declarations) for entry in exec_body if not is_comment(entry)]
+    new_body: ScxmlExecutionBody = []
+    for entry in exec_body:
+        if is_comment(entry):
+            continue
+        new_body.extend(entry.as_plain_scxml(ros_declarations))
+    return new_body
 
 
 def add_targets_to_scxml_send(

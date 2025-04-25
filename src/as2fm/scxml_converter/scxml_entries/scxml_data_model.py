@@ -96,11 +96,13 @@ class ScxmlDataModel(ScxmlBase):
         """Check if all data entries are already plain-scxml (using only base types)."""
         return self.check_validity() and all(data.is_plain_scxml() for data in self._data_entries)
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlDataModel":
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List["ScxmlDataModel"]:
         plain_data_entries = []
         for data_entry in self._data_entries:
             plain_data_entries.extend(data_entry.as_plain_scxml(ros_declarations))
-        return ScxmlDataModel(plain_data_entries)
+        return [ScxmlDataModel(plain_data_entries)]
 
     def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:
         """

@@ -77,15 +77,17 @@ class BtSetValueOutputPort(ScxmlSend):
         ), f"Error: SCXML BT Port {self._key} is not referencing a blackboard variable."
         self._blackboard_reference = get_blackboard_variable_name(port_value)
 
-    def as_plain_scxml(self, _) -> ScxmlSend:
+    def as_plain_scxml(self, _) -> List[ScxmlSend]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         assert (
             self._blackboard_reference is not None
         ), "Error: SCXML BT Output Port: must run 'update_bt_ports_values' before 'as_plain_scxml'"
-        return ScxmlSend(
-            generate_bt_blackboard_set(self._blackboard_reference),
-            [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
-        )
+        return [
+            ScxmlSend(
+                generate_bt_blackboard_set(self._blackboard_reference),
+                [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
+            )
+        ]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML BT Output Port: invalid parameters."

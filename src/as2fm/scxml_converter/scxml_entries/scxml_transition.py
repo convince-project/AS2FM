@@ -290,7 +290,9 @@ class ScxmlTransition(ScxmlBase):
             target.is_plain_scxml() for target in self._targets
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlTransition":
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List["ScxmlTransition"]:
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
         ), "Error: SCXML transition: invalid ROS declarations container."
@@ -300,10 +302,10 @@ class ScxmlTransition(ScxmlBase):
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(CallbackType.TRANSITION)
-            plain_targets.append(target.as_plain_scxml(ros_declarations))
+            plain_targets.extend(target.as_plain_scxml(ros_declarations))
         if self._condition is not None:
             self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
-        return ScxmlTransition(plain_targets, self._events, self._condition)
+        return [ScxmlTransition(plain_targets, self._events, self._condition)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid transition."

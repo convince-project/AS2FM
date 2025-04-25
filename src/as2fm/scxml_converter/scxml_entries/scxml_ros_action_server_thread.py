@@ -186,9 +186,9 @@ class RosActionThread(ScxmlBase):
             for state in self._states:
                 initial_state = state.get_id() == self._initial_state
                 state.set_thread_id(thread_idx)
-                plain_thread_instance.add_state(
-                    state.as_plain_scxml(ros_declarations), initial=initial_state
-                )
+                plain_states = state.as_plain_scxml(ros_declarations)
+                assert len(plain_states) == 1, "A state must also be one state in Plain SCXML"
+                plain_thread_instance.add_state(plain_states[0], initial=initial_state)
             assert plain_thread_instance.is_plain_scxml(), (
                 "Error: SCXML RosActionThread: "
                 f"failed to generate a plain-SCXML instance from thread '{self._name}'"
@@ -265,16 +265,21 @@ class RosActionHandleThreadStart(RosCallback):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert (
             self._thread_id is not None
         ), f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
-        plain_transition = super().as_plain_scxml(ros_declarations)
-        plain_transition._condition = (
+        plain_transitions = super().as_plain_scxml(ros_declarations)
+        assert (
+            len(plain_transitions) == 1
+        ), "A transition must also be one transition in Plain SCXML"
+        plain_transitions[0]._condition = (
             f"{PLAIN_SCXML_EVENT_DATA_PREFIX}thread_id == {self._thread_id}"
         )
-        return plain_transition
+        return plain_transitions
 
 
 class RosActionThreadFree(RosTrigger):
@@ -327,11 +332,14 @@ class RosActionThreadFree(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert (
             self._thread_id is not None
         ), f"Error: SCXML {self.__class__.__name__}: thread ID not set."
-        plain_trigger = super().as_plain_scxml(ros_declarations)
+        plain_triggers = super().as_plain_scxml(ros_declarations)
+        assert len(plain_triggers) == 1, "A trigger must also be one trigger in Plain SCXML"
         # Add the thread id to the (empty) param list
-        plain_trigger.append_param(ScxmlParam("thread_id", expr=str(self._thread_id)))
-        return plain_trigger
+        plain_triggers[0].append_param(ScxmlParam("thread_id", expr=str(self._thread_id)))
+        return plain_triggers

@@ -154,7 +154,7 @@ class RosDeclaration(ScxmlBase):
             ), f"Error: SCXML {self.__class__.__name__}: interface can't come  from BT Blackboard."
             self._interface_name = port_value
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError(
             f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML."
@@ -306,21 +306,23 @@ class RosCallback(ScxmlTransition):
             )
         return valid_body
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlTransition:
+    def as_plain_scxml(
+        self, ros_declarations: ScxmlRosDeclarationsContainer
+    ) -> List[ScxmlTransition]:
         assert self.check_valid_ros_instantiations(
             ros_declarations
         ), f"Error: SCXML {self.get_tag_name()}: invalid ROS instantiations."
         new_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(self.get_callback_type())
-            new_targets.append(target.as_plain_scxml(ros_declarations))
+            new_targets.extend(target.as_plain_scxml(ros_declarations))
             if new_targets[-1]._body is not None:
                 set_execution_body_callback_type(new_targets[-1]._body, self.get_callback_type())
         event_name = self.get_plain_scxml_event(ros_declarations)
         condition = self._condition
         if condition is not None:
             condition = get_plain_expression(condition, self.get_callback_type())
-        return ScxmlTransition(new_targets, [event_name], condition)
+        return [ScxmlTransition(new_targets, [event_name], condition)]
 
     def as_xml(self) -> XmlElement:
         """Convert the ROS callback to an XML element."""
@@ -483,7 +485,7 @@ class RosTrigger(ScxmlSend):
             return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> ScxmlSend:
+    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
         assert self.check_valid_ros_instantiations(
             ros_declarations
         ), f"Error: SCXML {self.__class__.__name__}: invalid ROS instantiations."
@@ -491,10 +493,12 @@ class RosTrigger(ScxmlSend):
             self._cb_type is not None
         ), f"Error: SCXML {self.__class__.__name__}: {self._interface_name} has no callback type."
         event_name = self.get_plain_scxml_event(ros_declarations)
-        params = [field.as_plain_scxml(ros_declarations) for field in self._fields]
+        plain_params = []
+        for single_field in self._fields:
+            plain_params.extend(single_field.as_plain_scxml(ros_declarations))
         for param_name, param_value in self._additional_args.items():
-            params.append(ScxmlParam(param_name, expr=param_value))
-        return ScxmlSend(event_name, params)
+            plain_params.append(ScxmlParam(param_name, expr=param_value))
+        return [ScxmlSend(event_name, plain_params)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."

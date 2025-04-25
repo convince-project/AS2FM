@@ -67,13 +67,13 @@ class RosField(ScxmlParam):
         )
         return valid_name and valid_expr
 
-    def as_plain_scxml(self, _) -> ScxmlParam:
+    def as_plain_scxml(self, _) -> List[ScxmlParam]:
         # In order to distinguish the message body from additional entries, add a prefix to the name
         assert (
             self._cb_type is not None
         ), f"Error: SCXML ROS field: {self._name} has not callback type set."
         plain_field_name = ROS_FIELD_PREFIX + self._name
-        return ScxmlParam(plain_field_name, expr=get_plain_expression(self._expr, self._cb_type))
+        return [ScxmlParam(plain_field_name, expr=get_plain_expression(self._expr, self._cb_type))]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."

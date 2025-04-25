@@ -264,9 +264,6 @@ def convert_expression_with_object_arrays(expr: str, elem=None) -> str:
         elem, "The ecmascript must contain exactly one expression."
     )
     ast = ast.expression
-    print(expr)
-    print(ast)
-    print(_convert_ast_to_plain_str(ast))
 
     obj, idxs = _convert_ast_to_plain_str(ast)
 

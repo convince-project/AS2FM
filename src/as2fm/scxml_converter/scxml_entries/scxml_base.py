@@ -17,7 +17,7 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from lxml.etree import _Element as XmlElement
 
@@ -80,7 +80,7 @@ class ScxmlBase:
         """Check if the object is compatible with the plain SCXML standard."""
         raise NotImplementedError
 
-    def as_plain_scxml(self, ros_declarations) -> Union[List["ScxmlBase"], "ScxmlBase"]:
+    def as_plain_scxml(self, ros_declarations) -> List["ScxmlBase"]:
         """Convert the object to its plain SCXML  version."""
         raise NotImplementedError
 

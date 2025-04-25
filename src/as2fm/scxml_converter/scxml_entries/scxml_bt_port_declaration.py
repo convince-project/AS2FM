@@ -61,7 +61,7 @@ class BtInputPortDeclaration(ScxmlBase):
     def get_key_type(self) -> str:
         return self._type
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Ports declarations cannot be converted to plain SCXML.")
 
@@ -106,7 +106,7 @@ class BtOutputPortDeclaration(ScxmlBase):
     def get_key_type(self) -> str:
         return self._type
 
-    def as_plain_scxml(self, _) -> ScxmlBase:
+    def as_plain_scxml(self, _) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Ports declarations cannot be converted to plain SCXML.")
 

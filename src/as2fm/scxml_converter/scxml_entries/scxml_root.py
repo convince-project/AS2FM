@@ -362,9 +362,13 @@ class ScxmlRoot(ScxmlBase):
         main_scxml = ScxmlRoot(self._name)
         main_scxml._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
-        main_scxml._data_model = self._data_model.as_plain_scxml(ros_declarations)
+        data_models = self._data_model.as_plain_scxml(ros_declarations)
+        assert len(data_models) == 1, "There can only be on data model per SCXML."
+        main_scxml._data_model = data_models[0]
         assert ros_declarations is not None, "Error: SCXML root: invalid ROS declarations."
-        main_scxml._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
+        main_scxml._states = []
+        for state in self._states:
+            main_scxml._states.extend(state.as_plain_scxml(ros_declarations))
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._additional_threads:
             converted_scxmls.extend(scxml_thread.as_plain_scxml(ros_declarations))
