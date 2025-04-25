@@ -129,6 +129,13 @@ class ScxmlStructDeclarationsContainer:
         """leftmost string is property"""
         if len(access_trace) == 1:
             property_name = access_trace[0]
+            prop_struct_type_str = struct_type.get_members()[access_trace[0]]
+            if is_type_string_array(prop_struct_type_str):
+                prop_struct_type_str = get_type_string_of_array(prop_struct_type_str)
+            if is_type_string_base_type(prop_struct_type_str):
+                return prop_struct_type_str, None
+            prop_struct_type = self._struct_definitions[prop_struct_type_str]
+
             assert property_name != ArrayAccess, get_error_msg(
                 elem, "Can not be only an array access."
             )
