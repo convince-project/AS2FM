@@ -142,7 +142,7 @@ def test_action_result_good_expressions():
         assert conv_expr == gt_expr
 
 
-def test_convert_expression_with_custom_structs():
+def test_convert_expression_with_object_arrays():
     """Test handling of array indexes."""
     assert convert_expression_with_object_arrays("x[0]") == "x[0]"
     assert convert_expression_with_object_arrays("x.y") == "x.y"
@@ -155,7 +155,7 @@ def test_convert_expression_with_custom_structs():
     assert convert_expression_with_object_arrays("x.y[0].z[1].y") == "x.y.z.y[0][1]"
     assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
     assert (
-        convert_expression_with_object_arrays("x.y[0].z[1].y ** my[l].c")
+        convert_expression_with_object_arrays("x.y[0].z[1].y**my[l].c")
         == "x.y.z.y[0][1] ** my.c[l]"
     )
     assert convert_expression_with_object_arrays("x[2].b && a") == "x.b[2] && a"
@@ -166,12 +166,22 @@ def test_convert_expression_with_custom_structs():
     assert convert_expression_with_object_arrays("x[0][1].length") == "x[0][1].length"
     assert convert_expression_with_object_arrays("x[1].y.length") == "x.y[1].length"
     assert (
-        convert_expression_with_object_arrays("x[1].y.length * c.length")
+        convert_expression_with_object_arrays("x[1].y.length*c.length")
         == "x.y[1].length * c.length"
     )
     assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
     assert convert_expression_with_object_arrays("x[0][x[0].length]") == "x[0][x[0].length]"
     assert convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x.y[0][x.y[0].length]"
+
+    # are necessary brackets kept?
+    assert convert_expression_with_object_arrays("!(x.y && x[0])") == "!(x.y && x[0])"
+    assert convert_expression_with_object_arrays("!(x[0].y && x[0].u)") == "!(x.y[0] && x.u[0])"
+    assert (
+        convert_expression_with_object_arrays("(x.y + x[0].u)[x[7].a]") == "(x.y + x.u[0])[x.a[7]]"
+    )
+    assert (
+        convert_expression_with_object_arrays("((a+b) * 9) ** a[i].x") == "((a + b) * 9) ** a.x[i]"
+    )
 
 
 def test_type_string_conversion():
