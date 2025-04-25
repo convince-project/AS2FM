@@ -210,8 +210,6 @@ def _split_array_indexes_out(
     `a[0].x[2]` => 'a.x', ['0', '2']
     `a` => 'a', []
     """
-    # TODO: consider doing this symbolically and then turn it to a string using
-    #       https://pypi.org/project/escodegen/
     if ast.type in (Syntax.Identifier, Syntax.Literal):
         return ast, []
     elif ast.type == Syntax.MemberExpression:
