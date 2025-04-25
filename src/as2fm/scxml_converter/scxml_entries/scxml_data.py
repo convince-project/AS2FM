@@ -280,9 +280,7 @@ class ScxmlData(ScxmlBase):
         expanded_data_values = data_type_def.get_instance_from_expression(self._expr)
         expanded_data_types = data_type_def.get_expanded_members()
         return [
-            ScxmlData(
-                ".".join((self._id, key)), expanded_data_values[key], expanded_data_types[key]
-            )
+            ScxmlData(self._id, expanded_data_values[key], expanded_data_types[key])
             for key in expanded_data_types
         ]
 

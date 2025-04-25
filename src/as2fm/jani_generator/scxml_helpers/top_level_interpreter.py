@@ -291,7 +291,7 @@ def interpret_top_level_xml(
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
 
-    custom_data_types: Dict[str, XmlStructDefinition] = []
+    custom_data_types: Dict[str, XmlStructDefinition] = {}
     for path in model.data_declarations:
         loaded_structs = read_types_file(path)
         loaded_structs_dict = {

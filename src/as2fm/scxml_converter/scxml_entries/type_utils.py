@@ -111,7 +111,7 @@ class ScxmlStructDeclarationsContainer:
         if len(access_trace) >= 2:
             # Accessing a property of a struct.
             # -> Get struct type and evaluate the property.
-            struct_type = self._type_per_variable[access_trace[0]]
+            struct_type, _ = self._type_per_variable[access_trace[0]]
             if access_trace[1] == ArrayAccess:
                 # This is an array, but we access an instance
                 return self._get_data_type_for_property(struct_type, access_trace[2:], elem)
@@ -122,7 +122,7 @@ class ScxmlStructDeclarationsContainer:
 
     def _get_data_type_for_property(
         self,
-        struct_type: XmlStructDefinition,
+        struct_type: Union[XmlStructDefinition, str],
         access_trace: List[Union[str, Type[ArrayAccess]]],
         elem,
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
@@ -132,7 +132,7 @@ class ScxmlStructDeclarationsContainer:
             assert property_name != ArrayAccess, get_error_msg(
                 elem, "Can not be only an array access."
             )
-            return struct_type.get_members()[property_name], None
+            return struct_type, None
         if access_trace[-1] == ArrayAccess:
             # We are accessing an array at the end.
             # Then we can take the array type and treat it as a single object of that type.
@@ -140,7 +140,9 @@ class ScxmlStructDeclarationsContainer:
         if len(access_trace) >= 2:
             # Accessing a property of a struct.
             # -> Get their type and evaluate further.
-            prop_struct_type = struct_type.get_members()[access_trace[0]]
+            prop_struct_type_str = struct_type.get_members()[access_trace[0]]
+            single_struct_type_name = get_type_string_of_array(prop_struct_type_str)
+            prop_struct_type = self._struct_definitions[single_struct_type_name]
             if access_trace[1] == ArrayAccess:
                 # This is an array, but we access an instance
                 return self._get_data_type_for_property(prop_struct_type, access_trace[2:], elem)

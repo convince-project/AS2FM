@@ -200,6 +200,6 @@ def _split_by_access(ast: esprima.nodes.Node) -> List:
         if ast.computed:  # array access
             return _split_by_access(ast.object) + [ArrayAccess]
         else:  # member access
-            return _split_by_access(ast.object) + _split_by_access(ast.object)
+            return _split_by_access(ast.object) + _split_by_access(ast.property)
     else:
         raise MemberAccessCheckException(f"Can not evaluate {ast.type} to a variable identifier.")
