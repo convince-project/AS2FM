@@ -18,7 +18,7 @@ The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
 from os.path import isfile
-from typing import List, Optional, Set, Tuple, get_args
+from typing import Dict, List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -58,12 +58,12 @@ class ScxmlRoot(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
-        scxml_name = get_xml_attribute(ScxmlRoot, xml_tree, "name")
+        scxml_name: str = get_xml_attribute(ScxmlRoot, xml_tree, "name")
         scxml_version = get_xml_attribute(ScxmlRoot, xml_tree, "version")
         assert (
             scxml_version == "1.0"
@@ -109,7 +109,9 @@ class ScxmlRoot(ScxmlBase):
         return scxml_root
 
     @staticmethod
-    def from_scxml_file(xml_file: str, custom_data_types: List[XmlStructDefinition]) -> "ScxmlRoot":
+    def from_scxml_file(
+        xml_file: str, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         print(f"{xml_file=}")
         if isfile(xml_file):

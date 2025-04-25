@@ -83,7 +83,7 @@ class TestConversion(unittest.TestCase):
             os.path.dirname(__file__), "_test_data", "battery_example", "battery_drainer.scxml"
         )
 
-        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer, [])
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer, {})
         eh = EventsHolder()
         jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
@@ -110,7 +110,7 @@ class TestConversion(unittest.TestCase):
             os.path.dirname(__file__), "_test_data", "battery_example", "battery_manager.scxml"
         )
 
-        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager, [])
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager, {})
         eh = EventsHolder()
         jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
@@ -137,8 +137,8 @@ class TestConversion(unittest.TestCase):
         test_data_folder = os.path.join(os.path.dirname(__file__), "_test_data", "battery_example")
         scxml_battery_drainer_path = os.path.join(test_data_folder, "battery_drainer.scxml")
         scxml_battery_manager_path = os.path.join(test_data_folder, "battery_manager.scxml")
-        scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path, [])
-        scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path, [])
+        scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path, {})
+        scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path, {})
 
         in_scxmls = [scxml_battery_drainer, scxml_battery_manager]
         jani_model = convert_multiple_scxmls_to_jani(in_scxmls, 100)

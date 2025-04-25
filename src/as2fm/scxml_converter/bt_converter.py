@@ -120,7 +120,7 @@ def is_bt_root_scxml(scxml_name: str) -> bool:
 
 
 def load_available_bt_plugins(
-    bt_plugins_scxml_paths: List[str], custom_data_types: List[XmlStructDefinition]
+    bt_plugins_scxml_paths: List[str], custom_data_types: Dict[str, XmlStructDefinition]
 ) -> Dict[str, ScxmlRoot]:
     available_bt_plugins = {}
     for path in bt_plugins_scxml_paths:
@@ -142,7 +142,7 @@ def bt_converter(
     bt_plugins_scxml_paths: List[str],
     bt_tick_rate: float,
     tick_if_not_running: bool,
-    custom_data_types: List[XmlStructDefinition],
+    custom_data_types: Dict[str, XmlStructDefinition],
 ) -> List[ScxmlRoot]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.

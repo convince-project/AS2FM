@@ -187,7 +187,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
 
 
 def generate_plain_scxml_models_and_timers(
-    model: FullModel, custom_data_types: List[XmlStructDefinition]
+    model: FullModel, custom_data_types: Dict[str, XmlStructDefinition]
 ) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
     # Load the skills and components scxml files (ROS-SCXML)
@@ -291,13 +291,16 @@ def interpret_top_level_xml(
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
 
-    custom_data_types: List[XmlStructDefinition] = []
+    custom_data_types: Dict[str, XmlStructDefinition] = []
     for path in model.data_declarations:
-        custom_data_types.extend(read_types_file(path))
-    # TODO: Future Marco or Christian, please decide for List or Dict for this entry!
-    custom_types_dict = {type_class.get_name(): type_class for type_class in custom_data_types}
-    for custom_type in custom_data_types:
-        custom_type.expand_members(custom_types_dict)
+        loaded_structs = read_types_file(path)
+        loaded_structs_dict = {
+            single_struct.get_name(): single_struct for single_struct in loaded_structs
+        }
+        custom_data_types.update(loaded_structs_dict)
+
+    for custom_struct_instance in custom_data_types.values():
+        custom_struct_instance.expand_members(custom_data_types)
 
     plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
 

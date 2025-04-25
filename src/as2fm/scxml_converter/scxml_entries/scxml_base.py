@@ -17,7 +17,7 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from lxml.etree import _Element as XmlElement
 
@@ -34,7 +34,7 @@ class ScxmlBase:
 
     @classmethod
     def from_xml_tree(
-        cls, xml_tree: XmlElement, custom_data_types: List["XmlStructDefinition"], **kwargs
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition], **kwargs
     ) -> "ScxmlBase":
         """External interface to create a ScxmlBase object from an XML tree."""
         instance = cls.from_xml_tree_impl(xml_tree, custom_data_types, **kwargs)
@@ -44,16 +44,16 @@ class ScxmlBase:
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List["XmlStructDefinition"]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlBase":
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
-    def set_custom_data_types(self, custom_data_types: List["XmlStructDefinition"]):
+    def set_custom_data_types(self, custom_data_types: Dict[str, XmlStructDefinition]):
         """Save container with custom data types."""
         self.custom_data_types = custom_data_types
 
-    def get_custom_data_types(self) -> List["XmlStructDefinition"]:
+    def get_custom_data_types(self) -> Dict[str, XmlStructDefinition]:
         """Get the container with custom data types."""
         return self.custom_data_types
 
