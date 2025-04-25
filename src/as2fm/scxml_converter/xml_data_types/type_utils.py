@@ -43,7 +43,7 @@ class ArrayInfo:
     A class to represent metadata about an array, including its type, dimensions,
     and maximum sizes for each dimension.
     Attributes:
-        array_type (str): The data type string of the array elements.
+        array_type (type, str): The data type of the array elements.
         array_dimensions (int): The number of dimensions of the array.
         array_max_sizes (List[int]): A list specifying the maximum size for each
             dimension of the array.
@@ -51,7 +51,7 @@ class ArrayInfo:
             custom object.
     """
 
-    array_type: Type[Union[int, float]]
+    array_type: Union[Type[Union[int, float]], str]
     array_dimensions: int
     array_max_sizes: List[Optional[int]]
     is_base_type: bool = True
@@ -140,7 +140,7 @@ def get_array_type_and_dimensions_from_string(data_type: str) -> Tuple[str, List
     return array_type_str, dim_bounds
 
 
-def get_array_info(data_type: str) -> ArrayInfo:
+def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
     """
     Given an array type string, return the related ArrayInfo.
 
@@ -152,9 +152,11 @@ def get_array_info(data_type: str) -> ArrayInfo:
     """
     assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
     array_type_str, array_max_sizes = get_array_type_and_dimensions_from_string(data_type)
-    array_py_type = SCXML_DATA_STR_TO_TYPE[array_type_str]
     n_dims = len(array_max_sizes)
-    return ArrayInfo(array_py_type, n_dims, array_max_sizes)
+    if expect_base_type:
+        array_py_type = SCXML_DATA_STR_TO_TYPE[array_type_str]
+        return ArrayInfo(array_py_type, n_dims, array_max_sizes, expect_base_type)
+    return ArrayInfo(array_type_str, n_dims, array_max_sizes, expect_base_type)
 
 
 def check_variable_base_type_ok(
