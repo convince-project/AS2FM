@@ -22,6 +22,7 @@ Module producing jani expressions from ecmascript.
 from typing import List, MutableSequence, Optional, Type, Union
 
 import esprima
+from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import convert_string_to_int_array
@@ -107,7 +108,7 @@ def _generate_array_expression_for_assignment(
         parent_script, esprima.nodes.Node
     ), f"Unexpected type '{type(parent_script)}' for input argument 'parent_script'."
     # Expression for generating array are supported only for assignments (elementary expression)!
-    assert parent_script.type in ("ExpressionStatement", "ArrayExpression"), (
+    assert parent_script.type in (Syntax.ExpressionStatement, Syntax.ArrayExpression), (
         "Error: array generators can only be used for assignments or in other array expressions "
         "(for multi-dimensional arrays): "
         f"{parent_script.type} not in (ExpressionStatement, ArrayExpression)."
@@ -146,7 +147,7 @@ def _generate_constant_array_expression(
 ) -> JaniExpression:
     # If here, we are dealing with a constant array, that can only be used for eq. checks
     assert (
-        p_node.type == "BinaryExpression"
+        p_node.type == Syntax.BinaryExpression
     ), f"Constant string parent node is a {p_node.type} != BinaryExpression."
     assert (
         p_node.operator == "=="
@@ -166,28 +167,30 @@ def _parse_ecmascript_to_jani_expression(
     :param array_info: The type and max size of the array, if required.
     :return: The jani expression.
     """
-    if ast.type == "ExpressionStatement":
+    if ast.type == Syntax.ExpressionStatement:
         # This is the highest level for each esprima script
         return _parse_ecmascript_to_jani_expression(ast.expression, ast, array_info)
-    elif ast.type == "Literal":
+    elif ast.type == Syntax.Literal:
         if isinstance(ast.value, str):
             # This needs to be treated as a list (not array) of integers.
             string_as_list = convert_string_to_int_array(ast.value)
-            if parent_script.type == "ExpressionStatement":  # This is an assignment, add padding
+            if (
+                parent_script.type == Syntax.ExpressionStatement
+            ):  # This is an assignment, add padding
                 return _generate_array_expression_for_assignment(
                     array_info, parent_script, string_as_list
                 )
             return _generate_constant_array_expression(parent_script, string_as_list)
         else:
             return JaniExpression(JaniValue(ast.value))
-    elif ast.type == "Identifier":
+    elif ast.type == Syntax.Identifier:
         # If it is an identifier, we do not need to expand further
         assert ast.name not in ("True", "False"), (
             f"Boolean {ast.name} mistaken for an identifier. "
             "Did you mean to use 'true' or 'false' instead?"
         )
         return JaniExpression(ast.name)
-    elif ast.type == "UnaryExpression":
+    elif ast.type == Syntax.UnaryExpression:
         assert ast.prefix is True, "only prefixes are supported"
         assert ast.operator in UNARY_OPERATORS_MAP, (
             f"Operator {ast.operator} is not supported. "
@@ -196,7 +199,7 @@ def _parse_ecmascript_to_jani_expression(
         return UNARY_OPERATORS_MAP[ast.operator](
             _parse_ecmascript_to_jani_expression(ast.argument, ast, array_info)
         )
-    elif ast.type == "BinaryExpression" or ast.type == "LogicalExpression":
+    elif ast.type == Syntax.BinaryExpression or ast.type == Syntax.LogicalExpression:
         # It is a more complex expression
         assert (
             ast.operator in OPERATORS_TO_JANI_MAP
@@ -208,14 +211,14 @@ def _parse_ecmascript_to_jani_expression(
                 "right": _parse_ecmascript_to_jani_expression(ast.right, ast, array_info),
             }
         )
-    elif ast.type == "ArrayExpression":
+    elif ast.type == Syntax.ArrayExpression:
         # TODO: Implement this in a separated function, using recursion and making sure to pad
         # everything according to array_info.
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         entry_type: Type = array_info.array_type
         if array_info.array_dimensions == 1:
             assert all(
-                element.type == "Literal" for element in ast.elements
+                element.type == Syntax.Literal for element in ast.elements
             ), "All array elements are expected to be a 'Literal'"
             elements_list = [entry_type(element.value) for element in ast.elements]
             return _generate_array_expression_for_assignment(
@@ -234,7 +237,7 @@ def _parse_ecmascript_to_jani_expression(
                 elem_exprs.append(elem_expr)
             return _generate_array_expression_for_assignment(array_info, parent_script, elem_exprs)
 
-    elif ast.type == "MemberExpression":
+    elif ast.type == Syntax.MemberExpression:
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
         property_expr = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)
         if ast.computed:
@@ -264,17 +267,17 @@ def _parse_ecmascript_to_jani_expression(
                     object_expr_str is not None
                 ), "Only identifiers can be accessed through dot notation."
                 return JaniExpression(f"{object_expr_str}.{property_expr_str}")
-    elif ast.type == "CallExpression":
+    elif ast.type == Syntax.CallExpression:
         # We expect function calls to be of the form Math.function_name(args) (JavaScript-like)
         # The "." operator is represented as a MemberExpression
         assert (
-            ast.callee.type == "MemberExpression"
+            ast.callee.type == Syntax.MemberExpression
         ), f"Functions callee is expected to be MemberExpressions, found {ast.callee}."
         assert (
-            ast.callee.object.type == "Identifier"
+            ast.callee.object.type == Syntax.Identifier
         ), f"Callee object is expected to be an Identifier, found {ast.callee.object}."
         assert (
-            ast.callee.property.type == "Identifier"
+            ast.callee.property.type == Syntax.Identifier
         ), f"Callee property is expected to be an Identifier, found {ast.callee.property}."
         assert (
             ast.callee.object.name == JS_CALLABLE_PREFIX

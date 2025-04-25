@@ -20,7 +20,10 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Type
 
 import esprima
+from esprima.syntax import Syntax
+from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.ecmascript_interpretation import parse_expression_to_ast
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
@@ -201,11 +204,11 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
     """
     # TODO: consider doing this symbolically and then turn it to a string using
     #       https://pypi.org/project/escodegen/
-    if ast.type == "Identifier":
+    if ast.type == Syntax.Identifier:
         return ast.name, []
-    elif ast.type == "Literal":
+    elif ast.type == Syntax.Literal:
         return ast.raw, []
-    elif ast.type == "MemberExpression":
+    elif ast.type == Syntax.MemberExpression:
         obj, idxs = _convert_ast_to_plain_str(ast.object)
         if ast.computed:  # array index
             idx_expr = _convert_ast_to_plain_str(ast.property)
@@ -216,20 +219,20 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
                 obj = _separated_member_expression_to_str(obj, idxs)
                 return f"{obj}.{ast.property.name}", []
             return f"{obj}.{ast.property.name}", idxs
-    elif ast.type in ("BinaryExpression", "LogicalExpression"):
+    elif ast.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
         left_expr = _convert_ast_to_plain_str(ast.left)
         right_expr = _convert_ast_to_plain_str(ast.right)
         left_str = _separated_member_expression_to_str(*left_expr)
         right_str = _separated_member_expression_to_str(*right_expr)
         return f"({left_str} {ast.operator} {right_str})", []
-    elif ast.type == "CallExpression":
+    elif ast.type == Syntax.CallExpression:
         callee_expr = _convert_ast_to_plain_str(ast.callee)
         argument_exprs = [_convert_ast_to_plain_str(a) for a in ast.arguments]
         callee_str = _separated_member_expression_to_str(*callee_expr)
         argument_strs = [_separated_member_expression_to_str(*a) for a in argument_exprs]
         arguments_str = ", ".join(argument_strs)
         return f"{callee_str}({arguments_str})", []
-    elif ast.type == "UnaryExpression":
+    elif ast.type == Syntax.UnaryExpression:
         expr_vals = _convert_ast_to_plain_str(ast.argument)
         expr_str = _separated_member_expression_to_str(*expr_vals)
         return f"({ast.operator}{expr_str})", []
@@ -238,7 +241,7 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
 
 
 def convert_expression_with_object_assignment(
-    expr: str, custom_data_type: XmlStructDefinition, elem=None
+    expr: str, custom_data_type: XmlStructDefinition, elem: Optional[XmlElement] = None
 ) -> List[str]:
     """
     e.g. `x.ps[0]` =>
@@ -248,22 +251,11 @@ def convert_expression_with_object_assignment(
     raise NotImplementedError("todo ...")
 
 
-def convert_expression_with_object_arrays(expr: str, elem=None) -> str:
+def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] = None) -> str:
     """
     e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons.polygons.points.y[0][1]`.
     """
-    try:
-        ast = esprima.parseScript(expr)
-    except esprima.error_handler.Error as e:
-        raise RuntimeError(get_error_msg(elem, f"Failed parsing ecmascript: {expr}. Error: {e}."))
-    assert len(ast.body) == 1, get_error_msg(
-        elem, "The ecmascript must contain exactly one expression."
-    )
-    ast = ast.body[0]
-    assert ast.type == "ExpressionStatement", get_error_msg(
-        elem, "The ecmascript must contain exactly one expression."
-    )
-    ast = ast.expression
+    ast = parse_expression_to_ast(expr, elem)
 
     obj, idxs = _convert_ast_to_plain_str(ast)
 

@@ -17,6 +17,7 @@
 
 from typing import Dict, Optional, Tuple, Union
 
+from as2fm.as2fm_common.ecmascript_interpretation import has_array_access, has_member_access
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ArrayInfo,
     get_array_info,
@@ -88,4 +89,8 @@ class ScxmlStructDeclarationsContainer:
         e.g. `polygon.points[1]` => `(XmlStructDefinition(Point2D), None)` <- ???
 
         """
-        return self._custom_type_per_variable[variable_name]
+        if has_array_access(variable_name, None):
+            pass
+        if has_member_access(variable_name, None):
+            pass
+        return self._type_per_variable[variable_name]

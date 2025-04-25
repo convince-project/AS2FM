@@ -19,7 +19,12 @@ import unittest
 
 import pytest
 
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    MemberAccessCheckException,
+    has_array_access,
+    has_member_access,
+    interpret_ecma_script_expr,
+)
 
 
 class TestEcmascriptInterpreter(unittest.TestCase):
@@ -54,6 +59,34 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertRaises(ValueError, interpret_ecma_script_expr, "null")
         self.assertRaises(ValueError, interpret_ecma_script_expr, "undefined")
         self.assertRaises(ValueError, interpret_ecma_script_expr, "new Date()")
+
+    def test_has_array_access(self):
+        self.assertTrue(has_array_access("a[0]", None))
+        self.assertTrue(has_array_access("a.b[0]", None))
+        self.assertTrue(has_array_access("a.b.c[0][1]", None))
+        self.assertFalse(has_array_access("a", None))
+        self.assertFalse(has_array_access("a.b", None))
+        self.assertFalse(has_array_access("a.b.c", None))
+
+        self.assertRaises(MemberAccessCheckException, has_array_access, "''", None)
+        self.assertRaises(MemberAccessCheckException, has_array_access, "2", None)
+        self.assertRaises(MemberAccessCheckException, has_array_access, "a.b()", None)
+        self.assertRaises(MemberAccessCheckException, has_array_access, "c[1]()", None)
+        self.assertRaises(RuntimeError, has_array_access, "d[]", None)
+
+    def test_has_member_access(self):
+        self.assertTrue(has_member_access("a.b", None))
+        self.assertTrue(has_member_access("a.b[0]", None))
+        self.assertTrue(has_member_access("a.b.c[0]", None))
+        self.assertFalse(has_member_access("a", None))
+        self.assertFalse(has_member_access("a[0]", None))
+        self.assertFalse(has_member_access("a[0][1]", None))
+
+        self.assertRaises(MemberAccessCheckException, has_member_access, "''", None)
+        self.assertRaises(MemberAccessCheckException, has_member_access, "2", None)
+        self.assertRaises(MemberAccessCheckException, has_member_access, "a.b()", None)
+        self.assertRaises(MemberAccessCheckException, has_member_access, "c[1]()", None)
+        self.assertRaises(RuntimeError, has_member_access, "d[]", None)
 
 
 if __name__ == "__main__":
