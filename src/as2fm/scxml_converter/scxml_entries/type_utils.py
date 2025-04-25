@@ -73,7 +73,7 @@ class ScxmlStructDeclarationsContainer:
                 )
 
     def get_data_type(
-        self, variable_name: str
+        self, variable_name: str, elem
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
         """
         Retrieve the type of a variable.
@@ -89,8 +89,8 @@ class ScxmlStructDeclarationsContainer:
         e.g. `polygon.points[1]` => `(XmlStructDefinition(Point2D), None)` <- ???
 
         """
-        if has_array_access(variable_name, None):
+        if has_array_access(variable_name, elem):
             pass
-        if has_member_access(variable_name, None):
+        if has_member_access(variable_name, elem):
             pass
         return self._type_per_variable[variable_name]

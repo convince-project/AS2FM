@@ -265,13 +265,17 @@ class ScxmlIf(ScxmlBase):
         conditional_executions = []
         for condition, execution in self._conditional_executions:
             set_execution_body_callback_type(execution, self._cb_type)
-            execution_body = as_plain_execution_body(execution, ros_declarations)
+            execution_body = as_plain_execution_body(
+                execution, struct_declarations, ros_declarations
+            )
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
             conditional_executions.append(
                 (get_plain_expression(condition, self._cb_type), execution_body)
             )
         set_execution_body_callback_type(self._else_execution, self._cb_type)
-        else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
+        else_execution = as_plain_execution_body(
+            self._else_execution, struct_declarations, ros_declarations
+        )
         return [ScxmlIf(conditional_executions, else_execution)]
 
     def as_xml(self) -> XmlElement:

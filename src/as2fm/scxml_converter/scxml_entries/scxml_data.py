@@ -269,7 +269,7 @@ class ScxmlData(ScxmlBase):
         # TODO: This is fine also in case it is an array of base types...
         if self._is_plain_type():
             return [self]
-        data_type_def, _ = struct_declarations.get_data_type(self.get_name())
+        data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
         assert isinstance(data_type_def, XmlStructDefinition), log_error(
             self.get_xml_origin(),
             f"Information for data variable {self.get_name()} has unexpected type.",
