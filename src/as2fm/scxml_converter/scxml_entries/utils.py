@@ -199,6 +199,8 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
     `a[0].x[2]` => 'a.x', ['0', '2']
     `a` => 'a', []
     """
+    # TODO: consider doing this symbolically and then turn it to a string using
+    #       https://pypi.org/project/escodegen/
     if ast.type == "Identifier":
         return ast.name, []
     elif ast.type == "Literal":
@@ -228,12 +230,9 @@ def _convert_ast_to_plain_str(ast: esprima.nodes.Node) -> Tuple[str, List[str]]:
         arguments_str = ", ".join(argument_strs)
         return f"{callee_str}({arguments_str})", []
     elif ast.type == "UnaryExpression":
-        operator = ast.operator
         expr_vals = _convert_ast_to_plain_str(ast.argument)
         expr_str = _separated_member_expression_to_str(*expr_vals)
-        if ast.argument.type not in ("Identifier", "Literal"):
-            expr_str = f"({expr_str})"
-        return f"{operator}{expr_str}", []
+        return f"({ast.operator}{expr_str})", []
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
