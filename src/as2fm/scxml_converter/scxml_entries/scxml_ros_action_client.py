@@ -39,6 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
     RosDeclaration,
     RosTrigger,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
@@ -174,7 +175,9 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         return True
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert self.check_valid_ros_instantiations(
             ros_declarations
@@ -253,13 +256,15 @@ class RosActionHandleSuccessResult(RosCallback):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_SUCCEEDED}"
-        return super().as_plain_scxml(ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ros_declarations)
 
 
 class RosActionHandleCanceledResult(RosCallback):
@@ -287,13 +292,15 @@ class RosActionHandleCanceledResult(RosCallback):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_CANCELED}"
-        return super().as_plain_scxml(ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ros_declarations)
 
 
 class RosActionHandleAbortedResult(RosCallback):
@@ -321,10 +328,12 @@ class RosActionHandleAbortedResult(RosCallback):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_ABORTED}"
-        return super().as_plain_scxml(ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ros_declarations)

@@ -28,6 +28,7 @@ from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     RESERVED_NAMES,
 )
@@ -259,23 +260,23 @@ class ScxmlData(ScxmlBase):
             return False
         return True
 
-    def as_plain_scxml(  # type: ignore
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List["ScxmlData"]:
         # TODO: By using ROS declarations, we can add the support for the ROS types as well.
         # TODO: This is fine also in case it is an array of base types...
         if self._is_plain_type():
             return [self]
-        custom_type_name = self._data_type
-        if is_type_string_array(custom_type_name):
-            custom_type_name = get_type_string_of_array(custom_type_name)
-        data_type_def = None
-        for custom_struct in self.get_custom_data_types():
-            if custom_struct.get_name() == custom_type_name:
-                data_type_def = custom_struct
-                break
-        assert data_type_def is not None, f"Cannot find custom data type {custom_type_name}."
-        assert isinstance(self._expr, str), "We only support string init expr. for custom types."
+        data_type_def, _ = struct_declarations.get_data_type(self.get_name())
+        assert isinstance(data_type_def, XmlStructDefinition), log_error(
+            self.get_xml_origin(),
+            f"Information for data variable {self.get_name()} has unexpected type.",
+        )
+        assert isinstance(self._expr, str), log_error(
+            self.get_xml_origin(), "We only support string init expr. for custom types."
+        )
         expanded_data_values = data_type_def.get_instance_from_expression(self._expr)
         expanded_data_types = data_type_def.get_expanded_members()
         return [

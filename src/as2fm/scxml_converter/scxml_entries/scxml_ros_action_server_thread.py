@@ -41,6 +41,7 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
@@ -167,7 +168,11 @@ class RosActionThread(ScxmlBase):
             return False
         return True
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlBase]:
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List[ScxmlBase]:
         """
         Convert the ROS-specific entries to be plain SCXML.
 
@@ -186,7 +191,7 @@ class RosActionThread(ScxmlBase):
             for state in self._states:
                 initial_state = state.get_id() == self._initial_state
                 state.set_thread_id(thread_idx)
-                plain_states = state.as_plain_scxml(ros_declarations)
+                plain_states = state.as_plain_scxml(struct_declarations, ros_declarations)
                 assert len(plain_states) == 1, "A state must also be one state in Plain SCXML"
                 plain_thread_instance.add_state(plain_states[0], initial=initial_state)
             assert plain_thread_instance.is_plain_scxml(), (
@@ -266,13 +271,15 @@ class RosActionHandleThreadStart(RosCallback):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert (
             self._thread_id is not None
         ), f"Error: SCXML {self.__class__.__name__}: thread ID not set."
         # Append a condition checking the thread ID matches the request
-        plain_transitions = super().as_plain_scxml(ros_declarations)
+        plain_transitions = super().as_plain_scxml(struct_declarations, ros_declarations)
         assert (
             len(plain_transitions) == 1
         ), "A transition must also be one transition in Plain SCXML"
@@ -333,12 +340,14 @@ class RosActionThreadFree(RosTrigger):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlTransition]:
         assert (
             self._thread_id is not None
         ), f"Error: SCXML {self.__class__.__name__}: thread ID not set."
-        plain_triggers = super().as_plain_scxml(ros_declarations)
+        plain_triggers = super().as_plain_scxml(struct_declarations, ros_declarations)
         assert len(plain_triggers) == 1, "A trigger must also be one trigger in Plain SCXML"
         # Add the thread id to the (empty) param list
         plain_triggers[0].append_param(ScxmlParam("thread_id", expr=str(self._thread_id)))

@@ -80,7 +80,7 @@ class ScxmlBase:
         """Check if the object is compatible with the plain SCXML standard."""
         raise NotImplementedError
 
-    def as_plain_scxml(self, ros_declarations) -> List["ScxmlBase"]:
+    def as_plain_scxml(self, struct_declarations, ros_declarations) -> List:
         """Convert the object to its plain SCXML  version."""
         raise NotImplementedError
 

@@ -54,7 +54,7 @@ class BtGetValueInputPort(ScxmlBase):
     def get_key_name(self) -> str:
         return self._key
 
-    def as_plain_scxml(self, _) -> List[ScxmlBase]:
+    def as_plain_scxml(self, _, __) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
 

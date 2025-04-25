@@ -17,7 +17,6 @@
 
 from typing import Dict, Optional, Tuple, Union
 
-from as2fm.scxml_converter.scxml_entries.scxml_data_model import ScxmlDataModel
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ArrayInfo,
     get_array_info,
@@ -42,28 +41,32 @@ class ScxmlStructDeclarationsContainer:
     def __init__(
         self,
         automaton_name: str,
-        data_model: ScxmlDataModel,
+        data_model,
         struct_definitions: Dict[str, XmlStructDefinition],
     ):
         self._automaton_name = automaton_name
         self._data_model = data_model
         self._struct_definitions = struct_definitions
-        self._custom_type_per_variable: Dict[
+        self._type_per_variable: Dict[
             str, Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]
         ] = {}
         for data_entry in self._data_model.get_data_entries():
+            variable_name: str = data_entry.get_name()
+            assert (
+                variable_name not in self._type_per_variable.keys()
+            ), f"Variable name {variable_name} must be unique."
             data_type_def = data_entry.get_type_str()
-            array_info: Optional[ArrayInfo] = None
             if is_type_string_array(data_type_def):
                 data_type_single = get_type_string_of_array(data_type_def)
-                array_info = get_array_info(data_type_def, False)
+                array_info: Optional[ArrayInfo] = get_array_info(data_type_def, False)
             else:
                 data_type_single = data_type_def
+                array_info = None
             if is_type_string_base_type(data_type_single):
-                self._custom_type_per_variable[data_entry.get_name()] = (data_type_def, array_info)
+                self._type_per_variable[variable_name] = (data_type_def, array_info)
             else:
                 data_type_struct = struct_definitions[data_type_single]
-                self._custom_type_per_variable[data_entry.get_name()] = (
+                self._type_per_variable[variable_name] = (
                     data_type_struct,
                     array_info,
                 )

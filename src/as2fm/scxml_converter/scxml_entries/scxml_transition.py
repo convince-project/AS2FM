@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     add_targets_to_scxml_send,
     execution_body_from_xml,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     get_plain_expression,
@@ -291,7 +292,9 @@ class ScxmlTransition(ScxmlBase):
         )
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List["ScxmlTransition"]:
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
@@ -302,7 +305,7 @@ class ScxmlTransition(ScxmlBase):
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(CallbackType.TRANSITION)
-            plain_targets.extend(target.as_plain_scxml(ros_declarations))
+            plain_targets.extend(target.as_plain_scxml(struct_declarations, ros_declarations))
         if self._condition is not None:
             self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
         return [ScxmlTransition(plain_targets, self._events, self._condition)]

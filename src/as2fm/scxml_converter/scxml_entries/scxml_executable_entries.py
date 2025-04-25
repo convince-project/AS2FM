@@ -37,6 +37,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_blackboard_reference,
     is_removed_bt_event,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     convert_expression_with_object_arrays,
@@ -255,7 +256,11 @@ class ScxmlIf(ScxmlBase):
             ) and is_plain_execution_body(self._else_execution)
         return False
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlIf"]:
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlIf"]:
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
         conditional_executions = []
         for condition, execution in self._conditional_executions:
@@ -404,7 +409,9 @@ class ScxmlSend(ScxmlBase):
             return all(isinstance(param.get_expr(), str) for param in self._params)
         return False
 
-    def as_plain_scxml(self, _) -> List["ScxmlSend"]:
+    def as_plain_scxml(
+        self, struct_declarations: ScxmlStructDeclarationsContainer, _
+    ) -> List["ScxmlSend"]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
         for param in self._params:
@@ -504,7 +511,9 @@ class ScxmlAssign(ScxmlBase):
             return isinstance(self._expr, str)
         return False
 
-    def as_plain_scxml(self, _) -> List["ScxmlAssign"]:
+    def as_plain_scxml(
+        self, struct_declarations: ScxmlStructDeclarationsContainer, _
+    ) -> List["ScxmlAssign"]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
         expr = get_plain_expression(self._expr, self._cb_type)
 
@@ -631,12 +640,15 @@ def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody]) -> bool:
 
 
 def as_plain_execution_body(
-    exec_body: Optional[ScxmlExecutionBody], ros_declarations: ScxmlRosDeclarationsContainer
+    exec_body: Optional[ScxmlExecutionBody],
+    struct_declarations: ScxmlStructDeclarationsContainer,
+    ros_declarations: ScxmlRosDeclarationsContainer,
 ) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 
     :param exec_body: The execution body to convert
+    :param struct_declarations: Information about the type of data in the automaton's datamodel
     :param ros_declarations: The ROS declarations
     :return: The converted execution body
     """
@@ -646,7 +658,7 @@ def as_plain_execution_body(
     for entry in exec_body:
         if is_comment(entry):
             continue
-        new_body.extend(entry.as_plain_scxml(ros_declarations))
+        new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
     return new_body
 
 

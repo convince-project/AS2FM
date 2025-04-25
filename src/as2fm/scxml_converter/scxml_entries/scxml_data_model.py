@@ -27,6 +27,7 @@ from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -97,11 +98,15 @@ class ScxmlDataModel(ScxmlBase):
         return self.check_validity() and all(data.is_plain_scxml() for data in self._data_entries)
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List["ScxmlDataModel"]:
         plain_data_entries = []
         for data_entry in self._data_entries:
-            plain_data_entries.extend(data_entry.as_plain_scxml(ros_declarations))
+            plain_data_entries.extend(
+                data_entry.as_plain_scxml(struct_declarations, ros_declarations)
+            )
         return [ScxmlDataModel(plain_data_entries)]
 
     def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:

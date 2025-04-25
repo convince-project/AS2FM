@@ -47,6 +47,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
     valid_execution_body,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, generate_tag_to_class_map
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -291,15 +292,19 @@ class ScxmlState(ScxmlBase):
         plain_body = all(transition.is_plain_scxml() for transition in self._body)
         return plain_entry and plain_exit and plain_body
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List["ScxmlState"]:
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlState"]:
         """Convert the ROS-specific entries to be plain SCXML"""
         set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
         set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
-        plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
-        plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
+        plain_entry = as_plain_execution_body(self._on_entry, struct_declarations, ros_declarations)
+        plain_exit = as_plain_execution_body(self._on_exit, struct_declarations, ros_declarations)
         plain_body: List[ScxmlTransition] = []
         for entry in self._body:
-            plain_body.extend(entry.as_plain_scxml(ros_declarations))
+            plain_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)]
 
     def as_xml(self) -> XmlElement:

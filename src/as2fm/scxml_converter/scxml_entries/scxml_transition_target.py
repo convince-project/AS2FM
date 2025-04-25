@@ -39,6 +39,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body,
     valid_execution_body_entry_types,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
@@ -191,7 +192,9 @@ class ScxmlTransitionTarget(ScxmlBase):
         return is_plain_execution_body(self._body)
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List["ScxmlTransitionTarget"]:
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
@@ -205,7 +208,7 @@ class ScxmlTransitionTarget(ScxmlBase):
             set_execution_body_callback_type(self._body, self._cb_type)
             new_body = []
             for entry in self._body:
-                new_body.extend(entry.as_plain_scxml(ros_declarations))
+                new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
 
     def as_xml(self) -> XmlElement:

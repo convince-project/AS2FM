@@ -67,7 +67,7 @@ class RosField(ScxmlParam):
         )
         return valid_name and valid_expr
 
-    def as_plain_scxml(self, _) -> List[ScxmlParam]:
+    def as_plain_scxml(self, _, __) -> List[ScxmlParam]:
         # In order to distinguish the message body from additional entries, add a prefix to the name
         assert (
             self._cb_type is not None

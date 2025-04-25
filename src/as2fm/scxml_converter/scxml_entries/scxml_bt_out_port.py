@@ -77,7 +77,7 @@ class BtSetValueOutputPort(ScxmlSend):
         ), f"Error: SCXML BT Port {self._key} is not referencing a blackboard variable."
         self._blackboard_reference = get_blackboard_variable_name(port_value)
 
-    def as_plain_scxml(self, _) -> List[ScxmlSend]:
+    def as_plain_scxml(self, _, __) -> List[ScxmlSend]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         assert (
             self._blackboard_reference is not None

@@ -40,6 +40,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
     RosDeclaration,
     RosTrigger,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
@@ -245,8 +246,12 @@ class RosActionSendSuccessResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(ros_declarations)
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
         for p_sends in plain_sends:
             p_sends.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
         return plain_sends
@@ -279,8 +284,12 @@ class RosActionSendCanceledResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(ros_declarations)
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
         for p_send in plain_sends:
             p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_CANCELED}"))
         return plain_sends
@@ -313,8 +322,12 @@ class RosActionSendAbortedResult(RosTrigger):
             ros_declarations.get_action_server_info(self._interface_name)[0]
         )
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(ros_declarations)
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List[ScxmlSend]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
         for p_send in plain_sends:
             p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_ABORTED}"))
         return plain_sends
