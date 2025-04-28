@@ -117,7 +117,6 @@ class ScxmlStructDeclarationsContainer:
                 return self._get_data_type_for_property(struct_type, access_trace[2:], elem)
             else:
                 return self._get_data_type_for_property(struct_type, access_trace[1:], elem)
-
         raise RuntimeError()
 
     def _get_data_type_for_property(
@@ -129,18 +128,16 @@ class ScxmlStructDeclarationsContainer:
         """leftmost string is property"""
         if len(access_trace) == 1:
             property_name = access_trace[0]
+            assert property_name != ArrayAccess, get_error_msg(
+                elem, "Can not be only an array access."
+            )
             prop_struct_type_str = struct_type.get_members()[access_trace[0]]
             if is_type_string_array(prop_struct_type_str):
                 prop_struct_type_str = get_type_string_of_array(prop_struct_type_str)
             if is_type_string_base_type(prop_struct_type_str):
                 return prop_struct_type_str, None
             prop_struct_type = self._struct_definitions[prop_struct_type_str]
-
-            assert property_name != ArrayAccess, get_error_msg(
-                elem, "Can not be only an array access."
-            )
-            assert not isinstance(struct_type, str), "Must be struct"
-            return struct_type.get_members()[property_name], None
+            return prop_struct_type, None
         if access_trace[-1] == ArrayAccess:
             # We are accessing an array at the end.
             # Then we can take the array type and treat it as a single object of that type.
@@ -156,5 +153,4 @@ class ScxmlStructDeclarationsContainer:
                 return self._get_data_type_for_property(prop_struct_type, access_trace[2:], elem)
             else:
                 return self._get_data_type_for_property(prop_struct_type, access_trace[1:], elem)
-
         raise RuntimeError()
