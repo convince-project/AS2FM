@@ -31,6 +31,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 ARRAY_LENGTH_SUFFIX = "length"
+ARRAY_LENGTH_TYPE = "uint64"
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []

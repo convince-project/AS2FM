@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 from as2fm.as2fm_common.ecmascript_interpretation import ArrayAccess, split_by_access
 from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.scxml_entries.utils import ARRAY_LENGTH_SUFFIX, ARRAY_LENGTH_TYPE
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ArrayInfo,
     get_array_info,
@@ -94,6 +95,19 @@ class ScxmlStructDeclarationsContainer:
         access_trace = split_by_access(variable_name, elem)
         return self._get_data_type_for_variable(access_trace, elem)
 
+    def _check_array_length_access(
+        self, access_trace: List[Union[str, Type[ArrayAccess]]], array_info: Optional[ArrayInfo]
+    ) -> bool:
+        """
+        Check if this expression relates to an array length access.
+        """
+        if array_info is not None:
+            if len(access_trace) == 2:
+                # base_type array e.g. int32[42]
+                assert access_trace[1] == ARRAY_LENGTH_SUFFIX
+                return True
+        return False
+
     def _get_data_type_for_variable(
         self, access_trace: List[Union[str, Type[ArrayAccess]]], elem
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
@@ -111,7 +125,9 @@ class ScxmlStructDeclarationsContainer:
         if len(access_trace) >= 2:
             # Accessing a property of a struct.
             # -> Get struct type and evaluate the property.
-            struct_type, _ = self._type_per_variable[access_trace[0]]
+            struct_type, array_info = self._type_per_variable[access_trace[0]]
+            if self._check_array_length_access(access_trace, array_info):
+                return ARRAY_LENGTH_TYPE, None
             if access_trace[1] == ArrayAccess:
                 # This is an array, but we access an instance
                 return self._get_data_type_for_property(struct_type, access_trace[2:], elem)
@@ -146,8 +162,15 @@ class ScxmlStructDeclarationsContainer:
             # Accessing a property of a struct.
             # -> Get their type and evaluate further.
             prop_struct_type_str = struct_type.get_members()[access_trace[0]]
-            single_struct_type_name = get_type_string_of_array(prop_struct_type_str)
+            if is_type_string_array(prop_struct_type_str):
+                single_struct_type_name = get_type_string_of_array(prop_struct_type_str)
+                array_info: Optional[ArrayInfo] = get_array_info(prop_struct_type_str)
+            else:
+                single_struct_type_name = prop_struct_type_str
+                array_info = None
             prop_struct_type = self._struct_definitions[single_struct_type_name]
+            if self._check_array_length_access(access_trace, array_info):
+                return ARRAY_LENGTH_TYPE, None
             if access_trace[1] == ArrayAccess:
                 # This is an array, but we access an instance
                 return self._get_data_type_for_property(prop_struct_type, access_trace[2:], elem)

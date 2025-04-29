@@ -31,6 +31,7 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int16": int,
     "int32": int,
     "int64": int,
+    "uint64": int,
     "string": str,
 }
 
