@@ -21,13 +21,14 @@ from typing import Dict, List, Optional, Tuple, Type
 
 import escodegen
 import esprima
-from esprima.nodes import ComputedMemberExpression
+from esprima.nodes import ComputedMemberExpression, Identifier
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import parse_expression_to_ast
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 ARRAY_LENGTH_SUFFIX = "length"
@@ -202,6 +203,38 @@ def _reassemble_expression(
     return _reassemble_expression(ComputedMemberExpression(array, idxs[0]), idxs[1:])
 
 
+def _convert_non_computed_member_exprs_to_identifiers(
+    node: esprima.nodes.Node,
+) -> esprima.nodes.Node:
+    """Convert member access operators (like '.') into identifiers."""
+    if node.type in (Syntax.Identifier, Syntax.Literal):
+        return node
+    elif node.type == Syntax.MemberExpression:
+        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object)
+        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property)
+        if node.computed:  # Array index
+            return node
+        # If not array index, convert to identifier
+        assert node.object.type == Syntax.Identifier
+        assert node.property.type == Syntax.Identifier
+        return Identifier(f"{node.object.name}{MEMBER_ACCESS_SUBSTITUTION}{node.property.name}")
+    elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
+        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left)
+        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right)
+        return node
+    elif node.type == Syntax.CallExpression:
+        node.arguments = [
+            _convert_non_computed_member_exprs_to_identifiers(node_arg)
+            for node_arg in node.arguments
+        ]
+        return node
+    elif node.type == Syntax.UnaryExpression:
+        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument)
+        return node
+    else:
+        raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
+
+
 def _split_array_indexes_out(
     ast: esprima.nodes.Node,
 ) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
@@ -252,11 +285,12 @@ def convert_expression_with_object_assignment(
 
 def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] = None) -> str:
     """
-    e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons.polygons.points.y[0][1]`.
+    e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons__polygons__points__y[0][1]`.
     """
     ast = parse_expression_to_ast(expr, elem)
     obj, idxs = _split_array_indexes_out(ast)
     exp = _reassemble_expression(obj, idxs)
+    exp = _convert_non_computed_member_exprs_to_identifiers(exp)
     return escodegen.generate(exp)
 
 

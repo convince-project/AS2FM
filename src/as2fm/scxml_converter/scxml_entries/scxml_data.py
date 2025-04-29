@@ -44,7 +44,10 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import (
+    MEMBER_ACCESS_SUBSTITUTION,
+    XmlStructDefinition,
+)
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
 ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
@@ -281,7 +284,9 @@ class ScxmlData(ScxmlBase):
         expanded_data_types = data_type_def.get_expanded_members()
         return [
             ScxmlData(
-                ".".join((self._id, key)), expanded_data_values[key], expanded_data_types[key]
+                f"{self._id}{MEMBER_ACCESS_SUBSTITUTION}{key}",
+                expanded_data_values[key],
+                expanded_data_types[key],
             )
             for key in expanded_data_types
         ]

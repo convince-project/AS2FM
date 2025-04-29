@@ -20,6 +20,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.xml_data_types.type_utils import (
+    MEMBER_ACCESS_SUBSTITUTION,
     get_array_type_and_dimensions_from_string,
     is_type_string_array,
     is_type_string_base_type,
@@ -144,7 +145,9 @@ class XmlStructDefinition:
                         child_type_only = child_m_type[:array_bracket_idx]
                         child_array_info = child_m_type[array_bracket_idx:]
                         expanded_type = child_type_only + array_info + child_array_info
-                    self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
+                    self._members_list.update(
+                        {f"{member_name}{MEMBER_ACCESS_SUBSTITUTION}{child_m_name}": expanded_type}
+                    )
 
     def get_instance_from_expression(self, expr: str) -> Dict[str, str]:
         """
@@ -163,7 +166,9 @@ class XmlStructDefinition:
     def _expand_object_dict(self, object_to_convert: Dict[str, Any], prefix: str) -> Dict[str, Any]:
         ret_dict: Dict[str, Any] = {}
         for obj_key, obj_value in object_to_convert.items():
-            obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
+            obj_full_name = (
+                obj_key if prefix == "" else f"{prefix}{MEMBER_ACCESS_SUBSTITUTION}{obj_key}"
+            )
             if isinstance(obj_value, dict):
                 assert len(obj_value) > 0, "Unexpected empty dictionary in value definition."
                 ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))

@@ -537,6 +537,7 @@ class ScxmlAssign(ScxmlBase):
             # Assumption: This appending of members works only if the expr is a single variable
             # Currently, this is not enforced in this method.
             for struct_member in sub_types.keys():
+                # Here we keep dots, since we are running the plain-ification below
                 expanded_expressions.append(f"{self._expr}.{struct_member}")
                 expanded_locations.append(f"{self._location}.{struct_member}")
         else:

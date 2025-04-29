@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
@@ -138,8 +139,10 @@ class ScxmlParam(ScxmlBase):
                 plain_params.append(self)
             else:
                 for member_key in struct_def.get_expanded_members().keys():
-                    new_name = f"{self.get_name()}.{member_key}"
-                    new_expr = f"{self.get_expr_or_location()}.{member_key}"
+                    new_name = f"{self.get_name()}{MEMBER_ACCESS_SUBSTITUTION}{member_key}"
+                    new_expr = (
+                        f"{self.get_expr_or_location()}{MEMBER_ACCESS_SUBSTITUTION}{member_key}"
+                    )
                     plain_params.append(
                         ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
                     )

@@ -215,6 +215,9 @@ class DatamodelTag(BaseTag):
                         )
                     else:
                         assert level < 2, "TODO: For now, only 1 and 2D supported."
+                        if len(array_sizes) <= level:
+                            assert len(array_sizes) == level
+                            array_sizes.append([])
                         padding = array_info.array_max_sizes[level] - len(array_sizes[level])
                         assert padding >= 0, "Padding must be non-negative."
                         array_sizes[level].extend([0] * padding)

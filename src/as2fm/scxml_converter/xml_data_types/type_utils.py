@@ -31,9 +31,15 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "int16": int,
     "int32": int,
     "int64": int,
+    "uint8": int,
+    "uint16": int,
+    "uint32": int,
     "uint64": int,
     "string": str,
 }
+
+# What to use for representing member access in plain SCXML (instead of '.' in HL-SCXML)
+MEMBER_ACCESS_SUBSTITUTION = "__"
 
 
 # TODO: Move this class to as2fm common and use a python type instead of an scxml string for the
