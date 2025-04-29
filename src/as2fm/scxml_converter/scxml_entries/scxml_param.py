@@ -28,6 +28,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     get_input_variable_as_scxml_expression,
     is_blackboard_reference,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
@@ -124,6 +125,15 @@ class ScxmlParam(ScxmlBase):
         else:
             print("Error: SCXML param: expr and location are both set.")
         return valid_name and valid_expr
+
+    def as_plain_scxml(
+        self, struct_declarations: ScxmlStructDeclarationsContainer, _
+    ) -> List["ScxmlParam"]:
+        plain_params: List[ScxmlParam] = []
+        # In case there are Unary or Binary operators, we have to assume basic types
+        plain_params.append(self)
+        # Otherwise, we can determine the type and get the sub-entries (is complex structs)
+        return plain_params
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid param."

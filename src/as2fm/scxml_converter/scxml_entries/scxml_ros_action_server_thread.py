@@ -170,7 +170,7 @@ class RosActionThread(ScxmlBase):
 
     def as_plain_scxml(
         self,
-        struct_declarations: ScxmlStructDeclarationsContainer,
+        struct_declarations: Optional[ScxmlStructDeclarationsContainer],
         ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List[ScxmlBase]:
         """
@@ -179,6 +179,14 @@ class RosActionThread(ScxmlBase):
         This returns a list of ScxmlRoot objects, using ScxmlBase to avoid circular dependencies.
         """
         from as2fm.scxml_converter.scxml_entries import ScxmlRoot
+
+        # This is an independent automaton, no structs shall be provided from outside.
+        assert struct_declarations is None, "Unexpected struct_declarations. Should be None."
+        assert self._data_model is not None, "No datamodel found in the thread."
+
+        struct_declarations = ScxmlStructDeclarationsContainer(
+            self._name, self._data_model, self.get_custom_data_types()
+        )
 
         thread_instances: List[ScxmlRoot] = []
         action_name = sanitize_ros_interface_name(

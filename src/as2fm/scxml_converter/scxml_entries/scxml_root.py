@@ -379,9 +379,7 @@ class ScxmlRoot(ScxmlBase):
             )
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._additional_threads:
-            converted_scxmls.extend(
-                scxml_thread.as_plain_scxml(declarations_container, ros_declarations)
-            )
+            converted_scxmls.extend(scxml_thread.as_plain_scxml(None, ros_declarations))
         for plain_scxml in converted_scxmls:
             assert isinstance(plain_scxml, ScxmlRoot), (
                 "Error: SCXML root: conversion to plain SCXML resulted in invalid object "

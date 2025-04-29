@@ -414,12 +414,16 @@ class ScxmlSend(ScxmlBase):
         return False
 
     def as_plain_scxml(
-        self, struct_declarations: ScxmlStructDeclarationsContainer, _
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
     ) -> List["ScxmlSend"]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
+        expanded_params: List[ScxmlParam] = []
         for param in self._params:
             param.set_callback_type(self._cb_type)
+            expanded_params.extend(param.as_plain_scxml(struct_declarations, ros_declarations))
         # For now, no conversion to plain scxml is expected for params
         # param.as_plain_scxml()
         return [ScxmlSend(self._event, self._params)]
