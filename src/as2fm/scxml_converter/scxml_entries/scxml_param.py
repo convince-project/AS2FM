@@ -22,6 +22,7 @@ from typing import List, Optional, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.ecmascript_interpretation import MemberAccessCheckException
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
@@ -64,6 +65,7 @@ class ScxmlParam(ScxmlBase):
         *,
         expr: Optional[Union[BtGetValueInputPort, str]] = None,
         location: Optional[str] = None,
+        cb_type: Optional[CallbackType] = None,
     ):
         """
         Initialize the SCXML Parameter object.
@@ -78,7 +80,7 @@ class ScxmlParam(ScxmlBase):
         self._name = name
         self._expr = expr
         self._location = location
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_type: Optional[CallbackType] = cb_type
 
     def set_callback_type(self, cb_type: CallbackType):
         self._cb_type = cb_type
@@ -89,15 +91,13 @@ class ScxmlParam(ScxmlBase):
     def get_expr(self) -> Optional[Union[BtGetValueInputPort, str]]:
         return self._expr
 
-    def get_location(self) -> Optional[str]:
-        return self._location
-
     def get_expr_or_location(self) -> str:
         """
         Return either the expr or location argument, depending on which one is None.
 
         Ensures that at least one is valid.
         """
+        # Deprecated
         if self._expr is not None:
             return self._expr
         assert is_non_empty_string(ScxmlParam, "location", self._location)
@@ -130,9 +130,22 @@ class ScxmlParam(ScxmlBase):
         self, struct_declarations: ScxmlStructDeclarationsContainer, _
     ) -> List["ScxmlParam"]:
         plain_params: List[ScxmlParam] = []
-        # In case there are Unary or Binary operators, we have to assume basic types
-        plain_params.append(self)
-        # Otherwise, we can determine the type and get the sub-entries (is complex structs)
+        assert isinstance(self._expr, str)
+        try:
+            # In case of single variables or their members, check if expansion is required
+            struct_def, _ = struct_declarations.get_data_type(self._expr, self.get_xml_origin())
+            if isinstance(struct_def, str):
+                plain_params.append(self)
+            else:
+                for member_key in struct_def.get_expanded_members().keys():
+                    new_name = f"{self.get_name()}.{member_key}"
+                    new_expr = f"{self.get_expr_or_location()}.{member_key}"
+                    plain_params.append(
+                        ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
+                    )
+        except MemberAccessCheckException:
+            # In case there are Unary or Binary operators, we have to assume basic types
+            plain_params.append(self)
         return plain_params
 
     def as_xml(self) -> XmlElement:

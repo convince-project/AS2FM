@@ -164,7 +164,7 @@ class ScxmlStructDeclarationsContainer:
             prop_struct_type_str = struct_type.get_members()[access_trace[0]]
             if is_type_string_array(prop_struct_type_str):
                 single_struct_type_name = get_type_string_of_array(prop_struct_type_str)
-                array_info: Optional[ArrayInfo] = get_array_info(prop_struct_type_str)
+                array_info: Optional[ArrayInfo] = get_array_info(prop_struct_type_str, False)
             else:
                 single_struct_type_name = prop_struct_type_str
                 array_info = None

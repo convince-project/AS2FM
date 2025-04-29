@@ -426,7 +426,7 @@ class ScxmlSend(ScxmlBase):
             expanded_params.extend(param.as_plain_scxml(struct_declarations, ros_declarations))
         # For now, no conversion to plain scxml is expected for params
         # param.as_plain_scxml()
-        return [ScxmlSend(self._event, self._params)]
+        return [ScxmlSend(self._event, expanded_params)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
