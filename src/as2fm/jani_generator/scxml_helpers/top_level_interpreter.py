@@ -324,4 +324,5 @@ def interpret_top_level_xml(
     output_path = os.path.join(model_dir, jani_file)
     with open(output_path, "w", encoding="utf-8") as f:
         temp_dict = jani_model.as_dict()
+        # print(temp_dict)
         json.dump(temp_dict, f, indent=2, ensure_ascii=False)

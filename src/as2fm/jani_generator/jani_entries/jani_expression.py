@@ -270,7 +270,7 @@ class JaniExpression:
         op_dict.update({"op": self.op})
         for op_key, op_value in self.operands.items():
             if isinstance(op_value, JaniExpression):
-                op_dict.update({op_key: op_value.as_dict})
+                op_dict.update({op_key: op_value.as_dict()})
             elif isinstance(op_value, list):
                 list_of_dicts = [single_val.as_dict() for single_val in op_value]
                 op_dict.update({op_key: list_of_dicts})

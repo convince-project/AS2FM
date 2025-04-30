@@ -532,13 +532,28 @@ def expand_distribution_expressions(
         # Generate all possible expressions, if expansion returns many expressions for an operand
         expanded_expressions: List[JaniExpression] = [deepcopy(expression)]
         for key, value in expression.operands.items():
-            expanded_operand = expand_distribution_expressions(value, n_options=n_options)
-            base_expressions = expanded_expressions
-            expanded_expressions = []
-            for expr in base_expressions:
-                for key_value in expanded_operand:
-                    expr.operands[key] = key_value
-                    expanded_expressions.append(deepcopy(expr))
+            if isinstance(value, JaniExpression):
+                # Normal case, operand value is a JaniExpression
+                expanded_operand = expand_distribution_expressions(value, n_options=n_options)
+                base_expressions = expanded_expressions
+                expanded_expressions = []
+                for expr in base_expressions:
+                    for key_value in expanded_operand:
+                        expr.operands[key] = key_value
+                        expanded_expressions.append(deepcopy(expr))
+            else:
+                assert isinstance(value, list), f"Unexpected value type {type(value)}."
+                # Here we expect an array of JaniExpressions
+                for value_idx, value_entry in enumerate(value):
+                    base_expressions = expanded_expressions
+                    expanded_expressions = []
+                    expanded_operand_entries = expand_distribution_expressions(
+                        value_entry, n_options=n_options
+                    )
+                    for expr in base_expressions:
+                        for expanded_entry in expanded_operand_entries:
+                            expr.operands[key][value_idx] = expanded_entry
+                            expanded_expressions.append(deepcopy(expr))
         return expanded_expressions
     elif expr_type == JaniExpressionType.DISTRIBUTION:
         # Here we need to substitute the distribution with a number of constants
