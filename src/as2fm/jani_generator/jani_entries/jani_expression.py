@@ -53,7 +53,7 @@ class JaniExpression:
         self.identifier: Optional[str] = None
         self.value: Optional[JaniValue] = None
         self.op: Optional[str] = None
-        self.operands: Dict[str, JaniExpression] = {}
+        self.operands: Dict[str, Union[JaniExpression, List[JaniExpression]]] = {}
         self.comment: Optional[str] = None
         if isinstance(expression, JaniExpression):
             self.reset(expression)
@@ -72,11 +72,6 @@ class JaniExpression:
                 self.identifier = expression
             elif JaniValue(expression).is_valid():
                 # If it is a value, then we don't need to expand further
-                self.value = JaniValue(expression)
-            elif isinstance(expression, list) and all(
-                JaniExpression(x).is_valid() for x in expression
-            ):
-                # list of jani expressions
                 self.value = JaniValue(expression)
             else:
                 # If it isn't a value or an identifier, it must be a dictionary providing op and
@@ -99,7 +94,9 @@ class JaniExpression:
         self.operands = new_expr.operands
         self.comment = new_expr.comment
 
-    def _get_operands(self, expression_dict: dict) -> Dict[str, "JaniExpression"]:
+    def _get_operands(
+        self, expression_dict: dict
+    ) -> Dict[str, Union["JaniExpression", List["JaniExpression"]]]:
         """Generate the expressions operands from a raw dictionary, after validating  it."""
         assert self.op is not None, "Operator not set"
         if self.op in ("intersect", "distance"):
@@ -272,11 +269,13 @@ class JaniExpression:
             op_dict.update({"comment": self.comment})
         op_dict.update({"op": self.op})
         for op_key, op_value in self.operands.items():
-            assert isinstance(
-                op_value, JaniExpression
-            ), f"Expected an expression, found {type(op_value)} for {op_key}"
-            assert op_value.is_valid(), f"Expression's {op_key}'s value is invalid: {op_value}"
-            op_dict.update({op_key: op_value.as_dict()})
+            if isinstance(op_value, JaniExpression):
+                op_dict.update({op_key: op_value.as_dict})
+            elif isinstance(op_value, list):
+                list_of_dicts = [single_val.as_dict() for single_val in op_value]
+                op_dict.update({op_key: list_of_dicts})
+            else:
+                raise TypeError(f"Unexpected operand {op_key} value type {type(op_value)}.")
         return op_dict
 
     def __eq__(self, value: "JaniExpression"):
@@ -348,15 +347,19 @@ class JaniDistribution(JaniExpression):
         return {"distribution": self._distribution, "args": self._args}
 
 
-def generate_jani_expression(expr: SupportedExp) -> JaniExpression:
-    """Generate a JaniExpression or a JaniDistribution, depending on the input."""
+def generate_jani_expression(expr: SupportedExp) -> Union[JaniExpression, List[JaniExpression]]:
+    """Generate a JaniExpression, a list of them or a JaniDistribution, based on the input."""
     if isinstance(expr, JaniExpression):
         return expr
     if isinstance(expr, (str, JaniValue)) or JaniValue(expr).is_valid():
         return JaniExpression(expr)
     if isinstance(expr, list) and all(JaniExpression(x).is_valid() for x in expr):
         # list of jani expressions
-        return JaniExpression(expr)
+        new_list: List[JaniExpression] = [JaniExpression(x) for x in expr]
+        assert all(
+            new_expr.is_valid() for new_expr in new_list
+        ), "Error generating list of JaniExpressions."
+        return new_list
     assert isinstance(expr, dict), f"Unsupported expression provided: {expr}."
     if "distribution" in expr:
         return JaniDistribution(expr)

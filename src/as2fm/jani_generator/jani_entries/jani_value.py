@@ -35,22 +35,9 @@ class JaniValue:
                     "π",
                 ), f"Unknown constant value {self._value['constant']}. Only 'e' and 'π' supported."
                 return True
-        elif isinstance(self._value, list):
-            if len(self._value) == 0:
-                return True
-            # Make sure that all entries have the same type
-            first_entry_value = JaniValue(self._value[0])
-            if not first_entry_value.is_valid():
-                return False
-            first_entry_type = first_entry_value._get_py_type()
-            for v in self._value:
-                single_val = JaniValue(v)
-                if not (single_val._get_py_type() is first_entry_type and single_val.is_valid()):
-                    return False
-            return True
         return isinstance(self._value, (int, float, bool))
 
-    def value(self) -> Union[int, float, bool, list]:
+    def value(self) -> Union[int, float, bool]:
         assert self.is_valid(), "The expression cannot be evaluated to a constant value"
         if isinstance(self._value, dict):
             constant_id = self._value["constant"]
@@ -60,16 +47,18 @@ class JaniValue:
                 return pi
         return self._value
 
-    def _get_py_type(self) -> Type[Union[int, float, bool, list]]:
+    def _get_py_type(self) -> Type[Union[int, float, bool]]:
         """
         Get the python type of the entry stored in the JaniValue.
 
         Constants are mapped to floats.
         """
+        assert self.is_valid(), "Invalid JaniValue instance"
         if isinstance(self._value, dict):
             return float
         return type(self._value)
 
     def as_dict(self) -> Union[dict, int, float, bool, list]:
         # Note: this might be a value or a dictionary
+        assert self.is_valid(), "Invalid JaniValue instance"
         return self._value
