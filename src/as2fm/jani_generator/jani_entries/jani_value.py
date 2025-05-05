@@ -24,7 +24,7 @@ from typing import Type, Union
 class JaniValue:
     """Class containing Jani Constant Values"""
 
-    def __init__(self, value):
+    def __init__(self, value: Union[int, float, bool, dict]):
         self._value = value
 
     def is_valid(self) -> bool:
@@ -58,7 +58,7 @@ class JaniValue:
             return float
         return type(self._value)
 
-    def as_dict(self) -> Union[dict, int, float, bool, list]:
+    def as_dict(self) -> Union[dict, int, float, bool]:
         # Note: this might be a value or a dictionary
         assert self.is_valid(), "Invalid JaniValue instance"
         return self._value

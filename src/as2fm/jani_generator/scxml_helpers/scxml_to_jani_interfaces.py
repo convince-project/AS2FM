@@ -29,6 +29,7 @@ from as2fm.jani_generator.jani_entries import (
     JaniValue,
     JaniVariable,
 )
+from as2fm.jani_generator.jani_entries.jani_expression_generator import array_value_operator
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder, is_event_synched
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     get_array_length_var_name,
@@ -214,13 +215,22 @@ class DatamodelTag(BaseTag):
                             JaniVariable(var_len_name, int, JaniValue(array_sizes[level]))
                         )
                     else:
-                        assert level < 2, "TODO: For now, only 1 and 2D supported."
+                        # Handle the case in which the default value is empty at a specific level
                         if len(array_sizes) <= level:
                             assert len(array_sizes) == level
                             array_sizes.append([])
-                        padding = array_info.array_max_sizes[level] - len(array_sizes[level])
-                        assert padding >= 0, "Padding must be non-negative."
-                        array_sizes[level].extend([0] * padding)
+                        dim_array_info = ArrayInfo(int, level, array_info.array_max_sizes[0:level])
+                        array_sizes[level] = get_padded_array(
+                            array_sizes[level],
+                            dim_array_info.array_max_sizes,
+                            dim_array_info.array_type,
+                        )
+                        sizes_expr = array_value_operator(array_sizes[level])
+                        self.automaton.add_variable(
+                            JaniVariable(
+                                var_len_name, MutableSequence, sizes_expr, False, dim_array_info
+                            )
+                        )
                 # Add padding to the evaluated expression, for the JS evaluator to work
                 array_base_type = array_info.array_type
                 # Extending string is not required
