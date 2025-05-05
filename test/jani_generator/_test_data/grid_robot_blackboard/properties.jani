@@ -38,13 +38,13 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__x",
-                                    "right": "topic_goal_msg.ros_fields__x"
+                                    "left": "topic_pose_msg__ros_fields__x",
+                                    "right": "topic_goal_msg__ros_fields__x"
                                 },
                                 "right": {
                                     "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__y",
-                                    "right": "topic_goal_msg.ros_fields__y"
+                                    "left": "topic_pose_msg__ros_fields__y",
+                                    "right": "topic_goal_msg__ros_fields__y"
                                 }
                             }
                         }

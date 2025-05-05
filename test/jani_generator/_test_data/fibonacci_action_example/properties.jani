@@ -15,7 +15,7 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_client_1_last_fibonacci_msg.ros_fields__data",
+                                    "left": "topic_client_1_last_fibonacci_msg__ros_fields__data",
                                     "right": 5
                                 },
                                 "right": "topic_client_1_last_fibonacci_msg.valid"
@@ -24,7 +24,7 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_client_2_last_fibonacci_msg.ros_fields__data",
+                                    "left": "topic_client_2_last_fibonacci_msg__ros_fields__data",
                                     "right": 13
                                 },
                                 "right": "topic_client_2_last_fibonacci_msg.valid"

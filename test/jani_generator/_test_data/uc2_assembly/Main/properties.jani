@@ -15,10 +15,10 @@
                             "left": "topic_uc2__info__properties__move_block_abort_time_msg.valid",
                             "right": {
                                 "op": "<",
-                                "left": "topic_clock_msg.ros_fields__sec",
+                                "left": "topic_clock_msg__ros_fields__sec",
                                 "right": {
                                     "op": "+",
-                                    "left": "topic_uc2__info__properties__move_block_abort_time_msg.ros_fields__sec",
+                                    "left": "topic_uc2__info__properties__move_block_abort_time_msg__ros_fields__sec",
                                     "right": 20.0
                                 }
                             }
