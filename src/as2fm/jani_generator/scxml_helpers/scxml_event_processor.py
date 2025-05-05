@@ -35,7 +35,7 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
+from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION, ArrayInfo
 
 JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
 
@@ -91,7 +91,7 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
     jani_vars: List[JaniVariable] = []
     jani_vars.append(JaniVariable(f"{event_obj.name}.valid", bool, False))
     for param_name, param_info in event_obj.get_data_structure().items():
-        var_name = f"{event_obj.name}.{param_name}"
+        var_name = f"{event_obj.name}{MEMBER_ACCESS_SUBSTITUTION}{param_name}"
         if is_array_type(param_info.p_type):
             ar_type = param_info.p_array_type
             assert ar_type is not None, "None array type found: this is unexpected."

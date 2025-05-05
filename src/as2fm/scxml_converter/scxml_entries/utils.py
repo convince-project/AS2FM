@@ -37,8 +37,8 @@ ARRAY_LENGTH_TYPE = "uint64"
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
 
-PLAIN_SCXML_EVENT_PREFIX: str = "_event."
-PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
+PLAIN_SCXML_EVENT_PREFIX: str = "_event" + MEMBER_ACCESS_SUBSTITUTION
+PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data" + MEMBER_ACCESS_SUBSTITUTION
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"
