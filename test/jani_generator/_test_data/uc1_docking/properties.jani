@@ -40,7 +40,7 @@
                         "op": "F",
                         "exp": {
                             "op": "=",
-                            "left": "bt_1000_response.status",
+                            "left": "bt_1000_response__status",
                             "right": 1,
                             "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
                         }

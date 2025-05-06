@@ -182,6 +182,11 @@ def test_convert_expression_with_object_arrays():
     assert (
         convert_expression_with_object_arrays("((a+b) * 9) ** a[i].x") == "((a + b) * 9) ** a.x[i]"
     )
+    # Special casing for events info...
+    assert (
+        convert_expression_with_object_arrays("_event.data.param_a.param_b")
+        == "_event.data.param_a__param_b"
+    )
 
 
 def test_type_string_conversion():

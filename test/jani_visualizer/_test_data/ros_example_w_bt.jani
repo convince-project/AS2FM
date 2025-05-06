@@ -11,7 +11,7 @@
   },
   "variables": [
     {
-      "name": "topic_level_msg.ros_fields__data",
+      "name": "topic_level_msg__ros_fields__data",
       "type": "int",
       "transient": false,
       "initial-value": 0
@@ -29,7 +29,7 @@
       "initial-value": false
     },
     {
-      "name": "topic_alarm_msg.ros_fields__data",
+      "name": "topic_alarm_msg__ros_fields__data",
       "type": "bool",
       "transient": false,
       "initial-value": false
@@ -219,7 +219,7 @@
               "location": "use_battery",
               "assignments": [
                 {
-                  "ref": "topic_level_msg.ros_fields__data",
+                  "ref": "topic_level_msg__ros_fields__data",
                   "value": "battery_percent",
                   "index": 0
                 },
@@ -256,7 +256,7 @@
               "location": "use_battery",
               "assignments": [
                 {
-                  "ref": "topic_level_msg.ros_fields__data",
+                  "ref": "topic_level_msg__ros_fields__data",
                   "value": "battery_percent",
                   "index": 0
                 },
@@ -311,7 +311,7 @@
               "location": "use_battery",
               "assignments": [
                 {
-                  "ref": "topic_level_msg.ros_fields__data",
+                  "ref": "topic_level_msg__ros_fields__data",
                   "value": "battery_percent",
                   "index": 0
                 },
@@ -365,7 +365,7 @@
                   "ref": "battery_alarm",
                   "value": {
                     "op": "<",
-                    "left": "topic_level_msg.ros_fields__data",
+                    "left": "topic_level_msg__ros_fields__data",
                     "right": 30
                   },
                   "index": 0
@@ -382,7 +382,7 @@
               "location": "check_battery",
               "assignments": [
                 {
-                  "ref": "topic_alarm_msg.ros_fields__data",
+                  "ref": "topic_alarm_msg__ros_fields__data",
                   "value": "battery_alarm",
                   "index": 0
                 },
@@ -413,7 +413,7 @@
               "location": "check_battery",
               "assignments": [
                 {
-                  "ref": "topic_alarm_msg.ros_fields__data",
+                  "ref": "topic_alarm_msg__ros_fields__data",
                   "value": "battery_alarm",
                   "index": 0
                 },
@@ -468,7 +468,7 @@
               "assignments": [
                 {
                   "ref": "last_msg",
-                  "value": "topic_alarm_msg.ros_fields__data",
+                  "value": "topic_alarm_msg__ros_fields__data",
                   "index": 0
                 }
               ]
@@ -2194,7 +2194,7 @@
             "right": {
               "left": {
                 "op": "≤",
-                "left": "topic_level_msg.ros_fields__data",
+                "left": "topic_level_msg__ros_fields__data",
                 "right": 0
               },
               "op": "∧",
@@ -2220,7 +2220,7 @@
             "right": {
               "left": {
                 "op": "<",
-                "left": "topic_level_msg.ros_fields__data",
+                "left": "topic_level_msg__ros_fields__data",
                 "right": 20
               },
               "op": "∧",
@@ -2245,7 +2245,7 @@
             "op": "U",
             "right": {
               "op": "∧",
-              "left": "topic_alarm_msg.ros_fields__data",
+              "left": "topic_alarm_msg__ros_fields__data",
               "right": "topic_charge_msg.valid"
             }
           }
@@ -2271,7 +2271,7 @@
             "right": {
               "left": {
                 "op": "=",
-                "left": "topic_level_msg.ros_fields__data",
+                "left": "topic_level_msg__ros_fields__data",
                 "right": 100
               },
               "op": "∧",

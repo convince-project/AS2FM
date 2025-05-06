@@ -37,8 +37,10 @@ ARRAY_LENGTH_TYPE = "uint64"
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
 
-PLAIN_SCXML_EVENT_PREFIX: str = "_event" + MEMBER_ACCESS_SUBSTITUTION
-PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data" + MEMBER_ACCESS_SUBSTITUTION
+PLAIN_EVENT_KEY: str = "_event"
+PLAIN_SCXML_EVENT_PREFIX: str = f"{PLAIN_EVENT_KEY}."
+PLAIN_EVENT_DATA_KEY: str = "data"
+PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY + "."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"
@@ -203,33 +205,50 @@ def _reassemble_expression(
     return _reassemble_expression(ComputedMemberExpression(array, idxs[0]), idxs[1:])
 
 
+def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
+    """Check if the ast node contains _event.data"""
+    if node is None:
+        return False
+    if node.type == Syntax.MemberExpression and not node.computed:
+        if node.object.type == Syntax.Identifier and node.property.type == Syntax.Identifier:
+            if node.object.name == PLAIN_EVENT_KEY and node.property.name == PLAIN_EVENT_DATA_KEY:
+                return True
+    return False
+
+
 def _convert_non_computed_member_exprs_to_identifiers(
-    node: esprima.nodes.Node,
+    node: esprima.nodes.Node, parent_node: Optional[esprima.nodes.Node]
 ) -> esprima.nodes.Node:
     """Convert member access operators (like '.') into identifiers."""
     if node.type in (Syntax.Identifier, Syntax.Literal):
         return node
     elif node.type == Syntax.MemberExpression:
-        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object)
-        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property)
         if node.computed:  # Array index
             return node
         # If not array index, convert to identifier
+        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object, node)
+        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property, node)
         assert node.object.type == Syntax.Identifier
         assert node.property.type == Syntax.Identifier
-        return Identifier(f"{node.object.name}{MEMBER_ACCESS_SUBSTITUTION}{node.property.name}")
+        member_separator = MEMBER_ACCESS_SUBSTITUTION
+        # Special casing, for preserving the "_event.data.<param_1>__<param_2>" notation
+        if _is_member_expr_event_data(node) or node.object.name == (
+            PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY
+        ):
+            member_separator = "."
+        return Identifier(f"{node.object.name}{member_separator}{node.property.name}")
     elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
-        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left)
-        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right)
+        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left, node)
+        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right, node)
         return node
     elif node.type == Syntax.CallExpression:
         node.arguments = [
-            _convert_non_computed_member_exprs_to_identifiers(node_arg)
+            _convert_non_computed_member_exprs_to_identifiers(node_arg, node)
             for node_arg in node.arguments
         ]
         return node
     elif node.type == Syntax.UnaryExpression:
-        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument)
+        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument, node)
         return node
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
@@ -290,7 +309,7 @@ def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] 
     ast = parse_expression_to_ast(expr, elem)
     obj, idxs = _split_array_indexes_out(ast)
     exp = _reassemble_expression(obj, idxs)
-    exp = _convert_non_computed_member_exprs_to_identifiers(exp)
+    exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
     return escodegen.generate(exp)
 
 
