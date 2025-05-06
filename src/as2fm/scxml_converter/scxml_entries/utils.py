@@ -217,17 +217,19 @@ def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
 
 
 def _convert_non_computed_member_exprs_to_identifiers(
-    node: esprima.nodes.Node, parent_node: Optional[esprima.nodes.Node]
+    node: esprima.nodes.Node,
 ) -> esprima.nodes.Node:
     """Convert member access operators (like '.') into identifiers."""
     if node.type in (Syntax.Identifier, Syntax.Literal):
         return node
     elif node.type == Syntax.MemberExpression:
-        if node.computed:  # Array index
-            return node
         # If not array index, convert to identifier
-        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object, node)
-        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property, node)
+        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object)
+        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property)
+        if node.computed:
+            # This is an array index access operator: do not convert it to an identifier
+            return node
+        # If here, this is a member entry access
         assert node.object.type == Syntax.Identifier
         assert node.property.type == Syntax.Identifier
         member_separator = MEMBER_ACCESS_SUBSTITUTION
@@ -238,17 +240,17 @@ def _convert_non_computed_member_exprs_to_identifiers(
             member_separator = "."
         return Identifier(f"{node.object.name}{member_separator}{node.property.name}")
     elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
-        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left, node)
-        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right, node)
+        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left)
+        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right)
         return node
     elif node.type == Syntax.CallExpression:
         node.arguments = [
-            _convert_non_computed_member_exprs_to_identifiers(node_arg, node)
+            _convert_non_computed_member_exprs_to_identifiers(node_arg)
             for node_arg in node.arguments
         ]
         return node
     elif node.type == Syntax.UnaryExpression:
-        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument, node)
+        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument)
         return node
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
@@ -309,7 +311,7 @@ def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] 
     ast = parse_expression_to_ast(expr, elem)
     obj, idxs = _split_array_indexes_out(ast)
     exp = _reassemble_expression(obj, idxs)
-    exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
+    exp = _convert_non_computed_member_exprs_to_identifiers(exp)
     return escodegen.generate(exp)
 
 

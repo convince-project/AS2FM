@@ -145,42 +145,45 @@ def test_action_result_good_expressions():
 def test_convert_expression_with_object_arrays():
     """Test handling of array indexes."""
     assert convert_expression_with_object_arrays("x[0]") == "x[0]"
-    assert convert_expression_with_object_arrays("x.y") == "x.y"
-    assert convert_expression_with_object_arrays("x[0].y") == "x.y[0]"
-    assert convert_expression_with_object_arrays("x[c].y") == "x.y[c]"
-    assert convert_expression_with_object_arrays("x[c[2]].y") == "x.y[c[2]]"
-    assert convert_expression_with_object_arrays("Math.sin(x[0].y)") == "Math.sin(x.y[0])"
-    assert convert_expression_with_object_arrays("Math.sin(x[0].y)[6]") == "Math.sin(x.y[0])[6]"
-    assert convert_expression_with_object_arrays("x.y.z[1].y") == "x.y.z.y[1]"
-    assert convert_expression_with_object_arrays("x.y[0].z[1].y") == "x.y.z.y[0][1]"
-    assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "x.y.z.y[0][1] + 1"
+    assert convert_expression_with_object_arrays("x.y") == "x__y"
+    assert convert_expression_with_object_arrays("x[0].y") == "x__y[0]"
+    assert convert_expression_with_object_arrays("x[c].y") == "x__y[c]"
+    assert convert_expression_with_object_arrays("x[c[2]].y") == "x__y[c[2]]"
+    assert convert_expression_with_object_arrays("Math.sin(x[0].y)") == "Math.sin(x__y[0])"
+    assert convert_expression_with_object_arrays("Math.sin(x[0].y)[6]") == "Math.sin(x__y[0])[6]"
+    assert convert_expression_with_object_arrays("x.y.z[1].y") == "x__y__z__y[1]"
+    assert convert_expression_with_object_arrays("x.y[0].z[1].y") == "x__y__z__y[0][1]"
+    assert convert_expression_with_object_arrays("x.y[0].z[1].y + 1") == "x__y__z__y[0][1] + 1"
     assert (
         convert_expression_with_object_arrays("x.y[0].z[1].y**my[l].c")
-        == "x.y.z.y[0][1] ** my.c[l]"
+        == "x__y__z__y[0][1] ** my__c[l]"
     )
-    assert convert_expression_with_object_arrays("x[2].b && a") == "x.b[2] && a"
+    assert convert_expression_with_object_arrays("x[2].b && a") == "x__b[2] && a"
 
     # also with length
     assert convert_expression_with_object_arrays("x.length") == "x.length"
     assert convert_expression_with_object_arrays("x[0].length") == "x[0].length"
     assert convert_expression_with_object_arrays("x[0][1].length") == "x[0][1].length"
-    assert convert_expression_with_object_arrays("x[1].y.length") == "x.y[1].length"
+    assert convert_expression_with_object_arrays("x[1].y.length") == "x__y[1].length"
     assert (
         convert_expression_with_object_arrays("x[1].y.length*c.length")
-        == "x.y[1].length * c.length"
+        == "x__y[1].length * c.length"
     )
     assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
     assert convert_expression_with_object_arrays("x[0][x[0].length]") == "x[0][x[0].length]"
-    assert convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x.y[0][x.y[0].length]"
+    assert (
+        convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x__y[0][x__y[0].length]"
+    )
 
     # are necessary brackets kept?
-    assert convert_expression_with_object_arrays("!(x.y && x[0])") == "!(x.y && x[0])"
-    assert convert_expression_with_object_arrays("!(x[0].y && x[0].u)") == "!(x.y[0] && x.u[0])"
+    assert convert_expression_with_object_arrays("!(x.y && x[0])") == "!(x__y && x[0])"
+    assert convert_expression_with_object_arrays("!(x[0].y && x[0].u)") == "!(x__y[0] && x__u[0])"
     assert (
-        convert_expression_with_object_arrays("(x.y + x[0].u)[x[7].a]") == "(x.y + x.u[0])[x.a[7]]"
+        convert_expression_with_object_arrays("(x.y + x[0].u)[x[7].a]")
+        == "(x__y + x__u[0])[x__a[7]]"
     )
     assert (
-        convert_expression_with_object_arrays("((a+b) * 9) ** a[i].x") == "((a + b) * 9) ** a.x[i]"
+        convert_expression_with_object_arrays("((a+b) * 9) ** a[i].x") == "((a + b) * 9) ** a__x[i]"
     )
     # Special casing for events info...
     assert (
