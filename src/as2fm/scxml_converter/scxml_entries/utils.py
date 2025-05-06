@@ -231,6 +231,7 @@ def _convert_non_computed_member_exprs_to_identifiers(
         ):
             # Case 1: This is an array index access operator: do not convert it to an identifier.
             # Case 2: We are accessing the length field: this is a special keyword, keep the dot.
+            # TODO: This creates problems in case we use the length keyword outside arrays...
             return node
         # If here, this is a member entry access
         assert node.object.type == Syntax.Identifier, f"Error: unexpected node content in {node}"

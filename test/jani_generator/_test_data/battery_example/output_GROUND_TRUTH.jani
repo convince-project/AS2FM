@@ -17,7 +17,7 @@
             "initial-value": false
         },
         {
-            "name": "level.data",
+            "name": "level__data",
             "type": "int",
             "transient": false,
             "initial-value": 0
@@ -92,7 +92,7 @@
                             "location": "use_battery",
                             "assignments": [
                                 {
-                                    "ref": "level.data",
+                                    "ref": "level__data",
                                     "value": "battery_percent",
                                     "index": 0
                                 },
@@ -126,7 +126,7 @@
                             "location": "use_battery",
                             "assignments": [
                                 {
-                                    "ref": "level.data",
+                                    "ref": "level__data",
                                     "value": "battery_percent",
                                     "index": 0
                                 },
@@ -174,7 +174,7 @@
                                     "ref": "battery_alarm",
                                     "value": {
                                         "op": "<",
-                                        "left": "level.data",
+                                        "left": "level__data",
                                         "right": 30
                                     },
                                     "index": 0
