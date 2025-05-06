@@ -226,12 +226,15 @@ def _convert_non_computed_member_exprs_to_identifiers(
         # If not array index, convert to identifier
         node.object = _convert_non_computed_member_exprs_to_identifiers(node.object)
         node.property = _convert_non_computed_member_exprs_to_identifiers(node.property)
-        if node.computed:
-            # This is an array index access operator: do not convert it to an identifier
+        if node.computed or (
+            node.property.type == Syntax.Identifier and node.property.name == ARRAY_LENGTH_SUFFIX
+        ):
+            # Case 1: This is an array index access operator: do not convert it to an identifier.
+            # Case 2: We are accessing the length field: this is a special keyword, keep the dot.
             return node
         # If here, this is a member entry access
-        assert node.object.type == Syntax.Identifier
-        assert node.property.type == Syntax.Identifier
+        assert node.object.type == Syntax.Identifier, f"Error: unexpected node content in {node}"
+        assert node.property.type == Syntax.Identifier, f"Error: unexpected node content in {node}"
         member_separator = MEMBER_ACCESS_SUBSTITUTION
         # Special casing, for preserving the "_event.data.<param_1>__<param_2>" notation
         if _is_member_expr_event_data(node) or node.object.name == (
