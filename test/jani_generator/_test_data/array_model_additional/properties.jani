@@ -20,7 +20,7 @@
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data_unbound_array.d1_len",
+                            "left": "all_data__unbound_array.d1_len",
                             "right": 3
                           },
                           "right": {
@@ -37,7 +37,7 @@
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data_bound_array.d1_len",
+                            "left": "all_data__bound_array.d1_len",
                             "right": 4
                           },
                           "right": {
