@@ -96,7 +96,11 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
 
 
 def preprocess_jani_expressions(jani_model: JaniModel):
-    """Preprocess JANI expressions in the model to be compatible with the standard JANI format."""
+    """
+    Preprocess JANI expressions in the model to be compatible with the standard JANI format.
+
+    In the current state, this ensures that array comparison is expanded to evaluate each element.
+    """
     global_variables = jani_model.get_variables()
     for jani_automaton in jani_model.get_automata():
         context_variables = global_variables | jani_automaton.get_variables()
@@ -123,7 +127,8 @@ def _preprocess_jani_expression(
     jani_expression: JaniExpression, context_vars: Dict[str, JaniVariable]
 ) -> JaniExpression:
     exp_operator, exp_operands = jani_expression.as_operator()
-    if exp_operator is None:
+    if exp_operator is None or is_expression_array(jani_expression):
+        # Skip elements that are jani values, variable names or array values.
         return jani_expression
     assert exp_operands is not None
     has_array_operator = any(is_expression_array(exp_op) for exp_op in exp_operands.values())

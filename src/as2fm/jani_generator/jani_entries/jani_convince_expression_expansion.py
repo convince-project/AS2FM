@@ -17,7 +17,7 @@
 
 from copy import deepcopy
 from math import pi
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 from as2fm.jani_generator.jani_entries import (
     JaniConstant,
@@ -469,9 +469,17 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-    expression: JaniExpression, jani_constants: Dict[str, JaniConstant]
-) -> JaniExpression:
+    expression: Union[JaniExpression, List[JaniExpression]], jani_constants: Dict[str, JaniConstant]
+) -> Union[JaniExpression, List[JaniExpression]]:
+    """
+    Given an expression (or a list of them), expand all operators to use only plain features.
+    """
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
+    if isinstance(expression, list):
+        assert all(
+            isinstance(entry, JaniExpression) for entry in expression
+        ), "Expected a list of expressions, found something else."
+        return [expand_expression(entry, jani_constants) for entry in expression]
     assert isinstance(
         expression, JaniExpression
     ), f"The expression should be a JaniExpression instance, found {type(expression)} instead."
