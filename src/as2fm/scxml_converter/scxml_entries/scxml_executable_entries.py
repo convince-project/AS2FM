@@ -270,7 +270,10 @@ class ScxmlIf(ScxmlBase):
             )
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
             conditional_executions.append(
-                (get_plain_expression(condition, self._cb_type), execution_body)
+                (
+                    get_plain_expression(condition, self._cb_type, struct_declarations),
+                    execution_body,
+                )
             )
         set_execution_body_callback_type(self._else_execution, self._cb_type)
         else_execution = as_plain_execution_body(
@@ -545,8 +548,8 @@ class ScxmlAssign(ScxmlBase):
             expanded_locations = [self._location]
         plain_assignments: List[ScxmlAssign] = []
         for single_expr, single_loc in zip(expanded_expressions, expanded_locations):
-            plain_expr = get_plain_expression(single_expr, self._cb_type)
-            plain_location = convert_expression_with_object_arrays(single_loc)
+            plain_expr = get_plain_expression(single_expr, self._cb_type, struct_declarations)
+            plain_location = convert_expression_with_object_arrays(single_loc, struct_declarations)
             plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
         return plain_assignments
 

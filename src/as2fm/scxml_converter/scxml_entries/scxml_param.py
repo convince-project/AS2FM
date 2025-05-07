@@ -131,10 +131,12 @@ class ScxmlParam(ScxmlBase):
             print("Error: SCXML param: expr and location are both set.")
         return valid_name and valid_expr
 
-    def _set_plain_name_and_expression(self):
+    def _set_plain_name_and_expression(self, struct_declarations: ScxmlStructDeclarationsContainer):
         """In place substitution of member accesses in the name and expression."""
         self._name = get_plain_variable_name(self._name, self.get_xml_origin())
-        self._expr = convert_expression_with_object_arrays(self._expr, self.get_xml_origin())
+        self._expr = convert_expression_with_object_arrays(
+            self._expr, self.get_xml_origin(), struct_declarations
+        )
 
     def as_plain_scxml(
         self, struct_declarations: ScxmlStructDeclarationsContainer, _
@@ -161,7 +163,7 @@ class ScxmlParam(ScxmlBase):
                         ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
                     )
         for plain_param in plain_params:
-            plain_param._set_plain_name_and_expression()
+            plain_param._set_plain_name_and_expression(struct_declarations)
         return plain_params
 
     def as_xml(self) -> XmlElement:

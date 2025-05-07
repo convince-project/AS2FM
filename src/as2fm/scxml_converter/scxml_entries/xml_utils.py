@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable, List, Optional, Type, Union
+from typing import Dict, Iterable, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
@@ -71,7 +71,7 @@ def get_xml_attribute(
 
 def get_children_as_scxml(
     xml_tree: XmlElement,
-    custom_data_types: List[XmlStructDefinition],
+    custom_data_types: Dict[str, XmlStructDefinition],
     scxml_types: Iterable[Type[ScxmlBase]],
 ) -> List[ScxmlBase]:
     """
@@ -94,7 +94,7 @@ def get_children_as_scxml(
 def read_value_from_xml_child(
     xml_tree: XmlElement,
     child_tag: str,
-    custom_data_types: List[XmlStructDefinition],
+    custom_data_types: Dict[str, XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     *,
     none_allowed: bool = False,
@@ -151,7 +151,7 @@ def read_value_from_xml_arg_or_child(
     scxml_type: Type[ScxmlBase],
     xml_tree: XmlElement,
     tag_name: str,
-    custom_data_types: List[XmlStructDefinition],
+    custom_data_types: Dict[str, XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:

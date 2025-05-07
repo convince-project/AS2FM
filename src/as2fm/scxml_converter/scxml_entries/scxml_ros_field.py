@@ -21,6 +21,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     ROS_FIELD_PREFIX,
     CallbackType,
@@ -67,16 +68,17 @@ class RosField(ScxmlParam):
         )
         return valid_name and valid_expr
 
-    def as_plain_scxml(self, _, __):
+    def as_plain_scxml(self, struct_declarations: ScxmlStructDeclarationsContainer, __):
         # In order to distinguish the message body from additional entries, add a prefix to the name
         assert (
             self._cb_type is not None
         ), f"Error: SCXML ROS field: {self._name} has not callback type set."
         plain_field_name = ROS_FIELD_PREFIX + self._name
         plain_scxml_param = ScxmlParam(
-            plain_field_name, expr=get_plain_expression(self._expr, self._cb_type)
+            plain_field_name,
+            expr=get_plain_expression(self._expr, self._cb_type, struct_declarations),
         )
-        plain_scxml_param._set_plain_name_and_expression()
+        plain_scxml_param._set_plain_name_and_expression(struct_declarations)
         return [plain_scxml_param]
 
     def as_xml(self) -> XmlElement:

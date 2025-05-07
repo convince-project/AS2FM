@@ -33,13 +33,12 @@ from as2fm.as2fm_common.ecmascript_interpretation import (
 )
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     MEMBER_ACCESS_SUBSTITUTION,
 )
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
-
-ARRAY_LENGTH_TYPE = "uint64"
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
@@ -185,7 +184,11 @@ def get_plain_variable_name(in_name: str, xml_origin: Optional[XmlElement]) -> s
     return MEMBER_ACCESS_SUBSTITUTION.join(expanded_name)
 
 
-def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
+def get_plain_expression(
+    in_expr: str,
+    cb_type: CallbackType,
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer],
+) -> str:
     """
     Convert ROS-specific PREFIXES, custom struct array indexing to plain SCXML.
 
@@ -211,7 +214,7 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
     # arrays of custom structs
-    new_expr = convert_expression_with_object_arrays(new_expr)
+    new_expr = convert_expression_with_object_arrays(new_expr, None, struct_declarations)
     return new_expr
 
 
@@ -294,7 +297,7 @@ def _convert_non_computed_member_exprs_to_identifiers(
 
 
 def _split_array_indexes_out(
-    ast: esprima.nodes.Node,
+    ast: esprima.nodes.Node, struct_declarations: Optional[ScxmlStructDeclarationsContainer]
 ) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
     """
     `a[0]` => 'a', ['0']
@@ -305,26 +308,34 @@ def _split_array_indexes_out(
     if ast.type in (Syntax.Identifier, Syntax.Literal):
         return ast, []
     elif ast.type == Syntax.MemberExpression:
-        obj, obj_idxs = _split_array_indexes_out(ast.object)
+        obj, obj_idxs = _split_array_indexes_out(ast.object, struct_declarations)
         if ast.computed:  # array index
-            return obj, obj_idxs + [_reassemble_expression(*_split_array_indexes_out(ast.property))]
+            return obj, obj_idxs + [
+                _reassemble_expression(*_split_array_indexes_out(ast.property, struct_declarations))
+            ]
         # actual member access
         if ast.property.name == ARRAY_LENGTH_SUFFIX:
+            # TODO: If the object refers to a struct (instead of an array), add missing members
             ast.object = _reassemble_expression(obj, obj_idxs)
             return ast, []  # not indexes after length property
-        ast.object = _reassemble_expression(*_split_array_indexes_out(obj))
+        ast.object = _reassemble_expression(*_split_array_indexes_out(obj, struct_declarations))
         return ast, obj_idxs
     elif ast.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
-        ast.left = _reassemble_expression(*_split_array_indexes_out(ast.left))
-        ast.right = _reassemble_expression(*_split_array_indexes_out(ast.right))
+        ast.left = _reassemble_expression(*_split_array_indexes_out(ast.left, struct_declarations))
+        ast.right = _reassemble_expression(
+            *_split_array_indexes_out(ast.right, struct_declarations)
+        )
         return ast, []
     elif ast.type == Syntax.CallExpression:
         ast.arguments = [
-            _reassemble_expression(*_split_array_indexes_out(a)) for a in ast.arguments
+            _reassemble_expression(*_split_array_indexes_out(a, struct_declarations))
+            for a in ast.arguments
         ]
         return ast, []
     elif ast.type == Syntax.UnaryExpression:
-        ast.argument = _reassemble_expression(*_split_array_indexes_out(ast.argument))
+        ast.argument = _reassemble_expression(
+            *_split_array_indexes_out(ast.argument, struct_declarations)
+        )
         return ast, []
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
@@ -341,13 +352,17 @@ def convert_expression_with_object_assignment(
     raise NotImplementedError("todo ...")
 
 
-def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] = None) -> str:
+def convert_expression_with_object_arrays(
+    expr: str,
+    elem: Optional[XmlElement] = None,
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer] = None,
+) -> str:
     """
     e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons__polygons__points__y[0][1]`.
     """
     try:
         ast = parse_expression_to_ast(expr, elem)
-        obj, idxs = _split_array_indexes_out(ast)
+        obj, idxs = _split_array_indexes_out(ast, struct_declarations)
         exp = _reassemble_expression(obj, idxs)
         exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
     except MemberAccessCheckException as e:

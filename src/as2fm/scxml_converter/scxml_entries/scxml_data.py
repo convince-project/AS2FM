@@ -18,7 +18,7 @@ Container for a single variable definition in SCXML. In XML, it has the tag `dat
 """
 
 import re
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -29,16 +29,13 @@ from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import (
-    RESERVED_NAMES,
-)
+from as2fm.scxml_converter.scxml_entries.utils import RESERVED_NAMES, get_plain_variable_name
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import (
-    MEMBER_ACCESS_SUBSTITUTION,
     convert_string_to_type,
     get_data_type_from_string,
     get_type_string_of_array,
@@ -90,7 +87,7 @@ class ScxmlData(ScxmlBase):
     def from_xml_tree_impl(
         cls,
         xml_tree: XmlElement,
-        custom_data_types: List[XmlStructDefinition],
+        custom_data_types: Dict[str, XmlStructDefinition],
         comment_above: Optional[str] = None,
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
@@ -282,14 +279,17 @@ class ScxmlData(ScxmlBase):
         )
         expanded_data_values = data_type_def.get_instance_from_expression(self._expr)
         expanded_data_types = data_type_def.get_expanded_members()
-        return [
+        plain_data = [
             ScxmlData(
-                f"{self._id}{MEMBER_ACCESS_SUBSTITUTION}{key}",
+                f"{self._id}.{key}",
                 expanded_data_values[key],
                 expanded_data_types[key],
             )
             for key in expanded_data_types
         ]
+        for single_data in plain_data:
+            single_data._id = get_plain_variable_name(single_data._id, self.get_xml_origin())
+        return plain_data
 
     def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
         if isinstance(self._expr, BtGetValueInputPort):

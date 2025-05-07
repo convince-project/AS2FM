@@ -39,7 +39,7 @@ def test_standard_good_expressions():
         ("cos(x+y+z) > 0 && sin(z - y) <= 0", "cos(x + y + z) > 0 && sin(z - y) <= 0"),
     ]
     for in_expr, gt_expr in test_expressions:
-        conv_expr = get_plain_expression(in_expr, CallbackType.STATE)
+        conv_expr = get_plain_expression(in_expr, CallbackType.STATE, None)
         assert conv_expr == gt_expr
 
 
@@ -53,7 +53,7 @@ def test_standard_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.STATE)
+            get_plain_expression(expr, CallbackType.STATE, None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -76,7 +76,7 @@ def test_topic_good_expressions():
         + f"{PLAIN_FIELD_EVENT_PREFIX}index",
     ]
     for test_expr, gt_expr in zip(test_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC)
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC, None)
         assert conv_expr == gt_expr
 
 
@@ -90,7 +90,7 @@ def test_topic_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.ROS_TOPIC)
+            get_plain_expression(expr, CallbackType.ROS_TOPIC, None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -103,7 +103,7 @@ def test_action_goal_good_expressions():
         f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL)
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL, None)
         assert conv_expr == gt_expr
 
 
@@ -120,7 +120,7 @@ def test_action_feedback_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK)
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK, None)
         assert conv_expr == gt_expr
 
 
@@ -139,7 +139,7 @@ def test_action_result_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT)
+        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT, None)
         assert conv_expr == gt_expr
 
 

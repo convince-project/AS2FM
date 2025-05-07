@@ -324,7 +324,9 @@ class RosCallback(ScxmlTransition):
         event_name = self.get_plain_scxml_event(ros_declarations)
         condition = self._condition
         if condition is not None:
-            condition = get_plain_expression(condition, self.get_callback_type())
+            condition = get_plain_expression(
+                condition, self.get_callback_type(), struct_declarations
+            )
         return [ScxmlTransition(new_targets, [event_name], condition)]
 
     def as_xml(self) -> XmlElement:

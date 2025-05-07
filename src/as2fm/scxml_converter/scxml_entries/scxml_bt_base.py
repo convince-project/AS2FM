@@ -252,7 +252,7 @@ class BtGenericStatusHandle(ScxmlTransition):
     ) -> List[ScxmlTransition]:
         plain_cond_expr = None
         if self._condition is not None:
-            plain_cond_expr = get_plain_expression(self._condition, CallbackType.BT_RESPONSE)
+            plain_cond_expr = get_plain_expression(self._condition, CallbackType.BT_RESPONSE, None)
         if isinstance(self._child_seq_id, int):
             # Handling specific child seq. ID, return a single transition
             assert self._child_seq_id < len(children_ids), (

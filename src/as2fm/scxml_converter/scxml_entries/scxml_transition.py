@@ -307,7 +307,9 @@ class ScxmlTransition(ScxmlBase):
             target.set_callback_type(CallbackType.TRANSITION)
             plain_targets.extend(target.as_plain_scxml(struct_declarations, ros_declarations))
         if self._condition is not None:
-            self._condition = get_plain_expression(self._condition, CallbackType.TRANSITION)
+            self._condition = get_plain_expression(
+                self._condition, CallbackType.TRANSITION, struct_declarations
+            )
         return [ScxmlTransition(plain_targets, self._events, self._condition)]
 
     def as_xml(self) -> XmlElement:
