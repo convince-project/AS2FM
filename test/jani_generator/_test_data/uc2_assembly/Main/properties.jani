@@ -25,7 +25,7 @@
                         },
                         "right": {
                             "op": "=",
-                            "left": "action_uc2__skills__move_block_result.code",
+                            "left": "action_uc2__skills__move_block_result__code",
                             "right": 4,
                             "comment": "This uses the action_msgs.GoalStatus values. Check if contains the STATUS_SUCCEEDED value (4)"
                         }
@@ -74,7 +74,7 @@
                             "left": "action_uc2__skills__move_block_result.valid",
                             "right": {
                                 "op": "=",
-                                "left": "action_uc2__skills__move_block_result.code",
+                                "left": "action_uc2__skills__move_block_result__code",
                                 "right": 4,
                                 "comment": "This uses the action_msgs.GoalStatus values. Check if contains the STATUS_SUCCEEDED value (4)"
                             }
