@@ -38,6 +38,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     read_value_from_xml_arg_or_child,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import (
+    MEMBER_ACCESS_SUBSTITUTION,
     convert_string_to_type,
     get_data_type_from_string,
     get_type_string_of_array,
@@ -45,7 +46,6 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     is_type_string_base_type,
 )
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import (
-    MEMBER_ACCESS_SUBSTITUTION,
     XmlStructDefinition,
 )
 

@@ -19,7 +19,7 @@ Functions for the conversion from SCXML to Jani.
 The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -154,7 +154,7 @@ def _preprocess_array_comparison(
     exp_operator, exp_operands = jani_expression.as_operator()
     assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
     assert exp_operands is not None
-    array_elements = None
+    array_elements: Optional[List[JaniExpression]] = None
     array_var_id = None
     array_length_var_ids = []
     for operand in exp_operands.values():
@@ -163,7 +163,9 @@ def _preprocess_array_comparison(
             array_var_id = operand.as_identifier()
             assert isinstance(array_var_id, str)
             array_variable = context_vars.get(array_var_id)
-            assert array_variable is not None, f"Cannot find {array_var_id} in context."
+            assert (
+                array_variable is not None
+            ), f"Can't find '{array_var_id}' in context vars {context_vars.keys()}."
             assert is_variable_array(array_variable), f"Variable {array_var_id} is not an array."
             array_info = array_variable.get_array_info()
             assert array_info is not None, f"Cannot get array_info from JANI Var. {array_var_id}."
@@ -178,11 +180,12 @@ def _preprocess_array_comparison(
             array_operator, array_operands = operand.as_operator()
             assert array_operator == "av", f"Expected {operand.as_dict()} has op=='av'."
             assert isinstance(array_operands, dict), "Expect array_operands to be a dict."
-            array_elements_jani = array_operands["elements"].as_literal()
-            assert (
-                array_elements_jani is not None
-            ), "Expected found invalid av operator content. Are array comparisons in 1D?"
-            array_elements = array_elements_jani.value()
+            assert isinstance(array_operands["elements"], list), "Invalid 'av' operator's content."
+            array_elements = array_operands["elements"]
+            assert all(
+                array_entry.get_expression_type() == JaniExpressionType.LITERAL
+                for array_entry in array_elements
+            ), "Found non-literal expressions in 'av' operator. Are all array comparisons in 1D?"
     assert array_operator is not None, "No array operator found in the eq. operator."
     assert array_var_id is not None, "No array variable found in the eq. operator."
     assert isinstance(array_elements, list), f"Unexpected value for array elements {array_elements}"

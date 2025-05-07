@@ -18,7 +18,7 @@ Expressions in Jani
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, get_args
 
 from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.jani_generator.jani_entries import JaniValue
@@ -28,6 +28,8 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 )
 
 SupportedExp = Union[str, int, float, bool, dict]
+
+JaniExprOrList = Union["JaniExpression", List["JaniExpression"]]
 
 
 class JaniExpressionType(Enum):
@@ -56,7 +58,7 @@ class JaniExpression:
         self.identifier: Optional[str] = None
         self.value: Optional[JaniValue] = None
         self.op: Optional[str] = None
-        self.operands: Dict[str, Union[JaniExpression, List[JaniExpression]]] = {}
+        self.operands: Dict[str, JaniExprOrList] = {}
         self.comment: Optional[str] = None
         if isinstance(expression, JaniExpression):
             self.reset(expression)
@@ -64,7 +66,7 @@ class JaniExpression:
             self.value = expression
         else:
             assert isinstance(
-                expression, SupportedExp
+                expression, get_args(SupportedExp)
             ), f"Unexpected expression type: {type(expression)} should be a dict or a base type."
             if isinstance(expression, str):
                 # self._init_expression_from_string(expression)
@@ -254,7 +256,7 @@ class JaniExpression:
         assert self.is_valid(), "Expression is not valid"
         return self.identifier
 
-    def as_operator(self) -> Tuple[Optional[str], Optional[Dict[str, "JaniExpression"]]]:
+    def as_operator(self) -> Tuple[Optional[str], Optional[Dict[str, JaniExprOrList]]]:
         """Provide the expression as an operator, if possible. (None, None) otherwise."""
         assert self.is_valid(), "Expression is not valid"
         if self.op is None:
@@ -282,7 +284,7 @@ class JaniExpression:
                 raise TypeError(f"Unexpected operand {op_key} value type {type(op_value)}.")
         return op_dict
 
-    def __eq__(self, value: "JaniExpression"):
+    def __eq__(self, value):
         """Equality operator between two JaniExpressions."""
         assert isinstance(value, JaniExpression)
         return self.as_dict() == value.as_dict()
@@ -351,7 +353,7 @@ class JaniDistribution(JaniExpression):
         return {"distribution": self._distribution, "args": self._args}
 
 
-def generate_jani_expression(expr: SupportedExp) -> Union[JaniExpression, List[JaniExpression]]:
+def generate_jani_expression(expr: SupportedExp) -> JaniExprOrList:
     """Generate a JaniExpression, a list of them or a JaniDistribution, based on the input."""
     if isinstance(expr, JaniExpression):
         return expr

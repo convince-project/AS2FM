@@ -19,6 +19,7 @@ from typing import List, MutableSequence, Tuple
 
 import pytest
 
+from as2fm.as2fm_common.ecmascript_interpretation import MemberAccessCheckException
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
@@ -32,10 +33,10 @@ from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_s
 def test_standard_good_expressions():
     """Test expressions that have no events at all (e.g. from state entries)."""
     test_expressions: List[Tuple[str, str]] = [
-        ("1 + 1 == 2", "((1 + 1) == 2)"),
-        ("variable_1 + cos(3.14)", "(variable_1 + cos(3.14))"),
-        ("sin(x.data) + 1.4", "(sin(x.data) + 1.4)"),
-        ("cos(x+y+z) > 0 && sin(z - y) <= 0", "((cos(((x + y) + z)) > 0) && (sin((z - y)) <= 0))"),
+        ("1 + 1 == 2", "1 + 1 == 2"),
+        ("variable_1 + cos(3.14)", "variable_1 + cos(3.14)"),
+        ("sin(x.data) + 1.4", "sin(x__data) + 1.4"),
+        ("cos(x+y+z) > 0 && sin(z - y) <= 0", "cos(x + y + z) > 0 && sin(z - y) <= 0"),
     ]
     for in_expr, gt_expr in test_expressions:
         conv_expr = get_plain_expression(in_expr, CallbackType.STATE)
@@ -66,13 +67,13 @@ def test_topic_good_expressions():
         "_msg.array_entry[_msg.index] == _msg.index",
     ]
     expected_expressions: List[str] = [
-        f"({PLAIN_FIELD_EVENT_PREFIX}data == 1)",
-        f"(cos({PLAIN_FIELD_EVENT_PREFIX}data) == 1.0)",
-        f"(some_msg.data + {PLAIN_FIELD_EVENT_PREFIX}count)",
-        f"(({PLAIN_FIELD_EVENT_PREFIX}x < 1) && (sin(({PLAIN_FIELD_EVENT_PREFIX}angle.x + "
-        + f"{PLAIN_FIELD_EVENT_PREFIX}angle.y)) > 2))",
-        f"({PLAIN_FIELD_EVENT_PREFIX}array_entry[{PLAIN_FIELD_EVENT_PREFIX}index] == "
-        + f"{PLAIN_FIELD_EVENT_PREFIX}index)",
+        f"{PLAIN_FIELD_EVENT_PREFIX}data == 1",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}data) == 1",
+        f"some_msg__data + {PLAIN_FIELD_EVENT_PREFIX}count",
+        f"{PLAIN_FIELD_EVENT_PREFIX}x < 1 && sin({PLAIN_FIELD_EVENT_PREFIX}angle__x + "
+        + f"{PLAIN_FIELD_EVENT_PREFIX}angle__y) > 2",
+        f"{PLAIN_FIELD_EVENT_PREFIX}array_entry[{PLAIN_FIELD_EVENT_PREFIX}index] == "
+        + f"{PLAIN_FIELD_EVENT_PREFIX}index",
     ]
     for test_expr, gt_expr in zip(test_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC)
@@ -97,9 +98,9 @@ def test_action_goal_good_expressions():
     """Test expressions that have events related to actions."""
     ok_expressions: List[str] = ["some_action.goal_id", "_action.goal_id", "_goal.x < 1"]
     expected_expressions: List[str] = [
-        "some_action.goal_id",
+        "some_action__goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
-        f"({PLAIN_FIELD_EVENT_PREFIX}x < 1)",
+        f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
         conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL)
@@ -114,8 +115,8 @@ def test_action_feedback_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        f"(cos({PLAIN_FIELD_EVENT_PREFIX}angle.x) == 1.0)",
-        "some_action.goal_id",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle__x) == 1",
+        "some_action__goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
@@ -132,9 +133,9 @@ def test_action_result_good_expressions():
         "_action.goal_id",
     ]
     expected_expressions: List[str] = [
-        f"({PLAIN_SCXML_EVENT_DATA_PREFIX}code == 1)",
-        f"(cos({PLAIN_FIELD_EVENT_PREFIX}angle) == 0.0)",
-        "some_action.goal_id",
+        f"{PLAIN_SCXML_EVENT_DATA_PREFIX}code == 1",
+        f"cos({PLAIN_FIELD_EVENT_PREFIX}angle) == 0",
+        "some_action__goal_id",
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
@@ -144,11 +145,13 @@ def test_action_result_good_expressions():
 
 def test_convert_expression_with_object_arrays():
     """Test handling of array indexes."""
+    # Simple cases
     assert convert_expression_with_object_arrays("x[0]") == "x[0]"
     assert convert_expression_with_object_arrays("x.y") == "x__y"
     assert convert_expression_with_object_arrays("x[0].y") == "x__y[0]"
     assert convert_expression_with_object_arrays("x[c].y") == "x__y[c]"
     assert convert_expression_with_object_arrays("x[c[2]].y") == "x__y[c[2]]"
+    # Some function calls
     assert convert_expression_with_object_arrays("Math.sin(x[0].y)") == "Math.sin(x__y[0])"
     assert convert_expression_with_object_arrays("Math.sin(x[0].y)[6]") == "Math.sin(x__y[0])[6]"
     assert convert_expression_with_object_arrays("x.y.z[1].y") == "x__y__z__y[1]"
@@ -160,7 +163,7 @@ def test_convert_expression_with_object_arrays():
     )
     assert convert_expression_with_object_arrays("x[2].b && a") == "x__b[2] && a"
 
-    # also with length
+    # also with the length keyword
     assert convert_expression_with_object_arrays("x.length") == "x.length"
     assert convert_expression_with_object_arrays("x[0].length") == "x[0].length"
     assert convert_expression_with_object_arrays("x[0][1].length") == "x[0][1].length"
@@ -174,6 +177,17 @@ def test_convert_expression_with_object_arrays():
     assert (
         convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x__y[0][x__y[0].length]"
     )
+    assert (
+        convert_expression_with_object_arrays("x[x.length].y[x[0].y.length].length + y.length")
+        == "x__y[x.length][x__y[0].length].length + y.length"
+    )
+    with pytest.raises(MemberAccessCheckException):
+        convert_expression_with_object_arrays("x.length.length")
+    with pytest.raises(MemberAccessCheckException):
+        convert_expression_with_object_arrays("x.length.y.length")
+    # This throws an error from the esprima parser already
+    with pytest.raises(RuntimeError):
+        convert_expression_with_object_arrays("2.length")
 
     # are necessary brackets kept?
     assert convert_expression_with_object_arrays("!(x.y && x[0])") == "!(x__y && x[0])"

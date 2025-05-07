@@ -9,7 +9,7 @@
             <assign location="temp_a" expr="_event.data.ros_fields__a" />
             <assign location="temp_b" expr="_event.data.ros_fields__b" />
             <send event="srv_adder_response">
-                <param name="ros_fields__sum" expr="(temp_a + temp_b)" />
+                <param name="ros_fields__sum" expr="temp_a + temp_b" />
             </send>
         </transition>
     </state>

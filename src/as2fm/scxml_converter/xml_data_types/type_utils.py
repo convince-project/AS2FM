@@ -38,6 +38,9 @@ SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
     "string": str,
 }
 
+# The keyword used to determine the length of an array
+ARRAY_LENGTH_SUFFIX = "length"
+
 # What to use for representing member access in plain SCXML (instead of '.' in HL-SCXML)
 MEMBER_ACCESS_SUBSTITUTION = "__"
 

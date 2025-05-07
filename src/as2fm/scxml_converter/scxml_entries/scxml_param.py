@@ -22,7 +22,7 @@ from typing import List, Optional, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ecmascript_interpretation import MemberAccessCheckException
+from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
@@ -30,13 +30,17 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_blackboard_reference,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import (
+    CallbackType,
+    convert_expression_with_object_arrays,
+    get_plain_variable_name,
+    is_non_empty_string,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
@@ -127,28 +131,37 @@ class ScxmlParam(ScxmlBase):
             print("Error: SCXML param: expr and location are both set.")
         return valid_name and valid_expr
 
+    def _set_plain_name_and_expression(self):
+        """In place substitution of member accesses in the name and expression."""
+        self._name = get_plain_variable_name(self._name, self.get_xml_origin())
+        self._expr = convert_expression_with_object_arrays(self._expr, self.get_xml_origin())
+
     def as_plain_scxml(
         self, struct_declarations: ScxmlStructDeclarationsContainer, _
     ) -> List["ScxmlParam"]:
         plain_params: List[ScxmlParam] = []
         assert isinstance(self._expr, str)
-        try:
+        if has_operators(self._expr, self.get_xml_origin()) or is_literal(
+            self._expr, self.get_xml_origin()
+        ):
+            # In this case, we assume the expression evaluates to a base type
+            # TODO: Consider checking this assumption
+            plain_params.append(self)
+        else:
             # In case of single variables or their members, check if expansion is required
             struct_def, _ = struct_declarations.get_data_type(self._expr, self.get_xml_origin())
             if isinstance(struct_def, str):
+                # This is a base type, no expansion required
                 plain_params.append(self)
             else:
                 for member_key in struct_def.get_expanded_members().keys():
-                    new_name = f"{self.get_name()}{MEMBER_ACCESS_SUBSTITUTION}{member_key}"
-                    new_expr = (
-                        f"{self.get_expr_or_location()}{MEMBER_ACCESS_SUBSTITUTION}{member_key}"
-                    )
+                    new_name = f"{self.get_name()}.{member_key}"
+                    new_expr = f"{self.get_expr_or_location()}.{member_key}"
                     plain_params.append(
                         ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
                     )
-        except MemberAccessCheckException:
-            # In case there are Unary or Binary operators, we have to assume basic types
-            plain_params.append(self)
+        for plain_param in plain_params:
+            plain_param._set_plain_name_and_expression()
         return plain_params
 
     def as_xml(self) -> XmlElement:

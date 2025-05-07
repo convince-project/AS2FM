@@ -31,10 +31,10 @@
                 </if>
             </if>
         </onentry>
-        <transition event="bt_1001_halt_response" cond="(child_idx == 0)" target="reset_children">
+        <transition event="bt_1001_halt_response" cond="child_idx == 0" target="reset_children">
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition event="bt_1003_halt_response" cond="(child_idx == 1)" target="reset_children">
+        <transition event="bt_1003_halt_response" cond="child_idx == 1" target="reset_children">
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
         <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
@@ -65,27 +65,27 @@
                 </if>
             </if>
         </onentry>
-        <transition event="bt_1001_response" cond="((_event.data.status == 1) &amp;&amp; (child_idx == 0))" target="tick_children">
+        <transition event="bt_1001_response" cond="_event.data.status == 1 &amp;&amp; child_idx == 0" target="tick_children">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition event="bt_1003_response" cond="((_event.data.status == 1) &amp;&amp; (child_idx == 1))" target="tick_children">
+        <transition event="bt_1003_response" cond="_event.data.status == 1 &amp;&amp; child_idx == 1" target="tick_children">
             <assign location="success_count" expr="success_count + 1"/>
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition event="bt_1001_response" cond="((_event.data.status == 2) &amp;&amp; (child_idx == 0))" target="reset_children">
+        <transition event="bt_1001_response" cond="_event.data.status == 2 &amp;&amp; child_idx == 0" target="reset_children">
             <assign location="failed_child" expr="child_idx"/>
             <assign location="child_idx" expr="0"/>
         </transition>
-        <transition event="bt_1003_response" cond="((_event.data.status == 2) &amp;&amp; (child_idx == 1))" target="reset_children">
+        <transition event="bt_1003_response" cond="_event.data.status == 2 &amp;&amp; child_idx == 1" target="reset_children">
             <assign location="failed_child" expr="child_idx"/>
             <assign location="child_idx" expr="0"/>
         </transition>
-        <transition event="bt_1001_response" cond="((_event.data.status == 3) &amp;&amp; (child_idx == 0))" target="reset_other_children">
+        <transition event="bt_1001_response" cond="_event.data.status == 3 &amp;&amp; child_idx == 0" target="reset_other_children">
             <assign location="running_child" expr="child_idx"/>
             <assign location="child_idx" expr="0"/>
         </transition>
-        <transition event="bt_1003_response" cond="((_event.data.status == 3) &amp;&amp; (child_idx == 1))" target="reset_other_children">
+        <transition event="bt_1003_response" cond="_event.data.status == 3 &amp;&amp; child_idx == 1" target="reset_other_children">
             <assign location="running_child" expr="child_idx"/>
             <assign location="child_idx" expr="0"/>
         </transition>
@@ -107,10 +107,10 @@
                 </if>
             </if>
         </onentry>
-        <transition event="bt_1001_halt_response" cond="(child_idx == 0)" target="reset_other_children">
+        <transition event="bt_1001_halt_response" cond="child_idx == 0" target="reset_other_children">
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
-        <transition event="bt_1003_halt_response" cond="(child_idx == 1)" target="reset_other_children">
+        <transition event="bt_1003_halt_response" cond="child_idx == 1" target="reset_other_children">
             <assign location="child_idx" expr="child_idx + 1"/>
         </transition>
         <transition cond="child_idx &gt;= children_count" target="wait_for_tick">

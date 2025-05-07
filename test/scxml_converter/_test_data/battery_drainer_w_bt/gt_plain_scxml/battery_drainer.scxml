@@ -17,7 +17,7 @@
             </send>
         </onentry>
         <transition event="ros_time_rate.my_timer" target="use_battery">
-            <assign location="battery_percent" expr="(battery_percent - 1)" />
+            <assign location="battery_percent" expr="battery_percent - 1" />
         </transition>
         <transition event="topic_charge_msg" target="use_battery">
             <assign location="battery_percent" expr="100" />

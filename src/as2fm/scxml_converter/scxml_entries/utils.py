@@ -25,13 +25,20 @@ from esprima.nodes import ComputedMemberExpression, Identifier
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ecmascript_interpretation import parse_expression_to_ast
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    MemberAccessCheckException,
+    has_array_access,
+    parse_expression_to_ast,
+    split_by_access,
+)
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
-from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    ARRAY_LENGTH_SUFFIX,
+    MEMBER_ACCESS_SUBSTITUTION,
+)
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
-ARRAY_LENGTH_SUFFIX = "length"
 ARRAY_LENGTH_TYPE = "uint64"
 
 # List of names that shall not be used for variable names
@@ -167,6 +174,17 @@ def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
     return False
 
 
+def get_plain_variable_name(in_name: str, xml_origin: Optional[XmlElement]) -> str:
+    """Given a variable or param name with member access, generate the plain version with '__'."""
+    check_assertion(
+        not has_array_access(in_name, xml_origin),
+        xml_origin,
+        f"Provided variable {in_name} contains array accesses, too.",
+    )
+    expanded_name = split_by_access(in_name, xml_origin)
+    return MEMBER_ACCESS_SUBSTITUTION.join(expanded_name)
+
+
 def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
     """
     Convert ROS-specific PREFIXES, custom struct array indexing to plain SCXML.
@@ -217,21 +235,36 @@ def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
 
 
 def _convert_non_computed_member_exprs_to_identifiers(
-    node: esprima.nodes.Node,
+    node: esprima.nodes.Node, parent_node: Optional[esprima.nodes.Node]
 ) -> esprima.nodes.Node:
     """Convert member access operators (like '.') into identifiers."""
-    if node.type in (Syntax.Identifier, Syntax.Literal):
+    if node.type == Syntax.Identifier:
+        if node.name == ARRAY_LENGTH_SUFFIX and (
+            parent_node is None or parent_node.type != Syntax.MemberExpression
+        ):
+            raise MemberAccessCheckException(
+                f"{ARRAY_LENGTH_SUFFIX} is a reserved keyword. Cannot be used here."
+            )
+        return node
+    elif node.type == Syntax.Literal:
         return node
     elif node.type == Syntax.MemberExpression:
         # If not array index, convert to identifier
-        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object)
-        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property)
-        if node.computed or (
-            node.property.type == Syntax.Identifier and node.property.name == ARRAY_LENGTH_SUFFIX
-        ):
-            # Case 1: This is an array index access operator: do not convert it to an identifier.
-            # Case 2: We are accessing the length field: this is a special keyword, keep the dot.
-            # TODO: This creates problems in case we use the length keyword outside arrays...
+        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object, node)
+        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property, node)
+        if node.computed:
+            # This is an array index access operator: do not convert it to an identifier.
+            return node
+        if node.property.type == Syntax.Identifier and node.property.name == ARRAY_LENGTH_SUFFIX:
+            # We are accessing the length field: this is a special keyword, keep the dot.
+            if (
+                parent_node is not None
+                and parent_node.type == Syntax.MemberExpression
+                and not parent_node.computed
+            ):
+                raise MemberAccessCheckException(
+                    f"{ARRAY_LENGTH_SUFFIX} is a reserved keyword. Cannot be used here."
+                )
             return node
         # If here, this is a member entry access
         assert node.object.type == Syntax.Identifier, f"Error: unexpected node content in {node}"
@@ -244,17 +277,17 @@ def _convert_non_computed_member_exprs_to_identifiers(
             member_separator = "."
         return Identifier(f"{node.object.name}{member_separator}{node.property.name}")
     elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
-        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left)
-        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right)
+        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left, node)
+        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right, node)
         return node
     elif node.type == Syntax.CallExpression:
         node.arguments = [
-            _convert_non_computed_member_exprs_to_identifiers(node_arg)
+            _convert_non_computed_member_exprs_to_identifiers(node_arg, node)
             for node_arg in node.arguments
         ]
         return node
     elif node.type == Syntax.UnaryExpression:
-        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument)
+        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument, node)
         return node
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
@@ -312,10 +345,14 @@ def convert_expression_with_object_arrays(expr: str, elem: Optional[XmlElement] 
     """
     e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons__polygons__points__y[0][1]`.
     """
-    ast = parse_expression_to_ast(expr, elem)
-    obj, idxs = _split_array_indexes_out(ast)
-    exp = _reassemble_expression(obj, idxs)
-    exp = _convert_non_computed_member_exprs_to_identifiers(exp)
+    try:
+        ast = parse_expression_to_ast(expr, elem)
+        obj, idxs = _split_array_indexes_out(ast)
+        exp = _reassemble_expression(obj, idxs)
+        exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
+    except MemberAccessCheckException as e:
+        log_error(elem, "Failed to expand the provided expression.")
+        raise e
     return escodegen.generate(exp)
 
 
@@ -333,7 +370,9 @@ def all_non_empty_strings(*in_args) -> bool:
     return True
 
 
-def is_non_empty_string(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> bool:
+def is_non_empty_string(
+    scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: Optional[str]
+) -> bool:
     """
     Check if a string is non-empty.
 

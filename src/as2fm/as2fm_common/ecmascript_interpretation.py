@@ -159,6 +159,20 @@ def has_member_access(expr: str, elem: Optional[XmlElement]) -> bool:
         raise e
 
 
+def has_operators(expr: str, elem: Optional[XmlElement]) -> bool:
+    """
+    Evaluate if an ECMAscript expression contains unary, binary, logical or function operators.
+    """
+    ast = parse_expression_to_ast(expr, elem)
+    return _has_operators(ast, elem)
+
+
+def is_literal(expr: str, elem: Optional[XmlElement]) -> bool:
+    """Evaluate if the expression contains only a literal (or an array expression)."""
+    ast = parse_expression_to_ast(expr, elem)
+    return ast.type in (Syntax.Literal, Syntax.ArrayExpression)
+
+
 def _has_member_or_array_access(ast: esprima.nodes.Node, array_access: bool) -> bool:
     """Evaluate if an ast node contains access to an array element.
 
@@ -178,6 +192,22 @@ def _has_member_or_array_access(ast: esprima.nodes.Node, array_access: bool) -> 
             return _has_member_or_array_access(ast.object, array_access)
     else:
         raise MemberAccessCheckException(f"Can not evaluate {ast.type} to a variable identifier.")
+
+
+def _has_operators(ast: esprima.nodes.Node, elem: Optional[XmlElement]) -> bool:
+    """Check if we can find a unary, binary, logical or function operator in the AST."""
+    if ast.type in (
+        Syntax.UnaryExpression,
+        Syntax.BinaryExpression,
+        Syntax.CallExpression,
+        Syntax.LogicalExpression,
+    ):
+        return True
+    elif ast.type in (Syntax.Identifier, Syntax.Literal, Syntax.MemberExpression):
+        # We do not care of operators used as array access index
+        return False
+    else:
+        raise NotImplementedError(get_error_msg(elem, f"Unhandled expression type: {ast.type}"))
 
 
 def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, ArrayAccess]]:
