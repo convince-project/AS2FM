@@ -33,7 +33,7 @@
                 recv_point.y &gt; 3 &amp;&amp;
                 recv_polygon.points.length == 2 &amp;&amp;
                 recv_polygon.points[0].x &gt;= 100 &amp;&amp;
-                recv_polygons.length == 2 &amp;&amp;
+                recv_polygons.length == 3 &amp;&amp;
                 recv_polygons.polygons[1].points[1].y &gt;= 100"
             target="end" />
     </state>

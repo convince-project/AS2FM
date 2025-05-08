@@ -13,7 +13,7 @@
             expr="{'points': [{'x': 0.1, 'y': 0.2}, {'x': 0.3, 'y': 0.4}]}"
             type="Polygon" />
         <data
-            id="two_polygons"
+            id="multiple_polygons"
             expr="
             {'polygons': [
                 {'points': []},
@@ -36,7 +36,7 @@
                 <param name="point.y" expr="a_point.y" />
                 -->
                 <param name="polygon" expr="a_polygon" />
-                <param name="polygons" expr="two_polygons" />
+                <param name="polygons" expr="multiple_polygons" />
             </send>
         </onentry>
         <transition target="increase" cond="a_point.x &lt; 100.0">
@@ -47,15 +47,15 @@
             <assign location="a_polygon.points[1].y" expr="a_point.y" />
             -->
             <assign location="a_polygon.points[0].x" expr="a_polygon.points[0].x + 1.0" />
-            <assign location="two_polygons.polygons[2]" expr="a_polygon" />
+            <assign location="multiple_polygons.polygons[2]" expr="a_polygon" />
             <!--
-            <assign location="two_polygons.polygons[2].points.x" expr="a_polygon.points.x" />
-            <assign location="two_polygons.polygons.points.x[2]" expr="a_polygon.points.x[2]" />
-            <assign location="two_polygons.polygons[2].points.y" expr="a_polygon.points.y" />
-            <assign location="two_polygons.polygons.points.y[2]" expr="a_polygon.points.y[2]" />
+            <assign location="multiple_polygons.polygons[2].points.x" expr="a_polygon.points.x" />
+            <assign location="multiple_polygons.polygons.points.x[2]" expr="a_polygon.points.x[2]" />
+            <assign location="multiple_polygons.polygons[2].points.y" expr="a_polygon.points.y" />
+            <assign location="multiple_polygons.polygons.points.y[2]" expr="a_polygon.points.y[2]" />
             -->
-            <assign location="two_polygons.polygons[1].points[1].y"
-                expr="two_polygons.polygons[1].points[1].y + 1.0" />
+            <assign location="multiple_polygons.polygons[1].points[1].y"
+                expr="multiple_polygons.polygons[1].points[1].y + 1.0" />
         </transition>
     </state>
 </scxml>
