@@ -296,6 +296,35 @@ def _convert_non_computed_member_exprs_to_identifiers(
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
 
 
+def _assemble_object_for_length_access(
+    ast_array: esprima.nodes.Node,
+    array_idxs: List[esprima.nodes.Node],
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer],
+) -> esprima.nodes.Node:
+    """
+    Generate the ast expression for accessing length information of custom structs.
+
+    This is about accessing the length of an array of objects in HL-SCXML. In LL-SCXML, we
+    don't consider objects, so they are translated to flat arrays of their base-type
+    properties. Then, the length has to return the length of a (the first) of the structs properties
+    lengths.
+
+    e.g. for `points: {x: [2, 4, 5], y: [1, 0, 8]}`
+    then `points.length` should be translated to `points.x.length` (i.e. `points__x.length`)
+    """
+    if struct_declarations is None:
+        return _reassemble_expression(ast_array, array_idxs)
+    # Generate the member access expression w.o. index access
+    member_var = escodegen.generate(ast_array)
+    data_type, array_info = struct_declarations.get_data_type(member_var, None)
+    if isinstance(data_type, str):
+        # not an object (a base type)
+        return _reassemble_expression(ast_array, array_idxs)
+    all_expanded_members = [k for k in data_type.get_expanded_members().keys()]
+    expanded_member_node = parse_expression_to_ast(f"{member_var}.{all_expanded_members[0]}", None)
+    return _reassemble_expression(expanded_member_node, array_idxs)
+
+
 def _split_array_indexes_out(
     ast: esprima.nodes.Node, struct_declarations: Optional[ScxmlStructDeclarationsContainer]
 ) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
@@ -316,7 +345,7 @@ def _split_array_indexes_out(
         # actual member access
         if ast.property.name == ARRAY_LENGTH_SUFFIX:
             # TODO: If the object refers to a struct (instead of an array), add missing members
-            ast.object = _reassemble_expression(obj, obj_idxs)
+            ast.object = _assemble_object_for_length_access(obj, obj_idxs, struct_declarations)
             return ast, []  # not indexes after length property
         ast.object = _reassemble_expression(*_split_array_indexes_out(obj, struct_declarations))
         return ast, obj_idxs
