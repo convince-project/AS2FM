@@ -45,6 +45,8 @@ ARRAY_LENGTH_TYPE = "uint64"
 # What to use for representing member access in plain SCXML (instead of '.' in HL-SCXML)
 MEMBER_ACCESS_SUBSTITUTION = "__"
 
+ARRAY_BASE_TYPES = (int, float, None)
+
 
 # TODO: Move this class to as2fm common and use a python type instead of an scxml string for the
 # base type
@@ -62,14 +64,16 @@ class ArrayInfo:
             custom object.
     """
 
-    array_type: Union[Type[Union[int, float]], str]
+    array_type: Union[Type[Union[int, float]], str, None]
     array_dimensions: int
     array_max_sizes: List[Optional[int]]
     is_base_type: bool = True
 
     def __post_init__(self):
         if self.is_base_type:
-            assert self.array_type in (int, float), f"array_type {self.array_type} != (int, float)"
+            assert (
+                self.array_type in ARRAY_BASE_TYPES
+            ), f"array_type {self.array_type} != (int, float, None)"
         assert (
             isinstance(self.array_dimensions, int) and self.array_dimensions > 0
         ), f"array_dimension is {self.array_dimensions}, but should be at least 1"
@@ -90,8 +94,6 @@ class ArrayInfo:
 def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
     """Small helper function to generate the array info from a given value instance."""
     array_type, array_sizes = get_array_type_and_sizes(data_value)
-    if array_type is None:
-        raise ValueError(f"Cannot detect type of input list {data_value}.")
     n_dims = len(array_sizes)
     return ArrayInfo(array_type, n_dims, [None] * n_dims)
 
