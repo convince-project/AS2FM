@@ -31,6 +31,18 @@ BasicJsTypes = Union[int, float, bool, str]
 
 
 class ArrayAccess:
+    """
+    Placeholder type for ArrayAccess operator call in expanded Member expression.
+
+    Check the function 'split_by_access' for more information.
+    """
+
+    pass
+
+
+class MemberAccessCheckException(Exception):
+    """Exception type thrown when there are error expanding a Member expression."""
+
     pass
 
 
@@ -93,42 +105,26 @@ def _interpret_ecmascript_expr(
 
 
 def interpret_ecma_script_expr(
-    expr: str, variables: Optional[Dict[str, ValidScxmlTypes]] = None
-) -> ValidScxmlTypes:
+    expr: str,
+    variables: Optional[Dict[str, ValidScxmlTypes]] = None,
+    allow_dict_results: bool = False,
+) -> Union[ValidScxmlTypes, dict]:
     """
-    Interpret the ECMA script expression. Return it only if result compatible with plain SCXML.
+    Interpret the ECMA script expression and return the resulting value.
 
     :param expr: The ECMA script expression
     :param variables: A dictionary of variables to be used in the ECMA script context
+    :param allow_dict_results: Whether the result of the expr. can be an object (encoded by a dict)
     :return: The interpreted object
     """
     if variables is None:
         variables = {}
     expr_result = _interpret_ecmascript_expr(expr, variables)
-    if isinstance(expr_result, dict):
+    if not allow_dict_results and isinstance(expr_result, dict):
         raise ValueError(
             f"Expected expr. {expr} to be of type {BasicJsTypes} or a list, got a dictionary."
         )
     return expr_result
-
-
-def interpret_non_base_ecma_script_expr(
-    expr: str, variables: Optional[Dict[str, ValidScxmlTypes]] = None
-) -> Union[ValidScxmlTypes, dict]:
-    """
-    Interpret the ECMA script expression. Returns also complex objects.
-
-    :param expr: The ECMA script expression
-    :param variables: A dictionary of variables to be used in the ECMA script context
-    :return: The interpreted object
-    """
-    if variables is None:
-        variables = {}
-    return _interpret_ecmascript_expr(expr, variables)
-
-
-class MemberAccessCheckException(Exception):
-    pass
 
 
 def has_array_access(expr: str, elem: Optional[XmlElement]) -> bool:
@@ -212,6 +208,9 @@ def _has_operators(ast: esprima.nodes.Node, elem: Optional[XmlElement]) -> bool:
 
 def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, ArrayAccess]]:
     """
+    Expand a Member expression into a list, distinguishing between member and array accesses.
+
+    Examples:
     `a.b` => `['a', 'b']
     `a[3].b` => `['a', ArrayAccess, 'b']
     """
@@ -224,6 +223,7 @@ def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, Ar
 
 
 def _split_by_access(ast: esprima.nodes.Node) -> List:
+    """Recursive implementation of 'split_by_access' functionality."""
     if ast.type == Syntax.Identifier:
         return [ast.name]
     elif ast.type == Syntax.MemberExpression:

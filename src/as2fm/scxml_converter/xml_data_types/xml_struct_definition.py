@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_non_base_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     get_array_type_and_dimensions_from_string,
@@ -156,7 +156,7 @@ class XmlStructDefinition:
         if self._members_list is None:
             raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
         # Interpret the expression
-        interpreted_expr = interpret_non_base_ecma_script_expr(expr)
+        interpreted_expr = interpret_ecma_script_expr(expr, {}, True)
         assert isinstance(interpreted_expr, dict)
         return self._expand_object_dict(interpreted_expr, "")
 
