@@ -359,9 +359,9 @@ def generate_jani_expression(expr: SupportedExp) -> JaniExprOrList:
         return expr
     if isinstance(expr, (str, JaniValue)) or JaniValue(expr).is_valid():
         return JaniExpression(expr)
-    if isinstance(expr, list) and all(JaniExpression(x).is_valid() for x in expr):
+    if isinstance(expr, list):
         # list of jani expressions
-        new_list: List[JaniExpression] = [JaniExpression(x) for x in expr]
+        new_list: List[JaniExpression] = [generate_jani_expression(x) for x in expr]
         assert all(
             new_expr.is_valid() for new_expr in new_list
         ), "Error generating list of JaniExpressions."
