@@ -17,7 +17,7 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -53,7 +53,7 @@ class ScxmlParam(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)

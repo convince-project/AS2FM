@@ -17,7 +17,7 @@
 Container for the variables defined in the SCXML model. In XML, it has the tag `datamodel`.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -46,7 +46,7 @@ class ScxmlDataModel(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlDataModel":
         """Create a ScxmlDataModel object from an XML tree."""
         assert_xml_tag_ok(ScxmlDataModel, xml_tree)

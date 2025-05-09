@@ -116,7 +116,7 @@ class ScxmlIf(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
@@ -193,7 +193,9 @@ class ScxmlIf(ScxmlBase):
                 return True
         return has_bt_blackboard_input(self._else_execution, bt_ports_handler)
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> ScxmlExecutionBody:
         """Instantiate the behavior tree events in the If action, if available."""
         expanded_condition_bodies: List[ConditionalExecutionBody] = []
         for condition, exec_body in self._conditional_executions:
@@ -305,7 +307,7 @@ class ScxmlSend(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
@@ -373,7 +375,7 @@ class ScxmlSend(ScxmlBase):
                 return True
         return False
 
-    def instantiate_bt_events(self, instance_id: int, _) -> List["ScxmlSend"]:
+    def instantiate_bt_events(self, instance_id: int, _) -> ScxmlExecutionBody:
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
@@ -450,7 +452,7 @@ class ScxmlAssign(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
@@ -605,7 +607,7 @@ def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
 
 
 def execution_entry_from_xml(
-    xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
 ) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
@@ -626,7 +628,7 @@ def execution_entry_from_xml(
 
 
 def execution_body_from_xml(
-    xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
 ) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.

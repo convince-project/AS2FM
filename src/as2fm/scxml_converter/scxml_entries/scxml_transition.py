@@ -17,7 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -70,7 +70,7 @@ class ScxmlTransition(ScxmlBase):
     def load_transition_targets_from_xml(
         cls: Type["ScxmlTransition"],
         xml_tree: XmlElement,
-        custom_data_types: List[XmlStructDefinition],
+        custom_data_types: Dict[str, XmlStructDefinition],
     ) -> List[ScxmlTransitionTarget]:
         """Loads all transition targets contained in the transition-like tags."""
         target = get_xml_attribute(cls, xml_tree, "target", undefined_allowed=True)
@@ -99,7 +99,7 @@ class ScxmlTransition(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlTransition":
         """Create a ScxmlTransition object from an XML tree."""
         assert (
@@ -113,8 +113,9 @@ class ScxmlTransition(ScxmlBase):
         )
         return ScxmlTransition(transition_targets, events, condition)
 
-    @staticmethod
+    @classmethod
     def make_single_target_transition(
+        cls: Type["ScxmlTransition"],
         target: str,
         events: Optional[List[str]] = None,
         condition: Optional[str] = None,
@@ -129,7 +130,7 @@ class ScxmlTransition(ScxmlBase):
         :param body: Content that is executed when the transition happens
         """
         targets = [ScxmlTransitionTarget(target, None, body)]
-        return ScxmlTransition(targets, events, condition)
+        return cls(targets, events, condition)
 
     def __init__(
         self,

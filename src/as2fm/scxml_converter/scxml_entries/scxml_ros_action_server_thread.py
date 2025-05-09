@@ -19,7 +19,7 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
@@ -66,7 +66,7 @@ class RosActionThread(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
     ) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)

@@ -17,11 +17,15 @@
 SCXML entries related to BT communication interfaces (i.e. tick and halt) and related responses.
 """
 
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend, ScxmlTransitionTarget
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlExecutionBody,
+    ScxmlParam,
+    ScxmlTransitionTarget,
+)
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtResponse,
     generate_bt_halt_event,
@@ -177,9 +181,11 @@ class BtReturnTickStatus(BtGenericStatusSend):
     def generate_bt_event_name(instance_id: int) -> str:
         return generate_bt_tick_response_event(instance_id)
 
-    @staticmethod
-    def from_xml_tree(
-        xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+    @classmethod
+    def from_xml_tree_impl(
+        cls: Type["BtGenericStatusSend"],
+        xml_tree: XmlElement,
+        _: Dict[str, XmlStructDefinition],
     ) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")
@@ -196,7 +202,9 @@ class BtReturnTickStatus(BtGenericStatusSend):
         """We do not expect reading from BT Ports here. Return False!"""
         return False
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> List[ScxmlSend]:
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> ScxmlExecutionBody:
         plain_send = super().instantiate_bt_events(instance_id, children_ids)
         plain_send[0].append_param(ScxmlParam("status", expr=f"{self._status_id}"))
         return plain_send

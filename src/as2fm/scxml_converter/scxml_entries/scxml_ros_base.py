@@ -75,7 +75,7 @@ class RosDeclaration(ScxmlBase):
     def from_xml_tree_impl(
         cls: Type["RosDeclaration"],
         xml_tree: XmlElement,
-        custom_data_types: List[XmlStructDefinition],
+        custom_data_types: Dict[str, XmlStructDefinition],
     ) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
@@ -198,7 +198,9 @@ class RosCallback(ScxmlTransition):
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type["RosCallback"], xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls: Type["RosCallback"],
+        xml_tree: XmlElement,
+        custom_data_types: Dict[str, XmlStructDefinition],
     ) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
@@ -363,7 +365,9 @@ class RosTrigger(ScxmlSend):
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type["RosTrigger"], xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls: Type["RosTrigger"],
+        xml_tree: XmlElement,
+        custom_data_types: Dict[str, XmlStructDefinition],
     ) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.

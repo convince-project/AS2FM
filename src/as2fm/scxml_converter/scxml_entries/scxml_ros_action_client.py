@@ -19,7 +19,7 @@ Declaration of SCXML tags related to ROS Action Clients.
 Based loosely on https://design.ros2.org/articles/actions.html
 """
 
-from typing import List, Type, Union
+from typing import Dict, List, Type, Union
 
 from action_msgs.msg import GoalStatus
 from lxml import etree as ET
@@ -102,7 +102,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
     ) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)

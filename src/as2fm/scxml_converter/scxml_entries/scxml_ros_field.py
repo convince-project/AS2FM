@@ -15,7 +15,7 @@
 
 """Declaration of the ROS Field SCXML tag extension."""
 
-from typing import List, Optional, Union
+from typing import Dict, Optional, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -45,7 +45,7 @@ class RosField(ScxmlParam):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)

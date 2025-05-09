@@ -17,9 +17,10 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Type
 
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
@@ -34,8 +35,11 @@ class ScxmlBase:
 
     @classmethod
     def from_xml_tree(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition], **kwargs
-    ) -> "ScxmlBase":
+        cls: Type[Self],
+        xml_tree: XmlElement,
+        custom_data_types: Dict[str, XmlStructDefinition],
+        **kwargs,
+    ) -> Self:
         """External interface to create a ScxmlBase object from an XML tree."""
         instance = cls.from_xml_tree_impl(xml_tree, custom_data_types, **kwargs)
         instance.set_xml_origin(xml_tree)
@@ -44,8 +48,8 @@ class ScxmlBase:
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
-    ) -> "ScxmlBase":
+        cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> Self:
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 

@@ -17,7 +17,7 @@
 SCXML entries related to Behavior Trees' Ports declaration.
 """
 
-from typing import List, Union
+from typing import Dict, List, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -39,7 +39,7 @@ class BtInputPortDeclaration(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
     ) -> "BtInputPortDeclaration":
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "key")
@@ -84,7 +84,7 @@ class BtOutputPortDeclaration(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
     ) -> "BtOutputPortDeclaration":
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "key")

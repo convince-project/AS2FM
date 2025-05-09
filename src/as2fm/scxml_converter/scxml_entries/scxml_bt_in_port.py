@@ -17,7 +17,7 @@
 SCXML get input for Behavior Trees' Ports.
 """
 
-from typing import List
+from typing import Dict, List
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -39,7 +39,7 @@ class BtGetValueInputPort(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
     ) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")

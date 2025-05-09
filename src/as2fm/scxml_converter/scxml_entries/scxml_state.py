@@ -17,7 +17,7 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Sequence, Union
+from typing import Dict, List, Sequence, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -61,7 +61,7 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(
-        state_id: str, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        state_id: str, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
         tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
@@ -81,7 +81,7 @@ class ScxmlState(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (

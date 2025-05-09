@@ -17,7 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 from warnings import warn
 
 from lxml import etree as ET
@@ -54,7 +54,7 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: List[XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
         assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
