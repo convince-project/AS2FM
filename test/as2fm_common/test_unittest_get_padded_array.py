@@ -39,5 +39,17 @@ def test_array_padding_3d():
     assert get_padded_array([[[42]]], [1, 2, 2], int) == [[[42, 0], [0, 0]]]
 
 
+def test_array_padding_wrong():
+    test_tuples = [
+        ([1, 2, 3], [1]),
+        ([[]], [3]),
+        ([[], [1, 2, 3]], [2, 2]),
+        ([[[]], [1, 2, 3]], [2, 3]),
+    ]
+    for in_seq, exp_sizes in test_tuples:
+        with pytest.raises(ValueError):
+            get_padded_array(in_seq, exp_sizes, int)
+
+
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])

@@ -172,7 +172,7 @@ def get_array_type_and_sizes(
                 if curr_type == int:
                     curr_type = single_type
         child_sizes.append(single_sizes)
-    # At this point, child_sizes contains a nested structure of lists of length 2
+    # At this point, we need to merge the sizes from the child_sizes
     max_depth = children_length + 1
     processed_sizes: List[Union[int, List]] = []
     for level in range(max_depth):
@@ -221,14 +221,20 @@ def get_padded_array(
 ) -> List[Union[int, float, List]]:
     """Given a N-Dimensional list, add padding for each level, depending on the provided sizes."""
     padding_size = size_per_level[0] - len(array_to_pad)
-    assert padding_size >= 0
+    if padding_size < 0:
+        raise ValueError(
+            f"Expected level's size '{size_per_level[0]}' is smaller than ",
+            f"the current instance length '{len(array_to_pad)}'.",
+        )
     if len(size_per_level) == 1:
-        # Lowest level -> only floats and integers allowed
-        assert all(not isinstance(entry, list) for entry in array_to_pad)
+        # We are at the lowest level -> only floats and integers allowed
+        if any(isinstance(entry, list) for entry in array_to_pad):
+            raise ValueError("The array to pad is deeper than expected.")
         array_to_pad.extend([array_type(0)] * padding_size)
     else:
         # There are lower levels -> Here we expect only empty lists
-        assert all(isinstance(entry, list) for entry in array_to_pad)
+        if not all(isinstance(entry, list) for entry in array_to_pad):
+            raise ValueError("Found non-array entries at intermediate depth.")
         array_to_pad.extend([[]] * padding_size)
         for idx in range(size_per_level[0]):
             array_to_pad[idx] = get_padded_array(array_to_pad[idx], size_per_level[1:], array_type)
