@@ -110,8 +110,11 @@ def value_to_string_expr(value: ValidJaniTypes) -> str:
 
 
 def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
-    """Check that the array is composed by a list of (int, float, list)."""
-    # TODO: Corner case possible: [[1], [[1,2,3]]] <- The depth of the two branches is not the same
+    """
+    Check that the array is composed by a list of (int, float, list).
+
+    No check for sub-lists same depth is done here (e.g. [[1], [[1,2,3]]]).
+    """
     assert isinstance(
         in_sequence, (list, str)
     ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
@@ -187,31 +190,6 @@ def get_array_type_and_sizes(
                 assert isinstance(processed_sizes[level], list), f"Unexpected type at {level=}."
                 processed_sizes[level].append(curr_size_entry[level - 1])
     return curr_type, processed_sizes
-
-
-def get_array_dimensionality_and_type(
-    in_sequence: MutableSequence,
-) -> Tuple[int, Type[Union[int, float]]]:
-    """
-    For a given array, return its deepest level and the type of the values in it.
-
-    E.g.: [[], [[1], []]] has depth 3
-    """
-    assert is_valid_array(in_sequence)
-    if len(in_sequence) == 0:
-        # By default, assume an array of integers
-        return 1, int
-    if not isinstance(in_sequence[0], MutableSequence):
-        array_type = int if all(isinstance(seq_value, int) for seq_value in in_sequence) else float
-        return 1, array_type
-    sub_level_dim: int = 0
-    sub_level_type: Type[Union[int, float]] = int
-    for seq_value in in_sequence:
-        next_dim, next_type = get_array_dimensionality_and_type(seq_value)
-        sub_level_dim = max(next_dim, sub_level_dim)
-        if next_type is float:
-            sub_level_type = float
-    return 1 + sub_level_dim, sub_level_type
 
 
 def get_padded_array(
