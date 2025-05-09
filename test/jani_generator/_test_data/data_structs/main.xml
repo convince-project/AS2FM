@@ -1,0 +1,19 @@
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <max_array_size value="5" />
+    </mc_parameters>
+
+    <data_declarations>
+        <input type="type-declarations" src="./my_types.scxml" />
+    </data_declarations>
+
+    <node_models>
+        <input type="ros-scxml" src="./sender.scxml" />
+        <input type="ros-scxml" src="./receiver.scxml" />
+    </node_models>
+
+    <properties>
+        <input type="jani" src="./properties.jani" />
+    </properties>
+</convince_mc_tc>

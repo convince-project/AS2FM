@@ -19,7 +19,7 @@ import pytest
 
 from as2fm.jani_generator.jani_entries import JaniExpression
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
-    array_create_operator,
+    array_value_operator,
     max_operator,
     plus_operator,
     sin_operator,
@@ -64,21 +64,21 @@ def test_parse_ecmascript_to_jani_expression_with_complex_expression():
 
 def test_parse_ecmascript_to_jani_expression_with_array():
     ecmascript_expr = "[]"
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_value_operator([int(0)] * 10)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_value_operator([int(0)] * 10)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
 def test_parse_ecmascript_to_jani_expression_with_escaped_string():
     # Check if double quotes are handled as well
     ecmascript_expr = '""'
-    expected_jani_expr = array_create_operator("__array_iterator", 10, 0)
-    array_info = ArrayInfo(int, 10)
+    array_info = ArrayInfo(int, 1, [10])
+    expected_jani_expr = array_value_operator([int(0)] * 10)
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)

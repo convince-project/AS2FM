@@ -12,7 +12,7 @@
                         "exp": {
                             "left": {
                                 "op": "=",
-                                "left": "string_event.string",
+                                "left": "string_event__string",
                                 "right": {
                                     "comment": "'some information'",
                                     "op": "av",
@@ -58,7 +58,7 @@
                         "exp": {
                             "left": {
                                 "op": "=",
-                                "left": "comp_result.res",
+                                "left": "comp_result__res",
                                 "right": 1
                             },
                             "op": "∧",
@@ -81,7 +81,7 @@
                     "exp": {
                         "op": "F",
                         "exp": {
-                            "left": "string_eval.comparison",
+                            "left": "string_eval__comparison",
                             "op": "∧",
                             "right": "string_eval.valid"
                         }
@@ -104,7 +104,7 @@
                         "exp": {
                             "left": {
                                 "op": "=",
-                                "left": "comp_result.res",
+                                "left": "comp_result__res",
                                 "right": -1
                             },
                             "op": "∧",

@@ -29,6 +29,7 @@ from as2fm.jani_generator.jani_entries import (
     JaniValue,
     JaniVariable,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
@@ -93,10 +94,13 @@ class JaniModel:
         variable_type: Type,
         variable_init_expression: Optional[ValidValue] = None,
         transient: bool = False,
+        array_info: Optional[ArrayInfo] = None,
     ):
         if variable_init_expression is None or isinstance(variable_init_expression, JaniExpression):
             self.add_jani_variable(
-                JaniVariable(variable_name, variable_type, variable_init_expression, transient)
+                JaniVariable(
+                    variable_name, variable_type, variable_init_expression, transient, array_info
+                )
             )
         else:
             assert JaniValue(
@@ -108,6 +112,7 @@ class JaniModel:
                     variable_type,
                     JaniExpression(variable_init_expression),
                     transient,
+                    array_info,
                 )
             )
 

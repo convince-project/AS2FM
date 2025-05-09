@@ -26,7 +26,7 @@
               "op": "∧",
               "left": {
                 "op": ">",
-                "left": "counter.data",
+                "left": "counter__data",
                 "right": 9
               },
               "right": "success.valid"

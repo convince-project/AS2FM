@@ -12,7 +12,7 @@
                         "exp": {
                             "left": {
                                 "op": "=",
-                                "left": "new_int.data",
+                                "left": "new_int__data",
                                 "right": 20
                             },
                             "op": "∧",
@@ -20,12 +20,12 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "entry.data",
+                                    "left": "entry__data",
                                     "right": 10
                                 },
                                 "right": {
                                     "op": "=",
-                                    "left": "exit.data",
+                                    "left": "exit__data",
                                     "right": 9
                                 }
                             }

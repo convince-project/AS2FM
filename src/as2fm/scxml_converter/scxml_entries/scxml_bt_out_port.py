@@ -17,6 +17,8 @@
 SCXML set output for Behavior Trees' Ports.
 """
 
+from typing import Dict, List
+
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
@@ -30,6 +32,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtSetValueOutputPort(ScxmlSend):
@@ -42,7 +45,9 @@ class BtSetValueOutputPort(ScxmlSend):
         return "bt_set_output"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "BtSetValueOutputPort":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+    ) -> "BtSetValueOutputPort":
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")
@@ -72,15 +77,17 @@ class BtSetValueOutputPort(ScxmlSend):
         ), f"Error: SCXML BT Port {self._key} is not referencing a blackboard variable."
         self._blackboard_reference = get_blackboard_variable_name(port_value)
 
-    def as_plain_scxml(self, _) -> ScxmlSend:
+    def as_plain_scxml(self, _, __) -> List[ScxmlSend]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         assert (
             self._blackboard_reference is not None
         ), "Error: SCXML BT Output Port: must run 'update_bt_ports_values' before 'as_plain_scxml'"
-        return ScxmlSend(
-            generate_bt_blackboard_set(self._blackboard_reference),
-            [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
-        )
+        return [
+            ScxmlSend(
+                generate_bt_blackboard_set(self._blackboard_reference),
+                [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
+            )
+        ]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML BT Output Port: invalid parameters."

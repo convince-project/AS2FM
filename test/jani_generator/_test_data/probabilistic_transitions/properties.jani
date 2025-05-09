@@ -17,7 +17,7 @@
                                     "op": "≥",
                                     "left": {
                                         "op": "aa",
-                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "exp": "topic_state_msg__ros_fields__data",
                                         "index": 3
                                     },
                                     "right": 70,
@@ -27,7 +27,7 @@
                                     "op": "≥",
                                     "left": {
                                         "op": "aa",
-                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "exp": "topic_state_msg__ros_fields__data",
                                         "index": 4
                                     },
                                     "right": 210,
@@ -40,7 +40,7 @@
                                     "op": "≥",
                                     "left": {
                                         "op": "aa",
-                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "exp": "topic_state_msg__ros_fields__data",
                                         "index": 5
                                     },
                                     "right": 420,
@@ -50,7 +50,7 @@
                                     "op": "=",
                                     "left": {
                                         "op": "aa",
-                                        "exp": "topic_state_msg.ros_fields__data",
+                                        "exp": "topic_state_msg__ros_fields__data",
                                         "index": 6
                                     },
                                     "right": 1000,

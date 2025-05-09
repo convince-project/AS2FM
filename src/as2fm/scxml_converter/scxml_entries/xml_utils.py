@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable, List, Optional, Type, Union
+from typing import Dict, Iterable, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class XmlUtilsError(Exception):
@@ -69,7 +70,9 @@ def get_xml_attribute(
 
 
 def get_children_as_scxml(
-    xml_tree: XmlElement, scxml_types: Iterable[Type[ScxmlBase]]
+    xml_tree: XmlElement,
+    custom_data_types: Dict[str, XmlStructDefinition],
+    scxml_types: Iterable[Type[ScxmlBase]],
 ) -> List[ScxmlBase]:
     """
     Load the children of the xml tree as scxml entries.
@@ -84,13 +87,14 @@ def get_children_as_scxml(
         if is_comment(child):
             continue
         if child.tag in tag_to_type:
-            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child))
+            scxml_list.append(tag_to_type[child.tag].from_xml_tree(child, custom_data_types))
     return scxml_list
 
 
 def read_value_from_xml_child(
     xml_tree: XmlElement,
     child_tag: str,
+    custom_data_types: Dict[str, XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     *,
     none_allowed: bool = False,
@@ -133,7 +137,7 @@ def read_value_from_xml_child(
         return None
     # Remove string from valid types, if present
     valid_types = tuple(t for t in valid_types if t != str)
-    scxml_entry = get_children_as_scxml(xml_child[0], valid_types)
+    scxml_entry = get_children_as_scxml(xml_child[0], custom_data_types, valid_types)
     if len(scxml_entry) == 0:
         log_error(
             xml_tree,
@@ -147,6 +151,7 @@ def read_value_from_xml_arg_or_child(
     scxml_type: Type[ScxmlBase],
     xml_tree: XmlElement,
     tag_name: str,
+    custom_data_types: Dict[str, XmlStructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:
@@ -165,7 +170,7 @@ def read_value_from_xml_arg_or_child(
     read_value = get_xml_attribute(scxml_type, xml_tree, tag_name, undefined_allowed=True)
     if read_value is None:
         read_value = read_value_from_xml_child(
-            xml_tree, tag_name, valid_types, none_allowed=none_allowed
+            xml_tree, tag_name, custom_data_types, valid_types, none_allowed=none_allowed
         )
     if not none_allowed:
         if read_value is None:

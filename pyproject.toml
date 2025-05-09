@@ -24,10 +24,12 @@ dependencies = [
     # jani_generator
     "jsonschema",
     "esprima",
+    "escodegen",
     # jani_visualizer
     "webcolors",
     "plantuml",
     # scxml_converter
+    "typing-extensions",
     # trace_visualizer
     "pandas",
     "Pillow",

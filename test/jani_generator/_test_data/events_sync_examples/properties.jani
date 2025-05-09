@@ -13,12 +13,12 @@
                     "op": "∧",
                     "left": {
                       "op": "<",
-                      "left": "msg_a.seq",
+                      "left": "msg_a__seq",
                       "right": 100
                     },
                     "right": {
                       "op": "<",
-                      "left": "msg_b.seq",
+                      "left": "msg_b__seq",
                       "right": 100
                     }
                   },
@@ -26,12 +26,12 @@
                     "op": "∧",
                     "left": {
                       "op": "=",
-                      "left": "msg_a.seq",
+                      "left": "msg_a__seq",
                       "right": 50
                     },
                     "right": {
                       "op": "=",
-                      "left": "msg_b.seq",
+                      "left": "msg_b__seq",
                       "right": 25
                     }
                   }

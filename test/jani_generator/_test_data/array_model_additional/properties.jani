@@ -14,20 +14,20 @@
                     "left": {
                       "op": "∧",
                       "left": {
-                        "comment": "Check for all_data.unbound_array and all_data.bound_array",
+                        "comment": "Check for all_data__unbound_array and all_data__bound_array",
                         "op": "∧",
                         "left": {
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data.unbound_array.length",
+                            "left": "all_data__unbound_array.d1_len",
                             "right": 3
                           },
                           "right": {
                             "op": "=",
                             "left": {
                               "op": "aa",
-                              "exp": "all_data.unbound_array",
+                              "exp": "all_data__unbound_array",
                               "index": 2
                             },
                             "right": 3
@@ -37,14 +37,14 @@
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data.bound_array.length",
+                            "left": "all_data__bound_array.d1_len",
                             "right": 4
                           },
                           "right": {
                             "op": "=",
                             "left": {
                               "op": "aa",
-                              "exp": "all_data.bound_array",
+                              "exp": "all_data__bound_array",
                               "index": 3
                             },
                             "right": 7
@@ -58,14 +58,14 @@
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data.filled_bound_array.length",
+                            "left": "all_data__filled_bound_array.d1_len",
                             "right": 6
                           },
                           "right": {
                             "op": "=",
                             "left": {
                               "op": "aa",
-                              "exp": "all_data.filled_bound_array",
+                              "exp": "all_data__filled_bound_array",
                               "index": 5
                             },
                             "right": 11
@@ -75,14 +75,14 @@
                           "op": "∧",
                           "left": {
                             "op": "=",
-                            "left": "all_data.filled_unbound_array.length",
+                            "left": "all_data__filled_unbound_array.d1_len",
                             "right": 7
                           },
                           "right": {
                             "op": "=",
                             "left": {
                               "op": "aa",
-                              "exp": "all_data.filled_unbound_array",
+                              "exp": "all_data__filled_unbound_array",
                               "index": 6
                             },
                             "right": 8
@@ -95,14 +95,14 @@
                       "op": "∧",
                       "left": {
                         "op": "=",
-                        "left": "all_data.explicit_array_param.length",
+                        "left": "all_data__explicit_array_param.d1_len",
                         "right": 4
                       },
                       "right": {
                         "op": "=",
                         "left": {
                           "op": "aa",
-                          "exp": "all_data.explicit_array_param",
+                          "exp": "all_data__explicit_array_param",
                           "index": 3
                         },
                         "right": 4

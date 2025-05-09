@@ -13,7 +13,7 @@
                             "op": "∧",
                             "left": {
                                 "op": "=",
-                                "left": "bt_1000_response.status",
+                                "left": "bt_1000_response__status",
                                 "right": 1,
                                 "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
                             },
@@ -24,19 +24,19 @@
                                     "op": "∧",
                                     "left": {
                                         "op": "=",
-                                        "left": "topic_tick_count_0_msg.ros_fields__data",
+                                        "left": "topic_tick_count_0_msg__ros_fields__data",
                                         "right": 1
                                     },
                                     "right": {
                                         "op": "∧",
                                         "left": {
                                             "op": "=",
-                                            "left": "topic_tick_count_1_msg.ros_fields__data",
+                                            "left": "topic_tick_count_1_msg__ros_fields__data",
                                             "right": 3
                                         },
                                         "right": {
                                                 "op": "=",
-                                                "left": "topic_tick_count_2_msg.ros_fields__data",
+                                                "left": "topic_tick_count_2_msg__ros_fields__data",
                                                 "right": 1
                                         }
                                     }
@@ -46,19 +46,19 @@
                                     "op": "∧",
                                     "left": {
                                         "op": "=",
-                                        "left": "topic_reset_count_0_msg.ros_fields__data",
+                                        "left": "topic_reset_count_0_msg__ros_fields__data",
                                         "right": 1
                                     },
                                     "right": {
                                         "op": "∧",
                                         "left": {
                                             "op": "=",
-                                            "left": "topic_reset_count_1_msg.ros_fields__data",
+                                            "left": "topic_reset_count_1_msg__ros_fields__data",
                                             "right": 1
                                         },
                                         "right": {
                                                 "op": "=",
-                                                "left": "topic_reset_count_2_msg.ros_fields__data",
+                                                "left": "topic_reset_count_2_msg__ros_fields__data",
                                                 "right": 1
                                         }
                                     }

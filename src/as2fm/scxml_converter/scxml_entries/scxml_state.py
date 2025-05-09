@@ -17,7 +17,7 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import List, Sequence, Union
+from typing import Dict, List, Sequence, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -47,7 +47,9 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
     valid_execution_body,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, generate_tag_to_class_map
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlState(ScxmlBase):
@@ -58,14 +60,16 @@ class ScxmlState(ScxmlBase):
         return "state"
 
     @staticmethod
-    def _transitions_from_xml(state_id: str, xml_tree: XmlElement) -> List[ScxmlTransition]:
+    def _transitions_from_xml(
+        state_id: str, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
         tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
         for child in xml_tree:
             if is_comment(child):
                 continue
             elif child.tag in tag_to_cls:
-                transitions.append(tag_to_cls[child.tag].from_xml_tree(child))
+                transitions.append(tag_to_cls[child.tag].from_xml_tree(child, custom_data_types))
             else:
                 assert child.tag in (
                     "onentry",
@@ -76,7 +80,9 @@ class ScxmlState(ScxmlBase):
         return transitions
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlState":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (
             xml_tree.tag == ScxmlState.get_tag_name()
@@ -94,13 +100,13 @@ class ScxmlState(ScxmlBase):
             len(on_exit) <= 1
         ), f"Error: SCXML state: {len(on_exit)} onexit tags found, expected 0 or 1."
         if len(on_entry) > 0:
-            for exec_entry in execution_body_from_xml(on_entry[0]):
+            for exec_entry in execution_body_from_xml(on_entry[0], custom_data_types):
                 scxml_state.append_on_entry(exec_entry)
         if len(on_exit) > 0:
-            for exec_entry in execution_body_from_xml(on_exit[0]):
+            for exec_entry in execution_body_from_xml(on_exit[0], custom_data_types):
                 scxml_state.append_on_exit(exec_entry)
         # Get the transitions in the state body
-        for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree):
+        for body_entry in ScxmlState._transitions_from_xml(id_, xml_tree, custom_data_types):
             scxml_state.add_transition(body_entry)
         return scxml_state
 
@@ -286,28 +292,20 @@ class ScxmlState(ScxmlBase):
         plain_body = all(transition.is_plain_scxml() for transition in self._body)
         return plain_entry and plain_exit and plain_body
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlState":
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlState"]:
         """Convert the ROS-specific entries to be plain SCXML"""
         set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
         set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
-        plain_entry = as_plain_execution_body(self._on_entry, ros_declarations)
-        plain_exit = as_plain_execution_body(self._on_exit, ros_declarations)
+        plain_entry = as_plain_execution_body(self._on_entry, struct_declarations, ros_declarations)
+        plain_exit = as_plain_execution_body(self._on_exit, struct_declarations, ros_declarations)
         plain_body: List[ScxmlTransition] = []
         for entry in self._body:
-            plain_entries = entry.as_plain_scxml(ros_declarations)
-            if isinstance(plain_entries, ScxmlTransition):
-                plain_body.append(plain_entries)
-            elif isinstance(plain_entries, list) and all(
-                isinstance(e, ScxmlTransition) for e in plain_entries
-            ):
-                # Some special entries return multiple transitions
-                plain_body.extend(plain_entries)
-            else:
-                raise ValueError(
-                    f"Error: SCXML state {self._id}: found invalid transition in "
-                    "state body after conversion to plain SCXML."
-                )
-        return ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)
+            plain_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+        return [ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."

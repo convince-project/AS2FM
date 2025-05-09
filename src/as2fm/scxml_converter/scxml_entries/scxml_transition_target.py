@@ -17,7 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 from warnings import warn
 
 from lxml import etree as ET
@@ -39,8 +39,10 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     valid_execution_body,
     valid_execution_body_entry_types,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlTransitionTarget(ScxmlBase):
@@ -51,7 +53,9 @@ class ScxmlTransitionTarget(ScxmlBase):
         return "target"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlTransitionTarget":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlTransitionTarget":
         """Create a ScxmlTransitionTarget object from an XML tree."""
         assert xml_tree.tag == ScxmlTransitionTarget.get_tag_name(), (
             "Error: SCXML transition target: XML root tag name is "
@@ -68,7 +72,7 @@ class ScxmlTransitionTarget(ScxmlBase):
             probability = float(probability_str)
             if probability == 0.0:
                 warn("Warning: SCXML transition target: Probability is zero.")
-        exec_body = execution_body_from_xml(xml_tree)
+        exec_body = execution_body_from_xml(xml_tree, custom_data_types)
         return ScxmlTransitionTarget(target_id, probability, exec_body)
 
     def __init__(
@@ -188,8 +192,10 @@ class ScxmlTransitionTarget(ScxmlBase):
         return is_plain_execution_body(self._body)
 
     def as_plain_scxml(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> "ScxmlTransitionTarget":
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlTransitionTarget"]:
         assert isinstance(
             ros_declarations, ScxmlRosDeclarationsContainer
         ), "Error: SCXML transition target: invalid ROS declarations container."
@@ -200,8 +206,10 @@ class ScxmlTransitionTarget(ScxmlBase):
         assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
         if self._body is not None:
             set_execution_body_callback_type(self._body, self._cb_type)
-            new_body = [entry.as_plain_scxml(ros_declarations) for entry in self._body]
-        return ScxmlTransitionTarget(self._target_id, self._probability, new_body)
+            new_body = []
+            for entry in self._body:
+                new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+        return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML transition target: invalid."

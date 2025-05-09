@@ -17,7 +17,10 @@
 Generate full expressions in Jani
 """
 
+from typing import MutableSequence, Union
+
 from as2fm.jani_generator.jani_entries import JaniDistribution, JaniExpression
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 
 # Math operators
@@ -128,15 +131,32 @@ def if_operator(condition, true_value, false_value) -> JaniExpression:
 
 
 # array operators
-def array_create_operator(var, length, exp) -> JaniExpression:
+def array_create_operator(array_info: ArrayInfo, *, curr_dim: int = 1) -> JaniExpression:
     """
-    Generate an array initialization expression
+    Generate an empty array based on the provided array_info
 
-    :param var: The name of an int variable, used to iterate over the array indexes
-    :param length: The length of the array
-    :param exp: The expression to initialize the array with, based on the variable in var
+    :param array_info: A struct containing all information related to the array to create.
+    :param curr_dim: The current dimension under expansion. Used for recursion.
     """
-    return JaniExpression({"op": "ac", "var": var, "length": length, "exp": exp})
+    array_iterator_var = f"__array_iterator_dim_{curr_dim}"
+    default_expr = JaniExpression(0)
+    if array_info.array_dimensions > 1:
+        default_expr = array_create_operator(
+            ArrayInfo(
+                array_info.array_type,
+                array_info.array_dimensions - 1,
+                array_info.array_max_sizes[1:],
+            ),
+            curr_dim=curr_dim + 1,
+        )
+    return JaniExpression(
+        {
+            "op": "ac",
+            "var": array_iterator_var,
+            "length": array_info.array_max_sizes[0],
+            "exp": default_expr,
+        }
+    )
 
 
 def array_access_operator(exp, index) -> JaniExpression:
@@ -149,13 +169,23 @@ def array_access_operator(exp, index) -> JaniExpression:
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
 
 
-def array_value_operator(elements: list) -> JaniExpression:
+def array_value_operator(
+    elements: MutableSequence[Union[MutableSequence, float, int]],
+) -> JaniExpression:
     """
     Generate an array value expression
 
     :param elements: The elements of the array
     """
-    return JaniExpression({"op": "av", "elements": elements})
+    elements_expressions = [
+        (
+            array_value_operator(array_element)
+            if isinstance(array_element, MutableSequence)
+            else array_element
+        )
+        for array_element in elements
+    ]
+    return JaniExpression({"op": "av", "elements": elements_expressions})
 
 
 def distribution_expression(distribution: str, arguments: list) -> JaniDistribution:

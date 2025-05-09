@@ -128,6 +128,8 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
         )
     curr_time_var = "current_time"
     scxml_root = ScxmlRoot(GLOBAL_TIMER_AUTOMATON)
+    # Explicitly set that there are no custom types
+    scxml_root.set_custom_data_types({})
     clock_topic_decl = RosTopicPublisher("clock", "builtin_interfaces/Time")
     scxml_root.add_ros_declaration(clock_topic_decl)
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData(curr_time_var, "0", "int64")]))

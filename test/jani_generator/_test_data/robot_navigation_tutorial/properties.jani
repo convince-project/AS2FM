@@ -15,7 +15,7 @@
                       "op": "<",
                       "left": {
                         "op": "abs",
-                        "exp": "topic_robot_pose_msg.ros_fields__x"
+                        "exp": "topic_robot_pose_msg__ros_fields__x"
                         },
                       "right": 10.0
                       },
@@ -23,7 +23,7 @@
                       "op": "<",
                       "left": {
                         "op": "abs",
-                        "exp": "topic_robot_pose_msg.ros_fields__y"
+                        "exp": "topic_robot_pose_msg__ros_fields__y"
                         },
                       "right": 10.0
                     }
@@ -37,7 +37,7 @@
                         "op": "abs",
                         "exp": {
                           "op": "-",
-                          "left": "topic_robot_pose_msg.ros_fields__x",
+                          "left": "topic_robot_pose_msg__ros_fields__x",
                           "right": 5.0
                         }
                       },
@@ -49,7 +49,7 @@
                         "op": "abs",
                         "exp": {
                           "op": "-",
-                          "left": "topic_robot_pose_msg.ros_fields__y",
+                          "left": "topic_robot_pose_msg__ros_fields__y",
                           "right": -2.0
                         }
                       },

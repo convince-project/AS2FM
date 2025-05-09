@@ -28,13 +28,20 @@ def test_jani_expression_expansion_no_distribution():
     """
     Test the expansion of an expression containing no distribution (should stay the same).
     """
+    # Simple int
     jani_entry = generate_jani_expression(5)
     jani_expressions = expand_distribution_expressions(jani_entry, n_options=100)
     assert len(jani_expressions) == 1, "Expression without distribution should not be expanded!"
     assert jani_entry.as_dict() == jani_expressions[0].as_dict()
+    # Multiplication operator
     jani_entry = generate_jani_expression(
         {"op": "*", "left": 2, "right": {"op": "floor", "exp": 1.1}}
     )
+    jani_expressions = expand_distribution_expressions(jani_entry, n_options=100)
+    assert len(jani_expressions) == 1, "Expression without distribution should not be expanded!"
+    assert jani_entry.as_dict() == jani_expressions[0].as_dict()
+    # Array value operator
+    jani_entry = generate_jani_expression({"op": "av", "elements": [1, 2, 3, 4]})
     jani_expressions = expand_distribution_expressions(jani_entry, n_options=100)
     assert len(jani_expressions) == 1, "Expression without distribution should not be expanded!"
     assert jani_entry.as_dict() == jani_expressions[0].as_dict()
@@ -44,8 +51,8 @@ def test_jani_expression_expansion_distribution():
     """
     Test the expansion of an expression with only a distribution.
     """
-    # Simplest case, just a distribution. Boundaries are included
     n_options = 100
+    # Simplest case, just a distribution. Boundaries are included
     jani_distribution = generate_jani_expression({"distribution": "Uniform", "args": [1.0, 3.0]})
     jani_expressions = expand_distribution_expressions(jani_distribution, n_options=n_options)
     assert len(jani_expressions) == n_options, "Base distribution was not expanded!"
@@ -77,6 +84,20 @@ def test_jani_expression_expansion_distribution():
     assert jani_expressions[99].as_dict() == {
         "op": "floor",
         "exp": {"op": "*", "left": 0.99, "right": 20},
+    }
+    # Test the expansion of a random element in an array distribution
+    jani_distribution = generate_jani_expression(
+        {"op": "av", "elements": [1.0, {"distribution": "Uniform", "args": [0.0, 1.0]}, 3.0, 4.0]}
+    )
+    jani_expressions = expand_distribution_expressions(jani_distribution, n_options=n_options)
+    assert len(jani_expressions) == n_options, "Distribution in array was not expanded!"
+    assert jani_expressions[10].as_dict() == {
+        "op": "av",
+        "elements": [1.0, 0.1, 3.0, 4.0],
+    }
+    assert jani_expressions[99].as_dict() == {
+        "op": "av",
+        "elements": [1.0, 0.99, 3.0, 4.0],
     }
 
 
@@ -138,4 +159,26 @@ def test_jani_expression_expansion_expr_with_multiple_distribution():
         "op": "*",
         "left": 0.0,
         "right": {"op": "*", "left": 2, "right": 0.5},
+    }
+    # Multiple random numbers in an array
+    jani_distribution = generate_jani_expression(
+        {
+            "op": "av",
+            "elements": [
+                1.0,
+                {"distribution": "Uniform", "args": [0.0, 1.0]},
+                3.0,
+                {"distribution": "Uniform", "args": [0.0, 1.0]},
+            ],
+        }
+    )
+    jani_expressions = expand_distribution_expressions(jani_distribution, n_options=n_options)
+    assert len(jani_expressions) == n_options**2, "Distribution in array was not expanded!"
+    assert jani_expressions[10].as_dict() == {
+        "op": "av",
+        "elements": [1.0, 0.0, 3.0, 0.5],
+    }
+    assert jani_expressions[-1].as_dict() == {
+        "op": "av",
+        "elements": [1.0, 0.95, 3.0, 0.95],
     }

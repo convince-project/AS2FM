@@ -34,6 +34,7 @@ from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
     parse_main_xml,
 )
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 from .utils import json_jani_properties_match
@@ -65,7 +66,7 @@ class TestConversion(unittest.TestCase):
                 </onentry>
             </state>
         </scxml>"""
-        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml))
+        scxml_root = ScxmlRoot.from_xml_tree(ET.fromstring(basic_scxml), [])
         eh = EventsHolder()
         jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
@@ -83,7 +84,7 @@ class TestConversion(unittest.TestCase):
             os.path.dirname(__file__), "_test_data", "battery_example", "battery_drainer.scxml"
         )
 
-        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer)
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_drainer, {})
         eh = EventsHolder()
         jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
@@ -110,7 +111,7 @@ class TestConversion(unittest.TestCase):
             os.path.dirname(__file__), "_test_data", "battery_example", "battery_manager.scxml"
         )
 
-        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager)
+        scxml_root = ScxmlRoot.from_scxml_file(scxml_battery_manager, {})
         eh = EventsHolder()
         jani_automaton = convert_scxml_root_to_jani_automaton(scxml_root, eh, 100)
 
@@ -137,8 +138,8 @@ class TestConversion(unittest.TestCase):
         test_data_folder = os.path.join(os.path.dirname(__file__), "_test_data", "battery_example")
         scxml_battery_drainer_path = os.path.join(test_data_folder, "battery_drainer.scxml")
         scxml_battery_manager_path = os.path.join(test_data_folder, "battery_manager.scxml")
-        scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path)
-        scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path)
+        scxml_battery_drainer = ScxmlRoot.from_scxml_file(scxml_battery_drainer_path, {})
+        scxml_battery_manager = ScxmlRoot.from_scxml_file(scxml_battery_manager_path, {})
 
         in_scxmls = [scxml_battery_drainer, scxml_battery_manager]
         jani_model = convert_multiple_scxmls_to_jani(in_scxmls, 100)
@@ -180,7 +181,13 @@ class TestConversion(unittest.TestCase):
             variables,
         )
         self.assertIn(
-            {"name": "level.data", "type": "int", "initial-value": 0, "transient": False}, variables
+            {
+                "name": f"level{MEMBER_ACCESS_SUBSTITUTION}data",
+                "type": "int",
+                "initial-value": 0,
+                "transient": False,
+            },
+            variables,
         )
 
         # Check full jani file
@@ -214,6 +221,7 @@ class TestConversion(unittest.TestCase):
         trace_length_limit: int = 10_000,
         n_traces_limit: int = 10_000,
         skip_properties_load_check: bool = False,
+        disable_cache: bool = False,
     ):
         """
         Testing the conversion of the model xml file with the entrypoint.
@@ -228,6 +236,7 @@ class TestConversion(unittest.TestCase):
         :param trace_length_limit: the max length a single trace can reach
         :param n_traces_limit: The max. number of iterations to run in SMC.
         :param skip_properties_load_check: Disable the equality check for the loaded properties.
+        :param disable_cache: Whether to disable cache in smc_storm.
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
         xml_main_path = os.path.join(test_data_dir, model_xml)
@@ -260,9 +269,14 @@ class TestConversion(unittest.TestCase):
             ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
-            run_smc_storm_with_output(
+            storm_command = (
                 f"--model {output_path} --properties-names {property_name} "
-                + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}",
+                + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}"
+            )
+            if disable_cache:
+                storm_command += " --disable-explored-states-caching"
+            run_smc_storm_with_output(
+                storm_command,
                 [property_name, output_path],
                 [],
                 expected_result_probability,
@@ -584,6 +598,15 @@ class TestConversion(unittest.TestCase):
         """Test support for nested objects in ros types."""
         self._test_with_main(
             "nested_data_ros", property_name="success", expected_result_probability=1.0
+        )
+
+    def test_data_structs(self):
+        """Test support for custom struct declarations."""
+        self._test_with_main(
+            "data_structs",
+            property_name="success",
+            expected_result_probability=1.0,
+            disable_cache=True,
         )
 
     def test_command_line_output_with_line_numbers(self):
