@@ -47,5 +47,21 @@ def test_array_dim_4_dims():
     assert get_array_type_and_sizes(input_array) == (int, expected_dims)
 
 
+def test_array_unbalanced():
+    test_arrays = [
+        [[1], [[1, 2, 3]], []],
+        [[[1, 2, 3]], [1]],
+        [[[1, []]]],
+        [[], [[1], [[1, 2]]]],
+        [[[1], [[1, 2]]], []],
+        [[[[1, 2]]], [[[[]]]]],
+        [[[[[]]]], [[[1, 2]]], []],
+    ]
+    for test_array in test_arrays:
+        with pytest.raises(ValueError):
+            output = get_array_type_and_sizes(test_array)
+            print(f"{test_array} generates {output}")
+
+
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])

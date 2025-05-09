@@ -136,7 +136,8 @@ def get_array_type_and_sizes(
     Exemplary output for 3-dimensional array [ [], [ [1], [1,2.0], [] ] ] is:
     tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])
     """
-    assert is_valid_array(in_sequence)
+    if not is_valid_array(in_sequence):
+        raise ValueError(f"Invalid sub-array found: {in_sequence}")
     if isinstance(in_sequence, str):
         return get_array_type_and_sizes(convert_string_to_int_array(in_sequence))
     if len(in_sequence) == 0:
@@ -149,19 +150,30 @@ def get_array_type_and_sizes(
     # Recursive part
     curr_type: Optional[Type[Union[int, float]]] = None
     base_size = len(in_sequence)
-    max_depth = 0
+    children_length = 0
     child_sizes = []
     for seq_entry in in_sequence:
         single_type, single_sizes = get_array_type_and_sizes(seq_entry)
-        # Handle types
+        child_len = len(single_sizes)
         if curr_type is None:
+            if single_type is not None and child_len < children_length:
+                raise ValueError("Unbalanced list found.")
+            # We do not know yet the max depth of the children branches
+            children_length = max(children_length, child_len)
             curr_type = single_type
-        elif curr_type == int:
-            curr_type = single_type
-        # Store sizes recursively
+        else:
+            # We have to make sure the max size doesn't grow
+            if single_type is None:
+                if child_len > children_length:
+                    raise ValueError("Unbalanced list found.")
+            else:
+                if child_len != children_length:
+                    raise ValueError("Unbalanced list found.")
+                if curr_type == int:
+                    curr_type = single_type
         child_sizes.append(single_sizes)
-        max_depth = max(max_depth, len(single_sizes) + 1)
-    # At this point, we a nested structure of lists of length 2
+    # At this point, child_sizes contains a nested structure of lists of length 2
+    max_depth = children_length + 1
     processed_sizes: List[Union[int, List]] = []
     for level in range(max_depth):
         if level == 0:
