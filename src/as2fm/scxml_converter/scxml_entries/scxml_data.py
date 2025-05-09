@@ -254,11 +254,7 @@ class ScxmlData(ScxmlBase):
 
     def is_plain_scxml(self) -> bool:
         """Check if the data type is a base type."""
-        if not self.check_validity():
-            return False
-        if not self._is_plain_type():
-            return False
-        return True
+        return self.check_validity() and self._is_plain_type()
 
     def as_plain_scxml(
         self,

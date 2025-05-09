@@ -66,7 +66,7 @@ class RosActionThread(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
     ) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)
@@ -75,7 +75,7 @@ class RosActionThread(ScxmlBase):
         n_threads = int(n_threads)
         assert n_threads > 0, f"Error: SCXML Action Thread: invalid n. of threads ({n_threads})."
         initial_state = get_xml_attribute(RosActionThread, xml_tree, "initial")
-        datamodel = get_children_as_scxml(xml_tree, [], (ScxmlDataModel,))
+        datamodel = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
         scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, [], (ScxmlState,))
         assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
