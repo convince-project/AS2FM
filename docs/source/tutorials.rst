@@ -114,7 +114,7 @@ The output is a JANI file called `main.jani` that will be located in the same fo
 Hands-on In-depth Tutorial Including Verification: Fetch & Carry
 -----------------------------------------------------------------
 
-In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with SMC Storm, our statistical model checking tool. 
+In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with SMC Storm, our statistical model checking tool.
 We will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and features in the behavior tree we make in the end sure that all properties hold.
 
 We assume some background in computer science or as a robotics developer but no knowledge about formal methods and model checking is required.
@@ -180,7 +180,7 @@ The third image depicts the behavior of the BT plugin `bt_pick_action.scxml` in 
 
 The last image depicts the behavior of the BT plugin `bt_place_action.scxml`. When called, the action just immediately tries to successfully execute, no matter if there is an object in the gripper or not, when the BT is ticked. When the BT is halted or the action is aborted `tmp_result` is set to false, otherwise it is set to true. Based on that the return status of the tree is then published.
 
-As a last step we are having a closer look at the environment model in `world.scxml`. 
+As a last step we are having a closer look at the environment model in `world.scxml`.
 
 * First, it is indicated that the model makes use of dependencies from the `delib_ws_24_interfaces` package, where custom ROS actions are defined. In the last line the ROS topic publisher for the snack type is declared.
 
@@ -224,12 +224,10 @@ From this model in SCXML we can generate a JANI representation with AS2FM by exe
 
 This produces the same model in JANI in the file `main.jani`.
 
-
-Model Checking with SMC Storm 
+Model Checking with SMC Storm
 ```````````````````````````````
-
 We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table This can be expressed as P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid), where F is the finally operator of linear temporal logic (LTL) and the first operand of the logical and expresses that the snack is located at the table (id 1). The second operand is needed to make sure TODO.
-The property is formulated in `properties.jani`. 
+The property is formulated in `properties.jani`.
 
 This property can be checked by calling SMC Storm on the JANI file generated before with AS2FM. For more details on SMC Storm you can have a look the `SMC Storm repository <https://github.com/convince-project/smc_storm>`_.
 
