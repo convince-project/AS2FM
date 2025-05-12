@@ -15,7 +15,7 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Optional, Type
+from typing import Optional, Type, Union
 
 from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniVariable
@@ -50,7 +50,7 @@ def get_expression_array_length(expr: JaniExpression) -> int:
 
 def generate_jani_variable(
     var_name: str, var_type: Type[ValidJaniTypes], array_info: Optional[ArrayInfo] = None
-):
+) -> Union[JaniExpression, JaniVariable]:
     """Helper to make a JaniVariable object."""
     if is_array_type(var_type):
         assert array_info is not None, f"No array info  provided for array variable {var_name}."

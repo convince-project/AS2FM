@@ -260,6 +260,7 @@ def _parse_ecmascript_to_jani_expression(
                     return JaniExpression(get_array_length_var_name(object_expr_str, 1))
                 else:
                     # We need to count how many levels deep we need to go (n. of `ac` in object)
+                    # TODO: Issue #102
                     raise NotImplementedError("Multi-Dimensional arrays are work in progress.")
             else:
                 # We are accessing a generic sub-field, just re-assemble the variable name

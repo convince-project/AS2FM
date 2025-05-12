@@ -55,6 +55,7 @@ class EventReceiver:
         self.edge_action_name = edge_action_name
 
 
+# TODO: Make type holder data structure consistent over complete AS2FM (issue #101)
 @dataclass
 class EventParamType:
     """Information related to a parameter type."""

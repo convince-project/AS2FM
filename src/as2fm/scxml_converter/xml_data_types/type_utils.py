@@ -70,17 +70,15 @@ class ArrayInfo:
     is_base_type: bool = True
 
     def __post_init__(self):
-        if self.is_base_type:
-            assert (
-                self.array_type in ARRAY_BASE_TYPES
-            ), f"array_type {self.array_type} != (int, float, None)"
-        assert (
-            isinstance(self.array_dimensions, int) and self.array_dimensions > 0
-        ), f"array_dimension is {self.array_dimensions}, but should be at least 1"
-        assert all(
+        if self.is_base_type and self.array_type not in ARRAY_BASE_TYPES:
+            raise ValueError(f"array_type {self.array_type} != (int, float, None)")
+        if not (isinstance(self.array_dimensions, int) and self.array_dimensions > 0):
+            raise ValueError(f"array_dimension is {self.array_dimensions}: it should be at least 1")
+        if not all(
             d_size is None or (isinstance(d_size, int) and d_size > 0)
             for d_size in self.array_max_sizes
-        ), f"Invalid 'array_max_sizes': {self.array_max_sizes}"
+        ):
+            raise ValueError(f"Invalid 'array_max_sizes': {self.array_max_sizes}")
 
     def substitute_unbounded_dims(self, max_size: int):
         """
