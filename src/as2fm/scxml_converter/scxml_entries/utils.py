@@ -38,7 +38,6 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     MEMBER_ACCESS_SUBSTITUTION,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []
@@ -109,13 +108,13 @@ class CallbackType(Enum):
             return CallbackType.TRANSITION
 
 
-def generate_tag_to_class_map(cls: Type["ScxmlBase"]) -> Dict[str, Type["ScxmlBase"]]:
+def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
     """
     Generate a map from (xml) tags to their associated classes.
 
     The map is generated for the provided class and all its subclasses.
     """
-    ret_dict: Dict[str, Type["ScxmlBase"]] = {}
+    ret_dict: Dict[str, Type[ScxmlBase]] = {}
     try:
         tag_name = cls.get_tag_name()
         ret_dict.update({tag_name: cls})
@@ -373,17 +372,6 @@ def _split_array_indexes_out(
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
 
-def convert_expression_with_object_assignment(
-    expr: str, custom_data_type: XmlStructDefinition, elem: Optional[XmlElement] = None
-) -> List[str]:
-    """
-    e.g. `x.ps[0]` =>
-         `['x.ps[0].x', 'x.ps[0].y']`.
-
-    """
-    raise NotImplementedError("todo ...")
-
-
 def convert_expression_with_object_arrays(
     expr: str,
     elem: Optional[XmlElement] = None,
@@ -418,7 +406,7 @@ def all_non_empty_strings(*in_args) -> bool:
 
 
 def is_non_empty_string(
-    scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: Optional[str]
+    scxml_type: Type[ScxmlBase], arg_name: str, arg_value: Optional[str]
 ) -> bool:
     """
     Check if a string is non-empty.
@@ -437,7 +425,7 @@ def is_non_empty_string(
     return valid_str
 
 
-def to_integer(scxml_type: Type["ScxmlBase"], arg_name: str, arg_value: str) -> Optional[int]:
+def to_integer(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> Optional[int]:
     """
     Try to convert a string to an integer. Return None if not possible.
     """

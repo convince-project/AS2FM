@@ -295,10 +295,7 @@ def interpret_top_level_xml(
     custom_data_types: Dict[str, XmlStructDefinition] = {}
     for path in model.data_declarations:
         loaded_structs = read_types_file(path)
-        loaded_structs_dict = {
-            single_struct.get_name(): single_struct for single_struct in loaded_structs
-        }
-        custom_data_types.update(loaded_structs_dict)
+        custom_data_types.update(loaded_structs)
 
     for custom_struct_instance in custom_data_types.values():
         custom_struct_instance.expand_members(custom_data_types)

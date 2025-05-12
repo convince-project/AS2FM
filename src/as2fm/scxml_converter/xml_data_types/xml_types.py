@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from typing import List
+from typing import Dict
 
 import lxml.etree as ET
 
@@ -25,13 +25,13 @@ from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStruct
 
 def read_types_file(
     xml_path: str,
-) -> List[XmlStructDefinition]:
+) -> Dict[str, XmlStructDefinition]:
     """
     Read the file containing custom type definitions.
 
     :param xml_path: Path of the XML file containing the top-level `types`-tag.
     """
-    declarations = []
+    declarations = {}
     parser_wo_comments = ET.XMLParser(remove_comments=True)
     with open(xml_path, "r", encoding="utf-8") as f:
         xml = ET.parse(f, parser=parser_wo_comments)
@@ -45,5 +45,6 @@ def read_types_file(
             "The children of the top-level XML element must be `struct`,"
             f"not {remove_namespace(first_level)}.",
         )
-        declarations.append(XmlStructDefinition.from_xml(first_level))
+        loaded_struct = XmlStructDefinition.from_xml(first_level)
+        declarations.update({loaded_struct.get_name(): loaded_struct})
     return declarations
