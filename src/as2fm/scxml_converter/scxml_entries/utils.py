@@ -313,6 +313,9 @@ def _assemble_object_for_length_access(
     then `points.length` should be translated to `points.x.length` (i.e. `points__x.length`)
     """
     if struct_declarations is None:
+        # In this case, we expect the ast_array to be a simple identifier with no indexes.
+        if ast_array.type != Syntax.Identifier or len(array_idxs) > 0:
+            raise AttributeError("Trying to access a member length, but no struct def. provided.")
         return _reassemble_expression(ast_array, array_idxs)
     # Generate the member access expression w.o. index access
     member_var = escodegen.generate(ast_array)
@@ -344,9 +347,9 @@ def _split_array_indexes_out(
             ]
         # actual member access
         if ast.property.name == ARRAY_LENGTH_SUFFIX:
-            # TODO: If the object refers to a struct (instead of an array), add missing members
+            # If the object refers to a struct (instead of an array), add missing members
             ast.object = _assemble_object_for_length_access(obj, obj_idxs, struct_declarations)
-            return ast, []  # not indexes after length property
+            return ast, []  # no indexes after length property
         ast.object = _reassemble_expression(*_split_array_indexes_out(obj, struct_declarations))
         return ast, obj_idxs
     elif ast.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):

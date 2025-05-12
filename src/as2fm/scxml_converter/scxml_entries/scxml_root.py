@@ -208,7 +208,7 @@ class ScxmlRoot(ScxmlBase):
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):
-        assert len(self._data_model._data_entries) == 0, "Data model already set"
+        assert len(self._data_model.get_data_entries()) == 0, "Data model already set"
         self._data_model = data_model
 
     def add_ros_declaration(self, ros_declaration: RosDeclaration):

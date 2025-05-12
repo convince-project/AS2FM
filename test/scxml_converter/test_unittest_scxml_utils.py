@@ -19,7 +19,8 @@ from typing import List, MutableSequence, Tuple
 
 import pytest
 
-from as2fm.as2fm_common.ecmascript_interpretation import MemberAccessCheckException
+from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
@@ -28,6 +29,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     get_plain_expression,
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 def test_standard_good_expressions():
@@ -165,25 +167,24 @@ def test_convert_expression_with_object_arrays():
 
     # also with the length keyword
     assert convert_expression_with_object_arrays("x.length") == "x.length"
-    assert convert_expression_with_object_arrays("x[0].length") == "x[0].length"
-    assert convert_expression_with_object_arrays("x[0][1].length") == "x[0][1].length"
-    assert convert_expression_with_object_arrays("x[1].y.length") == "x__y[1].length"
-    assert (
+    with pytest.raises(AttributeError):
+        convert_expression_with_object_arrays("x[0].length")
+    with pytest.raises(AttributeError):
+        convert_expression_with_object_arrays("x[0][1].length")
+    with pytest.raises(AttributeError):
+        convert_expression_with_object_arrays("x[1].y.length")
+    with pytest.raises(AttributeError):
         convert_expression_with_object_arrays("x[1].y.length*c.length")
-        == "x__y[1].length * c.length"
-    )
-    assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
-    assert convert_expression_with_object_arrays("x[0][x[0].length]") == "x[0][x[0].length]"
-    assert (
-        convert_expression_with_object_arrays("x[0].y[x[0].y.length]") == "x__y[0][x__y[0].length]"
-    )
-    assert (
+    with pytest.raises(AttributeError):
+        convert_expression_with_object_arrays("x[0][x[0].length]")
+    with pytest.raises(AttributeError):
+        convert_expression_with_object_arrays("x[0].y[x[0].y.length]")
+    with pytest.raises(AttributeError):
         convert_expression_with_object_arrays("x[x.length].y[x[0].y.length].length + y.length")
-        == "x__y[x.length][x__y[0].length].length + y.length"
-    )
-    with pytest.raises(MemberAccessCheckException):
+    assert convert_expression_with_object_arrays("x[x.length]") == "x[x.length]"
+    with pytest.raises(AttributeError):
         convert_expression_with_object_arrays("x.length.length")
-    with pytest.raises(MemberAccessCheckException):
+    with pytest.raises(AttributeError):
         convert_expression_with_object_arrays("x.length.y.length")
     # This throws an error from the esprima parser already
     with pytest.raises(RuntimeError):
@@ -203,6 +204,80 @@ def test_convert_expression_with_object_arrays():
     assert (
         convert_expression_with_object_arrays("_event.data.param_a.param_b")
         == "_event.data.param_a__param_b"
+    )
+    # Test length access with custom structs
+    # Prepare custom structs definitions
+    custom_structs = {
+        "Point": XmlStructDefinition("Point", {"x": "float32", "y": "float32"}),
+        "Polygon": XmlStructDefinition("Polygon", {"points": "Point[]"}),
+        "Polygons": XmlStructDefinition("Polygons", {"polygons": "Polygon[]"}),
+    }
+    for struct_def in custom_structs.values():
+        struct_def.expand_members(custom_structs)
+    data_model = ScxmlDataModel(
+        [
+            ScxmlData("nums", "[1,2,3]", "int32[]"),
+            ScxmlData("nums_2d", "[[1,2,3]]", "int32[][]"),
+            ScxmlData("points", "[{'x': 0.0, 'y': 1.0}]", "Point[]"),
+            ScxmlData(
+                "polygon", "{'points': [{'x': 1.0, 'y': 2.0}, {'x': 3.0, 'y': 4.0}]}", "Polygon"
+            ),
+            ScxmlData(
+                "polygons",
+                "[{'points': [{'x': 1.0, 'y': 2.0}, {'x': 3.0, 'y': 4.0}]},"
+                "{'points': [{'x': 5.0, 'y': 6.0}]}]",
+                "Polygons",
+            ),
+        ]
+    )
+    data_model.set_custom_data_types(custom_structs)
+    for data_entry in data_model.get_data_entries():
+        data_entry.set_custom_data_types(custom_structs)
+    data_vars_structs = ScxmlStructDeclarationsContainer("test_aut", data_model, custom_structs)
+    # Do the testing
+    with pytest.raises(KeyError):
+        convert_expression_with_object_arrays("no_var[0].length", None, data_vars_structs)
+    assert (
+        convert_expression_with_object_arrays("nums[0].length", None, data_vars_structs)
+        == "nums[0].length"
+    )
+    assert (
+        convert_expression_with_object_arrays("nums_2d[0][1].length", None, data_vars_structs)
+        == "nums_2d[0][1].length"
+    )
+    assert (
+        convert_expression_with_object_arrays("points.length", None, data_vars_structs)
+        == "points__x.length"
+    )
+    assert (
+        convert_expression_with_object_arrays("polygons.length", None, data_vars_structs)
+        == "polygons__polygons__points__x.length"
+    )
+    assert (
+        convert_expression_with_object_arrays(
+            "polygons.polygons[2].points.length", None, data_vars_structs
+        )
+        == "polygons__polygons__points__x[2].length"
+    )
+    assert (
+        convert_expression_with_object_arrays(
+            "polygons.polygons[1].points.length * nums.length", None, data_vars_structs
+        )
+        == "polygons__polygons__points__x[1].length * nums.length"
+    )
+    assert (
+        convert_expression_with_object_arrays(
+            "nums_2d[0][nums_2d[0].length]", None, data_vars_structs
+        )
+        == "nums_2d[0][nums_2d[0].length]"
+    )
+    assert (
+        convert_expression_with_object_arrays(
+            "polygons.polygons[2].points[polygons.polygons[2].points.length]",
+            None,
+            data_vars_structs,
+        )
+        == "polygons__polygons__points[2][polygons__polygons__points__x[2].length]"
     )
 
 

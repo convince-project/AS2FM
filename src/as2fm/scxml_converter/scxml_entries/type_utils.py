@@ -102,11 +102,9 @@ class ScxmlStructDeclarationsContainer:
         """
         Check if this expression relates to an array length access.
         """
-        if array_info is not None:
-            if len(access_trace) == 2:
-                # base_type array e.g. int32[42]
-                assert access_trace[1] == ARRAY_LENGTH_SUFFIX
-                return True
+        if len(access_trace) == 2 and access_trace[1] == ARRAY_LENGTH_SUFFIX:
+            assert array_info is not None, f"Found '{ARRAY_LENGTH_SUFFIX}' entry, but no array_info"
+            return True
         return False
 
     def _get_data_type_for_variable(
