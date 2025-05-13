@@ -91,7 +91,6 @@ class ScxmlStructDeclarationsContainer:
         e.g. `polygon.points` => `(XmlStructDefinition(Point2D), ArrayInfo)` <- ???
         e.g. `polygon.points[1]` => `(XmlStructDefinition(Point2D), None)` <- ???
         e.g. `polygon.points[1].x` => `(int32, None)` <- ???
-
         """
         access_trace = split_by_access(variable_name, elem)
         return self._get_data_type_for_variable(access_trace, elem)
@@ -101,6 +100,8 @@ class ScxmlStructDeclarationsContainer:
     ) -> bool:
         """
         Check if this expression relates to an array length access.
+
+        e.g. `points.length`
         """
         if len(access_trace) == 2 and access_trace[1] == ARRAY_LENGTH_SUFFIX:
             assert array_info is not None, f"Found '{ARRAY_LENGTH_SUFFIX}' entry, but no array_info"
@@ -110,7 +111,12 @@ class ScxmlStructDeclarationsContainer:
     def _get_data_type_for_variable(
         self, access_trace: List[Union[str, Type[ArrayAccess]]], elem
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
-        """leftmost string is variable"""
+        """
+        Get type info in case the leftmost string is a variable.
+
+        :param access_trace: a list of either strings (for property access) or ArrayAccess
+        :param elem: XML element to localize errors
+        """
         if len(access_trace) == 1:
             variable_name = access_trace[0]
             assert variable_name != ArrayAccess, get_error_msg(
@@ -128,9 +134,10 @@ class ScxmlStructDeclarationsContainer:
             if self._check_array_length_access(access_trace, array_info):
                 return ARRAY_LENGTH_TYPE, None
             if access_trace[1] == ArrayAccess:
-                # This is an array, but we access an instance
+                # This is an array, but we access an instance. Continue with it's property
                 return self._get_data_type_for_property(struct_type, access_trace[2:], elem)
             else:
+                # No array element access -> this is only a property access
                 return self._get_data_type_for_property(struct_type, access_trace[1:], elem)
         raise RuntimeError()
 
@@ -140,7 +147,13 @@ class ScxmlStructDeclarationsContainer:
         access_trace: List[Union[str, Type[ArrayAccess]]],
         elem,
     ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
-        """leftmost string is property"""
+        """
+        Get type info in case the leftmost string is a property.
+
+        :param struct_type: Info the struct that this is a property of
+        :param access_trace: a list of either strings (for property access) or ArrayAccess
+        :param elem: XML element to localize errors
+        """
         if len(access_trace) == 1:
             property_name = access_trace[0]
             assert property_name != ArrayAccess, get_error_msg(

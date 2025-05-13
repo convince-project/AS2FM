@@ -150,15 +150,15 @@ def get_array_type_and_dimensions_from_string(data_type: str) -> Tuple[str, List
     assert is_type_string_array(data_type), f"Error: SCXML data: '{data_type}' is not an array."
     array_type_str = get_type_string_of_array(data_type)
     dim_matches = re.findall(r"(\[([0-9]*)\])", data_type)
-    dim_bounds = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
-    return array_type_str, dim_bounds
+    array_max_sizes = [None if dim_str == "" else int(dim_str) for _, dim_str in dim_matches]
+    return array_type_str, array_max_sizes
 
 
 def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
     """
     Given an array type string, return the related ArrayInfo.
 
-    E.g. float[][5][10] will return n_dims=3 and dim_bounds=(None, 5, 10).
+    E.g. float[][5][10] will return n_dims=3 and array_max_sizes=(None, 5, 10).
 
     :param data_type: A string representing the array type. Must be a valid array type string.
     :param expect_base_type: A flag indicating whether to expect a base type in the type string.

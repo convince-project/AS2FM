@@ -93,10 +93,11 @@ def _generate_array_expression_for_assignment(
     array_values: MutableSequence,
 ) -> JaniExpression:
     """
-    Make the JaniExpression generating the array_values to ba assigned to a variable.
+    Make the JaniExpression generating the array_values to be assigned to a variable.
 
     :param array_info: Type and size of the array we are generating.
-    :array_values: The values to initialize the array with. Padding added to read the desired size.
+    :param parent_script: Reference to ecmascript AST where this is used.
+    :param array_values: The values to initialize the array with (for padding).
     """
     assert isinstance(
         array_info, ArrayInfo

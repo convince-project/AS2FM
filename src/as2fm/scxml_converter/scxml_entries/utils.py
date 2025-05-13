@@ -165,6 +165,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
 
 
 def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
+    """Check if string expression contains prefixes like `_event.`."""
     for prefix in prefixes:
         prefix_reg = prefix.replace(".", r"\.")
         if re.search(rf"(^|[^a-zA-Z0-9_.]){prefix_reg}", msg_expr) is not None:
@@ -220,13 +221,17 @@ def get_plain_expression(
 def _reassemble_expression(
     array: esprima.nodes.Node, idxs: List[esprima.nodes.Node]
 ) -> esprima.nodes.Node:
+    """
+    Turn AST that was split between member and array access by `_split_array_indexes_out`
+    back into one expression.
+    """
     if len(idxs) == 0:
         return array
     return _reassemble_expression(ComputedMemberExpression(array, idxs[0]), idxs[1:])
 
 
 def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
-    """Check if the ast node contains _event.data"""
+    """Check if the AST node contains _event.data"""
     if node is None:
         return False
     if node.type == Syntax.MemberExpression and not node.computed:
@@ -239,7 +244,7 @@ def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
 def _convert_non_computed_member_exprs_to_identifiers(
     node: esprima.nodes.Node, parent_node: Optional[esprima.nodes.Node]
 ) -> esprima.nodes.Node:
-    """Convert member access operators (like '.') into identifiers."""
+    """Convert member access operators (like '.') into identifiers 'a__b' or '_event.data.b')."""
     if node.type == Syntax.Identifier:
         if node.name == ARRAY_LENGTH_SUFFIX and (
             parent_node is None or parent_node.type != Syntax.MemberExpression
@@ -309,7 +314,7 @@ def _assemble_object_for_length_access(
     lengths.
 
     e.g. for `points: {x: [2, 4, 5], y: [1, 0, 8]}`
-    then `points.length` should be translated to `points.x.length` (i.e. `points__x.length`)
+    then `points.length` should be translated to `points.x.length` (later to `points__x.length`)
     """
     if struct_declarations is None:
         # In this case, we expect the ast_array to be a simple identifier with no indexes.
@@ -318,7 +323,7 @@ def _assemble_object_for_length_access(
         return _reassemble_expression(ast_array, array_idxs)
     # Generate the member access expression w.o. index access
     member_var = escodegen.generate(ast_array)
-    data_type, array_info = struct_declarations.get_data_type(member_var, None)
+    data_type, _ = struct_declarations.get_data_type(member_var, None)
     if isinstance(data_type, str):
         # not an object (a base type)
         return _reassemble_expression(ast_array, array_idxs)
@@ -331,6 +336,9 @@ def _split_array_indexes_out(
     ast: esprima.nodes.Node, struct_declarations: Optional[ScxmlStructDeclarationsContainer]
 ) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
     """
+    Split expression between member access and array access, needed to represent arrays of custom
+    objects as arrays of their properties, instead.
+
     `a[0]` => 'a', ['0']
     `a[0].x` => 'a.x', ['0']
     `a[0].x[2]` => 'a.x', ['0', '2']

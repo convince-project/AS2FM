@@ -77,7 +77,9 @@ class RosActionThread(ScxmlBase):
         initial_state = get_xml_attribute(RosActionThread, xml_tree, "initial")
         datamodel = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         # ros declarations and bt ports are expected to be defined in the parent tag (scxml_root)
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, [], (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(
+            xml_tree, custom_data_types, (ScxmlState,)
+        )
         assert len(datamodel) <= 1, "Error: SCXML Action Thread: multiple datamodels."
         assert len(scxml_states) > 0, "Error: SCXML Action Thread: no states defined."
         # The non-plain SCXML Action thread has the same name as the action

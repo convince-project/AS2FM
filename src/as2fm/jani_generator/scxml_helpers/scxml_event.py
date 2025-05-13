@@ -68,9 +68,9 @@ class EventParamType:
         """Basic check for dataclass validity."""
         if self.p_type == MutableSequence:
             assert self.p_array_type in (int, float), f"Unexpected array type {self.p_array_type}."
-            assert self.p_dimensions > 0
+            assert self.p_dimensions > 0, "Must have at least one dimension"
         else:
-            assert self.p_dimensions == 0
+            assert self.p_dimensions == 0, "Atomic types must have no dimensions"
 
 
 class Event:

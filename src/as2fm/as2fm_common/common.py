@@ -84,7 +84,7 @@ def get_default_expression_for_type(field_type: Type[ValidJaniTypes]) -> ValidJa
 
 
 def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
-    """Convert a value to a type."""
+    """Return the type of a python object (to be a jani value)."""
     if isinstance(value, MutableSequence):
         return MutableSequence
     elif isinstance(value, (int, float, bool)):
@@ -96,7 +96,7 @@ def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
 
 
 def value_to_string_expr(value: ValidJaniTypes) -> str:
-    """Convert a value to a string."""
+    """Return a python object (to be a jani value) as a string."""
     if isinstance(value, MutableSequence):
         assert is_valid_array(value), f"Found invalid input array {value}."
         # Expect value to be a list, so casting to string is enough.
@@ -113,7 +113,7 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
     """
     Check that the array is composed by a list of (int, float, list).
 
-    No check for sub-lists same depth is done here (e.g. [[1], [[1,2,3]]]).
+    This does *not* check that all sub-lists have the same depth (e.g. [[1], [[1,2,3]]]).
     """
     assert isinstance(
         in_sequence, (list, str)
@@ -127,6 +127,7 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
             isinstance(seq_value, MutableSequence) and is_valid_array(seq_value)
             for seq_value in in_sequence
         )
+    # base case: simple array of base types
     return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
 
 
@@ -134,10 +135,11 @@ def get_array_type_and_sizes(
     in_sequence: Union[MutableSequence, str],
 ) -> Tuple[Optional[Type[Union[int, float]]], MutableSequence]:
     """
-    Extract the type and size of the provided multi-dimensional array.
+    Extract the type and size(s) of the provided multi-dimensional array.
 
-    Exemplary output for 3-dimensional array [ [], [ [1], [1,2.0], [] ] ] is:
-    tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])
+    Exemplary output for 3-dimensional array `[ [], [ [1], [1, 2], [] ] ]` is:
+    `tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])`.
+    The sizes contain one entry per dimension (here 3).
     """
     if not is_valid_array(in_sequence):
         raise ValueError(f"Invalid sub-array found: {in_sequence}")
@@ -146,37 +148,40 @@ def get_array_type_and_sizes(
     if len(in_sequence) == 0:
         return None, [0]
     if not isinstance(in_sequence[0], MutableSequence):
+        # 1-D array -> type is int or float
         ret_type: Optional[Type[Union[int, float]]] = float
         if all(isinstance(seq_entry, int) for seq_entry in in_sequence):
+            # if at least one entry is float, all will be float
             ret_type = int
         return ret_type, [len(in_sequence)]
     # Recursive part
     curr_type: Optional[Type[Union[int, float]]] = None
-    base_size = len(in_sequence)
-    children_length = 0
-    child_sizes = []
+    base_size = len(in_sequence)  # first dimension
+    child_sizes = []  # on this first dimension
+    children_max_depth = 0  # keep track of how deep we go
     for seq_entry in in_sequence:
         single_type, single_sizes = get_array_type_and_sizes(seq_entry)
-        child_len = len(single_sizes)
+        child_depth = len(single_sizes)
         if curr_type is None:
-            if single_type is not None and child_len < children_length:
+            if single_type is not None and child_depth < children_max_depth:
                 raise ValueError("Unbalanced list found.")
-            # We do not know yet the max depth of the children branches
-            children_length = max(children_length, child_len)
+            # We do not know *yet* the max depth of the children.
+            children_max_depth = max(children_max_depth, child_depth)
             curr_type = single_type
         else:
-            # We have to make sure the max size doesn't grow
+            # We have to make sure the max depth doesn't grow
             if single_type is None:
-                if child_len > children_length:
+                if child_depth > children_max_depth:
                     raise ValueError("Unbalanced list found.")
             else:
-                if child_len != children_length:
+                if child_depth != children_max_depth:
                     raise ValueError("Unbalanced list found.")
                 if curr_type == int:
                     curr_type = single_type
         child_sizes.append(single_sizes)
-    # At this point, we need to merge the sizes from the child_sizes
-    max_depth = children_length + 1
+    # At this point, we need to merge the sizes from the child_sizes to create the desired
+    # output format. (List with one entry per dimension)
+    max_depth = children_max_depth + 1
     processed_sizes: List[Union[int, List]] = []
     for level in range(max_depth):
         if level == 0:
@@ -185,9 +190,12 @@ def get_array_type_and_sizes(
         processed_sizes.append([])
         for curr_size_entry in child_sizes:
             if len(curr_size_entry) < level:
+                # there was an empty list at the previous depth level
                 processed_sizes[level].append([])
             else:
-                assert isinstance(processed_sizes[level], list), f"Unexpected type at {level=}."
+                assert isinstance(
+                    processed_sizes[level], list
+                ), f"Unexpected a list of sizes at {level=}."
                 processed_sizes[level].append(curr_size_entry[level - 1])
     return curr_type, processed_sizes
 

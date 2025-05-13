@@ -72,7 +72,7 @@ def _interpret_ecmascript_expr(
     expr: str, variables: Dict[str, ValidScxmlTypes]
 ) -> Union[ValidScxmlTypes, dict]:
     """
-    Process a JS expression and return the resulting outcome.
+    Process a JS expression and return the resulting value.
 
     :param expr: The ECMA script expression to evaluate.
     :param variables: A dictionary of variables to be used in the ECMA script context.
