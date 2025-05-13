@@ -111,7 +111,7 @@ The output is a JANI file called `main.jani` that will be located in the same fo
 
 .. _full_tutorial:
 
-Hands-on In-depth Tutorial Including Verification: Fetch & Carry
+Hands-on in-depth tutorial including verification: Fetch & Carry
 -----------------------------------------------------------------
 
 In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with SMC Storm, our statistical model checking tool.
@@ -122,13 +122,13 @@ We assume some background in computer science or as a robotics developer but no 
 Reference Model: Fetch & Carry Robot
 `````````````````````````````````````
 
-For this tutorial we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/tutorial_fetch_and_carry>`_.
+For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/tutorial_fetch_and_carry>`_.
 What is implemented there is a classical fetch and carry task. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
 
 The model consists of a `main.xml` file, referencing to the BT `bt.xml` running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml`, picking `bt_pick_action.scxml`, and placing `bt_place_action.scxml`, as well as the world model `world.scxml`. Finally, there are the properties to check later with SMC Storm in the JANI format in `properties.jani`.
 
 All of those components are summarized and collected in the `main.xml` file.
-* First, some parameters relevant for the model checking in the end to bound the model execution are given. This is the maximum time of execution bound to 100 seconds, the maximal array size allowed is 10, and a flag indicating TODO.
+* First, some parameters configuring generic properties of the system are defined. In this example we bound the maximum execution time to 100 seconds, we configure unbounded arrays to contain at most 10 elements, and we configure the Behavior Tree to be ticked again in case it returns SUCCESS or FAILURE (by default, it would be tick for as long as it returns RUNNING, and stopped afterwards).
 
     .. code-block:: xml
 
@@ -139,7 +139,7 @@ All of those components are summarized and collected in the `main.xml` file.
         </mc_parameters>
 
 * Afterwards the Behavior Tree is fully specified in terms of the BT in the BT.cpp XML format and the used BT plugins in SCXML. We will go into the details of the individual files later.
- 
+
     .. code-block:: xml
 
         <behavior_tree>
@@ -251,7 +251,7 @@ The expected result shown below indicates that the property is fulfilled with pr
     =========================================
     Result: 1
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is PlotJuggler. Just run `ros2 run plotjuggler plotjuggler` to open the graphical interface, select `traces.csv` in the file explorer and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. For the topic TODO this looks as in the picture below.
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is PlotJuggler. Just run `ros2 run plotjuggler plotjuggler -d traces.csv` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. For the topic TODO this looks as in the picture below.
 
 .. image:: graphics/plotjuggler.jpg
     :width: 800
@@ -261,5 +261,5 @@ The changes of the values in the different ROS topics can be inspected by having
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
 
-Enhancing the Behavior Tree to Handle Probabilistic failures
+Enhancing the Behavior Tree to Handle Probabilistic Failures
 ```````````````````````````````````````````````````````````````
