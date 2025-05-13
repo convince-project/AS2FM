@@ -235,7 +235,7 @@ Executing SMC Storm on this example works as follows:
 
 .. code-block:: bash
 
-    `smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --show-statistics`
+    smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --show-statistics
 
 The expected result shown below indicates that the property is fulfilled with probability 1, i.e., the snack is always successfully placed on the table. In this case model checking needed 500 traces to come to that result called with the default confidence and error parameters. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
 
@@ -260,6 +260,63 @@ The changes of the values in the different ROS topics can be inspected by having
 
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
+This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. We would like to reflect this scenario by adapting the plugin for the `PickAction` in `bt_pick_action.scxml`. In line xy (around 26) we can add probabilistic behavior of the gripping action. It either succeeds in 80% of the cases, in which case `tmp_result` is set to `true` otherwise in the remaining 20% `tmp_result` is set to `false`. To implement this behavior lines x-y have to be replaced by the following code snippet:
+
+.. code-block:: xml
+
+    TODO
+
+Graphically this new functionality is visualized below:
+
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_prob_picking.drawio.svg
+    :width: 300
+    :alt: An image of the behavior tree plugin for probabilistic picking.
+
+We can then run SMC Storm again on the modified model after generating the JANI model with AS2FM.
+
+.. code-block:: bash
+
+    as2fm_scxml_to_jani main.xml TODO: Should we write the output to a different file to keep the old one?
+    smc_storm --model main-prob.jani --properties-names snack_at_table --traces-file traces-prob.csv --show-statistics
+
+The expected result shown below indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up. In this case model checking needed TODO traces to come to the result that the task is only completed successfully in xy% of the cases. It is not 80% of the cases because the robot is ticked again for up to 100 seconds when the BT does not succeed. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
+
+.. code-block:: bash
+
+    TODO
+
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces-prob.csv` again by running `ros2 run plotjuggler plotjuggler -d traces-prob.csv`. An interesting topic to look at is TODO.
+
+.. image:: graphics/plotjuggler-prob.jpg
+    :width: 800
+    :alt: An image showing the changes of the topic TODO in plotjuggler.
+
 
 Enhancing the Behavior Tree to Handle Probabilistic Failures
 ```````````````````````````````````````````````````````````````
+When the picking action does not succeed because the item slips out of the gripper, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again. This needs to be realized in the behavior tree by TODO in line xy...
+
+The new behavior tree looks as depicted below:
+
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_recovery.drawio.svg
+    :width: 300
+    :alt: An image of the behavior tree including the recovery strategy in case picking fails.
+
+We can  again run SMC Storm again on the modified model after generating the JANI model with AS2FM.
+
+.. code-block:: bash
+
+    as2fm_scxml_to_jani main.xml TODO: Should we write the output to a different file to keep the old one?
+    smc_storm --model main-rec.jani --properties-names snack_at_table --traces-file traces-rec.csv --show-statistics
+
+The expected result shown below states that the property is now fulfilled with probability 1 again, i.e., the snack is always successfully placed on the table, because when it slip out of the gripper when trying to pick it up, the robot just tries again. In this case model checking needed TODO traces to come to the result. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
+
+.. code-block:: bash
+
+    TODO
+
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces-rec.csv` again by running `ros2 run plotjuggler plotjuggler -d traces-rec.csv`. An interesting topic to look at is TODO.
+
+.. image:: graphics/plotjuggler-rec.jpg
+    :width: 800
+    :alt: An image showing the changes of the topic TODO in plotjuggler.
