@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml version="1.0" xmlns="..." datamodel="ecmascript" name="TimerComponent" initial="idle">
+
+	<datamodel>
+    <data id="timer_active" type="bool" expr="false" />
+    <!-- <data id="timer_duration" type="int32" expr="30000" /> --> <!-- Timer duration in milliseconds -->
+    <data id="counter" type="int32" expr="0" />
+    <data id="counter_max" type="int32" expr="30000" />
+	</datamodel>
+
+  <ros_service_server service_name="/TimerComponent/StartTimer" type="timer_interfaces_dummy/StartTimer"/>
+  <ros_service_server service_name="/TimerComponent/IsTimerActive" type="timer_interfaces_dummy/IsTimerActive"/>
+
+  <state id="idle">
+    <ros_service_handle_request name="/TimerComponent/StartTimer" target="active">
+      <assign location="timer_active" expr="true"/>
+      <ros_service_send_response name="/TimerComponent/StartTimer">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+    <ros_service_handle_request name="/TimerComponent/IsTimerActive" target="idle">
+      <ros_service_send_response name="/TimerComponent/IsTimerActive">
+        <field name="is_ok" expr="true"/>
+        <field name="is_active" expr="timer_active"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+  </state>
+
+  <state id="active">
+    <onentry>
+      <!-- <send event="timer_expired" delayexpr="timer_duration + 'ms'" /> -->
+      <assign location="counter" expr="counter+1"/>
+    </onentry>
+    <ros_service_handle_request name="/TimerComponent/IsTimerActive" target="active">
+      <ros_service_send_response name="/TimerComponent/IsTimerActive">
+        <field name="is_ok" expr="true"/>
+        <field name="is_active" expr="timer_active"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+
+    <ros_service_handle_request name="/TimerComponent/StartTimer" target="active">
+      <ros_service_send_response name="/TimerComponent/StartTimer">
+        <field name="is_ok" expr="false"/> <!-- Can not start another timer if one is already active -->
+      </ros_service_send_response>
+    </ros_service_handle_request>
+    <!-- <transition event="timer_expired" target="idle">
+      <assign location="timer_active" expr="false"/>
+    </transition> -->
+    <transition cond="counter == counter_max" target="idle">
+      <assign location="timer_active" expr="false"/>
+      <assign location="counter" expr="0"/>
+    </transition>
+  </state>
+</scxml>
