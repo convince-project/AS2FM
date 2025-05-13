@@ -17,7 +17,7 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
-from typing import Dict, List, Optional, Tuple, get_args
+from typing import Dict, List, MutableSequence, Optional, Tuple
 
 from as2fm.as2fm_common.common import is_array_type
 from as2fm.jani_generator.jani_entries import (
@@ -34,6 +34,8 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
     ROS_TIMER_RATE_EVENT_PREFIX,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
+from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION, ArrayInfo
 
 JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
 
@@ -88,15 +90,31 @@ def _generate_event_variables(event_obj: Event, max_array_size: int) -> List[Jan
     """Generate the variables required for handling a provided event."""
     jani_vars: List[JaniVariable] = []
     jani_vars.append(JaniVariable(f"{event_obj.name}.valid", bool, False))
-    for param_name, param_type in event_obj.get_data_structure().items():
-        var_name = f"{event_obj.name}.{param_name}"
-        if is_array_type(param_type):
-            ar_type = get_args(param_type)[0]
-            array_init = array_create_operator("__array_iterator", max_array_size, ar_type(0))
-            jani_vars.append(JaniVariable(var_name, param_type, array_init))
-            jani_vars.append(JaniVariable(f"{var_name}.length", int, 0))
+    for param_name, param_info in event_obj.get_data_structure().items():
+        var_name = f"{event_obj.name}{MEMBER_ACCESS_SUBSTITUTION}{param_name}"
+        if is_array_type(param_info.p_type):
+            ar_type = param_info.p_array_type
+            assert ar_type is not None, "None array type found: this is unexpected."
+            array_dims = param_info.p_dimensions
+            array_info = ArrayInfo(ar_type, array_dims, [max_array_size] * array_dims)
+            array_init = array_create_operator(array_info)
+            jani_vars.append(
+                JaniVariable(var_name, param_info.p_type, array_init, False, array_info)
+            )
+            for dim in range(array_dims):
+                len_var_name = get_array_length_var_name(var_name, dim + 1)
+                if dim == 0:
+                    jani_vars.append(JaniVariable(len_var_name, int, 0))
+                else:
+                    len_array_info = ArrayInfo(int, dim, [max_array_size] * dim)
+                    len_array_init = array_create_operator(len_array_info)
+                    jani_vars.append(
+                        JaniVariable(
+                            len_var_name, MutableSequence, len_array_init, False, len_array_info
+                        )
+                    )
         else:
-            jani_vars.append(JaniVariable(var_name, param_type))
+            jani_vars.append(JaniVariable(var_name, param_info.p_type))
     return jani_vars
 
 

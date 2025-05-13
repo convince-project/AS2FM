@@ -11,7 +11,7 @@
                         "op": "F",
                         "exp": {
                             "op": "=",
-                            "left": "bt_1000_response.status",
+                            "left": "bt_1000_response__status",
                             "right": 1,
                             "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
                         }
@@ -38,13 +38,13 @@
                                 "op": "∧",
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__x",
-                                    "right": "topic_goal_msg.ros_fields__x"
+                                    "left": "topic_pose_msg__ros_fields__x",
+                                    "right": "topic_goal_msg__ros_fields__x"
                                 },
                                 "right": {
                                     "op": "=",
-                                    "left": "topic_pose_msg.ros_fields__y",
-                                    "right": "topic_goal_msg.ros_fields__y"
+                                    "left": "topic_pose_msg__ros_fields__y",
+                                    "right": "topic_goal_msg__ros_fields__y"
                                 }
                             }
                         }

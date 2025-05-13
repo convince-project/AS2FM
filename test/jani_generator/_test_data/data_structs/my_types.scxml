@@ -1,0 +1,14 @@
+<types>
+    <struct id="PolygonArray">
+        <member id="polygons" type="Polygon[]" />
+    </struct>
+
+    <struct id="Polygon">
+        <member id="points" type="Point2D[]" />
+    </struct>
+
+    <struct id="Point2D">
+        <member id="x" type="float32" />
+        <member id="y" type="float32" />
+    </struct>
+</types>

@@ -17,7 +17,7 @@
 
 from copy import deepcopy
 from math import pi
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 from as2fm.jani_generator.jani_entries import (
     JaniConstant,
@@ -469,9 +469,17 @@ def __substitute_expression_op(expression: JaniExpression) -> JaniExpression:
 
 
 def expand_expression(
-    expression: JaniExpression, jani_constants: Dict[str, JaniConstant]
-) -> JaniExpression:
+    expression: Union[JaniExpression, List[JaniExpression]], jani_constants: Dict[str, JaniConstant]
+) -> Union[JaniExpression, List[JaniExpression]]:
+    """
+    Given an expression (or a list of them), expand all operators to use only plain features.
+    """
     # Given a CONVINCE JaniExpression, expand it to a plain JaniExpression
+    if isinstance(expression, list):
+        assert all(
+            isinstance(entry, JaniExpression) for entry in expression
+        ), "Expected a list of expressions, found something else."
+        return [expand_expression(entry, jani_constants) for entry in expression]
     assert isinstance(
         expression, JaniExpression
     ), f"The expression should be a JaniExpression instance, found {type(expression)} instead."
@@ -532,13 +540,28 @@ def expand_distribution_expressions(
         # Generate all possible expressions, if expansion returns many expressions for an operand
         expanded_expressions: List[JaniExpression] = [deepcopy(expression)]
         for key, value in expression.operands.items():
-            expanded_operand = expand_distribution_expressions(value, n_options=n_options)
-            base_expressions = expanded_expressions
-            expanded_expressions = []
-            for expr in base_expressions:
-                for key_value in expanded_operand:
-                    expr.operands[key] = key_value
-                    expanded_expressions.append(deepcopy(expr))
+            if isinstance(value, JaniExpression):
+                # Normal case, operand value is a JaniExpression
+                expanded_operand = expand_distribution_expressions(value, n_options=n_options)
+                base_expressions = expanded_expressions
+                expanded_expressions = []
+                for expr in base_expressions:
+                    for key_value in expanded_operand:
+                        expr.operands[key] = key_value
+                        expanded_expressions.append(deepcopy(expr))
+            else:
+                assert isinstance(value, list), f"Unexpected value type {type(value)}."
+                # Here we expect an array of JaniExpressions
+                for value_idx, value_entry in enumerate(value):
+                    base_expressions = expanded_expressions
+                    expanded_expressions = []
+                    expanded_operand_entries = expand_distribution_expressions(
+                        value_entry, n_options=n_options
+                    )
+                    for expr in base_expressions:
+                        for expanded_entry in expanded_operand_entries:
+                            expr.operands[key][value_idx] = expanded_entry
+                            expanded_expressions.append(deepcopy(expr))
         return expanded_expressions
     elif expr_type == JaniExpressionType.DISTRIBUTION:
         # Here we need to substitute the distribution with a number of constants

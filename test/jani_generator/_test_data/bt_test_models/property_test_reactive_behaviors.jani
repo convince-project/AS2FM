@@ -14,7 +14,7 @@
                             "left": {
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_tick_count_0_msg.ros_fields__data",
+                                    "left": "topic_tick_count_0_msg__ros_fields__data",
                                     "right": 10
                                 },
                                 "op": "∧",
@@ -27,13 +27,13 @@
                                 "comment": "For each tick (that fails), a reset is requested for both children.",
                                 "left": {
                                     "op": "=",
-                                    "left": "topic_reset_count_0_msg.ros_fields__data",
+                                    "left": "topic_reset_count_0_msg__ros_fields__data",
                                     "right": 10
                                 },
                                 "op": "∧",
                                 "right": {
                                     "op": "=",
-                                    "left": "topic_reset_count_1_msg.ros_fields__data",
+                                    "left": "topic_reset_count_1_msg__ros_fields__data",
                                     "right": 10
                                 }
                             }

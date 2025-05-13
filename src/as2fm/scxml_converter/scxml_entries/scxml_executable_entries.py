@@ -37,8 +37,10 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_blackboard_reference,
     is_removed_bt_event,
 )
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
+    convert_expression_with_object_arrays,
     generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
@@ -48,6 +50,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_child,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 # Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
 ScxmlExecutableEntry = Union["ScxmlAssign", "ScxmlIf", "ScxmlSend"]
@@ -112,7 +115,9 @@ class ScxmlIf(ScxmlBase):
         return "if"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlIf":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
 
@@ -139,7 +144,7 @@ class ScxmlIf(ScxmlBase):
                 exec_bodies.append(current_body)
                 current_body = []
             else:
-                current_body.append(execution_entry_from_xml(child))
+                current_body.append(execution_entry_from_xml(child, custom_data_types))
         else_body: Optional[ScxmlExecutionBody] = None
         if else_tag_found:
             else_body = current_body
@@ -188,7 +193,9 @@ class ScxmlIf(ScxmlBase):
                 return True
         return has_bt_blackboard_input(self._else_execution, bt_ports_handler)
 
-    def instantiate_bt_events(self, instance_id: int, children_ids: List[int]) -> "ScxmlIf":
+    def instantiate_bt_events(
+        self, instance_id: int, children_ids: List[int]
+    ) -> ScxmlExecutionBody:
         """Instantiate the behavior tree events in the If action, if available."""
         expanded_condition_bodies: List[ConditionalExecutionBody] = []
         for condition, exec_body in self._conditional_executions:
@@ -251,19 +258,30 @@ class ScxmlIf(ScxmlBase):
             ) and is_plain_execution_body(self._else_execution)
         return False
 
-    def as_plain_scxml(self, ros_declarations: ScxmlRosDeclarationsContainer) -> "ScxmlIf":
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlIf"]:
         assert self._cb_type is not None, "Error: SCXML if: callback type not set."
         conditional_executions = []
         for condition, execution in self._conditional_executions:
             set_execution_body_callback_type(execution, self._cb_type)
-            execution_body = as_plain_execution_body(execution, ros_declarations)
+            execution_body = as_plain_execution_body(
+                execution, struct_declarations, ros_declarations
+            )
             assert execution_body is not None, "Error: SCXML if: invalid execution body."
             conditional_executions.append(
-                (get_plain_expression(condition, self._cb_type), execution_body)
+                (
+                    get_plain_expression(condition, self._cb_type, struct_declarations),
+                    execution_body,
+                )
             )
         set_execution_body_callback_type(self._else_execution, self._cb_type)
-        else_execution = as_plain_execution_body(self._else_execution, ros_declarations)
-        return ScxmlIf(conditional_executions, else_execution)
+        else_execution = as_plain_execution_body(
+            self._else_execution, struct_declarations, ros_declarations
+        )
+        return [ScxmlIf(conditional_executions, else_execution)]
 
     def as_xml(self) -> XmlElement:
         # Based on example in https://www.w3.org/TR/scxml/#if
@@ -288,7 +306,9 @@ class ScxmlSend(ScxmlBase):
         return "send"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlSend":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
 
@@ -305,7 +325,7 @@ class ScxmlSend(ScxmlBase):
         for param_xml in xml_tree:
             if is_comment(param_xml):
                 continue
-            params.append(ScxmlParam.from_xml_tree(param_xml))
+            params.append(ScxmlParam.from_xml_tree(param_xml, custom_data_types))
         return ScxmlSend(event, params, target)
 
     def __init__(
@@ -355,7 +375,7 @@ class ScxmlSend(ScxmlBase):
                 return True
         return False
 
-    def instantiate_bt_events(self, instance_id: int, _) -> List["ScxmlSend"]:
+    def instantiate_bt_events(self, instance_id: int, _) -> ScxmlExecutionBody:
         """Instantiate the behavior tree events in the send action, if available."""
         # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
         assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
@@ -398,14 +418,20 @@ class ScxmlSend(ScxmlBase):
             return all(isinstance(param.get_expr(), str) for param in self._params)
         return False
 
-    def as_plain_scxml(self, _) -> "ScxmlSend":
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ros_declarations: ScxmlRosDeclarationsContainer,
+    ) -> List["ScxmlSend"]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
+        expanded_params: List[ScxmlParam] = []
         for param in self._params:
             param.set_callback_type(self._cb_type)
+            expanded_params.extend(param.as_plain_scxml(struct_declarations, ros_declarations))
         # For now, no conversion to plain scxml is expected for params
         # param.as_plain_scxml()
-        return ScxmlSend(self._event, self._params)
+        return [ScxmlSend(self._event, expanded_params)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
@@ -425,7 +451,9 @@ class ScxmlAssign(ScxmlBase):
         return "assign"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlAssign":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
 
@@ -435,7 +463,9 @@ class ScxmlAssign(ScxmlBase):
         location = get_xml_attribute(ScxmlAssign, xml_tree, "location")
         expr = get_xml_attribute(ScxmlAssign, xml_tree, "expr", undefined_allowed=True)
         if expr is None:
-            expr = read_value_from_xml_child(xml_tree, "expr", (BtGetValueInputPort, str))
+            expr = read_value_from_xml_child(
+                xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
+            )
             assert expr is not None, "Error: SCXML assign: expr is not valid."
         return ScxmlAssign(location, expr)
 
@@ -494,11 +524,36 @@ class ScxmlAssign(ScxmlBase):
             return isinstance(self._expr, str)
         return False
 
-    def as_plain_scxml(self, _) -> "ScxmlAssign":
-        # TODO: Might make sense to check if the assignment happens in a topic callback
+    def as_plain_scxml(
+        self, struct_declarations: ScxmlStructDeclarationsContainer, _
+    ) -> List["ScxmlAssign"]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
-        expr = get_plain_expression(self._expr, self._cb_type)
-        return ScxmlAssign(self._location, expr)
+        assert isinstance(self._expr, str), get_error_msg(
+            self.get_xml_origin(), "Unexpected expr. type."
+        )
+        location_type, array_info = struct_declarations.get_data_type(
+            self._location, self.get_xml_origin()
+        )
+        expanded_expressions = []
+        expanded_locations = []
+        if isinstance(location_type, XmlStructDefinition):
+            # We are dealing with a custom type, more assignments in output
+            sub_types = location_type.get_expanded_members()
+            # Assumption: This appending of members works only if the expr is a single variable
+            # Currently, this is not enforced in this method.
+            for struct_member in sub_types.keys():
+                # Here we keep dots, since we are running the plain-ification below
+                expanded_expressions.append(f"{self._expr}.{struct_member}")
+                expanded_locations.append(f"{self._location}.{struct_member}")
+        else:
+            expanded_expressions = [self._expr]
+            expanded_locations = [self._location]
+        plain_assignments: List[ScxmlAssign] = []
+        for single_expr, single_loc in zip(expanded_expressions, expanded_locations):
+            plain_expr = get_plain_expression(single_expr, self._cb_type, struct_declarations)
+            plain_location = convert_expression_with_object_arrays(single_loc, struct_declarations)
+            plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
+        return plain_assignments
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
@@ -551,7 +606,9 @@ def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
     return True
 
 
-def execution_entry_from_xml(xml_tree: XmlElement) -> ScxmlExecutableEntry:
+def execution_entry_from_xml(
+    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
 
@@ -567,10 +624,12 @@ def execution_entry_from_xml(xml_tree: XmlElement) -> ScxmlExecutableEntry:
     assert exec_tag in tag_to_cls, get_error_msg(
         xml_tree, f"Error: SCXML conversion: tag {exec_tag} isn't an executable entry."
     )
-    return tag_to_cls[exec_tag].from_xml_tree(xml_tree)
+    return tag_to_cls[exec_tag].from_xml_tree(xml_tree, custom_data_types)
 
 
-def execution_body_from_xml(xml_tree: XmlElement) -> ScxmlExecutionBody:
+def execution_body_from_xml(
+    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.
 
@@ -580,7 +639,7 @@ def execution_body_from_xml(xml_tree: XmlElement) -> ScxmlExecutionBody:
     exec_body: ScxmlExecutionBody = []
     for exec_elem_xml in xml_tree:
         if not is_comment(exec_elem_xml):
-            exec_body.append(execution_entry_from_xml(exec_elem_xml))
+            exec_body.append(execution_entry_from_xml(exec_elem_xml, custom_data_types))
     return exec_body
 
 
@@ -614,18 +673,26 @@ def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody]) -> bool:
 
 
 def as_plain_execution_body(
-    exec_body: Optional[ScxmlExecutionBody], ros_declarations: ScxmlRosDeclarationsContainer
+    exec_body: Optional[ScxmlExecutionBody],
+    struct_declarations: ScxmlStructDeclarationsContainer,
+    ros_declarations: ScxmlRosDeclarationsContainer,
 ) -> Optional[ScxmlExecutionBody]:
     """
     Convert the execution body to plain SCXML.
 
     :param exec_body: The execution body to convert
+    :param struct_declarations: Information about the type of data in the automaton's datamodel
     :param ros_declarations: The ROS declarations
     :return: The converted execution body
     """
     if exec_body is None:
         return None
-    return [entry.as_plain_scxml(ros_declarations) for entry in exec_body if not is_comment(entry)]
+    new_body: ScxmlExecutionBody = []
+    for entry in exec_body:
+        if is_comment(entry):
+            continue
+        new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+    return new_body
 
 
 def add_targets_to_scxml_send(

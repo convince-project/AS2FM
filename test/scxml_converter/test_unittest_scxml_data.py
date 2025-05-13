@@ -16,7 +16,6 @@
 """Test the SCXML data conversion from all possible declaration types"""
 
 import unittest
-from typing import MutableSequence
 
 import lxml.etree as ET
 import pytest
@@ -35,9 +34,9 @@ class TestScxmlData(unittest.TestCase):
         Test with no type information should raise a ValueError.
         """
         tag = ET.fromstring('<data id="level" />')
-        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
+        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag, [])
         tag = ET.fromstring('<data id="level" expr="0" />')
-        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
+        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag, [])
 
     def test_no_expr_information(self):
         """
@@ -45,23 +44,24 @@ class TestScxmlData(unittest.TestCase):
         missing.
         """
         tag = ET.fromstring('<data id="level" type="int32" />')
-        self.assertRaises(XmlUtilsError, ScxmlData.from_xml_tree, tag)
+        self.assertRaises(XmlUtilsError, ScxmlData.from_xml_tree, tag, [])
 
     def test_no_id_information(self):
         """
         Test with no id information should raise a AssertionError.
         """
         tag = ET.fromstring('<data type="int32" expr="0" />')
-        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag)
+        self.assertRaises(AssertionError, ScxmlData.from_xml_tree, tag, [])
 
     def test_regular_int_tag(self):
         """
         Test with regular tag with type int32.
         """
         tag = ET.fromstring('<data id="level" type="int32" expr="0" />')
-        scxml_data = ScxmlData.from_xml_tree(tag)
+        scxml_data = ScxmlData.from_xml_tree(tag, [])
+        assert isinstance(scxml_data, ScxmlData)
         self.assertEqual(scxml_data.get_name(), "level")
-        self.assertEqual(scxml_data.get_type(), int)
+        self.assertEqual(scxml_data.get_type_str(), "int32")
         self.assertEqual(scxml_data.get_expr(), "0")
 
     def test_regular_float_tag(self):
@@ -69,9 +69,10 @@ class TestScxmlData(unittest.TestCase):
         Test with regular tag with type int32.
         """
         tag = ET.fromstring('<data id="level_float" type="float32" expr="1.1" />')
-        scxml_data = ScxmlData.from_xml_tree(tag)
+        scxml_data = ScxmlData.from_xml_tree(tag, [])
+        assert isinstance(scxml_data, ScxmlData)
         self.assertEqual(scxml_data.get_name(), "level_float")
-        self.assertEqual(scxml_data.get_type(), float)
+        self.assertEqual(scxml_data.get_type_str(), "float32")
         self.assertEqual(scxml_data.get_expr(), "1.1")
 
     def test_regular_bool_tag(self):
@@ -79,9 +80,10 @@ class TestScxmlData(unittest.TestCase):
         Test with regular tag with type int32.
         """
         tag = ET.fromstring('<data id="condition" type="bool" expr="true" />')
-        scxml_data = ScxmlData.from_xml_tree(tag)
+        scxml_data = ScxmlData.from_xml_tree(tag, [])
+        assert isinstance(scxml_data, ScxmlData)
         self.assertEqual(scxml_data.get_name(), "condition")
-        self.assertEqual(scxml_data.get_type(), bool)
+        self.assertEqual(scxml_data.get_type_str(), "bool")
         self.assertEqual(scxml_data.get_expr(), "true")
 
     def test_regular_int_array_tag(self):
@@ -89,9 +91,10 @@ class TestScxmlData(unittest.TestCase):
         Test with regular tag with type int32.
         """
         tag = ET.fromstring('<data id="some_array" type="int32[]" expr="[]" />')
-        scxml_data = ScxmlData.from_xml_tree(tag)
+        scxml_data = ScxmlData.from_xml_tree(tag, [])
+        assert isinstance(scxml_data, ScxmlData)
         self.assertEqual(scxml_data.get_name(), "some_array")
-        self.assertEqual(scxml_data.get_type(), MutableSequence[int])
+        self.assertEqual(scxml_data.get_type_str(), "int32[]")
         self.assertEqual(scxml_data.get_expr(), "[]")
 
     # Tests with comment above the data tag ####################################
@@ -105,10 +108,11 @@ class TestScxmlData(unittest.TestCase):
         """
         comment_above = "TYPE level:int32"
         tag = ET.fromstring('<data id="level" expr="0" />')
-        scxml_data = ScxmlData.from_xml_tree(tag, comment_above=comment_above)
+        scxml_data = ScxmlData.from_xml_tree(tag, [], comment_above=comment_above)
+        assert isinstance(scxml_data, ScxmlData)
         self.assertEqual(scxml_data.get_name(), "level")
         self.assertEqual(scxml_data.get_expr(), "0")
-        self.assertEqual(scxml_data.get_type(), int)
+        self.assertEqual(scxml_data.get_type_str(), "int32")
 
     def test_invalid_id_in_comment(self):
         """
@@ -121,7 +125,7 @@ class TestScxmlData(unittest.TestCase):
         comment_above = "TYPE other:int32"
         tag = ET.fromstring('<data id="level" expr="0" />')
         with self.assertRaises(AssertionError):
-            ScxmlData.from_xml_tree(tag, comment_above=comment_above)
+            ScxmlData.from_xml_tree(tag, [], comment_above=comment_above)
 
     def test_datamodel_loading(self):
         """
@@ -138,7 +142,8 @@ class TestScxmlData(unittest.TestCase):
             "</datamodel>",
             xml_parser,
         )
-        scxml_data_model = ScxmlDataModel.from_xml_tree(xml_tree)
+        scxml_data_model = ScxmlDataModel.from_xml_tree(xml_tree, [])
+        assert isinstance(scxml_data_model, ScxmlDataModel)
         data_entries = scxml_data_model.get_data_entries()
         self.assertEqual(len(data_entries), 4)
         self.assertEqual(data_entries[0].get_name(), "level")
