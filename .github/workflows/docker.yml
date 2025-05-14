@@ -7,6 +7,7 @@ on:
 
 env:
   REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/as2fm
+  REGISTRY_IMAGE_LATEST: ghcr.io/${{ github.repository_owner }}/as2fm:latest
   RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 jobs:
   build:
@@ -18,7 +19,7 @@ jobs:
           submodules: true
       - name: Pull latest image for caching
         run: |
-          docker pull ${{ env.REGISTRY_IMAGE }}:latest
+          docker pull ${{ env.REGISTRY_IMAGE_LATEST }}
         continue-on-error: true
       - name: Also pull this branch's image for caching
         run: |
@@ -26,18 +27,19 @@ jobs:
           docker pull ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
         continue-on-error: true
       - name: Build Docker image
-        run: |
-          docker build -t ${{ env.REGISTRY_IMAGE }}:latest .
+        run: docker build -t ${{ env.REGISTRY_IMAGE_LATEST }} .
+      - name: Testing
+        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest
       - name: Push to gh registry with sha and branch
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
           # tag with sha and push
-          docker tag ${{ env.REGISTRY_IMAGE }}:latest ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}
+          docker tag ${{ env.REGISTRY_IMAGE_LATEST }} ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}
           docker push ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}
           # tag with branch name and push
           export BRANCH_NAME=$(echo ${{ env.RAW_BRANCH_NAME }} | sed 's/\//-/g')
-          docker tag ${{ env.REGISTRY_IMAGE }}:latest ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
+          docker tag ${{ env.REGISTRY_IMAGE_LATEST }} ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
           docker push ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
           echo "TAG_NAME=$BRANCH_NAME" >> $GITHUB_ENV
       - name: Push to gh registry with latest if this is main
@@ -45,5 +47,5 @@ jobs:
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
           # only from main we actually push to latest
-          docker push ${{ env.REGISTRY_IMAGE }}:latest
+          docker push ${{ env.REGISTRY_IMAGE_LATEST }}
           echo "TAG_NAME=latest" >> $GITHUB_ENV
