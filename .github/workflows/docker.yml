@@ -27,7 +27,7 @@ jobs:
           docker pull ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
         continue-on-error: true
       - name: Build Docker image
-        run: docker build -t ${{ env.REGISTRY_IMAGE_LATEST }} .
+        run: docker build -f .docker/Dockerfile -t ${{ env.REGISTRY_IMAGE_LATEST }} .
       - name: Push to gh registry with sha and branch
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
@@ -41,7 +41,7 @@ jobs:
           docker push ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
           echo "TAG_NAME=$BRANCH_NAME" >> $GITHUB_ENV
       - name: Testing
-        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest /as2fm
+        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest /colcon_ws/src/as2fm
       - name: Push to gh registry with latest if this is main
         if: github.ref == 'refs/heads/main'
         run: |
