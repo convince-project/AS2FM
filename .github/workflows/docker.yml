@@ -1,0 +1,30 @@
+name: Docker
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# env:
+#   REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/as2fm
+#   RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+jobs:
+  build:
+    name: Build and push docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+    #   - name: Pull latest image for caching
+    #     run: |
+    #       docker pull ${{ env.REGISTRY_IMAGE }}:latest
+    #     continue-on-error: true
+    #   - name: Also pull this branch's image for caching
+    #     run: |
+    #       export BRANCH_NAME=$(echo ${{ env.RAW_BRANCH_NAME }} | sed 's/\//-/g')
+    #       docker pull ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
+    #     continue-on-error: true
+      - name: Build Docker image
+        run: |
+          docker build .
