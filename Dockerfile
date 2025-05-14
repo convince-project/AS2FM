@@ -1,15 +1,20 @@
 FROM ros:foxy
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install requirements
-RUN apt update\
-    && apt install -y python3-pip wget tar\
-    && rm -rf /var/lib/apt/lists/*
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt install -y python3-pip curl tar && \
+    rm -rf /var/lib/apt/lists/*
 
 # Get SMC Storm
-RUN wget https://github.com/convince-project/smc_storm/releases/latest/download/smc_storm_executable.tar.gz
-RUN tar -xzf smc_storm_executable.tar.gz
-RUN ./install.sh --install-dependencies
+RUN mkdir /smc_storm_executable
+RUN curl -O -L https://github.com/convince-project/smc_storm/releases/download/0.0.7/smc_storm_executable.tar.gz
+RUN tar -xzf smc_storm_executable.tar.gz -C /smc_storm_executable
+RUN cd /smc_storm_executable && \
+    ./install.sh --install-dependencies && \
+    rm -rf /var/lib/apt/lists/*
 
 # Add AS2FM
-ADD . as2fm
-RUN python3 -m pip install as2fm/
+COPY . as2fm
+RUN pip3 install as2fm/
