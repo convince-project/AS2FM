@@ -18,4 +18,6 @@ RUN ln /smc_storm_executable/bin/smc_storm /usr/local/bin
 
 # Add AS2FM
 COPY . as2fm
+RUN pip3 uninstall -y --break-system-packages js2py && \
+    pip3 install --break-system-packages git+https://github.com/felixonmars/Js2Py.git@py3.12  # Temporary fix for js2py
 RUN pip3 install --break-system-packages as2fm/
