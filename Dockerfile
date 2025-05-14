@@ -14,6 +14,7 @@ RUN tar -xzf smc_storm_executable.tar.gz -C /smc_storm_executable
 RUN cd /smc_storm_executable && \
     ./install.sh --install-dependencies && \
     rm -rf /var/lib/apt/lists/*
+RUN ln /smc_storm_executable/bin/smc_storm /usr/local/bin
 
 # Add AS2FM
 COPY . as2fm
