@@ -41,7 +41,7 @@ jobs:
           docker push ${{ env.REGISTRY_IMAGE }}:$BRANCH_NAME
           echo "TAG_NAME=$BRANCH_NAME" >> $GITHUB_ENV
       - name: Testing
-        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest
+        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest /as2fm
       - name: Push to gh registry with latest if this is main
         if: github.ref == 'refs/heads/main'
         run: |
