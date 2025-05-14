@@ -27,3 +27,9 @@ RUN pip3 install --break-system-packages /colcon_ws/src/as2fm
 RUN source /opt/ros/jazzy/setup.bash && \
     cd /colcon_ws && \
     colcon build
+
+# Set up the entrypoint.
+CMD /bin/bash
+COPY .docker/entrypoint.sh /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
+RUN echo "source /entrypoint.sh" >> ~/.bashrc
