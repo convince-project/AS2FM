@@ -27,7 +27,7 @@ jobs:
     #     continue-on-error: true
       - name: Build Docker image
         run: |
-          docker build .
+          docker build -t ${{ env.REGISTRY_IMAGE }}:latest .
       - name: Push to gh registry with sha and branch
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
