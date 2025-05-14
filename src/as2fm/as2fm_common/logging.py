@@ -19,6 +19,7 @@ that caused the error.
 """
 import os
 from enum import Enum, auto
+from typing import Type
 
 from lxml.etree import _Element as XmlElement
 
@@ -130,3 +131,23 @@ def log_error(element: XmlElement, message: str) -> None:
     """
     error_msg = get_error_msg(element, message)
     print(error_msg)
+
+
+def check_assertion(
+    condition: bool,
+    element: XmlElement,
+    message: str,
+    error_type: Type[BaseException] = RuntimeError,
+) -> None:
+    """
+    Check if a condition holds, and raise an exception in case it doesn't.
+
+    :param condition: The condition to evaluate. If False, an exception will be raised.
+    :param element: The element associated with the assertion, used for error context.
+    :param message: The error message to include in the raised exception.
+    :param error_type: The type of exception to raise if the condition is False.
+
+    :raises error_type: Raised when the condition is False, with the provided message.
+    """
+    if not condition:
+        raise error_type(get_error_msg(element, message))

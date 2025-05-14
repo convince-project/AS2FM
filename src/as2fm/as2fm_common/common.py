@@ -18,8 +18,7 @@ Common functionalities used throughout the toolchain.
 """
 
 import re
-from array import array
-from typing import MutableSequence, Type, Union, get_args, get_origin
+from typing import List, MutableSequence, Optional, Tuple, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -38,7 +37,7 @@ from lxml.etree import _Element as XmlElement
 # src https://docs.google.com/document/d/\
 #     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
 # Additionally, we support the array types from the array extension.
-ValidJaniTypes = Union[bool, int, float, MutableSequence[int], MutableSequence[float]]
+ValidJaniTypes = Union[bool, int, float, MutableSequence]
 
 # When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
 # Strings.
@@ -78,42 +77,154 @@ def is_comment(element: XmlElement) -> bool:
 def get_default_expression_for_type(field_type: Type[ValidJaniTypes]) -> ValidJaniTypes:
     """Generate a default expression for a field type."""
     assert field_type in get_args(ValidJaniTypes), f"Error: Unsupported data type {field_type}."
-    if field_type is MutableSequence[int]:
-        return array("i")
-    elif field_type is MutableSequence[float]:
-        return array("d")
+    if field_type is MutableSequence:
+        return []
     else:
         return field_type()
 
 
 def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
-    """Convert a value to a type."""
-    if isinstance(value, array):
-        if value.typecode == "i":
-            return MutableSequence[int]
-        elif value.typecode == "d":
-            return MutableSequence[float]
-        else:
-            raise ValueError(f"Type of array '{value.typecode}' not supported.")
+    """Return the type of a python object (to be a jani value)."""
+    if isinstance(value, MutableSequence):
+        return MutableSequence
     elif isinstance(value, (int, float, bool)):
         return type(value)
     elif isinstance(value, str):  # Strings are interpreted as arrays of integers
-        return MutableSequence[int]
+        return MutableSequence
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
 def value_to_string_expr(value: ValidJaniTypes) -> str:
-    """Convert a value to a string."""
+    """Return a python object (to be a jani value) as a string."""
     if isinstance(value, MutableSequence):
-        # Expect value to be an array
-        return f'[{",".join(str(v) for v in value)}]'
+        assert is_valid_array(value), f"Found invalid input array {value}."
+        # Expect value to be a list, so casting to string is enough.
+        return str(value)
     elif isinstance(value, bool):
         return str(value).lower()
     elif isinstance(value, (int, float)):
         return str(value)
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
+
+
+def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
+    """
+    Check that the array is composed by a list of (int, float, list).
+
+    This does *not* check that all sub-lists have the same depth (e.g. [[1], [[1,2,3]]]).
+    """
+    assert isinstance(
+        in_sequence, (list, str)
+    ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
+    if len(in_sequence) == 0:
+        return True
+    if isinstance(in_sequence, str):
+        return True
+    if isinstance(in_sequence[0], MutableSequence):
+        return all(
+            isinstance(seq_value, MutableSequence) and is_valid_array(seq_value)
+            for seq_value in in_sequence
+        )
+    # base case: simple array of base types
+    return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
+
+
+def get_array_type_and_sizes(
+    in_sequence: Union[MutableSequence, str],
+) -> Tuple[Optional[Type[Union[int, float]]], MutableSequence]:
+    """
+    Extract the type and size(s) of the provided multi-dimensional array.
+
+    Exemplary output for 3-dimensional array `[ [], [ [1], [1, 2], [] ] ]` is:
+    `tuple(int, [2, [0, 3], [[], [1, 2, 0]]]])`.
+    The sizes contain one entry per dimension (here 3).
+    """
+    if not is_valid_array(in_sequence):
+        raise ValueError(f"Invalid sub-array found: {in_sequence}")
+    if isinstance(in_sequence, str):
+        return get_array_type_and_sizes(convert_string_to_int_array(in_sequence))
+    if len(in_sequence) == 0:
+        return None, [0]
+    if not isinstance(in_sequence[0], MutableSequence):
+        # 1-D array -> type is int or float
+        ret_type: Optional[Type[Union[int, float]]] = float
+        if all(isinstance(seq_entry, int) for seq_entry in in_sequence):
+            # if at least one entry is float, all will be float
+            ret_type = int
+        return ret_type, [len(in_sequence)]
+    # Recursive part
+    curr_type: Optional[Type[Union[int, float]]] = None
+    base_size = len(in_sequence)  # first dimension
+    child_sizes = []  # on this first dimension
+    children_max_depth = 0  # keep track of how deep we go
+    for seq_entry in in_sequence:
+        single_type, single_sizes = get_array_type_and_sizes(seq_entry)
+        child_depth = len(single_sizes)
+        if curr_type is None:
+            if single_type is not None and child_depth < children_max_depth:
+                raise ValueError("Unbalanced list found.")
+            # We do not know *yet* the max depth of the children.
+            children_max_depth = max(children_max_depth, child_depth)
+            curr_type = single_type
+        else:
+            # We have to make sure the max depth doesn't grow
+            if single_type is None:
+                if child_depth > children_max_depth:
+                    raise ValueError("Unbalanced list found.")
+            else:
+                if child_depth != children_max_depth:
+                    raise ValueError("Unbalanced list found.")
+                if curr_type == int:
+                    curr_type = single_type
+        child_sizes.append(single_sizes)
+    # At this point, we need to merge the sizes from the child_sizes to create the desired
+    # output format. (List with one entry per dimension)
+    max_depth = children_max_depth + 1
+    processed_sizes: List[Union[int, List]] = []
+    for level in range(max_depth):
+        if level == 0:
+            processed_sizes.append(base_size)
+            continue
+        processed_sizes.append([])
+        for curr_size_entry in child_sizes:
+            if len(curr_size_entry) < level:
+                # there was an empty list at the previous depth level
+                processed_sizes[level].append([])
+            else:
+                assert isinstance(
+                    processed_sizes[level], list
+                ), f"Unexpected a list of sizes at {level=}."
+                processed_sizes[level].append(curr_size_entry[level - 1])
+    return curr_type, processed_sizes
+
+
+def get_padded_array(
+    array_to_pad: List[Union[int, float, List]],
+    size_per_level: List[int],
+    array_type: Type[Union[int, float]],
+) -> List[Union[int, float, List]]:
+    """Given a N-Dimensional list, add padding for each level, depending on the provided sizes."""
+    padding_size = size_per_level[0] - len(array_to_pad)
+    if padding_size < 0:
+        raise ValueError(
+            f"Expected level's size '{size_per_level[0]}' is smaller than ",
+            f"the current instance length '{len(array_to_pad)}'.",
+        )
+    if len(size_per_level) == 1:
+        # We are at the lowest level -> only floats and integers allowed
+        if any(isinstance(entry, list) for entry in array_to_pad):
+            raise ValueError("The array to pad is deeper than expected.")
+        array_to_pad.extend([array_type(0)] * padding_size)
+    else:
+        # There are lower levels -> Here we expect only empty lists
+        if not all(isinstance(entry, list) for entry in array_to_pad):
+            raise ValueError("Found non-array entries at intermediate depth.")
+        array_to_pad.extend([[]] * padding_size)
+        for idx in range(size_per_level[0]):
+            array_to_pad[idx] = get_padded_array(array_to_pad[idx], size_per_level[1:], array_type)
+    return array_to_pad
 
 
 def string_as_bool(value_str: str) -> bool:
@@ -124,19 +235,9 @@ def string_as_bool(value_str: str) -> bool:
     return value_str == "true"
 
 
-def check_value_type_compatible(value: ValidJaniTypes, field_type: Type[ValidJaniTypes]) -> bool:
-    """Check if the value is compatible with the field type."""
-    if field_type is float:
-        return isinstance(value, (int, float))
-    # MutableSequence requires a special handling...
-    if field_type in (MutableSequence[int], MutableSequence[float]):
-        return isinstance(value, MutableSequence)
-    return isinstance(value, field_type)
-
-
 def is_array_type(field_type: Type[ValidScxmlTypes]) -> bool:
     """Check if the field type is an array type."""
-    return get_origin(field_type) == get_origin(MutableSequence)
+    return field_type is MutableSequence
 
 
 def is_valid_variable_name(var_name: str) -> bool:
@@ -152,8 +253,8 @@ def is_valid_variable_name(var_name: str) -> bool:
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
 
 
-def convert_string_to_int_array(value: str) -> MutableSequence[int]:
+def convert_string_to_int_array(value: str) -> List[int]:
     """
     Convert a string to a list of integers.
     """
-    return array("i", [int(x) for x in value.encode()])
+    return [int(x) for x in value.encode()]

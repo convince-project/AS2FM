@@ -18,7 +18,8 @@ Module to hold scxml even information to convert to jani syncs later.
 """
 
 import re
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, List, MutableSequence, Optional, Type, Union
 
 from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
@@ -54,16 +55,43 @@ class EventReceiver:
         self.edge_action_name = edge_action_name
 
 
+# TODO: Make type holder data structure consistent over complete AS2FM (issue #101)
+@dataclass
+class EventParamType:
+    """Information related to a parameter type."""
+
+    p_type: type
+    p_array_type: Optional[Type[Union[int, float]]] = None
+    p_dimensions: int = 0
+
+    def __post_init__(self):
+        """Basic check for dataclass validity."""
+        if self.p_type == MutableSequence:
+            assert self.p_array_type in (int, float), f"Unexpected array type {self.p_array_type}."
+            assert self.p_dimensions > 0, "Must have at least one dimension"
+        else:
+            assert self.p_dimensions == 0, "Atomic types must have no dimensions"
+
+
 class Event:
-    def __init__(self, name: str, data_struct: Optional[Dict[str, type]] = None):
+    def __init__(self, name: str, data_struct: Optional[Dict[str, EventParamType]] = None):
         self.name = name
         self.data_struct = data_struct
+        Event._validate_data_struct(data_struct)
         # Map automaton -> event name
         # TODO: EventSender and EventReceiver are only containers for the automaton-action name pair
         # In the future, this could be a Dict[str, str] or even a Set, if we assume the action name
         # always matches with the event name.
         self.senders: Dict[str, EventSender] = {}
         self.receivers: Dict[str, EventReceiver] = {}
+
+    @staticmethod
+    def _validate_data_struct(data_struct: Optional[Dict[str, EventParamType]]):
+        if data_struct is not None:
+            for key, value in data_struct.items():
+                assert isinstance(key, str) and isinstance(
+                    value, EventParamType
+                ), f"Invalid data_struct input types for param {key}."
 
     def add_sender_edge(self, automaton_name: str, edge_action_name: str):
         """Add information about the edge sending the event."""
@@ -81,14 +109,15 @@ class Event:
         """Get the receivers of the event."""
         return [receiver for receiver in self.receivers.values()]
 
-    def get_data_structure(self) -> Dict[str, type]:
+    def get_data_structure(self) -> Dict[str, EventParamType]:
         """Get the data structure of the event."""
         if self.data_struct is None:
             return {}
         return self.data_struct
 
-    def set_data_structure(self, data_struct: Dict[str, type]):
+    def set_data_structure(self, data_struct: Dict[str, EventParamType]):
         """Set the data structure of the event."""
+        Event._validate_data_struct(data_struct)
         self.data_struct = data_struct
 
     def has_senders(self) -> bool:

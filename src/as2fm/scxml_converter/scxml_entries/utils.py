@@ -17,17 +17,35 @@
 
 import re
 from enum import Enum, auto
-from typing import Any, Dict, List, MutableSequence, Optional, Type
+from typing import Dict, List, Optional, Tuple, Type
 
-from as2fm.as2fm_common.common import is_array_type
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+import escodegen
+import esprima
+from esprima.nodes import ComputedMemberExpression, Identifier
+from esprima.syntax import Syntax
+from lxml.etree import _Element as XmlElement
+
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    MemberAccessCheckException,
+    has_array_access,
+    parse_expression_to_ast,
+    split_by_access,
+)
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    ARRAY_LENGTH_SUFFIX,
+    MEMBER_ACCESS_SUBSTITUTION,
+)
 
 # List of names that shall not be used for variable names
-RESERVED_NAMES = []
+RESERVED_NAMES: List[str] = []
 
-PLAIN_SCXML_EVENT_PREFIX: str = "_event."
-PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + "data."
+PLAIN_EVENT_KEY: str = "_event"
+PLAIN_SCXML_EVENT_PREFIX: str = f"{PLAIN_EVENT_KEY}."
+PLAIN_EVENT_DATA_KEY: str = "data"
+PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY + "."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
 ROS_FIELD_PREFIX: str = "ros_fields__"
@@ -42,26 +60,6 @@ ROS_EVENT_PREFIXES = [
     "_wrapped_result.",
     "_action.",  # Action-related
 ]
-
-
-# TODO: add lower and upper bounds depending on the n. of bits used.
-# TODO: add support to uint
-SCXML_DATA_STR_TO_TYPE: Dict[str, Type] = {
-    "bool": bool,
-    "float32": float,
-    "float64": float,
-    "int8": int,
-    "int16": int,
-    "int32": int,
-    "int64": int,
-    "int8[]": MutableSequence[int],  # array('i'): https://stackoverflow.com/a/67775675
-    "int16[]": MutableSequence[int],
-    "int32[]": MutableSequence[int],
-    "int64[]": MutableSequence[int],
-    "float32[]": MutableSequence[float],  # array('d'): https://stackoverflow.com/a/67775675
-    "float64[]": MutableSequence[float],
-    "string": str,
-}
 
 
 # ------------ Expression-conversion functionalities ------------
@@ -99,6 +97,7 @@ class CallbackType(Enum):
             return ["_action.goal_id", "_feedback."]
         elif cb_type == CallbackType.BT_RESPONSE:
             return ["_bt.status"]
+        raise ValueError(f"Unexpected CallbackType {cb_type}")
 
     @staticmethod
     def get_plain_callback(cb_type: "CallbackType") -> "CallbackType":
@@ -166,6 +165,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
 
 
 def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
+    """Check if string expression contains prefixes like `_event.`."""
     for prefix in prefixes:
         prefix_reg = prefix.replace(".", r"\.")
         if re.search(rf"(^|[^a-zA-Z0-9_.]){prefix_reg}", msg_expr) is not None:
@@ -173,9 +173,27 @@ def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
     return False
 
 
-def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
+def get_plain_variable_name(in_name: str, xml_origin: Optional[XmlElement]) -> str:
+    """Given a variable or param name with member access, generate the plain version with '__'."""
+    check_assertion(
+        not has_array_access(in_name, xml_origin),
+        xml_origin,
+        f"Provided variable {in_name} contains array accesses, too.",
+    )
+    expanded_name = split_by_access(in_name, xml_origin)
+    return MEMBER_ACCESS_SUBSTITUTION.join(expanded_name)
+
+
+def get_plain_expression(
+    in_expr: str,
+    cb_type: CallbackType,
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer],
+) -> str:
     """
-    Convert a ROS interface expressions (using ROS-specific PREFIXES) to plain SCXML.
+    Convert ROS-specific PREFIXES, custom struct array indexing to plain SCXML.
+
+    e.g. `_msg.a` => `_event.data.a` and
+         `objects[2].x` => `objects.x[2]`
 
     :param in_expr: The expression to convert.
     :param cb_type: The type of callback the expression is used in.
@@ -195,7 +213,190 @@ def get_plain_expression(in_expr: str, cb_type: CallbackType) -> str:
         "Error: SCXML-ROS expression conversion: "
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
+    # arrays of custom structs
+    new_expr = convert_expression_with_object_arrays(new_expr, None, struct_declarations)
     return new_expr
+
+
+def _reassemble_expression(
+    array: esprima.nodes.Node, idxs: List[esprima.nodes.Node]
+) -> esprima.nodes.Node:
+    """
+    Turn AST that was split between member and array access by `_split_array_indexes_out`
+    back into one expression.
+    """
+    if len(idxs) == 0:
+        return array
+    return _reassemble_expression(ComputedMemberExpression(array, idxs[0]), idxs[1:])
+
+
+def _is_member_expr_event_data(node: Optional[esprima.nodes.Node]):
+    """Check if the AST node contains _event.data"""
+    if node is None:
+        return False
+    if node.type == Syntax.MemberExpression and not node.computed:
+        if node.object.type == Syntax.Identifier and node.property.type == Syntax.Identifier:
+            if node.object.name == PLAIN_EVENT_KEY and node.property.name == PLAIN_EVENT_DATA_KEY:
+                return True
+    return False
+
+
+def _convert_non_computed_member_exprs_to_identifiers(
+    node: esprima.nodes.Node, parent_node: Optional[esprima.nodes.Node]
+) -> esprima.nodes.Node:
+    """Convert member access operators (like '.') into identifiers 'a__b' or '_event.data.b')."""
+    if node.type == Syntax.Identifier:
+        if node.name == ARRAY_LENGTH_SUFFIX and (
+            parent_node is None or parent_node.type != Syntax.MemberExpression
+        ):
+            raise MemberAccessCheckException(
+                f"{ARRAY_LENGTH_SUFFIX} is a reserved keyword. Cannot be used here."
+            )
+        return node
+    elif node.type == Syntax.Literal:
+        return node
+    elif node.type == Syntax.MemberExpression:
+        # If not array index, convert to identifier
+        node.object = _convert_non_computed_member_exprs_to_identifiers(node.object, node)
+        node.property = _convert_non_computed_member_exprs_to_identifiers(node.property, node)
+        if node.computed:
+            # This is an array index access operator: do not convert it to an identifier.
+            return node
+        if node.property.type == Syntax.Identifier and node.property.name == ARRAY_LENGTH_SUFFIX:
+            # We are accessing the length field: this is a special keyword, keep the dot.
+            if (
+                parent_node is not None
+                and parent_node.type == Syntax.MemberExpression
+                and not parent_node.computed
+            ):
+                raise MemberAccessCheckException(
+                    f"{ARRAY_LENGTH_SUFFIX} is a reserved keyword. Cannot be used here."
+                )
+            return node
+        # If here, this is a member entry access
+        assert node.object.type == Syntax.Identifier, f"Error: unexpected node content in {node}"
+        assert node.property.type == Syntax.Identifier, f"Error: unexpected node content in {node}"
+        member_separator = MEMBER_ACCESS_SUBSTITUTION
+        # Special casing, for preserving the "_event.data.<param_1>__<param_2>" notation
+        if _is_member_expr_event_data(node) or node.object.name == (
+            PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY
+        ):
+            member_separator = "."
+        return Identifier(f"{node.object.name}{member_separator}{node.property.name}")
+    elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
+        node.left = _convert_non_computed_member_exprs_to_identifiers(node.left, node)
+        node.right = _convert_non_computed_member_exprs_to_identifiers(node.right, node)
+        return node
+    elif node.type == Syntax.CallExpression:
+        node.arguments = [
+            _convert_non_computed_member_exprs_to_identifiers(node_arg, node)
+            for node_arg in node.arguments
+        ]
+        return node
+    elif node.type == Syntax.UnaryExpression:
+        node.argument = _convert_non_computed_member_exprs_to_identifiers(node.argument, node)
+        return node
+    else:
+        raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
+
+
+def _assemble_object_for_length_access(
+    ast_array: esprima.nodes.Node,
+    array_idxs: List[esprima.nodes.Node],
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer],
+) -> esprima.nodes.Node:
+    """
+    Generate the ast expression for accessing length information of custom structs.
+
+    This is about accessing the length of an array of objects in HL-SCXML. In LL-SCXML, we
+    don't consider objects, so they are translated to flat arrays of their base-type
+    properties. Then, the length has to return the length of a (the first) of the structs properties
+    lengths.
+
+    e.g. for `points: {x: [2, 4, 5], y: [1, 0, 8]}`
+    then `points.length` should be translated to `points.x.length` (later to `points__x.length`)
+    """
+    if struct_declarations is None:
+        # In this case, we expect the ast_array to be a simple identifier with no indexes.
+        if ast_array.type != Syntax.Identifier or len(array_idxs) > 0:
+            raise AttributeError("Trying to access a member length, but no struct def. provided.")
+        return _reassemble_expression(ast_array, array_idxs)
+    # Generate the member access expression w.o. index access
+    member_var = escodegen.generate(ast_array)
+    data_type, _ = struct_declarations.get_data_type(member_var, None)
+    if isinstance(data_type, str):
+        # not an object (a base type)
+        return _reassemble_expression(ast_array, array_idxs)
+    all_expanded_members = [k for k in data_type.get_expanded_members().keys()]
+    expanded_member_node = parse_expression_to_ast(f"{member_var}.{all_expanded_members[0]}", None)
+    return _reassemble_expression(expanded_member_node, array_idxs)
+
+
+def _split_array_indexes_out(
+    ast: esprima.nodes.Node, struct_declarations: Optional[ScxmlStructDeclarationsContainer]
+) -> Tuple[esprima.nodes.Node, List[esprima.nodes.Node]]:
+    """
+    Split expression between member access and array access, needed to represent arrays of custom
+    objects as arrays of their properties, instead.
+
+    `a[0]` => 'a', ['0']
+    `a[0].x` => 'a.x', ['0']
+    `a[0].x[2]` => 'a.x', ['0', '2']
+    `a` => 'a', []
+    """
+    if ast.type in (Syntax.Identifier, Syntax.Literal):
+        return ast, []
+    elif ast.type == Syntax.MemberExpression:
+        obj, obj_idxs = _split_array_indexes_out(ast.object, struct_declarations)
+        if ast.computed:  # array index
+            return obj, obj_idxs + [
+                _reassemble_expression(*_split_array_indexes_out(ast.property, struct_declarations))
+            ]
+        # actual member access
+        if ast.property.name == ARRAY_LENGTH_SUFFIX:
+            # If the object refers to a struct (instead of an array), add missing members
+            ast.object = _assemble_object_for_length_access(obj, obj_idxs, struct_declarations)
+            return ast, []  # no indexes after length property
+        ast.object = _reassemble_expression(*_split_array_indexes_out(obj, struct_declarations))
+        return ast, obj_idxs
+    elif ast.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
+        ast.left = _reassemble_expression(*_split_array_indexes_out(ast.left, struct_declarations))
+        ast.right = _reassemble_expression(
+            *_split_array_indexes_out(ast.right, struct_declarations)
+        )
+        return ast, []
+    elif ast.type == Syntax.CallExpression:
+        ast.arguments = [
+            _reassemble_expression(*_split_array_indexes_out(a, struct_declarations))
+            for a in ast.arguments
+        ]
+        return ast, []
+    elif ast.type == Syntax.UnaryExpression:
+        ast.argument = _reassemble_expression(
+            *_split_array_indexes_out(ast.argument, struct_declarations)
+        )
+        return ast, []
+    else:
+        raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
+
+
+def convert_expression_with_object_arrays(
+    expr: str,
+    elem: Optional[XmlElement] = None,
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer] = None,
+) -> str:
+    """
+    e.g. `my_polygons.polygons[0].points[1].y` => `my_polygons__polygons__points__y[0][1]`.
+    """
+    try:
+        ast = parse_expression_to_ast(expr, elem)
+        obj, idxs = _split_array_indexes_out(ast, struct_declarations)
+        exp = _reassemble_expression(obj, idxs)
+        exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
+    except MemberAccessCheckException as e:
+        log_error(elem, "Failed to expand the provided expression.")
+        raise e
+    return escodegen.generate(exp)
 
 
 # ------------ String-related utilities ------------
@@ -212,7 +413,9 @@ def all_non_empty_strings(*in_args) -> bool:
     return True
 
 
-def is_non_empty_string(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> bool:
+def is_non_empty_string(
+    scxml_type: Type[ScxmlBase], arg_name: str, arg_value: Optional[str]
+) -> bool:
     """
     Check if a string is non-empty.
 
@@ -240,41 +443,3 @@ def to_integer(scxml_type: Type[ScxmlBase], arg_name: str, arg_value: str) -> Op
         return int(arg_value)
     except ValueError:
         return None
-
-
-# ------------ Datatype-related utilities ------------
-def get_data_type_from_string(data_type: str) -> Type:
-    """
-    Convert a data type string description to the matching python type.
-
-    :param data_type: The data type to check.
-    :return: the type matching the string, if that is valid. None otherwise.
-    """
-    data_type = data_type.strip()
-    # If the data type is an array, remove the bound value
-    if "[" in data_type:
-        data_type = re.sub(r"(^[a-z0-9]*\[)[0-9]*(\]$)", r"\g<1>\g<2>", data_type)
-    return SCXML_DATA_STR_TO_TYPE[data_type]
-
-
-def convert_string_to_type(value: str, data_type: str) -> Any:
-    """
-    Convert a value to the provided data type.
-    """
-    python_type = get_data_type_from_string(data_type)
-    interpreted_value = interpret_ecma_script_expr(value)
-    assert isinstance(interpreted_value, python_type), f"Failed interpreting {value}"
-    return interpreted_value
-
-
-def get_array_max_size(data_type: str) -> Optional[int]:
-    """
-    Get the maximum size of an array, if the data type is an array.
-    """
-    assert is_array_type(
-        get_data_type_from_string(data_type)
-    ), f"Error: SCXML data: '{data_type}' is not an array."
-    match_obj = re.search(r"\[([0-9]+)\]", data_type)
-    if match_obj is not None:
-        return int(match_obj.group(1))
-    return None

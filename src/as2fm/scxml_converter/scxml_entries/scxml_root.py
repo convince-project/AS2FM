@@ -17,9 +17,8 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from copy import deepcopy
 from os.path import isfile
-from typing import List, Optional, Set, Tuple, get_args
+from typing import Dict, List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -40,12 +39,14 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_children_as_scxml,
     get_xml_attribute,
 )
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlRoot(ScxmlBase):
@@ -56,33 +57,37 @@ class ScxmlRoot(ScxmlBase):
         return "scxml"
 
     @classmethod
-    def from_xml_tree_impl(cls, xml_tree: XmlElement) -> "ScxmlRoot":
+    def from_xml_tree_impl(
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(ScxmlRoot, xml_tree)
-        scxml_name = get_xml_attribute(ScxmlRoot, xml_tree, "name")
+        scxml_name: str = get_xml_attribute(ScxmlRoot, xml_tree, "name")
         scxml_version = get_xml_attribute(ScxmlRoot, xml_tree, "version")
         assert (
             scxml_version == "1.0"
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
         scxml_init_state = get_xml_attribute(ScxmlRoot, xml_tree, "initial")
         # Data Model
-        datamodel_elements = get_children_as_scxml(xml_tree, (ScxmlDataModel,))
+        datamodel_elements = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         assert (
             len(datamodel_elements) <= 1
         ), f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
         # ROS Declarations
         ros_declarations: List[RosDeclaration] = get_children_as_scxml(
-            xml_tree, RosDeclaration.__subclasses__()
+            xml_tree, custom_data_types, RosDeclaration.__subclasses__()
         )
         # BT Declarations
         bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
-            xml_tree, get_args(BtPortDeclarations)
+            xml_tree, custom_data_types, get_args(BtPortDeclarations)
         )
         # Additional threads
-        additional_threads = get_children_as_scxml(xml_tree, (RosActionThread,))
+        additional_threads = get_children_as_scxml(xml_tree, custom_data_types, (RosActionThread,))
         # States
-        scxml_states: List[ScxmlState] = get_children_as_scxml(xml_tree, (ScxmlState,))
+        scxml_states: List[ScxmlState] = get_children_as_scxml(
+            xml_tree, custom_data_types, (ScxmlState,)
+        )
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the ScxmlRoot object
         scxml_root = ScxmlRoot(scxml_name)
@@ -104,7 +109,9 @@ class ScxmlRoot(ScxmlBase):
         return scxml_root
 
     @staticmethod
-    def from_scxml_file(xml_file: str) -> "ScxmlRoot":
+    def from_scxml_file(
+        xml_file: str, custom_data_types: Dict[str, XmlStructDefinition]
+    ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         print(f"{xml_file=}")
         if isfile(xml_file):
@@ -120,14 +127,14 @@ class ScxmlRoot(ScxmlBase):
                 continue
             child.tag = remove_namespace(child.tag)
         # Do the conversion
-        return ScxmlRoot.from_xml_tree(xml_element)
+        return ScxmlRoot.from_xml_tree(xml_element, custom_data_types)
 
     def __init__(self, name: str):
         self._name = name
         self._version = "1.0"  # This is the only version mentioned in the official documentation
         self._initial_state: Optional[str] = None
         self._states: List[ScxmlState] = []
-        self._data_model: Optional[ScxmlDataModel] = None
+        self._data_model: ScxmlDataModel = ScxmlDataModel()
         self._ros_declarations: List[RosDeclaration] = []
         self._bt_ports_handler = BtPortsHandler()
         self._bt_plugin_id: Optional[int] = None
@@ -148,7 +155,7 @@ class ScxmlRoot(ScxmlBase):
         assert self._initial_state is not None, "Error: SCXML root: Initial state not set."
         return self._initial_state
 
-    def get_data_model(self) -> Optional[ScxmlDataModel]:
+    def get_data_model(self) -> ScxmlDataModel:
         return self._data_model
 
     def get_states(self) -> List[ScxmlState]:
@@ -201,7 +208,7 @@ class ScxmlRoot(ScxmlBase):
             self._initial_state = state.get_id()
 
     def set_data_model(self, data_model: ScxmlDataModel):
-        assert self._data_model is None, "Data model already set"
+        assert len(self._data_model.get_data_entries()) == 0, "Data model already set"
         self._data_model = data_model
 
     def add_ros_declaration(self, ros_declaration: RosDeclaration):
@@ -264,8 +271,7 @@ class ScxmlRoot(ScxmlBase):
         # Automatically add the correct amount of children to the specific port
         if self._bt_ports_handler.in_port_exists("CHILDREN_COUNT"):
             self._bt_ports_handler.set_port_value("CHILDREN_COUNT", str(n_bt_children))
-        if self._data_model is not None:
-            self._data_model.update_bt_ports_values(self._bt_ports_handler)
+        self._data_model.update_bt_ports_values(self._bt_ports_handler)
         for ros_decl_scxml in self._ros_declarations:
             ros_decl_scxml.update_bt_ports_values(self._bt_ports_handler)
         for scxml_thread in self._additional_threads:
@@ -293,7 +299,7 @@ class ScxmlRoot(ScxmlBase):
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(ScxmlRoot, "name", self._name)
         valid_initial_state = is_non_empty_string(ScxmlRoot, "initial state", self._initial_state)
-        valid_data_model = self._data_model is None or self._data_model.check_validity()
+        valid_data_model = self._data_model.check_validity()
         valid_states = all(
             isinstance(state, ScxmlState) and state.check_validity() for state in self._states
         )
@@ -337,9 +343,10 @@ class ScxmlRoot(ScxmlBase):
         assert self.check_validity(), get_error_msg(
             self.get_xml_origin(), "SCXML: found invalid root object."
         )
+        plain_data_model = self._data_model.is_plain_scxml()
         no_ros_declarations = (len(self._ros_declarations) + len(self._additional_threads)) == 0
         all_states_plain = all(state.is_plain_scxml() for state in self._states)
-        return no_ros_declarations and all_states_plain
+        return plain_data_model and no_ros_declarations and all_states_plain
 
     def to_plain_scxml_and_declarations(
         self,
@@ -356,14 +363,23 @@ class ScxmlRoot(ScxmlBase):
         converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
         main_scxml = ScxmlRoot(self._name)
-        main_scxml._data_model = deepcopy(self._data_model)
         main_scxml._initial_state = self._initial_state
         ros_declarations = self._generate_ros_declarations_helper()
+        declarations_container = ScxmlStructDeclarationsContainer(
+            self._name, self._data_model, self.get_custom_data_types()
+        )
+        data_models = self._data_model.as_plain_scxml(declarations_container, ros_declarations)
+        assert len(data_models) == 1, "There can only be on data model per SCXML."
+        main_scxml._data_model = data_models[0]
         assert ros_declarations is not None, "Error: SCXML root: invalid ROS declarations."
-        main_scxml._states = [state.as_plain_scxml(ros_declarations) for state in self._states]
+        main_scxml._states = []
+        for state in self._states:
+            main_scxml._states.extend(
+                state.as_plain_scxml(declarations_container, ros_declarations)
+            )
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._additional_threads:
-            converted_scxmls.extend(scxml_thread.as_plain_scxml(ros_declarations))
+            converted_scxmls.extend(scxml_thread.as_plain_scxml(None, ros_declarations))
         for plain_scxml in converted_scxmls:
             assert isinstance(plain_scxml, ScxmlRoot), (
                 "Error: SCXML root: conversion to plain SCXML resulted in invalid object "
@@ -393,7 +409,7 @@ class ScxmlRoot(ScxmlBase):
                 "xmlns": "http://www.w3.org/2005/07/scxml",
             },
         )
-        if self._data_model is not None:
+        if len(self._data_model.get_data_entries()) > 0:
             data_model_xml = self._data_model.as_xml(data_type_as_attribute)
             assert data_model_xml is not None, "Error: SCXML root: invalid data model."
             xml_root.append(data_model_xml)

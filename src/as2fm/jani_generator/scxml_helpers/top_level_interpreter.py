@@ -47,6 +47,8 @@ from as2fm.scxml_converter.bt_converter import (
     get_blackboard_variables_from_models,
 )
 from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
+from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.xml_data_types.xml_types import read_types_file
 
 
 @dataclass()
@@ -59,6 +61,8 @@ class FullModel:
     bt_tick_rate: float = field(default=1.0)
     # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
     bt_tick_when_not_running: bool = field(default=False)
+    # Paths to custom data declarations
+    data_declarations: List[str] = field(default_factory=list)
     # Path to the behavior tree loaded in the model
     bt: Optional[str] = None
     # Paths to the SCXML models of the BT nodes used in the model
@@ -118,6 +122,22 @@ def parse_main_xml(xml_path: str) -> FullModel:
             assert model.max_time is not None, get_error_msg(
                 first_level, "`max_time` must be defined."
             )
+        elif remove_namespace(first_level.tag) == "data_declarations":
+            for child in first_level:
+                if remove_namespace(child.tag) == "input":
+                    if child.attrib["type"] != "type-declarations":
+                        raise ValueError(
+                            get_error_msg(
+                                child,
+                                "Only `type-declarations` are supported under the "
+                                + "`data_declarations` tag.",
+                            )
+                        )
+                    model.data_declarations.append(os.path.join(folder_of_xml, child.attrib["src"]))
+                else:
+                    raise ValueError(
+                        get_error_msg(child, f"Invalid data_declarations tag: {child.tag} != input")
+                    )
         elif remove_namespace(first_level.tag) == "behavior_tree":
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
@@ -166,18 +186,24 @@ def parse_main_xml(xml_path: str) -> FullModel:
     return model
 
 
-def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
+def generate_plain_scxml_models_and_timers(
+    model: FullModel, custom_data_types: Dict[str, XmlStructDefinition]
+) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
     ros_scxmls: List[ScxmlRoot] = []
     for fname in scxml_files_to_convert:
-        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname))
+        ros_scxmls.append(ScxmlRoot.from_scxml_file(fname, custom_data_types))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
         ros_scxmls.extend(
             bt_converter(
-                model.bt, model.plugins, model.bt_tick_rate, model.bt_tick_when_not_running
+                model.bt,
+                model.plugins,
+                model.bt_tick_rate,
+                model.bt_tick_when_not_running,
+                custom_data_types,
             )
         )
     # Convert the loaded entries to plain SCXML
@@ -218,6 +244,7 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     assert model.max_time is not None, "Expected model.max_time to be defined here."
     timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
     if timer_scxml is not None:
+        timer_scxml.set_custom_data_types(custom_data_types)
         plain_scxmls, _ = timer_scxml.to_plain_scxml_and_declarations()
         plain_scxml_models.extend(plain_scxmls)
     return plain_scxml_models
@@ -264,8 +291,16 @@ def interpret_top_level_xml(
     """
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
-    assert model.max_time is not None, f"Max time must be defined in {xml_path}."
-    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
+
+    custom_data_types: Dict[str, XmlStructDefinition] = {}
+    for path in model.data_declarations:
+        loaded_structs = read_types_file(path)
+        custom_data_types.update(loaded_structs)
+
+    for custom_struct_instance in custom_data_types.values():
+        custom_struct_instance.expand_members(custom_data_types)
+
+    plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
@@ -284,4 +319,6 @@ def interpret_top_level_xml(
 
     output_path = os.path.join(model_dir, jani_file)
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(jani_model.as_dict(), f, indent=2, ensure_ascii=False)
+        temp_dict = jani_model.as_dict()
+        # print(temp_dict)
+        json.dump(temp_dict, f, indent=2, ensure_ascii=False)

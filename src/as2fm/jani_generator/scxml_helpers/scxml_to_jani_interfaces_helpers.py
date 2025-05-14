@@ -18,14 +18,19 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import SupportedECMAScriptSequences, value_to_type
+from as2fm.as2fm_common.common import (
+    SupportedECMAScriptSequences,
+    convert_string_to_int_array,
+    get_array_type_and_sizes,
+    value_to_type,
+)
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -37,19 +42,20 @@ from as2fm.jani_generator.jani_entries import (
 )
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     and_operator,
+    array_access_operator,
+    array_value_operator,
     max_operator,
     not_operator,
     plus_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
     generate_jani_variable,
-    get_array_variable_info,
     is_expression_array,
     is_variable_array,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
+from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventParamType, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import (
-    ArrayInfo,
+    get_array_length_var_name,
     parse_ecmascript_to_jani_expression,
 )
 from as2fm.scxml_converter.scxml_entries import (
@@ -59,6 +65,28 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlIf,
     ScxmlSend,
 )
+from as2fm.scxml_converter.xml_data_types.type_utils import (
+    MEMBER_ACCESS_SUBSTITUTION,
+    ArrayInfo,
+    array_value_to_type_info,
+)
+
+
+def _generate_nested_array_access_expr(
+    array_name: str, access_indexes: List[JaniExpression]
+) -> JaniExpression:
+    """
+    Generate the array access operator for a nested array.
+
+    Example: array_name: 'ar_x', access_indexes: [1,2,3] will result in
+             ret_expr = aa(exp: aa(exp: aa(exp: 'ar_x', index: 1), index: 2), index: 3)
+    """
+    assert len(access_indexes) > 0
+    if len(access_indexes) == 1:
+        array_expression = JaniExpression(array_name)
+    else:
+        array_expression = _generate_nested_array_access_expr(array_name, access_indexes[0:-1])
+    return array_access_operator(array_expression, access_indexes[-1])
 
 
 def generate_jani_assignments(
@@ -89,6 +117,7 @@ def generate_jani_assignments(
         target_expr_type = JaniExpressionType.IDENTIFIER
     # An assignment target must be either a variable or a single array entry
     if target_expr_type is JaniExpressionType.OPERATOR:
+        assert isinstance(target_expr, JaniExpression)
         # If here, the target expression must be an array access (aa) operator
         assign_op_name, assign_operands = target_expr.as_operator()
         assert assign_op_name == "aa", get_error_msg(
@@ -100,34 +129,57 @@ def generate_jani_assignments(
         assignments.append(
             JaniAssignment({"ref": target_expr, "value": assignment_value, "index": assign_index})
         )
-        target_var_length = f"{assign_operands['exp'].as_identifier()}.length"
-        new_array_legth_expr = max_operator(
-            plus_operator(assign_operands["index"], 1), target_var_length
-        )
-        assignments.append(
-            JaniAssignment(
-                {
-                    "ref": target_var_length,
-                    "value": new_array_legth_expr,
-                    "index": assign_index,
-                }
+        # Update the length of the array
+        assert isinstance(assign_operands, dict)
+        array_assign_indexes: List[JaniExpression] = [assign_operands["index"]]
+        target_sub_entry = assign_operands["exp"]
+        target_array_name = target_sub_entry.as_identifier()
+        while target_array_name is None:
+            sub_op_name, sub_operands = target_sub_entry.as_operator()
+            assert sub_op_name == "aa", f"Expected an array access, found {sub_op_name}"
+            assert isinstance(sub_operands, dict)
+            array_assign_indexes = [sub_operands["index"]] + array_assign_indexes
+            target_sub_entry = sub_operands["exp"]
+            target_array_name = target_sub_entry.as_identifier()
+        # Update the length for all array levels
+        for curr_array_lv in range(len(array_assign_indexes), 0, -1):
+            target_len_var_name = get_array_length_var_name(target_array_name, curr_array_lv)
+            curr_lv_dim_idx = curr_array_lv - 1
+            if curr_array_lv == 1:
+                target_len_ref_expr = JaniExpression(target_len_var_name)
+            else:
+                target_len_ref_expr = _generate_nested_array_access_expr(
+                    target_len_var_name, array_assign_indexes[0:curr_lv_dim_idx]
+                )
+            new_array_length_expr = max_operator(
+                plus_operator(array_assign_indexes[curr_lv_dim_idx], 1), target_len_ref_expr
             )
-        )
+            assignments.append(
+                JaniAssignment(
+                    {
+                        "ref": target_len_ref_expr,
+                        "value": new_array_length_expr,
+                        "index": assign_index,
+                    }
+                )
+            )
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
-            assignment_target_var = target_expr
+            assignment_target_var: Optional[JaniVariable] = target_expr
         else:
-            assignment_target_var = context_vars.get(target_expr.as_identifier())
+            assert isinstance(target_expr, JaniExpression)
+            target_var_name = target_expr.as_identifier()
+            assert target_var_name is not None
+            assignment_target_var = context_vars.get(target_var_name)
             assert assignment_target_var is not None, get_error_msg(
                 elem_xml,
-                f"Variable {target_expr.as_identifier()} not in provided context {context_vars}.",
+                f"Variable {target_var_name} not in provided context {context_vars}.",
             )
+        assert isinstance(assignment_target_var, JaniVariable)
         assignment_target_id = assignment_target_var.name()
 
-        array_info = None
-        if is_variable_array(assignment_target_var):
-            array_info = ArrayInfo(*get_array_variable_info(assignment_target_var))
+        array_info = assignment_target_var.get_array_info()
         assignment_value = parse_ecmascript_to_jani_expression(
             assign_expr, elem_xml, array_info
         ).replace_event(event_substitution)
@@ -138,6 +190,9 @@ def generate_jani_assignments(
         )
         # In case this is an array assignment, the length must be adapted too
         if is_variable_array(assignment_target_var):
+            assert array_info is not None, get_error_msg(
+                elem_xml, f"Expected array_info to be available for {assignment_target_id}"
+            )
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type is JaniExpressionType.OPERATOR:
                 assert is_expression_array(assignment_value), get_error_msg(
@@ -148,21 +203,43 @@ def generate_jani_assignments(
                     elem_xml,
                     f"Expected an array as interpretation result, got {type(interpreted_expr)}.",
                 )
-                value_array_length = len(interpreted_expr)
+                _, array_sizes = get_array_type_and_sizes(interpreted_expr)
+                assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
+                    elem_xml,
+                    "Mismatch between expected n. of dimension and result from JS interpreter.",
+                )
+                for level in range(array_info.array_dimensions):
+                    array_length_name = get_array_length_var_name(assignment_target_id, level + 1)
+                    if level == 0:
+                        array_length_expr = JaniExpression(array_sizes[level])
+                    else:
+                        array_length_expr = array_value_operator(array_sizes[level])
+                    assignments.append(
+                        JaniAssignment(
+                            {
+                                "ref": array_length_name,
+                                "value": array_length_expr,
+                                "index": assign_index,
+                            }
+                        )
+                    )
             else:
-                assert assignment_value_type is JaniExpressionType.IDENTIFIER, get_error_msg(
+                assignment_value_id = assignment_value.as_identifier()
+                assert assignment_value_id is not None, get_error_msg(
                     elem_xml, "Expected an Identifier expression."
                 )
-                value_array_length = JaniExpression(f"{assignment_value.as_identifier()}.length")
-            assignments.append(
-                JaniAssignment(
-                    {
-                        "ref": f"{assignment_target_id}.length",
-                        "value": value_array_length,
-                        "index": assign_index,
-                    }
-                )
-            )
+                for level in range(array_info.array_dimensions):
+                    array_length_name = get_array_length_var_name(assignment_target_id, level + 1)
+                    value_length_name = get_array_length_var_name(assignment_value_id, level + 1)
+                    assignments.append(
+                        JaniAssignment(
+                            {
+                                "ref": array_length_name,
+                                "value": value_length_name,
+                                "index": assign_index,
+                            }
+                        )
+                    )
     return assignments
 
 
@@ -291,20 +368,41 @@ def append_scxml_body_to_jani_edge(
                 }
             )
             new_edge_dest_assignments: List[JaniAssignment] = []
-            data_structure_for_event: Dict[str, type] = {}
+            data_structure_for_event: Dict[str, EventParamType] = {}
             for param in ec.get_params():
-                param_assign_name = f"{ec.get_event()}.{param.get_name()}"
+                param_assign_name = (
+                    f"{ec.get_event()}{MEMBER_ACCESS_SUBSTITUTION}{param.get_name()}"
+                )
                 expr = param.get_expr_or_location()
                 # Update the events holder
-                # TODO: get the expected type from a jani expression, w/o setting dummy values
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
                 res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
                 res_eval_type = value_to_type(res_eval_value)
-                data_structure_for_event[param.get_name()] = res_eval_type
+                res_eval_dims = 0
+                res_eval_array_type: Optional[Type[Union[int, float]]] = None
+                array_info: Optional[ArrayInfo] = None
+                # In case of MutableSequences, we need to get the dimensionality of the result
+                if res_eval_type == MutableSequence:
+                    if isinstance(res_eval_value, str):
+                        res_eval_value = convert_string_to_int_array(res_eval_value)
+                    array_info = array_value_to_type_info(res_eval_value)
+                    if array_info.array_type is None:
+                        # TODO: Better handling of array type than assigning int by default
+                        log_error(
+                            param.get_xml_origin(),
+                            "Empty array with unknown type in the model: assigning int to it.",
+                        )
+                        array_info.array_type = int
+                    array_info.substitute_unbounded_dims(max_array_size)
+                    res_eval_dims = array_info.array_dimensions
+                    res_eval_array_type = array_info.array_type
+                data_structure_for_event[param.get_name()] = EventParamType(
+                    res_eval_type, res_eval_array_type, res_eval_dims
+                )
                 param_variable = generate_jani_variable(
-                    param_assign_name, res_eval_type, max_array_size
+                    param_assign_name, res_eval_type, array_info
                 )
                 new_edge_dest_assignments.extend(
                     generate_jani_assignments(

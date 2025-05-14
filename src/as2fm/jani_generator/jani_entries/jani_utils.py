@@ -15,11 +15,12 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Tuple, Type, get_args
+from typing import Optional, Type, Union
 
 from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
+from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 
 def is_expression_array(expr: JaniExpression) -> bool:
@@ -47,25 +48,13 @@ def get_expression_array_length(expr: JaniExpression) -> int:
     return len(operands["elements"].as_literal().value())
 
 
-def get_array_variable_info(jani_var: JaniVariable) -> Tuple[Type, int]:
-    """Extract the array type and max size from a jani variable."""
-    var_type = jani_var.get_type()
-    assert is_array_type(var_type), f"Input JANI variable {jani_var.name()} is not an array."
-    array_type = get_args(var_type)[0]
-    assert array_type in (
-        int,
-        float,
-    ), f"Unsupported array type {array_type} found in JANI variable {jani_var.name()}."
-    max_size = get_expression_array_length(jani_var.get_init_expr())
-    return (array_type, max_size)
-
-
-def generate_jani_variable(var_name: str, var_type: Type[ValidJaniTypes], array_size: int):
+def generate_jani_variable(
+    var_name: str, var_type: Type[ValidJaniTypes], array_info: Optional[ArrayInfo] = None
+) -> Union[JaniExpression, JaniVariable]:
     """Helper to make a JaniVariable object."""
-    # TODO: Move it to jani_utils.py
     if is_array_type(var_type):
-        array_type = get_args(var_type)[0]
-        init_value = array_create_operator("__array_iterator", array_size, array_type(0))
+        assert array_info is not None, f"No array info  provided for array variable {var_name}."
+        init_value = array_create_operator(array_info)
     else:
         init_value = JaniExpression(get_default_expression_for_type(var_type))
-    return JaniVariable(var_name, var_type, init_value)
+    return JaniVariable(var_name, var_type, init_value, False, array_info)

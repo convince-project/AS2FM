@@ -17,7 +17,7 @@
 
 from typing import Any, Dict, List, Optional, Set
 
-from as2fm.jani_generator.jani_entries import JaniConstant, JaniEdge, JaniExpression, JaniVariable
+from as2fm.jani_generator.jani_entries import JaniConstant, JaniEdge, JaniVariable
 
 
 class JaniAutomaton:
@@ -104,21 +104,9 @@ class JaniAutomaton:
             self._initial_locations.add(init_location)
 
     def _generate_variables(self, variable_list: List[dict]):
-        for variable in variable_list:
-            init_expr = None
-            if "initial-value" in variable:
-                init_expr = JaniExpression(variable["initial-value"])
-            is_transient = False
-            if "transient" in variable:
-                is_transient = variable["transient"]
-            var_type = JaniVariable.python_type_from_json(variable["type"])
-            self._local_variables.update(
-                {
-                    variable["name"]: JaniVariable(
-                        variable["name"], var_type, init_expr, is_transient
-                    )
-                }
-            )
+        for variable_dict in variable_list:
+            jani_var = JaniVariable.from_dict(variable_dict)
+            self._local_variables.update({jani_var.name(): jani_var})
 
     def _generate_edges(self, edge_list: List[dict]):
         for edge in edge_list:
