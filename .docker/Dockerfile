@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install requirements
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-    apt install -y python3-pip curl tar && \
+    apt install -y python3-pip curl tar ros-jazzy-example-interfaces && \
     rm -rf /var/lib/apt/lists/*
 
 # Get SMC Storm
