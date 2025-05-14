@@ -1,0 +1,8 @@
+.vscode
+*.egg-info/
+build/
+*/*/build/
+*.pyc
+
+# Sphinx
+API/
