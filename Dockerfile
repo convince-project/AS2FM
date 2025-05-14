@@ -1,4 +1,4 @@
-FROM ros:foxy
+FROM ros:jazzy
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install requirements
@@ -17,4 +17,4 @@ RUN cd /smc_storm_executable && \
 
 # Add AS2FM
 COPY . as2fm
-RUN pip3 install as2fm/
+RUN pip3 install --break-system-packages as2fm/
