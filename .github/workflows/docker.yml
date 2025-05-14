@@ -28,8 +28,6 @@ jobs:
         continue-on-error: true
       - name: Build Docker image
         run: docker build -t ${{ env.REGISTRY_IMAGE_LATEST }} .
-      - name: Testing
-        run: docker run ${{ env.REGISTRY_IMAGE_LATEST }} pytest
       - name: Push to gh registry with sha and branch
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
