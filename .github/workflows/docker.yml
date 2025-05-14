@@ -5,7 +5,7 @@ on:
       - main
   pull_request:
 
-# env:
+env:
   REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/as2fm
   RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 jobs:
