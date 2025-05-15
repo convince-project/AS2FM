@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(delib_ws_24_interfaces)
+project(fetch_and_carry_msgs)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)

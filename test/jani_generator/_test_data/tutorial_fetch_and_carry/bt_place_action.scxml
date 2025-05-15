@@ -6,7 +6,7 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_action_client name="act" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
+    <ros_action_client name="act" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
 
     <datamodel>
         <data id="tmp_result" type="bool" expr="false" />

@@ -15,9 +15,9 @@
     0 .. snacks0
     -->
 
-    <ros_action_server name="act_nav" action_name="/go_to_goal" type="delib_ws_24_interfaces/Navigate" />
-    <ros_action_server name="act_pick" action_name="/pick_object" type="delib_ws_24_interfaces/Pick" />
-    <ros_action_server name="act_place" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
+    <ros_action_server name="act_nav" action_name="/go_to_goal" type="fetch_and_carry_msgs/Navigate" />
+    <ros_action_server name="act_pick" action_name="/pick_object" type="fetch_and_carry_msgs/Pick" />
+    <ros_action_server name="act_place" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
     <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
 
     <datamodel>
