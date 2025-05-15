@@ -195,7 +195,7 @@ class XmlStructDefinition:
                     # Empty list
                     self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
             else:
-                # Not an array
+                # Not a list
                 if isinstance(obj_value, str):
                     # Turn this into a string that evaluates to a string in ecmascript
                     obj_value = f"'{obj_value}'"
