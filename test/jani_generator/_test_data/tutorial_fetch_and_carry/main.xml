@@ -2,7 +2,7 @@
     <mc_parameters>
         <max_time value="100" unit="s" />
         <max_array_size value="10" />
-        <bt_tick_if_not_running value="true" />
+        <bt_tick_if_not_running value="false" />
     </mc_parameters>
 
     <behavior_tree>
