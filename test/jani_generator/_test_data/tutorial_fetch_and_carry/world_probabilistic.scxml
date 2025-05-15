@@ -15,9 +15,9 @@
     0 .. snacks0
     -->
 
-    <ros_action_server name="act_nav" action_name="/go_to_goal" type="delib_ws_24_interfaces/Navigate" />
-    <ros_action_server name="act_pick" action_name="/pick_object" type="delib_ws_24_interfaces/Pick" />
-    <ros_action_server name="act_place" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
+    <ros_action_server name="act_nav" action_name="/go_to_goal" type="fetch_and_carry_msgs/Navigate" />
+    <ros_action_server name="act_pick" action_name="/pick_object" type="fetch_and_carry_msgs/Pick" />
+    <ros_action_server name="act_place" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
     <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
 
     <datamodel>
@@ -27,6 +27,7 @@
         <!-- Additional support variable for the goal_id -->
         <data id="goal_id" type="int32" expr="0" />
         <data id="req_obj_idx" type="int32" expr="0" />
+        <data id="req_loc_idx" type="int32" expr="0" />
     </datamodel>
 
     <state id="idle">
@@ -36,9 +37,17 @@
             </ros_topic_publish>
         </onentry>
 
-        <ros_action_handle_goal name="act_nav" target="handle_nav_request" />
+        <ros_action_handle_goal name="act_nav" target="handle_nav_request">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="req_loc_idx" expr="_goal.loc_id" />
+            <ros_action_accept_goal name="act_nav" goal_id="goal_id" />
+        </ros_action_handle_goal>
 
-        <ros_action_handle_goal name="act_pick" target="handle_pick_request" />
+        <ros_action_handle_goal name="act_pick" target="handle_pick_request">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="req_obj_idx" expr="_goal.object_id" />
+            <ros_action_accept_goal name="act_pick" goal_id="goal_id" />
+        </ros_action_handle_goal>
 
         <ros_action_handle_goal name="act_place" target="idle">
             <assign location="goal_id" expr="_action.goal_id" />
@@ -54,14 +63,10 @@
     </state>
 
     <state id="handle_nav_request">
-        <onentry>
-            <assign location="goal_id" expr="_action.goal_id" />
-            <ros_action_accept_goal name="act_nav" goal_id="goal_id" />
-        </onentry>
         <transition>
             <!-- Successful navigation -->
             <target id="idle" prob="0.7">
-                <assign location="robot_loc" expr="_goal.loc_id" />
+                <assign location="robot_loc" expr="req_loc_idx" />
                 <ros_action_succeed name="act_nav" goal_id="goal_id" />
             </target>
             <!-- Unsuccessful navigation -->
@@ -72,27 +77,23 @@
     </state>
 
     <state id="handle_pick_request">
-        <onentry>
-            <assign location="goal_id" expr="_action.goal_id" />
-            <ros_action_accept_goal name="act_pick" goal_id="goal_id" />
-            <assign location="req_obj_idx" expr="_goal.object_id" />
-        </onentry>
-        <!-- The robot and object location match and the robot is not holding anything: it may succeed -->
-        <transition cond="obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0">
+        <transition>
             <!-- Successful picking -->
             <target id="idle" prob="0.6">
-                <assign location="robot_holding" expr="req_obj_idx" />
-                <assign location="obj_locs[req_obj_idx]" expr="-1" />
-                <ros_action_succeed name="act_pick" goal_id="goal_id" />
+                <if  cond="obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0">
+                    <!-- The robot and object location match and the robot is not holding anything: it may succeed -->
+                    <assign location="robot_holding" expr="req_obj_idx" />
+                    <assign location="obj_locs[req_obj_idx]" expr="-1" />
+                    <ros_action_succeed name="act_pick" goal_id="goal_id" />
+                <else/>
+                    <!-- Otherwise... FAIL!  -->
+                    <ros_action_aborted name="act_pick" goal_id="goal_id" />
+                </if>
             </target>
             <!-- Failing picking -->
-            <target>
+            <target id="idle">
                 <ros_action_aborted name="act_pick" goal_id="goal_id" />
             </target>
-        </transition>
-         <!--In this case, the robot location is different from the object one, FAIL!  -->
-        <transition target="idle">
-            <ros_action_aborted name="act_pick" goal_id="goal_id" />
         </transition>
     </state>
 
