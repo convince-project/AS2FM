@@ -9,7 +9,7 @@ RUN apt update && \
 
 # Get SMC Storm
 RUN mkdir /smc_storm_executable
-RUN curl -O -L https://github.com/convince-project/smc_storm/releases/download/0.0.7/smc_storm_executable.tar.gz
+RUN curl -O -L https://github.com/convince-project/smc_storm/releases/latest/download/smc_storm_executable.tar.gz
 RUN tar -xzf smc_storm_executable.tar.gz -C /smc_storm_executable
 RUN cd /smc_storm_executable && \
     ./install.sh --install-dependencies && \
