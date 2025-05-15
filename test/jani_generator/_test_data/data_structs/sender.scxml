@@ -45,9 +45,7 @@
             <assign location="a_polygon.points[0].x" expr="a_polygon.points[0].x + 1.0" />
             <assign location="multiple_polygons.polygons[2]" expr="a_polygon" />
             <assign location="multiple_polygons.polygons[2].points.x" expr="a_polygon.points.x" />
-            <assign location="multiple_polygons.polygons.points.x[2]" expr="a_polygon.points.x[2]" />
-            <assign location="multiple_polygons.polygons[2].points.y" expr="a_polygon.points.y" />
-            <assign location="multiple_polygons.polygons.points.y[2]" expr="a_polygon.points.y[2]" />
+            <assign location="multiple_polygons.polygons[1].points[0].x" expr="a_polygon.points[0].x" />
             <assign location="multiple_polygons.polygons[1].points[1].y"
                 expr="multiple_polygons.polygons[1].points[1].y + 1.0" />
         </transition>
