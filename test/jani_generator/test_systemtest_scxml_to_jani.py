@@ -407,6 +407,12 @@ class TestConversion(unittest.TestCase):
             "array_model_additional", property_name="array_check", expected_result_probability=1.0
         )
 
+    def test_array_model_multi_dim(self):
+        """Test the array model."""
+        self._test_with_main(
+            "array_model_multi_dim", property_name="array_check", expected_result_probability=1.0
+        )
+
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
         self._test_with_main(
