@@ -133,6 +133,17 @@ def log_error(element: XmlElement, message: str) -> None:
     print(error_msg)
 
 
+def log_warning(element: XmlElement, message: str) -> None:
+    """
+    Log an warning message and print it.
+
+    :param element: The element that caused the warning
+    :param message: The message
+    """
+    warning_msg = get_warn_msg(element, message)
+    print(warning_msg)
+
+
 def check_assertion(
     condition: bool,
     element: XmlElement,
