@@ -511,6 +511,16 @@ class TestConversion(unittest.TestCase):
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
+    def test_uc3_generic(self):
+        """Test the UC3 Museum guide example from IIT and UniGe."""
+        self._test_with_main(
+            os.path.join("uc3_museum_guide", "Main"),
+            model_xml="main.xml",
+            property_name="tree_success",
+            expected_result_probability=1.0,
+            store_generated_scxmls=True,
+        )
+
     def test_blackboard_features(self):
         """Test the blackboard features."""
         self._test_with_main(

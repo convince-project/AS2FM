@@ -130,6 +130,7 @@ def generate_jani_assignments(
             JaniAssignment({"ref": target_expr, "value": assignment_value, "index": assign_index})
         )
         # Update the length of the array
+        # 1: Get the depth and identifier of the target (recipient) variable
         assert isinstance(assign_operands, dict)
         array_assign_indexes: List[JaniExpression] = [assign_operands["index"]]
         target_sub_entry = assign_operands["exp"]
@@ -141,7 +142,7 @@ def generate_jani_assignments(
             array_assign_indexes = [sub_operands["index"]] + array_assign_indexes
             target_sub_entry = sub_operands["exp"]
             target_array_name = target_sub_entry.as_identifier()
-        # Update the length for all array levels
+        # 2: Update the length for the array dimensions from 1 to the one we assigned
         for curr_array_lv in range(len(array_assign_indexes), 0, -1):
             target_len_var_name = get_array_length_var_name(target_array_name, curr_array_lv)
             curr_lv_dim_idx = curr_array_lv - 1
@@ -163,6 +164,7 @@ def generate_jani_assignments(
                     }
                 )
             )
+        # 3: Update the remaining dimensions (according to the assigned value, if an array too)
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
