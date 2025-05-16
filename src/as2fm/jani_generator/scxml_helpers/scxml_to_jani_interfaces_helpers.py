@@ -81,8 +81,10 @@ def __generate_nested_array_access_expr(
     Example: array_name: 'ar_x', access_indexes: [1,2,3] will result in
              ret_expr = aa(exp: aa(exp: aa(exp: 'ar_x', index: 1), index: 2), index: 3)
     """
-    assert len(access_indexes) > 0
-    if len(access_indexes) == 1:
+    assert isinstance(access_indexes, list), f"Input var {access_indexes=} is not a list."
+    if len(access_indexes) == 0:
+        return JaniExpression(array_name)
+    elif len(access_indexes) == 1:
         array_expression = JaniExpression(array_name)
     else:
         array_expression = __generate_nested_array_access_expr(array_name, access_indexes[0:-1])
@@ -158,12 +160,9 @@ def generate_jani_assignments(
         for curr_array_dim in range(assigned_dimension, 0, -1):
             target_len_var_name = get_array_length_var_name(target_array_name, curr_array_dim)
             curr_lv_dim_idx = curr_array_dim - 1
-            if curr_array_dim == 1:
-                target_len_ref_expr = JaniExpression(target_len_var_name)
-            else:
-                target_len_ref_expr = __generate_nested_array_access_expr(
-                    target_len_var_name, target_array_indexes[0:curr_lv_dim_idx]
-                )
+            target_len_ref_expr = __generate_nested_array_access_expr(
+                target_len_var_name, target_array_indexes[0:curr_lv_dim_idx]
+            )
             new_array_length_expr = max_operator(
                 plus_operator(target_array_indexes[curr_lv_dim_idx], 1), target_len_ref_expr
             )
@@ -197,8 +196,21 @@ def generate_jani_assignments(
                 assignment_len_var_name = get_array_length_var_name(
                     assignment_value_name, assignment_dimension
                 )
-                # Generate dimension vars, assign one in the other and be done!
-                raise NotImplementedError(f"To finish {assignment_len_var_name}")
+                target_len_ref_expr = __generate_nested_array_access_expr(
+                    target_len_var_name, target_array_indexes
+                )
+                assignment_len_ref_expr = __generate_nested_array_access_expr(
+                    assignment_len_var_name, assignment_value_ids
+                )
+                assignments.append(
+                    JaniAssignment(
+                        {
+                            "ref": target_len_ref_expr,
+                            "value": assignment_len_ref_expr,
+                            "index": assign_index,
+                        }
+                    )
+                )
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
