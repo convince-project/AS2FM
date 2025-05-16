@@ -26,6 +26,8 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
+from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtChildTickStatus,
     BtTickChild,
@@ -49,8 +51,6 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     get_blackboard_variable_name,
     is_blackboard_reference,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import SCXML_DATA_STR_TO_TYPE
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
 

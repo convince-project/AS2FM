@@ -23,6 +23,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutionBody,
@@ -43,7 +44,6 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlTransition(ScxmlBase):

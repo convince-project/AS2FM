@@ -42,6 +42,14 @@ from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import 
     merge_conditions,
 )
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
+from as2fm.scxml_converter.data_types.type_utils import (
+    ArrayInfo,
+    check_variable_base_type_ok,
+    get_array_info,
+    get_data_type_from_string,
+    is_type_string_array,
+    is_type_string_base_type,
+)
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlDataModel,
@@ -49,14 +57,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
     ScxmlTransition,
     ScxmlTransitionTarget,
-)
-from as2fm.scxml_converter.xml_data_types.type_utils import (
-    ArrayInfo,
-    check_variable_base_type_ok,
-    get_array_info,
-    get_data_type_from_string,
-    is_type_string_array,
-    is_type_string_base_type,
 )
 
 # The supported MutableSequence instances
