@@ -3,11 +3,12 @@
     xmlns="http://www.w3.org/2005/07/scxml"
     initial="init"
     version="1.0"
-    name="RetryNode"
+    name="RetryUntilSuccessful"
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/decorators/retry_node.cpp">
 
     <!-- A default BT port reporting the amount of children -->
     <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
+    <bt_declare_port_in key="num_attempts" type="int8" />
 
     <datamodel>
         <data id="children_count" type="int8">

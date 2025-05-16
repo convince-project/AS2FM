@@ -5,7 +5,7 @@
     </mc_parameters>
 
     <behavior_tree>
-        <input type="bt.cpp-xml" src="./bt.xml" />
+        <input type="bt.cpp-xml" src="./bt_tree.xml" />
         <input type="bt-plugin-ros-scxml" src="./bt_navigate_action.scxml" />
         <input type="bt-plugin-ros-scxml" src="./bt_pick_action.scxml" />
         <input type="bt-plugin-ros-scxml" src="./bt_place_action.scxml" />
