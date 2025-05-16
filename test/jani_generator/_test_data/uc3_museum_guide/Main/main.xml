@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<convince_mc_tc>
+    <mc_parameters>
+        <max_time value="100" unit="s" />
+        <!-- <max_array_size value="10" /> -->
+        <bt_tick_rate value="10.0" />
+    </mc_parameters>
+
+    <behavior_tree>
+        <input type="bt.cpp-xml" src="./Policy.xml" />
+        <input type="bt-plugin-ros-scxml" src="../Plugins/ROS2Condition.scxml" />
+        <input type="bt-plugin-ros-scxml" src="../Plugins/ROS2Action.scxml" />
+    </behavior_tree>
+
+    <node_models>
+        <input type="ros-scxml" src="../Components/BatteryComponent.scxml" />
+        <input type="ros-scxml" src="../Components/NotifyUserComponent.scxml" />
+        <input type="ros-scxml" src="../Components/BlackboardComponent.scxml" />
+        <input type="ros-scxml" src="../Components/SchedulerComponent.scxml" />
+        <input type="ros-scxml" src="../Components/PeopleDetectorFilterComponent.scxml" />
+        <input type="ros-scxml" src="../Components/NavigationComponent.scxml" />
+        <input type="ros-scxml" src="../Skills/BatteryLevelSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/AlarmSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/IsPoiDone1Skill.scxml" />
+        <input type="ros-scxml" src="../Skills/IsPoiDone2Skill.scxml" />
+        <input type="ros-scxml" src="../Skills/SetPoi1Skill.scxml" />
+        <input type="ros-scxml" src="../Skills/SetPoi2Skill.scxml" />
+        <input type="ros-scxml" src="../Skills/ResetSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/SetCurrentPoiDoneSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/VisitorsFollowingRobotSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/WaitSkill.scxml" />
+        <input type="ros-scxml" src="../Skills/GoToPoiActionSkill.scxml" />
+    </node_models>
+
+    <properties>
+        <!-- <input type="xml" src="../Properties/properties.xml" /> -->
+        <input type="jani" src="../Properties/properties.jani" />
+    </properties>
+</convince_mc_tc>

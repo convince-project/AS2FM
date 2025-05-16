@@ -29,7 +29,7 @@ dependencies = [
     "webcolors",
     "plantuml",
     # scxml_converter
-    "typing-extensions",
+    "typing-extensions>=4.12.2",
     # trace_visualizer
     "pandas",
     "Pillow",
