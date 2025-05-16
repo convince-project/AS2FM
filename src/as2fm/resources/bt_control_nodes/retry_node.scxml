@@ -48,9 +48,6 @@
     </state>
 
     <state id="handle_tick">
-        <onentry>
-            <assign location="try_count" expr="try_count + 1" />
-        </onentry>
         <transition target="tick_child" cond="max_attempts == -1 || try_count &lt; max_attempts" />
         <transition target="wait_for_tick">
             <bt_return_status status="FAILURE" />
@@ -66,7 +63,9 @@
             <bt_return_status status="SUCCESS" />
             <assign location="try_count" expr="0" />
         </bt_child_status>
-        <bt_child_status id="0" cond="_bt.status == FAILURE" target="handle_tick" />
+        <bt_child_status id="0" cond="_bt.status == FAILURE" target="handle_tick">
+            <assign location="try_count" expr="try_count + 1" />
+        </bt_child_status>
         <bt_child_status id="0" cond="_bt.status == RUNNING" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </bt_child_status>
