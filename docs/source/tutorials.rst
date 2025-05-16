@@ -182,13 +182,13 @@ The last image depicts the behavior of the BT plugin `bt_place_action.scxml`. Wh
 
 As a last step we are having a closer look at the environment model in `world.scxml`.
 
-* First, it is indicated that the model makes use of dependencies from the `delib_ws_24_interfaces` package, where custom ROS actions are defined. In the last line the ROS topic publisher for the snack type is declared.
+* First, it is indicated that the model makes use of the interfaces from the `fetch_and_carry_msgs` package, where custom ROS actions are defined. In the last line the ROS topic publisher for the snack type is declared.
 
     .. code-block:: xml
 
-        <ros_action_server name="act_nav" action_name="/go_to_goal" type="delib_ws_24_interfaces/Navigate" />
-        <ros_action_server name="act_pick" action_name="/pick_object" type="delib_ws_24_interfaces/Pick" />
-        <ros_action_server name="act_place" action_name="/place_object" type="delib_ws_24_interfaces/Place" />
+        <ros_action_server name="act_nav" action_name="/go_to_goal" type="fetch_and_carry_msgs/Navigate" />
+        <ros_action_server name="act_pick" action_name="/pick_object" type="fetch_and_carry_msgs/Pick" />
+        <ros_action_server name="act_place" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
         <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
 
 * The next block defines and initializes the variables used: An array of arrays of integers for the objects' locations, an integer for the robot's location, a flag indicating if the robot is holding something (-1 = no, otherwise the object's id), a variable saying where the object should be brought to, i.e., the `goal_id`, and a helper variable `tmp_idx`.
