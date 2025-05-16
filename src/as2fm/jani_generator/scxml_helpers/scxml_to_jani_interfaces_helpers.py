@@ -30,7 +30,7 @@ from as2fm.as2fm_common.common import (
     value_to_type,
 )
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
-from as2fm.as2fm_common.logging import get_error_msg, log_error
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -392,7 +392,7 @@ def append_scxml_body_to_jani_edge(
                     array_info = array_value_to_type_info(res_eval_value)
                     if array_info.array_type is None:
                         # TODO: Better handling of array type than assigning int by default
-                        log_error(
+                        log_warning(
                             param.get_xml_origin(),
                             "Empty array with unknown type in the model: assigning int to it.",
                         )
