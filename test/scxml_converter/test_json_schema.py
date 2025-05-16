@@ -19,7 +19,7 @@ from as2fm.scxml_converter.data_types.json_struct_definition import JsonStructDe
 
 
 def test_json_from_dict():
-    json_def = JsonStructDefinition.from_dict(
+    json_defs = JsonStructDefinition.from_dict(
         {
             "title": "Test",
             "type": "object",
@@ -27,13 +27,32 @@ def test_json_from_dict():
         }
     )
 
+    assert len(json_defs) == 1
+    json_def = json_defs[0]
     assert json_def.get_name() == "Test"
-    print(json_def.get_members())
+    assert json_def.get_members() == {"name": "str", "age": "int"}
 
 
 def test_json_from_file():
     test_schema_path = os.path.join(
         os.path.dirname(__file__), "_test_data", "json_schema", "test.schema"
     )
-    json_def = JsonStructDefinition.from_file(test_schema_path)
-    print(json_def)
+    json_defs = JsonStructDefinition.from_file(test_schema_path)
+    assert len(json_defs) == 2
+    for json_def in json_defs:
+        if json_def.get_name() == "Product":
+            assert json_def.get_members() == {
+                "productId": "int",
+                "productName": "str",
+                "price": "float",
+                "tags": "str[]",
+                "dimensions": "dimensions",
+            }
+        elif json_def.get_name() == "dimensions":
+            assert json_def.get_members() == {
+                "length": "float",
+                "width": "float",
+                "height": "float",
+            }
+        else:
+            assert False

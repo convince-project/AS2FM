@@ -15,14 +15,16 @@
 
 import json
 import os
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 
+ARRAY = "array"
 OBJECT = "object"
 PROPERTIES = "properties"
 TITLE = "title"
 TYPE = "type"
+ITEMS = "items"
 
 JSON_SCHEMA_TYPE_TO_SCXML_TYPE = {
     "integer": "int",
@@ -41,23 +43,42 @@ class JsonStructDefinition(StructDefinition):
             return JsonStructDefinition.from_dict(json_def)
 
     @staticmethod
+    def _handle_property(prop_def: Dict[str, any]) -> str:
+        if prop_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
+            return JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(prop_def.get(TYPE))
+        elif prop_def.get(TYPE) == ARRAY:
+            assert ITEMS in prop_def
+            return JsonStructDefinition._handle_property(prop_def.get(ITEMS)) + "[]"
+        else:
+            raise NotImplementedError(f"{prop_def}")
+
+    @staticmethod
+    def _handle_objects(
+        obj_def: Dict[str, any], suggested_name: str
+    ) -> Tuple["JsonStructDefinition", List["JsonStructDefinition"]]:
+        assert obj_def.get(TYPE) == OBJECT
+        properties = obj_def.get(PROPERTIES)
+        assert properties is not None, f"Object must have properties: {obj_def}"
+        struct_members = {}
+        definitions = []
+        for prop_name, prop_def in properties.items():
+            if prop_def.get(TYPE) == OBJECT:
+                this_obj, new_defs = JsonStructDefinition._handle_objects(prop_def, prop_name)
+                definitions.append(this_obj)
+                definitions.extend(new_defs)
+                type_str = this_obj.get_name()
+            else:
+                type_str = JsonStructDefinition._handle_property(prop_def)
+            struct_members[prop_name] = type_str
+        return JsonStructDefinition(suggested_name, struct_members), definitions
+
+    @staticmethod
     def from_dict(json_def: Dict[str, any]):
         assert (
             json_def.get(TYPE) == OBJECT
         ), f"Only object definitions are supported. Got {json_def.get(TYPE)}"
-        properties = json_def.get(PROPERTIES)
+        schema_name = json_def.get(TITLE)
+        assert isinstance(schema_name, str), "The schema must have a title."
 
-        struct_name = json_def.get(TITLE)
-        assert isinstance(struct_name, str), "The schema must have a title."
-
-        struct_members = {}
-        for prop_name, prop_def in properties.items():
-            if prop_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
-                assert (
-                    prop_name not in struct_members
-                ), f"{prop_name=} must not be in {struct_members=} already."
-                struct_members[prop_name] = JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(prop_def.get(TYPE))
-            else:
-                raise NotImplementedError(f"{prop_def.get(TYPE)=}")
-
-        return JsonStructDefinition(struct_name, struct_members)
+        root_obj, other_objs = JsonStructDefinition._handle_objects(json_def, schema_name)
+        return [root_obj] + other_objs
