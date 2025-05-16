@@ -46,9 +46,8 @@ from as2fm.scxml_converter.bt_converter import (
     generate_blackboard_scxml,
     get_blackboard_variables_from_models,
 )
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
-from as2fm.scxml_converter.xml_data_types.xml_types import read_types_file
 
 
 @dataclass()
@@ -294,7 +293,7 @@ def interpret_top_level_xml(
 
     custom_data_types: Dict[str, XmlStructDefinition] = {}
     for path in model.data_declarations:
-        loaded_structs = read_types_file(path)
+        loaded_structs = XmlStructDefinition.from_file(path)
         custom_data_types.update(loaded_structs)
 
     for custom_struct_instance in custom_data_types.values():

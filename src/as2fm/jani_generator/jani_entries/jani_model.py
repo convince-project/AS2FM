@@ -29,7 +29,7 @@ from as2fm.jani_generator.jani_entries import (
     JaniValue,
     JaniVariable,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
+from as2fm.scxml_converter.data_types.type_utils import ArrayInfo
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 

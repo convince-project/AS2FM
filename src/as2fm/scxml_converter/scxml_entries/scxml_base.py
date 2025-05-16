@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Type
 from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlBase:

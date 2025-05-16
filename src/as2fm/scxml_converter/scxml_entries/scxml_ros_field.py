@@ -20,6 +20,7 @@ from typing import Dict, Optional, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -33,7 +34,6 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosField(ScxmlParam):

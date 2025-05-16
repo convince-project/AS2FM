@@ -33,8 +33,8 @@ from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
     interpret_top_level_xml,
     parse_main_xml,
 )
+from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
-from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 from .utils import json_jani_properties_match
