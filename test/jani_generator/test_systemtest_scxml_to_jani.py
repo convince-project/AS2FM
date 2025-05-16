@@ -434,13 +434,36 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
-    def test_tutorial_fetch_carry(self):
+    def test_tutorial_fetch_carry_deterministic(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
             "tutorial_fetch_and_carry",
+            model_xml="main.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
             expected_result_probability=1.0,
+        )
+
+    def test_tutorial_fetch_carry_prob_world(self):
+        """Test that the tutorial for the fetch and carry example works."""
+        self._test_with_main(
+            "tutorial_fetch_and_carry",
+            model_xml="main_probabilistic.xml",
+            store_generated_scxmls=True,
+            property_name="snack_at_table",
+            expected_result_probability=0.294,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+        )
+
+    def test_tutorial_fetch_carry_prob_world_retry(self):
+        """Test that the tutorial for the fetch and carry example works."""
+        self._test_with_main(
+            "tutorial_fetch_and_carry",
+            model_xml="main_probabilistic_extended_bt.xml",
+            store_generated_scxmls=True,
+            property_name="snack_at_table",
+            expected_result_probability=0.954,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
     def test_robot_navigation_demo(self):
