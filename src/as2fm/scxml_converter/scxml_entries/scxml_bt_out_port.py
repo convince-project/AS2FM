@@ -22,6 +22,7 @@ from typing import Dict, List
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BT_SET_BLACKBOARD_PARAM,
@@ -32,7 +33,6 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtSetValueOutputPort(ScxmlSend):

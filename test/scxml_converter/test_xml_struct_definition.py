@@ -1,6 +1,6 @@
 from typing import Dict
 
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 
 
 def expand_struct_definitions(struct_definitions: Dict[str, XmlStructDefinition]):

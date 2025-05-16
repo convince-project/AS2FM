@@ -19,7 +19,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
-from as2fm.scxml_converter.xml_data_types.type_utils import (
+from as2fm.scxml_converter.data_types.type_utils import (
     get_array_type_and_dimensions_from_string,
     is_type_string_array,
     is_type_string_base_type,
@@ -28,9 +28,9 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
 ExpandedDataStructType = Dict[str, Union[str, Dict[str, "ExpandedDataStructType"]]]
 
 
-class XmlStructDefinition:
+class StructDefinition:
     """
-    Represents a custom data structs defined in SCXML, loaded from an XML element.
+    Represents a custom data structs defined in SCXML, loaded from a file, for example XML.
     """
 
     def __init__(self, name: str, members: dict):
@@ -46,26 +46,11 @@ class XmlStructDefinition:
         self._members_list: Optional[Dict[str, str]] = None
 
     @staticmethod
-    def from_xml(xml_element: XmlElement):
+    def from_file(fname: str):
         """
-        Creates an ScxmlDataType instance from an `struct` XML element.
-
-        :param xml_element: The XML struct element defining the custom data type.
-        :return: An instance of ScxmlDataType.
+        Implement this method depending on the source of the type definitions
         """
-        name = xml_element.get("id")
-        members = {}
-        for member in xml_element.findall("member"):
-            member_name = member.get("id")
-            member_type = member.get("type")
-            assert member_name and member_type, get_error_msg(
-                xml_element, "Member with no id or type defined."
-            )
-            members[member_name] = member_type
-        assert len(members) > 0, get_error_msg(xml_element, "struct definition with no members.")
-        instance = XmlStructDefinition(name, members)
-        instance.set_xml_origin(xml_element)
-        return instance
+        raise NotImplementedError("This must be implemented in the child class.")
 
     def get_name(self) -> str:
         """Get the name of the custom struct."""
@@ -96,7 +81,7 @@ class XmlStructDefinition:
         assert self._members_list is not None
         return self._members_list
 
-    def expand_members(self, all_structs: Dict[str, "XmlStructDefinition"]):
+    def expand_members(self, all_structs: Dict[str, "StructDefinition"]):
         """
         Expands the members dictionary to resolve all fields to their base types.
 

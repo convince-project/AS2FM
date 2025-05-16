@@ -25,6 +25,16 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
+from as2fm.scxml_converter.data_types.type_utils import (
+    convert_string_to_type,
+    get_data_type_from_string,
+    get_type_string_of_array,
+    is_type_string_array,
+    is_type_string_base_type,
+)
+from as2fm.scxml_converter.data_types.xml_struct_definition import (
+    XmlStructDefinition,
+)
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
@@ -34,16 +44,6 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
-)
-from as2fm.scxml_converter.xml_data_types.type_utils import (
-    convert_string_to_type,
-    get_data_type_from_string,
-    get_type_string_of_array,
-    is_type_string_array,
-    is_type_string_base_type,
-)
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import (
-    XmlStructDefinition,
 )
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]

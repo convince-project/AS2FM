@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 from as2fm.as2fm_common.ecmascript_interpretation import ArrayAccess, split_by_access
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.xml_data_types.type_utils import (
+from as2fm.scxml_converter.data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     ARRAY_LENGTH_TYPE,
     ArrayInfo,
@@ -28,7 +28,7 @@ from as2fm.scxml_converter.xml_data_types.type_utils import (
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlStructDeclarationsContainer:
