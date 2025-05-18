@@ -114,10 +114,12 @@ The output is a JANI file called `main.jani` that will be located in the same fo
 Hands-on in-depth tutorial including verification: Fetch & Carry
 -----------------------------------------------------------------
 
-In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with SMC Storm, our statistical model checking tool.
-We will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and features in the behavior tree we make in the end sure that all properties hold.
+In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking tool.
+We will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and additional features in the behavior tree, we make in the end sure that the required properties hold.
 
 We assume some background in computer science or as a robotics developer but no knowledge about formal methods and model checking is required.
+
+You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page https://github.com/convince-project/AS2FM/pkgs/container/as2fm`_.
 
 Reference Model: Fetch & Carry Robot
 `````````````````````````````````````
@@ -125,17 +127,16 @@ Reference Model: Fetch & Carry Robot
 For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/tutorial_fetch_and_carry>`_.
 What is implemented there is a classical fetch and carry task. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
 
-The model consists of a `main.xml` file, referencing to the BT `bt.xml` running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml`, picking `bt_pick_action.scxml`, and placing `bt_place_action.scxml`, as well as the world model `world.scxml`. Finally, there are the properties to check later with SMC Storm in the JANI format in `properties.jani`.
+The model consists of a `main.xml` file, referencing to the BT `bt_tree.xml` running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml`, picking `bt_pick_action.scxml`, and placing `bt_place_action.scxml`, as well as the world model `world.scxml`. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani`.
 
 All of those components are summarized and collected in the `main.xml` file.
-* First, some parameters configuring generic properties of the system are defined. In this example we bound the maximum execution time to 100 seconds, we configure unbounded arrays to contain at most 10 elements, and we configure the Behavior Tree to be ticked again in case it returns SUCCESS or FAILURE (by default, it would be tick for as long as it returns RUNNING, and stopped afterwards).
+* First, some parameters configuring generic properties of the system are defined. In this example we bound the maximum execution time to 100 seconds, and configure unbounded arrays to contain at most 10 elements.
 
     .. code-block:: xml
 
         <mc_parameters>
             <max_time value="100" unit="s" />
             <max_array_size value="10" />
-            <bt_tick_if_not_running value="true" />
         </mc_parameters>
 
 * Afterwards the Behavior Tree is fully specified in terms of the BT in the BT.cpp XML format and the used BT plugins in SCXML. We will go into the details of the individual files later.
@@ -143,7 +144,7 @@ All of those components are summarized and collected in the `main.xml` file.
     .. code-block:: xml
 
         <behavior_tree>
-            <input type="bt.cpp-xml" src="./bt.xml" />
+            <input type="bt.cpp-xml" src="./bt_tree.xml" />
             <input type="bt-plugin-ros-scxml" src="./bt_navigate_action.scxml" />
             <input type="bt-plugin-ros-scxml" src="./bt_pick_action.scxml" />
             <input type="bt-plugin-ros-scxml" src="./bt_place_action.scxml" />
@@ -167,7 +168,7 @@ All of those components are summarized and collected in the `main.xml` file.
 
 
 
-The behavior tree specified in `bt.xml` looks as depicted in the first image below. The SequenceWithMemory node ticks each child in order until all of them have returned Success. Those who already returned Success are not ticked in the next cycle again.
+The behavior tree specified in `bt_tree.xml` looks as depicted in the first image below. The SequenceWithMemory node ticks each child in order until all of them have returned Success. Those who already returned Success are not ticked in the next cycle again.
 The location is encoded as 0 = in the pantry and 1 = at the table. The snack object has id 0.
 
 .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt.drawio.svg
@@ -191,7 +192,7 @@ As a last step we are having a closer look at the environment model in `world.sc
         <ros_action_server name="act_place" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
         <ros_topic_publisher name="pub_snacks0" topic="/snacks0_loc" type="std_msgs/Int32" />
 
-* The next block defines and initializes the variables used: An array of arrays of integers for the objects' locations, an integer for the robot's location, a flag indicating if the robot is holding something (-1 = no, otherwise the object's id), a variable saying where the object should be brought to, i.e., the `goal_id`, and a helper variable `tmp_idx`.
+* The next block defines and initializes the variables used: An array of integers for the objects' locations, an integer for the robot's location, a flag indicating if the robot is holding something (-1 = no, otherwise the object's id), a variable saying where the object should be brought to, i.e., the `goal_id`, and a helper variable `tmp_idx`.
 
     .. code-block:: xml
 
@@ -204,7 +205,7 @@ As a last step we are having a closer look at the environment model in `world.sc
             <data id="tmp_idx" type="int32" expr="0" />
         </datamodel>
 
-* The actual functionality of the world model is depicted in the graph below. When navigating to a goal the robot location is set to the goal location id. It is assumed that this operation always succeeds. When trying to pick an object it is checked if the object's location is the same as the robot's location. It is recorded in the `robot_holding` variable that the robot now holds the object with a certain id. The location of the object is reset to -1 indicating that it is in the robot's gripper. This procedure can succeed or be aborted. In case an object should be placed, it is checked if the robot is holding an object (by `robot_holding != -1`). In this case the location of the object is replaced with the robot's location and `robot_holding` is set to -1 again because the gripper is empty now. This procedure can also be aborted if it does not succeed.
+* The actual functionality of the world model is depicted in the graph below. When navigating to a goal the robot location is set to the goal location id.  For the moment, in this file it is assumed that this operation always succeeds. When trying to pick an object it is checked if the object's location is the same as the robot's location. It is recorded in the `robot_holding` variable that the robot now holds the object with a certain id. The location of the object is reset to -1 indicating that it is in the robot's gripper. This procedure can succeed or be aborted. In case an object should be placed, it is checked if the robot is holding an object (by `robot_holding != -1`). In this case the location of the object is replaced with the robot's location and `robot_holding` is set to -1 again because the gripper is empty now. This procedure can also be aborted if it does not succeed.
 
     .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world.drawio.svg
         :width: 400
@@ -222,11 +223,12 @@ From this model in SCXML we can generate a JANI representation with AS2FM by exe
     cd AS2FM/test/jani_generator/_test_data/tutorial_fetch_and_carry
     as2fm_scxml_to_jani main.xml
 
-This produces the same model in JANI in the file `main.jani`.
+This produces the same model in the JANI format in the file `main.jani`.
+You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani`
 
 Model Checking with SMC Storm
 ```````````````````````````````
-We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table This can be expressed as P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid), where F is the finally operator of linear temporal logic (LTL) and the first operand of the logical and expresses that the snack is located at the table (id 1). The second operand is needed to make sure TODO.
+We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table. This can be expressed as P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid), where F is the finally operator of linear temporal logic (LTL) and the first operand of the formula expresses that the snack is located at the table (id 1). The second operand is needed to make sure the system is still in a valid state.
 The property is formulated in `properties.jani`.
 
 This property can be checked by calling SMC Storm on the JANI file generated before with AS2FM. For more details on SMC Storm you can have a look the `SMC Storm repository <https://github.com/convince-project/smc_storm>`_.
@@ -237,7 +239,7 @@ Executing SMC Storm on this example works as follows:
 
     smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --show-statistics
 
-The expected result shown below indicates that the property is fulfilled with probability 1, i.e., the snack is always successfully placed on the table. In this case model checking needed 500 traces to come to that result called with the default confidence and error parameters. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
+The expected result shown below indicates that the property is fulfilled with probability 1, i.e., the snack is always successfully placed on the table. In this case model checking needed 500 traces to come to that result called with the default SMC confidence and error parameters. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
 
 .. code-block:: bash
 
@@ -251,72 +253,97 @@ The expected result shown below indicates that the property is fulfilled with pr
     =========================================
     Result: 1
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is PlotJuggler. Just run `ros2 run plotjuggler plotjuggler -d traces.csv` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. For the topic TODO this looks as in the picture below.
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run `ros2 run plotjuggler plotjuggler -d traces.csv` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot. In addition, because a lot of traces are generated, it might make sense to zoom in to only see a few steps of the trace.
+This can also be achieved by only generating a given number of traces by using the `--max-n-traces` flag. With
 
-.. image:: graphics/plotjuggler.jpg
+.. code-block:: bash
+
+    smc_storm --model main.jani --properties-names snack_at_table --traces-file traces_single.csv --max-n-traces 1 --show-statistics
+
+only one trace has been generated in `reference_traces_single.csv`
+
+The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world_obj_locs_at_0`, and `topic_clock_msg__ros_fields__sec` looks as follows:
+
+.. image:: graphics/plotjuggler_simple.png
     :width: 800
     :alt: An image showing the changes of the topic TODO in plotjuggler.
 
+You can see how the time advances in steps, how the robot moves from location 1 to 0 and then back to 1 again. The robot is first holding nothing, then it holds the object with id 0, and then it is holding nothing again. The objects position is first 0, then -1 in the gripper, and then 1 at the table.
 
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
-This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. We would like to reflect this scenario by adapting the plugin for the `PickAction` in `bt_pick_action.scxml`. In line xy (around 26) we can add probabilistic behavior of the gripping action. It either succeeds in 80% of the cases, in which case `tmp_result` is set to `true` otherwise in the remaining 20% `tmp_result` is set to `false`. To implement this behavior lines x-y have to be replaced by the following code snippet:
+This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. In addition, navigation fails sometimes. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml`. From now on we are using `main_probabilistic.scxml`, which is the same as `main.scxml` but referencing to this modified world model in line 15.
 
-.. code-block:: xml
+If you want to try to come up with a solution on your own on how to modify the world model such that it's behavior is probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml`. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml`
 
-    TODO
+`world_probabilistic.scxml` differs from the previous world model by introducing two new variables in line 29 and 30 to store the requested object id to pick and the requested location id to navigate to.
+
+    .. code-block:: xml
+
+        <data id="req_obj_idx" type="int32" expr="0" />
+        <data id="req_loc_idx" type="int32" expr="0" />
+
+In addition, the new functionality is introduced as follows. Placing the object works as before. For navigating the requested goal location is first stored and the model transitions into a new state for handling the navigation request. From there the new location is assigned successfully in 70% of the cases. In the remaining 30% the request is not fulfilled and the action is aborted.
+
+Similarly for the picking action, the object's id is first stored in a helper variable and the model transitions in a new state for handling the picking request. With a probability of 60% the action succeeds as before. Otherwise, it is aborted. This time the remaining part is not explicitly specified in line 88, because in such cases the remaining probability is implicitly assumed.
 
 Graphically this new functionality is visualized below:
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_prob_picking.drawio.svg
-    :width: 300
-    :alt: An image of the behavior tree plugin for probabilistic picking.
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world_probabilistic.drawio.svg
+    :width: 600
+    :alt: An image of the world behavior with probabilities.
 
 We can then run SMC Storm again on the modified model after generating the JANI model with AS2FM.
 
 .. code-block:: bash
 
-    as2fm_scxml_to_jani main.xml TODO: Should we write the output to a different file to keep the old one?
-    smc_storm --model main-prob.jani --properties-names snack_at_table --traces-file traces-prob.csv --show-statistics
+    as2fm_scxml_to_jani main_probabilistic.xml
+    smc_storm --model main_prob.jani --properties-names snack_at_table --traces-file traces_prob.csv --show-statistics
 
-The expected result shown below indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up. In this case model checking needed TODO traces to come to the result that the task is only completed successfully in xy% of the cases. It is not 80% of the cases because the robot is ticked again for up to 100 seconds when the BT does not succeed. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
+The sample output can be found again in `sample_solutions_and_outputs/reference_traces_prob.csv`.
+The expected result shown below indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up, or the navigation fails.
+This gives us a probability of 0.7 * 0.6 = 0.42 that everything works successfully.
+In this case model checking needed TODO traces to come to the result that the task is only completed successfully in 42% of the cases.
 
 .. code-block:: bash
 
     TODO
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces-prob.csv` again by running `ros2 run plotjuggler plotjuggler -d traces-prob.csv`. An interesting topic to look at is TODO.
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces_prob.csv` again by running `ros2 run plotjuggler plotjuggler -d traces_prob.csv`. Here we checked exemplarily a trace in `traces_prob_single.csv`, which shows TODO. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account.
 
-.. image:: graphics/plotjuggler-prob.jpg
+.. image:: graphics/plotjuggler_prob.jpg
     :width: 800
     :alt: An image showing the changes of the topic TODO in plotjuggler.
 
 
 Enhancing the Behavior Tree to Handle Probabilistic Failures
 ```````````````````````````````````````````````````````````````
-When the picking action does not succeed because the item slips out of the gripper, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again. This needs to be realized in the behavior tree by TODO in line xy...
+When the picking action does not succeed because the item slips out of the gripper, or the navigation fails for some reason, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again, or tries to navigate at the requested location again.
+Can you come up with one or more solutions for that on your own? In the following, we will discuss one of them.
 
-The new behavior tree looks as depicted below:
+One solution is to realized the functionality in the behavior tree by adding a `RetryUntilSuccessful` node in line 3 of the modified behavior tree in `bt_tree_retry.xml`:
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_recovery.drawio.svg
-    :width: 300
-    :alt: An image of the behavior tree including the recovery strategy in case picking fails.
+.. code-block:: xml
 
-We can  again run SMC Storm again on the modified model after generating the JANI model with AS2FM.
+    <RetryUntilSuccessful num_attempts="5">
+
+This also allows do specify the number of attempts to retry. The new behavior tree looks as depicted below:
+
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_retry.drawio.svg
+    :width: 500
+    :alt: An image of the behavior tree including the recovery strategy in case picking or navigating fails.
+
+We can again run SMC Storm again on the modified model after generating the JANI model with AS2FM. This time we use `main_probabilistic_extended_bt.xml` as input to refer to the modified files of the bt and the probabilistic world model.
 
 .. code-block:: bash
 
-    as2fm_scxml_to_jani main.xml TODO: Should we write the output to a different file to keep the old one?
-    smc_storm --model main-rec.jani --properties-names snack_at_table --traces-file traces-rec.csv --show-statistics
+    as2fm_scxml_to_jani main_probabilistic_extended_bt.xml
+    smc_storm --model main_retry.jani --properties-names snack_at_table --traces-file traces_retry.csv --show-statistics
 
-The expected result shown below states that the property is now fulfilled with probability 1 again, i.e., the snack is always successfully placed on the table, because when it slip out of the gripper when trying to pick it up, the robot just tries again. In this case model checking needed TODO traces to come to the result. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
+The expected result shown below states that the property is now fulfilled with probability TODO again when 5 retries are allowed.
 
 .. code-block:: bash
 
     TODO
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces-rec.csv` again by running `ros2 run plotjuggler plotjuggler -d traces-rec.csv`. An interesting topic to look at is TODO.
-
-.. image:: graphics/plotjuggler-rec.jpg
-    :width: 800
-    :alt: An image showing the changes of the topic TODO in plotjuggler.
+As before an inspection with PlotJuggler can be helpful.
