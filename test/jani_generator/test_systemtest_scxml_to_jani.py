@@ -616,10 +616,21 @@ class TestConversion(unittest.TestCase):
             "nested_data_ros", property_name="success", expected_result_probability=1.0
         )
 
-    def test_data_structs(self):
+    def test_data_structs_xml(self):
         """Test support for custom struct declarations."""
         self._test_with_main(
             "data_structs",
+            model_xml="main_xml_def.xml",
+            property_name="success",
+            expected_result_probability=1.0,
+            disable_cache=True,
+        )
+
+    def test_data_structs_json(self):
+        """Test support for custom struct declarations."""
+        self._test_with_main(
+            "data_structs",
+            model_xml="main_json_def.xml",
             property_name="success",
             expected_result_probability=1.0,
             disable_cache=True,

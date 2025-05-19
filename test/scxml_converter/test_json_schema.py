@@ -28,8 +28,7 @@ def test_json_from_dict_types():
     )
 
     assert len(json_defs) == 1
-    json_def = json_defs[0]
-    assert json_def.get_name() == "Test"
+    json_def = json_defs["Test"]
     assert json_def.get_members() == {"name": "str", "age": "int32"}
 
 
@@ -46,9 +45,27 @@ def test_json_from_dict_arrays():
     )
 
     assert len(json_defs) == 1
-    json_def = json_defs[0]
-    assert json_def.get_name() == "TestWArray"
+    json_def = json_defs["TestWArray"]
     assert json_def.get_members() == {"name": "str", "grades": "float32[]"}
+
+
+def test_json_from_dict_refs():
+    json_defs = JsonStructDefinition.from_dict(
+        {
+            "title": "TestWDef",
+            "type": "object",
+            "properties": {
+                "person": {"$ref": "#/definitions/Person"},
+            },
+            "definitions": {
+                "Person": {"type": "object", "properties": {"name": {"type": "string"}}}
+            },
+        }
+    )
+
+    assert len(json_defs) == 2
+    assert json_defs["TestWDef"].get_members() == {"person": "Person"}
+    assert json_defs["Person"].get_members() == {"name": "str"}
 
 
 def test_json_from_file():
@@ -57,20 +74,15 @@ def test_json_from_file():
     )
     json_defs = JsonStructDefinition.from_file(test_schema_path)
     assert len(json_defs) == 2
-    for json_def in json_defs:
-        if json_def.get_name() == "Product":
-            assert json_def.get_members() == {
-                "productId": "int32",
-                "productName": "str",
-                "price": "float32",
-                "tags": "str[]",
-                "dimensions": "dimensions",
-            }
-        elif json_def.get_name() == "dimensions":
-            assert json_def.get_members() == {
-                "length": "float32",
-                "width": "float32",
-                "height": "float32",
-            }
-        else:
-            assert False
+    assert json_defs["Product"].get_members() == {
+        "productId": "int32",
+        "productName": "str",
+        "price": "float32",
+        "tags": "str[]",
+        "dimensions": "dimensions",
+    }
+    assert json_defs["dimensions"].get_members() == {
+        "length": "float32",
+        "width": "float32",
+        "height": "float32",
+    }

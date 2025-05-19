@@ -5,7 +5,7 @@
     </mc_parameters>
 
     <data_declarations>
-        <input type="xml" src="./my_types.scxml" />
+        <input type="json" src="./my_types.json" />
     </data_declarations>
 
     <node_models>
