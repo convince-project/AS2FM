@@ -111,7 +111,8 @@ def _interpret_ecmascript_expr(
                 f"Failed to interpret JS expression using variables {variables}: ",
                 f"'result = {expr}'. {msg_addition}",
             )
-        return __evaluate_js_variable_content(context.locals.result)
+        eval_res = __evaluate_js_variable_content(context.locals.result)
+    return eval_res
 
 
 def interpret_ecma_script_expr(
