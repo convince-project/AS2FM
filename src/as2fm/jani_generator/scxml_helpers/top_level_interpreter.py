@@ -21,7 +21,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Type
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
@@ -46,8 +46,15 @@ from as2fm.scxml_converter.bt_converter import (
     generate_blackboard_scxml,
     get_blackboard_variables_from_models,
 )
+from as2fm.scxml_converter.data_types.json_struct_definition import JsonStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
+
+AVAILABLE_STRUCT_DEFINITIONS: Dict[str, Type[StructDefinition]] = {
+    "xml": XmlStructDefinition,
+    "json": JsonStructDefinition,
+}
 
 
 @dataclass()
@@ -60,8 +67,8 @@ class FullModel:
     bt_tick_rate: float = field(default=1.0)
     # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
     bt_tick_when_not_running: bool = field(default=False)
-    # Paths to custom data declarations
-    data_declarations: List[str] = field(default_factory=list)
+    # List of data declarations. Each entry will contain the type aPaths to custom data declarations
+    data_declarations: List[Tuple[str, str]] = field(default_factory=list)
     # Path to the behavior tree loaded in the model
     bt: Optional[str] = None
     # Paths to the SCXML models of the BT nodes used in the model
@@ -124,15 +131,13 @@ def parse_main_xml(xml_path: str) -> FullModel:
         elif remove_namespace(first_level.tag) == "data_declarations":
             for child in first_level:
                 if remove_namespace(child.tag) == "input":
-                    if child.attrib["type"] != "type-declarations":
+                    if child.attrib["type"] not in AVAILABLE_STRUCT_DEFINITIONS.keys():
                         raise ValueError(
-                            get_error_msg(
-                                child,
-                                "Only `type-declarations` are supported under the "
-                                + "`data_declarations` tag.",
-                            )
+                            get_error_msg(child, f"Unsupported type {child.attrib['type']}.")
                         )
-                    model.data_declarations.append(os.path.join(folder_of_xml, child.attrib["src"]))
+                    model.data_declarations.append(
+                        (child.attrib["type"], os.path.join(folder_of_xml, child.attrib["src"]))
+                    )
                 else:
                     raise ValueError(
                         get_error_msg(child, f"Invalid data_declarations tag: {child.tag} != input")
@@ -291,9 +296,10 @@ def interpret_top_level_xml(
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
 
-    custom_data_types: Dict[str, XmlStructDefinition] = {}
-    for path in model.data_declarations:
-        loaded_structs = XmlStructDefinition.from_file(path)
+    custom_data_types: Dict[str, StructDefinition] = {}
+    for type, path in model.data_declarations:
+        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[type]
+        loaded_structs = struct_definition_class.from_file(path)
         custom_data_types.update(loaded_structs)
 
     for custom_struct_instance in custom_data_types.values():
