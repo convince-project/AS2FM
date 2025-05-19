@@ -190,7 +190,7 @@ def generate_jani_assignments(
                 raise NotImplementedError("Cannot assign explicitly arrays to a specific var index")
             assignment_n_dims = len(assignment_value_ids)
             for next_idx in range(1, remaining_dimensions + 1):
-                target_dimension = assigned_dimension + 1
+                target_dimension = assigned_dimension + next_idx
                 assignment_dimension = assignment_n_dims + next_idx
                 target_len_var_name = get_array_length_var_name(target_array_name, target_dimension)
                 assignment_len_var_name = get_array_length_var_name(

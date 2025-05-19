@@ -19,7 +19,7 @@
             <if cond="complete_array[1][1][1][1] == 5 &amp;&amp; complete_array[1][1][1].length == 3">
                 <send event="complete_array_ok"/>
             </if>
-            <if cond="sub_array[1][1][1][1] == 5 &amp;&amp; sub_array[1][1][1].length == 3 &amp;&amp; sub_array[0].length == 1">
+            <if cond="sub_array[1][1][1][1] == 5 &amp;&amp; sub_array[1][1][1].length == 3 &amp;&amp; sub_array[0].length == 0">
                 <send event="sub_array_ok"/>
             </if>
         </transition>
