@@ -18,7 +18,7 @@ import os
 from as2fm.scxml_converter.data_types.json_struct_definition import JsonStructDefinition
 
 
-def test_json_from_dict():
+def test_json_from_dict_types():
     json_defs = JsonStructDefinition.from_dict(
         {
             "title": "Test",
@@ -30,7 +30,25 @@ def test_json_from_dict():
     assert len(json_defs) == 1
     json_def = json_defs[0]
     assert json_def.get_name() == "Test"
-    assert json_def.get_members() == {"name": "str", "age": "int"}
+    assert json_def.get_members() == {"name": "str", "age": "int32"}
+
+
+def test_json_from_dict_arrays():
+    json_defs = JsonStructDefinition.from_dict(
+        {
+            "title": "TestWArray",
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "grades": {"type": "array", "items": {"type": "number"}},
+            },
+        }
+    )
+
+    assert len(json_defs) == 1
+    json_def = json_defs[0]
+    assert json_def.get_name() == "TestWArray"
+    assert json_def.get_members() == {"name": "str", "grades": "float32[]"}
 
 
 def test_json_from_file():
@@ -42,17 +60,17 @@ def test_json_from_file():
     for json_def in json_defs:
         if json_def.get_name() == "Product":
             assert json_def.get_members() == {
-                "productId": "int",
+                "productId": "int32",
                 "productName": "str",
-                "price": "float",
+                "price": "float32",
                 "tags": "str[]",
                 "dimensions": "dimensions",
             }
         elif json_def.get_name() == "dimensions":
             assert json_def.get_members() == {
-                "length": "float",
-                "width": "float",
-                "height": "float",
+                "length": "float32",
+                "width": "float32",
+                "height": "float32",
             }
         else:
             assert False

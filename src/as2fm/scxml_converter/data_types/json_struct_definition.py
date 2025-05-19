@@ -26,9 +26,11 @@ TITLE = "title"
 TYPE = "type"
 ITEMS = "items"
 
+# compare: https://json-schema.org/understanding-json-schema/reference/type
 JSON_SCHEMA_TYPE_TO_SCXML_TYPE = {
-    "integer": "int",
-    "number": "float",
+    "boolean": "bool",
+    "integer": "int32",
+    "number": "float32",
     "string": "str",
 }
 
