@@ -50,7 +50,8 @@ def __evaluate_js_variable_content(js_variable: Any) -> Any:
     """Extract the result from the JS Context variable"""
     if isinstance(js_variable, get_args(BasicJsTypes)):
         return js_variable
-    if isinstance(js_variable, STPyV8.JSArray):
+    # Here consider both STPyV8.JSArray and list, since the type depends on the context variables.
+    if isinstance(js_variable, (STPyV8.JSArray, list)):
         return __evaluate_js_var_as_list(js_variable)
     if isinstance(js_variable, STPyV8.JSObject):
         return __evaluate_js_var_as_dict(js_variable)
@@ -58,7 +59,7 @@ def __evaluate_js_variable_content(js_variable: Any) -> Any:
 
 
 def __evaluate_js_var_as_list(js_variable: Any) -> List[Any]:
-    assert isinstance(js_variable, STPyV8.JSArray)
+    assert isinstance(js_variable, (STPyV8.JSArray, list))
     return [__evaluate_js_variable_content(x) for x in js_variable]
 
 
