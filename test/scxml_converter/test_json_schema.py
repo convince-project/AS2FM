@@ -49,6 +49,26 @@ def test_json_from_dict_arrays():
     assert json_def.get_members() == {"name": "str", "grades": "float32[]"}
 
 
+def test_json_from_dict_def_arrays():
+    json_defs = JsonStructDefinition.from_dict(
+        {
+            "title": "TestWArrayADefs",
+            "type": "object",
+            "properties": {
+                "year": {"type": "integer"},
+                "students": {"type": "array", "items": {"$ref": "#/definitions/Student"}},
+            },
+            "definitions": {
+                "Student": {"type": "object", "properties": {"name": {"type": "string"}}}
+            },
+        }
+    )
+
+    assert len(json_defs) == 2
+    assert json_defs["TestWArrayADefs"].get_members() == {"year": "int32", "students": "Student[]"}
+    assert json_defs["Student"].get_members() == {"name": "str"}
+
+
 def test_json_from_dict_refs():
     json_defs = JsonStructDefinition.from_dict(
         {

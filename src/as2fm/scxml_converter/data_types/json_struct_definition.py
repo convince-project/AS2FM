@@ -15,7 +15,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 
@@ -85,7 +85,7 @@ class JsonStructDefinition(StructDefinition):
     @staticmethod
     def _handle_objects(
         root_obj: Dict[str, any], obj_def: Dict[str, any], suggested_name: str
-    ) -> Tuple[Union["JsonStructDefinition", str], List["JsonStructDefinition"]]:
+    ) -> Tuple[str, List["JsonStructDefinition"]]:
         if REF in obj_def.keys():
             # this is a reference, resolve it first
             obj_def, suggested_name = JsonStructDefinition._resolve_ref(root_obj, obj_def)
@@ -105,17 +105,14 @@ class JsonStructDefinition(StructDefinition):
                     type_str = this_obj.get_name()
                 definitions.extend(new_defs)
                 struct_members[prop_name] = type_str
-            return JsonStructDefinition(suggested_name, struct_members), definitions
+            definitions.append(JsonStructDefinition(suggested_name, struct_members))
+            return suggested_name, definitions
         elif obj_def.get(TYPE) == ARRAY:
             assert ITEMS in obj_def
-            item_obj, new_defs = JsonStructDefinition._handle_objects(
-                root_obj, obj_def.get(ITEMS), suggested_name + "s"
+            type_str, new_defs = JsonStructDefinition._handle_objects(
+                root_obj, obj_def.get(ITEMS), suggested_name
             )
-            if isinstance(item_obj, str):
-                return item_obj + "[]", []
-            else:
-                item_obj.name = item_obj.get_name() + "[]"
-                return item_obj, new_defs
+            return type_str + "[]", new_defs
         elif obj_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
             type_str = JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(obj_def.get(TYPE))
             return type_str, []
@@ -130,6 +127,5 @@ class JsonStructDefinition(StructDefinition):
         schema_name = json_def.get(TITLE)
         assert isinstance(schema_name, str), "The schema must have a title."
 
-        root_obj, other_objs = JsonStructDefinition._handle_objects(json_def, json_def, schema_name)
-        struct_list = [root_obj] + other_objs
-        return {s.get_name(): s for s in struct_list}
+        _, other_objs = JsonStructDefinition._handle_objects(json_def, json_def, schema_name)
+        return {s.get_name(): s for s in other_objs}
