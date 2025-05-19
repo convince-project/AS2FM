@@ -57,6 +57,39 @@ def get_array_length_var_name(array_name: str, dimension: int) -> str:
     return f"{array_name}.d{dimension}_len"
 
 
+def convert_array_access_to_length_access(jani_expr: JaniExpression) -> JaniExpression:
+    """
+    Substitute the array_access ('aa') expression to access the related array dimension variable.
+    """
+    return __convert_array_access_to_length_access(jani_expr, 1)
+
+
+def __convert_array_access_to_length_access(
+    jani_expr: JaniExpression, dim_level: int
+) -> JaniExpression:
+    """
+    Implementation of the `convert_array_access_to_length_access` function.
+
+    :param jani_expr: The expression to process, must be an `aa` operator.
+    :param dim_level: The level of the previous jani_expr.
+    :return: The new expression to use for accessing the length.
+    """
+    jani_operator, jani_operands = jani_expr.as_operator()
+    assert jani_operator == "aa", f"Expected JANI operator `aa`, found `{jani_operator}`."
+    assert jani_operands is not None, "Expected jani_operands to be not None."
+    curr_dim_level = dim_level + 1
+    array_expr = jani_operands["exp"]
+    index_expr = jani_operands["index"]
+    assert isinstance(array_expr, JaniExpression), f"Unexpected value of {array_expr=}."
+    array_expr_id = array_expr.as_identifier()
+    if array_expr_id is not None:
+        array_length_var = get_array_length_var_name(array_expr_id, curr_dim_level)
+        return array_access_operator(array_length_var, index_expr)
+    return array_access_operator(
+        __convert_array_access_to_length_access(array_expr, curr_dim_level), index_expr
+    )
+
+
 def parse_ecmascript_to_jani_expression(
     ecmascript: str, elem: Optional[XmlElement], array_info: Optional[ArrayInfo] = None
 ) -> JaniExpression:
@@ -213,8 +246,7 @@ def _parse_ecmascript_to_jani_expression(
             }
         )
     elif ast.type == Syntax.ArrayExpression:
-        # TODO: Implement this in a separated function, using recursion and making sure to pad
-        # everything according to array_info.
+        # This is an Array literal, will result in an array_value operator
         assert array_info is not None, "Array info must be provided for ArrayExpressions."
         entry_type: Type = array_info.array_type
         if array_info.array_dimensions == 1:
@@ -237,7 +269,6 @@ def _parse_ecmascript_to_jani_expression(
                 elem_expr = _parse_ecmascript_to_jani_expression(elem, ast, elem_array_info)
                 elem_exprs.append(elem_expr)
             return _generate_array_expression_for_assignment(array_info, parent_script, elem_exprs)
-
     elif ast.type == Syntax.MemberExpression:
         object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
         property_expr = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)
@@ -260,9 +291,8 @@ def _parse_ecmascript_to_jani_expression(
                     # Accessing array dimension at level 1
                     return JaniExpression(get_array_length_var_name(object_expr_str, 1))
                 else:
-                    # We need to count how many levels deep we need to go (n. of `ac` in object)
-                    # TODO: Issue #102
-                    raise NotImplementedError("Multi-Dimensional arrays are work in progress.")
+                    # We need to count how many levels deep we need to go (n. of ArrayAccess)
+                    return convert_array_access_to_length_access(object_expr)
             else:
                 # We are accessing a generic sub-field, just re-assemble the variable name
                 assert (
