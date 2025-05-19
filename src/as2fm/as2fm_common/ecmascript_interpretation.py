@@ -17,10 +17,10 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, List, Optional, Union, get_args
+from typing import Any, Dict, List, Optional, Union, get_args
 
 import esprima
-import js2py
+import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
@@ -44,6 +44,28 @@ class MemberAccessCheckException(Exception):
     """Exception type thrown when there are error expanding a Member expression."""
 
     pass
+
+
+def __evaluate_js_variable_content(js_variable: Any) -> Any:
+    """Extract the result from the JS Context variable"""
+    if isinstance(js_variable, get_args(BasicJsTypes)):
+        return js_variable
+    if isinstance(js_variable, STPyV8.JSArray):
+        return __evaluate_js_var_as_list(js_variable)
+    if isinstance(js_variable, STPyV8.JSObject):
+        return __evaluate_js_var_as_dict(js_variable)
+    raise ValueError(f"Cannot evaluate input JS var. {js_variable}")
+
+
+def __evaluate_js_var_as_list(js_variable: Any) -> List[Any]:
+    assert isinstance(js_variable, STPyV8.JSArray)
+    return [__evaluate_js_variable_content(x) for x in js_variable]
+
+
+def __evaluate_js_var_as_dict(js_variable: Any) -> Dict[str, Any]:
+    assert isinstance(js_variable, STPyV8.JSObject)
+    obj_keys = js_variable.keys()
+    return {k: __evaluate_js_variable_content(js_variable[k]) for k in obj_keys}
 
 
 def parse_expression_to_ast(expression: str, elem: XmlElement):
@@ -77,31 +99,18 @@ def _interpret_ecmascript_expr(
     :param expr: The ECMA script expression to evaluate.
     :param variables: A dictionary of variables to be used in the ECMA script context.
     """
-    context = js2py.EvalJs(variables)
-    try:
-        context.execute("result = " + expr)
-    except js2py.base.PyJsException:
-        msg_addition = ""
-        if expr in ("True", "False"):
-            msg_addition = "Did you mean to use 'true' or 'false' instead?"
-        raise RuntimeError(
-            f"Failed to interpret JS expression using variables {variables}: ",
-            f"'result = {expr}'. {msg_addition}",
-        )
-    expr_result = context.result
-    if isinstance(expr_result, get_args(BasicJsTypes)):
-        return expr_result
-    elif isinstance(expr_result, js2py.base.JsObjectWrapper):
-        # This is just to control the 1st operation to execute. All others are done recursively.
-        if isinstance(expr_result._obj, js2py.base.PyJsArray):
-            return expr_result.to_list()
-        else:
-            return expr_result.to_dict()
-    else:
-        raise ValueError(
-            f"Expected expr. {expr} to be of type {BasicJsTypes} or "
-            f"JsObjectWrapper, got '{type(expr_result)}'"
-        )
+    with STPyV8.JSContext(variables) as context:
+        try:
+            context.eval(f"result = {expr}")
+        except Exception:
+            msg_addition = ""
+            if expr in ("True", "False"):
+                msg_addition = "Did you mean to use 'true' or 'false' instead?"
+            raise RuntimeError(
+                f"Failed to interpret JS expression using variables {variables}: ",
+                f"'result = {expr}'. {msg_addition}",
+            )
+        return __evaluate_js_variable_content(context.locals.result)
 
 
 def interpret_ecma_script_expr(
