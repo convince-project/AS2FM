@@ -83,7 +83,13 @@ def __extract_type_from_instance(var_value) -> Union[Type[ValidScxmlTypes], Arra
 
 
 def __get_ast_literal_type(ast: esprima.nodes.Node):
-    pass
+    """Extract the type of a literal node. Special handling for floats."""
+    assert ast.type == Syntax.Literal
+    extracted_type = type(ast.value)
+    assert extracted_type in (int, float, bool), "Unexpected literal type."
+    if extracted_type is int and ast.raw.contains("."):
+        return float
+    return extracted_type
 
 
 def __get_ast_expression_type(
@@ -92,14 +98,14 @@ def __get_ast_expression_type(
     if ast.type == Syntax.Literal:
         return __get_ast_literal_type(ast.raw)
     elif ast.type == Syntax.Identifier:
-        pass
+        return variables[ast.name]
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 
 
 # TODO: Turn the variables into a name->type map, instead of name->instance.
 def get_ast_expression_type(
-    ast: esprima.nodes.Node, variables: Dict[ValidScxmlTypes]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidScxmlTypes]
 ) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
     """TODO"""
     var_to_type = {
@@ -107,6 +113,11 @@ def get_ast_expression_type(
         for var_name, var_value in variables.items()
     }
     return __get_ast_expression_type(ast, var_to_type)
+
+
+def get_esprima_expr_type(expr: str, variables: Dict[str, ValidScxmlTypes], elem: XmlElement):
+    ast_node = parse_expression_to_ast(expr, elem)
+    return get_ast_expression_type(ast_node, variables)
 
 
 def _interpret_ecmascript_expr(
