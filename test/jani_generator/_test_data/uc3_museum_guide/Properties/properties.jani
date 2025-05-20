@@ -21,6 +21,23 @@
                     "op": "initial"
                 }
             }
+        },
+        {
+            "name": "alarm_raised",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": "topic_NotifyUserComponent__alarm_msg__ros_fields__data"
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
         }
     ]
 }
