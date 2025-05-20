@@ -17,14 +17,20 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Any, Dict, List, Optional, Union, get_args
+from typing import Dict, List, Optional, Type, Union
 
 import esprima
 import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import ValidScxmlTypes
+from as2fm.as2fm_common.array_type import ArrayInfo
+from as2fm.as2fm_common.common import (
+    ValidScxmlTypes,
+    get_array_type_and_sizes,
+    is_array_type,
+    value_to_type,
+)
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 
 BasicJsTypes = Union[int, float, bool, str]
@@ -44,29 +50,6 @@ class MemberAccessCheckException(Exception):
     """Exception type thrown when there are error expanding a Member expression."""
 
     pass
-
-
-def __evaluate_js_variable_content(js_variable: Any) -> Any:
-    """Extract the result from the JS Context variable"""
-    if isinstance(js_variable, get_args(BasicJsTypes)):
-        return js_variable
-    # Here consider both STPyV8.JSArray and list, since the type depends on the context variables.
-    if isinstance(js_variable, (STPyV8.JSArray, list)):
-        return __evaluate_js_var_as_list(js_variable)
-    if isinstance(js_variable, STPyV8.JSObject):
-        return __evaluate_js_var_as_dict(js_variable)
-    raise ValueError(f"Cannot evaluate input JS var. {js_variable}")
-
-
-def __evaluate_js_var_as_list(js_variable: Any) -> List[Any]:
-    assert isinstance(js_variable, (STPyV8.JSArray, list))
-    return [__evaluate_js_variable_content(x) for x in js_variable]
-
-
-def __evaluate_js_var_as_dict(js_variable: Any) -> Dict[str, Any]:
-    assert isinstance(js_variable, STPyV8.JSObject)
-    obj_keys = js_variable.keys()
-    return {k: __evaluate_js_variable_content(js_variable[k]) for k in obj_keys}
 
 
 def parse_expression_to_ast(expression: str, elem: XmlElement):
@@ -91,6 +74,41 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
     return ast.expression
 
 
+def __extract_type_from_instance(var_value) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    var_type = value_to_type(var_value)
+    if is_array_type(var_type):
+        array_type, array_sizes = get_array_type_and_sizes(var_value)
+        return ArrayInfo(array_type, len(array_sizes), [None] * len(array_sizes))
+    return var_type
+
+
+def __get_ast_literal_type(ast: esprima.nodes.Node):
+    pass
+
+
+def __get_ast_expression_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
+) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    if ast.type == Syntax.Literal:
+        return __get_ast_literal_type(ast.raw)
+    elif ast.type == Syntax.Identifier:
+        pass
+    else:
+        raise ValueError(f"Unknown ast type {ast.type}")
+
+
+# TODO: Turn the variables into a name->type map, instead of name->instance.
+def get_ast_expression_type(
+    ast: esprima.nodes.Node, variables: Dict[ValidScxmlTypes]
+) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    """TODO"""
+    var_to_type = {
+        var_name: __extract_type_from_instance(var_value)
+        for var_name, var_value in variables.items()
+    }
+    return __get_ast_expression_type(ast, var_to_type)
+
+
 def _interpret_ecmascript_expr(
     expr: str, variables: Dict[str, ValidScxmlTypes]
 ) -> Union[ValidScxmlTypes, dict]:
@@ -111,8 +129,9 @@ def _interpret_ecmascript_expr(
                 f"Failed to interpret JS expression using variables {variables}: ",
                 f"'result = {expr}'. {msg_addition}",
             )
-        eval_res = __evaluate_js_variable_content(context.locals.result)
-    return eval_res
+        # eval_res = __evaluate_js_variable_content(context.locals.result)
+    # return
+    return 0
 
 
 def interpret_ecma_script_expr(

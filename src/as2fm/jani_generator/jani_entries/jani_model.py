@@ -20,6 +20,7 @@ Complete Jani Model
 
 from typing import Dict, List, Optional, Type, Union
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniComposition,
@@ -29,7 +30,6 @@ from as2fm.jani_generator.jani_entries import (
     JaniValue,
     JaniVariable,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
