@@ -300,7 +300,7 @@ We can then run SMC Storm again on the modified model after generating the JANI 
     as2fm_scxml_to_jani main_probabilistic.xml
     smc_storm --model main_prob.jani --properties-names snack_at_table --traces-file traces_prob.csv --show-statistics
 
-The sample output can be found again in `sample_solutions_and_outputs/reference_traces_prob.csv`.
+The sample output for one trace can be found again in `sample_solutions_and_outputs/reference_traces_prob_single.csv`. We do not provide the full output because it is quite large.
 The expected result shown below indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up, or the navigation fails.
 This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
 In this case model checking needed 15700 traces to come to the result that the task is only completed successfully in 29.99% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
