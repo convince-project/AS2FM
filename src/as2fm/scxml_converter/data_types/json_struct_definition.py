@@ -51,15 +51,15 @@ class JsonStructDefinition(StructDefinition):
             return JsonStructDefinition.from_dict(json_def)
 
     @staticmethod
-    def _handle_property(root_obj: Dict[str, any], prop_def: Dict[str, Any]) -> str:
+    def _handle_property(root_obj: Dict[str, Any], prop_def: Dict[str, Any]) -> str:
         if REF in prop_def.keys():
             # this is a reference, resolve it first
             prop_def, _ = JsonStructDefinition._resolve_ref(root_obj, prop_def)
 
     @staticmethod
     def _resolve_ref(
-        root_obj: Dict[str, any], obj_def: Dict[str, any]
-    ) -> Tuple[Dict[str, any], str]:
+        root_obj: Dict[str, Any], obj_def: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], str]:
         assert REF in obj_def.keys()
         path = obj_def.get(REF)
         assert isinstance(path, str)
@@ -84,7 +84,7 @@ class JsonStructDefinition(StructDefinition):
 
     @staticmethod
     def _handle_objects(
-        root_obj: Dict[str, any], obj_def: Dict[str, any], suggested_name: str
+        root_obj: Dict[str, Any], obj_def: Dict[str, Any], suggested_name: str
     ) -> Tuple[str, List["JsonStructDefinition"]]:
         if REF in obj_def.keys():
             # this is a reference, resolve it first
@@ -120,7 +120,7 @@ class JsonStructDefinition(StructDefinition):
             raise NotImplementedError(f"{obj_def}")
 
     @staticmethod
-    def from_dict(json_def: Dict[str, any]):
+    def from_dict(json_def: Dict[str, Any]):
         assert (
             json_def.get(TYPE) == OBJECT
         ), f"Only object definitions are supported. Got {json_def.get(TYPE)}"

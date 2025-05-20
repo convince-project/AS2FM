@@ -23,7 +23,7 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     RosField,
     ScxmlBase,
@@ -66,7 +66,7 @@ class RosActionThread(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "RosActionThread":
         """Create a RosActionThread object from an XML tree."""
         assert_xml_tag_ok(RosActionThread, xml_tree)

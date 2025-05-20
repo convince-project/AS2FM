@@ -20,7 +20,7 @@ from typing import Dict, Optional, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -45,7 +45,7 @@ class RosField(ScxmlParam):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "RosField":
         """Create a RosField object from an XML tree."""
         assert_xml_tag_ok(RosField, xml_tree)

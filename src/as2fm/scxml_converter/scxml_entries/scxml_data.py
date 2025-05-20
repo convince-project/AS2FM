@@ -172,7 +172,7 @@ class ScxmlData(ScxmlBase):
             base_type = get_type_string_of_array(self._data_type)
         if is_type_string_base_type(base_type):
             return True
-        if base_type in [custom_type.get_name() for custom_type in self.get_custom_data_types()]:
+        if base_type in [custom_type for custom_type in self.get_custom_data_types()]:
             return True
         log_error(self.get_xml_origin(), f"Cannot find definition of type {self._data_type}.")
         return False

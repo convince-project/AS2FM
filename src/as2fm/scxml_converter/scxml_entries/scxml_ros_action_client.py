@@ -25,7 +25,7 @@ from action_msgs.msg import GoalStatus
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer, ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_feedback_handle_event,
@@ -102,7 +102,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, StructDefinition]
     ) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)

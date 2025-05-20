@@ -20,7 +20,7 @@ from typing import Dict, Type
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
@@ -38,7 +38,7 @@ class RosTimeRate(RosDeclaration):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, _: Dict[str, StructDefinition]
     ) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)

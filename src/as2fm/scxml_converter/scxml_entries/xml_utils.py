@@ -19,7 +19,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
@@ -71,7 +71,7 @@ def get_xml_attribute(
 
 def get_children_as_scxml(
     xml_tree: XmlElement,
-    custom_data_types: Dict[str, XmlStructDefinition],
+    custom_data_types: Dict[str, StructDefinition],
     scxml_types: Iterable[Type[ScxmlBase]],
 ) -> List[ScxmlBase]:
     """
@@ -94,7 +94,7 @@ def get_children_as_scxml(
 def read_value_from_xml_child(
     xml_tree: XmlElement,
     child_tag: str,
-    custom_data_types: Dict[str, XmlStructDefinition],
+    custom_data_types: Dict[str, StructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     *,
     none_allowed: bool = False,
@@ -151,7 +151,7 @@ def read_value_from_xml_arg_or_child(
     scxml_type: Type[ScxmlBase],
     xml_tree: XmlElement,
     tag_name: str,
-    custom_data_types: Dict[str, XmlStructDefinition],
+    custom_data_types: Dict[str, StructDefinition],
     valid_types: Iterable[Type[Union[ScxmlBase, str]]],
     none_allowed: bool = False,
 ) -> Optional[Union[str, ScxmlBase]]:

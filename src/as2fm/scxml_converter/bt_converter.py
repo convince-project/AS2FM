@@ -26,8 +26,8 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtChildTickStatus,
     BtTickChild,
@@ -120,7 +120,7 @@ def is_bt_root_scxml(scxml_name: str) -> bool:
 
 
 def load_available_bt_plugins(
-    bt_plugins_scxml_paths: List[str], custom_data_types: Dict[str, XmlStructDefinition]
+    bt_plugins_scxml_paths: List[str], custom_data_types: Dict[str, StructDefinition]
 ) -> Dict[str, ScxmlRoot]:
     available_bt_plugins = {}
     for path in bt_plugins_scxml_paths:
@@ -142,7 +142,7 @@ def bt_converter(
     bt_plugins_scxml_paths: List[str],
     bt_tick_rate: float,
     tick_if_not_running: bool,
-    custom_data_types: Dict[str, XmlStructDefinition],
+    custom_data_types: Dict[str, StructDefinition],
 ) -> List[ScxmlRoot]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.

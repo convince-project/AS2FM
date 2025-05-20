@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 from as2fm.as2fm_common.ecmascript_interpretation import ArrayAccess, split_by_access
 from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     ARRAY_LENGTH_TYPE,
@@ -28,7 +29,6 @@ from as2fm.scxml_converter.data_types.type_utils import (
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlStructDeclarationsContainer:
@@ -46,13 +46,13 @@ class ScxmlStructDeclarationsContainer:
         self,
         automaton_name: str,
         data_model,
-        struct_definitions: Dict[str, XmlStructDefinition],
+        struct_definitions: Dict[str, StructDefinition],
     ):
         self._automaton_name = automaton_name
         self._data_model = data_model
         self._struct_definitions = struct_definitions
         self._type_per_variable: Dict[
-            str, Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]
+            str, Tuple[Union[StructDefinition, str], Optional[ArrayInfo]]
         ] = {}
         for data_entry in self._data_model.get_data_entries():
             variable_name: str = data_entry.get_name()
@@ -77,7 +77,7 @@ class ScxmlStructDeclarationsContainer:
 
     def get_data_type(
         self, variable_name: str, elem
-    ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
+    ) -> Tuple[Union[StructDefinition, str], Optional[ArrayInfo]]:
         """
         Retrieve the type of a variable.
 
@@ -87,9 +87,9 @@ class ScxmlStructDeclarationsContainer:
         e.g. `xs` => ('int32', ArrayInfo)` <-- retrieve from dict
         e.g. `xs[1]` => ('int32', None)` <- handle *specially*
 
-        e.g. `a_point` => (XmlStructDefinition(Point2D), None)` <-- retrieve from dict
-        e.g. `polygon.points` => `(XmlStructDefinition(Point2D), ArrayInfo)` <- ???
-        e.g. `polygon.points[1]` => `(XmlStructDefinition(Point2D), None)` <- ???
+        e.g. `a_point` => (StructDefinition(Point2D), None)` <-- retrieve from dict
+        e.g. `polygon.points` => `(StructDefinition(Point2D), ArrayInfo)` <- ???
+        e.g. `polygon.points[1]` => `(StructDefinition(Point2D), None)` <- ???
         e.g. `polygon.points[1].x` => `(int32, None)` <- ???
         """
         access_trace = split_by_access(variable_name, elem)
@@ -110,7 +110,7 @@ class ScxmlStructDeclarationsContainer:
 
     def _get_data_type_for_variable(
         self, access_trace: List[Union[str, Type[ArrayAccess]]], elem
-    ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
+    ) -> Tuple[Union[StructDefinition, str], Optional[ArrayInfo]]:
         """
         Get type info in case the leftmost string is a variable.
 
@@ -143,10 +143,10 @@ class ScxmlStructDeclarationsContainer:
 
     def _get_data_type_for_property(
         self,
-        struct_type: XmlStructDefinition,
+        struct_type: StructDefinition,
         access_trace: List[Union[str, Type[ArrayAccess]]],
         elem,
-    ) -> Tuple[Union[XmlStructDefinition, str], Optional[ArrayInfo]]:
+    ) -> Tuple[Union[StructDefinition, str], Optional[ArrayInfo]]:
         """
         Get type info in case the leftmost string is a property.
 

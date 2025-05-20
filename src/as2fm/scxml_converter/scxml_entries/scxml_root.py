@@ -25,7 +25,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
 from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
     BtOutputPortDeclaration,
@@ -58,7 +58,7 @@ class ScxmlRoot(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
@@ -110,7 +110,7 @@ class ScxmlRoot(ScxmlBase):
 
     @staticmethod
     def from_scxml_file(
-        xml_file: str, custom_data_types: Dict[str, XmlStructDefinition]
+        xml_file: str, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlRoot":
         """Create a ScxmlRoot object from an SCXML file."""
         print(f"{xml_file=}")

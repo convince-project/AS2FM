@@ -24,7 +24,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutableEntry,
@@ -61,7 +61,7 @@ class ScxmlState(ScxmlBase):
 
     @staticmethod
     def _transitions_from_xml(
-        state_id: str, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        state_id: str, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> List[ScxmlTransition]:
         transitions: List[ScxmlTransition] = []
         tag_to_cls = generate_tag_to_class_map(ScxmlTransition)
@@ -81,7 +81,7 @@ class ScxmlState(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlState":
         """Create a ScxmlState object from an XML tree."""
         assert (

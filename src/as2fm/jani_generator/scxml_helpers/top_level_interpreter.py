@@ -191,7 +191,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
 
 
 def generate_plain_scxml_models_and_timers(
-    model: FullModel, custom_data_types: Dict[str, XmlStructDefinition]
+    model: FullModel, custom_data_types: Dict[str, StructDefinition]
 ) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
     # Load the skills and components scxml files (ROS-SCXML)

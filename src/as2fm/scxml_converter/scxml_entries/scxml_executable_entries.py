@@ -25,7 +25,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     ScxmlBase,
@@ -116,7 +116,7 @@ class ScxmlIf(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlIf":
         """
         Create a ScxmlIf object from an XML tree.
@@ -307,7 +307,7 @@ class ScxmlSend(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlSend":
         """
         Create a ScxmlSend object from an XML tree.
@@ -452,7 +452,7 @@ class ScxmlAssign(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlAssign":
         """
         Create a ScxmlAssign object from an XML tree.
@@ -536,7 +536,7 @@ class ScxmlAssign(ScxmlBase):
         )
         expanded_expressions = []
         expanded_locations = []
-        if isinstance(location_type, XmlStructDefinition):
+        if isinstance(location_type, StructDefinition):
             # We are dealing with a custom type, more assignments in output
             sub_types = location_type.get_expanded_members()
             # Assumption: This appending of members works only if the expr is a single variable
@@ -607,7 +607,7 @@ def valid_execution_body(exec_body: ScxmlExecutionBody) -> bool:
 
 
 def execution_entry_from_xml(
-    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
 ) -> ScxmlExecutableEntry:
     """
     Create an execution entry from an XML tree.
@@ -628,7 +628,7 @@ def execution_entry_from_xml(
 
 
 def execution_body_from_xml(
-    xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+    xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
 ) -> ScxmlExecutionBody:
     """
     Create an execution body from an XML tree.

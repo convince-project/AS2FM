@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Type
 from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
-from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 
 
 class ScxmlBase:
@@ -37,7 +37,7 @@ class ScxmlBase:
     def from_xml_tree(
         cls: Type[Self],
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
         **kwargs,
     ) -> Self:
         """External interface to create a ScxmlBase object from an XML tree."""
@@ -48,16 +48,16 @@ class ScxmlBase:
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> Self:
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
         raise NotImplementedError
 
-    def set_custom_data_types(self, custom_data_types: Dict[str, XmlStructDefinition]):
+    def set_custom_data_types(self, custom_data_types: Dict[str, StructDefinition]):
         """Save container with custom data types."""
         self.custom_data_types = custom_data_types
 
-    def get_custom_data_types(self) -> Dict[str, XmlStructDefinition]:
+    def get_custom_data_types(self) -> Dict[str, StructDefinition]:
         """Get the container with custom data types."""
         return self.custom_data_types
 
