@@ -266,13 +266,13 @@ The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world
 
 .. image:: graphics/plotjuggler_simple.png
     :width: 800
-    :alt: An image showing the changes of the topic TODO in plotjuggler.
+    :alt: An image showing the changes of the relevant topics in plotjuggler.
 
 You can see how the time advances in steps, how the robot moves from location 1 to 0 and then back to 1 again. The robot is first holding nothing, then it holds the object with id 0, and then it is holding nothing again. The objects position is first 0, then -1 in the gripper, and then 1 at the table.
 
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
-This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. In addition, navigation fails sometimes. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml`. From now on we are using `main_probabilistic.scxml`, which is the same as `main.scxml` but referencing to this modified world model in line 15.
+This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml`. From now on we are using `main_probabilistic.scxml`, which is the same as `main.scxml` but referencing to this modified world model in line 15.
 
 If you want to try to come up with a solution on your own on how to modify the world model such that it's behavior is probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml`. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml`
 
@@ -302,18 +302,26 @@ We can then run SMC Storm again on the modified model after generating the JANI 
 
 The sample output can be found again in `sample_solutions_and_outputs/reference_traces_prob.csv`.
 The expected result shown below indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up, or the navigation fails.
-This gives us a probability of 0.7 * 0.6 = 0.42 that everything works successfully.
-In this case model checking needed TODO traces to come to the result that the task is only completed successfully in 42% of the cases.
+This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
+In this case model checking needed 15700 traces to come to the result that the task is only completed successfully in 29.99% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
 
 .. code-block:: bash
 
-    TODO
+    ============= SMC Results =============
+        N. of times target reached:     4709
+        N. of times no termination:     0
+        Tot. n. of tries (samples):     15700
+        Estimated success prob.:        0.2999363057
+        Min trace length:       65
+        Max trace length:       248
+    =========================================
+    Result: 0.2999363057
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces_prob.csv` again by running `ros2 run plotjuggler plotjuggler -d traces_prob.csv`. Here we checked exemplarily a trace in `traces_prob_single.csv`, which shows TODO. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account.
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces_prob.csv` again by running `ros2 run plotjuggler plotjuggler -d traces_prob.csv`. Here we checked exemplarily a trace in `traces_prob_single.csv`, which shows a failing trace, where the robot navigates to the pantry successfully but then never manages to grasp the object and thus also never transports it to the table. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account.
 
-.. image:: graphics/plotjuggler_prob.jpg
+.. image:: graphics/plotjuggler_prob.png
     :width: 800
-    :alt: An image showing the changes of the topic TODO in plotjuggler.
+    :alt: An image showing the changes of the topics in plotjuggler.
 
 
 Enhancing the Behavior Tree to Handle Probabilistic Failures
@@ -338,12 +346,20 @@ We can again run SMC Storm again on the modified model after generating the JANI
 .. code-block:: bash
 
     as2fm_scxml_to_jani main_probabilistic_extended_bt.xml
-    smc_storm --model main_retry.jani --properties-names snack_at_table --traces-file traces_retry.csv --show-statistics
+    smc_storm --model main_probabilistic_extended_bt.jani --properties-names snack_at_table --traces-file traces_retry.csv --show-statistics
 
-The expected result shown below states that the property is now fulfilled with probability TODO again when 5 retries are allowed.
+The expected result shown below states that the property is now fulfilled with probability 95.05% again when 5 retries are allowed.
 
 .. code-block:: bash
 
-    TODO
+    ============= SMC Results =============
+        N. of times target reached:     3802
+        N. of times no termination:     0
+        Tot. n. of tries (samples):     4000
+        Estimated success prob.:        0.9505
+        Min trace length:       181
+        Max trace length:       519
+    =========================================
+    Result: 0.9505
 
 As before an inspection with PlotJuggler can be helpful.
