@@ -23,6 +23,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
@@ -41,7 +42,6 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class ScxmlParam(ScxmlBase):
@@ -53,7 +53,7 @@ class ScxmlParam(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, XmlStructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
