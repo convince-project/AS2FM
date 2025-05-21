@@ -45,7 +45,7 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertEqual(get_esprima_expr_type("1.1", {}), float)
         self.assertEqual(get_esprima_expr_type("true", {}), bool)
         self.assertEqual(get_esprima_expr_type("false", {}), bool)
-        self.assertEqual(get_esprima_expr_type("'ecma'", {}), str)
+        self.assertEqual(get_esprima_expr_type("'ecma'", {}), ArrayInfo(int, 1, [None]))
         self.assertEqual(get_esprima_expr_type("[1,2,3]", {}), ArrayInfo(int, 1, [None]))
         # Identifiers
         self.assertEqual(get_esprima_expr_type("x", {"x": 1}), int)
