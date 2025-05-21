@@ -84,8 +84,13 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Type[ValidScxmlTypes]:
     """Extract the type of a literal node. Special handling for floats."""
     assert ast.type == Syntax.Literal
     extracted_type = type(ast.value)
-    assert extracted_type in (int, float, bool), "Unexpected literal type."
-    if extracted_type is int and ast.raw.contains("."):
+    if extracted_type not in (int, float, bool, str):
+        raise ValueError(f"Unexpected literal type {extracted_type}.")
+    if extracted_type is str:
+        return str
+    n_dots = ast.raw.count(".")
+    if extracted_type is int and n_dots > 0:
+        assert n_dots == 1, f"Unexpected literal's raw string {ast.raw}."
         return float
     return extracted_type
 
@@ -144,7 +149,7 @@ def __get_member_access_array(
         assert curr_ast.type == Syntax.MemberExpression and curr_ast.computed
         curr_ast = curr_ast.object
         depth += 1
-    var_type = variables[ast.name]
+    var_type = variables[curr_ast.name]
     assert isinstance(var_type, ArrayInfo), f"{var_type=} != ArrayInfo."
     if depth == var_type.array_dimensions:
         return var_type.array_type
@@ -214,7 +219,11 @@ def __get_binary_expr_type(
         # Both int
         return int
 
-    raise RuntimeError(f"Unknown binary operator: {op}")
+    # Comparison operator
+    if op in (">", ">=", "<", "<=", "==", "!="):
+        return bool
+
+    raise ValueError(f"Unknown binary operator: {op}")
 
 
 def __get_ast_expression_type(
@@ -259,7 +268,9 @@ def get_ast_expression_type(
     return __get_ast_expression_type(ast, var_to_type)
 
 
-def get_esprima_expr_type(expr: str, variables: Dict[str, ValidScxmlTypes], elem: XmlElement):
+def get_esprima_expr_type(
+    expr: str, variables: Dict[str, ValidScxmlTypes], elem: Optional[XmlElement] = None
+):
     ast_node = parse_expression_to_ast(expr, elem)
     return get_ast_expression_type(ast_node, variables)
 
