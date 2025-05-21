@@ -80,14 +80,14 @@ def __extract_type_from_instance(var_value) -> Union[Type[ValidScxmlTypes], Arra
     return var_type
 
 
-def __get_ast_literal_type(ast: esprima.nodes.Node) -> Type[ValidScxmlTypes]:
+def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
     """Extract the type of a literal node. Special handling for floats."""
     assert ast.type == Syntax.Literal
     extracted_type = type(ast.value)
     if extracted_type not in (int, float, bool, str):
         raise ValueError(f"Unexpected literal type {extracted_type}.")
     if extracted_type is str:
-        return str
+        return ArrayInfo(int, 1, [None])
     n_dots = ast.raw.count(".")
     if extracted_type is int and n_dots > 0:
         assert n_dots == 1, f"Unexpected literal's raw string {ast.raw}."
@@ -273,6 +273,12 @@ def get_esprima_expr_type(
 ):
     ast_node = parse_expression_to_ast(expr, elem)
     return get_ast_expression_type(ast_node, variables)
+
+
+def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List:
+    """Reads a string as a, EcmaScript expression and returns it as an ArrayExpression."""
+    ast_node = parse_expression_to_ast(expr, elem)
+    return __get_list_from_array_expr_type(ast_node)
 
 
 def _interpret_ecmascript_expr(

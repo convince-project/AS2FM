@@ -18,19 +18,19 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Union
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import (
-    SupportedECMAScriptSequences,
-    convert_string_to_int_array,
     get_array_type_and_sizes,
-    value_to_type,
 )
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    get_array_expr_as_list,
+    get_esprima_expr_type,
+)
 from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
@@ -119,8 +119,8 @@ def generate_jani_assignments(
     """
     Interpret SCXML assign element.
 
-    :param target_expr: The expression to assign to the target expression.
-    :param assign_expr: The target expression, recipient of the target_expr.
+    :param target_expr: The recipient that will hold the expression result.
+    :param assign_expr: The expression to evaluate.
     :param context_vars: Context variables, used to evaluate the target_expr.
     :param event_substitution: The event that is associated to the provided expression (if any).
     :param assign_index: Priority index, to order the generated assignments.
@@ -245,12 +245,9 @@ def generate_jani_assignments(
                 assert is_expression_array(assignment_value), get_error_msg(
                     elem_xml, "Array variables must be assigned array expressions."
                 )
-                interpreted_expr = interpret_ecma_script_expr(assign_expr)
-                assert isinstance(interpreted_expr, SupportedECMAScriptSequences), get_error_msg(
-                    elem_xml,
-                    f"Expected an array as interpretation result, got {type(interpreted_expr)}.",
-                )
-                _, array_sizes = get_array_type_and_sizes(interpreted_expr)
+                # The assigned_expr is a Literal ArrayExpression
+                assign_expr_list = get_array_expr_as_list(assign_expr)
+                _, array_sizes = get_array_type_and_sizes(assign_expr_list)
                 assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
                     elem_xml,
                     "Mismatch between expected n. of dimension and result from JS interpreter.",
@@ -321,12 +318,11 @@ def _interpret_scxml_assign(
     :return: The action or expression to be executed.
     """
     assert isinstance(elem, ScxmlAssign), f"Expected ScxmlAssign, got {type(elem)}"
-    assignment_target = parse_ecmascript_to_jani_expression(
-        elem.get_location(), elem.get_xml_origin()
-    )
+    element_origin = elem.get_xml_origin()
+    assignment_target = parse_ecmascript_to_jani_expression(elem.get_location(), element_origin)
     assign_expr = elem.get_expr()
     assert isinstance(assign_expr, str), get_error_msg(
-        elem.get_xml_origin(), "Error: expected plain-scxml here."
+        element_origin, "Error: expected plain-scxml here."
     )
 
     return generate_jani_assignments(
@@ -335,7 +331,7 @@ def _interpret_scxml_assign(
         jani_automaton.get_variables(),
         event_substitution,
         assign_index,
-        elem.get_xml_origin(),
+        element_origin,
     )
 
 
@@ -399,6 +395,7 @@ def append_scxml_body_to_jani_edge(
     last_edge = jani_edge
     for i, ec in enumerate(body):
         intermediate_location = f"{original_source}-{hash_str}-{i}"
+        element_origin = ec.get_xml_origin()
         if isinstance(ec, ScxmlAssign):
             assign_idx = len(last_edge.destinations[-1]["assignments"])
             jani_assigns = _interpret_scxml_assign(ec, jani_automaton, data_event, assign_idx)
@@ -425,32 +422,31 @@ def append_scxml_body_to_jani_edge(
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
-                res_eval_value = interpret_ecma_script_expr(expr, datamodel_vars)
-                res_eval_type = value_to_type(res_eval_value)
+                res_eval_type = get_esprima_expr_type(expr, datamodel_vars, element_origin)
                 res_eval_dims = 0
-                res_eval_array_type: Optional[Type[Union[int, float]]] = None
-                array_info: Optional[ArrayInfo] = None
                 # In case of MutableSequences, we need to get the dimensionality of the result
-                if res_eval_type == MutableSequence:
-                    if isinstance(res_eval_value, str):
-                        res_eval_value = convert_string_to_int_array(res_eval_value)
-                    array_info = array_value_to_type_info(res_eval_value)
-                    if array_info.array_type is None:
+                if isinstance(res_eval_type, ArrayInfo):
+                    if res_eval_type.array_type is None:
                         # TODO: Better handling of array type than assigning int by default
                         log_warning(
                             param.get_xml_origin(),
                             "Empty array with unknown type in the model: assigning int to it.",
                         )
-                        array_info.array_type = int
-                    array_info.substitute_unbounded_dims(max_array_size)
-                    res_eval_dims = array_info.array_dimensions
-                    res_eval_array_type = array_info.array_type
-                data_structure_for_event[param.get_name()] = EventParamType(
-                    res_eval_type, res_eval_array_type, res_eval_dims
-                )
-                param_variable = generate_jani_variable(
-                    param_assign_name, res_eval_type, array_info
-                )
+                        res_eval_type.array_type = int
+                    res_eval_type.substitute_unbounded_dims(max_array_size)
+                    res_eval_dims = res_eval_type.array_dimensions
+                    res_eval_array_type = res_eval_type.array_type
+                    data_structure_for_event[param.get_name()] = EventParamType(
+                        MutableSequence, res_eval_array_type, res_eval_dims
+                    )
+                    param_variable = generate_jani_variable(
+                        param_assign_name, MutableSequence, res_eval_type
+                    )
+                else:
+                    data_structure_for_event[param.get_name()] = EventParamType(
+                        res_eval_type, res_eval_array_type, res_eval_dims
+                    )
+                    param_variable = generate_jani_variable(param_assign_name, res_eval_type, None)
                 new_edge_dest_assignments.extend(
                     generate_jani_assignments(
                         param_variable,
@@ -481,7 +477,7 @@ def append_scxml_body_to_jani_edge(
             last_edge.destinations[-1]["location"] = interm_loc_before
             previous_conditions: List[JaniExpression] = []
             for if_idx, (cond_str, conditional_body) in enumerate(ec.get_conditional_executions()):
-                current_cond = parse_ecmascript_to_jani_expression(cond_str, ec.get_xml_origin())
+                current_cond = parse_ecmascript_to_jani_expression(cond_str, element_origin)
                 jani_cond = merge_conditions(previous_conditions, current_cond).replace_event(
                     data_event
                 )
