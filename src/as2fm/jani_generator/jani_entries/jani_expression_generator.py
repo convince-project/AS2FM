@@ -19,8 +19,8 @@ Generate full expressions in Jani
 
 from typing import MutableSequence, Union
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.jani_generator.jani_entries import JaniDistribution, JaniExpression
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 
 # Math operators

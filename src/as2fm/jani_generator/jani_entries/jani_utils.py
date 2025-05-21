@@ -17,10 +17,10 @@
 
 from typing import Optional, Type, Union
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
 
 
 def is_expression_array(expr: JaniExpression) -> bool:

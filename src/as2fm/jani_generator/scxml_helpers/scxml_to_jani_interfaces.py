@@ -20,7 +20,10 @@ Interface classes between SCXML tags and related JANI output.
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple
 
 from as2fm.as2fm_common.common import EPSILON, get_array_type_and_sizes, get_padded_array
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    get_array_expr_as_list,
+    get_esprima_expr_type,
+)
 from as2fm.as2fm_common.logging import check_assertion
 from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
@@ -52,10 +55,8 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     ArrayInfo,
-    check_variable_base_type_ok,
     get_array_info,
     get_data_type_from_string,
-    is_type_string_array,
     is_type_string_base_type,
 )
 
@@ -167,36 +168,35 @@ class DatamodelTag(BaseTag):
             "Invalid data_model element found.",
         )
         for scxml_data in self.element.get_data_entries():
+            scxml_origin = scxml_data.get_xml_origin()
             data_type_str = scxml_data.get_type_str()
             array_info: Optional[ArrayInfo] = None
             data_type: type = None
-            if is_type_string_array(data_type_str):
-                array_info = get_array_info(data_type_str)
-                array_info.substitute_unbounded_dims(self.max_array_size)
-                data_type = MutableSequence
-            else:
-                check_assertion(
-                    is_type_string_base_type(data_type_str),
-                    scxml_data.get_xml_origin(),
-                    f"Unexpected type {data_type_str} found in scxml data.",
-                )
-                data_type = get_data_type_from_string(data_type_str)
-                # Special handling of strings: treat them as array of integers
-                if data_type is str:
-                    # Keep data_type == str, since we use it for the JS evaluation.
-                    array_info = ArrayInfo(int, 1, [self.max_array_size])
-            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             check_assertion(
-                check_variable_base_type_ok(evaluated_expr, data_type, array_info),
+                is_type_string_base_type(data_type_str),
                 scxml_data.get_xml_origin(),
+                f"Unexpected type {data_type_str} found in scxml data.",
+            )
+            data_type = get_data_type_from_string(data_type_str)
+            if data_type is MutableSequence:
+                # Extract ArrayInfo from data_type_str.
+                data_type = get_array_info(data_type_str)
+            elif data_type is str:
+                # Special handling of strings: treat them as array of integers
+                data_type = ArrayInfo(int, 1, [self.max_array_size])
+            # Explicitly prevent the use of existing  variable in data expression
+            evaluated_expr_type = get_esprima_expr_type(scxml_data.get_expr(), {}, scxml_origin)
+            check_assertion(
+                evaluated_expr_type == data_type,
+                scxml_origin,
                 f"Invalid type of '{scxml_data.get_name()}': expected type "
-                f"{data_type} != {type(evaluated_expr)}",
+                f"{data_type} != {evaluated_expr_type}",
             )
             jani_data_init_expr = parse_ecmascript_to_jani_expression(
-                scxml_data.get_expr(), scxml_data.get_xml_origin(), array_info
+                scxml_data.get_expr(), scxml_origin, array_info
             )
             # JANI has no knowledge of strings, consider it an array of integers
-            jani_type = MutableSequence if data_type == str else data_type
+            jani_type = MutableSequence if isinstance(data_type, ArrayInfo) else data_type
             # TODO: Add support for lower and upper bounds
             self.automaton.add_variable(
                 JaniVariable(
@@ -207,7 +207,8 @@ class DatamodelTag(BaseTag):
             if array_info is not None:
                 # Add the array-length values in the model
                 # TODO: The length variable NEEDS to be bounded in jani, between 0 and max_length
-                _, array_sizes = get_array_type_and_sizes(evaluated_expr)
+                data_expr_as_list = get_array_expr_as_list(scxml_data.get_expr(), scxml_origin)
+                _, array_sizes = get_array_type_and_sizes(data_expr_as_list)
                 for level in range(array_info.array_dimensions):
                     var_len_name = get_array_length_var_name(scxml_data.get_name(), level + 1)
                     if level == 0:
@@ -231,14 +232,7 @@ class DatamodelTag(BaseTag):
                                 var_len_name, MutableSequence, sizes_expr, False, dim_array_info
                             )
                         )
-                # Add padding to the evaluated expression, for the JS evaluator to work
-                array_base_type = array_info.array_type
-                # Extending string is not required
-                if data_type != str:
-                    evaluated_expr = get_padded_array(
-                        evaluated_expr, array_info.array_max_sizes, array_base_type
-                    )
-            self.model_variables.update({scxml_data.get_name(): evaluated_expr})
+            self.model_variables.update({scxml_data.get_name(): data_type})
 
 
 class ScxmlTag(BaseTag):
