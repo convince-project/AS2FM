@@ -112,6 +112,52 @@ def __get_ast_array_expr_type(ast: esprima.nodes.Node) -> ArrayInfo:
     return array_value_to_type_info(converted_array)
 
 
+def __get_member_access_name(ast: esprima.nodes.Node) -> str:
+    """Compute the name resulting from a non-computed MemberExpression."""
+    assert ast.type == Syntax.MemberExpression and not ast.computed
+    member_obj_name: str = ""
+    if ast.object.type == Syntax.Identifier:
+        member_obj_name = ast.object.name
+    else:
+        member_obj_name = __get_member_access_name(ast.object)
+    member_prop_name: str = ""
+    if ast.property.type == Syntax.Identifier:
+        member_prop_name = ast.property.name
+    else:
+        member_prop_name = __get_member_access_name(ast.property)
+    return f"{member_obj_name}.{member_prop_name}"
+
+
+def __get_member_access_array(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
+) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    """
+    Compute the type resulting from an array access operator.
+
+    Note: In this functions, we assume that all array access operators are at the end.
+    E.g. obj.some_array[0][1][2] and not obj_array[0].something[1].x[2]
+    """
+    assert ast.type == Syntax.MemberExpression and ast.computed
+    depth = 1
+    curr_ast = ast.object
+    while curr_ast.type != Syntax.Identifier:
+        assert curr_ast.type == Syntax.MemberExpression and curr_ast.computed
+        curr_ast = curr_ast.object
+        depth += 1
+    var_type = variables[ast.name]
+    assert isinstance(var_type, ArrayInfo), f"{var_type=} != ArrayInfo."
+    if depth == var_type.array_dimensions:
+        return var_type.array_type
+    elif depth < var_type.array_dimensions:
+        return ArrayInfo(
+            var_type.array_type, var_type.array_dimensions - depth, var_type.array_max_sizes[depth:]
+        )
+    raise RuntimeError(
+        f"Invalid array access: trying to access the {depth}-th dim. "
+        f"of a {var_type.array_dimensions}-dim array."
+    )
+
+
 def __get_ast_expression_type(
     ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
 ) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
@@ -121,6 +167,13 @@ def __get_ast_expression_type(
         return variables[ast.name]
     elif ast.type == Syntax.ArrayExpression:
         return __get_ast_array_expr_type(ast)
+    elif ast.type == Syntax.MemberExpression:
+        if ast.computed:
+            # Array Access Operator
+            return __get_member_access_array(ast, variables)
+        else:
+            # Member access operator, treat it like an identifier
+            return variables[__get_member_access_name(ast)]
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 
