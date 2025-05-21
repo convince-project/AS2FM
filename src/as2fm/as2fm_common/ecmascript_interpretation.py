@@ -158,6 +158,31 @@ def __get_member_access_array(
     )
 
 
+def __get_call_expr_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
+) -> Type[ValidScxmlTypes]:
+    assert ast.type == Syntax.CallExpression
+    callee_str: str = ""
+    if ast.callee.type == Syntax.Identifier:
+        callee_str = ast.callee.name
+    else:
+        callee_str = __get_member_access_name(ast.callee)
+    if callee_str in ("Math.cos", "Math.sin", "Math.log", "Math.pow", "Math.random"):
+        return float
+    elif callee_str in ("Math.floor", "Math.ceil"):
+        return int
+    elif callee_str in ("Math.abs", "Math.min", "Math.max"):
+        found_type: Optional[Union[Type[int], Type[float]]] = None
+        for callee_arg in ast.arguments:
+            arg_type = __get_ast_expression_type(callee_arg, variables)
+            assert arg_type in (int, float)
+            if found_type is not float:
+                found_type = arg_type
+        assert found_type is not None
+        return found_type
+    raise RuntimeError(f"Unknown function in expression: {callee_str}.")
+
+
 def __get_ast_expression_type(
     ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
 ) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
@@ -174,6 +199,8 @@ def __get_ast_expression_type(
         else:
             # Member access operator, treat it like an identifier
             return variables[__get_member_access_name(ast)]
+    elif ast.type == Syntax.CallExpression:
+        return __get_call_expr_type(ast, variables)
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 
