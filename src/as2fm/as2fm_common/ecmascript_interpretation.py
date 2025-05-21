@@ -183,6 +183,40 @@ def __get_call_expr_type(
     raise RuntimeError(f"Unknown function in expression: {callee_str}.")
 
 
+def __get_unary_expr_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
+) -> Type[ValidScxmlTypes]:
+    assert ast.type == Syntax.UnaryExpression
+    assert ast.prefix is True
+    op_arg_type = __get_ast_expression_type(ast.argument, variables)
+    op = ast.operator
+    if op == "-":
+        assert op_arg_type in (int, float)
+        return op_arg_type
+    elif op == "!":
+        assert op_arg_type is bool
+    raise RuntimeError(f"Unexpected unary operator. '{op}' not in ('-', '!').")
+
+
+def __get_binary_expr_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
+) -> Type[ValidScxmlTypes]:
+    assert ast.type == Syntax.BinaryExpression
+    left_type = __get_ast_expression_type(ast.left, variables)
+    right_type = __get_ast_expression_type(ast.right, variables)
+    op = ast.operator
+
+    # Arithmetic operators
+    if op in ("+", "-", "*", "/", "%", "**"):
+        # If either side is float, result is float
+        if float in (left_type, right_type):
+            return float
+        # Both int
+        return int
+
+    raise RuntimeError(f"Unknown binary operator: {op}")
+
+
 def __get_ast_expression_type(
     ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
 ) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
@@ -201,6 +235,14 @@ def __get_ast_expression_type(
             return variables[__get_member_access_name(ast)]
     elif ast.type == Syntax.CallExpression:
         return __get_call_expr_type(ast, variables)
+    elif ast.type == Syntax.LogicalExpression:
+        assert __get_ast_expression_type(ast.left, variables) is bool
+        assert __get_ast_expression_type(ast.right, variables) is bool
+        return bool
+    elif ast.type == Syntax.BinaryExpression:
+        return __get_binary_expr_type(ast, variables)
+    elif ast.type == Syntax.UnaryExpression:
+        return __get_unary_expr_type(ast, variables)
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 
