@@ -23,6 +23,7 @@ from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Unio
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
 from as2fm.as2fm_common.common import (
     SupportedECMAScriptSequences,
     convert_string_to_int_array,
@@ -67,8 +68,6 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.xml_data_types.type_utils import (
     MEMBER_ACCESS_SUBSTITUTION,
-    ArrayInfo,
-    array_value_to_type_info,
 )
 
 

@@ -17,7 +17,7 @@ import re
 from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, get_args
 
 from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import ValidScxmlTypes, get_array_type_and_sizes
+from as2fm.as2fm_common.common import ValidScxmlTypes
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
@@ -44,13 +44,6 @@ ARRAY_LENGTH_TYPE = "uint64"
 
 # What to use for representing member access in plain SCXML (instead of '.' in HL-SCXML)
 MEMBER_ACCESS_SUBSTITUTION = "__"
-
-
-def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
-    """Small helper function to generate the array info from a given value instance."""
-    array_type, array_sizes = get_array_type_and_sizes(data_value)
-    n_dims = len(array_sizes)
-    return ArrayInfo(array_type, n_dims, [None] * n_dims)
 
 
 def is_type_string_array(data_type: str) -> bool:

@@ -24,10 +24,9 @@ import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import ArrayInfo
+from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
 from as2fm.as2fm_common.common import (
     ValidScxmlTypes,
-    get_array_type_and_sizes,
     is_array_type,
     value_to_type,
 )
@@ -77,12 +76,11 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
 def __extract_type_from_instance(var_value) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
     var_type = value_to_type(var_value)
     if is_array_type(var_type):
-        array_type, array_sizes = get_array_type_and_sizes(var_value)
-        return ArrayInfo(array_type, len(array_sizes), [None] * len(array_sizes))
+        return array_value_to_type_info(var_value)
     return var_type
 
 
-def __get_ast_literal_type(ast: esprima.nodes.Node):
+def __get_ast_literal_type(ast: esprima.nodes.Node) -> Type[ValidScxmlTypes]:
     """Extract the type of a literal node. Special handling for floats."""
     assert ast.type == Syntax.Literal
     extracted_type = type(ast.value)
@@ -92,13 +90,37 @@ def __get_ast_literal_type(ast: esprima.nodes.Node):
     return extracted_type
 
 
+def __get_list_from_array_expr_type(ast: esprima.nodes.Node) -> List:
+    assert ast.type == Syntax.ArrayExpression
+    ret_list = []
+    for elem in ast.elements:
+        if elem.type == Syntax.Literal:
+            lit_type = __get_ast_literal_type(elem)
+            assert lit_type in (
+                int,
+                float,
+            ), f"Found entry of type {lit_type}. Only arrays of int and floats are supported."
+            ret_list.append(lit_type(elem.value))
+        elif elem.type == Syntax.ArrayExpression:
+            ret_list.append(__get_list_from_array_expr_type(elem))
+    return ret_list
+
+
+def __get_ast_array_expr_type(ast: esprima.nodes.Node) -> ArrayInfo:
+    assert ast.type == Syntax.ArrayExpression
+    converted_array = __get_list_from_array_expr_type(ast)
+    return array_value_to_type_info(converted_array)
+
+
 def __get_ast_expression_type(
     ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
 ) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
     if ast.type == Syntax.Literal:
-        return __get_ast_literal_type(ast.raw)
+        return __get_ast_literal_type(ast)
     elif ast.type == Syntax.Identifier:
         return variables[ast.name]
+    elif ast.type == Syntax.ArrayExpression:
+        return __get_ast_array_expr_type(ast)
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 

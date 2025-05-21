@@ -14,7 +14,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union
+from typing import List, MutableSequence, Optional, Type, Union
+
+from as2fm.as2fm_common.common import get_array_type_and_sizes
 
 ARRAY_BASE_TYPES = (int, float, None)
 
@@ -56,3 +58,10 @@ class ArrayInfo:
         self.array_max_sizes = [
             max_size if curr_size is None else curr_size for curr_size in self.array_max_sizes
         ]
+
+
+def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
+    """Small helper function to generate the array info from a given value instance."""
+    array_type, array_sizes = get_array_type_and_sizes(data_value)
+    n_dims = len(array_sizes)
+    return ArrayInfo(array_type, n_dims, [None] * n_dims)
