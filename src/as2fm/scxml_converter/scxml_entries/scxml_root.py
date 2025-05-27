@@ -24,7 +24,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
-from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
+from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_sub_elements
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
@@ -116,7 +116,7 @@ class ScxmlRoot(ScxmlBase):
         print(f"{xml_file=}")
         if isfile(xml_file):
             xml_element = ET.parse(xml_file).getroot()
-            set_filepath_for_all_elements(xml_element, xml_file)
+            set_filepath_for_all_sub_elements(xml_element, xml_file)
         elif xml_file.startswith("<?xml"):
             raise NotImplementedError("Can only parse files, not strings.")
         else:

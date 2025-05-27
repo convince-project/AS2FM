@@ -19,11 +19,15 @@ that caused the error.
 """
 import os
 from enum import Enum, auto
-from typing import Type
+from typing import Tuple, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
+
+LOCATION_INFO = Tuple[str, int]  # filename, line_number
+SUPPORTED_LOCATIONS = Union[XmlElement, LOCATION_INFO, str]
+
 
 # This is the name of an internal attribute that is used to store the filepath of an element.
 INTERNAL_FILEPATH_ATTR = "_filepath"
@@ -40,7 +44,7 @@ class Severity(Enum):
     INFO = auto()
 
 
-def set_filepath_for_all_elements(root: XmlElement, filepath: str) -> None:
+def set_filepath_for_all_sub_elements(root: XmlElement, filepath: str) -> None:
     """
     Set the filepath for all elements in the XML tree.
 
@@ -61,35 +65,56 @@ def set_filepath_for_all_elements(root: XmlElement, filepath: str) -> None:
             raise e
 
 
-def _assemble_message(severity: Severity, element: XmlElement, message: str) -> str:
+def _get_xml_location(element: XmlElement) -> LOCATION_INFO:
+    """Get location info from xml element."""
+    assert hasattr(element, SOURCELINE), (
+        "The element must have a sourceline attribute. This is set by the parser, "
+        "i. e. when `lxml.etree.ElementTree` is used."
+    )
+    assert INTERNAL_FILEPATH_ATTR in element.attrib.keys(), (
+        "The element must have a filepath attribute. This is set by "
+        "`as2fm_common.logging.set_filepath_for_all_elements`."
+    )
+    path = element.attrib[INTERNAL_FILEPATH_ATTR]
+    sourceline = element.sourceline
+    return (path, sourceline)
+
+
+def _assemble_message(severity: Severity, location: SUPPORTED_LOCATIONS, message: str) -> str:
     """
     Produce an logging message with the line number of the element.
 
     :param severity: The severity of the error
-    :param element: The element that caused the error
+    :param location: The location that caused the error
     :param message: The message
     :return: The message with path and line number
     """
-    # assert hasattr(element, SOURCELINE), (
-    #     "The element must have a sourceline attribute. This is set by the parser, "
-    #     "i. e. when `lxml.etree.ElementTree` is used."
-    # )
-    # assert INTERNAL_FILEPATH_ATTR in element.attrib.keys(), (
-    #     "The element must have a filepath attribute. This is set by "
-    #     "`as2fm_common.logging.set_filepath_for_all_elements`."
-    # )
+
     # TODO: At some point this should be set everywhere.
 
     severity_initial = severity.name[0]
-    if hasattr(element, SOURCELINE) and INTERNAL_FILEPATH_ATTR in element.attrib.keys():
-        path = element.attrib[INTERNAL_FILEPATH_ATTR]
-        locator: str = f"{path}:{element.sourceline}"
+    if isinstance(location, XmlElement):
+        location_info = _get_xml_location(location)
+    elif isinstance(location, tuple):
+        assert len(location) == 2
+        location_info = location
+    elif isinstance(location, str):
+        location_info = (location, None)
+    elif location is None:
+        location_info = ("UNKNOWN", None)
     else:
-        locator = "UNKNOWN_LOCATION"
-    return f"{severity_initial} ({locator}) {message}"
+        raise NotImplementedError(f"Location type {location.__class__} not supported.")
+
+    path, sourceline = location_info
+    if sourceline is None:
+        location_str = path
+    else:
+        location_str = f"{path}:{sourceline}"
+
+    return f"{severity_initial} ({location_str}) {message}"
 
 
-def get_error_msg(element: XmlElement, message: str) -> str:
+def get_error_msg(element: SUPPORTED_LOCATIONS, message: str) -> str:
     """
     Log an error message.
 
@@ -100,7 +125,7 @@ def get_error_msg(element: XmlElement, message: str) -> str:
     return _assemble_message(Severity.ERROR, element, message)
 
 
-def get_warn_msg(element: XmlElement, message: str) -> str:
+def get_warn_msg(element: SUPPORTED_LOCATIONS, message: str) -> str:
     """
     Log a warning message.
 
@@ -111,7 +136,7 @@ def get_warn_msg(element: XmlElement, message: str) -> str:
     return _assemble_message(Severity.WARNING, element, message)
 
 
-def get_info_msg(element: XmlElement, message: str) -> str:
+def get_info_msg(element: SUPPORTED_LOCATIONS, message: str) -> str:
     """
     Log an info message.
 
@@ -122,7 +147,7 @@ def get_info_msg(element: XmlElement, message: str) -> str:
     return _assemble_message(Severity.INFO, element, message)
 
 
-def log_error(element: XmlElement, message: str) -> None:
+def log_error(element: SUPPORTED_LOCATIONS, message: str) -> None:
     """
     Log an error message and print it.
 
@@ -133,7 +158,7 @@ def log_error(element: XmlElement, message: str) -> None:
     print(error_msg)
 
 
-def log_warning(element: XmlElement, message: str) -> None:
+def log_warning(element: SUPPORTED_LOCATIONS, message: str) -> None:
     """
     Log an warning message and print it.
 
@@ -146,7 +171,7 @@ def log_warning(element: XmlElement, message: str) -> None:
 
 def check_assertion(
     condition: bool,
-    element: XmlElement,
+    element: SUPPORTED_LOCATIONS,
     message: str,
     error_type: Type[BaseException] = RuntimeError,
 ) -> None:

@@ -27,7 +27,7 @@ import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import remove_namespace, string_as_bool
-from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
+from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_sub_elements
 from as2fm.jani_generator.jani_entries import JaniModel, JaniProperty
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
@@ -103,7 +103,7 @@ def parse_main_xml(xml_path: str) -> FullModel:
     parser_wo_comments = ET.XMLParser(remove_comments=True)
     with open(xml_path, "r", encoding="utf-8") as f:
         xml = ET.parse(f, parser=parser_wo_comments)
-    set_filepath_for_all_elements(xml.getroot(), xml_path)
+    set_filepath_for_all_sub_elements(xml.getroot(), xml_path)
     assert remove_namespace(xml.getroot().tag) == "convince_mc_tc", get_error_msg(
         xml.getroot(), "The top-level XML element must be convince_mc_tc."
     )

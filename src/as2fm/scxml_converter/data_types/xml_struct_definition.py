@@ -19,7 +19,7 @@ import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import remove_namespace
-from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_elements
+from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_sub_elements
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 
 
@@ -60,7 +60,7 @@ class XmlStructDefinition(StructDefinition):
         parser_wo_comments = ET.XMLParser(remove_comments=True)
         with open(fname, "r", encoding="utf-8") as f:
             xml = ET.parse(f, parser=parser_wo_comments)
-        set_filepath_for_all_elements(xml.getroot(), fname)
+        set_filepath_for_all_sub_elements(xml.getroot(), fname)
         assert remove_namespace(xml.getroot().tag) == "types", get_error_msg(
             xml.getroot(), "The top-level XML element must be types."
         )

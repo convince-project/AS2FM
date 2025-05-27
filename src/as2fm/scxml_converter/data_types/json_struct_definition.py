@@ -49,17 +49,17 @@ class JsonStructDefinition(StructDefinition):
         assert os.path.exists(fname), f"File {fname} must exist."
         with open(fname, "r") as file:
             json_def = json.loads(file.read())
-            return JsonStructDefinition.from_dict(json_def)
+            return JsonStructDefinition.from_dict(json_def, fname)
 
     @staticmethod
-    def _handle_property(root_obj: Dict[str, Any], prop_def: Dict[str, Any]) -> str:
+    def _handle_property(root_obj: Dict[str, Any], prop_def: Dict[str, Any], fname: str) -> str:
         if REF in prop_def.keys():
             # this is a reference, resolve it first
-            prop_def, _ = JsonStructDefinition._resolve_ref(root_obj, prop_def)
+            prop_def, _ = JsonStructDefinition._resolve_ref(root_obj, prop_def, fname)
 
     @staticmethod
     def _resolve_ref(
-        root_obj: Dict[str, Any], obj_def: Dict[str, Any]
+        root_obj: Dict[str, Any], obj_def: Dict[str, Any], fname: str
     ) -> Tuple[Dict[str, Any], str]:
         assert REF in obj_def.keys()
         path = obj_def.get(REF)
@@ -85,21 +85,21 @@ class JsonStructDefinition(StructDefinition):
 
     @staticmethod
     def _handle_objects(
-        root_obj: Dict[str, Any], obj_def: Dict[str, Any], suggested_name: str
+        root_obj: Dict[str, Any], obj_def: Dict[str, Any], suggested_name: str, fname: str
     ) -> Tuple[str, List["JsonStructDefinition"]]:
         if REF in obj_def.keys():
             # this is a reference, resolve it first
-            obj_def, suggested_name = JsonStructDefinition._resolve_ref(root_obj, obj_def)
+            obj_def, suggested_name = JsonStructDefinition._resolve_ref(root_obj, obj_def, fname)
         if obj_def.get(TYPE) == OBJECT:
             properties = obj_def.get(PROPERTIES)
             if properties is None:
-                log_warning(None, f"Object must have properties: {obj_def}")
+                log_warning(fname, f"Object must have properties: {obj_def}")
                 return suggested_name, []
             struct_members = {}
             definitions = []
             for prop_name, prop_def in properties.items():
                 this_obj, new_defs = JsonStructDefinition._handle_objects(
-                    root_obj, prop_def, prop_name
+                    root_obj, prop_def, prop_name, fname
                 )
                 if isinstance(this_obj, str):
                     type_str = this_obj
@@ -113,11 +113,11 @@ class JsonStructDefinition(StructDefinition):
         elif obj_def.get(TYPE) == ARRAY:
             assert ITEMS in obj_def
             type_str, new_defs = JsonStructDefinition._handle_objects(
-                root_obj, obj_def.get(ITEMS), suggested_name
+                root_obj, obj_def.get(ITEMS), suggested_name, fname
             )
             return type_str + "[]", new_defs
         elif isinstance(obj_def.get(TYPE), list):
-            log_warning(None, "List of types not supported.")
+            log_warning(fname, "List of types not supported.")
             return suggested_name, []
         elif obj_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
             type_str = JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(obj_def.get(TYPE))
@@ -126,12 +126,12 @@ class JsonStructDefinition(StructDefinition):
             raise NotImplementedError(f"{obj_def}")
 
     @staticmethod
-    def from_dict(json_def: Dict[str, Any]):
+    def from_dict(json_def: Dict[str, Any], fname: str):
         assert (
             json_def.get(TYPE) == OBJECT
         ), f"Only object definitions are supported. Got {json_def.get(TYPE)}"
         schema_name = json_def.get(TITLE)
         assert isinstance(schema_name, str), "The schema must have a title."
 
-        _, other_objs = JsonStructDefinition._handle_objects(json_def, json_def, schema_name)
+        _, other_objs = JsonStructDefinition._handle_objects(json_def, json_def, schema_name, fname)
         return {s.get_name(): s for s in other_objs}
