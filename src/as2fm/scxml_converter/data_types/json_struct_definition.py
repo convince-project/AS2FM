@@ -17,6 +17,7 @@ import json
 import os
 from typing import Any, Dict, List, Tuple
 
+from as2fm.as2fm_common.logging import log_warning
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 
 ARRAY = "array"
@@ -91,7 +92,9 @@ class JsonStructDefinition(StructDefinition):
             obj_def, suggested_name = JsonStructDefinition._resolve_ref(root_obj, obj_def)
         if obj_def.get(TYPE) == OBJECT:
             properties = obj_def.get(PROPERTIES)
-            assert properties is not None, f"Object must have properties: {obj_def}"
+            if properties is None:
+                log_warning(None, f"Object must have properties: {obj_def}")
+                return suggested_name, []
             struct_members = {}
             definitions = []
             for prop_name, prop_def in properties.items():
@@ -113,6 +116,9 @@ class JsonStructDefinition(StructDefinition):
                 root_obj, obj_def.get(ITEMS), suggested_name
             )
             return type_str + "[]", new_defs
+        elif isinstance(obj_def.get(TYPE), list):
+            log_warning(None, "List of types not supported.")
+            return suggested_name, []
         elif obj_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
             type_str = JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(obj_def.get(TYPE))
             return type_str, []
