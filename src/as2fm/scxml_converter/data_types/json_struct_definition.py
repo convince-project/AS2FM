@@ -38,7 +38,7 @@ JSON_SCHEMA_TYPE_TO_SCXML_TYPE = {
     "boolean": "bool",
     "integer": "int32",
     "number": "float32",
-    "string": "str",
+    "string": "string",
 }
 
 

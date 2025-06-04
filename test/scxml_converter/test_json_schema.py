@@ -29,7 +29,7 @@ def test_json_from_dict_types():
 
     assert len(json_defs) == 1
     json_def = json_defs["Test"]
-    assert json_def.get_members() == {"name": "str", "age": "int32"}
+    assert json_def.get_members() == {"name": "string", "age": "int32"}
 
 
 def test_json_from_dict_arrays():
@@ -46,7 +46,7 @@ def test_json_from_dict_arrays():
 
     assert len(json_defs) == 1
     json_def = json_defs["TestWArray"]
-    assert json_def.get_members() == {"name": "str", "grades": "float32[]"}
+    assert json_def.get_members() == {"name": "string", "grades": "float32[]"}
 
 
 def test_json_from_dict_def_arrays():
@@ -66,7 +66,7 @@ def test_json_from_dict_def_arrays():
 
     assert len(json_defs) == 2
     assert json_defs["TestWArrayADefs"].get_members() == {"year": "int32", "students": "Student[]"}
-    assert json_defs["Student"].get_members() == {"name": "str"}
+    assert json_defs["Student"].get_members() == {"name": "string"}
 
 
 def test_json_from_dict_refs():
@@ -85,7 +85,7 @@ def test_json_from_dict_refs():
 
     assert len(json_defs) == 2
     assert json_defs["TestWDef"].get_members() == {"person": "Person"}
-    assert json_defs["Person"].get_members() == {"name": "str"}
+    assert json_defs["Person"].get_members() == {"name": "string"}
 
 
 def test_json_from_file():
@@ -96,7 +96,7 @@ def test_json_from_file():
     assert len(json_defs) == 2
     assert json_defs["Product"].get_members() == {
         "productId": "int32",
-        "productName": "str",
+        "productName": "string",
         "price": "float32",
         "tags": "str[]",
         "dimensions": "dimensions",

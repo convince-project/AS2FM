@@ -297,8 +297,8 @@ def interpret_top_level_xml(
     model = parse_main_xml(xml_path)
 
     custom_data_types: Dict[str, StructDefinition] = {}
-    for type, path in model.data_declarations:
-        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[type]
+    for struct_format, path in model.data_declarations:
+        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[struct_format]
         loaded_structs = struct_definition_class.from_file(path)
         custom_data_types.update(loaded_structs)
 
