@@ -92,9 +92,17 @@ class StructDefinition:
             return
         self._members_list = {}
         for member_name, member_type in self._members.items():
+            potential_base_type = member_type
             if is_type_string_base_type(member_type):
                 self._members_list.update({member_name: member_type})
-            else:
+            if is_type_string_array(member_type):
+                array_type_str, array_max_sizes = get_array_type_and_dimensions_from_string(
+                    member_type
+                )
+                potential_base_type = array_type_str
+                if is_type_string_base_type(array_type_str):
+                    self._members_list.update({member_name: member_type})
+            if not is_type_string_base_type(potential_base_type):
                 member_type_proc = member_type
                 array_info = ""
                 if is_type_string_array(member_type):
@@ -109,7 +117,9 @@ class StructDefinition:
                     array_size = array_max_sizes[0]
                     array_info = "[]" if array_size is None else f"[{array_size}]"
                     member_type_proc = array_type_str
-                if member_type_proc not in all_structs:
+                if member_type_proc not in all_structs and not is_type_string_base_type(
+                    member_type_proc
+                ):
                     raise ValueError(
                         get_error_msg(
                             self.get_xml_origin(),
