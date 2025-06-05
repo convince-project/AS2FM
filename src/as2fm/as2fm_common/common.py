@@ -257,4 +257,6 @@ def convert_string_to_int_array(value: str) -> List[int]:
     """
     Convert a string to a list of integers.
     """
+    if isinstance(value, MutableSequence):
+        return [convert_string_to_int_array(x) for x in value]
     return [int(x) for x in value.encode()]

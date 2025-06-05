@@ -70,8 +70,12 @@ class ArrayInfo:
     is_base_type: bool = True
 
     def __post_init__(self):
+        if self.is_base_type and self.array_type == str:
+            self.array_dimensions += 1
+            self.array_type = int
+            self.array_max_sizes.append(self.array_max_sizes[-1])
         if self.is_base_type and self.array_type not in ARRAY_BASE_TYPES:
-            raise ValueError(f"array_type {self.array_type} != (int, float, None)")
+            raise ValueError(f"array_type {self.array_type} != {ARRAY_BASE_TYPES}")
         if not (isinstance(self.array_dimensions, int) and self.array_dimensions > 0):
             raise ValueError(f"array_dimension is {self.array_dimensions}: it should be at least 1")
         if not all(

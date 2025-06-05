@@ -115,8 +115,8 @@ def parse_ecmascript_to_jani_expression(
         jani_expression = _parse_ecmascript_to_jani_expression(ast, None, array_info)
     except NotImplementedError:
         raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript: {ecmascript}"))
-    except AssertionError:
-        raise RuntimeError(get_error_msg(elem, f"Assertion from ecmascript: {ecmascript}"))
+    # except AssertionError as e:
+    #     raise RuntimeError(get_error_msg(elem, f"Assertion {e} from ecmascript: {ecmascript}"))
     return jani_expression
 
 
@@ -171,9 +171,12 @@ def _make_padding(array_base_type: Type[Union[int, float]], sizes: List[int]):
     Returns:
         List: A nested list filled with zero values, matching the specified dimensions.
     """
+    padding_type = array_base_type
+    if array_base_type is str:
+        padding_type = int
     if len(sizes) == 1:
-        return [array_base_type(0)] * sizes[0]
-    return [_make_padding(array_base_type, sizes[1:]) for _ in range(sizes[0])]
+        return [padding_type(0)] * sizes[0]
+    return [_make_padding(padding_type, sizes[1:]) for _ in range(sizes[0])]
 
 
 def _generate_constant_array_expression(
@@ -208,6 +211,9 @@ def _parse_ecmascript_to_jani_expression(
         if isinstance(ast.value, str):
             # This needs to be treated as a list (not array) of integers.
             string_as_list = convert_string_to_int_array(ast.value)
+            if array_info is None:
+                # Create an array info to be used later
+                array_info = ArrayInfo(int, 1, [len(string_as_list)])
             if (
                 parent_script.type == Syntax.ExpressionStatement
             ):  # This is an assignment, add padding
@@ -253,7 +259,14 @@ def _parse_ecmascript_to_jani_expression(
             assert all(
                 element.type == Syntax.Literal for element in ast.elements
             ), "All array elements are expected to be a 'Literal'"
-            elements_list = [entry_type(element.value) for element in ast.elements]
+            if entry_type == str:
+                # the elements are strings, so we need to convert their element literals
+                elements_list = [
+                    _parse_ecmascript_to_jani_expression(element, ast, None)
+                    for element in ast.elements
+                ]
+            else:
+                elements_list = [entry_type(element.value) for element in ast.elements]
             return _generate_array_expression_for_assignment(
                 array_info, parent_script, elements_list
             )
