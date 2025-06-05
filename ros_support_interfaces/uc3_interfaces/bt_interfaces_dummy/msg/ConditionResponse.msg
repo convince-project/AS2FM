@@ -1,0 +1,3 @@
+int8 SKILL_SUCCESS=0
+int8 SKILL_FAILURE=1
+int8 status

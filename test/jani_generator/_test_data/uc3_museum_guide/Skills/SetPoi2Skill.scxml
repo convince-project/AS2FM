@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    version="1.0"
+    xmlns="..."
+    datamodel="ecmascript"
+    name="SetPoi2Skill"
+    initial="idle">
+
+    <datamodel>
+        <data id="poi_number" type="int32" expr="2"/>
+        <data id="SKILL_SUCCESS" type="int8" expr="0" />
+        <data id="SKILL_FAILURE" type="int8" expr="1" />
+        <data id="SKILL_RUNNING" type="int8" expr="2" />
+    </datamodel>
+
+    <!-- SetPoiSkill is a server for tick from the ROS2Action plugin-->
+    <ros_service_server service_name="/SetPoi2Skill/tick" type ="bt_interfaces_dummy/TickAction"/>
+    <!-- SetPoiSkill is a server for halt from the ROS2Action plugin-->
+    <!-- <ros_service_server service_name="/SetPoiSkill/halt" type ="bt_interfaces_dummy/HaltAction"/> -->
+    <!-- SetPoiSkill is a client for SetPoi from the SchedulerComponent -->
+    <ros_service_client service_name="/SchedulerComponent/SetPoi" type ="scheduler_interfaces_dummy/SetPoi"/>
+
+    <state id="idle">
+        <ros_service_handle_request name="/SetPoi2Skill/tick" target="setPoi">
+            <ros_service_send_request name="/SchedulerComponent/SetPoi">
+                <field name="poi_number" expr="poi_number"/>
+            </ros_service_send_request>
+        </ros_service_handle_request>
+        <!-- <ros_service_handle_request name="/SetPoiSkill/halt" target="idle">
+            <ros_service_send_response name="/SetPoiSkill/halt"/>
+        </ros_service_handle_request> -->
+    </state>
+
+    <state id="setPoi">
+        <ros_service_handle_response name="/SchedulerComponent/SetPoi" cond="_res.is_ok" target="idle">
+            <ros_service_send_response name="/SetPoi2Skill/tick">
+                <field name="status" expr="SKILL_SUCCESS"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <ros_service_handle_response name="/SchedulerComponent/SetPoi" cond="(_res.is_ok) == false" target="idle">
+            <ros_service_send_response name="/SetPoi2Skill/tick">
+                <field name="status" expr="SKILL_FAILURE"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <!-- <ros_service_handle_request name="/SetPoiSkill/halt" target="idle">
+            <ros_service_send_response name="/SetPoiSkill/halt"/>
+        </ros_service_handle_request> -->
+    </state>
+</scxml>
