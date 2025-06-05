@@ -12,7 +12,9 @@ It can also be checked with external tools accepting JANI as input, e.g., the ot
 Prerequisites
 --------------
 
-Before starting the tutorials, make sure to install AS2FM, as described in the :ref:`installation guide <installation>`.
+You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page https://github.com/convince-project/AS2FM/pkgs/container/as2fm`_
+
+In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
 
 
 .. _scxml_conversion:
@@ -28,7 +30,7 @@ Reference Model: Battery Drainer
 `````````````````````````````````
 
 For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/ros_example_w_bt>`_.
-The model consists of a `main.xml` file, referencing to the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
+The model consists of a `main.xml` file, referencing the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
 
 This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
 A behavior tree continuously monitors the alarm topic and, once it is triggered, recharges the battery to its full level before starting the draining process again.
@@ -114,12 +116,11 @@ The output is a JANI file called `main.jani` that will be located in the same fo
 Hands-on in-depth tutorial including verification: Fetch & Carry
 -----------------------------------------------------------------
 
-In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. We translate the model of the robot and its environment with AS2FM into JANI for verification with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking tool.
-We will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and additional features in the behavior tree, we make in the end sure that the required properties hold.
+In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. You translate the model of the robot and its environment with AS2FM into JANI for verification with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking tool.
+You will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and additional features in the behavior tree, you make in the end sure that the required properties hold.
 
 We assume some background in computer science or as a robotics developer but no knowledge about formal methods and model checking is required.
 
-You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page https://github.com/convince-project/AS2FM/pkgs/container/as2fm`_.
 
 Reference Model: Fetch & Carry Robot
 `````````````````````````````````````
@@ -127,9 +128,11 @@ Reference Model: Fetch & Carry Robot
 For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/tutorial_fetch_and_carry>`_.
 What is implemented there is a classical fetch and carry task. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
 
-The model consists of a `main.xml` file, referencing to the BT `bt_tree.xml` running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml`, picking `bt_pick_action.scxml`, and placing `bt_place_action.scxml`, as well as the world model `world.scxml`. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani`.
+The model consists of a `main.xml` file, referencing the BT `bt_tree.xml` running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml`, picking `bt_pick_action.scxml`, and placing `bt_place_action.scxml`, as well as the world model `world.scxml`. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani`.
 
 All of those components are summarized and collected in the `main.xml` file.
+
+
 * First, some parameters configuring generic properties of the system are defined. In this example we bound the maximum execution time to 100 seconds, and configure unbounded arrays to contain at most 10 elements.
 
     .. code-block:: xml
@@ -216,19 +219,19 @@ As a last step we are having a closer look at the environment model in `world.sc
 Model translation with AS2FM
 ```````````````````````````````
 
-From this model in SCXML we can generate a JANI representation with AS2FM by executing:
+From this model in SCXML you can generate a JANI representation with AS2FM by executing:
 
 .. code-block:: bash
 
     cd AS2FM/test/jani_generator/_test_data/tutorial_fetch_and_carry
     as2fm_scxml_to_jani main.xml
 
-This produces the same model in the JANI format in the file `main.jani`.
+This produces the same model in the JANI (link) format in the file `main.jani`.
 You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani`
 
 Model Checking with SMC Storm
 ```````````````````````````````
-We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table. This can be expressed as P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid), where F is the finally operator of linear temporal logic (LTL) and the first operand of the formula expresses that the snack is located at the table (id 1). The second operand is needed to make sure the system is still in a valid state.
+We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table. This can be expressed as ``P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid)``, where F is the finally operator of linear temporal logic (LTL) and the first operand of the formula expresses that the snack is located at the table (id 1). The second operand is needed to make sure the system is still in a valid state.
 The property is formulated in `properties.jani`.
 
 This property can be checked by calling SMC Storm on the JANI file generated before with AS2FM. For more details on SMC Storm you can have a look the `SMC Storm repository <https://github.com/convince-project/smc_storm>`_.
@@ -241,7 +244,7 @@ Executing SMC Storm on this example works as follows:
 
 The expected result shown below indicates that the property is fulfilled with probability 1, i.e., the snack is always successfully placed on the table. In this case model checking needed 500 traces to come to that result called with the default SMC confidence and error parameters. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
 
-.. code-block:: bash
+.. code-block::
 
     ============= SMC Results =============
         N. of times target reached:     500
@@ -253,14 +256,14 @@ The expected result shown below indicates that the property is fulfilled with pr
     =========================================
     Result: 1
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run `ros2 run plotjuggler plotjuggler -d traces.csv` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot. In addition, because a lot of traces are generated, it might make sense to zoom in to only see a few steps of the trace.
-This can also be achieved by only generating a given number of traces by using the `--max-n-traces` flag. With
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking in `traces.csv`. A tool to inspect them graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d traces.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot. In addition, because a lot of traces are generated, it might make sense to zoom in to only see a few steps of the trace.
+This can also be achieved by only generating a given number of traces by using the `--max-n-traces` flag. With the following command only one trace is generated.
 
 .. code-block:: bash
 
     smc_storm --model main.jani --properties-names snack_at_table --traces-file traces_single.csv --max-n-traces 1 --show-statistics
 
-only one trace has been generated in `reference_traces_single.csv`
+One sample trace can be inspected in `reference_traces_single.csv`.
 
 The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world_obj_locs_at_0`, and `topic_clock_msg__ros_fields__sec` looks as follows:
 
@@ -272,7 +275,7 @@ You can see how the time advances in steps, how the robot moves from location 1 
 
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
-This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml`. From now on we are using `main_probabilistic.scxml`, which is the same as `main.scxml` but referencing to this modified world model in line 15.
+This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml`. From now on we are using `main_probabilistic.scxml`, which is the same as `main.scxml` but referencing this modified world model in line 15.
 
 If you want to try to come up with a solution on your own on how to modify the world model such that it's behavior is probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml`. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml`
 
@@ -305,7 +308,7 @@ The expected result shown below indicates that the property is not fulfilled wit
 This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
 In this case model checking needed 15700 traces to come to the result that the task is only completed successfully in 29.99% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
 
-.. code-block:: bash
+.. code-block::
 
     ============= SMC Results =============
         N. of times target reached:     4709
@@ -350,7 +353,7 @@ We can again run SMC Storm again on the modified model after generating the JANI
 
 The expected result shown below states that the property is now fulfilled with probability 95.05% again when 5 retries are allowed.
 
-.. code-block:: bash
+.. code-block::
 
     ============= SMC Results =============
         N. of times target reached:     3802

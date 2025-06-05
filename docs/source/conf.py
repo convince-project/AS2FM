@@ -5,7 +5,7 @@
 # mypy: ignore-errors
 
 project = "CONVINCE Model Checking Components"
-copyright = "2024"
+copyright = "2025"
 author = "CONVINCE Consortium"
 
 release = "0.1"
