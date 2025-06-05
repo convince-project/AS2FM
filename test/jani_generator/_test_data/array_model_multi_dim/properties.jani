@@ -1,0 +1,25 @@
+{
+    "properties": [
+          {
+            "name": "array_check",
+            "expression": {
+              "op": "filter",
+              "fun": "values",
+              "values": {
+                "op": "Pmin",
+                "exp": {
+                  "op": "F",
+                  "exp": {
+                    "op": "∧",
+                    "left": "complete_array_ok.valid",
+                    "right": "sub_array_ok.valid"
+                  }
+                }
+              },
+              "states": {
+                "op": "initial"
+              }
+            }
+          }
+    ]
+}

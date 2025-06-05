@@ -407,6 +407,12 @@ class TestConversion(unittest.TestCase):
             "array_model_additional", property_name="array_check", expected_result_probability=1.0
         )
 
+    def test_array_model_multi_dim(self):
+        """Test the array model."""
+        self._test_with_main(
+            "array_model_multi_dim", property_name="array_check", expected_result_probability=1.0
+        )
+
     def test_ros_add_int_srv_example(self):
         """Test the services are properly handled in Jani."""
         self._test_with_main(
@@ -532,6 +538,16 @@ class TestConversion(unittest.TestCase):
             property_name="executes_recovery_branch_or_success",
             expected_result_probability=0.7,
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
+        )
+
+    def test_uc3_generic(self):
+        """Test the UC3 Museum guide example from IIT and UniGe."""
+        self._test_with_main(
+            os.path.join("uc3_museum_guide", "Main"),
+            model_xml="main.xml",
+            property_name="tree_success",
+            expected_result_probability=1.0,
+            store_generated_scxmls=True,
         )
 
     def test_blackboard_features(self):
