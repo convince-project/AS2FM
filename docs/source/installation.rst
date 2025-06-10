@@ -49,4 +49,21 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
 
 .. code-block:: bash
 
-    as2fm_scxml_to_jani --help
+    $ as2fm_scxml_to_jani --help
+
+    usage: as2fm_scxml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR]
+                            [--jani-out-file JANI_OUT_FILE]
+                            main_xml
+
+    Convert SCXML robot system models to JANI model.
+
+    positional arguments:
+    main_xml              The path to the main XML file to interpret.
+
+    options:
+    -h, --help            show this help message and exit
+    --generated-scxml-dir GENERATED_SCXML_DIR
+                            Path to the folder containing the generated plain-
+                            SCXML files.
+    --jani-out-file JANI_OUT_FILE
+                            Path to the generated jani file.
