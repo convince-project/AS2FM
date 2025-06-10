@@ -41,36 +41,6 @@
       "initial-value": 0
     },
     {
-      "name": "action_go_to_goal_result.valid",
-      "type": "bool",
-      "transient": false,
-      "initial-value": false
-    },
-    {
-      "name": "action_go_to_goal_result__goal_id",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
-      "name": "action_go_to_goal_result__code",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
-      "name": "topic_snacks0_loc_msg.valid",
-      "type": "bool",
-      "transient": false,
-      "initial-value": false
-    },
-    {
-      "name": "topic_snacks0_loc_msg__ros_fields__data",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
       "name": "action_pick_object_goal_handle.valid",
       "type": "bool",
       "transient": false,
@@ -96,24 +66,6 @@
     },
     {
       "name": "action_pick_object_goal_accepted__goal_id",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
-      "name": "action_pick_object_result.valid",
-      "type": "bool",
-      "transient": false,
-      "initial-value": false
-    },
-    {
-      "name": "action_pick_object_result__goal_id",
-      "type": "int",
-      "transient": false,
-      "initial-value": 0
-    },
-    {
-      "name": "action_pick_object_result__code",
       "type": "int",
       "transient": false,
       "initial-value": 0
@@ -156,6 +108,54 @@
     },
     {
       "name": "action_place_object_result__code",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    },
+    {
+      "name": "topic_snacks0_loc_msg.valid",
+      "type": "bool",
+      "transient": false,
+      "initial-value": false
+    },
+    {
+      "name": "topic_snacks0_loc_msg__ros_fields__data",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    },
+    {
+      "name": "action_go_to_goal_result.valid",
+      "type": "bool",
+      "transient": false,
+      "initial-value": false
+    },
+    {
+      "name": "action_go_to_goal_result__goal_id",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    },
+    {
+      "name": "action_go_to_goal_result__code",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    },
+    {
+      "name": "action_pick_object_result.valid",
+      "type": "bool",
+      "transient": false,
+      "initial-value": false
+    },
+    {
+      "name": "action_pick_object_result__goal_id",
+      "type": "int",
+      "transient": false,
+      "initial-value": 0
+    },
+    {
+      "name": "action_pick_object_result__code",
       "type": "int",
       "transient": false,
       "initial-value": 0
@@ -803,16 +803,19 @@
       "name": "goal_requested-waiting-e56a1890"
     },
     {
-      "name": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-0"
+      "name": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-0"
     },
     {
-      "name": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-1"
+      "name": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-1"
     },
     {
-      "name": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-0"
+      "name": "handle_pick_request-idle-d271f37e"
     },
     {
-      "name": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-1"
+      "name": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-0"
+    },
+    {
+      "name": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-1"
     },
     {
       "name": "idle-f50d5f6e-2_before_if-idle-f50d5f6e-2_after_if-parent-f50d5f6e-f7149819-0"
@@ -825,9 +828,6 @@
     },
     {
       "name": "idle-idle-cd1a2ec2"
-    },
-    {
-      "name": "idle-idle-d3048a56"
     },
     {
       "name": "idle-idle-f50d5f6e"
@@ -986,10 +986,10 @@
       "name": "result_available-initial-d364d085"
     },
     {
-      "name": "ros_time_rate.bt_tick_on_receive"
+      "name": "ros_time_rate.bt_tree_tick_on_receive"
     },
     {
-      "name": "ros_time_rate.bt_tick_on_send"
+      "name": "ros_time_rate.bt_tree_tick_on_send"
     },
     {
       "name": "tick_children-1dd9dfcd-2_before_if-1dd9dfcd-c1118feb-0-0_before_if-tick_children-1dd9dfcd-2_before_if-1dd9dfcd-c1118feb-0-0_after_if-parent-1dd9dfcd-c1118feb-0-515bbb57-0"
@@ -1205,6 +1205,12 @@
       "name": "topic_snacks0_loc_msg_on_send"
     },
     {
+      "name": "transition-handle_nav_request-eventless-207a7c9d"
+    },
+    {
+      "name": "transition-handle_pick_request-eventless-b6ad9042"
+    },
+    {
       "name": "transition-init-eventless-76c5c3f7"
     },
     {
@@ -1339,34 +1345,37 @@
       "name": "world",
       "locations": [
         {
+          "name": "handle_nav_request"
+        },
+        {
+          "name": "handle_nav_request-e8a71a91-1"
+        },
+        {
+          "name": "handle_nav_request-e8a71a91-2"
+        },
+        {
+          "name": "handle_pick_request"
+        },
+        {
+          "name": "handle_pick_request-d271f37e-0_after_if"
+        },
+        {
+          "name": "handle_pick_request-d271f37e-0_before_if"
+        },
+        {
+          "name": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-0-2"
+        },
+        {
+          "name": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-1-0"
+        },
+        {
+          "name": "handle_pick_request-d271f37e-1"
+        },
+        {
           "name": "idle"
         },
         {
-          "name": "idle-0d947c6e-2"
-        },
-        {
-          "name": "idle-0d947c6e-3"
-        },
-        {
-          "name": "idle-0d947c6e-4"
-        },
-        {
-          "name": "idle-d3048a56-2"
-        },
-        {
-          "name": "idle-d3048a56-3_after_if"
-        },
-        {
-          "name": "idle-d3048a56-3_before_if"
-        },
-        {
-          "name": "idle-d3048a56-3_before_if-d3048a56-1e20d418-0-2"
-        },
-        {
-          "name": "idle-d3048a56-3_before_if-d3048a56-1e20d418-1-0"
-        },
-        {
-          "name": "idle-d3048a56-4"
+          "name": "idle-2cbbf246-2"
         },
         {
           "name": "idle-f50d5f6e-1"
@@ -1387,6 +1396,9 @@
           "name": "idle-f50d5f6e-3"
         },
         {
+          "name": "idle-fca22d22-2"
+        },
+        {
           "name": "idle-first-exec"
         },
         {
@@ -1401,7 +1413,7 @@
           "location": "idle",
           "destinations": [
             {
-              "location": "idle-0d947c6e-2",
+              "location": "idle-fca22d22-2",
               "probability": {
                 "exp": 1.0
               },
@@ -1412,7 +1424,7 @@
                   "index": 0
                 },
                 {
-                  "ref": "robot_loc",
+                  "ref": "req_loc_idx",
                   "value": "action_go_to_goal_goal_handle__ros_fields__loc_id",
                   "index": 1
                 }
@@ -1425,10 +1437,10 @@
           }
         },
         {
-          "location": "idle-0d947c6e-2",
+          "location": "idle-fca22d22-2",
           "destinations": [
             {
-              "location": "idle-0d947c6e-3",
+              "location": "handle_nav_request",
               "assignments": [
                 {
                   "ref": "action_go_to_goal_goal_accepted__goal_id",
@@ -1446,61 +1458,10 @@
           "action": "action_go_to_goal_goal_accepted_on_send"
         },
         {
-          "location": "idle-0d947c6e-3",
-          "destinations": [
-            {
-              "location": "idle-0d947c6e-4",
-              "assignments": [
-                {
-                  "ref": "action_go_to_goal_result__goal_id",
-                  "value": "goal_id",
-                  "index": 0
-                },
-                {
-                  "ref": "action_go_to_goal_result__code",
-                  "value": 4,
-                  "index": 0
-                },
-                {
-                  "ref": "action_go_to_goal_result.valid",
-                  "value": true,
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "action_go_to_goal_result_on_send"
-        },
-        {
-          "location": "idle-0d947c6e-4",
-          "destinations": [
-            {
-              "location": "idle",
-              "assignments": [
-                {
-                  "ref": "topic_snacks0_loc_msg__ros_fields__data",
-                  "value": {
-                    "op": "aa",
-                    "exp": "obj_locs",
-                    "index": 0
-                  },
-                  "index": 0
-                },
-                {
-                  "ref": "topic_snacks0_loc_msg.valid",
-                  "value": true,
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "topic_snacks0_loc_msg_on_send"
-        },
-        {
           "location": "idle",
           "destinations": [
             {
-              "location": "idle-d3048a56-2",
+              "location": "idle-2cbbf246-2",
               "probability": {
                 "exp": 1.0
               },
@@ -1511,7 +1472,7 @@
                   "index": 0
                 },
                 {
-                  "ref": "tmp_idx",
+                  "ref": "req_obj_idx",
                   "value": "action_pick_object_goal_handle__ros_fields__object_id",
                   "index": 1
                 }
@@ -1524,10 +1485,10 @@
           }
         },
         {
-          "location": "idle-d3048a56-2",
+          "location": "idle-2cbbf246-2",
           "destinations": [
             {
-              "location": "idle-d3048a56-3_before_if",
+              "location": "handle_pick_request",
               "assignments": [
                 {
                   "ref": "action_pick_object_goal_accepted__goal_id",
@@ -1543,180 +1504,6 @@
             }
           ],
           "action": "action_pick_object_goal_accepted_on_send"
-        },
-        {
-          "location": "idle-d3048a56-3_before_if",
-          "destinations": [
-            {
-              "location": "idle-d3048a56-3_before_if-d3048a56-1e20d418-0-2",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": [
-                {
-                  "ref": "robot_holding",
-                  "value": "tmp_idx",
-                  "index": 0
-                },
-                {
-                  "ref": {
-                    "op": "aa",
-                    "exp": "obj_locs",
-                    "index": "tmp_idx"
-                  },
-                  "value": {
-                    "op": "-",
-                    "left": 0,
-                    "right": 1
-                  },
-                  "index": 1
-                },
-                {
-                  "ref": "obj_locs.d1_len",
-                  "value": {
-                    "op": "max",
-                    "left": {
-                      "op": "+",
-                      "left": "tmp_idx",
-                      "right": 1
-                    },
-                    "right": "obj_locs.d1_len"
-                  },
-                  "index": 1
-                }
-              ]
-            }
-          ],
-          "action": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-0",
-          "guard": {
-            "exp": {
-              "op": "=",
-              "left": {
-                "op": "aa",
-                "exp": "obj_locs",
-                "index": "tmp_idx"
-              },
-              "right": "robot_loc"
-            }
-          }
-        },
-        {
-          "location": "idle-d3048a56-3_before_if-d3048a56-1e20d418-0-2",
-          "destinations": [
-            {
-              "location": "idle-d3048a56-3_after_if",
-              "assignments": [
-                {
-                  "ref": "action_pick_object_result__goal_id",
-                  "value": "goal_id",
-                  "index": 0
-                },
-                {
-                  "ref": "action_pick_object_result__code",
-                  "value": 4,
-                  "index": 0
-                },
-                {
-                  "ref": "action_pick_object_result.valid",
-                  "value": true,
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "action_pick_object_result_on_send"
-        },
-        {
-          "location": "idle-d3048a56-3_before_if",
-          "destinations": [
-            {
-              "location": "idle-d3048a56-3_before_if-d3048a56-1e20d418-1-0",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-1",
-          "guard": {
-            "exp": {
-              "op": "∧",
-              "left": true,
-              "right": {
-                "op": "¬",
-                "exp": {
-                  "op": "=",
-                  "left": {
-                    "op": "aa",
-                    "exp": "obj_locs",
-                    "index": "tmp_idx"
-                  },
-                  "right": "robot_loc"
-                }
-              }
-            }
-          }
-        },
-        {
-          "location": "idle-d3048a56-3_before_if-d3048a56-1e20d418-1-0",
-          "destinations": [
-            {
-              "location": "idle-d3048a56-3_after_if",
-              "assignments": [
-                {
-                  "ref": "action_pick_object_result__goal_id",
-                  "value": "goal_id",
-                  "index": 0
-                },
-                {
-                  "ref": "action_pick_object_result__code",
-                  "value": 6,
-                  "index": 0
-                },
-                {
-                  "ref": "action_pick_object_result.valid",
-                  "value": true,
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "action_pick_object_result_on_send"
-        },
-        {
-          "location": "idle-d3048a56-3_after_if",
-          "destinations": [
-            {
-              "location": "idle-d3048a56-4",
-              "assignments": []
-            }
-          ],
-          "action": "idle-idle-d3048a56"
-        },
-        {
-          "location": "idle-d3048a56-4",
-          "destinations": [
-            {
-              "location": "idle",
-              "assignments": [
-                {
-                  "ref": "topic_snacks0_loc_msg__ros_fields__data",
-                  "value": {
-                    "op": "aa",
-                    "exp": "obj_locs",
-                    "index": 0
-                  },
-                  "index": 0
-                },
-                {
-                  "ref": "topic_snacks0_loc_msg.valid",
-                  "value": true,
-                  "index": 0
-                }
-              ]
-            }
-          ],
-          "action": "topic_snacks0_loc_msg_on_send"
         },
         {
           "location": "idle",
@@ -1936,6 +1723,285 @@
           "action": "topic_snacks0_loc_msg_on_send"
         },
         {
+          "location": "handle_nav_request",
+          "destinations": [
+            {
+              "location": "handle_nav_request-e8a71a91-1",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": [
+                {
+                  "ref": "robot_loc",
+                  "value": "req_loc_idx",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "transition-handle_nav_request-eventless-207a7c9d",
+          "guard": {
+            "exp": true
+          }
+        },
+        {
+          "location": "handle_nav_request-e8a71a91-1",
+          "destinations": [
+            {
+              "location": "handle_nav_request-e8a71a91-2",
+              "assignments": [
+                {
+                  "ref": "action_go_to_goal_result__goal_id",
+                  "value": "goal_id",
+                  "index": 0
+                },
+                {
+                  "ref": "action_go_to_goal_result__code",
+                  "value": 4,
+                  "index": 0
+                },
+                {
+                  "ref": "action_go_to_goal_result.valid",
+                  "value": true,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "action_go_to_goal_result_on_send"
+        },
+        {
+          "location": "handle_nav_request-e8a71a91-2",
+          "destinations": [
+            {
+              "location": "idle",
+              "assignments": [
+                {
+                  "ref": "topic_snacks0_loc_msg__ros_fields__data",
+                  "value": {
+                    "op": "aa",
+                    "exp": "obj_locs",
+                    "index": 0
+                  },
+                  "index": 0
+                },
+                {
+                  "ref": "topic_snacks0_loc_msg.valid",
+                  "value": true,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "topic_snacks0_loc_msg_on_send"
+        },
+        {
+          "location": "handle_pick_request",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-0_before_if",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "transition-handle_pick_request-eventless-b6ad9042",
+          "guard": {
+            "exp": true
+          }
+        },
+        {
+          "location": "handle_pick_request-d271f37e-0_before_if",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-0-2",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": [
+                {
+                  "ref": "robot_holding",
+                  "value": "req_obj_idx",
+                  "index": 0
+                },
+                {
+                  "ref": {
+                    "op": "aa",
+                    "exp": "obj_locs",
+                    "index": "req_obj_idx"
+                  },
+                  "value": {
+                    "op": "-",
+                    "left": 0,
+                    "right": 1
+                  },
+                  "index": 1
+                },
+                {
+                  "ref": "obj_locs.d1_len",
+                  "value": {
+                    "op": "max",
+                    "left": {
+                      "op": "+",
+                      "left": "req_obj_idx",
+                      "right": 1
+                    },
+                    "right": "obj_locs.d1_len"
+                  },
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "action": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-0",
+          "guard": {
+            "exp": {
+              "op": "∧",
+              "left": {
+                "op": "=",
+                "left": {
+                  "op": "aa",
+                  "exp": "obj_locs",
+                  "index": "req_obj_idx"
+                },
+                "right": "robot_loc"
+              },
+              "right": {
+                "op": "<",
+                "left": "robot_holding",
+                "right": 0
+              }
+            }
+          }
+        },
+        {
+          "location": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-0-2",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-0_after_if",
+              "assignments": [
+                {
+                  "ref": "action_pick_object_result__goal_id",
+                  "value": "goal_id",
+                  "index": 0
+                },
+                {
+                  "ref": "action_pick_object_result__code",
+                  "value": 4,
+                  "index": 0
+                },
+                {
+                  "ref": "action_pick_object_result.valid",
+                  "value": true,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "action_pick_object_result_on_send"
+        },
+        {
+          "location": "handle_pick_request-d271f37e-0_before_if",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-1-0",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-1",
+          "guard": {
+            "exp": {
+              "op": "∧",
+              "left": true,
+              "right": {
+                "op": "¬",
+                "exp": {
+                  "op": "∧",
+                  "left": {
+                    "op": "=",
+                    "left": {
+                      "op": "aa",
+                      "exp": "obj_locs",
+                      "index": "req_obj_idx"
+                    },
+                    "right": "robot_loc"
+                  },
+                  "right": {
+                    "op": "<",
+                    "left": "robot_holding",
+                    "right": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "location": "handle_pick_request-d271f37e-0_before_if-d271f37e-8220ad55-1-0",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-0_after_if",
+              "assignments": [
+                {
+                  "ref": "action_pick_object_result__goal_id",
+                  "value": "goal_id",
+                  "index": 0
+                },
+                {
+                  "ref": "action_pick_object_result__code",
+                  "value": 6,
+                  "index": 0
+                },
+                {
+                  "ref": "action_pick_object_result.valid",
+                  "value": true,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "action_pick_object_result_on_send"
+        },
+        {
+          "location": "handle_pick_request-d271f37e-0_after_if",
+          "destinations": [
+            {
+              "location": "handle_pick_request-d271f37e-1",
+              "assignments": []
+            }
+          ],
+          "action": "handle_pick_request-idle-d271f37e"
+        },
+        {
+          "location": "handle_pick_request-d271f37e-1",
+          "destinations": [
+            {
+              "location": "idle",
+              "assignments": [
+                {
+                  "ref": "topic_snacks0_loc_msg__ros_fields__data",
+                  "value": {
+                    "op": "aa",
+                    "exp": "obj_locs",
+                    "index": 0
+                  },
+                  "index": 0
+                },
+                {
+                  "ref": "topic_snacks0_loc_msg.valid",
+                  "value": true,
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "action": "topic_snacks0_loc_msg_on_send"
+        },
+        {
           "location": "idle-first-exec",
           "destinations": [
             {
@@ -2018,7 +2084,13 @@
           "initial-value": 0
         },
         {
-          "name": "tmp_idx",
+          "name": "req_obj_idx",
+          "type": "int",
+          "transient": false,
+          "initial-value": 0
+        },
+        {
+          "name": "req_loc_idx",
           "type": "int",
           "transient": false,
           "initial-value": 0
@@ -2026,7 +2098,7 @@
       ]
     },
     {
-      "name": "bt_root_fsm_bt",
+      "name": "bt_root_fsm_bt_tree",
       "locations": [
         {
           "name": "done"
@@ -2038,7 +2110,7 @@
           "name": "idle"
         },
         {
-          "name": "idle-ae395e8f-0"
+          "name": "idle-24c98fe0-0"
         },
         {
           "name": "wait_tick_res"
@@ -2052,20 +2124,20 @@
           "location": "idle",
           "destinations": [
             {
-              "location": "idle-ae395e8f-0",
+              "location": "idle-24c98fe0-0",
               "probability": {
                 "exp": 1.0
               },
               "assignments": []
             }
           ],
-          "action": "ros_time_rate.bt_tick_on_receive",
+          "action": "ros_time_rate.bt_tree_tick_on_receive",
           "guard": {
             "exp": true
           }
         },
         {
-          "location": "idle-ae395e8f-0",
+          "location": "idle-24c98fe0-0",
           "destinations": [
             {
               "location": "wait_tick_res",
@@ -8603,33 +8675,6 @@
               "assignments": []
             }
           ],
-          "action": "bt_1002_halt_response_on_receive",
-          "guard": {
-            "exp": {
-              "op": "∧",
-              "left": true,
-              "right": {
-                "op": "¬",
-                "exp": {
-                  "op": "=",
-                  "left": "current_child_idx",
-                  "right": 1
-                }
-              }
-            }
-          }
-        },
-        {
-          "location": "reset_children",
-          "destinations": [
-            {
-              "location": "reset_children",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
           "action": "bt_1004_halt_response_on_receive",
           "guard": {
             "exp": {
@@ -8657,7 +8702,7 @@
               "assignments": []
             }
           ],
-          "action": "bt_1003_halt_response_on_receive",
+          "action": "bt_1002_halt_response_on_receive",
           "guard": {
             "exp": {
               "op": "∧",
@@ -8667,7 +8712,7 @@
                 "exp": {
                   "op": "=",
                   "left": "current_child_idx",
-                  "right": 2
+                  "right": 1
                 }
               }
             }
@@ -8701,73 +8746,27 @@
           }
         },
         {
-          "location": "tick_children",
+          "location": "reset_children",
           "destinations": [
             {
-              "location": "tick_children",
+              "location": "reset_children",
               "probability": {
                 "exp": 1.0
               },
               "assignments": []
             }
           ],
-          "action": "bt_1001_response_on_receive",
+          "action": "bt_1003_halt_response_on_receive",
           "guard": {
             "exp": {
               "op": "∧",
-              "left": {
-                "op": "∧",
-                "left": {
-                  "op": "∧",
-                  "left": true,
-                  "right": {
-                    "op": "¬",
-                    "exp": {
-                      "op": "∧",
-                      "left": {
-                        "op": "=",
-                        "left": "bt_1001_response__status",
-                        "right": 1
-                      },
-                      "right": {
-                        "op": "=",
-                        "left": "current_child_idx",
-                        "right": 0
-                      }
-                    }
-                  }
-                },
-                "right": {
-                  "op": "¬",
-                  "exp": {
-                    "op": "∧",
-                    "left": {
-                      "op": "=",
-                      "left": "bt_1001_response__status",
-                      "right": 2
-                    },
-                    "right": {
-                      "op": "=",
-                      "left": "current_child_idx",
-                      "right": 0
-                    }
-                  }
-                }
-              },
+              "left": true,
               "right": {
                 "op": "¬",
                 "exp": {
-                  "op": "∧",
-                  "left": {
-                    "op": "=",
-                    "left": "bt_1001_response__status",
-                    "right": 3
-                  },
-                  "right": {
-                    "op": "=",
-                    "left": "current_child_idx",
-                    "right": 0
-                  }
+                  "op": "=",
+                  "left": "current_child_idx",
+                  "right": 2
                 }
               }
             }
@@ -8857,79 +8856,6 @@
               "assignments": []
             }
           ],
-          "action": "bt_1004_response_on_receive",
-          "guard": {
-            "exp": {
-              "op": "∧",
-              "left": {
-                "op": "∧",
-                "left": {
-                  "op": "∧",
-                  "left": true,
-                  "right": {
-                    "op": "¬",
-                    "exp": {
-                      "op": "∧",
-                      "left": {
-                        "op": "=",
-                        "left": "bt_1004_response__status",
-                        "right": 1
-                      },
-                      "right": {
-                        "op": "=",
-                        "left": "current_child_idx",
-                        "right": 3
-                      }
-                    }
-                  }
-                },
-                "right": {
-                  "op": "¬",
-                  "exp": {
-                    "op": "∧",
-                    "left": {
-                      "op": "=",
-                      "left": "bt_1004_response__status",
-                      "right": 2
-                    },
-                    "right": {
-                      "op": "=",
-                      "left": "current_child_idx",
-                      "right": 3
-                    }
-                  }
-                }
-              },
-              "right": {
-                "op": "¬",
-                "exp": {
-                  "op": "∧",
-                  "left": {
-                    "op": "=",
-                    "left": "bt_1004_response__status",
-                    "right": 3
-                  },
-                  "right": {
-                    "op": "=",
-                    "left": "current_child_idx",
-                    "right": 3
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "location": "tick_children",
-          "destinations": [
-            {
-              "location": "tick_children",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
           "action": "bt_1002_response_on_receive",
           "guard": {
             "exp": {
@@ -8993,27 +8919,146 @@
           }
         },
         {
-          "location": "halt_current_child",
+          "location": "tick_children",
           "destinations": [
             {
-              "location": "halt_current_child",
+              "location": "tick_children",
               "probability": {
                 "exp": 1.0
               },
               "assignments": []
             }
           ],
-          "action": "bt_1002_halt_response_on_receive",
+          "action": "bt_1001_response_on_receive",
           "guard": {
             "exp": {
               "op": "∧",
-              "left": true,
+              "left": {
+                "op": "∧",
+                "left": {
+                  "op": "∧",
+                  "left": true,
+                  "right": {
+                    "op": "¬",
+                    "exp": {
+                      "op": "∧",
+                      "left": {
+                        "op": "=",
+                        "left": "bt_1001_response__status",
+                        "right": 1
+                      },
+                      "right": {
+                        "op": "=",
+                        "left": "current_child_idx",
+                        "right": 0
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "op": "¬",
+                  "exp": {
+                    "op": "∧",
+                    "left": {
+                      "op": "=",
+                      "left": "bt_1001_response__status",
+                      "right": 2
+                    },
+                    "right": {
+                      "op": "=",
+                      "left": "current_child_idx",
+                      "right": 0
+                    }
+                  }
+                }
+              },
               "right": {
                 "op": "¬",
                 "exp": {
-                  "op": "=",
-                  "left": "current_child_idx",
-                  "right": 1
+                  "op": "∧",
+                  "left": {
+                    "op": "=",
+                    "left": "bt_1001_response__status",
+                    "right": 3
+                  },
+                  "right": {
+                    "op": "=",
+                    "left": "current_child_idx",
+                    "right": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "location": "tick_children",
+          "destinations": [
+            {
+              "location": "tick_children",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "bt_1004_response_on_receive",
+          "guard": {
+            "exp": {
+              "op": "∧",
+              "left": {
+                "op": "∧",
+                "left": {
+                  "op": "∧",
+                  "left": true,
+                  "right": {
+                    "op": "¬",
+                    "exp": {
+                      "op": "∧",
+                      "left": {
+                        "op": "=",
+                        "left": "bt_1004_response__status",
+                        "right": 1
+                      },
+                      "right": {
+                        "op": "=",
+                        "left": "current_child_idx",
+                        "right": 3
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "op": "¬",
+                  "exp": {
+                    "op": "∧",
+                    "left": {
+                      "op": "=",
+                      "left": "bt_1004_response__status",
+                      "right": 2
+                    },
+                    "right": {
+                      "op": "=",
+                      "left": "current_child_idx",
+                      "right": 3
+                    }
+                  }
+                }
+              },
+              "right": {
+                "op": "¬",
+                "exp": {
+                  "op": "∧",
+                  "left": {
+                    "op": "=",
+                    "left": "bt_1004_response__status",
+                    "right": 3
+                  },
+                  "right": {
+                    "op": "=",
+                    "left": "current_child_idx",
+                    "right": 3
+                  }
                 }
               }
             }
@@ -9057,7 +9102,7 @@
               "assignments": []
             }
           ],
-          "action": "bt_1003_halt_response_on_receive",
+          "action": "bt_1002_halt_response_on_receive",
           "guard": {
             "exp": {
               "op": "∧",
@@ -9067,7 +9112,7 @@
                 "exp": {
                   "op": "=",
                   "left": "current_child_idx",
-                  "right": 2
+                  "right": 1
                 }
               }
             }
@@ -9095,6 +9140,33 @@
                   "op": "=",
                   "left": "current_child_idx",
                   "right": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "location": "halt_current_child",
+          "destinations": [
+            {
+              "location": "halt_current_child",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "bt_1003_halt_response_on_receive",
+          "guard": {
+            "exp": {
+              "op": "∧",
+              "left": true,
+              "right": {
+                "op": "¬",
+                "exp": {
+                  "op": "=",
+                  "left": "current_child_idx",
+                  "right": 2
                 }
               }
             }
@@ -12719,7 +12791,7 @@
           "name": "idle-cd1a2ec2-2_before_if"
         },
         {
-          "name": "idle-cd1a2ec2-2_before_if-cd1a2ec2-65f92b30-0-0"
+          "name": "idle-cd1a2ec2-2_before_if-cd1a2ec2-589e675a-0-0"
         }
       ],
       "initial-locations": [
@@ -12786,14 +12858,14 @@
           "location": "idle-cd1a2ec2-2_before_if",
           "destinations": [
             {
-              "location": "idle-cd1a2ec2-2_before_if-cd1a2ec2-65f92b30-0-0",
+              "location": "idle-cd1a2ec2-2_before_if-cd1a2ec2-589e675a-0-0",
               "probability": {
                 "exp": 1.0
               },
               "assignments": []
             }
           ],
-          "action": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-0",
+          "action": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-0",
           "guard": {
             "exp": {
               "op": "=",
@@ -12807,14 +12879,14 @@
           }
         },
         {
-          "location": "idle-cd1a2ec2-2_before_if-cd1a2ec2-65f92b30-0-0",
+          "location": "idle-cd1a2ec2-2_before_if-cd1a2ec2-589e675a-0-0",
           "destinations": [
             {
               "location": "idle-cd1a2ec2-2_after_if",
               "assignments": []
             }
           ],
-          "action": "ros_time_rate.bt_tick_on_send"
+          "action": "ros_time_rate.bt_tree_tick_on_send"
         },
         {
           "location": "idle-cd1a2ec2-2_before_if",
@@ -12827,7 +12899,7 @@
               "assignments": []
             }
           ],
-          "action": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-1",
+          "action": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-1",
           "guard": {
             "exp": {
               "op": "∧",
@@ -12978,87 +13050,6 @@
       ]
     },
     {
-      "name": "action_go_to_goal_result",
-      "locations": [
-        {
-          "name": "received"
-        },
-        {
-          "name": "waiting"
-        }
-      ],
-      "initial-locations": [
-        "waiting"
-      ],
-      "edges": [
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "action_go_to_goal_result_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "action_go_to_goal_result_on_receive"
-        },
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "global_timer_enable"
-        }
-      ]
-    },
-    {
-      "name": "topic_snacks0_loc_msg",
-      "locations": [
-        {
-          "name": "waiting"
-        }
-      ],
-      "initial-locations": [
-        "waiting"
-      ],
-      "edges": [
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "topic_snacks0_loc_msg_on_send"
-        }
-      ]
-    },
-    {
       "name": "action_pick_object_goal_handle",
       "locations": [
         {
@@ -13152,61 +13143,6 @@
             }
           ],
           "action": "action_pick_object_goal_accepted_on_receive"
-        },
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "global_timer_enable"
-        }
-      ]
-    },
-    {
-      "name": "action_pick_object_result",
-      "locations": [
-        {
-          "name": "received"
-        },
-        {
-          "name": "waiting"
-        }
-      ],
-      "initial-locations": [
-        "waiting"
-      ],
-      "edges": [
-        {
-          "location": "waiting",
-          "destinations": [
-            {
-              "location": "received",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "action_pick_object_result_on_send"
-        },
-        {
-          "location": "received",
-          "destinations": [
-            {
-              "location": "waiting",
-              "probability": {
-                "exp": 1.0
-              },
-              "assignments": []
-            }
-          ],
-          "action": "action_pick_object_result_on_receive"
         },
         {
           "location": "waiting",
@@ -13372,6 +13308,142 @@
             }
           ],
           "action": "action_place_object_result_on_receive"
+        },
+        {
+          "location": "waiting",
+          "destinations": [
+            {
+              "location": "waiting",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "global_timer_enable"
+        }
+      ]
+    },
+    {
+      "name": "topic_snacks0_loc_msg",
+      "locations": [
+        {
+          "name": "waiting"
+        }
+      ],
+      "initial-locations": [
+        "waiting"
+      ],
+      "edges": [
+        {
+          "location": "waiting",
+          "destinations": [
+            {
+              "location": "waiting",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "topic_snacks0_loc_msg_on_send"
+        }
+      ]
+    },
+    {
+      "name": "action_go_to_goal_result",
+      "locations": [
+        {
+          "name": "received"
+        },
+        {
+          "name": "waiting"
+        }
+      ],
+      "initial-locations": [
+        "waiting"
+      ],
+      "edges": [
+        {
+          "location": "waiting",
+          "destinations": [
+            {
+              "location": "received",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "action_go_to_goal_result_on_send"
+        },
+        {
+          "location": "received",
+          "destinations": [
+            {
+              "location": "waiting",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "action_go_to_goal_result_on_receive"
+        },
+        {
+          "location": "waiting",
+          "destinations": [
+            {
+              "location": "waiting",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "global_timer_enable"
+        }
+      ]
+    },
+    {
+      "name": "action_pick_object_result",
+      "locations": [
+        {
+          "name": "received"
+        },
+        {
+          "name": "waiting"
+        }
+      ],
+      "initial-locations": [
+        "waiting"
+      ],
+      "edges": [
+        {
+          "location": "waiting",
+          "destinations": [
+            {
+              "location": "received",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "action_pick_object_result_on_send"
+        },
+        {
+          "location": "received",
+          "destinations": [
+            {
+              "location": "waiting",
+              "probability": {
+                "exp": 1.0
+              },
+              "assignments": []
+            }
+          ],
+          "action": "action_pick_object_result_on_receive"
         },
         {
           "location": "waiting",
@@ -15189,7 +15261,7 @@
         "automaton": "world"
       },
       {
-        "automaton": "bt_root_fsm_bt"
+        "automaton": "bt_root_fsm_bt_tree"
       },
       {
         "automaton": "1000_SequenceWithMemory"
@@ -15225,19 +15297,10 @@
         "automaton": "action_go_to_goal_goal_accepted"
       },
       {
-        "automaton": "action_go_to_goal_result"
-      },
-      {
-        "automaton": "topic_snacks0_loc_msg"
-      },
-      {
         "automaton": "action_pick_object_goal_handle"
       },
       {
         "automaton": "action_pick_object_goal_accepted"
-      },
-      {
-        "automaton": "action_pick_object_result"
       },
       {
         "automaton": "action_place_object_goal_handle"
@@ -15247,6 +15310,15 @@
       },
       {
         "automaton": "action_place_object_result"
+      },
+      {
+        "automaton": "topic_snacks0_loc_msg"
+      },
+      {
+        "automaton": "action_go_to_goal_result"
+      },
+      {
+        "automaton": "action_pick_object_result"
       },
       {
         "automaton": "bt_1000_tick"
@@ -16574,13 +16646,13 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           "action_go_to_goal_result_on_receive",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
           null,
           null,
           null,
@@ -16640,13 +16712,13 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           "action_go_to_goal_result_on_send",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
           null,
           null,
           null,
@@ -16839,9 +16911,9 @@
           null,
           null,
           null,
-          null,
-          null,
           "action_pick_object_goal_accepted_on_receive",
+          null,
+          null,
           null,
           null,
           null,
@@ -16905,9 +16977,9 @@
           null,
           null,
           null,
-          null,
-          null,
           "action_pick_object_goal_accepted_on_send",
+          null,
+          null,
           null,
           null,
           null,
@@ -16970,9 +17042,9 @@
           null,
           null,
           null,
-          null,
-          null,
           "action_pick_object_goal_handle_on_receive",
+          null,
+          null,
           null,
           null,
           null,
@@ -17036,9 +17108,9 @@
           null,
           null,
           null,
-          null,
-          null,
           "action_pick_object_goal_handle_on_send",
+          null,
+          null,
           null,
           null,
           null,
@@ -17436,10 +17508,10 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
           "action_pick_object_result_on_receive",
-          null,
-          null,
-          null,
           null,
           null,
           null,
@@ -17502,10 +17574,10 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
           "action_pick_object_result_on_send",
-          null,
-          null,
-          null,
           null,
           null,
           null,
@@ -17699,10 +17771,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_goal_accepted_on_receive",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -17765,10 +17837,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_goal_accepted_on_send",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -17830,10 +17902,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_goal_handle_on_receive",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -17896,10 +17968,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_goal_handle_on_send",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -18294,10 +18366,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_result_on_receive",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -18360,10 +18432,10 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           "action_place_object_result_on_send",
+          null,
+          null,
+          null,
           null,
           null,
           null,
@@ -20865,11 +20937,11 @@
           "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
+          "global_timer_enable",
+          "global_timer_enable",
+          "global_timer_enable",
+          "global_timer_enable",
           null,
-          "global_timer_enable",
-          "global_timer_enable",
-          "global_timer_enable",
-          "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
@@ -22235,141 +22307,9 @@
         ]
       },
       {
-        "result": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-0",
+        "result": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-0",
         "synchronise": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-0",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ]
-      },
-      {
-        "result": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-1",
-        "synchronise": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-65f92b30-1",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ]
-      },
-      {
-        "result": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-0",
-        "synchronise": [
-          "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-0",
+          "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-0",
           null,
           null,
           null,
@@ -22433,9 +22373,9 @@
         ]
       },
       {
-        "result": "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-1",
+        "result": "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-1",
         "synchronise": [
-          "idle-d3048a56-3_before_if-idle-d3048a56-3_after_if-parent-d3048a56-1e20d418-1",
+          "handle_pick_request-d271f37e-0_before_if-handle_pick_request-d271f37e-0_after_if-parent-d271f37e-8220ad55-1",
           null,
           null,
           null,
@@ -22446,6 +22386,204 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "result": "handle_pick_request-idle-d271f37e",
+        "synchronise": [
+          "handle_pick_request-idle-d271f37e",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "result": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-0",
+        "synchronise": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-0",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "result": "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-1",
+        "synchronise": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "idle-cd1a2ec2-2_before_if-idle-cd1a2ec2-2_after_if-parent-cd1a2ec2-589e675a-1",
           null,
           null,
           null,
@@ -22710,72 +22848,6 @@
           null,
           null,
           "idle-idle-cd1a2ec2",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ]
-      },
-      {
-        "result": "idle-idle-d3048a56",
-        "synchronise": [
-          "idle-idle-d3048a56",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
           null,
           null,
           null,
@@ -26261,10 +26333,10 @@
         ]
       },
       {
-        "result": "ros_time_rate.bt_tick_on_receive",
+        "result": "ros_time_rate.bt_tree_tick_on_receive",
         "synchronise": [
           null,
-          "ros_time_rate.bt_tick_on_receive",
+          "ros_time_rate.bt_tree_tick_on_receive",
           null,
           null,
           null,
@@ -26273,15 +26345,15 @@
           null,
           null,
           null,
-          "ros_time_rate.bt_tick_on_send",
-          "global_timer_enable",
-          "global_timer_enable",
-          "global_timer_enable",
-          null,
+          "ros_time_rate.bt_tree_tick_on_send",
           "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
+          "global_timer_enable",
+          "global_timer_enable",
+          "global_timer_enable",
+          null,
           "global_timer_enable",
           "global_timer_enable",
           "global_timer_enable",
@@ -30963,7 +31035,139 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
+          null,
           "topic_snacks0_loc_msg_on_send",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "result": "transition-handle_nav_request-eventless-207a7c9d",
+        "synchronise": [
+          "transition-handle_nav_request-eventless-207a7c9d",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "result": "transition-handle_pick_request-eventless-b6ad9042",
+        "synchronise": [
+          "transition-handle_pick_request-eventless-b6ad9042",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           null,
           null,
           null,
