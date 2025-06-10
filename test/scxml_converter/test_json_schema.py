@@ -24,7 +24,8 @@ def test_json_from_dict_types():
             "title": "Test",
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
-        }
+        },
+        "TEST",
     )
 
     assert len(json_defs) == 1
@@ -41,7 +42,8 @@ def test_json_from_dict_arrays():
                 "name": {"type": "string"},
                 "grades": {"type": "array", "items": {"type": "number"}},
             },
-        }
+        },
+        "TEST",
     )
 
     assert len(json_defs) == 1
@@ -61,7 +63,8 @@ def test_json_from_dict_def_arrays():
             "definitions": {
                 "Student": {"type": "object", "properties": {"name": {"type": "string"}}}
             },
-        }
+        },
+        "TEST",
     )
 
     assert len(json_defs) == 2
@@ -80,7 +83,8 @@ def test_json_from_dict_refs():
             "definitions": {
                 "Person": {"type": "object", "properties": {"name": {"type": "string"}}}
             },
-        }
+        },
+        "TEST",
     )
 
     assert len(json_defs) == 2
