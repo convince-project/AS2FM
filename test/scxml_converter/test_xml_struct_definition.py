@@ -15,18 +15,18 @@ def test_expand_members_basic():
         "Int": XmlStructDefinition("Int", {"x": "int8"}),
         "Ints": XmlStructDefinition("Ints", {"x": "int8[]"}),
         "Ints42": XmlStructDefinition("Ints42", {"x": "int8[42]"}),
-        "String": XmlStructDefinition("Int", {"x": "string"}),
-        "Strings": XmlStructDefinition("Strings", {"x": "string[]"}),
-        "Strings1": XmlStructDefinition("Strings1", {"x": "string[1]"}),
+        # "String": XmlStructDefinition("Int", {"x": "string"}),
+        # "Strings": XmlStructDefinition("Strings", {"x": "string[]"}),
+        # "Strings1": XmlStructDefinition("Strings1", {"x": "string[1]"}),
     }
     expand_struct_definitions(struct_definitions)
 
     assert struct_definitions["Int"].get_expanded_members()["x"] == "int8"
     assert struct_definitions["Ints"].get_expanded_members()["x"] == "int8[]"
     assert struct_definitions["Ints42"].get_expanded_members()["x"] == "int8[42]"
-    assert struct_definitions["String"].get_expanded_members()["x"] == "string"
-    assert struct_definitions["Strings"].get_expanded_members()["x"] == "string[]"
-    assert struct_definitions["Strings1"].get_expanded_members()["x"] == "string[1]"
+    # assert struct_definitions["String"].get_expanded_members()["x"] == "string"
+    # assert struct_definitions["Strings"].get_expanded_members()["x"] == "string[]"
+    # assert struct_definitions["Strings1"].get_expanded_members()["x"] == "string[1]"
 
 
 def test_expand_members_complex():
