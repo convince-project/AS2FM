@@ -102,7 +102,7 @@ def test_json_from_file():
         "productId": "int32",
         "productName": "string",
         "price": "float32",
-        "tags": "str[]",
+        "tags": "string[]",
         "dimensions": "dimensions",
     }
     assert json_defs["dimensions"].get_members() == {
