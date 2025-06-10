@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>uc3_interfaces</name>
+  <version>0.0.0</version>
+  <description>Meta package depending on UC3 interfaces.</description>
+  <maintainer email="stefano.bernagozzi@iit.it">ste</maintainer>
+  <license>TODO: License declaration</license>
+
+  <exec_depend>blackboard_interfaces_dummy</exec_depend>
+  <exec_depend>bt_interfaces_dummy</exec_depend>
+  <exec_depend>navigation_interfaces_dummy</exec_depend>
+  <exec_depend>notify_user_interfaces_dummy</exec_depend>
+  <exec_depend>people_detector_filter_interfaces_dummy</exec_depend>
+  <exec_depend>scheduler_interfaces_dummy</exec_depend>
+  <exec_depend>timer_interfaces_dummy</exec_depend>
+</package>
