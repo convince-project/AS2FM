@@ -1,147 +1,328 @@
-<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="531px" height="491px" viewBox="-0.5 -0.5 531 491" content="&lt;mxfile&gt;&lt;diagram id=&quot;L8sj1IRMkiojp0_DbZir&quot; name=&quot;Page-1&quot;&gt;3VhLk5s4EP4tOVCVPdjF0x4fx/YkuaRqq+aQ7MklQAbtCMQK+bW/flsgHpLxGFKTZGsuNvrUrW413V9LWN4mO3/mqEi/shhTy7Xjs+VtLdcN/AB+JXCpAc/zayDhJK4hpwOeyb9YgbZCDyTGpSYoGKOCFDoYsTzHkdAwxDk76WJ7RnWrBUrwFfAcIXqNfiOxSGv0IbA7/AsmSdpYdmw1k6FGWAFlimJ26kHek+VtOGOifsrOG0xl7Jq41Hqfbsy2jnGcizEKrldrHBE9qM19wiJKZaDyGH43EK8L/H9jHIJU+ywuTSDKE8koymG0vrasnDliLvC5BylPPmOWYVEtrmZ9FZSL/rZPXYgDT2FpL7z+SoFIvdakXbnbOTyozd8IhH8VCMtdUDCxjslR2/Xin4N8PWvYlZghSpLc8h5BguK9qALRCMBTov6rhcoC5YMrhSh6STg75PEsYpTxej2SE0EQfXXJsAFIDGsqEPba4tVSLVx7oC8BcLVDHf0/bnoG8yyH/IJX+462Bf8oK+AhD8uiGtuzAazEVUEWh3BX5mCktN9zBIaDYsdIIDkr7dks/HtHWVRawdq2gu3EcBhUVjmMJRvA6utTSgR+LlAkZ0/QxABLRQbub51BsmuJdDTbOb6j0Z1rX/Odsxrgu+Vb0F1wRXcoErscHXuVFfJ+5SUM0R2J2+jvQIGwfN7iptK9jLudWtMyd5goOAuZkOnROZxQFiI6B2zQXxRFuBCWu5FWDjDA8cjcwTEcD9QwZ1U77CULPhPxXebVfBmo4V8qzeTz9twfXJqBZLnvzQpyUOnM3aAZd3rVqFGMDvxYpbFUVPW8VcUsk5PAMeZRwRAhwbJX87lkBx5hvUcKxBMsdEyGYEzWz+y5vwrcWoljigQ56qeqobSulnvkHF16AgUjuSh71v6UQGfKXeoF5iyMs5Ah73kT5RdGATuaPDzUHhvajftsvy8himbRtiEbV8fLwTouSPTydoUslURWwNy5V0wgPQcGhvP1oBKTzUGV1JAnZA/zH3sU3liQRF4Zqey0ZfzHzf3UIikc4kmetA62Dg+pvGYWGo1z3X2GVjFIopvEtMQ33UUhgxZxfZYeIBGtlu8zSjM1jVGW9xjlDokIJiNEUYjpuu38m7rxNxv5pfyycFbB7+AXz7nDF/5EeZNfgt/AL6upza7JMlvPsntJ1qX0+B75C7Lq52aQs5rWcRyzowV35P2J8u5EfxxD/mGi/GqaP6922B/I7uZrgtk9aXXuf6v2OaoTmk3sQ9uKbvnR62G6cq+T9Q7B4ztn1f5+eruT9015ixScvWCjXRgdZ08oNSR6jGP2o4zE8lvI8B1Ov+XdJpDx1zgjRRcPlnmJcxcDlzjHmX6Lg2H3ZbBO9+7zqvf0Hw==&lt;/diagram&gt;&lt;/mxfile&gt;">
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="741px" height="491px" viewBox="-0.5 -0.5 741 491" content="&lt;mxfile&gt;&lt;diagram id=&quot;L8sj1IRMkiojp0_DbZir&quot; name=&quot;Page-1&quot;&gt;7VtBc5s4FP4te2Bme4gHkMH2sUnb7WV3OpND25NHBsXWBiMKcuzsr18JJEAS2BhD7e0mhwQ9noTe0yfpe0+KBR62hz9SmGz+JCGKLNcODxb4YLnudD5nv7ngtRDM/EUhWKc4LEROJXjE/yAhtIV0h0OUKYqUkIjiRBUGJI5RQBUZTFOyV9WeSKR+NYFrZAgeAxiZ0q84pJtCOvfsSv4Z4fVGftmxxZstlMpCkG1gSPY1EfhogYeUEFo8bQ8PKOK+k34p6n1qeVt2LEUx7VIByH7QV2kcCpmtohiTmP2539BtxEoOeyzUuU7rF53SDjb+iGwRTV+ZSooiSPGLWg+KkViXemXVLwSzFl1bgKZ0mcCM69tqExSma0RFrbrJ5zaUkV0aIKMh9lCzpxLlHm3xrrDyBUY7YfdXkjKw6T7P9ngbwdzXogZKKTqc62I5v1QD5RjvK6jOpMqmBtPpwm4fFMULx0x2zwQUOmD6rfb8nT3bE0+UPnCTbFl4lYWY9epbvVCrxYtVtbwk6z2RmH6CWxxxwWcUvSCKAyheiGXGcUT5gUQkZYIQPcFdRLthX454gSHhV7lE5QAVMjDKJAHy+xLbwOuEbaMhz9MnidZQy2zrM0nAuYjpOfoSaRW6vtfB1Yi0IYd8kHXxfZrC15pCwkcgO7Js2upAOjP76MA7izP152fqzzT9uaLPHgoLW6wBvgpLu9vabXZjemKiDIjvqbEJWK6fLygr9rDmDynJljCgmMTLDYzDCC3XBEZSjX2h1CyrprqEr1mczEABQv/HjrOI+wfmEoyYuv0X2lfiWnW4TdhDvMqSvGzzby9Z99lGyRuyRdcmpbzsVvHNIz3Tmz5mOQwClNCrWt7BGZoTTlmri/ATn/JkRehyw2gnjtes/FvR9B1b3d73bbhBRFZ/LyMSZJZ3r37R+1CaU7xgWgN+VzevtO4y4AwlakdgtmMQRHWAXxt9V8EoijJUQ+Kow9W+GqwIo8Ddx+ICKPQewR5jYThToz6M9XN5RlPyjCQFFRwIRngds2KEnvJu4yjSNGosiUcQjNxG70WlLQ5D/pH7/QZT9JgUxu5ZfJ77fReHKFRIz4kQBByPQYCyvfq+EYK4i4UZgjjOECGI1zMEkezvvBBkspgvLIWIgpk1ahySN/YFpZi5BqUXMlV3LKZqxhQ69XN6BidGlOPMJuPRN38ANDndsOTUceSMC6K+eAG3Etl4WqQCHP+skBZMT+g7mr53XH+qt39K3z5PH+hpHVfRPxE5+a6nzpl5z8jJ9dwJAIvqx1XbnbH1b1p7Pdq8nLWGVSF+USas3Lj5RLjL8pnByI3tuMmh2M5Napa3kyUwbmxoBYPndb5n3gXFxOLt4RhTzGKXY01eEPExWdEhQ5zbq0pv2AW3Eqe++dOI29CPJY8ZcXiofMqdOSmk/xOHro64qDHaPTeD8as46pp5l8sweINB1yB07sKYzdf2cn9uhm3uzAzb9BO0XlHbvHU/74mzWmpLJrvYAsfKxQLXPbnRIV/UmFe4dt72P5h6uIFZMNV4tiPRXZsF5SlJfRaAIWbBome0qRyfWseizSGSD+bpm3U8WO0bbTado7k/JzuhHy11vl8wBxMt1up4StUjCpJYbV81zQ1/lOjkBs6jzC60k4QmcRvTavfXeYztZ1H4codTKHwhHWTb605zb8w7vTnlG3k8TR4d9Wjen5nc0Rlp15TbRG0VxNx1xlYaRTjJ2lxq3HK7zCH6TQfXNtn0vMEhemKul0NcwyFiHY/hy5ItEjuU0eu6R99vgXlE5LgN7nGc6QD+AW3+SXDwfCMOmp/Gz4gemg5BREe6x9eXTXqjMEdjonvdmGMfuuc10L2+IC3vHg915utqx3JTM3CS/a3j1R1iwfNbeXAb4eD79p3YoHnGS+zR10k1sukU5yaPnDW8stHHb+JYRTKVErYIL5PdKsLZ5lf3yPiJVObIZRazvmW2dZLovvnzpD9DSGEZQdjVFTs7v1Z3pex0wJYPfhXkti8FaZm1pvzyaJm1aft5cU+45Fc5f69fsqydn5VXLIvEcz0VLSFV/DaK5vVJqSHAYtvvut4Tbb6JqZzzdWjllInibmdbDnzQS8K3d0Wz8+XLYa5VDnZh8uqeeTuP6JhY0QNlk1YD0BQH9iDWrFj982ERoFT/wQk+/gs=&lt;/diagram&gt;&lt;/mxfile&gt;">
     <defs/>
     <g>
-        <path d="M 0 23 L 0 0 L 530 0 L 530 23" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
-        <path d="M 0 23 L 0 490 L 530 490 L 530 23" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 0 23 L 530 23" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 23 L 0 0 L 740 0 L 740 23" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 0 23 L 0 490 L 740 490 L 740 23" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 23 L 740 23" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
         <g fill="rgb(0, 0, 0)" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
-            <text x="264.5" y="16">
-                Fetch and Carry World
+            <text x="369.5" y="16">
+                World
             </text>
         </g>
-        <rect x="141" y="200" width="190" height="70" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="none"/>
+        <path d="M 250 248 L 573.64 264.67" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 578.88 264.94 L 571.71 268.08 L 573.64 264.67 L 572.07 261.09 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 210 208 L 202.54 179.67 Q 200 170 195 170 L 192.5 170 Q 190 170 185 170 L 182.5 170 Q 180 170 175 175 L 172.5 177.5 Q 170 180 170 190 L 170 241.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 170 246.88 L 166.5 239.88 L 170 241.63 L 173.5 239.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 235px; margin-left: 142px;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 297px; height: 1px; padding-top: 121px; margin-left: 5px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                <b>
+                                    ros_action_handle_goal
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = _action.goal_id
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_accept_goal
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                    <br/>
+                                    if robot_holding != -1:
+                                    <br/>
+                                    obj_locs[robot_holding] = robot_loc
+                                    <br/>
+                                    robot_holding = -1
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_succeed
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                    <br/>
+                                    else:
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_aborted
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                </font>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="5" y="125" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
+                    ros_action_handle_goal...
+                </text>
+            </switch>
+        </g>
+        <path d="M 570 93 L 254.93 234.98" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 250.14 237.14 L 255.08 231.07 L 254.93 234.98 L 257.96 237.46 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 597.2 304.95 L 593.6 310.47 Q 590 316 582 322 L 558 340 Q 550 346 540.3 348.43 L 519.7 353.57 Q 510 356 500 356 L 460 356 Q 450 356 440 356 L 410 356 Q 400 356 391.06 351.53 L 348.94 330.47 Q 340 326 331.02 321.61 L 244.01 279.08" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 239.29 276.78 L 247.11 276.7 L 244.01 279.08 L 244.04 282.99 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 225px; height: 1px; padding-top: 298px; margin-left: 364px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                <div style="font-size: 12px;">
+                                    <span style="background-color: initial;">
+                                        <b>
+                                            ros_action_handle_goal
+                                        </b>
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px;">
+                                    <span style="background-color: initial;">
+                                        <font face="Courier New">
+                                            goal_id = _action.goal_id
+                                        </font>
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px;">
+                                    <span style="background-color: initial;">
+                                        <font face="Courier New">
+                                            req_obj_idx = _goal.obj_id
+                                        </font>
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px;">
+                                    <span style="background-color: initial;">
+                                        <b>
+                                            ros_action_accept_goal
+                                        </b>
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px;">
+                                    <span style="background-color: initial;">
+                                        <font face="Courier New">
+                                            goal_id = goal_id
+                                        </font>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="364" y="301" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
+                    ros_action_handle_goal...
+                </text>
+            </switch>
+        </g>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 188px; height: 1px; padding-top: 175px; margin-left: 442px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                <font face="Courier New">
+                                    robot_loc = req_loc_idx
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_succeed
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                </font>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="442" y="178" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
+                    robot_loc = req_loc_idx...
+                </text>
+            </switch>
+        </g>
+        <path d="M 238.28 219.72 L 581.45 55.8" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 586.19 53.54 L 581.38 59.71 L 581.45 55.8 L 578.37 53.39 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 208px; height: 1px; padding-top: 82px; margin-left: 318px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                <font style="">
+                                    <b>
+                                        ros_action_handle_goal
+                                    </b>
+                                    <br/>
+                                    <font face="Courier New">
+                                        goal_id = _action.goal_id
+                                        <br/>
+                                    </font>
+                                </font>
+                                <div style=""></div>
+                                <div style="">
+                                    <font face="Courier New">
+                                        req_loc_idx = _goal.loc_id
+                                    </font>
+                                    <br/>
+                                    <b>
+                                        ros_action_accept_goal
+                                    </b>
+                                </div>
+                                <div style="">
+                                    <font face="Courier New">
+                                        goal_id = goal_id
+                                    </font>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="318" y="85" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
+                    ros_action_handle_goal...
+                </text>
+            </switch>
+        </g>
+        <ellipse cx="210" cy="248" rx="40" ry="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 248px; margin-left: 171px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                idle
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="210" y="252" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    idle
+                </text>
+            </switch>
+        </g>
+        <ellipse cx="630" cy="93" rx="60" ry="57" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 93px; margin-left: 571px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                handle_nav_request
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="630" y="97" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    handle_nav_request
+                </text>
+            </switch>
+        </g>
+        <ellipse cx="640" cy="265" rx="60" ry="57" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 265px; margin-left: 581px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                handle_pick_request
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="640" y="269" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    handle_pick_request
+                </text>
+            </switch>
+        </g>
+        <path d="M 43 250 L 163.63 250" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 168.88 250 L 161.88 253.5 L 163.63 250 L 161.88 246.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
+        <ellipse cx="32" cy="250" rx="11" ry="10" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="none"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 283px; margin-left: 41px;">
                         <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
                                 <div style="text-align: left;">
                                     <span style="background-color: initial;">
                                         <b>
-                                            idle
+                                            onentry
                                         </b>
-                                        :
                                     </span>
                                 </div>
                                 <div style="text-align: left;">
                                     <span style="background-color: initial;">
-                                        - onentry:
+                                        <b>
+                                            ros_topic_publish
+                                        </b>
                                     </span>
                                 </div>
                                 <div style="text-align: left;">
                                     <span style="background-color: initial;">
-                                        -  send pub_snacks0
+                                        <font face="Courier New">
+                                            pub_snacks0
+                                        </font>
                                     </span>
                                 </div>
                                 <div style="text-align: left;">
                                     <span style="background-color: initial;">
-                                        - data = obj_locs[0]
+                                        <font face="Courier New">
+                                            data = 0bj_locs[0]
+                                        </font>
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="236" y="239" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
-                    idle:...
+                <text x="135" y="287" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    onentry...
                 </text>
             </switch>
         </g>
-        <path d="M 283.5 200 Q 271 160 301 160 Q 331 160 346 185 Q 361 210 337.18 215.96" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 332.08 217.23 L 338.03 212.14 L 337.18 215.96 L 339.72 218.93 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-end; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 157px; margin-left: 279px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; background-color: rgb(255, 255, 255); white-space: nowrap;">
-                                act_nav:
-                                <br/>
-                                - goal_id = _action.goal_id
-                                <br/>
-                                <div style=""></div>
-                                <div style="">
-                                    - robot_loc = _global.loc_id
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 328px; height: 1px; padding-top: 420px; margin-left: 312px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
+                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
+                                <font face="Courier New">
+                                    if (obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0):
                                     <br/>
-                                    accept, succeed
-                                </div>
+                                    robot_holding = req_obj_idx
+                                    <br/>
+                                    obj_locs[req_obj_idx] = -1
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_succeed
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                    <br/>
+                                    else:
+                                </font>
+                                <br/>
+                                <b>
+                                    ros_action_aborted
+                                </b>
+                                <br/>
+                                <font face="Courier New">
+                                    goal_id = goal_id
+                                </font>
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="279" y="157" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
-                    act_nav:...
-                </text>
-            </switch>
-        </g>
-        <path d="M 283.5 270 Q 271 310 306 310 Q 341 310 351 280 Q 361 250 337.35 251.97" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 332.11 252.41 L 338.8 248.34 L 337.35 251.97 L 339.38 255.31 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g transform="translate(-0.5 -0.5)">
-            <switch>
-                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 314px; margin-left: 274px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
-                            <div style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: nowrap;">
-                                act_pick:
-                                <br/>
-                                - goal_id = _action.goal_id
-                                <br/>
-                                - tmp_idx = _goal.object_id
-                                <br/>
-                                on accept:
-                                <br/>
-                                if (obj_locs[tmp_idx] == robot_loc):
-                                <br/>
-                                - robot_holding = tmp_idx
-                                <br/>
-                                - obj_locs[tmp_idx] = -1
-                                <br/>
-                                - succeed
-                                <br/>
-                                else:
-                                <br/>
-                                - aborted
-                            </div>
-                        </div>
-                    </div>
-                </foreignObject>
-                <text x="274" y="325" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
-                    act_pick:...
-                </text>
-            </switch>
-        </g>
-        <path d="M 236 200 L 198.47 166.64 Q 191 160 182.06 155.53 L 176.53 152.76 Q 171 150 161 150 L 151 150 Q 141 150 132.06 154.47 L 126.53 157.24 Q 121 160 116.53 168.94 L 113.76 174.47 Q 111 180 111 185 L 111 187.5 Q 111 190 115.47 198.94 L 118.24 204.47 Q 121 210 127.25 217.81 L 137.02 230.03" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <path d="M 140.3 234.13 L 133.2 230.85 L 137.02 230.03 L 138.66 226.47 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="none"/>
-        <g transform="translate(-0.5 -0.5)">
-            <switch>
-                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe flex-start; width: 258px; height: 1px; padding-top: 123px; margin-left: 23px;">
-                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;">
-                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: none; white-space: normal; overflow-wrap: normal;">
-                                act_place:
-                                <br/>
-                                - goal_id = _action.goal_id
-                                <br/>
-                                on accept:
-                                <br/>
-                                if robot_holding != -1:
-                                <br/>
-                                - obj_locs[robot_holding] = robot_loc
-                                <br/>
-                                - robot_holding = -1
-                                <br/>
-                                - succeed
-                                <br/>
-                                else:
-                                <br/>
-                                - aborted
-                            </div>
-                        </div>
-                    </div>
-                </foreignObject>
-                <text x="23" y="127" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
-                    act_place:...
+                <text x="312" y="423" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px">
+                    if (obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0)...
                 </text>
             </switch>
         </g>
