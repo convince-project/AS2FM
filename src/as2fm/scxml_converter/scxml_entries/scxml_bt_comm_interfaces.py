@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlParam,
@@ -40,7 +41,6 @@ from as2fm.scxml_converter.scxml_entries.scxml_bt_base import (
     BtGenericStatusSend,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtTick(BtGenericRequestHandle):
@@ -185,7 +185,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
     def from_xml_tree_impl(
         cls: Type["BtGenericStatusSend"],
         xml_tree: XmlElement,
-        _: Dict[str, XmlStructDefinition],
+        _: Dict[str, StructDefinition],
     ) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")

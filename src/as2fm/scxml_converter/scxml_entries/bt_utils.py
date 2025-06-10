@@ -19,12 +19,12 @@ import re
 from enum import Enum, auto
 from typing import Dict, Tuple, Type, Union
 
+from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     to_integer,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
