@@ -90,8 +90,6 @@ def _assemble_message(severity: Severity, location: SUPPORTED_LOCATIONS, message
     :return: The message with path and line number
     """
 
-    # TODO: At some point this should be set everywhere.
-
     severity_initial = severity.name[0]
     if isinstance(location, XmlElement):
         location_info = _get_xml_location(location)
