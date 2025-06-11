@@ -118,7 +118,10 @@ Hands-on in-depth tutorial including verification: Fetch & Carry
 
 What you will learn
 
-In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. You translate the model of the robot and its environment with AS2FM into JANI for verification with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking tool.
+In this tutorial you will learn in about one hour how a robotic example can be expressed in SCXML.
+The example models a robot with a simple symbolic fetch and carry task.
+You will use linear temporal logic (LTL) properties to verify it is working correctly. 
+Then, you will translate the model of the robot and its environment with AS2FM into JANI to run it with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking (SMC) tool.
 With the results from SMC Storm, you will observe that some properties are fulfilled and some are violated.
 By updating the model with more complexity in terms of probabilistic behavior and additional features in the behavior tree (BT), you make sure that the required properties hold in the end.
 This verifies, that your BT controls the example correctly.
