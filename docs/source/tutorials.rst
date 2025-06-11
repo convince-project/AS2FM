@@ -179,19 +179,19 @@ The location is encoded as 0 = in the pantry and 1 = at the table. The snack obj
 
 The next image depicts the behavior of the BT plugin `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_. It is used to navigate to a certain location given by the id, either 0 or 1 in this example, stored in `data`. When the BT is ticked it assigns `loc_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_navigate.drawio.svg
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_navigate.drawio.png
     :width: 600
     :alt: An image of the BT navigate action plugin.
 
 The next image depicts the behavior of the BT plugin `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`_ in a very similar fashion. The action is used to pick a certain item with a given id, stored in `data`. When the BT is ticked it assigns `object_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_pick.drawio.svg
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_pick.drawio.png
     :width: 600
     :alt: An image of the BT pick action plugin.
 
 The next image depicts the behavior of the BT plugin `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_place_action.scxml>`_. When called, the action just immediately tries to successfully execute, no matter if there is an object in the gripper or not, when the BT is ticked. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_place.drawio.svg
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_place.drawio.png
     :width: 600
     :alt: An image of the BT place action plugin.
 
@@ -222,7 +222,7 @@ As a last step we are having a closer look at the environment model in `world.sc
 
 * The actual functionality of the world model is depicted in the graph below. When trying to navigate to a goal the location is first stored in the helper variable and from there the robot location is set to the goal location id.  For the moment, in this file it is assumed that this operation always succeeds. When trying to pick an object, the requested object's id is again stored in a helper variable. Afterwards, it is checked if the object's location is the same as the robot's location. It is recorded in the `robot_holding` variable that the robot now holds the object with a certain id. The location of the object is reset to -1 indicating that it is in the robot's gripper. This procedure can succeed or be aborted. In case an object should be placed, it is checked if the robot is holding an object (by `robot_holding != -1`). In this case the location of the object is replaced with the robot's location and `robot_holding` is set to -1 again because the gripper is empty now. This procedure can also be aborted if it does not succeed.
 
-    .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world.drawio.svg
+    .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world.drawio.png
         :width: 800
         :alt: An image of the world behavior of the fetch and carry example.
 
@@ -298,7 +298,7 @@ Similarly for the picking action, the object's id is first stored in a helper va
 
 Graphically this new functionality is visualized below:
 
-.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world_probabilistic.drawio.svg
+.. image:: graphics/scxml_tutorial_ros_fetch_and_carry_world_probabilistic.drawio.png
     :width: 800
     :alt: An image of the world behavior with probabilities.
 
