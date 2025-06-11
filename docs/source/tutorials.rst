@@ -126,7 +126,7 @@ With the results from SMC Storm, you will observe that some properties are fulfi
 By updating the model with more complexity in terms of probabilistic behavior and additional features in the behavior tree (BT), you make sure that the required properties hold in the end.
 This verifies, that your BT controls the example correctly.
 
-We assume some background in computer science or as a robotics developer but no knowledge about formal methods and model checking is required.
+We assume some background in computer science or as a robotics developer but no knowledge about formal methods or model checking is required.
 
 
 Reference Model: Fetch & Carry Robot
