@@ -2,10 +2,7 @@ Tutorials
 =========
 
 This section provides tutorials on how to use the AS2FM tools to convert an autonomous robotic system into a formal model compatible with existing model checker tools (i.e., in the JANI format).
-
-The page is subdivided in two main sections, one providing a :ref:`quick guide for converting an SCXML model into JANI <scxml_conversion>`, and another one providing a :ref:`hands-on in-depth tutorial on a fetch and carry scenario including verification <full_tutorial>`.
-
-The JANI models generated in the above tutorials with AS2FM can be given to any model checker accepting JANI as input format and being able to handle DTMC models. This could for example be the `Storm SMC extension SMC-STORM <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC-Storm for further details.
+The JANI models generated in the tutorials with AS2FM can be given to any model checker accepting JANI as input format and being able to handle DTMC models. This could for example be the `Storm SMC extension SMC-STORM <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC Storm for further details.
 It can also be checked with external tools accepting JANI as input, e.g., the other engines of the `Storm model checker <https://stormchecker.org>`_ or the `Modest Toolset <https://modestchecker.net>`_.
 
 
@@ -15,101 +12,6 @@ Prerequisites
 You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page <https://github.com/convince-project/AS2FM/pkgs/container/as2fm>`_
 
 In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
-
-
-.. _scxml_conversion:
-
-Quick Guide: How to convert from (SC)XML to plain JANI?
----------------------------------------------------------
-
-This tutorial explains how to convert an autonomous system specified using a combination of BT-XML and SCXML files into a JANI model.
-For this tutorial, we assume the system specification is already available. Further explanations on how to specify the system can be found in the `SCXML How-To <scxml_howto>`.
-
-
-Reference Model: Battery Drainer
-`````````````````````````````````
-
-For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/examples/ros_example_w_bt>`_.
-The model consists of a `main.xml` file, referencing the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
-
-This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
-A behavior tree continuously monitors the alarm topic and, once it is triggered, recharges the battery to its full level before starting the draining process again.
-
-The image below gives an overview of an exemplary system to be model-checked.
-
-.. image:: graphics/scxml_tutorial_ros_example_w_bt.drawio.svg
-    :width: 800
-    :alt: An image of the complete exemplary system.
-
-In this example, the system is composed by the following components modeled in SCXML:
-
-* a **Battery Drainer**, that at each time step drains the battery by 1%, and each time the charge trigger is received, it recharges the battery to 100%.
-* a **Battery Manager**, that at each time the battery level is received checks if it is below 30% and, if so, triggers the alarm.
-
-The **Behavior Tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery drainer.
-
-The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/battery_properties.jani>`_ defines the property of interest to be model-checked.
-In this case, it calculates the minimal probability that the battery level will eventually be 100%, after an initial depletion time, i.e., all we verify here is that the battery is charged at some point.
-
-In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
-
-In addition, in this main file, all the components of the example are put together, and the property to use is indicated.
-
-
-Structure of Inputs
-`````````````````````
-
-The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ with the following content:
-
-* one or multiple ROS nodes in SCXML:
-
-    .. code-block:: xml
-
-        <input type="ros-scxml" src="./battery_manager.scxml" />
-
-* the environment model in SCXML:
-
-    .. code-block:: xml
-
-        <input type="ros-scxml" src="./battery_drainer.scxml" />
-
-* the behavior tree in XML,
-* the plugins of the behavior tree leaf nodes in SCXML,
-* the property to check in temporal logic, currently given in JANI, later support for XML will be added:
-
-    .. code-block:: xml
-
-        <properties>
-            <input type="jani" src="./battery_depleted.jani" />
-        </properties>
-
-* additionally, commonly shared variables for synchronization between the components are specified in the main file:
-
-    .. code-block:: xml
-
-        <mc_parameters>
-            <max_time value="100" unit="s" />
-        </mc_parameters>
-
-All of those components are converted into one JANI DTMC model by the ``as2fm_scxml_to_jani`` tool.
-
-
-Running the Script
-`````````````````````
-
-After installing the AS2FM packages as described in the :ref:`installation section <installation>`, a full system model can be converted into a model-checkable JANI file as follows:
-
-.. code-block:: bash
-
-    cd AS2FM/jani_generator/test/_test_data/ros_example_w_bt/
-    as2fm_scxml_to_jani main.xml
-
-The output is a JANI file called `main.jani` that will be located in the same folder.
-
-
-
-
-
 
 .. _full_tutorial:
 
@@ -136,7 +38,7 @@ For this tutorial we use the model defined here: `tutorial_fetch_and_carry <http
 A classical fetch and carry task is implemented there. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
 
 The model consists of a `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.xml>`_ file, referencing the BT `bt_tree.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_tree.xml>`_ running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_, picking `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/
-_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`_, and placing `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_place_action.scxml>`_, as well as the world model `world.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world.scxml>`_. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/properties.jani>`_.
+_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`__, and placing `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_place_action.scxml>`_, as well as the world model `world.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world.scxml>`_. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/properties.jani>`_.
 
 All of those components are summarized and collected in the `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.xml>`_ file.
 
