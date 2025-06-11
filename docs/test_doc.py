@@ -1,8 +1,9 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
+
 import pytest
 from sybil import Sybil
-from sybil.parsers.codeblock import PythonCodeBlockParser, CodeBlockParser
+from sybil.parsers.codeblock import CodeBlockParser
 
 COMMAND_PREFIX = "$ "
 
@@ -21,7 +22,7 @@ def evaluate_bash_block(example):
                 .decode("ascii")
             )
             print(f"{output=}")
-            output = [l.strip() for l in output.split("\n")]
+            output = [x.strip() for x in output.split("\n")]
             output_i = 0
         else:
             expected_line = line.strip()
