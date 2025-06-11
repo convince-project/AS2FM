@@ -22,22 +22,42 @@ Then verify that the correct versions are installed
     $ docker compose run --remove-orphans base smc_storm --version
     [+] Creating 1/1
     ...
-    0.1.1
+    0.1.2
 
 Local installation
 ^^^^^^^^^^^^^^^^^^
 
-.. sybil-new-environment: IGNORE
+Requirements
+````````````
 
 The scripts have been tested with Python 3.10 and pip version 24.0.
 
-Additionally, the following dependencies are required to be installed:
+You need to install ROS. We currently support the following distributions:
 
-* `ROS Humble <https://docs.ros.org/en/humble/index.html>`_
+* `Humble <https://docs.ros.org/en/humble/index.html>`_
+* `Jazzy <https://docs.ros.org/en/jazzy/index.html>`_
 
+Don't forget to source ROS, e.g.:
 
-AS2FM Package Installations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. sybil-new-environment: IGNORE
+.. TODO: this needs actual bash instead of sh
+
+.. code-block:: bash
+
+    $ source /opt/ros/humble/setup.bash
+
+Install SMC Storm by downloading the `latest release <https://github.com/convince-project/smc_storm/releases>`_ and executing the installation script.
+Verify your installation:
+
+.. sybil-new-environment: smc_storm
+
+.. code-block:: bash
+
+    $ smc_storm --version
+    0.1.2
+
+AS2FM Python Package
+````````````````````
 
 .. warning::
 
@@ -50,6 +70,8 @@ AS2FM Package Installations
 
     Since we switched from a multi-package to a mono-package setup, make sure to uninstall the previous version of the AS2FM tools.
     It can be done using the following instructions:
+
+    .. sybil-new-environment: IGNORE
 
     .. code-block:: bash
 
