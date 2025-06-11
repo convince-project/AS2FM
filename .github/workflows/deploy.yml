@@ -5,6 +5,7 @@ on:
     # Triggers the workflow on push or pull request events but only for the "main" branch
     push:
         branches: [ "main" ]
+    pull_request:
 
 jobs:
     build:
@@ -35,7 +36,7 @@ jobs:
               run: |
                     source /opt/ros/jazzy/setup.bash
                     cd docs
-                    make html
+                    make html --fail-on-warning
             # upload the documentation to GitHub Pages
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
@@ -44,6 +45,9 @@ jobs:
     deploy:
         # Add a dependency to the build job
         needs: build
+
+        # Only deploy from main
+        if: github.ref == 'refs/heads/main'
 
         # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
         permissions:
