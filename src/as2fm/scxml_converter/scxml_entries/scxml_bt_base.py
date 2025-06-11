@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Type, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlIf,
@@ -37,7 +38,6 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     get_plain_expression,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtGenericRequestHandle(ScxmlTransition):
@@ -53,7 +53,7 @@ class BtGenericRequestHandle(ScxmlTransition):
     def from_xml_tree_impl(
         cls: Type["BtGenericRequestHandle"],
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
     ) -> "BtGenericRequestHandle":
         assert_xml_tag_ok(cls, xml_tree)
         condition: Optional[str] = get_xml_attribute(cls, xml_tree, "cond", undefined_allowed=True)
@@ -130,7 +130,7 @@ class BtGenericRequestSend(ScxmlSend):
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type["BtGenericRequestSend"], xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+        cls: Type["BtGenericRequestSend"], xml_tree: XmlElement, _: Dict[str, StructDefinition]
     ) -> "BtGenericRequestSend":
         assert_xml_tag_ok(cls, xml_tree)
         # child_seq_id = n -> the n-th children of the control node in the BT XML
@@ -207,7 +207,7 @@ class BtGenericStatusHandle(ScxmlTransition):
     def from_xml_tree_impl(
         cls: Type["BtGenericStatusHandle"],
         xml_tree,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
     ) -> "BtGenericStatusHandle":
         assert_xml_tag_ok(cls, xml_tree)
         # Same as in BtTickChild
@@ -305,7 +305,7 @@ class BtGenericStatusSend(ScxmlSend):
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type["BtGenericStatusSend"], xml_tree: XmlElement, _: Dict[str, XmlStructDefinition]
+        cls: Type["BtGenericStatusSend"], xml_tree: XmlElement, _: Dict[str, StructDefinition]
     ) -> "BtGenericStatusSend":
         assert_xml_tag_ok(cls, xml_tree)
         return cls()

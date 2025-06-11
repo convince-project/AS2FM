@@ -33,13 +33,15 @@ from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
     interpret_top_level_xml,
     parse_main_xml,
 )
+from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.scxml_entries import ScxmlRoot
-from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
 from .utils import json_jani_properties_match
 
 PROB_ERROR_TOLERANCE = 0.015
+
+rel_examples_folder = os.path.join("..", "..", "..", "examples")
 
 
 # pylint: disable=too-many-public-methods
@@ -443,7 +445,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_deterministic(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
@@ -453,7 +455,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_prob_world(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main_probabilistic.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
@@ -464,7 +466,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_prob_world_retry(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main_probabilistic_extended_bt.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
@@ -639,10 +641,21 @@ class TestConversion(unittest.TestCase):
             "nested_data_ros", property_name="success", expected_result_probability=1.0
         )
 
-    def test_data_structs(self):
+    def test_data_structs_xml(self):
         """Test support for custom struct declarations."""
         self._test_with_main(
             "data_structs",
+            model_xml="main_xml_def.xml",
+            property_name="success",
+            expected_result_probability=1.0,
+            disable_cache=True,
+        )
+
+    def test_data_structs_json(self):
+        """Test support for custom struct declarations."""
+        self._test_with_main(
+            "data_structs",
+            model_xml="main_json_def.xml",
             property_name="success",
             expected_result_probability=1.0,
             disable_cache=True,

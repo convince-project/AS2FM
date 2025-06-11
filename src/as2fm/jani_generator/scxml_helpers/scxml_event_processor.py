@@ -35,7 +35,7 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
-from as2fm.scxml_converter.xml_data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION, ArrayInfo
+from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION, ArrayInfo
 
 JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
 

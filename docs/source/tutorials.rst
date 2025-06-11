@@ -12,7 +12,7 @@ It can also be checked with external tools accepting JANI as input, e.g., the ot
 Prerequisites
 --------------
 
-You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page https://github.com/convince-project/AS2FM/pkgs/container/as2fm`_
+You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page <https://github.com/convince-project/AS2FM/pkgs/container/as2fm>`_
 
 In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
 
@@ -29,7 +29,7 @@ For this tutorial, we assume the system specification is already available. Furt
 Reference Model: Battery Drainer
 `````````````````````````````````
 
-For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/ros_example_w_bt>`_.
+For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/examples/ros_example_w_bt>`_.
 The model consists of a `main.xml` file, referencing the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
 
 This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
@@ -48,10 +48,10 @@ In this example, the system is composed by the following components modeled in S
 
 The **Behavior Tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery drainer.
 
-The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/ros_example_w_bt/battery_properties.jani>`_ defines the property of interest to be model-checked.
+The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/battery_properties.jani>`_ defines the property of interest to be model-checked.
 In this case, it calculates the minimal probability that the battery level will eventually be 100%, after an initial depletion time, i.e., all we verify here is that the battery is charged at some point.
 
-In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/ros_example_w_bt/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
+In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
 
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated.
 
@@ -59,7 +59,7 @@ In addition, in this main file, all the components of the example are put togeth
 Structure of Inputs
 `````````````````````
 
-The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/ros_example_w_bt/main.xml>`_ with the following content:
+The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ with the following content:
 
 * one or multiple ROS nodes in SCXML:
 
@@ -114,10 +114,17 @@ The output is a JANI file called `main.jani` that will be located in the same fo
 .. _full_tutorial:
 
 Hands-on in-depth tutorial including verification: Fetch & Carry
------------------------------------------------------------------
+----------------------------------------------------------------
 
-In this tutorial you will learn within around one hour how a fetch and carry robot scenario can be modeled in SCXML and how linear temporal logic properties can be verified on it. You translate the model of the robot and its environment with AS2FM into JANI for verification with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking tool.
-You will observe fulfilled and violated properties. By updating the model with more involved functionality in terms of probabilistic behavior and additional features in the behavior tree, you make in the end sure that the required properties hold.
+What you will learn
+
+In this tutorial you will learn in about one hour how a robotic example can be expressed in SCXML.
+The example models a robot with a simple symbolic fetch and carry task.
+You will use linear temporal logic (LTL) properties to verify it is working correctly.
+Then, you will translate the model of the robot and its environment with AS2FM into JANI to run it with `SMC Storm <https://github.com/convince-project/smc_storm>`_, our statistical model checking (SMC) tool.
+With the results from SMC Storm, you will observe that some properties are fulfilled and some are violated.
+By updating the model with more complexity in terms of probabilistic behavior and additional features in the behavior tree (BT), you make sure that the required properties hold in the end.
+This verifies, that your BT controls the example correctly.
 
 We assume some background in computer science or as a robotics developer but no knowledge about formal methods and model checking is required.
 
@@ -125,13 +132,13 @@ We assume some background in computer science or as a robotics developer but no 
 Reference Model: Fetch & Carry Robot
 `````````````````````````````````````
 
-For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/test/jani_generator/_test_data/tutorial_fetch_and_carry>`_.
-What is implemented there is a classical fetch and carry task. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
+For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/examples/tutorial_fetch_and_carry>`_.
+A classical fetch and carry task is implemented there. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
 
-The model consists of a `main.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/main.xml>`_ file, referencing the BT `bt_tree.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_tree.xml>`_ running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_, picking `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/
-_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`_, and placing `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_place_action.scxml>`_, as well as the world model `world.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/world.scxml>`_. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/properties.jani>`_.
+The model consists of a `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.xml>`_ file, referencing the BT `bt_tree.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_tree.xml>`_ running in the system and the SCXML files modeling the BT plugins for navigating `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_, picking `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/
+_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`_, and placing `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_place_action.scxml>`_, as well as the world model `world.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world.scxml>`_. Finally, there is the property to check later with SMC Storm in JANI format in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/properties.jani>`_.
 
-All of those components are summarized and collected in the `main.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/main.xml>`_ file.
+All of those components are summarized and collected in the `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.xml>`_ file.
 
 
 * First, some parameters configuring generic properties of the system are defined. In this example we bound the maximum execution time to 100 seconds, and configure unbounded arrays to contain at most 10 elements.
@@ -170,32 +177,32 @@ All of those components are summarized and collected in the `main.xml <https://g
             <input type="jani" src="./properties.jani" />
         </properties>
 
-The behavior tree specified in `bt_tree.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_tree.xml>`_ looks as depicted in the image below. The SequenceWithMemory node ticks each child in order until all of them have returned Success. Those who already returned Success are not ticked in the next cycle again.
+The behavior tree specified in `bt_tree.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_tree.xml>`_ looks as depicted in the image below. The SequenceWithMemory node ticks each child in order until all of them have returned Success. Those who already returned Success are not ticked in the next cycle again.
 The location is encoded as 0 = in the pantry and 1 = at the table. The snack object has id 0.
 
 .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt.drawio.svg
     :width: 600
     :alt: An image of the behavior tree of the fetch and carry example.
 
-The next image depicts the behavior of the BT plugin `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_. It is used to navigate to a certain location given by the id, either 0 or 1 in this example, stored in `data`. When the BT is ticked it assigns `loc_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
+The next image depicts the behavior of the BT plugin `bt_navigate_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_navigate_action.scxml>`_. It is used to navigate to a certain location given by the id, either 0 or 1 in this example, stored in `data`. When the BT is ticked it assigns `loc_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
 .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_navigate.drawio.png
     :width: 600
     :alt: An image of the BT navigate action plugin.
 
-The next image depicts the behavior of the BT plugin `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_pick_action.scxml>`_ in a very similar fashion. The action is used to pick a certain item with a given id, stored in `data`. When the BT is ticked it assigns `object_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
+The next image depicts the behavior of the BT plugin `bt_pick_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_pick_action.scxml>`_ in a very similar fashion. The action is used to pick a certain item with a given id, stored in `data`. When the BT is ticked it assigns `object_id = data`. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
 .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_pick.drawio.png
     :width: 600
     :alt: An image of the BT pick action plugin.
 
-The next image depicts the behavior of the BT plugin `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_place_action.scxml>`_. When called, the action just immediately tries to successfully execute, no matter if there is an object in the gripper or not, when the BT is ticked. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
+The next image depicts the behavior of the BT plugin `bt_place_action.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_place_action.scxml>`_. When called, the action just immediately tries to successfully execute, no matter if there is an object in the gripper or not, when the BT is ticked. When the BT is halted or the action is aborted `tmp_result` is set to `false`, otherwise it is set to `true`. Based on that the return status of the tree is then published.
 
 .. image:: graphics/scxml_tutorial_ros_fetch_and_carry_bt_place.drawio.png
     :width: 600
     :alt: An image of the BT place action plugin.
 
-As a last step we are having a closer look at the environment model in `world.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/world.scxml>`_.
+As a last step we are having a closer look at the environment model in `world.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world.scxml>`_.
 
 * First, it is indicated that the model makes use of the interfaces from the `fetch_and_carry_msgs <https://github.com/convince-project/AS2FM/tree/main/ros_support_interfaces/fetch_and_carry_msgs>`_ package, where custom ROS actions are defined. In line 21 the ROS topic publisher for the snack type is declared.
 
@@ -229,22 +236,22 @@ As a last step we are having a closer look at the environment model in `world.sc
 
 
 Model Translation with AS2FM
-```````````````````````````````
+````````````````````````````
 
 From this model in SCXML you can generate a JANI representation with AS2FM by executing:
 
 .. code-block:: bash
 
-    cd AS2FM/test/jani_generator/_test_data/tutorial_fetch_and_carry
+    cd AS2FM/examples/tutorial_fetch_and_carry
     as2fm_scxml_to_jani main.xml
 
 This produces the same model in the `JANI format <https://jani-spec.org/>`_ in the file `main.jani`.
-You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_main.jani>`_.
+You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_main.jani>`_.
 
 Model Checking with SMC Storm
 ```````````````````````````````
 We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table. This can be expressed as ``P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid)``, where F is the finally operator of `linear temporal logic (LTL) <https://en.wikipedia.org/wiki/Linear_temporal_logic>`_ and the first operand of the formula expresses that the snack is located at the table (id 1). The second operand is needed to make sure the system is still in a valid state.
-The property is formulated in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/properties.jani>`_.
+The property is formulated in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/properties.jani>`_.
 
 This property can be checked by calling SMC Storm on the JANI file generated before with AS2FM. For more details on SMC Storm you can have a look the `SMC Storm repository <https://github.com/convince-project/smc_storm>`_.
 
@@ -274,7 +281,7 @@ It is also possible to log the traces generated during model checking in a csv f
 
     smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1 --show-statistics
 
-One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
+One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
 
 A tool to inspect the changes in the variables graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d traces.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot.
 
@@ -288,9 +295,9 @@ You can see how the time advances in steps (`topic_clock_msg__ros_fields__sec`),
 
 Enhancing the Model with Probabilities
 `````````````````````````````````````````
-This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/world_probabilistic.scxml>`_. From now on we are using `main_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/main_probabilistic.scxml>`_, which is the same as `main.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/main.scxml>`_ but referencing this modified world model in line 15.
+This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic.scxml>`_. From now on we are using `main_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main_probabilistic.scxml>`_, which is the same as `main.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.scxml>`_ but referencing this modified world model in line 15.
 
-If you want to try to come up with a solution on your own on how to modify the world model such that it's behavior is probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/world_probabilistic_gaps.scxml>`_. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/world_probabilistic.scxml>`_.
+If you want to try to come up with a solution on your own on how to modify the world model such that it's behavior is probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic_gaps.scxml>`_. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic.scxml>`_.
 
 `world_probabilistic.scxml` differs from the previous world model by introducing success probabilities for navigating and picking. Placing the object works as before. For navigating the requested goal location is first stored and the model transitions into the `handle_nav_request` state for handling the navigation request. From there the new location is assigned successfully in 70% of the cases. In the remaining 30% the request is not fulfilled and the action is aborted.
 
@@ -325,7 +332,7 @@ The expected result shown above indicates that the property is not fulfilled wit
 This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
 In this case model checking needed 15700 traces to come to the result that the task is only completed successfully in 29.99% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
 
-The sample output for one trace can be found again in `sample_solutions_and_outputs/reference_traces_prob_single.csv <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_prob_single.csv>`_. We do not provide the full output because it is quite large.
+The sample output for one trace can be found again in `sample_solutions_and_outputs/reference_traces_prob_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_prob_single.csv>`_. We do not provide the full output because it is quite large.
 
 The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking again by running `ros2 run plotjuggler plotjuggler -d reference_traces_prob_single.csv`. Here we checked exemplarily a trace in `reference_traces_prob_single.csv`, which shows a failing trace, where the robot navigates to the pantry successfully but then never manages to grasp the object and thus also never transports it to the table. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account, i.e., the traces you generate on your machine may differ.
 
@@ -339,7 +346,7 @@ Enhancing the Behavior Tree to Handle Probabilistic Failures
 When the picking action does not succeed because the item slips out of the gripper, or the navigation fails for some reason, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again, or tries to navigate at the requested location again.
 Can you come up with one or more solutions for that on your own? In the following, we will discuss one of them.
 
-One solution is to realize the functionality in the behavior tree by adding a `RetryUntilSuccessful` node in line 3 of the modified behavior tree in `bt_tree_retry.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/bt_tree_retry.xml>`_:
+One solution is to realize the functionality in the behavior tree by adding a `RetryUntilSuccessful` node in line 3 of the modified behavior tree in `bt_tree_retry.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/bt_tree_retry.xml>`_:
 
 .. code-block:: xml
 
@@ -351,7 +358,7 @@ This also allows to specify the number of attempts to retry. The new behavior tr
     :width: 600
     :alt: An image of the behavior tree including the recovery strategy in case picking or navigating fails.
 
-We can again run SMC Storm on the modified model after generating the JANI model with AS2FM. This time we use `main_probabilistic_extended_bt.xml <https://github.com/convince-project/AS2FM/blob/main/test/jani_generator/_test_data/tutorial_fetch_and_carry/main_probabilistic_extended_bt.xml>`_ as input to refer to the modified files of the bt and the probabilistic world model.
+We can again run SMC Storm on the modified model after generating the JANI model with AS2FM. This time we use `main_probabilistic_extended_bt.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main_probabilistic_extended_bt.xml>`_ as input to refer to the modified files of the bt and the probabilistic world model.
 
 .. code-block:: bash
 
