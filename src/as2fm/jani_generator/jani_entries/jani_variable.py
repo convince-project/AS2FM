@@ -22,7 +22,7 @@ from typing import MutableSequence, Optional, Tuple, Type, Union, get_args
 from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniValue
 from as2fm.jani_generator.jani_entries.jani_expression import SupportedExp
-from as2fm.scxml_converter.xml_data_types.type_utils import ArrayInfo
+from as2fm.scxml_converter.data_types.type_utils import ArrayInfo
 
 
 class JaniVariable:

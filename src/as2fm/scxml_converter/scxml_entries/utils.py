@@ -32,12 +32,12 @@ from as2fm.as2fm_common.ecmascript_interpretation import (
     split_by_access,
 )
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
-from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
-from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.xml_data_types.type_utils import (
+from as2fm.scxml_converter.data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     MEMBER_ACCESS_SUBSTITUTION,
 )
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 
 # List of names that shall not be used for variable names
 RESERVED_NAMES: List[str] = []

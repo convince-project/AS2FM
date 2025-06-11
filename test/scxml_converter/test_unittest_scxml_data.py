@@ -20,6 +20,7 @@ import unittest
 import lxml.etree as ET
 import pytest
 
+from as2fm.as2fm_common.logging import INTERNAL_FILEPATH_ATTR
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
 from as2fm.scxml_converter.scxml_entries.xml_utils import XmlUtilsError
 
@@ -44,6 +45,7 @@ class TestScxmlData(unittest.TestCase):
         missing.
         """
         tag = ET.fromstring('<data id="level" type="int32" />')
+        tag.attrib[INTERNAL_FILEPATH_ATTR] = "UNKNOWN"
         self.assertRaises(XmlUtilsError, ScxmlData.from_xml_tree, tag, [])
 
     def test_no_id_information(self):

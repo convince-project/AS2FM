@@ -19,6 +19,8 @@ from typing import List, MutableSequence, Tuple
 
 import pytest
 
+from as2fm.scxml_converter.data_types.type_utils import get_data_type_from_string
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -28,8 +30,6 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     convert_expression_with_object_arrays,
     get_plain_expression,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import get_data_type_from_string
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 def test_standard_good_expressions():
