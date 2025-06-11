@@ -125,7 +125,7 @@ class PathProperty:
         if self._op is None:
             return
         self._operands: Dict[str, JaniExpression] = {}
-        if self._op == "F":
+        if self._op in ("F", "G"):
             self._operands = {"exp": JaniExpression(prop_values["exp"])}
         elif self._op in ("U", "W"):
             self._operands = {
