@@ -41,6 +41,8 @@ from .utils import json_jani_properties_match
 
 PROB_ERROR_TOLERANCE = 0.015
 
+rel_examples_folder = os.path.join("..", "..", "..", "examples")
+
 
 # pylint: disable=too-many-public-methods
 class TestConversion(unittest.TestCase):
@@ -443,7 +445,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_deterministic(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
@@ -453,7 +455,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_prob_world(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main_probabilistic.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
@@ -464,7 +466,7 @@ class TestConversion(unittest.TestCase):
     def test_tutorial_fetch_carry_prob_world_retry(self):
         """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "tutorial_fetch_and_carry",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
             model_xml="main_probabilistic_extended_bt.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
