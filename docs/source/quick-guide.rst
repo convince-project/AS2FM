@@ -80,9 +80,36 @@ Running the Script
 
 After installing the AS2FM packages as described in the :ref:`installation section <installation>`, a full system model can be converted into a model-checkable JANI file as follows:
 
+.. sybil-new-environment: ros_example_w_bt
+    :cwd: .
+    :expected-files: test/jani_generator/_test_data/ros_example_w_bt/main.jani
+
 .. code-block:: bash
 
-    cd AS2FM/jani_generator/test/_test_data/ros_example_w_bt/
-    as2fm_scxml_to_jani main.xml
+    $ cd test/jani_generator/_test_data/ros_example_w_bt/; \
+    $ as2fm_scxml_to_jani main.xml
+
+    AS2FM - SCXML to JANI.
+
+    Loading model from main.xml.
+    xml_file='./battery_drainer.scxml'
+    xml_file='./battery_manager.scxml'
+    xml_file='./bt_topic_condition.scxml'
+    xml_file='./bt_topic_action.scxml'
+    ...
 
 The output is a JANI file called `main.jani` that will be located in the same folder.
+
+It can be checked with SMC Storm:
+
+.. code-block:: bash
+
+    $ cd test/jani_generator/_test_data/ros_example_w_bt/; \
+    $ smc_storm --model main.jani --properties-names battery_depleted
+
+    Welcome to SMC Storm
+    Checking model: main.jani
+    Property "battery_depleted": Pmin=? [F ((topic_level_msg__ros_fields__data <= 0) & topic_level_msg.valid)];
+    Result: 0
+
+This demonstrates that the battery will never be fully depleted.

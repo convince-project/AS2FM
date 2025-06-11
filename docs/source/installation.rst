@@ -1,10 +1,33 @@
 .. _installation:
 
 Installation
---------------
+------------
 
-Prerequisites
-^^^^^^^^^^^^^^
+Docker
+^^^^^^
+
+In the root folder of the repository, pull the necessary docker image:
+
+.. sybil-new-environment: IGNORE
+
+.. code-block:: bash
+
+    $ docker compose pull
+    ...
+
+Then verify that the correct versions are installed
+
+.. code-block:: bash
+
+    $ docker compose run --remove-orphans base smc_storm --version
+    [+] Creating 1/1
+    ...
+    0.1.1
+
+Local installation
+^^^^^^^^^^^^^^^^^^
+
+.. sybil-new-environment: IGNORE
 
 The scripts have been tested with Python 3.10 and pip version 24.0.
 
@@ -46,6 +69,9 @@ AS2FM can be installed using pip:
     python3 -m pip install -e AS2FM/
 
 Verify your installation by **sourcing your ROS distribution** (i.e. running `source /opt/ros/<ros-distro>/setup.bash`) and then running:
+
+.. sybil-new-environment: pip
+    :cwd: /
 
 .. code-block:: bash
 
