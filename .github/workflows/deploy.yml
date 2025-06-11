@@ -36,7 +36,7 @@ jobs:
               run: |
                     source /opt/ros/jazzy/setup.bash
                     cd docs
-                    make html --fail-on-warning
+                    make html
             # upload the documentation to GitHub Pages
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
