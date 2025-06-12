@@ -244,52 +244,60 @@ class TestConversion(unittest.TestCase):
         xml_main_path = os.path.join(test_data_dir, model_xml)
         assert xml_main_path.endswith(".xml"), f"Unexpected format of main xml file {xml_main_path}"
         model_jani = model_xml.removesuffix("xml") + "jani"
-        output_path = os.path.join(test_data_dir, model_jani)
-        if os.path.exists(output_path):
-            os.remove(output_path)
+        jani_path = os.path.join(test_data_dir, model_jani)
+        if os.path.exists(jani_path):
+            os.remove(jani_path)
         generated_scxml_path = "generated_plain_scxml" if store_generated_scxmls else None
-        interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
-        if store_generated_scxmls:
-            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
-            self.assertTrue(os.path.exists(plain_scxml_path))
-            generated_files = os.listdir(plain_scxml_path)
-            # Ensure there is the data type comment in the generated SCXML
-            self.assertGreater(len(generated_files), 0, "Expected at least one gen. SCXML file.")
-            for file in os.listdir(plain_scxml_path):
-                with open(os.path.join(plain_scxml_path, file), "r", encoding="utf-8") as f:
-                    # Make sure that the generated plain SCXML files use the agreed format
-                    content = f.read()
-                    if "<datamodel>" in content:
-                        self.assertIn("<!-- TYPE", content)
-                    if "<send" in content:
-                        self.assertIn("target=", content)
-        self.assertTrue(os.path.exists(output_path))
-        properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
-        if not skip_properties_load_check:
-            assert json_jani_properties_match(
-                properties_file, output_path
-            ), "Properties from input json and generated jani file do not match."
-        if not skip_smc:
-            assert len(property_name) > 0, "Property name must be provided for SMC."
-            storm_command = (
-                f"--model {output_path} --properties-names {property_name} "
-                + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}"
+
+        try:
+            interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
+            if store_generated_scxmls:
+                plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+                self.assertTrue(os.path.exists(plain_scxml_path))
+                generated_files = os.listdir(plain_scxml_path)
+                # Ensure there is the data type comment in the generated SCXML
+                self.assertGreater(
+                    len(generated_files), 0, "Expected at least one gen. SCXML file."
+                )
+                for file in os.listdir(plain_scxml_path):
+                    with open(os.path.join(plain_scxml_path, file), "r", encoding="utf-8") as f:
+                        # Make sure that the generated plain SCXML files use the agreed format
+                        content = f.read()
+                        if "<datamodel>" in content:
+                            self.assertIn("<!-- TYPE", content)
+                        if "<send" in content:
+                            self.assertIn("target=", content)
+            self.assertTrue(os.path.exists(jani_path))
+            properties_file = os.path.join(
+                test_data_dir, parse_main_xml(xml_main_path).properties[0]
             )
-            if disable_cache:
-                storm_command += " --disable-explored-states-caching"
-            run_smc_storm_with_output(
-                storm_command,
-                [property_name, output_path],
-                [],
-                expected_result_probability,
-                result_probability_tolerance,
-            )
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        if store_generated_scxmls:
-            for file in os.listdir(plain_scxml_path):
-                os.remove(os.path.join(plain_scxml_path, file))
-            os.removedirs(plain_scxml_path)
+            if not skip_properties_load_check:
+                assert json_jani_properties_match(
+                    properties_file, jani_path
+                ), "Properties from input json and generated jani file do not match."
+            if not skip_smc:
+                assert len(property_name) > 0, "Property name must be provided for SMC."
+                storm_command = (
+                    f"--model {jani_path} --properties-names {property_name} "
+                    + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}"
+                )
+                if disable_cache:
+                    storm_command += " --disable-explored-states-caching"
+                run_smc_storm_with_output(
+                    storm_command,
+                    [property_name, jani_path],
+                    [],
+                    expected_result_probability,
+                    result_probability_tolerance,
+                )
+        finally:
+            # cleanup
+            if os.path.exists(jani_path):
+                os.remove(jani_path)
+            if store_generated_scxmls:
+                for file in os.listdir(plain_scxml_path):
+                    os.remove(os.path.join(plain_scxml_path, file))
+                os.removedirs(plain_scxml_path)
 
     def test_battery_ros_example_depleted_success(self):
         """Test the battery_depleted property is satisfied."""
