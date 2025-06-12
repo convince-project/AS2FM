@@ -45,6 +45,7 @@ jobs:
               uses: actions/upload-pages-artifact@v3
               with:
                     path: docs/build/html
+              if: github.ref == 'refs/heads/main'
     deploy:
         # Add a dependency to the build job
         needs: build
