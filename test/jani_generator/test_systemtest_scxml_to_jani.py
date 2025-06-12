@@ -332,7 +332,7 @@ class TestConversion(unittest.TestCase):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
         self._test_with_main(
-            "ros_example_w_bt",
+            os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
             store_generated_scxmls=True,
             property_name="battery_depleted",
             expected_result_probability=0.0,
@@ -342,21 +342,27 @@ class TestConversion(unittest.TestCase):
         """Here we expect the property to be *not* satisfied."""
         # TODO: Improve properties under evaluation!
         self._test_with_main(
-            "ros_example_w_bt", property_name="battery_below_20", expected_result_probability=0.0
+            os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            property_name="battery_below_20",
+            expected_result_probability=0.0,
         )
 
     def test_battery_example_w_bt_main_alarm_and_charge(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main(
-            "ros_example_w_bt", property_name="battery_alarm_on", expected_result_probability=1.0
+            os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            property_name="battery_alarm_on",
+            expected_result_probability=1.0,
         )
 
     def test_battery_example_w_bt_main_charged_after_time(self):
         """Here we expect the property to be satisfied in a battery example
         with charging feature."""
         self._test_with_main(
-            "ros_example_w_bt", property_name="battery_charged", expected_result_probability=1.0
+            os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            property_name="battery_charged",
+            expected_result_probability=1.0,
         )
 
     def test_events_sync_handling(self):
