@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
     # 'myst_parser',
     # 'autodoc2',
 ]
@@ -57,3 +58,8 @@ html_style = "css/custom.css"
 
 # -- Options for EPUB output
 epub_show_urls = "footnote"
+
+# Copybutton
+copybutton_prompt_text = r"\$ "
+copybutton_prompt_is_regexp = True
+copybutton_line_continuation_character = "\\"
