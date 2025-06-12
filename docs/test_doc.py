@@ -38,14 +38,17 @@ def evaluate_bash_block(example, cwd):
     output = []
     output_i = -1
     previous_cmd_line = ""
+    next_is_cmd_continuation = False
     for line in lines:
-        if line.startswith(COMMAND_PREFIX):
+        if line.startswith(COMMAND_PREFIX) or next_is_cmd_continuation:
             # this is a command
             command = previous_cmd_line + line.replace(COMMAND_PREFIX, "")
             if command.endswith(LINE_END):
                 # this must be merged with the next line
                 previous_cmd_line = command.replace(LINE_END, "")
+                next_is_cmd_continuation = True
                 continue
+            next_is_cmd_continuation = False
             print(f"{command=}")
             previous_cmd_line = ""
             output = (

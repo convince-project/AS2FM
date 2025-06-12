@@ -260,13 +260,9 @@ You can then run SMC Storm again on the modified model after generating the JANI
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main_probabilistic.xml
-    ...
-    $ smc_storm --model main_probabilistic.jani --properties-names snack_at_table --show-statistics
+    $ as2fm_scxml_to_jani main_probabilistic.xml && \
+      smc_storm --model main_probabilistic.jani --properties-names snack_at_table --show-statistics
 
-    Welcome to SMC Storm
-    Checking model: main_probabilistic.jani
-    Property "snack_at_table": Pmin=? [F ((topic_snacks0_loc_msg__ros_fields__data = 1) & topic_snacks0_loc_msg.valid)];
     ...
 
 
@@ -299,6 +295,10 @@ The changes of the values in the different ROS topics can be inspected by having
 Enhancing the Behavior Tree to Handle Probabilistic Failures
 ------------------------------------------------------------
 
+.. sybil-new-environment: enhancing_bt
+    :cwd: examples/tutorial_fetch_and_carry
+    :expected-files: main_probabilistic_extended_bt.jani
+
 When the picking action does not succeed because the item slips out of the gripper, or the navigation fails for some reason, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again, or tries to navigate at the requested location again.
 Can you come up with one or more solutions for that on your own? In the following, we will discuss one of them.
 
@@ -318,8 +318,11 @@ We can again run SMC Storm on the modified model after generating the JANI model
 
 .. code-block:: bash
 
-    as2fm_scxml_to_jani main_probabilistic_extended_bt.xml
-    smc_storm --model main_probabilistic_extended_bt.jani --properties-names snack_at_table --show-statistics
+    $ as2fm_scxml_to_jani main_probabilistic_extended_bt.xml && \
+      smc_storm --model main_probabilistic_extended_bt.jani --properties-names snack_at_table --show-statistics
+
+    ...
+
 
 The expected result shown below states that the property is now fulfilled with probability 95.05% again when 5 retries are allowed.
 
