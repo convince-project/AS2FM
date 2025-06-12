@@ -18,6 +18,8 @@ classifiers = [
 ]
 keywords = []
 dependencies = [
+    # all
+    "typer",
     # as2fm_common
     "js2py",
     "lxml",
@@ -49,8 +51,8 @@ requires-python = ">=3.10"
 "as2fm.resources" = ["bt_control_nodes/*.scxml"]
 
 [project.scripts]
-as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"
-as2fm_scxml_to_jani = "as2fm.jani_generator.main:main_scxml_to_jani"
+as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:as2fm_convince_to_plain_jani"
+as2fm_scxml_to_jani = "as2fm.jani_generator.main:as2fm_scxml_to_jani"
 as2fm_jani_to_plantuml = "as2fm.jani_visualizer.main:main_jani_to_plantuml"
 as2fm_trace_to_png = "as2fm.trace_visualizer.main:main_trace_to_png"
 
