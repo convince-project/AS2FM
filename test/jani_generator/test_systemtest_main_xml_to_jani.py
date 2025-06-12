@@ -129,7 +129,7 @@ def _default_case():
         "property_name": None,
         "expected_result_probability": 1.0,
         "model_xml": "main.xml",
-        "generate_plain_scxml": False,
+        "generate_plain_scxml": True,
         "skip_smc": False,
         "result_probability_tolerance": 0.0,
         "trace_length_limit": 10_000,
@@ -174,7 +174,6 @@ def get_cases():
             "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
             "property_name": "battery_depleted",
             "expected_result_probability": 0.0,
-            "generate_plain_scxml": True,
         },
         # Expect the property to be *not* satisfied.
         # TODO: Improve properties under evaluation!
@@ -184,7 +183,6 @@ def get_cases():
             "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
             "property_name": "battery_depleted",
             "expected_result_probability": 0.0,
-            "generate_plain_scxml": True,
         },
         # Expect the property to be *not* satisfied.
         # TODO: Improve properties under evaluation!
@@ -363,7 +361,6 @@ def get_cases():
             "_case_name": "fibonacci_action_single_thread",
             "folder": "fibonacci_action_single_thread",
             "property_name": "client1_ok",
-            "generate_plain_scxml": True,
         },
         # Nested data in ROS types.
         _default_case()
@@ -423,7 +420,6 @@ def get_cases():
             "_case_name": "robot_navigation_tutorial",
             "folder": "robot_navigation_tutorial",
             "property_name": "goal_reached",
-            "generate_plain_scxml": True,
             "skip_smc": True,
         },
         # Simple robot navigation demo with a behavior tree.
@@ -432,7 +428,6 @@ def get_cases():
             "_case_name": "robot_navigation_with_bt",
             "folder": "robot_navigation_with_bt",
             "property_name": "goal_reached",
-            "generate_plain_scxml": True,
             "skip_smc": True,
         },
         # -------------------------------------------------------------------------------------
@@ -443,7 +438,6 @@ def get_cases():
             "_case_name": "uc1_docking",
             "folder": "uc1_docking",
             "property_name": "charging_starts",
-            "generate_plain_scxml": True,
             "trace_length_limit": 1_000_000,
         },
         # UC1 docking BT (with a bug).
@@ -454,7 +448,6 @@ def get_cases():
             "model_xml": "main_with_problem.xml",
             "property_name": "charging_starts",
             "expected_result_probability": 0.0,
-            "generate_plain_scxml": True,
             "trace_length_limit": 1_000_000,
             "n_threads": 8,
         },
@@ -488,7 +481,6 @@ def get_cases():
             "_case_name": "uc2_assembly_with_bug",
             "folder": os.path.join("uc3_museum_guide", "Main"),
             "property_name": "tree_success",
-            "generate_plain_scxml": True,
         },
     ]
 
@@ -506,7 +498,6 @@ def test_battery_example_w_bt_battery_depleted_removed():
         "folder": "ros_example_w_bt_removed",
         "property_name": "battery_depleted",
         "expected_result_probability": 0.0,
-        "generate_plain_scxml": True,
     }
     _test_with_main(*c)
 
@@ -519,6 +510,5 @@ def test_battery_example_w_bt_main_alarm_and_charge_removed():
         "folder": "ros_example_w_bt_removed",
         "property_name": "battery_alarm_on",
         "expected_result_probability": 0.0,
-        "generate_plain_scxml": True,
     }
     _test_with_main(*c)
