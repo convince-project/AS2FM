@@ -25,10 +25,8 @@ In case you want to install AS2FM locally follow the description in the :ref:`in
 
 .. _full_tutorial:
 
-Introduction
-------------
-
 What you will learn
+-------------------
 
 In this tutorial you will learn in about one hour how a robotic example can be expressed in SCXML.
 The example models a robot with a simple symbolic fetch and carry task.
@@ -339,6 +337,9 @@ The expected result shown below states that the property is now fulfilled with p
     Result: 0.9505
 
 As before an inspection with PlotJuggler can be helpful.
+
+Summary
+-------
 
 Congratulations! You finished the tutorial on how to use AS2FM and SMC Storm on a fetch & carry use case. You learned how to generate a JANI model out of (SC)XML models of a BT, its BT plugins, and a world model with AS2FM. You successfully checked a temporal logic property on it and inspected the changes in the ROS topic variables during sample executions of the model produced by the model checker with PlotJuggler. Afterwards, you modified the example such that the behavior of the navigation and picking actions is probabilistic. In the end you even introduced a recovery strategy in case of failures in the BT.
 
