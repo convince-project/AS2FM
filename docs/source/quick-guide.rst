@@ -1,16 +1,19 @@
 .. _scxml_conversion:
 
-Quick Guide: How to convert from (SC)XML to plain JANI?
----------------------------------------------------------
+Quick Start
+-----------
+
+..
+
+    How to convert from (SC)XML to plain JANI?
 
 This tutorial explains how to convert an autonomous system specified using a combination of BT-XML and SCXML files into a JANI model.
 For this tutorial, we assume the system specification is already available. Further explanations on how to specify the system can be found in the `SCXML How-To <scxml_howto>`.
 
-
 Reference Model: Battery Drainer
 `````````````````````````````````
 
-For this tutorial, we use the model defined here: `ros_example_w_bt <https://github.com/convince-project/AS2FM/tree/main/examples/ros_example_w_bt>`_.
+For this tutorial, we use the model defined here: `quick_start_battery_monitor <https://github.com/convince-project/AS2FM/tree/main/examples/quick_start_battery_monitor>`_.
 The model consists of a `main.xml` file, referencing the BT files running in the system and the SCXML files modeling the BT plugins, as well as the environment and the ROS nodes.
 
 This example models a simple system with a battery that is continuously drained and, once it reaches a certain level, an alarm is triggered.
@@ -18,7 +21,7 @@ A behavior tree continuously monitors the alarm topic and, once it is triggered,
 
 The image below gives an overview of an exemplary system to be model-checked.
 
-.. image:: graphics/scxml_tutorial_ros_example_w_bt.drawio.svg
+.. image:: graphics/scxml_tutorial_quick_start_battery_monitor.drawio.svg
     :width: 800
     :alt: An image of the complete exemplary system.
 
@@ -29,10 +32,10 @@ In this example, the system is composed by the following components modeled in S
 
 The **Behavior Tree** continuously checks the alarm topic and, once it is triggered, sends a charge trigger to the battery drainer.
 
-The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/battery_properties.jani>`_ defines the property of interest to be model-checked.
+The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/battery_properties.jani>`_ defines the property of interest to be model-checked.
 In this case, it calculates the minimal probability that the battery level will eventually be 100%, after an initial depletion time, i.e., all we verify here is that the battery is charged at some point.
 
-In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
+In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
 
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated.
 
@@ -40,7 +43,7 @@ In addition, in this main file, all the components of the example are put togeth
 Structure of Inputs
 `````````````````````
 
-The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/ros_example_w_bt/main.xml>`_ with the following content:
+The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ with the following content:
 
 * one or multiple ROS nodes in SCXML:
 
@@ -80,13 +83,13 @@ Running the Script
 
 After installing the AS2FM packages as described in the :ref:`installation section <installation>`, a full system model can be converted into a model-checkable JANI file as follows:
 
-.. sybil-new-environment: ros_example_w_bt
+.. sybil-new-environment: quick_start_battery_monitor
     :cwd: .
-    :expected-files: test/jani_generator/_test_data/ros_example_w_bt/main.jani
+    :expected-files: examples/quick_start_battery_monitor/main.jani
 
 .. code-block:: bash
 
-    $ cd test/jani_generator/_test_data/ros_example_w_bt/; \
+    $ cd examples/quick_start_battery_monitor/; \
     $ as2fm_scxml_to_jani main.xml
 
     AS2FM - SCXML to JANI.
@@ -104,7 +107,7 @@ It can be checked with SMC Storm:
 
 .. code-block:: bash
 
-    $ cd test/jani_generator/_test_data/ros_example_w_bt/; \
+    $ cd examples/quick_start_battery_monitor/; \
     $ smc_storm --model main.jani --properties-names battery_depleted
 
     Welcome to SMC Storm
