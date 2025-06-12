@@ -161,7 +161,5 @@ def test_doc_rst(path, blocks):
                 evaluate_bash_block(block, cwd)
         finally:
             for file in expected_files:
-                assert os.path.isfile(
-                    file
-                ), f"File {expected_files[-1]} was expected to exist *after* the test."
+                assert os.path.isfile(file), f"File {file} was expected to exist *after* the test."
                 os.remove(file)

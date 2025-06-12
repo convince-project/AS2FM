@@ -1,5 +1,5 @@
-Tutorials
-=========
+Tutorial
+========
 
 This section provides tutorials on how to use the AS2FM tools to convert an autonomous robotic system into a formal model compatible with existing model checker tools (i.e., in the JANI format).
 The JANI models generated in the tutorials with AS2FM can be given to any model checker accepting JANI as input format and being able to handle DTMC models. This could for example be the `Storm SMC extension SMC-STORM <https://github.com/convince-project/smc_storm>`_, which we developed as part of the CONVINCE toolchain. Check out the documentation of SMC Storm for further details.
@@ -7,7 +7,7 @@ It can also be checked with external tools accepting JANI as input, e.g., the ot
 
 
 Prerequisites
---------------
+-------------
 
 You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page <https://github.com/convince-project/AS2FM/pkgs/container/as2fm>`_
 
@@ -15,8 +15,8 @@ In case you want to install AS2FM locally follow the description in the :ref:`in
 
 .. _full_tutorial:
 
-Hands-on in-depth tutorial including verification: Fetch & Carry
-----------------------------------------------------------------
+Introduction
+------------
 
 What you will learn
 
@@ -32,7 +32,7 @@ We assume some background in computer science or as a robotics developer but no 
 
 
 Reference Model: Fetch & Carry Robot
-`````````````````````````````````````
+------------------------------------
 
 For this tutorial we use the model defined here: `tutorial_fetch_and_carry <https://github.com/convince-project/AS2FM/tree/main/examples/tutorial_fetch_and_carry>`_.
 A classical fetch and carry task is implemented there. A robot should drive to the pantry where food is stored, pick up snacks, drive to the table and place the snacks there. The robot should be done with this task after at most 100 seconds.
@@ -138,7 +138,7 @@ As a last step we are having a closer look at the environment model in `world.sc
 
 
 Model Translation with AS2FM
-````````````````````````````
+----------------------------
 
 First, navigate to the example folder.
 
@@ -152,9 +152,9 @@ First, navigate to the example folder.
 From this model in SCXML you can generate a JANI representation with AS2FM by executing:
 
 
-.. sybil-new-environment: step-one
+.. sybil-new-environment: first_model_checking
     :cwd: examples/tutorial_fetch_and_carry
-    :expected-files: main.jani
+    :expected-files: main.jani, traces.csv
 
 .. code-block:: bash
 
@@ -173,7 +173,8 @@ This produces the same model in the `JANI format <https://jani-spec.org/>`_ in t
 You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_main.jani>`_.
 
 Model Checking with SMC Storm
-```````````````````````````````
+-----------------------------
+
 We can now check with SMC Storm what the probability is that the snack will eventually be placed at the table. This can be expressed as ``P_min(F topic_snacks0_loc_msg.ros_fields__data = 1 ∧ topic_snacks0_loc_msg.valid)``, where F is the finally operator of `linear temporal logic (LTL) <https://en.wikipedia.org/wiki/Linear_temporal_logic>`_ and the first operand of the formula expresses that the snack is located at the table (id 1). The second operand is needed to make sure the system is still in a valid state.
 The property is formulated in `properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/properties.jani>`_.
 
@@ -206,7 +207,11 @@ It is also possible to log the traces generated during model checking in a csv f
 
 .. code-block:: bash
 
-    smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1 --show-statistics
+    $ smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1
+
+    Welcome to SMC Storm
+    Checking model: main.jani
+    Property "snack_at_table": Pmin=? [F ((topic_snacks0_loc_msg__ros_fields__data = 1) & topic_snacks0_loc_msg.valid)];
 
 One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
 
@@ -221,7 +226,12 @@ The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world
 You can see how the time advances in steps (`topic_clock_msg__ros_fields__sec`), how the robot moves from location 1 to 0 and then back to 1 again (`world_robot_loc`). The robot is first holding nothing, then it holds the object with id 0, and then it is holding nothing again (`world_robot_holding`). The objects position is first 0, then -1 in the gripper, and then 1 at the table (`world_obj_locs_at_0`).
 
 Enhancing the Model with Probabilities
-`````````````````````````````````````````
+--------------------------------------
+
+.. sybil-new-environment: enhancing
+    :cwd: examples/tutorial_fetch_and_carry
+    :expected-files: main_probabilistic.jani
+
 This is a very simple example and behavior of the robot. In real world applications the item which should be brought to another location sometimes slips out of the gripper when trying to pick it. Let's say this happens in 40% of the trials. In addition, navigation fails sometimes, let's say in 30% of the cases. We would like to reflect this scenario by adapting the world model in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic.scxml>`_. From now on we are using `main_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main_probabilistic.scxml>`_, which is the same as `main.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main.scxml>`_ but referencing this modified world model in line 15.
 
 If you want to try to come up with a solution on your own on how to modify the world model such that its results are probabilistic, try to fill the gaps flagged with `TODO` (sometimes in comments, sometimes directly in the code) in the file `world_probabilistic_gaps.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic_gaps.scxml>`_. Afterwards you can read on here and compare your solution with ours in `world_probabilistic.scxml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/world_probabilistic.scxml>`_.
@@ -240,20 +250,28 @@ You can then run SMC Storm again on the modified model after generating the JANI
 
 .. code-block:: bash
 
-    as2fm_scxml_to_jani main_probabilistic.xml
-    smc_storm --model main_prob.jani --properties-names snack_at_table --show-statistics
+    $ as2fm_scxml_to_jani main_probabilistic.xml
+    ...
+    $ smc_storm --model main_probabilistic.jani --properties-names snack_at_table --show-statistics
+
+    Welcome to SMC Storm
+    Checking model: main_probabilistic.jani
+    Property "snack_at_table": Pmin=? [F ((topic_snacks0_loc_msg__ros_fields__data = 1) & topic_snacks0_loc_msg.valid)];
+    ...
+
 
 .. code-block::
 
     ============= SMC Results =============
-        N. of times target reached:     4709
-        N. of times no termination:     0
-        Tot. n. of tries (samples):     15700
-        Estimated success prob.:        0.2999363057
-        Min trace length:       65
-        Max trace length:       248
+        N. of times target reached:	4607
+        N. of times no termination:	0
+        Tot. n. of tries (samples):	15600
+        Estimated success prob.:	0.2953205128
+        Min trace length:	65
+        Max trace length:	252
     =========================================
-    Result: 0.2999363057
+    Result: 0.2953205128
+
 
 The expected result shown above indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up, or the navigation fails.
 This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
@@ -261,7 +279,7 @@ In this case model checking needed 15700 traces to come to the result that the t
 
 The sample output for one trace can be found again in `sample_solutions_and_outputs/reference_traces_prob_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_prob_single.csv>`_. We do not provide the full output because it is quite large.
 
-The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking again by running `ros2 run plotjuggler plotjuggler -d reference_traces_prob_single.csv`. Here we checked exemplarily a trace in `reference_traces_prob_single.csv`, which shows a failing trace, where the robot navigates to the pantry successfully but then never manages to grasp the object and thus also never transports it to the table. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account, i.e., the traces you generate on your machine may differ.
+The changes of the values in the different ROS topics can be inspected by having a look at the log of the traces generated during model checking again by running ``ros2 run plotjuggler plotjuggler -d reference_traces_prob_single.csv``. Here we checked exemplarily a trace in `reference_traces_prob_single.csv`, which shows a failing trace, where the robot navigates to the pantry successfully but then never manages to grasp the object and thus also never transports it to the table. Keep in mind that the traces generated in every call to SMC Storm differ from previous runs because they are regenerated taking the probabilities into account, i.e., the traces you generate on your machine may differ.
 
 .. image:: graphics/plotjuggler_prob.png
     :width: 800
@@ -269,7 +287,8 @@ The changes of the values in the different ROS topics can be inspected by having
 
 
 Enhancing the Behavior Tree to Handle Probabilistic Failures
-```````````````````````````````````````````````````````````````
+------------------------------------------------------------
+
 When the picking action does not succeed because the item slips out of the gripper, or the navigation fails for some reason, we actually would like that the robot executes a recovery strategy, i.e., it tries to pick the item again, or tries to navigate at the requested location again.
 Can you come up with one or more solutions for that on your own? In the following, we will discuss one of them.
 
