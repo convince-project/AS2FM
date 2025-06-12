@@ -224,6 +224,7 @@ class TestConversion(unittest.TestCase):
         n_traces_limit: int = 10_000,
         skip_properties_load_check: bool = False,
         disable_cache: bool = False,
+        n_threads: int = 1,
     ):
         """
         Testing the conversion of the model xml file with the entrypoint.
@@ -239,6 +240,7 @@ class TestConversion(unittest.TestCase):
         :param n_traces_limit: The max. number of iterations to run in SMC.
         :param skip_properties_load_check: Disable the equality check for the loaded properties.
         :param disable_cache: Whether to disable cache in smc_storm.
+        :param n_threads: How many threads to use
         """
         test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
         xml_main_path = os.path.join(test_data_dir, model_xml)
@@ -279,7 +281,8 @@ class TestConversion(unittest.TestCase):
                 assert len(property_name) > 0, "Property name must be provided for SMC."
                 storm_command = (
                     f"--model {jani_path} --properties-names {property_name} "
-                    + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit}"
+                    + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit} "
+                    + f"--n-threads {n_threads}"
                 )
                 if disable_cache:
                     storm_command += " --disable-explored-states-caching"
@@ -516,6 +519,7 @@ class TestConversion(unittest.TestCase):
             property_name="charging_starts",
             expected_result_probability=1.0,
             trace_length_limit=1_000_000,
+            n_threads=8,
         )
 
     def test_uc1_docking_bugged(self):
@@ -526,6 +530,7 @@ class TestConversion(unittest.TestCase):
             property_name="charging_starts",
             expected_result_probability=0.0,
             trace_length_limit=1_000_000,
+            n_threads=8,
         )
 
     def test_uc2_assembly_trigger_recovery(self):
@@ -582,6 +587,7 @@ class TestConversion(unittest.TestCase):
             model_xml="main.xml",
             property_name="at_goal",
             expected_result_probability=1.0,
+            n_threads=8,
         )
 
     def test_grid_robot_blackboard_simple(self):
@@ -592,6 +598,7 @@ class TestConversion(unittest.TestCase):
             property_name="tree_success",
             expected_result_probability=1.0,
             trace_length_limit=1_000_000,
+            n_threads=8,
         )
 
     def test_probabilistic_transitions(self):
@@ -603,6 +610,7 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
             result_probability_tolerance=PROB_ERROR_TOLERANCE,
             trace_length_limit=20_000,
+            n_threads=8,
         )
 
     def test_string_support_two_sent(self):
