@@ -1,7 +1,7 @@
 
 services:
   base:
-    image: ghcr.io/convince-project/as2fm:tutorial-prepare-tutorials-2025  # TODO: latest
+    image: ghcr.io/convince-project/as2fm:latest
     build:
       context: .
       dockerfile: .docker/Dockerfile
