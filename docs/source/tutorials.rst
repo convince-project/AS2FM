@@ -13,6 +13,8 @@ You don't need to install AS2FM and SMC Storm locally on your machine. You can d
 
 Just clone the repository and then run the following command in the root folder to start the docker in an interactive terminal such that you can then run all the commands in the tutorial inside the container.
 
+.. sybil-new-environment: IGNORE
+
 .. code-block:: bash
 
     $ docker compose run -it --remove-orphans base bash
