@@ -41,6 +41,8 @@ from .utils import json_jani_properties_match
 
 PROB_ERROR_TOLERANCE = 0.015
 
+rel_examples_folder = os.path.join("..", "..", "..", "examples")
+
 
 # pylint: disable=too-many-public-methods
 class TestConversion(unittest.TestCase):
@@ -440,13 +442,36 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
-    def test_ros_delib_ws_2024_p1(self):
-        """Test the ROS Deliberation Workshop example works."""
+    def test_tutorial_fetch_carry_deterministic(self):
+        """Test that the tutorial for the fetch and carry example works."""
         self._test_with_main(
-            "delibws24_p1",
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
+            model_xml="main.xml",
             store_generated_scxmls=True,
             property_name="snack_at_table",
             expected_result_probability=1.0,
+        )
+
+    def test_tutorial_fetch_carry_prob_world(self):
+        """Test that the tutorial for the fetch and carry example works."""
+        self._test_with_main(
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
+            model_xml="main_probabilistic.xml",
+            store_generated_scxmls=True,
+            property_name="snack_at_table",
+            expected_result_probability=0.294,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
+        )
+
+    def test_tutorial_fetch_carry_prob_world_retry(self):
+        """Test that the tutorial for the fetch and carry example works."""
+        self._test_with_main(
+            os.path.join(rel_examples_folder, "tutorial_fetch_and_carry"),
+            model_xml="main_probabilistic_extended_bt.xml",
+            store_generated_scxmls=True,
+            property_name="snack_at_table",
+            expected_result_probability=0.954,
+            result_probability_tolerance=PROB_ERROR_TOLERANCE,
         )
 
     def test_robot_navigation_demo(self):

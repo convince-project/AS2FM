@@ -34,7 +34,7 @@ class ArrayAccess:
     """
     Placeholder type for ArrayAccess operator call in expanded Member expression.
 
-    Check the function 'split_by_access' for more information.
+    Check the function `split_by_access` for more information.
     """
 
     pass
@@ -212,7 +212,7 @@ def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, Ar
 
     Examples:
     `a.b` => `['a', 'b']
-    `a[3].b` => `['a', ArrayAccess, 'b']
+    `a[3].b` => `['a', ArrayAccess, 'b']`
     """
     ast = parse_expression_to_ast(expr, elem)
     try:
@@ -223,7 +223,7 @@ def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, Ar
 
 
 def _split_by_access(ast: esprima.nodes.Node) -> List:
-    """Recursive implementation of 'split_by_access' functionality."""
+    """Recursive implementation of `split_by_access` functionality."""
     if ast.type == Syntax.Identifier:
         return [ast.name]
     elif ast.type == Syntax.MemberExpression:

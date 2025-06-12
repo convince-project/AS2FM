@@ -12,7 +12,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
 
-  <exec_depend>delib_ws_24_interfaces</exec_depend>
+  <exec_depend>fetch_and_carry_msgs</exec_depend>
   <exec_depend>grid_robot_interfaces</exec_depend>
   <exec_depend>nested_interfaces</exec_depend>
   <exec_depend>uc2_interfaces</exec_depend>
