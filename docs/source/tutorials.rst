@@ -11,6 +11,16 @@ Prerequisites
 
 You don't need to install AS2FM and SMC Storm locally on your machine. You can directly use the docker container, in which all tools are preinstalled, provided as a package on the `AS2FM Github page <https://github.com/convince-project/AS2FM/pkgs/container/as2fm>`_
 
+Just clone the repository and then run the following command in the root folder to start the docker in an interactive terminal such that you can then run all the commands in the tutorial inside the container.
+
+.. code-block:: bash
+    $ docker compose run -it --re move-orphans bash
+
+Then change to the following folder inside the container in which the files of the repository are mounted:
+
+.. code-block:: bash
+    $ cd /colcon_ws/src/as2fm/examples/tutorial_fetch_and_carry
+
 In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
 
 .. _full_tutorial:
