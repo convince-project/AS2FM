@@ -14,11 +14,13 @@ You don't need to install AS2FM and SMC Storm locally on your machine. You can d
 Just clone the repository and then run the following command in the root folder to start the docker in an interactive terminal such that you can then run all the commands in the tutorial inside the container.
 
 .. code-block:: bash
-    $ docker compose run -it --re move-orphans bash
+
+    $ docker compose run -it --remove-orphans base bash
 
 Then change to the following folder inside the container in which the files of the repository are mounted:
 
 .. code-block:: bash
+
     $ cd /colcon_ws/src/as2fm/examples/tutorial_fetch_and_carry
 
 In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
@@ -148,17 +150,8 @@ As a last step we are having a closer look at the environment model in `world.sc
 Model Translation with AS2FM
 ----------------------------
 
-First, navigate to the example folder.
-
-.. sybil-new-environment: navigation
-    :cwd: .
-
-.. code-block:: bash
-
-    $ cd examples/tutorial_fetch_and_carry
-
-From this model in SCXML you can generate a JANI representation with AS2FM by executing:
-
+From this model in SCXML you can generate a JANI representation with AS2FM.
+Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
 
 .. sybil-new-environment: first_model_checking
     :cwd: examples/tutorial_fetch_and_carry
