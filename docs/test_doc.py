@@ -77,6 +77,7 @@ def evaluate_bash_block(example, cwd):
                 actual_line = output[output_i]
             if IGNORED_OUTPUT in expected_line:
                 # skip this line
+                output_i += 1
                 continue
             assert actual_line == expected_line
             output_i += 1

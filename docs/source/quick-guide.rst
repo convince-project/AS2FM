@@ -89,7 +89,7 @@ After installing the AS2FM packages as described in the :ref:`installation secti
 
 .. code-block:: bash
 
-    $ cd examples/quick_start_battery_monitor/; \
+    $ cd examples/quick_start_battery_monitor/ && \
     $ as2fm_scxml_to_jani main.xml
 
     AS2FM - SCXML to JANI.
@@ -107,7 +107,7 @@ It can be checked with SMC Storm:
 
 .. code-block:: bash
 
-    $ cd examples/quick_start_battery_monitor/; \
+    $ cd examples/quick_start_battery_monitor/ && \
     $ smc_storm --model main.jani --properties-names battery_depleted
 
     Welcome to SMC Storm

@@ -140,12 +140,34 @@ As a last step we are having a closer look at the environment model in `world.sc
 Model Translation with AS2FM
 ````````````````````````````
 
-From this model in SCXML you can generate a JANI representation with AS2FM by executing:
+First, navigate to the example folder.
+
+.. sybil-new-environment: navigation
+    :cwd: .
 
 .. code-block:: bash
 
-    cd AS2FM/examples/tutorial_fetch_and_carry
-    as2fm_scxml_to_jani main.xml
+    $ cd examples/tutorial_fetch_and_carry
+
+From this model in SCXML you can generate a JANI representation with AS2FM by executing:
+
+
+.. sybil-new-environment: step-one
+    :cwd: examples/tutorial_fetch_and_carry
+    :expected-files: main.jani
+
+.. code-block:: bash
+
+    $ as2fm_scxml_to_jani main.xml
+
+    AS2FM - SCXML to JANI.
+
+    Loading model from main.xml.
+    xml_file='./world.scxml'
+    xml_file='./bt_navigate_action.scxml'
+    xml_file='./bt_pick_action.scxml'
+    xml_file='./bt_place_action.scxml'
+    ...
 
 This produces the same model in the `JANI format <https://jani-spec.org/>`_ in the file `main.jani`.
 You can find the expected sample output in `sample_solutions_and_outputs/reference_main.jani <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_main.jani>`_.
@@ -161,19 +183,22 @@ Executing SMC Storm on this example works as follows:
 
 .. code-block:: bash
 
-    smc_storm --model main.jani --properties-names snack_at_table --show-statistics
+    $ smc_storm --model main.jani --properties-names snack_at_table --show-statistics
 
-.. code-block::
+    Welcome to SMC Storm
+    Checking model: main.jani
+    Property "snack_at_table": Pmin=? [F ((topic_snacks0_loc_msg__ros_fields__data = 1) & topic_snacks0_loc_msg.valid)];
 
     ============= SMC Results =============
-        N. of times target reached:     500
-        N. of times no termination:     0
-        Tot. n. of tries (samples):     500
-        Estimated success prob.:        1
-        Min trace length:       159
-        Max trace length:       237
+        N. of times target reached:	500
+        N. of times no termination:	0
+        Tot. n. of tries (samples):	500
+        Estimated success prob.:	1
+        Min trace length:	...
+        Max trace length:	...
     =========================================
     Result: 1
+
 
 The expected result shown above indicates that the property is fulfilled with probability 1, i.e., the snack is always successfully placed on the table. In this case model checking needed 500 traces to come to that result called with the default SMC confidence and error parameters. All generated traces terminated and the target, i.e., placing the stack at the table, was reached. The minimal length of a trace generated in those runs was 159 and the maximal length was 237.
 
