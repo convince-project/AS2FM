@@ -70,4 +70,4 @@ jobs:
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 source ros_interfaces_ws/install/setup.bash
-                pytest-3 -vs test/
+                pytest-3 -vs .
