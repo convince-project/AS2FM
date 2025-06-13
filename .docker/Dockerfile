@@ -32,4 +32,5 @@ RUN source /opt/ros/jazzy/setup.bash && \
 CMD /bin/bash
 COPY .docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x entrypoint.sh
+WORKDIR /colcon_ws/src/as2fm
 ENTRYPOINT [ "/entrypoint.sh" ]
