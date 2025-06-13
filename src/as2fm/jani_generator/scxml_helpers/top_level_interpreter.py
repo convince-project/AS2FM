@@ -67,7 +67,7 @@ class FullModel:
     bt_tick_rate: float = field(default=1.0)
     # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
     bt_tick_when_not_running: bool = field(default=False)
-    # List of data declarations. Each entry will contain the type aPaths to custom data declarations
+    # List of data declarations. Each entry will contain the type and path to the file
     data_declarations: List[Tuple[str, str]] = field(default_factory=list)
     # Path to the behavior tree loaded in the model
     bt: Optional[str] = None

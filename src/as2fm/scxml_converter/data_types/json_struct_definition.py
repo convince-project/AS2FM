@@ -15,7 +15,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from as2fm.as2fm_common.logging import log_warning
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
@@ -52,6 +52,12 @@ class JsonStructDefinition(StructDefinition):
             return JsonStructDefinition.from_dict(json_def, fname)
 
     @staticmethod
+    def _handle_property(root_obj: Dict[str, Any], prop_def: Dict[str, Any], fname: str) -> str:
+        if REF in prop_def.keys():
+            # this is a reference, resolve it first
+            prop_def, _ = JsonStructDefinition._resolve_ref(root_obj, prop_def, fname)
+
+    @staticmethod
     def _resolve_ref(
         root_obj: Dict[str, Any], obj_def: Dict[str, Any], fname: str
     ) -> Tuple[Dict[str, Any], str]:
@@ -80,7 +86,7 @@ class JsonStructDefinition(StructDefinition):
     @staticmethod
     def _handle_objects(
         root_obj: Dict[str, Any], obj_def: Dict[str, Any], suggested_name: str, fname: str
-    ) -> Optional[Tuple[str, List["JsonStructDefinition"]]]:
+    ) -> Tuple[str, List["JsonStructDefinition"]]:
         if REF in obj_def.keys():
             # this is a reference, resolve it first
             obj_def, suggested_name = JsonStructDefinition._resolve_ref(root_obj, obj_def, fname)
@@ -88,34 +94,31 @@ class JsonStructDefinition(StructDefinition):
             properties = obj_def.get(PROPERTIES)
             if properties is None:
                 log_warning(fname, f"Object must have properties: {obj_def}")
-                return None
+                return suggested_name, []
             struct_members = {}
             definitions = []
             for prop_name, prop_def in properties.items():
-                prop = JsonStructDefinition._handle_objects(root_obj, prop_def, prop_name, fname)
-                if prop is not None:
-                    this_obj, new_defs = prop
-                    if isinstance(this_obj, str):
-                        type_str = this_obj
-                    else:
-                        definitions.append(this_obj)
-                        type_str = this_obj.get_name()
-                    definitions.extend(new_defs)
-                    struct_members[prop_name] = type_str
+                this_obj, new_defs = JsonStructDefinition._handle_objects(
+                    root_obj, prop_def, prop_name, fname
+                )
+                if isinstance(this_obj, str):
+                    type_str = this_obj
+                else:
+                    definitions.append(this_obj)
+                    type_str = this_obj.get_name()
+                definitions.extend(new_defs)
+                struct_members[prop_name] = type_str
             definitions.append(JsonStructDefinition(suggested_name, struct_members))
             return suggested_name, definitions
         elif obj_def.get(TYPE) == ARRAY:
             assert ITEMS in obj_def
-            prop = JsonStructDefinition._handle_objects(
+            type_str, new_defs = JsonStructDefinition._handle_objects(
                 root_obj, obj_def.get(ITEMS), suggested_name, fname
             )
-            if prop is None:
-                return None
-            type_str, new_defs = prop
             return type_str + "[]", new_defs
         elif isinstance(obj_def.get(TYPE), list):
             log_warning(fname, "List of types not supported.")
-            return None
+            return suggested_name, []
         elif obj_def.get(TYPE) in JSON_SCHEMA_TYPE_TO_SCXML_TYPE:
             type_str = JSON_SCHEMA_TYPE_TO_SCXML_TYPE.get(obj_def.get(TYPE))
             return type_str, []
