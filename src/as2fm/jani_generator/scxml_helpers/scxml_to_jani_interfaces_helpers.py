@@ -182,7 +182,9 @@ def generate_jani_assignments(
             if assignment_value_type == JaniExpressionType.IDENTIFIER:
                 assignment_value_name: str = assignment_value.as_identifier()
                 assignment_value_ids: List[JaniExpression] = []
-            elif assignment_value_type == JaniExpressionType.OPERATOR:
+            elif (
+                assignment_value_type == JaniExpressionType.OPERATOR and assignment_value.op == "aa"
+            ):
                 assignment_value_name, assignment_value_ids = __get_array_access_name_and_indexes(
                     assignment_value
                 )
@@ -363,6 +365,18 @@ def merge_conditions(
     return joint_condition
 
 
+def is_string_or_array_of_strings(val) -> bool:
+    """
+    Check if `val` is a (possibly multi-dimensional) array of strings.
+    """
+    if isinstance(val, MutableSequence):
+        return is_string_or_array_of_strings(val[0])
+    elif isinstance(val, str):
+        return True
+    else:
+        return False
+
+
 def append_scxml_body_to_jani_edge(
     jani_edge: JaniEdge,
     jani_automaton: JaniAutomaton,
@@ -422,7 +436,7 @@ def append_scxml_body_to_jani_edge(
                     f"{ec.get_event()}{MEMBER_ACCESS_SUBSTITUTION}{param.get_name()}"
                 )
                 expr = param.get_expr_or_location()
-                # Update the events holder
+
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
@@ -433,7 +447,8 @@ def append_scxml_body_to_jani_edge(
                 array_info: Optional[ArrayInfo] = None
                 # In case of MutableSequences, we need to get the dimensionality of the result
                 if res_eval_type == MutableSequence:
-                    if isinstance(res_eval_value, str):
+
+                    if is_string_or_array_of_strings(res_eval_value):
                         res_eval_value = convert_string_to_int_array(res_eval_value)
                     array_info = array_value_to_type_info(res_eval_value)
                     if array_info.array_type is None:

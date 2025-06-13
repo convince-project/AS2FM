@@ -72,7 +72,7 @@ class JaniExpression:
                 # self._init_expression_from_string(expression)
                 assert is_valid_variable_name(
                     expression
-                ), f"Expression string {expression} is not a valid variable name."
+                ), f"Expression string >{expression}<,l,.kj is not a valid variable name."
                 # If it is a reference to a constant or variable, we do not need to expand further
                 self.identifier = expression
             elif JaniValue(expression).is_valid():
