@@ -39,9 +39,6 @@ from as2fm.scxml_converter.data_types.type_utils import (
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 
-# List of names that shall not be used for variable names
-RESERVED_NAMES: List[str] = []
-
 PLAIN_EVENT_KEY: str = "_event"
 PLAIN_SCXML_EVENT_PREFIX: str = f"{PLAIN_EVENT_KEY}."
 PLAIN_EVENT_DATA_KEY: str = "data"
