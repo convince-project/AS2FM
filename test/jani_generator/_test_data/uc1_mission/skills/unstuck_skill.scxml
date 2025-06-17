@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="wait_for_action"
+    version="1.0"
+    name="UnstuckSkill"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <!-- Support variable for actions -->
+        <data id="goal_id" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_action_server name="unstuck_action" action_name="/perform_unstucking" type="uc1_interfaces/PerformUnstucking" />
+
+    <state id="wait_for_action">
+    </state>
+
+</scxml>
