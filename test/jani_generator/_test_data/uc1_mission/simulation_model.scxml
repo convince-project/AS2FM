@@ -44,22 +44,22 @@
     <!-- ====== Requests orchestration ====== -->
     <state id="running">
         <!-- Undocking requests -->
-        <transition event="undock_req" condition="current_location == 0" target="valid_undock_req" />
+        <transition event="undock_req" cond="current_location == 0" target="valid_undock_req" />
         <transition event="undock_req" target="invalid_undock_req" />
         <!-- Docking requests -->
-        <transition event="dock_req" condition="current_location == 1" target="valid_dock_req" />
+        <transition event="dock_req" cond="current_location == 1" target="valid_dock_req" />
         <transition event="dock_req" target="invalid_dock_req" />
         <!-- Navigate requests -->
-        <transition event="nav_req" condition="current_location != 0 &amp;&amp; _event.data.goal_location &gt; 0 &amp;&amp; _event.data.goal_location &lt; 3" target="valid_nav_req">
+        <transition event="nav_req" cond="current_location != 0 &amp;&amp; _event.data.goal_location &gt; 0 &amp;&amp; _event.data.goal_location &lt; 3" target="valid_nav_req">
             <assign location="goal_location" expr="_event.data.goal_location" />
         </transition>
         <transition event="nav_req" target="invalid_nav_req" />
         <!-- Coverage requests -->
-        <transition event="cov_step_req" condition="current_location != 0" target="valid_cov_step_req" />
+        <transition event="cov_step_req" cond="current_location != 0" target="valid_cov_step_req" />
         <transition event="cov_step_req" target="invalid_cov_step_req" />
         <!-- Unstuck requests -->
-        <transition event="unstuck_req" condition="current_location == 0" target="invalid_unstuck_req" />
-        <transition event="unstuck_req" condition="is_stuck" target="valid_unstuck_req" />
+        <transition event="unstuck_req" cond="current_location == 0" target="invalid_unstuck_req" />
+        <transition event="unstuck_req" cond="is_stuck" target="valid_unstuck_req" />
         <transition event="unstuck_req" target="valid_unstuck_req_dummy" />
     </state>
 

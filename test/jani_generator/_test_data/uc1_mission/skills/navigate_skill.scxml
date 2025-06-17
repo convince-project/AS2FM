@@ -7,16 +7,88 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
+        <data id="coverage_running" expr="false" type="bool" />
+        <data id="last_coverage" expr="0" type="int16" />
+        <data id="coverage_fail_count" expr="0" type="int16" />
         <!-- Support variable for actions -->
-        <data id="goal_id" expr="0" type="int16" />
+        <data id="nav_goal_id" expr="0" type="int16" />
+        <data id="cov_goal_id" expr="0" type="int16" />
+        <data id="nav_target" expr="0" type="int16" />
     </datamodel>
 
     <ros_action_server name="navigation_action" action_name="/navigate_to_loc" type="uc1_interfaces/Navigate" />
     <ros_action_server name="coverage_action" action_name="/do_coverage" type="uc1_interfaces/Coverage" />
+    <ros_topic_subscriber name="coverage_sub" topic="/coverage_percentage" type="std_msgs/Int16" />
     <!-- If the coverage action is running, each timer callback we try to step fwd and, if 5 failures in a row are found, we stop the action -->
     <ros_time_rate rate_hz="10" name="coverage_update" />
 
     <state id="wait_for_action">
+        <!-- Navigation action requests handle -->
+        <ros_action_handle_goal name="navigation_action" target="process_nav_req" />
+        <!-- Coverage action requests handle -->
+        <ros_action_handle_goal name="coverage_action" cond="coverage_running" target="wait_for_action">
+            <ros_action_reject_goal name="coverage_action" goal_id="_action.goal_id" />
+        </ros_action_handle_goal>
+        <ros_action_handle_goal name="coverage_action" target="wait_for_action">
+            <assign location="cov_goal_id" expr="_action.goal_id" />
+            <assign location="coverage_running" expr="true" />
+            <ros_action_accept_goal name="coverage_action" goal_id="cov_goal_id" />
+        </ros_action_handle_goal>
+        <!-- Coverage percentage update -->
+        <ros_topic_callback name="coverage_sub" target="wait_for_action">
+            <assign location="last_coverage" expr="_msg.data" />
+        </ros_topic_callback>
+        <!-- Coverage update -->
+        <ros_rate_callback name="coverage_update" cond="coverage_running" target="update_coverage_action" />
+        <ros_rate_callback name="coverage_update" target="wait_for_action" />
+    </state>
+
+    <state id="process_nav_req">
+        <onentry>
+            <assign location="nav_goal_id" expr="_action.goal_id" />
+            <assign location="nav_target" expr="_goal.loc_id"/>
+            <send event="nav_req">
+                <param name="goal_location" expr="nav_target" />
+            </send>
+        </onentry>
+        <!-- Action call was accepted -->
+        <transition event="nav_res" cond="_event.data.accept" target="wait_action">
+            <!-- accept goal -->
+            <ros_action_accept_goal name="navigation_action" goal_id="nav_goal_id" />
+            <if cond="_event.data.success">
+                <ros_action_succeed name="navigation_action" goal_id="nav_goal_id" />
+            <else/>
+                <ros_action_aborted name="navigation_action" goal_id="nav_goal_id" />
+            </if>
+        </transition>
+        <!-- Action call was not accepted -->
+        <transition event="nav_res" target="wait_action">
+            <ros_action_reject_goal name="navigation_action" goal_id="nav_goal_id" />
+        </transition>
+    </state>
+
+    <state id="update_coverage_action">
+        <onentry>
+            <send event="cov_step_req" />
+        </onentry>
+        <transition event="cov_step_res" cond="!_event.data.accept" target="wait_for_action">
+            <assign location="coverage_running" expr="false" />
+            <ros_action_aborted name="coverage_action" goal_id="cov_goal_id" />
+        </transition>
+        <transition event="cov_step_res" target="wait_for_action">
+            <if cond="!event.data.success">
+                <assign location="coverage_fail_count" expr="coverage_fail_count + 1" />
+            <else/>
+                <assign location="coverage_fail_count" expr="0" />
+            </if>
+            <if cond="coverage_fail_count &gt; 5">
+                <assign location="coverage_running" expr="false" />
+                <ros_action_aborted name="coverage_action" goal_id="cov_goal_id" />
+            <elseif cond="last_coverage &gt; 95"/>
+                <assign location="coverage_running" expr="false" />
+                <ros_action_succeed name="coverage_action" goal_id="cov_goal_id" />
+            </if>
+        </transition>
     </state>
 
 </scxml>
