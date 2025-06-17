@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="wait_for_action"
+    version="1.0"
+    name="NavigateSkill"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <!-- Support variable for actions -->
+        <data id="goal_id" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_action_server name="navigation_action" action_name="/navigate_to_loc" type="uc1_interfaces/Navigate" />
+    <ros_action_server name="coverage_action" action_name="/do_coverage" type="uc1_interfaces/Coverage" />
+    <!-- If the coverage action is running, each timer callback we try to step fwd and, if 5 failures in a row are found, we stop the action -->
+    <ros_time_rate rate_hz="10" name="coverage_update" />
+
+    <state id="wait_for_action">
+    </state>
+
+</scxml>
