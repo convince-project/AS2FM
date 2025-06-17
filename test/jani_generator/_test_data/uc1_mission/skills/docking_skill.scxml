@@ -27,7 +27,7 @@
 
     <state id="process_undock_req">
         <!-- Action call was accepted -->
-        <transition event="undock_res" condition="_event.data.accept" target="wait_action">
+        <transition event="undock_res" cond="_event.data.accept" target="wait_action">
             <!-- accept goal -->
             <ros_action_accept_goal name="undock_action" goal_id="goal_id" />
             <if cond="_event.data.success">
@@ -44,7 +44,7 @@
 
     <state id="process_dock_req">
         <!-- Action call was accepted -->
-        <transition event="dock_res" condition="_event.data.accept" target="wait_action">
+        <transition event="dock_res" cond="_event.data.accept" target="wait_action">
             <!-- accept goal -->
             <ros_action_accept_goal name="dock_action" goal_id="goal_id" />
             <if cond="_event.data.success">
