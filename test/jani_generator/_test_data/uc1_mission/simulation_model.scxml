@@ -21,13 +21,13 @@
         <data id="current_location" expr="0" type="int16" />
         <data id="clean_percentage" type="int16" expr="0" />
         <data id="is_stuck" type="bool" expr="false" />
+        <!-- Additional failure counter variables -->
+        <data id="undock_count" expr="0" type="int16" />
+        <data id="dock_count" expr="0" type="int16" />
+        <data id="nav_count" expr="0" type="int16" />
+        <!-- Additional settings from skill nodes -->
+        <data id="goal_location" expr="0" type="int16" />
     </datamodel>
-
-    <ros_action_server name="navigation_action" action_name="/navigate_to_loc" type="uc1_interfaces/Navigate" />
-    <ros_action_server name="coverage_action" action_name="/do_coverage" type="uc1_interfaces/Coverage" />
-    <ros_action_server name="dock_action" action_name="/perform_docking" type="uc1_interfaces/PerformDocking" />
-    <ros_action_server name="undock_action" action_name="/perform_undocking" type="uc1_interfaces/PerformUndocking" />
-    <ros_action_server name="unstuck_action" action_name="/perform_unstucking" type="uc1_interfaces/PerformUnstucking" />
 
     <ros_topic_publisher name="current_coverage" topic="/coverage_percentage" type="std_msgs/Int16" />
     <ros_topic_publisher name="stuck_info" topic="/stuck_info" type="uc1_interfaces/StuckInfo" />
@@ -40,18 +40,25 @@
         </transition>
     </state>
 
+    <!-- ====== Requests orchestration ====== -->
     <state id="running">
         <!-- Undocking requests -->
         <transition event="undock_req" condition="current_location == 0" target="valid_undock_req" />
         <transition event="undock_req" target="invalid_undock_req" />
         <!-- Docking requests -->
+        <transition event="dock_req" condition="current_location == 1" target="valid_dock_req" />
+        <transition event="dock_req" target="invalid_dock_req" />
         <!-- Navigate requests -->
+        <transition event="nav_req" condition="current_location != 0" target="valid_nav_req">
+            <assign location="goal_location" expr="_event.data.goal_location" />
+        </transition>
+        <transition event="nav_req" target="invalid_nav_req" />
         <!-- Coverage requests -->
         <!-- Unstuck requests -->
 
     </state>
 
-    <!-- Invalid undock request -->
+    <!-- ====== Undocking ====== -->
     <state id="invalid_undock_req">
         <transition target="running">
             <send event="undock_res">
@@ -60,7 +67,6 @@
         </transition>
     </state>
 
-    <!-- Valid undock request -->
     <state id="valid_undock_req">
         <onentry>
             <assign location="undock_count" expr="undock_count + 1" />
@@ -69,6 +75,7 @@
             <target id="running" prob="0.8">
                 <!-- Success -->
                 <assign location="current_location" expr="1" />
+                <assign location="undock_count" expr="0" />
                 <send event="undock_res">
                     <param name="accept" expr="true" />
                     <param name="success" expr="true" />
@@ -78,6 +85,7 @@
                 <if cond="undock_count &gt; 3">
                     <!-- Success -->
                     <assign location="current_location" expr="1" />
+                    <assign location="undock_count" expr="0" />
                     <send event="undock_res">
                         <param name="accept" expr="true" />
                         <param name="success" expr="true" />
@@ -85,6 +93,95 @@
                 <else/>
                     <!-- Failure -->
                     <send event="undock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Docking ====== -->
+    <state id="invalid_dock_req">
+        <transition target="running">
+            <send event="dock_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_dock_req">
+        <onentry>
+            <assign location="dock_count" expr="dock_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success -->
+                <assign location="current_location" expr="0" />
+                <assign location="dock_count" expr="0" />
+                <send event="dock_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="true" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="dock_count &gt; 3">
+                    <!-- Success -->
+                    <assign location="current_location" expr="1" />
+                    <assign location="dock_count" expr="0" />
+                    <send event="dock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <send event="dock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Navigation ====== -->
+    <state id="invalid_nav_req">
+        <transition target="running">
+            <send event="nav_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_nav_req">
+        <onentry>
+            <assign location="nav_count" expr="nav_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success if not stuck -->
+                <if cond="!is_stuck">
+                    <assign location="current_location" expr="goal_location" />
+                    <assign location="nav_count" expr="0" />
+                </if>
+                <send event="nav_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="!is_stuck" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="!is_stuck &amp;&amp; (current_location == goal_location || nav_count &gt; 3)">
+                    <!-- Success -->
+                    <assign location="current_location" expr="goal_location" />
+                    <assign location="nav_count" expr="0" />
+                    <send event="nav_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <assign location="is_stuck" expr="true" />
+                    <send event="nav_res">
                         <param name="accept" expr="true" />
                         <param name="success" expr="false" />
                     </send>
