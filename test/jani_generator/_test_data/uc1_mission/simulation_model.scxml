@@ -25,6 +25,7 @@
         <data id="undock_count" expr="0" type="int16" />
         <data id="dock_count" expr="0" type="int16" />
         <data id="nav_count" expr="0" type="int16" />
+        <data id="unstuck_count" expr="0" type="int16" />
         <!-- Additional settings from skill nodes -->
         <data id="goal_location" expr="0" type="int16" />
     </datamodel>
@@ -49,13 +50,17 @@
         <transition event="dock_req" condition="current_location == 1" target="valid_dock_req" />
         <transition event="dock_req" target="invalid_dock_req" />
         <!-- Navigate requests -->
-        <transition event="nav_req" condition="current_location != 0" target="valid_nav_req">
+        <transition event="nav_req" condition="current_location != 0 &amp;&amp; _event.data.goal_location &gt; 0 &amp;&amp; _event.data.goal_location &lt; 3" target="valid_nav_req">
             <assign location="goal_location" expr="_event.data.goal_location" />
         </transition>
         <transition event="nav_req" target="invalid_nav_req" />
         <!-- Coverage requests -->
+        <transition event="cov_step_req" condition="current_location != 0" target="valid_cov_step_req" />
+        <transition event="cov_step_req" target="invalid_cov_step_req" />
         <!-- Unstuck requests -->
-
+        <transition event="unstuck_req" condition="current_location == 0" target="invalid_unstuck_req" />
+        <transition event="unstuck_req" condition="is_stuck" target="valid_unstuck_req" />
+        <transition event="unstuck_req" target="valid_unstuck_req_dummy" />
     </state>
 
     <!-- ====== Undocking ====== -->
@@ -155,7 +160,9 @@
 
     <state id="valid_nav_req">
         <onentry>
-            <assign location="nav_count" expr="nav_count + 1" />
+            <if cond="!is_stuck">
+                <assign location="nav_count" expr="nav_count + 1" />
+            </if>
         </onentry>
         <transition>
             <target id="running" prob="0.8">
@@ -170,7 +177,7 @@
                 </send>
             </target>
             <target id="running" prob="0.2">
-                <if cond="!is_stuck &amp;&amp; (current_location == goal_location || nav_count &gt; 3)">
+                <if cond="!is_stuck &amp;&amp; (current_location == goal_location || nav_count &gt; 1)">
                     <!-- Success -->
                     <assign location="current_location" expr="goal_location" />
                     <assign location="nav_count" expr="0" />
@@ -187,6 +194,103 @@
                     </send>
                 </if>
             </target>
+        </transition>
+    </state>
+
+    <!-- ====== Coverage Step ====== -->
+    <state id="invalid_cov_step_req">
+        <transition target="running">
+            <send event="cov_step_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_cov_step_req">
+        <onentry>
+            <if cond="!is_stuck">
+                <assign location="cov_count" expr="cov_count + 1" />
+            </if>
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success if not stuck -->
+                <if cond="!is_stuck">
+                    <assign location="clean_percentage" expr="clean_percentage + 1" />
+                    <assign location="cov_count" expr="0" />
+                </if>
+                <send event="cov_step_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="!is_stuck" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="!is_stuck &amp;&amp; clean_count &gt; 2">
+                    <!-- Success -->
+                    <assign location="clean_percentage" expr="clean_percentage + 1" />
+                    <assign location="cov_count" expr="0" />
+                    <send event="cov_step_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <assign location="is_stuck" expr="true" />
+                    <send event="cov_step_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Unstuck Step ====== -->
+    <state id="invalid_unstuck_req">
+        <transition target="running">
+            <send event="unstuck_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_unstuck_req">
+        <onentry>
+            <assign location="unstuck_count" expr="unstuck_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <assign location="is_stuck" expr="false" />
+                <assign location="unstuck_count" expr="0" />
+                <send event="unstuck_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="true" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="unstuck_count &gt; 2">
+                    <assign location="is_stuck" expr="false" />
+                    <assign location="unstuck_count" expr="0" />
+                    <send event="unstuck_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <send event="unstuck_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <state id="valid_unstuck_req_dummy">
+        <transition target="running">
+            <send event="unstuck_res">
+                <param name="accept" expr="true" />
+                <param name="success" expr="true" />
+            </send>
         </transition>
     </state>
 
