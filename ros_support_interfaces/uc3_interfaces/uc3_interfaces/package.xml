@@ -14,4 +14,8 @@
   <exec_depend>people_detector_filter_interfaces_dummy</exec_depend>
   <exec_depend>scheduler_interfaces_dummy</exec_depend>
   <exec_depend>timer_interfaces_dummy</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
