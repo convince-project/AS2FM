@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="initial"
+    version="1.0"
+    name="ResetBumperState"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_service_client name="reset_bump" service_name="/reset_bump" type="std_srvs/Empty" />
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <ros_service_send_request name="reset_bump" />
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+        <bt_halt target="initial">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</scxml>
