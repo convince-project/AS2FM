@@ -16,6 +16,11 @@
   <exec_depend>fetch_and_carry_msgs</exec_depend>
   <exec_depend>grid_robot_interfaces</exec_depend>
   <exec_depend>nested_interfaces</exec_depend>
+  <exec_depend>uc1_interfaces</exec_depend>
   <exec_depend>uc2_interfaces</exec_depend>
   <exec_depend>uc3_interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
