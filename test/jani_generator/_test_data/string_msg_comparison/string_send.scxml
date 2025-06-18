@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    name="string_send"
+    version="1.0"
+    initial="current"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_topic_publisher name="publisher" topic="/str_topic" type="example_interfaces/String" />
+
+    <state id="current">
+        <transition target="done">
+            <ros_topic_publish name="publisher">
+                <field name="data" expr="'a string'" />
+            </ros_topic_publish>
+        </transition>
+    </state>
+
+    <state id="done" />
+</scxml>
