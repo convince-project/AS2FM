@@ -510,7 +510,8 @@ class RosTrigger(ScxmlSend):
         for single_field in self._fields:
             plain_params.extend(single_field.as_plain_scxml(struct_declarations, ros_declarations))
         for param_name, param_value in self._additional_args.items():
-            plain_params.append(ScxmlParam(param_name, expr=param_value))
+            expanded_value = get_plain_expression(param_value, self._cb_type, struct_declarations)
+            plain_params.append(ScxmlParam(param_name, expr=expanded_value))
         return [ScxmlSend(event_name, plain_params)]
 
     def as_xml(self) -> XmlElement:
