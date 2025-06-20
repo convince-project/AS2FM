@@ -3,14 +3,14 @@
     xmlns="http://www.w3.org/2005/07/scxml"
     initial="init"
     version="1.0"
-    name="BlackboardCheckBool"
+    name="BlackboardCheckInt"
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/include/behaviortree_cpp_v3/decorators/blackboard_precondition.h">
 
     <!-- A default BT port reporting the amount of children -->
     <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
     <!-- Additional input ports -->
-    <bt_declare_port_in key="value_A" type="bool" />
-    <bt_declare_port_in key="value_B" type="bool" />
+    <bt_declare_port_in key="value_A" type="int32" />
+    <bt_declare_port_in key="value_B" type="int32" />
     <bt_declare_port_in key="return_on_mismatch" type="int8" />
     <!-- This is a BT Status:
             * 1: SUCCESS
@@ -24,8 +24,8 @@
                 <bt_get_input key="CHILDREN_COUNT" />
             </expr>
         </data>
-        <data id="value_a" type="bool" expr="false"/>
-        <data id="value_b" type="bool" expr="false"/>
+        <data id="value_a" type="int32" expr="0"/>
+        <data id="value_b" type="int32" expr="0"/>
         <data id="mismatch_return" type="int8">
             <expr>
                 <bt_get_input key="return_on_mismatch"/>

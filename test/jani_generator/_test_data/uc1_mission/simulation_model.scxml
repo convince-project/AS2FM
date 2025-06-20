@@ -21,7 +21,7 @@
         <data id="current_location" expr="0" type="int16" />
         <data id="clean_percentage" type="int16" expr="0" />
         <data id="is_stuck" type="bool" expr="false" />
-        <!-- Additional failure counter variables -->
+        <!-- Additional failure counter variables, to ignore probabilities after n. attempts -->
         <data id="undock_count" expr="0" type="int16" />
         <data id="dock_count" expr="0" type="int16" />
         <data id="nav_count" expr="0" type="int16" />
