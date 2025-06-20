@@ -14,6 +14,7 @@
         <data id="nav_goal_id" expr="0" type="int16" />
         <data id="cov_goal_id" expr="0" type="int16" />
         <data id="nav_target" expr="0" type="int16" />
+        <data id="support_goal_id" expr="0" type="int16" />
     </datamodel>
 
     <ros_action_server name="navigation_action" action_name="/navigate_to_loc" type="uc1_interfaces/Navigate" />
@@ -33,7 +34,8 @@
         </ros_action_handle_goal>
         <!-- Coverage action requests handle -->
         <ros_action_handle_goal name="coverage_action" cond="coverage_running" target="wait_for_action">
-            <ros_action_reject_goal name="coverage_action" goal_id="_action.goal_id" />
+            <assign location="support_goal_id" expr="_action.goal_id" />
+            <ros_action_reject_goal name="coverage_action" goal_id="support_goal_id" />
         </ros_action_handle_goal>
         <ros_action_handle_goal name="coverage_action" target="wait_for_action">
             <assign location="cov_goal_id" expr="_action.goal_id" />
