@@ -24,7 +24,13 @@
 
     <state id="wait_for_action">
         <!-- Navigation action requests handle -->
-        <ros_action_handle_goal name="navigation_action" target="process_nav_req" />
+        <ros_action_handle_goal name="navigation_action" target="process_nav_req">
+            <assign location="nav_goal_id" expr="_action.goal_id" />
+            <assign location="nav_target" expr="_goal.loc_id"/>
+            <send event="nav_req">
+                <param name="goal_location" expr="nav_target" />
+            </send>
+        </ros_action_handle_goal>
         <!-- Coverage action requests handle -->
         <ros_action_handle_goal name="coverage_action" cond="coverage_running" target="wait_for_action">
             <ros_action_reject_goal name="coverage_action" goal_id="_action.goal_id" />
@@ -44,15 +50,8 @@
     </state>
 
     <state id="process_nav_req">
-        <onentry>
-            <assign location="nav_goal_id" expr="_action.goal_id" />
-            <assign location="nav_target" expr="_goal.loc_id"/>
-            <send event="nav_req">
-                <param name="goal_location" expr="nav_target" />
-            </send>
-        </onentry>
         <!-- Action call was accepted -->
-        <transition event="nav_res" cond="_event.data.accept" target="wait_action">
+        <transition event="nav_res" cond="_event.data.accept" target="wait_for_action">
             <!-- accept goal -->
             <ros_action_accept_goal name="navigation_action" goal_id="nav_goal_id" />
             <if cond="_event.data.success">
@@ -62,7 +61,7 @@
             </if>
         </transition>
         <!-- Action call was not accepted -->
-        <transition event="nav_res" target="wait_action">
+        <transition event="nav_res" target="wait_for_action">
             <ros_action_reject_goal name="navigation_action" goal_id="nav_goal_id" />
         </transition>
     </state>
