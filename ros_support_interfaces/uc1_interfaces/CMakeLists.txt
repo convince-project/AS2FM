@@ -25,6 +25,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/StuckInfo.msg"
+  "action/Coverage.action"
   "action/Navigate.action"
   "action/PerformDocking.action"
   "action/PerformUndocking.action"
