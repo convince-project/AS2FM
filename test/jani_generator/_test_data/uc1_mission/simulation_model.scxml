@@ -26,6 +26,7 @@
         <data id="dock_count" expr="0" type="int16" />
         <data id="nav_count" expr="0" type="int16" />
         <data id="unstuck_count" expr="0" type="int16" />
+        <data id="cov_count" expr="0" type="int16" />
         <!-- Additional settings from skill nodes -->
         <data id="goal_location" expr="0" type="int16" />
     </datamodel>

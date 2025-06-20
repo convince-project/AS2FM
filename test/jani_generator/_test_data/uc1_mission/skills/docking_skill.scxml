@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scxml
-    initial="wait_location"
+    initial="wait_for_action"
     version="1.0"
     name="DockingSkill"
     model_src=""
@@ -14,7 +14,7 @@
     <ros_action_server name="dock_action" action_name="/perform_docking" type="uc1_interfaces/PerformDocking" />
     <ros_action_server name="undock_action" action_name="/perform_undocking" type="uc1_interfaces/PerformUndocking" />
 
-    <state id="wait_action">
+    <state id="wait_for_action">
         <ros_action_handle_goal name="undock_action" target="process_undock_req">
             <assign location="goal_id" expr="_action.goal_id" />
             <send event="undock_req" />
@@ -27,7 +27,7 @@
 
     <state id="process_undock_req">
         <!-- Action call was accepted -->
-        <transition event="undock_res" cond="_event.data.accept" target="wait_action">
+        <transition event="undock_res" cond="_event.data.accept" target="wait_for_action">
             <!-- accept goal -->
             <ros_action_accept_goal name="undock_action" goal_id="goal_id" />
             <if cond="_event.data.success">
@@ -37,14 +37,14 @@
             </if>
         </transition>
         <!-- Action call was not accepted -->
-        <transition event="undock_res" target="wait_action">
+        <transition event="undock_res" target="wait_for_action">
             <ros_action_reject_goal name="undock_action" goal_id="goal_id" />
         </transition>
     </state>
 
     <state id="process_dock_req">
         <!-- Action call was accepted -->
-        <transition event="dock_res" cond="_event.data.accept" target="wait_action">
+        <transition event="dock_res" cond="_event.data.accept" target="wait_for_action">
             <!-- accept goal -->
             <ros_action_accept_goal name="dock_action" goal_id="goal_id" />
             <if cond="_event.data.success">
@@ -54,7 +54,7 @@
             </if>
         </transition>
         <!-- Action call was not accepted -->
-        <transition event="dock_res" target="wait_action">
+        <transition event="dock_res" target="wait_for_action">
             <ros_action_reject_goal name="dock_action" goal_id="goal_id" />
         </transition>
     </state>

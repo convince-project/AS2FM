@@ -207,7 +207,7 @@ def get_plain_expression(
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_DATA_PREFIX)
     new_expr = _replace_ros_interface_expression(in_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), (
-        "Error: SCXML-ROS expression conversion: "
+        f"Error: SCXML-ROS expression conversion with Cb type {cb_type.name}: "
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
     # arrays of custom structs
