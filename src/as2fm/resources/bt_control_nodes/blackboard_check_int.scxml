@@ -42,7 +42,23 @@
 
     <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
-        <bt_tick target="tick_child" />
+        <bt_tick target="tick_child">
+            <assign location="value_a">
+                <expr>
+                    <bt_get_input key="value_A" />
+                </expr>
+            </assign>
+            <assign location="value_b">
+                <expr>
+                    <bt_get_input key="value_B" />
+                </expr>
+            </assign>
+            <assign location="mismatch_return">
+                <expr>
+                    <bt_get_input key="return_on_mismatch" />
+                </expr>
+            </assign>
+        </bt_tick>
         <bt_halt target="halting_child" />
     </state>
 
@@ -56,18 +72,6 @@
     </state>
 
     <state id="exec_tick">
-        <onentry>
-            <assign location="value_a">
-                <expr>
-                    <bt_get_input key="value_A" />
-                </expr>
-            </assign>
-            <assign location="value_b">
-                <expr>
-                    <bt_get_input key="value_B" />
-                </expr>
-            </assign>
-        </onentry>
         <transition cond="value_a == value_b" target="tick_child"/>
         <transition target="value_mismatch"/>
     </state>
@@ -84,11 +88,6 @@
     <state id="value_mismatch">
         <onentry>
             <bt_halt_child id="0" />
-            <assign location="mismatch_return">
-                <expr>
-                    <bt_get_input key="return_on_mismatch" />
-                </expr>
-            </assign>
         </onentry>
         <bt_child_halted id="0" target="wait_for_tick">
             <bt_return_status status="mismatch_return" />
