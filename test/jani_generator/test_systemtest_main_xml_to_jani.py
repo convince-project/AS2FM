@@ -341,6 +341,13 @@ def get_cases():
         },
         # -------------------------------------------------------------------------------------
         # ROS features
+        # Test String types in ROS interfaces works correctly
+        _default_case()
+        | {
+            "_case_name": "ros_topic_with_strings",
+            "folder": "string_msg_comparison",
+            "property_name": "success",
+        },
         # Test services are properly handled in Jani.
         _default_case()
         | {
