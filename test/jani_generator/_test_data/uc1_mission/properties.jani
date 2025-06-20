@@ -1,35 +1,6 @@
 {
     "properties": [
         {
-            "name": "charging_starts",
-            "expression": {
-                "op": "filter",
-                "fun": "values",
-                "values": {
-                    "op": "Pmin",
-                    "exp": {
-                        "op": "F",
-                        "exp": {
-                            "op": "∧",
-                            "left": {
-                                "left": {
-                                    "op": "=",
-                                    "left": "topic_dist_to_dock_msg__ros_fields__data",
-                                    "right": 0
-                                },
-                                "op": "∧",
-                                "right": "topic_dist_to_dock_msg.valid"
-                            },
-                            "right": "topic_battery_charging_msg__ros_fields__data"
-                        }
-                    }
-                },
-                "states": {
-                    "op": "initial"
-                }
-            }
-        },
-        {
             "name": "tree_success",
             "expression": {
                 "op": "filter",
