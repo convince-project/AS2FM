@@ -81,6 +81,8 @@ def get_default_expression_for_type(field_type: Type[ValidScxmlTypes]) -> ValidS
     ), f"Error: Unsupported SCXML data type {field_type}."
     if field_type is MutableSequence:
         return []
+    if field_type is str:
+        return "''"
     else:
         return field_type()
 
