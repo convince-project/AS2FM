@@ -24,8 +24,8 @@ from as2fm.scxml_converter.scxml_entries.utils import all_non_empty_strings
 MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
     "sequence<int32>": "int32[]",
-    "sequence<float>": "float[]",
-    "sequence<double>": "double[]",
+    "sequence<float32>": "float32[]",
+    "sequence<float64>": "float64[]",
 }
 
 BASIC_FIELD_TYPES = [
@@ -34,12 +34,12 @@ BASIC_FIELD_TYPES = [
     "int16",
     "int32",
     "int64",
-    "float",
-    "double",
+    "float32",
+    "float64",
     "string",
     "sequence<int32>",
-    "sequence<float>",
-    "sequence<double>",
+    "sequence<float32>",
+    "sequence<float64>",
 ]
 
 # Container for the ROS interface name (e.g. topic or service name) and the related type
