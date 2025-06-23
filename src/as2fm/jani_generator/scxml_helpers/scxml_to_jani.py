@@ -95,10 +95,7 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
         except Exception as e:
             log_error(
                 input_scxml.get_xml_origin(),
-                (
-                    f"Error while converting SCXML model {input_scxml.get_name()}. "
-                    f"Error: {e.args[0]}."
-                ),
+                f"Error while converting SCXML model {input_scxml.get_name()}.",
             )
             raise e
         base_model.add_jani_automaton(automaton)
