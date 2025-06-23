@@ -21,6 +21,7 @@ The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 
 from typing import Any, Dict, List, Optional
 
+from as2fm.as2fm_common.logging import log_error
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -87,7 +88,19 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
         assert (
             input_scxml.is_plain_scxml()
         ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
-        automaton = convert_scxml_root_to_jani_automaton(input_scxml, events_holder, max_array_size)
+        try:
+            automaton = convert_scxml_root_to_jani_automaton(
+                input_scxml, events_holder, max_array_size
+            )
+        except Exception as e:
+            log_error(
+                input_scxml.get_xml_origin(),
+                (
+                    f"Error while converting SCXML model {input_scxml.get_name()}. "
+                    f"Error: {e.args[0]}."
+                ),
+            )
+            raise e
         base_model.add_jani_automaton(automaton)
     implement_scxml_events_as_jani_syncs(events_holder, max_array_size, base_model)
     remove_empty_self_loops_from_interface_handlers_in_jani(base_model)
