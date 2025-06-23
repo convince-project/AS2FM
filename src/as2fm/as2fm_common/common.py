@@ -74,9 +74,11 @@ def is_comment(element: XmlElement) -> bool:
     return isinstance(element, XmlComment) or "function Comment" in str(element)
 
 
-def get_default_expression_for_type(field_type: Type[ValidJaniTypes]) -> ValidJaniTypes:
+def get_default_expression_for_type(field_type: Type[ValidScxmlTypes]) -> ValidScxmlTypes:
     """Generate a default expression for a field type."""
-    assert field_type in get_args(ValidJaniTypes), f"Error: Unsupported data type {field_type}."
+    assert field_type in get_args(
+        ValidScxmlTypes
+    ), f"Error: Unsupported SCXML data type {field_type}."
     if field_type is MutableSequence:
         return []
     else:
