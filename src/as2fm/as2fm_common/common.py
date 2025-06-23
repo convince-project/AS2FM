@@ -85,7 +85,7 @@ def get_default_expression_for_type(field_type: Type[ValidScxmlTypes]) -> ValidS
         return field_type()
 
 
-def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
+def value_to_type(value: ValidScxmlTypes) -> Type[ValidJaniTypes]:
     """Return the type of a python object (to be a jani value)."""
     if isinstance(value, MutableSequence):
         return MutableSequence
@@ -97,7 +97,7 @@ def value_to_type(value: ValidJaniTypes | str) -> Type[ValidJaniTypes]:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def value_to_string_expr(value: ValidJaniTypes) -> str:
+def value_to_string_expr(value: ValidScxmlTypes) -> str:
     """Return a python object (to be a jani value) as a string."""
     if isinstance(value, MutableSequence):
         assert is_valid_array(value), f"Found invalid input array {value}."
@@ -107,6 +107,8 @@ def value_to_string_expr(value: ValidJaniTypes) -> str:
         return str(value).lower()
     elif isinstance(value, (int, float)):
         return str(value)
+    elif isinstance(value, str):
+        return value
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
