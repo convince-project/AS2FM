@@ -136,7 +136,9 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
     idle_state = ScxmlState("idle")
     # Tick timer with a delay corresponding to 'global_timer_period',
     # by sending a delayed event to the timer itself.
-    delay = ScxmlSend(event="tick_timer", target_automaton="GLOBAL_TIMER_AUTOMATON", delay=global_timer_period)
+    delay = ScxmlSend(
+        event="tick_timer", target_automaton="GLOBAL_TIMER_AUTOMATON", delay=global_timer_period
+    )
     # send delayed 'tick_timer' event to self on entry of 'idle' state
     idle_state.set_on_entry([delay])
     global_timer_tick_body: ScxmlExecutionBody = [
