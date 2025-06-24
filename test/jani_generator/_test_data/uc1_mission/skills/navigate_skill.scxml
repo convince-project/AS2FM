@@ -77,7 +77,7 @@
             <ros_action_aborted name="coverage_action" goal_id="cov_goal_id" />
         </transition>
         <transition event="cov_step_res" target="wait_for_action">
-            <if cond="!event.data.success">
+            <if cond="!_event.data.success">
                 <assign location="coverage_fail_count" expr="coverage_fail_count + 1" />
             <else/>
                 <assign location="coverage_fail_count" expr="0" />

@@ -240,7 +240,7 @@
                 </send>
             </target>
             <target id="running" prob="0.2">
-                <if cond="!is_stuck &amp;&amp; clean_count &gt; 2">
+                <if cond="!is_stuck &amp;&amp; cov_count &gt; 2">
                     <!-- Success -->
                     <assign location="clean_percentage" expr="clean_percentage + 1" />
                     <assign location="cov_count" expr="0" />
