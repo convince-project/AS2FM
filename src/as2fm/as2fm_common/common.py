@@ -42,7 +42,7 @@ ValidJaniTypes = Union[bool, int, float, MutableSequence]
 # When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
 # Strings.
 SupportedECMAScriptSequences = (MutableSequence, str)
-ValidScxmlTypes = Union[bool, int, float, MutableSequence, str]
+ValidPlainScxmlTypes = Union[bool, int, float, MutableSequence, str]
 
 # Small number used for float comparison.
 EPSILON = 1e-3
@@ -74,10 +74,10 @@ def is_comment(element: XmlElement) -> bool:
     return isinstance(element, XmlComment) or "function Comment" in str(element)
 
 
-def get_default_expression_for_type(field_type: Type[ValidScxmlTypes]) -> ValidScxmlTypes:
+def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> ValidPlainScxmlTypes:
     """Generate a default expression for a field type."""
     assert field_type in get_args(
-        ValidScxmlTypes
+        ValidPlainScxmlTypes
     ), f"Error: Unsupported SCXML data type {field_type}."
     if field_type is MutableSequence:
         return []
@@ -87,7 +87,7 @@ def get_default_expression_for_type(field_type: Type[ValidScxmlTypes]) -> ValidS
         return field_type()
 
 
-def value_to_type(value: ValidScxmlTypes) -> Type[ValidJaniTypes]:
+def value_to_type(value: ValidPlainScxmlTypes) -> Type[ValidJaniTypes]:
     """Return the type of a python object (to be a jani value)."""
     if isinstance(value, MutableSequence):
         return MutableSequence
@@ -99,7 +99,7 @@ def value_to_type(value: ValidScxmlTypes) -> Type[ValidJaniTypes]:
         raise ValueError(f"Unsupported value type {type(value)}.")
 
 
-def value_to_string_expr(value: ValidScxmlTypes) -> str:
+def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
     """Return a python object (to be a jani value) as a string."""
     if isinstance(value, MutableSequence):
         assert is_valid_array(value), f"Found invalid input array {value}."
@@ -241,7 +241,7 @@ def string_as_bool(value_str: str) -> bool:
     return value_str == "true"
 
 
-def is_array_type(field_type: Type[ValidScxmlTypes]) -> bool:
+def is_array_type(field_type: Type[ValidPlainScxmlTypes]) -> bool:
     """Check if the field type is an array type."""
     return field_type is MutableSequence
 

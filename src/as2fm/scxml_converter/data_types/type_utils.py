@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union, get_args
 
-from as2fm.as2fm_common.common import ValidScxmlTypes, get_array_type_and_sizes
+from as2fm.as2fm_common.common import ValidPlainScxmlTypes, get_array_type_and_sizes
 from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
@@ -174,8 +174,8 @@ def get_array_info(data_type: str, expect_base_type: bool = True) -> ArrayInfo:
 
 
 def check_variable_base_type_ok(
-    data_value: ValidScxmlTypes,
-    expected_data_type: Type[ValidScxmlTypes],
+    data_value: ValidPlainScxmlTypes,
+    expected_data_type: Type[ValidPlainScxmlTypes],
     array_info: Optional[ArrayInfo] = None,
 ) -> bool:
     """
@@ -187,7 +187,7 @@ def check_variable_base_type_ok(
     :param array_info: Information about the array, if the data value is expected to one.
     :return: True if the data value matches the expected type, otherwise False.
     """
-    valid_types = get_args(ValidScxmlTypes)
+    valid_types = get_args(ValidPlainScxmlTypes)
     assert (
         expected_data_type in valid_types
     ), f"Invalid expected data type '{expected_data_type}' not in {valid_types}"
