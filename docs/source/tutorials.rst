@@ -19,11 +19,11 @@ Just clone the repository and then run the following command in the root folder 
 
     $ docker compose run -it --remove-orphans base bash
 
-Then change to the following folder inside the container in which the files of the repository are mounted:
+Then, in the running container, navigate to the following folder, which is mounted from the cloned repository:
 
 .. code-block:: bash
 
-    $ cd /colcon_ws/src/as2fm/examples/tutorial_fetch_and_carry
+    $ cd examples/tutorial_fetch_and_carry
 
 In case you want to install AS2FM locally follow the description in the :ref:`installation guide <installation>`.
 

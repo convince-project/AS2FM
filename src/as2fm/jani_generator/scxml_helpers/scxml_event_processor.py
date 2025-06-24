@@ -220,9 +220,15 @@ def implement_scxml_events_as_jani_syncs(
     # Add syncs for rate timers
     for timer_event in timer_events:
         timer_send_event, timer_recv_event = _generate_event_action_names(timer_event)
-        assert len(timer_event.get_senders()) == 1
+        n_timer_senders = len(timer_event.get_senders())
+        n_timer_recvs = len(timer_event.get_receivers())
+        assert (
+            n_timer_senders == 1
+        ), f"Error: timer {timer_event.name} sender are {n_timer_senders} != 1"
         # TODO: Check if having the same timer name in multiple automata creates problems
-        assert len(timer_event.get_receivers()) == 1
+        assert (
+            n_timer_recvs == 1
+        ), f"Error: timer {timer_event.name} receivers are {n_timer_recvs} != 1"
         recv_automaton_name = timer_event.get_receivers()[0].automaton_name
         timer_trigger_syncs = {
             GLOBAL_TIMER_AUTOMATON: timer_send_event,

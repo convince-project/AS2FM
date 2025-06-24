@@ -218,6 +218,8 @@ def generate_plain_scxml_models_and_timers(
     bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_scxmls)
     for scxml_entry in ros_scxmls:
         plain_scxmls, ros_declarations = scxml_entry.to_plain_scxml_and_declarations()
+        for plain_scxml in plain_scxmls:
+            plain_scxml.set_xml_origin(scxml_entry.get_xml_origin())
         # Handle ROS timers
         for timer_name, timer_rate in ros_declarations._timers.items():
             assert timer_name not in all_timers, f"Timer {timer_name} already exists."

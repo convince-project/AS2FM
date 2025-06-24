@@ -60,9 +60,10 @@ class RosCommunicationHandler:
             assert (
                 self._interface_name == interface_name
             ), f"Error: Interface name {interface_name} does not match {self._interface_name}."
-            assert (
-                self._interface_type == interface_type
-            ), f"Error: Interface type {interface_type} does not match {self._interface_type}."
+            assert self._interface_type == interface_type, (
+                f"Error: Interface type {interface_type} does not match {self._interface_type} for "
+                f"interface name {self._interface_name}."
+            )
 
     def _assert_validity(self):
         """
