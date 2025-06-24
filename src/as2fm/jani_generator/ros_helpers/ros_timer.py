@@ -134,6 +134,11 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
     scxml_root.add_ros_declaration(clock_topic_decl)
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData(curr_time_var, "0", "int64")]))
     idle_state = ScxmlState("idle")
+    # Tick timer with a delay corresponding to 'global_timer_period',
+    # by sending a delayed event to the timer itself.
+    delay = ScxmlSend(event="tick_timer", target_automaton="GLOBAL_TIMER_AUTOMATON", delay=global_timer_period)
+    # send delayed 'tick_timer' event to self on entry of 'idle' state
+    idle_state.set_on_entry([delay])
     global_timer_tick_body: ScxmlExecutionBody = [
         ScxmlAssign(curr_time_var, f"{curr_time_var} + {global_timer_period}"),
         _get_current_time_to_clock_msg_publish(
@@ -151,8 +156,9 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
                 ]
             )
         )
+    # transition is activated by 'tick_timer' event sent on entry of 'idle' state
     timer_step_transition = ScxmlTransition.make_single_target_transition(
-        "idle", [], f"{curr_time_var} < {max_time}", global_timer_tick_body
+        "idle", ["tick_timer"], f"{curr_time_var} < {max_time}", global_timer_tick_body
     )
     idle_state.add_transition(timer_step_transition)
     scxml_root.add_state(idle_state, initial=True)

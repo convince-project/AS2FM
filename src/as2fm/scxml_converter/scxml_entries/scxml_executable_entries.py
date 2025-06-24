@@ -333,6 +333,7 @@ class ScxmlSend(ScxmlBase):
         event: str,
         params: Optional[List[ScxmlParam]] = None,
         target_automaton: Optional[str] = None,
+        delay: Optional[int] = None,
     ):
         """
         Construct a new ScxmlSend object.
@@ -346,6 +347,7 @@ class ScxmlSend(ScxmlBase):
         self._event = event
         self._params = params
         self._target_automaton = target_automaton
+        self._delay = delay
         self._cb_type: Optional[CallbackType] = None
 
     def set_callback_type(self, cb_type: CallbackType) -> None:
@@ -431,13 +433,16 @@ class ScxmlSend(ScxmlBase):
             expanded_params.extend(param.as_plain_scxml(struct_declarations, ros_declarations))
         # For now, no conversion to plain scxml is expected for params
         # param.as_plain_scxml()
-        return [ScxmlSend(self._event, expanded_params)]
+        return [ScxmlSend(self._event, expanded_params, delay=self._delay)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
         if self._target_automaton is not None:
             xml_send.set("target", self._target_automaton)
+        if self._delay is not None:
+            # delay needs explicit conversion to str
+            xml_send.set("delay", str(self._delay))
         for param in self._params:
             xml_send.append(param.as_xml())
         return xml_send
