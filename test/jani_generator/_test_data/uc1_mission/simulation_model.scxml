@@ -44,6 +44,20 @@
 
     <!-- ====== Requests orchestration ====== -->
     <state id="running">
+        <onentry>
+            <ros_topic_publish name="current_coverage">
+                <field name="data" expr="clean_percentage" />
+            </ros_topic_publish>
+            <if cond="is_stuck">
+                <ros_topic_publish name="stuck_info">
+                    <field name="state" expr="1" />
+                </ros_topic_publish>
+                <else/>
+                <ros_topic_publish name="stuck_info">
+                    <field name="state" expr="0" />
+                </ros_topic_publish>
+            </if>
+        </onentry>
         <!-- Undocking requests -->
         <transition event="undock_req" cond="current_location == 0" target="valid_undock_req" />
         <transition event="undock_req" target="invalid_undock_req" />

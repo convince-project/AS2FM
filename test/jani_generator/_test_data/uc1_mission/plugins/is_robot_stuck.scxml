@@ -27,7 +27,7 @@
             <bt_return_halted />
         </bt_halt>
         <ros_topic_callback name="stuck_sub" target="idle">
-            <assign location="last_stuck_info" expr="_msg.stuck_info" />
+            <assign location="last_stuck_info" expr="_msg.state" />
         </ros_topic_callback>
     </state>
 
