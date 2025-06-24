@@ -24,13 +24,14 @@
                 <bt_get_input key="CHILDREN_COUNT" />
             </expr>
         </data>
-        <data id="value_a" type="int32" expr="0"/>
-        <data id="value_b" type="int32" expr="0"/>
+        <data id="value_a" type="int32" expr="0" />
+        <data id="value_b" type="int32" expr="0" />
         <data id="mismatch_return" type="int8">
             <expr>
-                <bt_get_input key="return_on_mismatch"/>
+                <bt_get_input key="return_on_mismatch" />
             </expr>
         </data>
+        <data id="support_bt_status" type="int32" expr="0" />
     </datamodel>
 
     <state id="init">
@@ -81,7 +82,8 @@
             <bt_tick_child id="0"/>
         </onentry>
         <bt_child_status id="0" target="wait_for_tick">
-            <bt_return_status status="_bt.status" />
+            <assign location="support_bt_status" expr="_bt.status" />
+            <bt_return_status status="support_bt_status" />
         </bt_child_status>
     </state>
 
