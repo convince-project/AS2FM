@@ -100,7 +100,7 @@ def value_to_type(value: ValidPlainScxmlTypes) -> Type[ValidJaniTypes]:
 
 
 def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
-    """Return a python object (to be a jani value) as a string."""
+    """Takes a python object and returns it as a (SCXML compatible) string."""
     if isinstance(value, MutableSequence):
         assert is_valid_array(value), f"Found invalid input array {value}."
         # Expect value to be a list, so casting to string is enough.
@@ -110,7 +110,7 @@ def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
     elif isinstance(value, (int, float)):
         return str(value)
     elif isinstance(value, str):
-        return value
+        return f"'{value}'"
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
 

@@ -27,7 +27,7 @@ MSG_TYPE_SUBSTITUTIONS = {
     "double": "float64",
     "sequence<int32>": "int32[]",
     "sequence<float>": "float32[]",
-    "sequence<float64>": "float64[]",
+    "sequence<double>": "float64[]",
 }
 
 BASIC_FIELD_TYPES = [
