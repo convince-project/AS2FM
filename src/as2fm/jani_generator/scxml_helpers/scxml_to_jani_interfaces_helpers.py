@@ -182,12 +182,13 @@ def generate_jani_assignments(
             if assignment_value_type == JaniExpressionType.IDENTIFIER:
                 assignment_value_name: str = assignment_value.as_identifier()
                 assignment_value_ids: List[JaniExpression] = []
-            elif (
-                assignment_value_type == JaniExpressionType.OPERATOR and assignment_value.op == "aa"
-            ):
-                assignment_value_name, assignment_value_ids = __get_array_access_name_and_indexes(
-                    assignment_value
-                )
+            elif assignment_value_type == JaniExpressionType.OPERATOR:
+                if assignment_value.op == "aa":
+                    assignment_value_name, assignment_value_ids = (
+                        __get_array_access_name_and_indexes(assignment_value)
+                    )
+                else:
+                    raise NotImplementedError("Unexpected operator found: '{assignment_value.op}'")
             else:
                 raise NotImplementedError("Cannot assign explicitly arrays to a specific var index")
             assignment_n_dims = len(assignment_value_ids)
