@@ -24,7 +24,7 @@ import js2py
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import ValidScxmlTypes
+from as2fm.as2fm_common.common import ValidPlainScxmlTypes
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 
 BasicJsTypes = Union[int, float, bool, str]
@@ -69,8 +69,8 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
 
 
 def _interpret_ecmascript_expr(
-    expr: str, variables: Dict[str, ValidScxmlTypes]
-) -> Union[ValidScxmlTypes, dict]:
+    expr: str, variables: Dict[str, ValidPlainScxmlTypes]
+) -> Union[ValidPlainScxmlTypes, dict]:
     """
     Process a JS expression and return the resulting value.
 
@@ -106,9 +106,9 @@ def _interpret_ecmascript_expr(
 
 def interpret_ecma_script_expr(
     expr: str,
-    variables: Optional[Dict[str, ValidScxmlTypes]] = None,
+    variables: Optional[Dict[str, ValidPlainScxmlTypes]] = None,
     allow_dict_results: bool = False,
-) -> Union[ValidScxmlTypes, dict]:
+) -> Union[ValidPlainScxmlTypes, dict]:
     """
     Interpret the ECMA script expression and return the resulting value.
 

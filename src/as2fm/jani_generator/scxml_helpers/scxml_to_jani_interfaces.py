@@ -403,8 +403,8 @@ class StateTag(BaseTag):
                 transition_event = transition_events[0]
                 has_event_transition = True
             assert transition_event not in self._events_no_condition, (
-                f"Event {transition_event} in state {self.element.get_id()} has already a base"
-                "exit condition."
+                f"Model {self.call_trace[0].get_name()} has an event {transition_event} in state "
+                f"{self.element.get_id()} that has already a base exit condition."
             )
             transition_condition = child.element.get_condition()
             # Add previous conditions matching the same event trigger to the current child state
