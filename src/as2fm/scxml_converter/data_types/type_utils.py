@@ -211,8 +211,5 @@ def check_variable_base_type_ok(
 
             return recurse_on_array(data_value, array_info.array_dimensions, expected_types)
         else:
-            # Small hack to accept integer values in case type is float
-            if expected_data_type is float:
-                expected_types = (int, float)
             return isinstance(data_value, expected_types)
     return False
