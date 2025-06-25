@@ -195,7 +195,7 @@ def check_variable_base_type_ok(
     if isinstance(data_value, valid_types):
         if isinstance(data_value, MutableSequence):
             assert array_info is not None
-            # Small hack to accept integer values in case type is float
+            # TODO: Small hack to accept integer values in case array type is float
             expected_types = (int,) if array_info.array_type is int else (int, float)
 
             # We are dealing with a list, use array_info data
