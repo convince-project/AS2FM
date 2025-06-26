@@ -31,7 +31,6 @@
                 <bt_get_input key="return_on_mismatch" />
             </expr>
         </data>
-        <data id="support_bt_status" type="int32" expr="0" />
     </datamodel>
 
     <state id="init">
@@ -43,7 +42,7 @@
 
     <state id="wait_for_tick">
         <!-- React to an incoming BT Tick -->
-        <bt_tick target="tick_child">
+        <bt_tick target="exec_tick">
             <assign location="value_a">
                 <expr>
                     <bt_get_input key="value_A" />
@@ -81,10 +80,16 @@
         <onentry>
             <bt_tick_child id="0"/>
         </onentry>
-        <bt_child_status id="0" target="wait_for_tick">
-            <assign location="support_bt_status" expr="_bt.status" />
-            <bt_return_status status="support_bt_status" />
+        <bt_child_status id="0" target="wait_for_tick" cond="_bt.status == SUCCESS">
+            <bt_return_status status="SUCCESS" />
         </bt_child_status>
+        <bt_child_status id="0" target="wait_for_tick" cond="_bt.status == FAILURE">
+            <bt_return_status status="FAILURE" />
+        </bt_child_status>
+        <bt_child_status id="0" target="wait_for_tick" cond="_bt.status == RUNNING">
+            <bt_return_status status="RUNNING" />
+        </bt_child_status>
+        <bt_child_status id="0" target="error" />
     </state>
 
     <state id="value_mismatch">
