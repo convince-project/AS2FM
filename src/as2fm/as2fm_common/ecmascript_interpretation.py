@@ -77,6 +77,13 @@ def _interpret_ecmascript_expr(
     :param expr: The ECMA script expression to evaluate.
     :param variables: A dictionary of variables to be used in the ECMA script context.
     """
+    # TODO: This is so hacky that we wanna cry
+    current_float = 0.3
+    for key in variables:
+        if isinstance(variables[key], float):
+            # Just a number to ensure we don't end up with an integer
+            current_float += 0.01
+            variables[key] = current_float
     context = js2py.EvalJs(variables)
     try:
         context.execute("result = " + expr)
