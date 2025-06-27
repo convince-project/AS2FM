@@ -14,6 +14,30 @@ Using AS2FM, we can convert the model described using SCXML to JANI, that is a J
 
 The main difference between SCXML and JANI is that in JANI there is no concept of events, so synchronization must be achieved using the global variables and composition description.
 
+Processing steps
+----------------
+
+.. mermaid::
+
+    flowchart TD
+        main_xml("main.xml"):::file
+        tli(["top_level_interpreter"]):::proc
+        fsf(["from_scxml_file"]):::proc
+        scxml["ScxmlRoot"]:::object
+
+        main_xml --> tli
+        tli --> fsf
+        fsf --> scxml
+
+        click tli "https://convince-project.github.io/AS2FM/API/as2fm.jani_generator.scxml_helpers.top_level_interpreter.html" _blank
+        click fsf "https://convince-project.github.io/AS2FM/API/as2fm.scxml_converter.scxml_entries.scxml_root.ScxmlRoot.html#as2fm.scxml_converter.scxml_entries.scxml_root.ScxmlRoot.from_scxml_file" _blank
+
+        classDef file,object,proc stroke:#000,stroke-width:2px
+        classDef file fill:#86cac9
+        classDef object fill:#face93
+        classDef proc fill:#f4a2b3
+
+
 .. _hl_scxml:
 
 High-Level (ROS) SCXML Implementation

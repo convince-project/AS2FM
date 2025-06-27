@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
+    "sphinxcontrib.mermaid",
     # 'myst_parser',
     # 'autodoc2',
 ]
