@@ -355,6 +355,14 @@ def get_cases():
             "folder": "ros_add_int_srv_example",
             "property_name": "happy_clients",
         },
+        # Also in case we are dealing with float numbers
+        _default_case()
+        | {
+            "_case_name": "set_float_srv_example",
+            "folder": "set_float_srv_example",
+            "property_name": "float_received",
+            "disable_cache": True,
+        },
         # Test actions are properly handled in Jani.
         _default_case()
         | {

@@ -1,0 +1,25 @@
+{
+    "properties": [
+        {
+            "name": "float_received",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": "topic_recv_float_msg__ros_fields__data",
+                            "right": "topic_recv_float_msg.valid"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

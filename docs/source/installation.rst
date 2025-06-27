@@ -63,7 +63,7 @@ AS2FM Python Package
 
     Before proceeding with the installation, make sure that pip's version is at least 24.0.
 
-    - To check pip's version: `python3 -m pip --version -m pip --version`
+    - To check pip's version: `python3 -m pip --version`
     - To upgrade pip: `python3 -m pip install --upgrade pip`
 
 .. note::

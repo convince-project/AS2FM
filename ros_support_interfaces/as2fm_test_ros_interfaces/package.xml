@@ -8,6 +8,7 @@
   <license>Apache License 2.0</license>
   <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
 
+  <exec_depend>as2fm_test_srvs</exec_depend>
   <exec_depend>example_interfaces</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
