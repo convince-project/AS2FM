@@ -225,6 +225,7 @@
         <onentry>
             <if cond="!is_stuck">
                 <assign location="cov_count" expr="cov_count + 1" />
+                <assign location="current_location" expr="2" />
             </if>
         </onentry>
         <transition>

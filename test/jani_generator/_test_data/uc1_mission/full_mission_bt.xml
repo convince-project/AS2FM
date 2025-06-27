@@ -34,7 +34,9 @@
                     value_A="{undocking_done}" value_B="0">
                     <Sequence name="perfom_undocking">
                         <SetBlackboard output_key="{mission_stage}" value="1"/>
-                        <PerformUndockingAction/>
+                        <RetryUntilSuccessful num_attempts="5">
+                            <PerformUndockingAction/>
+                        </RetryUntilSuccessful>
                         <SetBlackboard output_key="{undocking_done}" value="1"/>
                     </Sequence>
                 </BlackboardCheckInt>
