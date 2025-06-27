@@ -23,7 +23,8 @@
             </if>
         </bt_tick>
         <bt_halt target="idle">
-            <assign location="last_stuck_info" expr="0" />
+            <!-- Do not delete the latest stuck info on reset, consider it as a latched msg -->
+            <!-- <assign location="last_stuck_info" expr="0" /> -->
             <bt_return_halted />
         </bt_halt>
         <ros_topic_callback name="stuck_sub" target="idle">
