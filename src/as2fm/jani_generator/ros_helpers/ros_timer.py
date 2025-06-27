@@ -135,12 +135,13 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
     scxml_root.add_ros_declaration(clock_topic_decl)
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData(curr_time_var, "0", "int64")]))
     idle_state = ScxmlState("idle")
-    # Tick timer with a delay corresponding to 'global_timer_period',
-    # by sending a delayed event to the timer itself.
+    # Tick timer with a delay of 1 (as there is no smaller time step needed in the model).
+    # This way, the channel system own time-unit corresponds to a duration of `global_timer_period` with unit `global_timer_period_unit`.
+    # Timing is achieved by sending a delayed event to the timer itself.
     delay = ScxmlSend(
         event=GLOBAL_TIMER_TICK_EVENT,
         target_automaton=GLOBAL_TIMER_AUTOMATON,
-        delay=global_timer_period,
+        delay=1,
     )
     # send delayed 'tick_timer' event to self on entry of 'idle' state
     idle_state.set_on_entry([delay])
