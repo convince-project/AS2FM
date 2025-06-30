@@ -279,7 +279,7 @@
             <assign location="unstuck_count" expr="unstuck_count + 1" />
         </onentry>
         <transition>
-            <target id="running" prob="0.8">
+            <target id="running" prob="0.7">
                 <assign location="is_stuck" expr="false" />
                 <assign location="unstuck_count" expr="0" />
                 <send event="unstuck_res">
@@ -287,8 +287,9 @@
                     <param name="success" expr="true" />
                 </send>
             </target>
-            <target id="running" prob="0.2">
-                <if cond="unstuck_count &gt; 2">
+            <target id="running" prob="0.3">
+                <if cond="unstuck_count &gt; 4">
+                    <!-- Force success at the 5th attempt -->
                     <assign location="is_stuck" expr="false" />
                     <assign location="unstuck_count" expr="0" />
                     <send event="unstuck_res">

@@ -10,10 +10,18 @@
                     "exp": {
                         "op": "F",
                         "exp": {
-                            "op": "=",
-                            "left": "bt_1000_response__status",
-                            "right": 1,
-                            "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 1,
+                                "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                            },
+                            "right": {
+                                "op": "≥",
+                                "left": "topic_coverage_percentage_msg__ros_fields__data",
+                                "right": 95
+                            }
                         }
                     }
                 },
