@@ -233,10 +233,10 @@
             </if>
         </onentry>
         <transition>
-            <target id="running" prob="0.8">
+            <target id="running" prob="0.9">
                 <!-- Success if not stuck -->
                 <if cond="!is_stuck">
-                    <assign location="clean_percentage" expr="clean_percentage + 1" />
+                    <assign location="clean_percentage" expr="clean_percentage + 3" />
                     <assign location="cov_count" expr="0" />
                 </if>
                 <send event="cov_step_res">
@@ -244,10 +244,10 @@
                     <param name="success" expr="!is_stuck" />
                 </send>
             </target>
-            <target id="running" prob="0.2">
+            <target id="running" prob="0.1">
                 <if cond="!is_stuck &amp;&amp; cov_count &gt; 2">
                     <!-- Success -->
-                    <assign location="clean_percentage" expr="clean_percentage + 1" />
+                    <assign location="clean_percentage" expr="clean_percentage + 3" />
                     <assign location="cov_count" expr="0" />
                     <send event="cov_step_res">
                         <param name="accept" expr="true" />

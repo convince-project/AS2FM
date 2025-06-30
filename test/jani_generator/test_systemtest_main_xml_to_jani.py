@@ -46,6 +46,7 @@ def _test_with_main(
     skip_properties_load_check: bool,
     disable_cache: bool,
     n_threads: int,
+    batch_size: int,
     _case_name: str,
 ):
     """
@@ -62,7 +63,8 @@ def _test_with_main(
     :param n_traces_limit: The max. number of iterations to run in SMC.
     :param skip_properties_load_check: Disable the equality check for the loaded properties.
     :param disable_cache: Whether to disable cache in smc_storm.
-    :param n_threads: How many threads to use
+    :param n_threads: How many threads to use.
+    :param batch_size: How many traces to compute in a batch before checking for convergence.
     :param _case_name: Unused here. Needed to name the parameterized tests.
     """
     test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
@@ -101,7 +103,7 @@ def _test_with_main(
             storm_command = (
                 f"--model {jani_path} --properties-names {property_name} "
                 + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit} "
-                + f"--n-threads {n_threads}"
+                + f"--n-threads {n_threads} --batch-size {batch_size}"
             )
             if disable_cache:
                 storm_command += " --disable-explored-states-caching"
@@ -137,6 +139,7 @@ def _default_case():
         "skip_properties_load_check": False,
         "disable_cache": False,
         "n_threads": 1,
+        "batch_size": 100,
     }
 
 
@@ -465,6 +468,19 @@ def get_cases():
             "expected_result_probability": 0.0,
             "trace_length_limit": 1_000_000,
             "n_threads": 8,
+        },
+        # UC1 Complete Mission
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main.xml",
+            "property_name": "tree_success",
+            "expected_result_probability": 1.0,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 50,
+            "n_threads": 8,
+            "batch_size": 1,
         },
         # UC2 Assembly recovery
         _default_case()
