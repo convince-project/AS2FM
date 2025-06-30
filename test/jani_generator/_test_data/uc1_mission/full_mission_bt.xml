@@ -48,7 +48,10 @@
                             <PerformOnlineCoverage/>
                             <SetBlackboard output_key="{online_coverage_done}" value="1"/>
                         </Sequence>
-                        <SetBlackboard output_key="{mission_failed}" value="1"/>
+                        <Sequence>
+                            <SetBlackboard output_key="{online_coverage_done}" value="1"/>
+                            <SetBlackboard output_key="{mission_failed}" value="1"/>
+                        </Sequence>
                     </Fallback>
                 </BlackboardCheckInt>
                 <SetBlackboard output_key="{mission_stage}" value="2"/>

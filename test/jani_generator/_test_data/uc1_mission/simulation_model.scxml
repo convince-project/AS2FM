@@ -32,6 +32,7 @@
     </datamodel>
 
     <ros_topic_publisher name="current_coverage" topic="/coverage_percentage" type="std_msgs/Int16" />
+    <ros_topic_publisher name="current_state" topic="/robot_state" type="std_msgs/Int16" />
     <ros_topic_publisher name="stuck_info" topic="/stuck_info" type="uc1_interfaces/StuckInfo" />
 
     <state id="init">
@@ -45,6 +46,9 @@
     <!-- ====== Requests orchestration ====== -->
     <state id="running">
         <onentry>
+            <ros_topic_publish name="current_state">
+                <field name="data" expr="current_location" />
+            </ros_topic_publish>
             <ros_topic_publish name="current_coverage">
                 <field name="data" expr="clean_percentage" />
             </ros_topic_publish>
@@ -147,7 +151,7 @@
             <target id="running" prob="0.2">
                 <if cond="dock_count &gt; 3">
                     <!-- Success -->
-                    <assign location="current_location" expr="1" />
+                    <assign location="current_location" expr="0" />
                     <assign location="dock_count" expr="0" />
                     <send event="dock_res">
                         <param name="accept" expr="true" />
