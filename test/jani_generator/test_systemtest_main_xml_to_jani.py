@@ -475,7 +475,7 @@ def get_cases():
             "_case_name": "uc1_mission",
             "folder": "uc1_mission",
             "model_xml": "main.xml",
-            "property_name": "tree_success",
+            "property_name": "tree_finished_robot_docked",
             "expected_result_probability": 1.0,
             "trace_length_limit": 1_000_000,
             "n_traces_limit": 50,

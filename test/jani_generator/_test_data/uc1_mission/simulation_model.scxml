@@ -11,7 +11,7 @@
         - The robot starts in the dock
         - The robot can start cleaning only after undocking
         - The robot can dock only when it is in the undocked location
-        - Cleaning will not increase in case an anomaly is raised and not handled
+        - Cleaning coverage will not increase in case an anomaly is raised and not solved yet
     -->
 
     <datamodel>

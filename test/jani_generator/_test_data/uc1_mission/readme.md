@@ -17,6 +17,6 @@ In the current model, this should never happen.
 ## Properties
 
 * *tree_success*: The BT reports success and cleaning coverage is above 95%
-* *tree_finished_robot_docked*: Once the BT is not running, we expect the robot to be docked the online_coverage_done flag in the BT Blackboard to be set.
+* *tree_finished_robot_docked*: Once the BT is not running, we expect the robot to be docked and the online_coverage_done flag in the BT Blackboard to be set.
 
 Both of them are expected to return 1.0 probability of the property being verified.
