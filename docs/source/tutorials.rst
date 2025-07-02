@@ -198,8 +198,8 @@ Executing SMC Storm on this example works as follows:
         N. of times no termination:	0
         Tot. n. of tries (samples):	500
         Estimated success prob.:	1
-        Min trace length:	...
-        Max trace length:	...
+        Min trace length:	159
+        Max trace length:	237
     =========================================
     Result: 1
 
@@ -226,7 +226,7 @@ The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world
     :width: 800
     :alt: An image showing the changes of the relevant topics in plotjuggler.
 
-You can see how the time advances in steps (`topic_clock_msg__ros_fields__sec`), how the robot moves from location 1 to 0 and then back to 1 again (`world_robot_loc`). The robot is first holding nothing, then it holds the object with id 0, and then it is holding nothing again (`world_robot_holding`). The objects position is first 0, then -1 in the gripper, and then 1 at the table (`world_obj_locs_at_0`).
+You can see how the time advances in steps (`topic_clock_msg__ros_fields__sec`), how the robot moves from location 1 to 0 and then back to 1 again (`world_robot_loc`). The robot is first holding nothing, then it holds the object with id 0, and then it is holding nothing again (`world_robot_holding`). The object's position is first 0, then -1 in the gripper, and then 1 at the table (`world_obj_locs_at_0`).
 
 Enhancing the Model with Probabilities
 --------------------------------------
@@ -274,7 +274,7 @@ You can then run SMC Storm again on the modified model after generating the JANI
 
 The expected result shown above indicates that the property is not fulfilled with probability 1 anymore, i.e., the snack is not always successfully placed on the table, because it can slip out of the gripper when trying to pick it up, or the navigation fails.
 This gives us a probability of 0.7 * 0.6 * 0.7 = 0.294 that everything works successfully (navigate to the item, pick it, navigate to the table).
-In this case model checking needed 15700 traces to come to the result that the task is only completed successfully in 29.99% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
+In this case model checking needed 15600 traces to come to the result that the task is only completed successfully in 29.95% of the cases, which is in the confidence (0.95) and error bound (0.1) of the default configuration of SMC Storm.
 
 The sample output for one trace can be found again in `sample_solutions_and_outputs/reference_traces_prob_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_prob_single.csv>`_. We do not provide the full output because it is quite large.
 
@@ -307,7 +307,7 @@ This also allows to specify the number of attempts to retry. The new behavior tr
     :width: 600
     :alt: An image of the behavior tree including the recovery strategy in case picking or navigating fails.
 
-We can again run SMC Storm on the modified model after generating the JANI model with AS2FM. This time we use `main_probabilistic_extended_bt.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main_probabilistic_extended_bt.xml>`_ as input to refer to the modified files of the bt and the probabilistic world model.
+We can again run SMC Storm on the modified model after generating the JANI model with AS2FM. This time we use `main_probabilistic_extended_bt.xml <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/main_probabilistic_extended_bt.xml>`_ as input to refer to the modified files of the BT and the probabilistic world model.
 
 .. code-block:: bash
 
