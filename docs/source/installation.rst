@@ -54,7 +54,7 @@ Verify your installation:
 .. code-block:: bash
 
     $ smc_storm --version
-    0.1.2
+    0.1.3
 
 AS2FM Python Package
 ````````````````````

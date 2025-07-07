@@ -100,15 +100,15 @@ def _test_with_main(
             ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
-            storm_command = (
+            storm_args = (
                 f"--model {jani_path} --properties-names {property_name} "
                 + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit} "
-                + f"--n-threads {n_threads} --batch-size {batch_size}"
+                + f"--n-threads {n_threads} --batch-size {batch_size} --hide-progress-bar"
             )
             if disable_cache:
-                storm_command += " --disable-explored-states-caching"
+                storm_args += " --disable-explored-states-caching"
             run_smc_storm_with_output(
-                storm_command,
+                storm_args,
                 [property_name, jani_path],
                 [],
                 expected_result_probability,
