@@ -187,7 +187,7 @@ Executing SMC Storm on this example works as follows:
 
 .. code-block:: bash
 
-    $ smc_storm --model main.jani --properties-names snack_at_table --show-statistics
+    $ smc_storm --model main.jani --properties-names snack_at_table --show-statistics --hide-progress-bar
 
     Welcome to SMC Storm
     Checking model: main.jani
@@ -210,11 +210,12 @@ It is also possible to log the traces generated during model checking in a csv f
 
 .. code-block:: bash
 
-    $ smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1
+    $ smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1 --hide-progress-bar
 
     Welcome to SMC Storm
     Checking model: main.jani
     Property "snack_at_table": Pmin=? [F ((topic_snacks0_loc_msg__ros_fields__data = 1) & topic_snacks0_loc_msg.valid)];
+    ...
 
 One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
 

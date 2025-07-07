@@ -22,7 +22,7 @@ Then verify that the correct versions are installed
     $ docker compose run --remove-orphans base smc_storm --version
     [+] Creating 1/1
     ...
-    0.1.2
+    0.1.3
 
 Local installation
 ^^^^^^^^^^^^^^^^^^
