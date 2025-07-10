@@ -7,13 +7,13 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="msg_array" expr="['a', 'b', 'c']" type="string[]" />
+        <!-- <data id="msg_array" expr="['a', 'b', 'c']" type="string[]" /> -->
     </datamodel>
 
     <state id="send_next">
         <transition target="send_next">
             <send event="new_msg_array">
-                <param name="msg" expr="msg_array" />
+                <param name="msg" expr="['a', 'b', 'c']" />
             </send>
         </transition>
     </state>
