@@ -76,10 +76,12 @@ def _test_with_main(
         os.remove(jani_path)
     generated_scxml_path = "generated_plain_scxml" if generate_plain_scxml else None
 
+    if generate_plain_scxml:
+        plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+
     try:
         interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
         if generate_plain_scxml:
-            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
             assert os.path.exists(plain_scxml_path)
             generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
@@ -341,6 +343,13 @@ def get_cases():
             "expected_result_probability": 0.1,
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
             "skip_properties_load_check": True,
+        },
+        # Arrays of strings
+        _default_case()
+        | {
+            "_case_name": "array_of_strings",
+            "folder": "array_of_strings",
+            "property_name": "array_check",
         },
         # -------------------------------------------------------------------------------------
         # ROS features
