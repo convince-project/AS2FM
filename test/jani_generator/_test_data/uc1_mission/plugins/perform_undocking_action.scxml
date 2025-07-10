@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="idle"
+    version="1.0"
+    name="PerformUndockingAction"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- MoveBlock is a client for the MoveBlockSkill -->
+    <ros_action_client name="plugins_action" action_name="/perform_undocking" type="uc1_interfaces/PerformUndocking" />
+
+    <datamodel>
+        <data id="action_success" expr="false" type="bool" />
+    </datamodel>
+
+    <state id="idle">
+        <!-- If ticked, request the action -->
+        <bt_tick target="request_action" />
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <!-- Just handle possible responses in case of halting -->
+        <ros_action_handle_goal_response name="plugins_action" accept="idle" reject="idle" />
+        <ros_action_handle_success_result name="plugins_action" target="idle" />
+        <ros_action_handle_aborted_result name="plugins_action" target="idle" />
+    </state>
+
+    <state id="request_action">
+        <!-- Send an asynchronous request and answer RUNNING to the BT -->
+        <onentry>
+            <ros_action_send_goal name="plugins_action"  />
+        </onentry>
+        <transition target="wait_accept" />
+    </state>
+
+    <state id="wait_accept">
+        <onentry>
+            <bt_return_status status="RUNNING" />
+        </onentry>
+        <bt_tick target="wait_accept" />
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <ros_action_handle_goal_response name="plugins_action" accept="running" reject="idle" />
+    </state>
+
+    <state id="running">
+        <!-- If the requested action returns, go to answer state-->
+        <ros_action_handle_success_result name="plugins_action" target="answer">
+            <assign location="action_success" expr="true" />
+        </ros_action_handle_success_result>
+        <ros_action_handle_aborted_result name="plugins_action" target="answer">
+            <assign location="action_success" expr="false" />
+        </ros_action_handle_aborted_result>
+
+        <!-- If ticked, just answer RUNNING and stay in this state -->
+        <bt_tick target="running">
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
+        <!-- If halted, send stop request to skill and go to idle state -->
+        <bt_halt target="idle">
+            <!-- TODO: This should be in charge of requesting the action cancellation -->
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="answer">
+        <!-- If halted, return to the idle state -->
+        <bt_halt target="idle">
+            <bt_return_halted />
+        </bt_halt>
+        <!-- If ticked, send back an answer to the BT and go to idle state -->
+        <bt_tick target="idle">
+            <if cond="action_success == true">
+                <bt_return_status status="SUCCESS" />
+                <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+    </state>
+</scxml>

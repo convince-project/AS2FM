@@ -36,15 +36,22 @@ from as2fm.scxml_converter.data_types.type_utils import (
     is_type_string_base_type,
 )
 from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    BtResponse,
+    is_blackboard_reference,
+)
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import RESERVED_NAMES, get_plain_variable_name
+from as2fm.scxml_converter.scxml_entries.utils import get_plain_variable_name
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
+
+# List of names that shall not be used for variable names
+RESERVED_NAMES: List[str] = [] + BtResponse._member_names_
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
 ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]

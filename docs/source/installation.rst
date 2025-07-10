@@ -22,7 +22,7 @@ Then verify that the correct versions are installed
     $ docker compose run --remove-orphans base smc_storm --version
     [+] Creating 1/1
     ...
-    0.1.2
+    0.1.3
 
 Local installation
 ^^^^^^^^^^^^^^^^^^
@@ -54,7 +54,7 @@ Verify your installation:
 .. code-block:: bash
 
     $ smc_storm --version
-    0.1.2
+    0.1.3
 
 AS2FM Python Package
 ````````````````````
@@ -63,7 +63,7 @@ AS2FM Python Package
 
     Before proceeding with the installation, make sure that pip's version is at least 24.0.
 
-    - To check pip's version: `python3 -m pip --version -m pip --version`
+    - To check pip's version: `python3 -m pip --version`
     - To upgrade pip: `python3 -m pip install --upgrade pip`
 
 .. note::

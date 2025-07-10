@@ -23,7 +23,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
@@ -155,9 +155,21 @@ class ScxmlState(ScxmlBase):
         self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
         generated_states: List[ScxmlState] = [self]
-        assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
-            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
-            "This isn't yet supported."
+        check_assertion(
+            not has_bt_blackboard_input(self._on_entry, bt_ports_handler),
+            self.get_xml_origin(),
+            (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
+                "This isn't yet supported."
+            ),
+        )
+        check_assertion(
+            not has_bt_blackboard_input(self._on_exit, bt_ports_handler),
+            self.get_xml_origin(),
+            (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
+                "This isn't yet supported."
+            ),
         )
         assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
             f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "

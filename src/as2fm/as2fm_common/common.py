@@ -82,7 +82,7 @@ def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> V
     if field_type is MutableSequence:
         return []
     if field_type is str:
-        return "''"
+        return ""
     else:
         return field_type()
 
