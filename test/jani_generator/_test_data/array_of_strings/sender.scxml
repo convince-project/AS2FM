@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="send_next"
+    version="1.0"
+    name="sender"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="msg_array" expr="['a', 'b', 'c']" type="string[]" />
+    </datamodel>
+
+    <state id="send_next">
+        <transition target="send_next">
+            <send event="new_msg_array">
+                <param name="msg" expr="msg_array" />
+            </send>
+        </transition>
+    </state>
+
+</scxml>

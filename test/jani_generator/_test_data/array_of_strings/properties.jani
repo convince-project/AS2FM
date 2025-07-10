@@ -1,0 +1,37 @@
+{
+    "properties": [
+          {
+            "name": "array_check",
+            "expression": {
+              "op": "filter",
+              "fun": "values",
+              "values": {
+                "op": "Pmin",
+                "exp": {
+                  "op": "F",
+                  "exp": {
+                    "op": "∧",
+                    "left": {
+                      "op": "=",
+                      "left": 11,
+                      "right": "new_msg_array__msg.d1_len"
+                    },
+                    "right": {
+                      "op": "=",
+                      "left": {
+                        "op": "aa",
+                        "exp": "new_msg_array__msg",
+                        "index": 10
+                      },
+                      "right": 10
+                    }
+                  }
+                }
+              },
+              "states": {
+                "op": "initial"
+              }
+            }
+          }
+    ]
+}
