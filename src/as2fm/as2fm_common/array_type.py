@@ -27,10 +27,10 @@ class ArrayInfo:
     Representation of metadata about an array, including its type, dimensions, and maximum sizes
     for each dimension.
 
-    :param array_type: The data type of the array elements.
-    :param array_dimensions: The number of dimensions of the array.
-    :param array_max_sizes: A list specifying the maximum size for each dimension of the array.
-    :param is_base_type: Whether the array_type is assumed to be a float or int, i.e. not a
+    :attribute array_type: The data type of the array elements.
+    :attribute array_dimensions: The number of dimensions of the array.
+    :attribute array_max_sizes: A list specifying the maximum size for each dimension of the array.
+    :attribute is_base_type: Whether the array_type is assumed to be a float or int, i.e. not a
         custom object.
     """
 
