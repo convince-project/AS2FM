@@ -25,7 +25,6 @@ import esprima
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import convert_string_to_int_array
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
@@ -206,17 +205,8 @@ def _parse_ecmascript_to_jani_expression(
         return _parse_ecmascript_to_jani_expression(ast.expression, ast, array_info)
     elif ast.type == Syntax.Literal:
         if isinstance(ast.value, str):
-            # This needs to be treated as a list (not array) of integers.
-            string_as_list = convert_string_to_int_array(ast.value)
-            if (
-                parent_script.type == Syntax.ExpressionStatement
-            ):  # This is an assignment, add padding
-                return _generate_array_expression_for_assignment(
-                    array_info, parent_script, string_as_list
-                )
-            return _generate_constant_array_expression(parent_script, string_as_list)
-        else:
-            return JaniExpression(JaniValue(ast.value))
+            raise RuntimeError("This should not contain string expressions any more.")
+        return JaniExpression(JaniValue(ast.value))
     elif ast.type == Syntax.Identifier:
         # If it is an identifier, we do not need to expand further
         assert ast.name not in ("True", "False"), (

@@ -150,7 +150,7 @@ def get_array_type_and_sizes(
     if not is_valid_array(in_sequence):
         raise ValueError(f"Invalid sub-array found: {in_sequence}")
     if isinstance(in_sequence, str):
-        return get_array_type_and_sizes(convert_string_to_int_array(in_sequence))
+        raise ValueError("This should not contain string expressions any more.")
     if len(in_sequence) == 0:
         return None, [0]
     if not isinstance(in_sequence[0], MutableSequence):
@@ -257,10 +257,3 @@ def is_valid_variable_name(var_name: str) -> bool:
     Alternatively, a variable name can be a single character.
     """
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
-
-
-def convert_string_to_int_array(value: str) -> List[int]:
-    """
-    Convert a string to a list of integers.
-    """
-    return [int(x) for x in value.encode()]
