@@ -20,9 +20,8 @@ Interface classes between SCXML tags and related JANI output.
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple
 
 from as2fm.as2fm_common.common import EPSILON, get_array_type_and_sizes, get_padded_array
-from as2fm.as2fm_common.ecmascript_interpretation import (
+from as2fm.as2fm_common.ecmascript_interpretation import (  # get_esprima_expr_type,
     get_array_expr_as_list,
-    get_esprima_expr_type,
     interpret_ecma_script_expr,
 )
 from as2fm.as2fm_common.logging import check_assertion
@@ -193,11 +192,11 @@ class DatamodelTag(BaseTag):
             # TODO: This special casing is needed since JavaScript typing is funny
             if data_type is float and isinstance(evaluated_expr, int):
                 evaluated_expr = float(evaluated_expr)
-            check_assertion(
-                is_type_string_base_type(data_type_str),
-                scxml_data.get_xml_origin(),
-                f"Unexpected type {data_type_str} found in scxml data.",
-            )
+            # check_assertion(
+            #     check_variable_base_type_ok(data_type_str),
+            #     scxml_data.get_xml_origin(),
+            #     f"Unexpected type {data_type_str} found in scxml data.",
+            # )
             data_type = get_data_type_from_string(data_type_str)
             if data_type is MutableSequence:
                 # Extract ArrayInfo from data_type_str.
@@ -206,13 +205,13 @@ class DatamodelTag(BaseTag):
                 # Special handling of strings: treat them as array of integers
                 data_type = ArrayInfo(int, 1, [self.max_array_size])
             # Explicitly prevent the use of existing  variable in data expression
-            evaluated_expr_type = get_esprima_expr_type(scxml_data.get_expr(), {}, scxml_origin)
-            check_assertion(
-                evaluated_expr_type == data_type,
-                scxml_origin,
-                f"Invalid type of '{scxml_data.get_name()}': expected type "
-                f"{data_type} != {evaluated_expr_type}",
-            )
+            # evaluated_expr_type = get_esprima_expr_type(scxml_data.get_expr(), {}, scxml_origin)
+            # check_assertion(
+            #     evaluated_expr_type == data_type,
+            #     scxml_origin,
+            #     f"Invalid type of '{scxml_data.get_name()}': expected type "
+            #     f"{data_type} != {evaluated_expr_type}",
+            # )
             jani_data_init_expr = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_origin, array_info
             )

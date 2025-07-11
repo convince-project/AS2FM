@@ -282,6 +282,14 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
     return __get_list_from_array_expr_type(ast_node)
 
 
+def __evaluate_js_variable_content(result):
+    if isinstance(result, ValidPlainScxmlTypes):
+        return result
+    if isinstance(result, STPyV8.JSArray):
+        return []
+    raise RuntimeError(f"unsupported expression type {type(result)} of {result}.")
+
+
 def _interpret_ecmascript_expr(
     expr: str, variables: Dict[str, ValidPlainScxmlTypes]
 ) -> Union[ValidPlainScxmlTypes, dict]:
@@ -291,6 +299,7 @@ def _interpret_ecmascript_expr(
     :param expr: The ECMA script expression to evaluate.
     :param variables: A dictionary of variables to be used in the ECMA script context.
     """
+    eval_res = None
     with STPyV8.JSContext(variables) as context:
         try:
             context.eval(f"result = {expr}")
@@ -302,9 +311,9 @@ def _interpret_ecmascript_expr(
                 f"Failed to interpret JS expression using variables {variables}: ",
                 f"'result = {expr}'. {msg_addition}",
             )
-        # eval_res = __evaluate_js_variable_content(context.locals.result)
-    # return
-    return 0
+        eval_res = __evaluate_js_variable_content(context.locals.result)
+    assert eval_res is not None
+    return eval_res
 
 
 def interpret_ecma_script_expr(

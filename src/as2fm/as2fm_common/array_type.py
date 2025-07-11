@@ -51,6 +51,14 @@ class ArrayInfo:
         ):
             raise ValueError(f"Invalid 'array_max_sizes': {self.array_max_sizes}")
 
+    def __eq__(self, other: "ArrayInfo"):
+        return (
+            self.array_dimensions == other.array_dimensions
+            and self.array_max_sizes == other.array_max_sizes
+            and self.array_type == other.array_type
+            and self.is_base_type == other.is_base_type
+        )
+
     def substitute_unbounded_dims(self, max_size: int):
         """
         Substitute the 'None' entries in the array_max_sizes with the provided max_size.
