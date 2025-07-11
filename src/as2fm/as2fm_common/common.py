@@ -96,7 +96,7 @@ def value_to_type(value: ValidPlainScxmlTypes) -> Type[ValidJaniTypes]:
     elif isinstance(value, str):  # Strings are interpreted as arrays of integers
         return MutableSequence
     else:
-        raise ValueError(f"Unsupported value type {type(value)}.")
+        raise ValueError(f"Unsupported value type {type(value)} for {value}.")
 
 
 def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
