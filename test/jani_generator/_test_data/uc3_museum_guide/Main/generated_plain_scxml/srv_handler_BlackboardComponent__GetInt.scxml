@@ -1,0 +1,44 @@
+<scxml name="srv_handler_BlackboardComponent__GetInt" version="1.0" model_src="" initial="waiting" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE ros_fields__field_name:int32 -->
+        <data id="ros_fields__field_name" expr="0"/>
+        <!-- TYPE ros_fields__value:int32 -->
+        <data id="ros_fields__value" expr="0"/>
+        <!-- TYPE ros_fields__is_ok:bool -->
+        <data id="ros_fields__is_ok" expr="false"/>
+    </datamodel>
+    <state id="waiting">
+        <transition event="srv_BlackboardComponent__GetInt_req_client_IsPoiDone1Skill" target="processing_client_IsPoiDone1Skill">
+            <assign location="ros_fields__field_name" expr="_event.data.ros_fields__field_name"/>
+            <send event="srv_BlackboardComponent__GetInt_request" target="BlackboardComponent">
+                <param name="ros_fields__field_name" expr="ros_fields__field_name"/>
+            </send>
+        </transition>
+        <transition event="srv_BlackboardComponent__GetInt_req_client_IsPoiDone2Skill" target="processing_client_IsPoiDone2Skill">
+            <assign location="ros_fields__field_name" expr="_event.data.ros_fields__field_name"/>
+            <send event="srv_BlackboardComponent__GetInt_request" target="BlackboardComponent">
+                <param name="ros_fields__field_name" expr="ros_fields__field_name"/>
+            </send>
+        </transition>
+    </state>
+    <state id="processing_client_IsPoiDone1Skill">
+        <transition event="srv_BlackboardComponent__GetInt_response" target="waiting">
+            <assign location="ros_fields__value" expr="_event.data.ros_fields__value"/>
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_BlackboardComponent__GetInt_response_client_IsPoiDone1Skill" target="IsPoiDone1Skill">
+                <param name="ros_fields__value" expr="ros_fields__value"/>
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+    <state id="processing_client_IsPoiDone2Skill">
+        <transition event="srv_BlackboardComponent__GetInt_response" target="waiting">
+            <assign location="ros_fields__value" expr="_event.data.ros_fields__value"/>
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_BlackboardComponent__GetInt_response_client_IsPoiDone2Skill" target="IsPoiDone2Skill">
+                <param name="ros_fields__value" expr="ros_fields__value"/>
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

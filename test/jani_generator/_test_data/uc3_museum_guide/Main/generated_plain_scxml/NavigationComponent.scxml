@@ -1,0 +1,51 @@
+<scxml name="NavigationComponent" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE goal_id:int32 -->
+        <data id="goal_id" expr="0"/>
+        <!-- TYPE poi_number:int32 -->
+        <data id="poi_number" expr="0"/>
+        <!-- TYPE thread_0_busy:bool -->
+        <data id="thread_0_busy" expr="false"/>
+        <!-- TYPE thread_to_start:int32 -->
+        <data id="thread_to_start" expr="-1"/>
+        <!-- TYPE thread_to_stop:int32 -->
+        <data id="thread_to_stop" expr="-1"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="action_NavigationComponent__GoToPoi_goal_handle" target="check_goal">
+            <assign location="goal_id" expr="_event.data.goal_id"/>
+            <assign location="poi_number" expr="_event.data.ros_fields__poi_number"/>
+        </transition>
+        <transition event="action_NavigationComponent__GoToPoi_thread_free" target="idle">
+            <if cond="_event.data.thread_id == 0">
+                <assign location="thread_0_busy" expr="false"/>
+            </if>
+        </transition>
+    </state>
+    <state id="check_goal">
+        <onentry>
+            <if cond="thread_0_busy == false">
+                <assign location="thread_0_busy" expr="true"/>
+                <assign location="thread_to_start" expr="0"/>
+                <else/>
+                <assign location="thread_to_start" expr="-1"/>
+            </if>
+        </onentry>
+        <transition target="idle">
+            <if cond="thread_to_start &gt;= 0">
+                <send event="action_NavigationComponent__GoToPoi_goal_accepted" target="action_handler_NavigationComponent__GoToPoi">
+                    <param name="goal_id" expr="goal_id"/>
+                </send>
+                <send event="action_NavigationComponent__GoToPoi_thread_start" target="NavigationComponent__GoToPoi_thread_0">
+                    <param name="ros_fields__poi_number" expr="poi_number"/>
+                    <param name="goal_id" expr="goal_id"/>
+                    <param name="thread_id" expr="thread_to_start"/>
+                </send>
+                <else/>
+                <send event="action_NavigationComponent__GoToPoi_goal_rejected" target="action_handler_NavigationComponent__GoToPoi">
+                    <param name="goal_id" expr="goal_id"/>
+                </send>
+            </if>
+        </transition>
+    </state>
+</scxml>

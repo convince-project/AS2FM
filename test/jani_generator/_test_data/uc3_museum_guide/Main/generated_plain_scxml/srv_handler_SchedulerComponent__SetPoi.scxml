@@ -1,0 +1,52 @@
+<scxml name="srv_handler_SchedulerComponent__SetPoi" version="1.0" model_src="" initial="waiting" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE ros_fields__poi_number:int32 -->
+        <data id="ros_fields__poi_number" expr="0"/>
+        <!-- TYPE ros_fields__is_ok:bool -->
+        <data id="ros_fields__is_ok" expr="false"/>
+    </datamodel>
+    <state id="waiting">
+        <transition event="srv_SchedulerComponent__SetPoi_req_client_SetPoi1Skill" target="processing_client_SetPoi1Skill">
+            <assign location="ros_fields__poi_number" expr="_event.data.ros_fields__poi_number"/>
+            <send event="srv_SchedulerComponent__SetPoi_request" target="SchedulerComponent">
+                <param name="ros_fields__poi_number" expr="ros_fields__poi_number"/>
+            </send>
+        </transition>
+        <transition event="srv_SchedulerComponent__SetPoi_req_client_SetPoi2Skill" target="processing_client_SetPoi2Skill">
+            <assign location="ros_fields__poi_number" expr="_event.data.ros_fields__poi_number"/>
+            <send event="srv_SchedulerComponent__SetPoi_request" target="SchedulerComponent">
+                <param name="ros_fields__poi_number" expr="ros_fields__poi_number"/>
+            </send>
+        </transition>
+        <transition event="srv_SchedulerComponent__SetPoi_req_client_ResetSkill" target="processing_client_ResetSkill">
+            <assign location="ros_fields__poi_number" expr="_event.data.ros_fields__poi_number"/>
+            <send event="srv_SchedulerComponent__SetPoi_request" target="SchedulerComponent">
+                <param name="ros_fields__poi_number" expr="ros_fields__poi_number"/>
+            </send>
+        </transition>
+    </state>
+    <state id="processing_client_SetPoi1Skill">
+        <transition event="srv_SchedulerComponent__SetPoi_response" target="waiting">
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_SchedulerComponent__SetPoi_response_client_SetPoi1Skill" target="SetPoi1Skill">
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+    <state id="processing_client_SetPoi2Skill">
+        <transition event="srv_SchedulerComponent__SetPoi_response" target="waiting">
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_SchedulerComponent__SetPoi_response_client_SetPoi2Skill" target="SetPoi2Skill">
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+    <state id="processing_client_ResetSkill">
+        <transition event="srv_SchedulerComponent__SetPoi_response" target="waiting">
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_SchedulerComponent__SetPoi_response_client_ResetSkill" target="ResetSkill">
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

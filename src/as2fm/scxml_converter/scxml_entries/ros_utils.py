@@ -21,7 +21,14 @@ from typing import Any, Dict, List, Tuple, Type
 from as2fm.scxml_converter.scxml_entries import RosField, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import all_non_empty_strings
 
-MSG_TYPE_SUBSTITUTIONS = {"boolean": "bool", "sequence<int32>": "int32[]"}
+MSG_TYPE_SUBSTITUTIONS = {
+    "boolean": "bool",
+    "float": "float32",
+    "double": "float64",
+    "sequence<int32>": "int32[]",
+    "sequence<float>": "float32[]",
+    "sequence<double>": "float64[]",
+}
 
 BASIC_FIELD_TYPES = [
     "boolean",
@@ -31,7 +38,10 @@ BASIC_FIELD_TYPES = [
     "int64",
     "float",
     "double",
+    "string",
     "sequence<int32>",
+    "sequence<float>",
+    "sequence<double>",
 ]
 
 # Container for the ROS interface name (e.g. topic or service name) and the related type

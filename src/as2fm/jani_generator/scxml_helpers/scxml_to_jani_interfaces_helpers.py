@@ -59,15 +59,15 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     get_array_length_var_name,
     parse_ecmascript_to_jani_expression,
 )
+from as2fm.scxml_converter.data_types.type_utils import (
+    MEMBER_ACCESS_SUBSTITUTION,
+)
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlBase,
     ScxmlExecutionBody,
     ScxmlIf,
     ScxmlSend,
-)
-from as2fm.scxml_converter.xml_data_types.type_utils import (
-    MEMBER_ACCESS_SUBSTITUTION,
 )
 
 

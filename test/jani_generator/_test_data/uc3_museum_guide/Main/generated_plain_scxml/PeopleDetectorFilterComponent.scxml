@@ -1,0 +1,18 @@
+<scxml name="PeopleDetectorFilterComponent" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE is_followed:bool -->
+        <data id="is_followed" expr="true"/>
+        <!-- TYPE counter:int32 -->
+        <data id="counter" expr="0"/>
+    </datamodel>
+    <state id="idle">
+        <onentry>
+            <assign location="is_followed" expr="counter % 2 == 1"/>
+            <assign location="counter" expr="counter + 1"/>
+            <send event="topic_PeopleDetectorFilterComponent__is_followed_msg" target="VisitorsFollowingRobotSkill">
+                <param name="ros_fields__data" expr="is_followed"/>
+            </send>
+        </onentry>
+        <transition event="ros_time_rate.control_timer_2" target="idle"/>
+    </state>
+</scxml>

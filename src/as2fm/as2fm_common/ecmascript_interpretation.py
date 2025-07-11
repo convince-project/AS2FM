@@ -24,9 +24,10 @@ import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import (
-    ValidScxmlTypes,
+    ValidPlainScxmlTypes,
+    array_value_to_type_info,
     is_array_type,
     value_to_type,
 )
@@ -39,7 +40,7 @@ class ArrayAccess:
     """
     Placeholder type for ArrayAccess operator call in expanded Member expression.
 
-    Check the function 'split_by_access' for more information.
+    Check the function `split_by_access` for more information.
     """
 
     pass
@@ -73,14 +74,14 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
     return ast.expression
 
 
-def __extract_type_from_instance(var_value) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+def __extract_type_from_instance(var_value) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     var_type = value_to_type(var_value)
     if is_array_type(var_type):
         return array_value_to_type_info(var_value)
     return var_type
 
 
-def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     """Extract the type of a literal node. Special handling for floats."""
     assert ast.type == Syntax.Literal
     extracted_type = type(ast.value)
@@ -134,8 +135,8 @@ def __get_member_access_name(ast: esprima.nodes.Node) -> str:
 
 
 def __get_member_access_array(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
-) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     """
     Compute the type resulting from an array access operator.
 
@@ -164,8 +165,8 @@ def __get_member_access_array(
 
 
 def __get_call_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
-) -> Type[ValidScxmlTypes]:
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.CallExpression
     callee_str: str = ""
     if ast.callee.type == Syntax.Identifier:
@@ -189,8 +190,8 @@ def __get_call_expr_type(
 
 
 def __get_unary_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
-) -> Type[ValidScxmlTypes]:
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.UnaryExpression
     assert ast.prefix is True
     op_arg_type = __get_ast_expression_type(ast.argument, variables)
@@ -204,8 +205,8 @@ def __get_unary_expr_type(
 
 
 def __get_binary_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
-) -> Type[ValidScxmlTypes]:
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.BinaryExpression
     left_type = __get_ast_expression_type(ast.left, variables)
     right_type = __get_ast_expression_type(ast.right, variables)
@@ -227,8 +228,8 @@ def __get_binary_expr_type(
 
 
 def __get_ast_expression_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidScxmlTypes], ArrayInfo]]
-) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     if ast.type == Syntax.Literal:
         return __get_ast_literal_type(ast)
     elif ast.type == Syntax.Identifier:
@@ -258,8 +259,8 @@ def __get_ast_expression_type(
 
 # TODO: Turn the variables into a name->type map, instead of name->instance.
 def get_ast_expression_type(
-    ast: esprima.nodes.Node, variables: Dict[str, ValidScxmlTypes]
-) -> Union[Type[ValidScxmlTypes], ArrayInfo]:
+    ast: esprima.nodes.Node, variables: Dict[str, ValidPlainScxmlTypes]
+) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     """TODO"""
     var_to_type = {
         var_name: __extract_type_from_instance(var_value)
@@ -269,7 +270,7 @@ def get_ast_expression_type(
 
 
 def get_esprima_expr_type(
-    expr: str, variables: Dict[str, ValidScxmlTypes], elem: Optional[XmlElement] = None
+    expr: str, variables: Dict[str, ValidPlainScxmlTypes], elem: Optional[XmlElement] = None
 ):
     ast_node = parse_expression_to_ast(expr, elem)
     return get_ast_expression_type(ast_node, variables)
@@ -282,8 +283,8 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
 
 
 def _interpret_ecmascript_expr(
-    expr: str, variables: Dict[str, ValidScxmlTypes]
-) -> Union[ValidScxmlTypes, dict]:
+    expr: str, variables: Dict[str, ValidPlainScxmlTypes]
+) -> Union[ValidPlainScxmlTypes, dict]:
     """
     Process a JS expression and return the resulting value.
 
@@ -308,9 +309,9 @@ def _interpret_ecmascript_expr(
 
 def interpret_ecma_script_expr(
     expr: str,
-    variables: Optional[Dict[str, ValidScxmlTypes]] = None,
+    variables: Optional[Dict[str, ValidPlainScxmlTypes]] = None,
     allow_dict_results: bool = False,
-) -> Union[ValidScxmlTypes, dict]:
+) -> Union[ValidPlainScxmlTypes, dict]:
     """
     Interpret the ECMA script expression and return the resulting value.
 
@@ -414,7 +415,7 @@ def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, Ar
 
     Examples:
     `a.b` => `['a', 'b']
-    `a[3].b` => `['a', ArrayAccess, 'b']
+    `a[3].b` => `['a', ArrayAccess, 'b']`
     """
     ast = parse_expression_to_ast(expr, elem)
     try:
@@ -425,7 +426,7 @@ def split_by_access(expr: str, elem: Optional[XmlElement]) -> List[Union[str, Ar
 
 
 def _split_by_access(ast: esprima.nodes.Node) -> List:
-    """Recursive implementation of 'split_by_access' functionality."""
+    """Recursive implementation of `split_by_access` functionality."""
     if ast.type == Syntax.Identifier:
         return [ast.name]
     elif ast.type == Syntax.MemberExpression:

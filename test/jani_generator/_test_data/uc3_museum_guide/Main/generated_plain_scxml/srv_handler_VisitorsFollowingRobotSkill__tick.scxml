@@ -1,0 +1,23 @@
+<scxml name="srv_handler_VisitorsFollowingRobotSkill__tick" version="1.0" model_src="" initial="waiting" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE ros_fields__status:int8 -->
+        <data id="ros_fields__status" expr="0"/>
+        <!-- TYPE ros_fields__is_ok:bool -->
+        <data id="ros_fields__is_ok" expr="false"/>
+    </datamodel>
+    <state id="waiting">
+        <transition event="srv_VisitorsFollowingRobotSkill__tick_req_client_1016_ROS2Condition" target="processing_client_1016_ROS2Condition">
+            <send event="srv_VisitorsFollowingRobotSkill__tick_request" target="VisitorsFollowingRobotSkill"/>
+        </transition>
+    </state>
+    <state id="processing_client_1016_ROS2Condition">
+        <transition event="srv_VisitorsFollowingRobotSkill__tick_response" target="waiting">
+            <assign location="ros_fields__status" expr="_event.data.ros_fields__status"/>
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_VisitorsFollowingRobotSkill__tick_response_client_1016_ROS2Condition" target="1016_ROS2Condition">
+                <param name="ros_fields__status" expr="ros_fields__status"/>
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

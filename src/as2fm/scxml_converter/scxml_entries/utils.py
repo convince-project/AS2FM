@@ -32,15 +32,12 @@ from as2fm.as2fm_common.ecmascript_interpretation import (
     split_by_access,
 )
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
-from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
-from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.xml_data_types.type_utils import (
+from as2fm.scxml_converter.data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
     MEMBER_ACCESS_SUBSTITUTION,
 )
-
-# List of names that shall not be used for variable names
-RESERVED_NAMES: List[str] = []
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 
 PLAIN_EVENT_KEY: str = "_event"
 PLAIN_SCXML_EVENT_PREFIX: str = f"{PLAIN_EVENT_KEY}."
@@ -210,7 +207,7 @@ def get_plain_expression(
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_DATA_PREFIX)
     new_expr = _replace_ros_interface_expression(in_expr, expected_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), (
-        "Error: SCXML-ROS expression conversion: "
+        f"Error: SCXML-ROS expression conversion with Cb type {cb_type.name}: "
         f"unexpected ROS interface prefixes in expr.: {in_expr}"
     )
     # arrays of custom structs

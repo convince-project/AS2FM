@@ -1,0 +1,32 @@
+<scxml name="BatteryLevelSkill" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE percentage:int32 -->
+        <data id="percentage" expr="100"/>
+        <!-- TYPE SKILL_SUCCESS:int8 -->
+        <data id="SKILL_SUCCESS" expr="0"/>
+        <!-- TYPE SKILL_FAILURE:int8 -->
+        <data id="SKILL_FAILURE" expr="1"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="srv_BatteryLevelSkill__tick_request" target="checkLevel"/>
+        <transition event="topic_BatteryComponent__battery_level_msg" target="idle">
+            <assign location="percentage" expr="_event.data.ros_fields__data"/>
+        </transition>
+    </state>
+    <state id="checkLevel">
+        <onentry>
+            <if cond="percentage &gt; 30">
+                <send event="srv_BatteryLevelSkill__tick_response" target="srv_handler_BatteryLevelSkill__tick">
+                    <param name="ros_fields__status" expr="SKILL_SUCCESS"/>
+                    <param name="ros_fields__is_ok" expr="true"/>
+                </send>
+                <else/>
+                <send event="srv_BatteryLevelSkill__tick_response" target="srv_handler_BatteryLevelSkill__tick">
+                    <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                    <param name="ros_fields__is_ok" expr="true"/>
+                </send>
+            </if>
+        </onentry>
+        <transition target="idle"/>
+    </state>
+</scxml>

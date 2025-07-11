@@ -25,26 +25,33 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
-from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
-from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import RESERVED_NAMES, get_plain_variable_name
-from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok,
-    get_xml_attribute,
-    read_value_from_xml_arg_or_child,
+from as2fm.scxml_converter.data_types.struct_definition import (
+    StructDefinition,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import (
+from as2fm.scxml_converter.data_types.type_utils import (
     convert_string_to_type,
     get_data_type_from_string,
     get_type_string_of_array,
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import (
-    XmlStructDefinition,
+from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
+from as2fm.scxml_converter.scxml_entries.bt_utils import (
+    BtPortsHandler,
+    BtResponse,
+    is_blackboard_reference,
 )
+from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries.utils import get_plain_variable_name
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok,
+    get_xml_attribute,
+    read_value_from_xml_arg_or_child,
+)
+
+# List of names that shall not be used for variable names
+RESERVED_NAMES: List[str] = [] + BtResponse._member_names_
 
 ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
 ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
@@ -87,7 +94,7 @@ class ScxmlData(ScxmlBase):
     def from_xml_tree_impl(
         cls,
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
         comment_above: Optional[str] = None,
     ) -> "ScxmlData":
         """Create a ScxmlData object from an XML tree."""
@@ -172,7 +179,7 @@ class ScxmlData(ScxmlBase):
             base_type = get_type_string_of_array(self._data_type)
         if is_type_string_base_type(base_type):
             return True
-        if base_type in [custom_type.get_name() for custom_type in self.get_custom_data_types()]:
+        if base_type in self.get_custom_data_types().keys():
             return True
         log_error(self.get_xml_origin(), f"Cannot find definition of type {self._data_type}.")
         return False
@@ -266,9 +273,10 @@ class ScxmlData(ScxmlBase):
         if self._is_plain_type():
             return [self]
         data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
-        assert isinstance(data_type_def, XmlStructDefinition), get_error_msg(
+        assert isinstance(data_type_def, StructDefinition), get_error_msg(
             self.get_xml_origin(),
-            f"Information for data variable {self.get_name()} has unexpected type.",
+            f"Information for data variable {self.get_name()} "
+            + f"has unexpected type {data_type_def.__class__}.",
         )
         assert isinstance(self._expr, str), get_error_msg(
             self.get_xml_origin(), "We only support string init expr. for custom types."

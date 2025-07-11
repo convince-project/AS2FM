@@ -17,14 +17,14 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, Tuple, Type, Union
+from typing import Dict, Optional, Tuple, Type, Union
 
+from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     to_integer,
 )
-from as2fm.scxml_converter.xml_data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 
 VALID_BT_INPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
 VALID_BT_OUTPUT_PORT_TYPES: Dict[str, Type] = SCXML_DATA_STR_TO_TYPE
@@ -48,12 +48,12 @@ class BtResponse(Enum):
     RUNNING = auto()
 
     @staticmethod
-    def str_to_int(resp_str: str) -> int:
+    def str_to_int(resp_str: str) -> Optional[int]:
         """Convert the BT response to an integer."""
         for response in BtResponse:
             if response.name == resp_str:
                 return response.value
-        raise ValueError(f"Error: {resp_str} is an invalid BT Status type.")
+        return None
 
     @staticmethod
     def process_expr(expr: str) -> str:

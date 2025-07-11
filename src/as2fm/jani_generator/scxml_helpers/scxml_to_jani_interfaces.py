@@ -23,6 +23,7 @@ from as2fm.as2fm_common.common import EPSILON, get_array_type_and_sizes, get_pad
 from as2fm.as2fm_common.ecmascript_interpretation import (
     get_array_expr_as_list,
     get_esprima_expr_type,
+    interpret_ecma_script_expr,
 )
 from as2fm.as2fm_common.logging import check_assertion
 from as2fm.jani_generator.jani_entries import (
@@ -45,6 +46,13 @@ from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import 
     merge_conditions,
 )
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
+from as2fm.scxml_converter.data_types.type_utils import (
+    ArrayInfo,
+    get_array_info,
+    get_data_type_from_string,
+    is_type_string_array,
+    is_type_string_base_type,
+)
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlDataModel,
@@ -52,12 +60,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
     ScxmlTransition,
     ScxmlTransitionTarget,
-)
-from as2fm.scxml_converter.xml_data_types.type_utils import (
-    ArrayInfo,
-    get_array_info,
-    get_data_type_from_string,
-    is_type_string_base_type,
 )
 
 # The supported MutableSequence instances
@@ -172,6 +174,25 @@ class DatamodelTag(BaseTag):
             data_type_str = scxml_data.get_type_str()
             array_info: Optional[ArrayInfo] = None
             data_type: type = None
+            if is_type_string_array(data_type_str):
+                array_info = get_array_info(data_type_str)
+                array_info.substitute_unbounded_dims(self.max_array_size)
+                data_type = MutableSequence
+            else:
+                check_assertion(
+                    is_type_string_base_type(data_type_str),
+                    scxml_data.get_xml_origin(),
+                    f"Unexpected type {data_type_str} found in scxml data.",
+                )
+                data_type = get_data_type_from_string(data_type_str)
+                # Special handling of strings: treat them as array of integers
+                if data_type is str:
+                    # Keep data_type == str, since we use it for the JS evaluation.
+                    array_info = ArrayInfo(int, 1, [self.max_array_size])
+            evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
+            # TODO: This special casing is needed since JavaScript typing is funny
+            if data_type is float and isinstance(evaluated_expr, int):
+                evaluated_expr = float(evaluated_expr)
             check_assertion(
                 is_type_string_base_type(data_type_str),
                 scxml_data.get_xml_origin(),
@@ -397,8 +418,8 @@ class StateTag(BaseTag):
                 transition_event = transition_events[0]
                 has_event_transition = True
             assert transition_event not in self._events_no_condition, (
-                f"Event {transition_event} in state {self.element.get_id()} has already a base"
-                "exit condition."
+                f"Model {self.call_trace[0].get_name()} has an event {transition_event} in state "
+                f"{self.element.get_id()} that has already a base exit condition."
             )
             transition_condition = child.element.get_condition()
             # Add previous conditions matching the same event trigger to the current child state

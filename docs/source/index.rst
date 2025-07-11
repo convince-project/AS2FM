@@ -33,6 +33,7 @@ Contents
    :maxdepth: 2
 
    installation
+   quick-guide
    tutorials
    howto
    scxml-jani-conversion

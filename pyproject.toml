@@ -62,7 +62,8 @@ dev = [
     "flake8",
     "mypy",
     "isort",
-    "bumpver"
+    "bumpver",
+    "sybil"
 ]
 
 [tool.pylint.main]

@@ -1,0 +1,31 @@
+<scxml name="NotifyUserComponent" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE alarm_active:bool -->
+        <data id="alarm_active" expr="false"/>
+    </datamodel>
+    <state id="idle">
+        <onentry>
+            <send event="topic_NotifyUserComponent__alarm_msg" target="NONE">
+                <param name="ros_fields__data" expr="false"/>
+            </send>
+        </onentry>
+        <transition event="srv_NotifyUserComponent__StartAlarm_request" target="active">
+            <assign location="alarm_active" expr="true"/>
+            <send event="srv_NotifyUserComponent__StartAlarm_response" target="srv_handler_NotifyUserComponent__StartAlarm">
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+    <state id="active">
+        <onentry>
+            <send event="topic_NotifyUserComponent__alarm_msg" target="NONE">
+                <param name="ros_fields__data" expr="true"/>
+            </send>
+        </onentry>
+        <transition event="srv_NotifyUserComponent__StartAlarm_request" target="active">
+            <send event="srv_NotifyUserComponent__StartAlarm_response" target="srv_handler_NotifyUserComponent__StartAlarm">
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

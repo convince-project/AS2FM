@@ -1,0 +1,128 @@
+<scxml name="1015_ReactiveFallback" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE failure_count:int8 -->
+        <data id="failure_count" expr="0"/>
+        <!-- TYPE running_child:int8 -->
+        <data id="running_child" expr="-1"/>
+        <!-- TYPE success_child:int8 -->
+        <data id="success_child" expr="-1"/>
+        <!-- TYPE child_idx:int8 -->
+        <data id="child_idx" expr="0"/>
+        <!-- TYPE children_count:int8 -->
+        <data id="children_count" expr="2"/>
+    </datamodel>
+    <state id="init">
+        <transition cond="children_count &lt; 1" target="error"/>
+        <transition target="wait_for_tick"/>
+    </state>
+    <state id="wait_for_tick">
+        <transition event="bt_1015_tick" target="tick_children">
+            <assign location="failure_count" expr="0"/>
+            <assign location="child_idx" expr="0"/>
+            <assign location="success_child" expr="-1"/>
+        </transition>
+        <transition event="bt_1015_halt" target="reset_children">
+            <assign location="child_idx" expr="0"/>
+            <assign location="running_child" expr="-1"/>
+        </transition>
+    </state>
+    <state id="reset_children">
+        <onentry>
+            <if cond="child_idx &lt; children_count">
+                <if cond="child_idx == 0">
+                    <send event="bt_1016_halt" target="1016_ROS2Condition"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1017_halt" target="1017_ROS2Action"/>
+                </if>
+            </if>
+        </onentry>
+        <transition event="bt_1016_halt_response" cond="child_idx == 0" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition event="bt_1017_halt_response" cond="child_idx == 1" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
+            <if cond="failure_count == children_count">
+                <send event="bt_1015_response" target="1014_ReactiveSequence">
+                    <param name="status" expr="2"/>
+                </send>
+                <elseif cond="success_child &gt;= 0"/>
+                <send event="bt_1015_response" target="1014_ReactiveSequence">
+                    <param name="status" expr="1"/>
+                </send>
+                <else/>
+                <send event="bt_1015_halt_response" target="1014_ReactiveSequence"/>
+            </if>
+            <assign location="child_idx" expr="0"/>
+            <assign location="failure_count" expr="0"/>
+            <assign location="running_child" expr="-1"/>
+            <assign location="success_child" expr="-1"/>
+        </transition>
+    </state>
+    <state id="tick_children">
+        <onentry>
+            <if cond="child_idx &lt; children_count">
+                <if cond="child_idx == 0">
+                    <send event="bt_1016_tick" target="1016_ROS2Condition"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1017_tick" target="1017_ROS2Action"/>
+                </if>
+            </if>
+        </onentry>
+        <transition event="bt_1016_response" cond="_event.data.status == 3 &amp;&amp; child_idx == 0" target="reset_other_children">
+            <assign location="running_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition event="bt_1017_response" cond="_event.data.status == 3 &amp;&amp; child_idx == 1" target="reset_other_children">
+            <assign location="running_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition event="bt_1016_response" cond="_event.data.status == 2 &amp;&amp; child_idx == 0" target="tick_children">
+            <assign location="failure_count" expr="failure_count + 1"/>
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition event="bt_1017_response" cond="_event.data.status == 2 &amp;&amp; child_idx == 1" target="tick_children">
+            <assign location="failure_count" expr="failure_count + 1"/>
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition event="bt_1016_response" cond="_event.data.status == 1 &amp;&amp; child_idx == 0" target="reset_children">
+            <assign location="success_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition event="bt_1017_response" cond="_event.data.status == 1 &amp;&amp; child_idx == 1" target="reset_children">
+            <assign location="success_child" expr="child_idx"/>
+            <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition cond="failure_count == children_count" target="reset_children">
+            <assign location="child_idx" expr="0"/>
+        </transition>
+        <transition cond="child_idx &lt; 0 || child_idx &gt;= children_count" target="error"/>
+    </state>
+    <state id="reset_other_children">
+        <onentry>
+            <if cond="child_idx == running_child">
+                <assign location="child_idx" expr="child_idx + 1"/>
+            </if>
+            <if cond="child_idx &lt; children_count">
+                <if cond="child_idx == 0">
+                    <send event="bt_1016_halt" target="1016_ROS2Condition"/>
+                    <elseif cond="child_idx == 1"/>
+                    <send event="bt_1017_halt" target="1017_ROS2Action"/>
+                </if>
+            </if>
+        </onentry>
+        <transition event="bt_1016_halt_response" cond="child_idx == 0" target="reset_other_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition event="bt_1017_halt_response" cond="child_idx == 1" target="reset_other_children">
+            <assign location="child_idx" expr="child_idx + 1"/>
+        </transition>
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
+            <send event="bt_1015_response" target="1014_ReactiveSequence">
+                <param name="status" expr="3"/>
+            </send>
+        </transition>
+    </state>
+    <state id="error"/>
+</scxml>

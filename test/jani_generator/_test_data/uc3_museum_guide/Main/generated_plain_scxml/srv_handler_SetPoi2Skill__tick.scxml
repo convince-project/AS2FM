@@ -1,0 +1,23 @@
+<scxml name="srv_handler_SetPoi2Skill__tick" version="1.0" model_src="" initial="waiting" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE ros_fields__status:int8 -->
+        <data id="ros_fields__status" expr="0"/>
+        <!-- TYPE ros_fields__is_ok:bool -->
+        <data id="ros_fields__is_ok" expr="false"/>
+    </datamodel>
+    <state id="waiting">
+        <transition event="srv_SetPoi2Skill__tick_req_client_1012_ROS2Action" target="processing_client_1012_ROS2Action">
+            <send event="srv_SetPoi2Skill__tick_request" target="SetPoi2Skill"/>
+        </transition>
+    </state>
+    <state id="processing_client_1012_ROS2Action">
+        <transition event="srv_SetPoi2Skill__tick_response" target="waiting">
+            <assign location="ros_fields__status" expr="_event.data.ros_fields__status"/>
+            <assign location="ros_fields__is_ok" expr="_event.data.ros_fields__is_ok"/>
+            <send event="srv_SetPoi2Skill__tick_response_client_1012_ROS2Action" target="1012_ROS2Action">
+                <param name="ros_fields__status" expr="ros_fields__status"/>
+                <param name="ros_fields__is_ok" expr="ros_fields__is_ok"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

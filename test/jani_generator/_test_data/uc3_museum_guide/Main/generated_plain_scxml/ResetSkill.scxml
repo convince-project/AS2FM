@@ -1,0 +1,67 @@
+<scxml name="ResetSkill" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE poi_number:int32 -->
+        <data id="poi_number" expr="1"/>
+        <!-- TYPE poi_number_1:int32 -->
+        <data id="poi_number_1" expr="1"/>
+        <!-- TYPE poi_number_2:int32 -->
+        <data id="poi_number_2" expr="2"/>
+        <!-- TYPE value:int32 -->
+        <data id="value" expr="0"/>
+        <!-- TYPE SKILL_SUCCESS:int8 -->
+        <data id="SKILL_SUCCESS" expr="0"/>
+        <!-- TYPE SKILL_FAILURE:int8 -->
+        <data id="SKILL_FAILURE" expr="1"/>
+        <!-- TYPE SKILL_RUNNING:int8 -->
+        <data id="SKILL_RUNNING" expr="2"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="srv_ResetSkill__tick_request" target="setCurrentPoi">
+            <send event="srv_SchedulerComponent__SetPoi_req_client_ResetSkill" target="srv_handler_SchedulerComponent__SetPoi">
+                <param name="ros_fields__poi_number" expr="poi_number"/>
+            </send>
+        </transition>
+    </state>
+    <state id="setCurrentPoi">
+        <transition event="srv_SchedulerComponent__SetPoi_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok" target="setInt1">
+            <send event="srv_BlackboardComponent__SetInt_req_client_ResetSkill" target="srv_handler_BlackboardComponent__SetInt">
+                <param name="ros_fields__field_name" expr="poi_number_1"/>
+                <param name="ros_fields__value" expr="value"/>
+            </send>
+        </transition>
+        <transition event="srv_SchedulerComponent__SetPoi_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_ResetSkill__tick_response" target="srv_handler_ResetSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+    <state id="setInt1">
+        <transition event="srv_BlackboardComponent__SetInt_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok" target="setInt2">
+            <send event="srv_BlackboardComponent__SetInt_req_client_ResetSkill" target="srv_handler_BlackboardComponent__SetInt">
+                <param name="ros_fields__field_name" expr="poi_number_2"/>
+                <param name="ros_fields__value" expr="value"/>
+            </send>
+        </transition>
+        <transition event="srv_BlackboardComponent__SetInt_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_ResetSkill__tick_response" target="srv_handler_ResetSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+    <state id="setInt2">
+        <transition event="srv_BlackboardComponent__SetInt_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok" target="idle">
+            <send event="srv_ResetSkill__tick_response" target="srv_handler_ResetSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_SUCCESS"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+        <transition event="srv_BlackboardComponent__SetInt_response_client_ResetSkill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_ResetSkill__tick_response" target="srv_handler_ResetSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

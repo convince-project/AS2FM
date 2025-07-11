@@ -1,0 +1,35 @@
+<scxml name="1018_ROS2Action" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE SKILL_SUCCESS:int8 -->
+        <data id="SKILL_SUCCESS" expr="0"/>
+        <!-- TYPE SKILL_FAILURE:int8 -->
+        <data id="SKILL_FAILURE" expr="1"/>
+        <!-- TYPE SKILL_RUNNING:int8 -->
+        <data id="SKILL_RUNNING" expr="2"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="bt_1018_tick" target="handle_response_tick">
+            <send event="srv_GoToPoiActionSkill__tick_req_client_1018_ROS2Action" target="srv_handler_GoToPoiActionSkill__tick"/>
+        </transition>
+        <transition event="bt_1018_halt" target="idle">
+            <send event="bt_1018_halt_response" target="1014_ReactiveSequence"/>
+        </transition>
+    </state>
+    <state id="handle_response_tick">
+        <transition event="srv_GoToPoiActionSkill__tick_response_client_1018_ROS2Action" cond="_event.data.ros_fields__status == SKILL_SUCCESS" target="idle">
+            <send event="bt_1018_response" target="1014_ReactiveSequence">
+                <param name="status" expr="1"/>
+            </send>
+        </transition>
+        <transition event="srv_GoToPoiActionSkill__tick_response_client_1018_ROS2Action" cond="_event.data.ros_fields__status == SKILL_FAILURE" target="idle">
+            <send event="bt_1018_response" target="1014_ReactiveSequence">
+                <param name="status" expr="2"/>
+            </send>
+        </transition>
+        <transition event="srv_GoToPoiActionSkill__tick_response_client_1018_ROS2Action" cond="_event.data.ros_fields__status == SKILL_RUNNING" target="idle">
+            <send event="bt_1018_response" target="1014_ReactiveSequence">
+                <param name="status" expr="3"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

@@ -1,0 +1,48 @@
+<scxml name="SetCurrentPoiDoneSkill" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE poi_number:int32 -->
+        <data id="poi_number" expr="0"/>
+        <!-- TYPE value:int32 -->
+        <data id="value" expr="1"/>
+        <!-- TYPE SKILL_SUCCESS:int8 -->
+        <data id="SKILL_SUCCESS" expr="0"/>
+        <!-- TYPE SKILL_FAILURE:int8 -->
+        <data id="SKILL_FAILURE" expr="1"/>
+        <!-- TYPE SKILL_RUNNING:int8 -->
+        <data id="SKILL_RUNNING" expr="2"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="srv_SetCurrentPoiDoneSkill__tick_request" target="getCurrentPoi">
+            <send event="srv_SchedulerComponent__GetCurrentPoi_req_client_SetCurrentPoiDoneSkill" target="srv_handler_SchedulerComponent__GetCurrentPoi"/>
+        </transition>
+    </state>
+    <state id="getCurrentPoi">
+        <transition event="srv_SchedulerComponent__GetCurrentPoi_response_client_SetCurrentPoiDoneSkill" cond="_event.data.ros_fields__is_ok" target="setInt">
+            <assign location="poi_number" expr="_event.data.ros_fields__poi_number"/>
+            <send event="srv_BlackboardComponent__SetInt_req_client_SetCurrentPoiDoneSkill" target="srv_handler_BlackboardComponent__SetInt">
+                <param name="ros_fields__field_name" expr="poi_number"/>
+                <param name="ros_fields__value" expr="value"/>
+            </send>
+        </transition>
+        <transition event="srv_SchedulerComponent__GetCurrentPoi_response_client_SetCurrentPoiDoneSkill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_SetCurrentPoiDoneSkill__tick_response" target="srv_handler_SetCurrentPoiDoneSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+    <state id="setInt">
+        <transition event="srv_BlackboardComponent__SetInt_response_client_SetCurrentPoiDoneSkill" cond="_event.data.ros_fields__is_ok" target="idle">
+            <send event="srv_SetCurrentPoiDoneSkill__tick_response" target="srv_handler_SetCurrentPoiDoneSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_SUCCESS"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+        <transition event="srv_BlackboardComponent__SetInt_response_client_SetCurrentPoiDoneSkill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_SetCurrentPoiDoneSkill__tick_response" target="srv_handler_SetCurrentPoiDoneSkill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

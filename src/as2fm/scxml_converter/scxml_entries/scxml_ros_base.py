@@ -21,6 +21,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     RosField,
@@ -47,7 +48,6 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class RosDeclaration(ScxmlBase):
@@ -75,7 +75,7 @@ class RosDeclaration(ScxmlBase):
     def from_xml_tree_impl(
         cls: Type["RosDeclaration"],
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
     ) -> "RosDeclaration":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
@@ -200,7 +200,7 @@ class RosCallback(ScxmlTransition):
     def from_xml_tree_impl(
         cls: Type["RosCallback"],
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
     ) -> "RosCallback":
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
@@ -367,7 +367,7 @@ class RosTrigger(ScxmlSend):
     def from_xml_tree_impl(
         cls: Type["RosTrigger"],
         xml_tree: XmlElement,
-        custom_data_types: Dict[str, XmlStructDefinition],
+        custom_data_types: Dict[str, StructDefinition],
     ) -> "RosTrigger":
         """
         Create an instance of the class from an XML tree.
@@ -510,7 +510,8 @@ class RosTrigger(ScxmlSend):
         for single_field in self._fields:
             plain_params.extend(single_field.as_plain_scxml(struct_declarations, ros_declarations))
         for param_name, param_value in self._additional_args.items():
-            plain_params.append(ScxmlParam(param_name, expr=param_value))
+            expanded_value = get_plain_expression(param_value, self._cb_type, struct_declarations)
+            plain_params.append(ScxmlParam(param_name, expr=expanded_value))
         return [ScxmlSend(event_name, plain_params)]
 
     def as_xml(self) -> XmlElement:

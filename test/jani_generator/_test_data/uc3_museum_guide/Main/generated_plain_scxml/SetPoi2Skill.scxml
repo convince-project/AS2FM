@@ -1,0 +1,33 @@
+<scxml name="SetPoi2Skill" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <datamodel>
+        <!-- TYPE poi_number:int32 -->
+        <data id="poi_number" expr="2"/>
+        <!-- TYPE SKILL_SUCCESS:int8 -->
+        <data id="SKILL_SUCCESS" expr="0"/>
+        <!-- TYPE SKILL_FAILURE:int8 -->
+        <data id="SKILL_FAILURE" expr="1"/>
+        <!-- TYPE SKILL_RUNNING:int8 -->
+        <data id="SKILL_RUNNING" expr="2"/>
+    </datamodel>
+    <state id="idle">
+        <transition event="srv_SetPoi2Skill__tick_request" target="setPoi">
+            <send event="srv_SchedulerComponent__SetPoi_req_client_SetPoi2Skill" target="srv_handler_SchedulerComponent__SetPoi">
+                <param name="ros_fields__poi_number" expr="poi_number"/>
+            </send>
+        </transition>
+    </state>
+    <state id="setPoi">
+        <transition event="srv_SchedulerComponent__SetPoi_response_client_SetPoi2Skill" cond="_event.data.ros_fields__is_ok" target="idle">
+            <send event="srv_SetPoi2Skill__tick_response" target="srv_handler_SetPoi2Skill__tick">
+                <param name="ros_fields__status" expr="SKILL_SUCCESS"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+        <transition event="srv_SchedulerComponent__SetPoi_response_client_SetPoi2Skill" cond="_event.data.ros_fields__is_ok == false" target="idle">
+            <send event="srv_SetPoi2Skill__tick_response" target="srv_handler_SetPoi2Skill__tick">
+                <param name="ros_fields__status" expr="SKILL_FAILURE"/>
+                <param name="ros_fields__is_ok" expr="true"/>
+            </send>
+        </transition>
+    </state>
+</scxml>

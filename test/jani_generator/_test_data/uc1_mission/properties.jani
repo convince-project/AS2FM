@@ -1,0 +1,80 @@
+{
+    "properties": [
+        {
+            "name": "tree_success",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 1,
+                                "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                            },
+                            "right": {
+                                "op": "≥",
+                                "left": "topic_coverage_percentage_msg__ros_fields__data",
+                                "right": 95
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "tree_finished_robot_docked",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "U",
+                        "left": {
+                            "op": "∨",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 0
+                            },
+                            "right": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 3
+                            }
+                        },
+                        "right": {
+                            "op": "∧",
+                            "left": {
+                                "op": "∧",
+                                "left": "topic_robot_state_msg.valid",
+                                "right": {
+                                    "op": "=",
+                                    "left": "topic_robot_state_msg__ros_fields__data",
+                                    "right": 0
+                                }
+                            },
+                            "right": {
+                                "op": "=",
+                                "left": "bt_blackboard_set_online_coverage_done__value",
+                                "right": 1
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

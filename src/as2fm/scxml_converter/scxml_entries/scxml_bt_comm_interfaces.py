@@ -21,9 +21,13 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.common import is_valid_variable_name
+from as2fm.as2fm_common.logging import check_assertion
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlParam,
+    ScxmlSend,
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
@@ -40,7 +44,6 @@ from as2fm.scxml_converter.scxml_entries.scxml_bt_base import (
     BtGenericStatusSend,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
-from as2fm.scxml_converter.xml_data_types.xml_struct_definition import XmlStructDefinition
 
 
 class BtTick(BtGenericRequestHandle):
@@ -185,7 +188,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
     def from_xml_tree_impl(
         cls: Type["BtGenericStatusSend"],
         xml_tree: XmlElement,
-        _: Dict[str, XmlStructDefinition],
+        _: Dict[str, StructDefinition],
     ) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")
@@ -193,7 +196,6 @@ class BtReturnTickStatus(BtGenericStatusSend):
 
     def __init__(self, status: str):
         self._status: str = status
-        self._status_id: int = BtResponse.str_to_int(status)
 
     def check_validity(self) -> bool:
         return True
@@ -205,8 +207,17 @@ class BtReturnTickStatus(BtGenericStatusSend):
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> ScxmlExecutionBody:
-        plain_send = super().instantiate_bt_events(instance_id, children_ids)
-        plain_send[0].append_param(ScxmlParam("status", expr=f"{self._status_id}"))
+        plain_send: List[ScxmlSend] = super().instantiate_bt_events(instance_id, children_ids)
+        plain_status: Optional[Union[str, int]] = BtResponse.str_to_int(self._status)
+        if plain_status is None:
+            check_assertion(
+                is_valid_variable_name(self._status),
+                self.get_xml_origin(),
+                f"Unexpected explicit status value {self._status}. "
+                + "Should be in [{BtResponse._member_names_}] set.",
+            )
+            plain_status = self._status
+        plain_send[0].append_param(ScxmlParam("status", expr=f"{plain_status}"))
         return plain_send
 
     def as_xml(self) -> XmlElement:
