@@ -17,7 +17,7 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, MutableSequence, Optional, Type, Union
 
 import esprima
 import STPyV8
@@ -261,12 +261,11 @@ def get_ast_expression_type(
     ast: esprima.nodes.Node, variables: Dict[str, ValidPlainScxmlTypes]
 ) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     """TODO"""
-    var_to_type = {
-        # var_name: __extract_type_from_instance(var_value)
-        var_name: var_value  # right now already types
-        for var_name, var_value in variables.items()
-    }
-    return __get_ast_expression_type(ast, var_to_type)
+    # var_to_type = {
+    #     var_name: __extract_type_from_instance(var_value)
+    #     for var_name, var_value in variables.items()
+    # }
+    return __get_ast_expression_type(ast, variables)
 
 
 def get_esprima_expr_type(
@@ -284,9 +283,9 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
 
 def __evaluate_js_variable_content(result):
     if isinstance(result, ValidPlainScxmlTypes):
-        return result
+        return result.__class__
     if isinstance(result, STPyV8.JSArray):
-        return []
+        return MutableSequence
     raise RuntimeError(f"unsupported expression type {type(result)} of {result}.")
 
 

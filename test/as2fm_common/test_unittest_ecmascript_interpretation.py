@@ -48,28 +48,30 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertEqual(get_esprima_expr_type("'ecma'", {}), ArrayInfo(int, 1, [None]))
         self.assertEqual(get_esprima_expr_type("[1,2,3]", {}), ArrayInfo(int, 1, [None]))
         # Identifiers
-        self.assertEqual(get_esprima_expr_type("x", {"x": 1}), int)
-        self.assertEqual(get_esprima_expr_type("x", {"x": False}), bool)
-        self.assertEqual(get_esprima_expr_type("x", {"x": "test!"}), ArrayInfo(int, 1, [None]))
+        self.assertEqual(get_esprima_expr_type("x", {"x": int}), int)
+        self.assertEqual(get_esprima_expr_type("x", {"x": bool}), bool)
         self.assertEqual(
-            get_esprima_expr_type("x", {"x": [[[1, 2.0], [5]], [[3], [4]]]}),
+            get_esprima_expr_type("x", {"x": ArrayInfo(int, 1, [None])}), ArrayInfo(int, 1, [None])
+        )
+        self.assertEqual(
+            get_esprima_expr_type("x", {"x": ArrayInfo(float, 3, [None] * 3)}),
             ArrayInfo(float, 3, [None] * 3),
         )
         # Array Access
         self.assertEqual(
-            get_esprima_expr_type("x[1]", {"x": [[[1, 2.0], [5]], [[3], [4]]]}),
+            get_esprima_expr_type("x[1]", {"x": ArrayInfo(float, 3, [None] * 3)}),
             ArrayInfo(float, 2, [None] * 2),
         )
         self.assertEqual(
-            get_esprima_expr_type("x[1][0]", {"x": [[[1, 2.0], [5]], [[3], [4]]]}),
+            get_esprima_expr_type("x[1][0]", {"x": ArrayInfo(float, 3, [None] * 3)}),
             ArrayInfo(float, 1, [None]),
         )
         # Expressions
-        self.assertEqual(get_esprima_expr_type("-x", {"x": 1}), int)
-        self.assertEqual(get_esprima_expr_type("-x", {"x": 1.0}), float)
-        self.assertEqual(get_esprima_expr_type("x > 1", {"x": 1.0}), bool)
-        self.assertEqual(get_esprima_expr_type("x != y", {"x": 1.0, "y": 2.0}), bool)
-        self.assertEqual(get_esprima_expr_type("x != y && y < 2.0", {"x": 1.0, "y": 2.0}), bool)
+        self.assertEqual(get_esprima_expr_type("-x", {"x": int}), int)
+        self.assertEqual(get_esprima_expr_type("-x", {"x": float}), float)
+        self.assertEqual(get_esprima_expr_type("x > 1", {"x": float}), bool)
+        self.assertEqual(get_esprima_expr_type("x != y", {"x": float, "y": float}), bool)
+        self.assertEqual(get_esprima_expr_type("x != y && y < 2.0", {"x": float, "y": float}), bool)
 
     def test_ecmascript_unsupported(self):
         """
