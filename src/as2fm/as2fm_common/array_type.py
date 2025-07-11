@@ -24,15 +24,14 @@ ARRAY_BASE_TYPES = (int, float, None)
 @dataclass()
 class ArrayInfo:
     """
-    A class to represent metadata about an array, including its type, dimensions,
-    and maximum sizes for each dimension.
-    Attributes:
-        array_type (type, str): The data type of the array elements.
-        array_dimensions (int): The number of dimensions of the array.
-        array_max_sizes (List[int]): A list specifying the maximum size for each
-            dimension of the array.
-        is_base_type (bool): Whether the array_type is assumed to be a float or int, i.e. not a
-            custom object.
+    Representation of metadata about an array, including its type, dimensions, and maximum sizes
+    for each dimension.
+
+    :param array_type: The data type of the array elements.
+    :param array_dimensions: The number of dimensions of the array.
+    :param array_max_sizes: A list specifying the maximum size for each dimension of the array.
+    :param is_base_type: Whether the array_type is assumed to be a float or int, i.e. not a
+        custom object.
     """
 
     array_type: Union[Type[Union[int, float]], str, None]
