@@ -284,6 +284,8 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
 def __evaluate_js_variable_content(result):
     if isinstance(result, ValidPlainScxmlTypes):
         return result.__class__
+    if isinstance(result, STPyV8.JSObject):
+        return {k: __evaluate_js_variable_content(result[k]) for k in result.keys()}
     if isinstance(result, STPyV8.JSArray):
         return MutableSequence
     raise RuntimeError(f"unsupported expression type {type(result)} of {result}.")
