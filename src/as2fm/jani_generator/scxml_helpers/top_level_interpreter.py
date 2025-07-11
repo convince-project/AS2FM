@@ -190,10 +190,16 @@ def parse_main_xml(xml_path: str) -> FullModel:
     return model
 
 
-def generate_plain_scxml_models_and_timers(
-    model: FullModel, custom_data_types: Dict[str, StructDefinition]
-) -> List[ScxmlRoot]:
+def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
+    custom_data_types: Dict[str, StructDefinition] = {}
+    for struct_format, path in model.data_declarations:
+        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[struct_format]
+        loaded_structs = struct_definition_class.from_file(path)
+        custom_data_types.update(loaded_structs)
+
+    for custom_struct_instance in custom_data_types.values():
+        custom_struct_instance.expand_members(custom_data_types)
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
     ros_scxmls: List[ScxmlRoot] = []
@@ -295,19 +301,11 @@ def interpret_top_level_xml(
     :param jani_file: The path to the output Jani file.
     :param generated_scxmls_dir: The directory to store the generated plain SCXML files.
     """
+    # Complete Model handling
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
 
-    custom_data_types: Dict[str, StructDefinition] = {}
-    for struct_format, path in model.data_declarations:
-        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[struct_format]
-        loaded_structs = struct_definition_class.from_file(path)
-        custom_data_types.update(loaded_structs)
-
-    for custom_struct_instance in custom_data_types.values():
-        custom_struct_instance.expand_members(custom_data_types)
-
-    plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
+    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
     if generated_scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
