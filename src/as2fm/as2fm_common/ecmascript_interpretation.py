@@ -24,10 +24,9 @@ import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import ArrayInfo
+from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
 from as2fm.as2fm_common.common import (
     ValidPlainScxmlTypes,
-    array_value_to_type_info,
     is_array_type,
     value_to_type,
 )
