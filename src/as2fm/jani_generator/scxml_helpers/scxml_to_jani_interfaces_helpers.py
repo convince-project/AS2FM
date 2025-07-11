@@ -442,10 +442,8 @@ def append_scxml_body_to_jani_edge(
                     param_variable = generate_jani_variable(
                         param_assign_name, MutableSequence, res_eval_type
                     )
-                else:
-                    data_structure_for_event[param.get_name()] = EventParamType(
-                        res_eval_type, res_eval_array_type, res_eval_dims
-                    )
+                else:  # Not an array
+                    data_structure_for_event[param.get_name()] = EventParamType(res_eval_type)
                     param_variable = generate_jani_variable(param_assign_name, res_eval_type, None)
                 new_edge_dest_assignments.extend(
                     generate_jani_assignments(

@@ -262,7 +262,8 @@ def get_ast_expression_type(
 ) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
     """TODO"""
     var_to_type = {
-        var_name: __extract_type_from_instance(var_value)
+        # var_name: __extract_type_from_instance(var_value)
+        var_name: var_value  # right now already types
         for var_name, var_value in variables.items()
     }
     return __get_ast_expression_type(ast, var_to_type)
