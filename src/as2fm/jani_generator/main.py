@@ -70,7 +70,7 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     print("AS2FM - SCXML to JANI.\n")
     print(f"Loading model from {main_xml_file}.")
 
-    interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
+    interpret_top_level_xml(main_xml_file, jani_file=jani_out_file, scxmls_dir=scxml_out_dir)
 
 
 def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:

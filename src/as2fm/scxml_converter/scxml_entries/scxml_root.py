@@ -173,18 +173,6 @@ class ScxmlRoot(ScxmlBase):
                 transition_events.update({ev for ev in transition.get_events()})
         return transition_events
 
-    def to_scxml_with_targets(self, events_to_targets: EventsToAutomata) -> None:
-        """
-        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
-
-        :param events_to_targets: Mapping between the event name and the automata recipients.
-        """
-        for state in self._states:
-            state.set_on_entry(add_targets_to_scxml_sends(state.get_onentry(), events_to_targets))
-            state.set_on_exit(add_targets_to_scxml_sends(state.get_onexit(), events_to_targets))
-            for transition in state.get_body():
-                transition.add_targets_to_scxml_sends(events_to_targets)
-
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:
             if state.get_id() == state_id:
@@ -394,6 +382,24 @@ class ScxmlRoot(ScxmlBase):
                 "conversion to plain SCXML failed."
             )
         return (converted_scxmls, ros_declarations)
+
+    def to_scxml_with_targets(self, events_to_targets: EventsToAutomata) -> None:
+        """
+        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
+
+        :param events_to_targets: Mapping between the event name and the automata recipients.
+        """
+        for state in self._states:
+            state.set_on_entry(add_targets_to_scxml_sends(state.get_onentry(), events_to_targets))
+            state.set_on_exit(add_targets_to_scxml_sends(state.get_onexit(), events_to_targets))
+            for transition in state.get_body():
+                transition.add_targets_to_scxml_sends(events_to_targets)
+
+    def to_scxml_with_replaced_strings(self) -> None:
+        """
+        Replace all occurrences of strings in the datamodel and the expressions with array of int.
+        """
+        NotImplementedError("TODO")
 
     def as_xml(self, **kwargs) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid root object."

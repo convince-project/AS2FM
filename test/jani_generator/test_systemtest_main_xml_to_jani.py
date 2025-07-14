@@ -80,7 +80,9 @@ def _test_with_main(
         plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
 
     try:
-        interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
+        interpret_top_level_xml(
+            xml_main_path, jani_file=model_jani, scxmls_dir=generated_scxml_path
+        )
         if generate_plain_scxml:
             assert os.path.exists(plain_scxml_path)
             generated_files = os.listdir(plain_scxml_path)

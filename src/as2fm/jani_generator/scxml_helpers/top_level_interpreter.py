@@ -290,7 +290,7 @@ def export_plain_scxml_models(
 
 
 def interpret_top_level_xml(
-    xml_path: str, jani_file: str, generated_scxmls_dir: Optional[str] = None
+    xml_path: str, *, jani_file: Optional[str] = None, scxmls_dir: Optional[str] = None
 ):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
@@ -299,7 +299,7 @@ def interpret_top_level_xml(
 
     :param xml_path: The path to the XML file to interpret.
     :param jani_file: The path to the output Jani file.
-    :param generated_scxmls_dir: The directory to store the generated plain SCXML files.
+    :param scxmls_dir: The directory to store the generated plain SCXML files.
     """
     # Complete Model handling
     model_dir = os.path.dirname(xml_path)
@@ -307,23 +307,23 @@ def interpret_top_level_xml(
 
     plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
-    if generated_scxmls_dir is not None:
-        plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
+    if scxmls_dir is not None:
+        plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
+    if jani_file is not None:
+        jani_model: JaniModel = convert_multiple_scxmls_to_jani(
+            plain_scxml_models, model.max_array_size
+        )
+        with open(model.properties[0], "r", encoding="utf-8") as f:
+            all_properties = json.load(f)["properties"]
+            for property_dict in all_properties:
+                jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
 
-    jani_model: JaniModel = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, model.max_array_size
-    )
-    with open(model.properties[0], "r", encoding="utf-8") as f:
-        all_properties = json.load(f)["properties"]
-        for property_dict in all_properties:
-            jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
+        # Preprocess the JANI file, to remove non-standard artifacts
+        preprocess_jani_expressions(jani_model)
 
-    # Preprocess the JANI file, to remove non-standard artifacts
-    preprocess_jani_expressions(jani_model)
-
-    output_path = os.path.join(model_dir, jani_file)
-    with open(output_path, "w", encoding="utf-8") as f:
-        temp_dict = jani_model.as_dict()
-        # print(temp_dict)
-        json.dump(temp_dict, f, indent=2, ensure_ascii=False)
+        output_path = os.path.join(model_dir, jani_file)
+        with open(output_path, "w", encoding="utf-8") as f:
+            temp_dict = jani_model.as_dict()
+            # print(temp_dict)
+            json.dump(temp_dict, f, indent=2, ensure_ascii=False)

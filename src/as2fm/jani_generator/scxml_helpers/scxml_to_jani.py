@@ -19,6 +19,7 @@ Functions for the conversion from SCXML to Jani.
 The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
+from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 from as2fm.as2fm_common.logging import log_error
@@ -83,12 +84,15 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
     base_model.add_feature("arrays")
     base_model.add_feature("trigonometric-functions")
     events_holder = EventsHolder()
-    for input_scxml in scxmls:
+    # Not really needed, added for consistency
+    processed_scxmls = deepcopy(scxmls)
+    for input_scxml in processed_scxmls:
         assert isinstance(input_scxml, ScxmlRoot)
         assert (
             input_scxml.is_plain_scxml()
         ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
         try:
+            input_scxml.to_scxml_with_replaced_strings()
             automaton = convert_scxml_root_to_jani_automaton(
                 input_scxml, events_holder, max_array_size
             )
