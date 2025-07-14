@@ -36,9 +36,9 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlDataModel,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
-    add_targets_to_scxml_send,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import add_targets_to_scxml_sends
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
@@ -173,15 +173,15 @@ class ScxmlRoot(ScxmlBase):
                 transition_events.update({ev for ev in transition.get_events()})
         return transition_events
 
-    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
+    def to_scxml_with_targets(self, events_to_targets: EventsToAutomata) -> None:
         """
         For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
 
         :param events_to_targets: Mapping between the event name and the automata recipients.
         """
         for state in self._states:
-            state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
-            state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
+            state.set_on_entry(add_targets_to_scxml_sends(state.get_onentry(), events_to_targets))
+            state.set_on_exit(add_targets_to_scxml_sends(state.get_onexit(), events_to_targets))
             for transition in state.get_body():
                 transition.add_targets_to_scxml_sends(events_to_targets)
 

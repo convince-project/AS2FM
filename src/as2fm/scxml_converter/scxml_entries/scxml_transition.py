@@ -34,7 +34,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_remo
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     EventsToAutomata,
     ScxmlExecutableEntry,
-    add_targets_to_scxml_send,
+    add_targets_to_scxml_sends,
     execution_body_from_xml,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
@@ -196,7 +196,7 @@ class ScxmlTransition(ScxmlBase):
         """
         for transition_target in self._targets:
             transition_target.set_body(
-                add_targets_to_scxml_send(transition_target.get_body(), events_to_targets)
+                add_targets_to_scxml_sends(transition_target.get_body(), events_to_targets)
             )
 
     def get_events(self) -> List[str]:

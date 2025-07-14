@@ -695,21 +695,20 @@ def as_plain_execution_body(
     return new_body
 
 
-def add_targets_to_scxml_send(
-    exec_body: Optional[ScxmlExecutionBody], events_to_automata: EventsToAutomata
-) -> Optional[ScxmlExecutionBody]:
+def add_targets_to_scxml_sends(
+    exec_body: ScxmlExecutionBody, events_to_automata: EventsToAutomata
+) -> ScxmlExecutionBody:
     """For each ScxmlSend in the body, generate instances containing the target automaton."""
-    if exec_body is None:
-        return None
+    assert exec_body is not None, "Unexpected value of exec_body."
     new_body: ScxmlExecutionBody = []
     for entry in exec_body:
         if isinstance(entry, ScxmlIf):
             if_conditionals = []
             for cond, cond_body in entry.get_conditional_executions():
                 if_conditionals.append(
-                    (cond, add_targets_to_scxml_send(cond_body, events_to_automata))
+                    (cond, add_targets_to_scxml_sends(cond_body, events_to_automata))
                 )
-            else_body = add_targets_to_scxml_send(entry.get_else_execution(), events_to_automata)
+            else_body = add_targets_to_scxml_sends(entry.get_else_execution(), events_to_automata)
             new_body.append(ScxmlIf(if_conditionals, else_body))
         elif isinstance(entry, ScxmlSend):
             target_automata = events_to_automata.get(entry.get_event(), {"NONE"})

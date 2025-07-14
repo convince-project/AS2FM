@@ -396,6 +396,18 @@ def convert_expression_with_object_arrays(
     return escodegen.generate(exp)
 
 
+def convert_expression_with_string_literals(
+    expr: str,
+    elem: Optional[XmlElement] = None,
+    struct_declarations: Optional[ScxmlStructDeclarationsContainer] = None,
+) -> str:
+    """
+    Convert an expression with strings to use array of ints instead.
+    """
+    raise NotImplementedError("TODO")
+    # return [int(x) for x in value.encode()]
+
+
 # ------------ String-related utilities ------------
 def all_non_empty_strings(*in_args) -> bool:
     """
