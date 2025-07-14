@@ -283,16 +283,9 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
 
 def __evaluate_js_variable_content(result):
     if isinstance(result, ValidPlainScxmlTypes):
-        return result.__class__
+        return result
     if isinstance(result, STPyV8.JSArray):
-        if len(result.keys()) > 0:
-            key_0 = result.keys()[0]
-            element_type = __evaluate_js_variable_content(result[key_0])
-            if isinstance(element_type, STPyV8.JSArray):
-                raise RuntimeError("Multi dimensional array ...")
-            return ArrayInfo(element_type, 1, [len(result.keys())])
-        else:
-            return ArrayInfo(None, 1, [None])
+        return [__evaluate_js_variable_content(result[i]) for i in result.keys()]
     if isinstance(result, STPyV8.JSObject):
         return {k: __evaluate_js_variable_content(result[k]) for k in result.keys()}
     raise RuntimeError(f"unsupported expression type {type(result)} of {result}.")
