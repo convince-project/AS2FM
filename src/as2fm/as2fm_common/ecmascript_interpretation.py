@@ -27,6 +27,7 @@ from lxml.etree import _Element as XmlElement
 from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
 from as2fm.as2fm_common.common import (
     ValidPlainScxmlTypes,
+    convert_string_to_int_array,
     is_array_type,
     value_to_type,
 )
@@ -96,7 +97,6 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxm
 
 
 def __get_list_from_array_expr_type(ast: esprima.nodes.Node) -> List:
-    assert ast.type == Syntax.ArrayExpression
     ret_list = []
     for elem in ast.elements:
         if elem.type == Syntax.Literal:
@@ -278,7 +278,13 @@ def get_esprima_expr_type(
 def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List:
     """Reads a string as a, EcmaScript expression and returns it as an ArrayExpression."""
     ast_node = parse_expression_to_ast(expr, elem)
-    return __get_list_from_array_expr_type(ast_node)
+    if ast_node.type == Syntax.ArrayExpression:
+        return __get_list_from_array_expr_type(ast_node)
+    elif ast_node.type == Syntax.Literal:  # a string
+        assert expr[0] == "'", f"expected to be a string expression: >{expr}<."
+        assert expr[-1] == "'", f"expected to be a string expression: >{expr}<."
+        raw_str = expr[1:-1]
+        return convert_string_to_int_array(raw_str)
 
 
 def __evaluate_js_variable_content(result):
