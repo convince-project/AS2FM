@@ -200,6 +200,7 @@ def __get_unary_expr_type(
         return op_arg_type
     elif op == "!":
         assert op_arg_type is bool
+        return op_arg_type
     raise RuntimeError(f"Unexpected unary operator. '{op}' not in ('-', '!').")
 
 
