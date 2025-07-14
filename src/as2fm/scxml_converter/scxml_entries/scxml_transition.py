@@ -36,10 +36,12 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     ScxmlExecutableEntry,
     add_targets_to_scxml_sends,
     execution_body_from_xml,
+    replace_string_expressions_in_execution_body,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
+    convert_expression_with_string_literals,
     get_plain_expression,
     is_non_empty_string,
 )
@@ -190,15 +192,6 @@ class ScxmlTransition(ScxmlBase):
                 abs(prob_sum - 1.0) < EPSILON
             ), f"The sum of probabilities is {prob_sum}, must be 1.0."
 
-    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata):
-        """
-        For each "ScxmlSend" entry in the transition body, add the automata receiving the event.
-        """
-        for transition_target in self._targets:
-            transition_target.set_body(
-                add_targets_to_scxml_sends(transition_target.get_body(), events_to_targets)
-            )
-
     def get_events(self) -> List[str]:
         """Return the events that trigger this transition (if any)."""
         return self._events
@@ -312,6 +305,26 @@ class ScxmlTransition(ScxmlBase):
                 self._condition, CallbackType.TRANSITION, struct_declarations
             )
         return [ScxmlTransition(plain_targets, self._events, self._condition)]
+
+    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata):
+        """
+        For each "ScxmlSend" entry in the transition body, add the automata receiving the event.
+        """
+        for transition_target in self._targets:
+            transition_target.set_body(
+                add_targets_to_scxml_sends(transition_target.get_body(), events_to_targets)
+            )
+
+    def replace_string_expressions(self) -> None:
+        """
+        Replace the string literals in the transition condition and the different targets.
+        """
+        if self._condition is not None:
+            self._condition = convert_expression_with_string_literals(
+                self._condition, self.get_xml_origin()
+            )
+        for target in self._targets:
+            target.set_body(replace_string_expressions_in_execution_body(target.get_body()))
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid transition."

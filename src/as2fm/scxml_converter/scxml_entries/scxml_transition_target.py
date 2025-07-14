@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
     is_plain_execution_body,
+    replace_string_expressions_in_execution_body,
     set_execution_body_callback_type,
     valid_execution_body,
     valid_execution_body_entry_types,
@@ -99,7 +100,7 @@ class ScxmlTransitionTarget(ScxmlBase):
         ), "Error SCXML transition target: invalid body provided."
         self._target_id = target_id
         self._probability = probability
-        self._body = body
+        self._body: ScxmlExecutionBody = body if body is not None else []
         self._cb_type: Optional[CallbackType] = None
 
     def set_callback_type(self, cb_type: CallbackType):
@@ -124,7 +125,7 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def get_body(self) -> ScxmlExecutionBody:
         """Return the executable content of this transition."""
-        return self._body if self._body is not None else []
+        return self._body
 
     def set_body(self, body: ScxmlExecutionBody) -> None:
         """Set the body of this transition."""
@@ -202,14 +203,18 @@ class ScxmlTransitionTarget(ScxmlBase):
         assert self.check_valid_ros_instantiations(
             ros_declarations
         ), "Error: SCXML transition target: invalid ROS instantiations in transition body."
-        new_body = None
+        new_body: ScxmlExecutionBody = []
         assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
-        if self._body is not None:
-            set_execution_body_callback_type(self._body, self._cb_type)
-            new_body = []
-            for entry in self._body:
-                new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+        set_execution_body_callback_type(self._body, self._cb_type)
+        for entry in self._body:
+            new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
+
+    def replace_string_expressions(self) -> None:
+        """
+        Replace the string literals in the transition condition and the different targets.
+        """
+        self._body = replace_string_expressions_in_execution_body(self._body)
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "Error: SCXML transition target: invalid."

@@ -42,6 +42,7 @@ from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclaratio
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     convert_expression_with_object_arrays,
+    convert_expression_with_string_literals,
     generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
@@ -283,6 +284,16 @@ class ScxmlIf(ScxmlBase):
         )
         return [ScxmlIf(conditional_executions, else_execution)]
 
+    def replace_string_expressions(self) -> "ScxmlIf":
+        """Replace all string literals in the contained expressions."""
+        new_cond_execs: List[ConditionalExecutionBody] = []
+        for cond, body in self._conditional_executions:
+            new_cond = convert_expression_with_string_literals(cond)
+            new_body = replace_string_expressions_in_execution_body(body)
+            new_cond_execs.append((new_cond, new_body))
+        new_else_body = replace_string_expressions_in_execution_body(self._else_execution)
+        return ScxmlIf(new_cond_execs, new_else_body)
+
     def as_xml(self) -> XmlElement:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
@@ -433,6 +444,16 @@ class ScxmlSend(ScxmlBase):
         # param.as_plain_scxml()
         return [ScxmlSend(self._event, expanded_params)]
 
+    def replace_string_expressions(self) -> "ScxmlSend":
+        """Replace all string literals in the contained expressions."""
+        new_params: List[ScxmlParam] = []
+        for param in self._params:
+            new_param_expr = convert_expression_with_string_literals(param.get_expr_or_location())
+            new_params.append(
+                ScxmlParam(param.get_name(), expr=new_param_expr, cb_type=param._cb_type)
+            )
+        return ScxmlSend(self._event, new_params, self._target_automaton)
+
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."
         xml_send = ET.Element(ScxmlSend.get_tag_name(), {"event": self._event})
@@ -554,6 +575,12 @@ class ScxmlAssign(ScxmlBase):
             plain_location = convert_expression_with_object_arrays(single_loc, struct_declarations)
             plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
         return plain_assignments
+
+    def replace_string_expressions(self) -> "ScxmlAssign":
+        """Replace all string literals in the contained expressions."""
+        return ScxmlAssign(
+            self.get_location(), convert_expression_with_string_literals(self.get_expr())
+        )
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
@@ -689,9 +716,18 @@ def as_plain_execution_body(
         return None
     new_body: ScxmlExecutionBody = []
     for entry in exec_body:
-        if is_comment(entry):
-            continue
         new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+    return new_body
+
+
+def replace_string_expressions_in_execution_body(
+    exec_body: ScxmlExecutionBody,
+) -> ScxmlExecutionBody:
+    """In-place replacement for all string literals in the expressions in the exec_body."""
+    # TODO: In-Place or not in-place substitution? Both would work here...
+    new_body: ScxmlExecutionBody = []
+    for entry in exec_body:
+        new_body.append(entry.replace_string_expressions())
     return new_body
 
 
