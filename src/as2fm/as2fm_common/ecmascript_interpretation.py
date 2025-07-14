@@ -31,7 +31,7 @@ from as2fm.as2fm_common.common import (
     is_array_type,
     value_to_type,
 )
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, get_warn_msg
 
 BasicJsTypes = Union[int, float, bool, str]
 
@@ -308,9 +308,11 @@ def _interpret_ecmascript_expr(
     :param variables: A dictionary of variables to be used in the ECMA script context.
     """
     eval_res = None
+    eval_str = f"result = {expr}"
     with STPyV8.JSContext(variables) as context:
         try:
-            context.eval(f"result = {expr}")
+            print(get_warn_msg(None, f"evaluating:\n{eval_str}"))
+            context.eval(eval_str)
         except Exception:
             msg_addition = ""
             if expr in ("True", "False"):
