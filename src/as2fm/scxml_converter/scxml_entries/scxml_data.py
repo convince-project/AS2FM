@@ -24,13 +24,15 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg, log_error
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
 from as2fm.scxml_converter.data_types.struct_definition import (
     StructDefinition,
 )
 from as2fm.scxml_converter.data_types.type_utils import (
     convert_string_to_type,
+    get_array_type_and_dimensions_from_string,
     get_data_type_from_string,
+    get_type_string_from_type_and_dimensions,
     get_type_string_of_array,
     is_type_string_array,
     is_type_string_base_type,
@@ -43,7 +45,10 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
 )
 from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import get_plain_variable_name
+from as2fm.scxml_converter.scxml_entries.utils import (
+    convert_expression_with_string_literals,
+    get_plain_variable_name,
+)
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
@@ -314,3 +319,25 @@ class ScxmlData(ScxmlBase):
                 f"Error: SCXML Data: '{self._id}': cannot set the upper bound from "
                 f" the BT blackboard variable {self._upper_bound}"
             )
+
+    def replace_string_type(self) -> None:
+        base_type: str = self._data_type
+        array_dims: List[Optional[int]] = []
+        if is_type_string_array(self._data_type):
+            base_type, array_dims = get_array_type_and_dimensions_from_string(self._data_type)
+        check_assertion(
+            is_type_string_base_type(base_type),
+            self.get_xml_origin(),
+            f"Unexpected type '{base_type}' found.",
+        )
+        check_assertion(
+            isinstance(self._expr, str),
+            self.get_xml_origin(),
+            "Expected the default expr. to be a string at this point.",
+        )
+        if base_type == "string":
+            # Handle the expected type
+            array_dims.append(None)
+            self._data_type = get_type_string_from_type_and_dimensions("uint32", array_dims)
+            # Handle the default expression
+            self._expr = convert_expression_with_string_literals(self._expr, self.get_xml_origin())

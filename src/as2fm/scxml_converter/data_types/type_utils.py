@@ -141,6 +141,16 @@ def convert_string_to_type(value: str, data_type: str) -> Any:
     return interpreted_value
 
 
+def get_type_string_from_type_and_dimensions(base_type: str, dimensions: List[Optional[int]]):
+    """
+    Generate the type string from the base type and array dimensions.
+
+    E.g. uint32, [None, 1, 2, None] => uint32[][1][2][]
+    """
+    str_dims: List[str] = ["" if dim is None else str(dim) for dim in dimensions]
+    return base_type + "".join(f"[{v_dim}]" for v_dim in str_dims)
+
+
 def get_array_type_and_dimensions_from_string(data_type: str) -> Tuple[str, List[Optional[int]]]:
     """
     Given an array type string, return its base type and each dimension's max size.

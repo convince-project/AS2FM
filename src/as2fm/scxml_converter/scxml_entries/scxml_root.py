@@ -24,7 +24,11 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
-from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_sub_elements
+from as2fm.as2fm_common.logging import (
+    check_assertion,
+    get_error_msg,
+    set_filepath_for_all_sub_elements,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
@@ -399,7 +403,14 @@ class ScxmlRoot(ScxmlBase):
         """
         Replace all occurrences of strings in the datamodel and the expressions with array of int.
         """
-        NotImplementedError("TODO")
+        check_assertion(
+            self.is_plain_scxml(),
+            self.get_xml_origin(),
+            f"{self.get_name()} model is not plain SCXML yet.",
+        )
+        # Replace string entries in the datamodel
+        self._data_model.replace_string_entries()
+        NotImplementedError("To be finished.")
 
     def as_xml(self, **kwargs) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid root object."
