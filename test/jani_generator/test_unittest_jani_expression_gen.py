@@ -15,11 +15,11 @@
 
 import pytest
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_create_operator,
     array_value_operator,
 )
-from as2fm.scxml_converter.data_types.type_utils import ArrayInfo
 
 
 def __validate_array_create_operator(op_dict: dict, array_info: ArrayInfo):

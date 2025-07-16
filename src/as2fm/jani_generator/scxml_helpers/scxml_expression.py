@@ -25,6 +25,7 @@ import esprima
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import convert_string_to_int_array
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
@@ -38,7 +39,6 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_value_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
-from as2fm.scxml_converter.data_types.type_utils import ArrayInfo
 from as2fm.scxml_converter.scxml_entries.utils import ARRAY_LENGTH_SUFFIX
 
 JS_CALLABLE_PREFIX = "Math"
