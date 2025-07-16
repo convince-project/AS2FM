@@ -309,9 +309,9 @@ def _interpret_ecmascript_expr(
     """
     eval_res = None
     eval_str = f"result = {expr}"
+    print(get_warn_msg(None, f"evaluating:\n{eval_str}\nwith:{variables}\n"))
     with STPyV8.JSContext(variables) as context:
         try:
-            print(get_warn_msg(None, f"evaluating:\n{eval_str}"))
             context.eval(eval_str)
         except Exception:
             msg_addition = ""
