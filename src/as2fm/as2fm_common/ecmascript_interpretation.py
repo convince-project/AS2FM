@@ -17,7 +17,7 @@
 Module for interpreting ecmascript.
 """
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union, get_args
 
 import esprima
 import STPyV8
@@ -326,6 +326,18 @@ def _interpret_ecmascript_expr(
     return eval_res
 
 
+def _get_variable_instances(variables):
+    out_d = {}
+    for name, type in variables.items():
+        if type in get_args(ValidPlainScxmlTypes):
+            out_d[name] = type()
+        elif isinstance(type, dict):
+            out_d[name] = _get_variable_instances(type)
+        else:
+            raise RuntimeError(f"Unsupported type {type}.")
+    return out_d
+
+
 def interpret_ecma_script_expr(
     expr: str,
     variables: Optional[Dict[str, ValidPlainScxmlTypes]] = None,
@@ -341,7 +353,8 @@ def interpret_ecma_script_expr(
     """
     if variables is None:
         variables = {}
-    expr_result = _interpret_ecmascript_expr(expr, variables)
+    variable_instances = _get_variable_instances(variables)
+    expr_result = _interpret_ecmascript_expr(expr, variable_instances)
     if not allow_dict_results and isinstance(expr_result, dict):
         raise ValueError(
             f"Expected expr. {expr} to be of type {BasicJsTypes} or a list, got a dictionary."
