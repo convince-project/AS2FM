@@ -26,6 +26,9 @@
         "Point2D": {
             "type": "object",
             "properties": {
+                "frame": {
+                    "type": "string"
+                },
                 "x": {
                     "type": "number"
                 },

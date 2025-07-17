@@ -7,10 +7,14 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="a_point" expr="{'x': 0.42, 'y': 3.14}" type="Point2D" />
+        <data id="a_point" expr="{'frame': 'world', 'x': 0.42, 'y': 3.14}" type="Point2D" />
         <data
             id="a_polygon"
-            expr="{'points': [{'x': 0.1, 'y': 0.2}, {'x': 0.3, 'y': 0.4}]}"
+            expr="
+            {'points': [
+                {'frame': 'world1', 'x': 0.1, 'y': 0.2},
+                {'frame': 'world2', 'x': 0.3, 'y': 0.4}
+            ]}"
             type="Polygon" />
         <data
             id="multiple_polygons"
@@ -18,8 +22,8 @@
             {'polygons': [
                 {'points': []},
                 {'points': [
-                    {'x': 1, 'y': 2},
-                    {'x': 3, 'y': 4}
+                    {'frame': 'world1', 'x': 1, 'y': 2},
+                    {'frame': 'world?', 'x': 3, 'y': 4}
                 ]},
                 ]
             }"
