@@ -37,8 +37,8 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_value_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
-from as2fm.scxml_converter.data_types.type_utils import ArrayInfo
-from as2fm.scxml_converter.scxml_entries.utils import ARRAY_LENGTH_SUFFIX
+from as2fm.scxml_converter.data_types.type_utils import ARRAY_LENGTH_SUFFIX, ArrayInfo
+from as2fm.scxml_converter.scxml_entries.utils import get_type_ast_array_expression
 
 JS_CALLABLE_PREFIX = "Math"
 
@@ -90,13 +90,19 @@ def __convert_array_access_to_length_access(
 
 
 def parse_ecmascript_to_jani_expression(
-    ecmascript: str, elem: Optional[XmlElement], array_info: Optional[ArrayInfo] = None
+    ecmascript: str,
+    elem: Optional[XmlElement],
+    max_array_size: int,
+    dest_var_array_info: Optional[ArrayInfo] = None,
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
 
     :param ecmascript: The ecmascript to parse.
-    :param array_info: The type and max size of the array, if required.
+    :param elem: The xml element associated to the expression, for error logging.
+    :param max_array_size: The max size for an array dimension, if left undefined.
+    :param dest_var_array_info: The array info declared in the destination variable.
+
     :return: The jani expression.
     """
     check_assertion(isinstance(ecmascript, str), elem, f"Unexpected type {type(ecmascript)}.")
@@ -111,7 +117,9 @@ def parse_ecmascript_to_jani_expression(
     )
     ast = ast.body[0]
     try:
-        jani_expression = _parse_ecmascript_to_jani_expression(ast, None, array_info)
+        jani_expression = _parse_ecmascript_to_jani_expression(
+            ast, None, max_array_size, dest_var_array_info
+        )
     except NotImplementedError:
         raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript: {ecmascript}"))
     except AssertionError:
@@ -119,18 +127,22 @@ def parse_ecmascript_to_jani_expression(
     return jani_expression
 
 
-def _generate_array_expression_for_assignment(
-    array_info: ArrayInfo,
+def _generate_jani_array_expression(
     parent_script: Optional[esprima.nodes.Node],
     array_values: MutableSequence,
+    *,
+    array_info: Optional[ArrayInfo],
+    array_type: Type[Union[int, float]],
 ) -> JaniExpression:
     """
     Make the JaniExpression generating the array_values to be assigned to a variable.
 
-    :param array_info: Type and size of the array we are generating.
     :param parent_script: Reference to ecmascript AST where this is used.
     :param array_values: The values to initialize the array with (for padding).
+    :param array_info: Type and size of the array we are generating. If None, skip padding.
+    :param array_type: Type of the array we are generating. Used if array_info is None.
     """
+    NotImplementedError("To be refactored...")
     assert isinstance(
         array_info, ArrayInfo
     ), f"Unexpected type '{type(array_info)}' for input argument 'array_info'."
@@ -140,12 +152,13 @@ def _generate_array_expression_for_assignment(
     assert isinstance(
         parent_script, esprima.nodes.Node
     ), f"Unexpected type '{type(parent_script)}' for input argument 'parent_script'."
+    # Removing the next check, since we expand array comparison in `preprocess_jani_expressions`
     # Expression for generating array are supported only for assignments (elementary expression)!
-    assert parent_script.type in (Syntax.ExpressionStatement, Syntax.ArrayExpression), (
-        "Error: array generators can only be used for assignments or in other array expressions "
-        "(for multi-dimensional arrays): "
-        f"{parent_script.type} not in (ExpressionStatement, ArrayExpression)."
-    )
+    # assert parent_script.type in (Syntax.ExpressionStatement, Syntax.ArrayExpression), (
+    #     "Error: array generators can only be used for assignments or in other array expressions "
+    #     "(for multi-dimensional arrays): "
+    #     f"{parent_script.type} not in (ExpressionStatement, ArrayExpression)."
+    # )
 
     array_base_type: Type[Union[int, float]] = array_info.array_type
     assert isinstance(array_info.array_max_sizes[0], int), "Unexpected error: undefined size found."
@@ -175,23 +188,11 @@ def _make_padding(array_base_type: Type[Union[int, float]], sizes: List[int]):
     return [_make_padding(array_base_type, sizes[1:]) for _ in range(sizes[0])]
 
 
-def _generate_constant_array_expression(
-    p_node: esprima.nodes.Node, array_values: MutableSequence[Union[MutableSequence, int, float]]
-) -> JaniExpression:
-    # If here, we are dealing with a constant array, that can only be used for eq. checks
-    assert (
-        p_node.type == Syntax.BinaryExpression
-    ), f"Constant string parent node is a {p_node.type} != BinaryExpression."
-    assert (
-        p_node.operator == "=="
-    ), f"Constant strings support only the equality operator, found '{p_node.operator}'."
-    return array_value_operator(array_values)
-
-
 def _parse_ecmascript_to_jani_expression(
     ast: esprima.nodes.Node,
     parent_script: Optional[esprima.nodes.Node],
-    array_info: Optional[ArrayInfo] = None,
+    max_array_size: int,
+    dest_var_array_info: Optional[ArrayInfo],
 ) -> JaniExpression:
     """
     Parse ecmascript to jani expression.
@@ -202,7 +203,9 @@ def _parse_ecmascript_to_jani_expression(
     """
     if ast.type == Syntax.ExpressionStatement:
         # This is the highest level for each esprima script
-        return _parse_ecmascript_to_jani_expression(ast.expression, ast, array_info)
+        return _parse_ecmascript_to_jani_expression(
+            ast.expression, ast, max_array_size, dest_var_array_info
+        )
     elif ast.type == Syntax.Literal:
         if isinstance(ast.value, str):
             raise RuntimeError("This should not contain string expressions any more.")
@@ -221,7 +224,9 @@ def _parse_ecmascript_to_jani_expression(
             + f"Only {UNARY_OPERATORS_MAP.keys()} are supported."
         )
         return UNARY_OPERATORS_MAP[ast.operator](
-            _parse_ecmascript_to_jani_expression(ast.argument, ast, array_info)
+            _parse_ecmascript_to_jani_expression(
+                ast.argument, ast, max_array_size, dest_var_array_info
+            )
         )
     elif ast.type == Syntax.BinaryExpression or ast.type == Syntax.LogicalExpression:
         # It is a more complex expression
@@ -231,37 +236,56 @@ def _parse_ecmascript_to_jani_expression(
         return JaniExpression(
             {
                 "op": OPERATORS_TO_JANI_MAP[ast.operator],
-                "left": _parse_ecmascript_to_jani_expression(ast.left, ast, array_info),
-                "right": _parse_ecmascript_to_jani_expression(ast.right, ast, array_info),
+                "left": _parse_ecmascript_to_jani_expression(
+                    ast.left, ast, max_array_size, dest_var_array_info
+                ),
+                "right": _parse_ecmascript_to_jani_expression(
+                    ast.right, ast, max_array_size, dest_var_array_info
+                ),
             }
         )
     elif ast.type == Syntax.ArrayExpression:
         # This is an Array literal, will result in an array_value operator
-        assert array_info is not None, "Array info must be provided for ArrayExpressions."
-        entry_type: Type = array_info.array_type
-        if array_info.array_dimensions == 1:
+        if dest_var_array_info is None:
+            dest_var_array_type = get_type_ast_array_expression(ast)
+        entry_type: Type = dest_var_array_info.array_type
+        if dest_var_array_info.array_dimensions == 1:
             assert all(
                 element.type == Syntax.Literal for element in ast.elements
             ), "All array elements are expected to be a 'Literal'"
             elements_list = [entry_type(element.value) for element in ast.elements]
-            return _generate_array_expression_for_assignment(
-                array_info, parent_script, elements_list
+            return _generate_jani_array_expression(
+                parent_script,
+                elements_list,
+                array_info=dest_var_array_info,
+                array_type=dest_var_array_type,
             )
         else:  # array_info.array_dimensions > 1
             elem_exprs = []
             for elem in ast.elements:
                 elem_array_info = ArrayInfo(
-                    array_type=array_info.array_type,
-                    array_dimensions=array_info.array_dimensions - 1,
-                    array_max_sizes=array_info.array_max_sizes[1:],
-                    is_base_type=array_info.is_base_type,
+                    array_type=dest_var_array_info.array_type,
+                    array_dimensions=dest_var_array_info.array_dimensions - 1,
+                    array_max_sizes=dest_var_array_info.array_max_sizes[1:],
+                    is_base_type=dest_var_array_info.is_base_type,
                 )
-                elem_expr = _parse_ecmascript_to_jani_expression(elem, ast, elem_array_info)
+                elem_expr = _parse_ecmascript_to_jani_expression(
+                    elem, ast, max_array_size, elem_array_info
+                )
                 elem_exprs.append(elem_expr)
-            return _generate_array_expression_for_assignment(array_info, parent_script, elem_exprs)
+            return _generate_jani_array_expression(
+                parent_script,
+                elem_exprs,
+                array_info=dest_var_array_info,
+                array_type=dest_var_array_type,
+            )
     elif ast.type == Syntax.MemberExpression:
-        object_expr = _parse_ecmascript_to_jani_expression(ast.object, ast, array_info)
-        property_expr = _parse_ecmascript_to_jani_expression(ast.property, ast, array_info)
+        object_expr = _parse_ecmascript_to_jani_expression(
+            ast.object, ast, max_array_size, dest_var_array_info
+        )
+        property_expr = _parse_ecmascript_to_jani_expression(
+            ast.property, ast, max_array_size, dest_var_array_info
+        )
         if ast.computed:
             # This is an array access, like `array[0]`
             return array_access_operator(object_expr, property_expr)
@@ -310,7 +334,9 @@ def _parse_ecmascript_to_jani_expression(
         ), f"Unsupported function call {function_name}."
         expression_args: List[JaniExpression] = []
         for arg in ast.arguments:
-            expression_args.append(_parse_ecmascript_to_jani_expression(arg, ast, array_info))
+            expression_args.append(
+                _parse_ecmascript_to_jani_expression(arg, ast, max_array_size, dest_var_array_info)
+            )
         return CALLABLE_OPERATORS_MAP[function_name](*expression_args)
     else:
         raise NotImplementedError(f"Unsupported ecmascript type: {ast.type}")
