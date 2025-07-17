@@ -7,7 +7,7 @@
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="recv_point" expr="{'x': 0, 'y': 0}" type="Point2D" />
+        <data id="recv_point" expr="{'x': 0, 'y': 0, 'frame': 'old_world'}" type="Point2D" />
         <data
             id="recv_polygon"
             expr="{'points': []}"

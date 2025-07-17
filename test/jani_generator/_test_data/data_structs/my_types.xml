@@ -8,7 +8,7 @@
     </struct>
 
     <struct id="Point2D">
-        <member id="frame" type="str" />
+        <member id="frame" type="string" />
         <member id="x" type="float32" />
         <member id="y" type="float32" />
     </struct>
