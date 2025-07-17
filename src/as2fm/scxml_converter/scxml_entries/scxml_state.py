@@ -329,12 +329,12 @@ class ScxmlState(ScxmlBase):
         for transition in self._body:
             transition.add_targets_to_scxml_sends(events_to_targets)
 
-    def replace_strings_in_expressions(self) -> None:
+    def replace_strings_types_with_integer_arrays(self) -> None:
         """Replace all the strings that appear in the SCXML expressions."""
         self._on_entry = replace_string_expressions_in_execution_body(self._on_entry)
         self._on_exit = replace_string_expressions_in_execution_body(self._on_exit)
         for transition in self._body:
-            transition.replace_string_expressions()
+            transition.replace_strings_types_with_integer_arrays()
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."

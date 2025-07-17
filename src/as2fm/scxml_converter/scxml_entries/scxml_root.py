@@ -395,7 +395,7 @@ class ScxmlRoot(ScxmlBase):
         for state in self._states:
             state.add_target_to_sent_events(events_to_targets)
 
-    def to_scxml_with_replaced_strings(self) -> None:
+    def replace_strings_types_with_integer_arrays(self) -> None:
         """
         Replace all occurrences of strings in the datamodel and the expressions with array of int.
         """
@@ -405,11 +405,10 @@ class ScxmlRoot(ScxmlBase):
             f"{self.get_name()} model is not plain SCXML yet.",
         )
         # Replace string entries in the datamodel
-        self._data_model.replace_string_entries()
+        self._data_model.replace_strings_types_with_integer_arrays()
         # Go over the various states and substitute all the strings in the expressions
         for scxml_state in self._states:
-            scxml_state.replace_strings_in_expressions()
-        NotImplementedError("To be finished.")
+            scxml_state.replace_strings_types_with_integer_arrays()
 
     def as_xml(self, **kwargs) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid root object."

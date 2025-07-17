@@ -320,7 +320,7 @@ class ScxmlData(ScxmlBase):
                 f" the BT blackboard variable {self._upper_bound}"
             )
 
-    def replace_string_type(self) -> None:
+    def replace_strings_types_with_integer_arrays(self) -> None:
         base_type: str = self._data_type
         array_dims: List[Optional[int]] = []
         if is_type_string_array(self._data_type):

@@ -284,7 +284,7 @@ class ScxmlIf(ScxmlBase):
         )
         return [ScxmlIf(conditional_executions, else_execution)]
 
-    def replace_string_expressions(self) -> "ScxmlIf":
+    def replace_strings_types_with_integer_arrays(self) -> "ScxmlIf":
         """Replace all string literals in the contained expressions."""
         new_cond_execs: List[ConditionalExecutionBody] = []
         for cond, body in self._conditional_executions:
@@ -444,7 +444,7 @@ class ScxmlSend(ScxmlBase):
         # param.as_plain_scxml()
         return [ScxmlSend(self._event, expanded_params)]
 
-    def replace_string_expressions(self) -> "ScxmlSend":
+    def replace_strings_types_with_integer_arrays(self) -> "ScxmlSend":
         """Replace all string literals in the contained expressions."""
         new_params: List[ScxmlParam] = []
         for param in self._params:
@@ -576,7 +576,7 @@ class ScxmlAssign(ScxmlBase):
             plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
         return plain_assignments
 
-    def replace_string_expressions(self) -> "ScxmlAssign":
+    def replace_strings_types_with_integer_arrays(self) -> "ScxmlAssign":
         """Replace all string literals in the contained expressions."""
         return ScxmlAssign(
             self.get_location(), convert_expression_with_string_literals(self.get_expr())
@@ -727,7 +727,7 @@ def replace_string_expressions_in_execution_body(
     # TODO: In-Place or not in-place substitution? Both would work here...
     new_body: ScxmlExecutionBody = []
     for entry in exec_body:
-        new_body.append(entry.replace_string_expressions())
+        new_body.append(entry.replace_strings_types_with_integer_arrays())
     return new_body
 
 

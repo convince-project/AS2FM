@@ -92,7 +92,7 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
             input_scxml.is_plain_scxml()
         ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
         try:
-            input_scxml.to_scxml_with_replaced_strings()
+            input_scxml.replace_strings_types_with_integer_arrays()
             automaton = convert_scxml_root_to_jani_automaton(
                 input_scxml, events_holder, max_array_size
             )

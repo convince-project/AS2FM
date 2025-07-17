@@ -84,7 +84,7 @@ def _test_with_main(
             xml_main_path, jani_file=model_jani, scxmls_dir=generated_scxml_path
         )
         if generate_plain_scxml:
-            assert os.path.exists(plain_scxml_path)
+            assert os.path.exists(plain_scxml_path), "Expected to find generated plain SCXMl files"
             generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
             assert len(generated_files) > 0, "Expected at least one gen. SCXML file."

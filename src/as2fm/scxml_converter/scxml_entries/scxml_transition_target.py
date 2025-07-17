@@ -210,7 +210,7 @@ class ScxmlTransitionTarget(ScxmlBase):
             new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
 
-    def replace_string_expressions(self) -> None:
+    def replace_strings_types_with_integer_arrays(self) -> None:
         """
         Replace the string literals in the transition condition and the different targets.
         """

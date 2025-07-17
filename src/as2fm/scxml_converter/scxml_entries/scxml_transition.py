@@ -36,7 +36,6 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     ScxmlExecutableEntry,
     add_targets_to_scxml_sends,
     execution_body_from_xml,
-    replace_string_expressions_in_execution_body,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -315,7 +314,7 @@ class ScxmlTransition(ScxmlBase):
                 add_targets_to_scxml_sends(transition_target.get_body(), events_to_targets)
             )
 
-    def replace_string_expressions(self) -> None:
+    def replace_strings_types_with_integer_arrays(self) -> None:
         """
         Replace the string literals in the transition condition and the different targets.
         """
@@ -324,7 +323,7 @@ class ScxmlTransition(ScxmlBase):
                 self._condition, self.get_xml_origin()
             )
         for target in self._targets:
-            target.set_body(replace_string_expressions_in_execution_body(target.get_body()))
+            target.replace_strings_types_with_integer_arrays()
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid transition."
