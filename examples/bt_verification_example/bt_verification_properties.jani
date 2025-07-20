@@ -1,0 +1,96 @@
+{
+  "properties": [
+    {
+      "name": "action_execution_after_condition",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": {
+              "op": "=",
+              "left": "bt_1002_response__status",
+              "right": 1
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    },
+    {
+      "name": "sequence_completion",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": {
+              "op": "=",
+              "left": "bt_1000_response__status",
+              "right": 1
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    },
+    {
+      "name": "condition_failure_leads_to_sequence_failure",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "G",
+            "exp": {
+              "op": "⇒",
+              "left": {
+                "op": "=",
+                "left": "bt_1001_response__status",
+                "right": 2
+              },
+              "right": {
+                "op": "=",
+                "left": "bt_1000_response__status",
+                "right": 2
+              }
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    },
+    {
+      "name": "action_execution_frequency",
+      "expression": {
+        "op": "filter",
+        "fun": "values",
+        "values": {
+          "op": "Pmin",
+          "exp": {
+            "op": "F",
+            "exp": {
+              "op": "≥",
+              "left": "bt_1002_response__status",
+              "right": 1
+            }
+          }
+        },
+        "states": {
+          "op": "initial"
+        }
+      }
+    }
+  ]
+}

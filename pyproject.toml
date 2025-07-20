@@ -45,11 +45,12 @@ requires-python = ">=3.10"
 
 [tool.setuptools.package-data]
 "as2fm.trace_visualizer" = ["data/slkscr.ttf"]
-"as2fm.resources" = ["bt_control_nodes/*.scxml"]
+"as2fm.resources" = ["bt_control_nodes/*.scxml", "mock_bt_nodes/*.scxml"]
 
 [project.scripts]
 as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"
 as2fm_scxml_to_jani = "as2fm.jani_generator.main:main_scxml_to_jani"
+as2fm_bt_only_verification = "as2fm.jani_generator.main:main_bt_only_verification"
 as2fm_jani_to_plantuml = "as2fm.jani_visualizer.main:main_jani_to_plantuml"
 as2fm_trace_to_png = "as2fm.trace_visualizer.main:main_trace_to_png"
 
@@ -81,4 +82,4 @@ profile = "black"
 line_length = 100
 
 [tool.codespell]
-ignore-words-list = 'assertIn'
+ignore-words-list = 'Studi'

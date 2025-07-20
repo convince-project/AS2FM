@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    initial="idle"
+    version="1.0"
+    name="MockAction_TEMPLATE"
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="execution_count" expr="0" type="int32" />
+        <data id="last_result" expr="'SUCCESS'" type="string" />
+        <data id="ticks_in_running" expr="0" type="int32" />
+        <data id="max_running_ticks" expr="5" type="int32" />
+    </datamodel>
+
+    <state id="idle">
+        <bt_tick target="process" />
+        <bt_halt target="idle">
+            <assign location="ticks_in_running" expr="0" />
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="process">
+        <transition target="return_success" cond="execution_count % 3 == 0">
+            <assign location="execution_count" expr="execution_count + 1" />
+            <assign location="last_result" expr="'SUCCESS'" />
+        </transition>
+        <transition target="return_running" cond="execution_count % 3 == 1">
+            <assign location="execution_count" expr="execution_count + 1" />
+            <assign location="last_result" expr="'RUNNING'" />
+            <assign location="ticks_in_running" expr="1" />
+        </transition>
+        <transition target="return_failure" cond="execution_count % 3 == 2">
+            <assign location="execution_count" expr="execution_count + 1" />
+            <assign location="last_result" expr="'FAILURE'" />
+        </transition>
+    </state>
+
+    <state id="return_success">
+        <transition target="idle">
+            <bt_return_status status="SUCCESS" />
+        </transition>
+    </state>
+
+    <state id="return_failure">
+        <transition target="idle">
+            <bt_return_status status="FAILURE" />
+        </transition>
+    </state>
+
+    <state id="return_running">
+        <transition target="idle">
+            <bt_return_status status="RUNNING" />
+        </transition>
+    </state>
+
+</scxml>
