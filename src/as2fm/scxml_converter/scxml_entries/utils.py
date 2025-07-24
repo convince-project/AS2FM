@@ -17,7 +17,7 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type
 
 import escodegen
 import esprima
@@ -408,27 +408,6 @@ def _convert_string_literals_to_int_arrays(node: esprima.nodes.Node) -> esprima.
         return node
     else:
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
-
-
-def get_type_ast_array_expression(array_ast: ArrayExpression) -> Type[Union[int, float]]:
-    """Generate the ArrayInfo associated to the input AST instance."""
-    assert array_ast.type == Syntax.ArrayExpression, "This function expects an ArrayExpression."
-    expected_type: Type[Union[int, float]] = int
-    sub_array_found = False
-    sub_literal_found = False
-    for sub_expr in array_ast:
-        if sub_expr.type == Syntax.ArrayExpression:
-            sub_array_found = True
-            sub_type = get_type_ast_array_expression(sub_expr)
-        elif sub_expr.type == Syntax.Literal:
-            sub_literal_found = True
-            sub_type = type(sub_expr.value)
-        assert not (
-            sub_array_found and sub_literal_found
-        ), "Found arrays and lit. values at the same array level."
-        if sub_type == float:
-            expected_type = float
-    return expected_type
 
 
 def convert_expression_with_object_arrays(
