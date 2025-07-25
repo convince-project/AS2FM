@@ -35,8 +35,8 @@
                 recv_polygon.points[0].x &gt;= 100 &amp;&amp;
                 recv_polygons.length == 3 &amp;&amp;
                 recv_polygons.polygons[1].points[1].y &gt;= 100 &amp;&amp;
-                recv_polygons.polygons[2].points.length == 2 &amp;&amp;
-                recv_polygons.polygons[2].points[1].frame == 'world?'"
+                recv_polygons.polygons[1].points.length == 2 &amp;&amp;
+                recv_polygons.polygons[1].points[1].frame == 'world?'"
             target="end" />
     </state>
 
