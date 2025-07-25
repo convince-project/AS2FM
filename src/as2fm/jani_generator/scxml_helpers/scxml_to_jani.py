@@ -219,7 +219,7 @@ def _preprocess_array_comparison(
     assert isinstance(array_elements, list), f"Unexpected value for array elements {array_elements}"
     assert array_var_name is not None, "No array variable found in the eq. operator."
     array_length_var = get_array_length_var_name(array_var_name, len(array_var_idxs) + 1)
-    if len(array_var_idxs) > 0:
+    if len(array_var_idxs) <= 0:
         array_len_var_expr = JaniExpression(array_length_var)
     else:
         array_len_var_expr = array_access_operator(array_length_var, array_var_idxs)
