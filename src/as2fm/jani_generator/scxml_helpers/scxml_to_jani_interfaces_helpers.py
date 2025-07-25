@@ -25,7 +25,6 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import (
     SupportedECMAScriptSequences,
-    convert_string_to_int_array,
     get_array_type_and_sizes,
     value_to_type,
 )
@@ -183,9 +182,12 @@ def generate_jani_assignments(
                 assignment_value_name: str = assignment_value.as_identifier()
                 assignment_value_ids: List[JaniExpression] = []
             elif assignment_value_type == JaniExpressionType.OPERATOR:
-                assignment_value_name, assignment_value_ids = __get_array_access_name_and_indexes(
-                    assignment_value
-                )
+                if assignment_value.op == "aa":
+                    assignment_value_name, assignment_value_ids = (
+                        __get_array_access_name_and_indexes(assignment_value)
+                    )
+                else:
+                    raise NotImplementedError("Unexpected operator found: '{assignment_value.op}'")
             else:
                 raise NotImplementedError("Cannot assign explicitly arrays to a specific var index")
             assignment_n_dims = len(assignment_value_ids)
@@ -434,7 +436,7 @@ def append_scxml_body_to_jani_edge(
                 # In case of MutableSequences, we need to get the dimensionality of the result
                 if res_eval_type == MutableSequence:
                     if isinstance(res_eval_value, str):
-                        res_eval_value = convert_string_to_int_array(res_eval_value)
+                        raise RuntimeError("This should not contain string expressions any more.")
                     array_info = array_value_to_type_info(res_eval_value)
                     if array_info.array_type is None:
                         # TODO: Better handling of array type than assigning int by default
