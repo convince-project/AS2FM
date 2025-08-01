@@ -117,10 +117,10 @@ def parse_ecmascript_to_jani_expression(
     ast = ast.body[0]
     try:
         jani_expression = _parse_ecmascript_to_jani_expression(ast, target_array_info)
-    except NotImplementedError:
-        raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript: {ecmascript}"))
-    except AssertionError:
-        raise RuntimeError(get_error_msg(elem, f"Assertion from ecmascript: {ecmascript}"))
+    except NotImplementedError as e:
+        raise RuntimeError(get_error_msg(elem, f"Unsupported ecmascript '{ecmascript}': {e}"))
+    except AssertionError as e:
+        raise RuntimeError(get_error_msg(elem, f"Assertion from ecmascript '{ecmascript}': {e}"))
     return jani_expression
 
 

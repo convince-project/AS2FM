@@ -88,7 +88,7 @@ def test_instance_evaluation():
     assert len(poly_instance) == 3
     assert poly_instance["polygons.points.x"] == [[1, 3], [-1.5, -2.0], []]
     assert poly_instance["polygons.points.y"] == [[2, 4], [3, 5], []]
-    assert poly_instance["polygons.frame"] == ["'map'", "'world'", "''"]
+    assert poly_instance["polygons.frame"] == ["map", "world", ""]
 
 
 def test_empty_instance_evaluation():
