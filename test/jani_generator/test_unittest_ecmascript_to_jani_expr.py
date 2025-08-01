@@ -69,6 +69,7 @@ def test_parse_ecmascript_to_jani_expression_with_array():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
+@pytest.mark.xfail(reason="No strings processing expected in the JANI conversion", strict=True)
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
     array_info = ArrayInfo(int, 1, [10])
@@ -76,6 +77,7 @@ def test_parse_ecmascript_to_jani_expression_with_string():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
+@pytest.mark.xfail(reason="No strings processing expected in the JANI conversion", strict=True)
 def test_parse_ecmascript_to_jani_expression_with_escaped_string():
     # Check if double quotes are handled as well
     ecmascript_expr = '""'

@@ -13,17 +13,21 @@
                     "op": "∧",
                     "left": {
                       "op": "=",
-                      "left": 11,
+                      "left": 3,
                       "right": "new_msg_array__msg.d1_len"
                     },
                     "right": {
                       "op": "=",
                       "left": {
                         "op": "aa",
-                        "exp": "new_msg_array__msg",
-                        "index": 10
+                        "exp": {
+                          "op": "aa",
+                          "exp": "new_msg_array__msg",
+                          "index": 2
+                        },
+                        "index": 0
                       },
-                      "right": 10
+                      "right": 99
                     }
                   }
                 }
