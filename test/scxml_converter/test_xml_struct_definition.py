@@ -57,26 +57,38 @@ def test_instance_evaluation():
     # Create mock dict of elements for struct definitions
     struct_definitions: Dict[str, XmlStructDefinition] = {
         "PolygonsArray": XmlStructDefinition("PolygonsArray", {"polygons": "Polygon[]"}),
-        "Polygon": XmlStructDefinition("Polygon", {"points": "Point2D[]"}),
+        "Polygon": XmlStructDefinition("Polygon", {"points": "Point2D[]", "frame": "string"}),
         "Point2D": XmlStructDefinition("Point2D", {"x": "float32", "y": "float32"}),
     }
     expand_struct_definitions(struct_definitions)
     js_expression = """{
         'polygons': [
-            {'points': [
-                {'x': 1, 'y': 2},
-                {'x': 3, 'y': 4}
-            ]},
-            {'points': [
-                {'x': -1.5, 'y': 3},
-                {'x': -2.0, 'y': 5}
-            ]},
-            {'points': []},
+            {
+                'points':
+                    [
+                        {'x': 1, 'y': 2},
+                        {'x': 3, 'y': 4}
+                    ],
+                'frame': 'map',
+            },
+            {
+                'points':
+                    [
+                        {'x': -1.5, 'y': 3},
+                        {'x': -2.0, 'y': 5}
+                    ],
+                'frame': 'world',
+            },
+            {
+                'points': [],
+                'frame': '',
+            },
         ]}"""
     poly_instance = struct_definitions["PolygonsArray"].get_instance_from_expression(js_expression)
-    assert len(poly_instance) == 2
+    assert len(poly_instance) == 3
     assert poly_instance["polygons.points.x"] == [[1, 3], [-1.5, -2.0], []]
     assert poly_instance["polygons.points.y"] == [[2, 4], [3, 5], []]
+    assert poly_instance["polygons.frame"] == ["'map'", "'world'", "''"]
 
 
 def test_empty_instance_evaluation():

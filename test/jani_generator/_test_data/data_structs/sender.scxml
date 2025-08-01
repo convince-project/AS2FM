@@ -35,8 +35,6 @@
         <onentry>
             <send event="data">
                 <param name="point" expr="a_point" />
-                <param name="point.x" expr="a_point.x" />
-                <param name="point.y" expr="a_point.y" />
                 <param name="polygon" expr="a_polygon" />
                 <param name="polygons" expr="multiple_polygons" />
             </send>
@@ -50,8 +48,7 @@
             <assign location="multiple_polygons.polygons[2]" expr="a_polygon" />
             <assign location="multiple_polygons.polygons[2].points.x" expr="a_polygon.points.x" />
             <assign location="multiple_polygons.polygons[1].points[0].x" expr="a_polygon.points[0].x" />
-            <assign location="multiple_polygons.polygons[1].points[1].y"
-                expr="multiple_polygons.polygons[1].points[1].y + 1.0" />
+            <assign location="multiple_polygons.polygons[1].points[1].y" expr="multiple_polygons.polygons[1].points[1].y + 1.0" />
         </transition>
     </state>
 </scxml>

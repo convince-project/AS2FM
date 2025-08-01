@@ -294,6 +294,7 @@ def get_cases():
             "model_xml": "main_xml_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # JSON struct definitions
         _default_case()
@@ -303,6 +304,7 @@ def get_cases():
             "model_xml": "main_json_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # -------------------------------------------------------------------------------------
         # String support
