@@ -322,7 +322,7 @@ class ScxmlState(ScxmlBase):
             plain_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)]
 
-    def add_target_to_sent_events(self, events_to_targets: EventsToAutomata) -> None:
+    def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
         """Update all send event tags to include the target scxml model."""
         self._on_entry = add_targets_to_scxml_sends(self._on_entry, events_to_targets)
         self._on_exit = add_targets_to_scxml_sends(self._on_exit, events_to_targets)

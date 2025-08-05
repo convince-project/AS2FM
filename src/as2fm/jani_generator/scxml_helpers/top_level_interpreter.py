@@ -278,7 +278,7 @@ def export_plain_scxml_models(
             event_targets[event].add(scxml_model.get_name())
     # Add the target automaton to each event sent
     for scxml_model in models_to_export:
-        scxml_model.to_scxml_with_targets(event_targets)
+        scxml_model.add_target_to_event_send(event_targets)
     # Export the models
     for scxml_model in models_to_export:
         with open(

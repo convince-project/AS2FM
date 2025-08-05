@@ -386,14 +386,14 @@ class ScxmlRoot(ScxmlBase):
             )
         return (converted_scxmls, ros_declarations)
 
-    def to_scxml_with_targets(self, events_to_targets: EventsToAutomata) -> None:
+    def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
         """
         For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
 
         :param events_to_targets: Mapping between the event name and the automata recipients.
         """
         for state in self._states:
-            state.add_target_to_sent_events(events_to_targets)
+            state.add_target_to_event_send(events_to_targets)
 
     def replace_strings_types_with_integer_arrays(self) -> None:
         """
