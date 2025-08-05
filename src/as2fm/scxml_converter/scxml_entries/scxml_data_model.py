@@ -109,6 +109,11 @@ class ScxmlDataModel(ScxmlBase):
             )
         return [ScxmlDataModel(plain_data_entries)]
 
+    def replace_strings_types_with_integer_arrays(self) -> None:
+        """Replace all data entries of type string (or arrays of strings) to array of ints."""
+        for data_entry in self._data_entries:
+            data_entry.replace_strings_types_with_integer_arrays()
+
     def as_xml(self, type_as_attribute: bool = True) -> Optional[XmlElement]:
         """
         Store the datamodel, containing all model's data entries, as an XML element.

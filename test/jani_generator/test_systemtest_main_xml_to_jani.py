@@ -76,11 +76,15 @@ def _test_with_main(
         os.remove(jani_path)
     generated_scxml_path = "generated_plain_scxml" if generate_plain_scxml else None
 
+    if generate_plain_scxml:
+        plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+
     try:
-        interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
+        interpret_top_level_xml(
+            xml_main_path, jani_file=model_jani, scxmls_dir=generated_scxml_path
+        )
         if generate_plain_scxml:
-            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
-            assert os.path.exists(plain_scxml_path)
+            assert os.path.exists(plain_scxml_path), "Expected to find generated plain SCXMl files"
             generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
             assert len(generated_files) > 0, "Expected at least one gen. SCXML file."
@@ -290,6 +294,7 @@ def get_cases():
             "model_xml": "main_xml_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # JSON struct definitions
         _default_case()
@@ -299,6 +304,7 @@ def get_cases():
             "model_xml": "main_json_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # -------------------------------------------------------------------------------------
         # String support
@@ -341,6 +347,13 @@ def get_cases():
             "expected_result_probability": 0.1,
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
             "skip_properties_load_check": True,
+        },
+        # Arrays of strings
+        _default_case()
+        | {
+            "_case_name": "array_of_strings",
+            "folder": "array_of_strings",
+            "property_name": "array_check",
         },
         # -------------------------------------------------------------------------------------
         # ROS features

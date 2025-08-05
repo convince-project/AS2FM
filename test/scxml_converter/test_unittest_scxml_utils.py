@@ -28,6 +28,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     CallbackType,
     convert_expression_with_object_arrays,
+    convert_expression_with_string_literals,
     get_plain_expression,
 )
 
@@ -279,6 +280,24 @@ def test_convert_expression_with_object_arrays():
         )
         == "polygons__polygons__points[2][polygons__polygons__points__x[2].length]"
     )
+
+
+def test_convert_expression_with_string_literals():
+    """Test if the functionality works in a number of cases."""
+    test_cases = [
+        ("'as2fm'", "[97, 115, 50, 102, 109]"),
+        ("as2fm_str == 'as2fm'", "as2fm_str == [97, 115, 50, 102, 109]"),
+        ("'as2fm' == as2fm_str", "[97, 115, 50, 102, 109] == as2fm_str"),
+        ("['as', '2', 'fm']", "[[97, 115], [50], [102, 109]]"),
+    ]
+
+    for in_val, gt_out in test_cases:
+        out_val = convert_expression_with_string_literals(in_val)
+        # Arrays are printed on multiple lines by default: we remove them here.
+        out_val = " ".join(s.strip().rstrip() for s in out_val.splitlines())
+        # Remove extra-spaces in array brackets
+        out_val = out_val.replace("[ ", "[").replace(" ]", "]")
+        assert out_val == gt_out, f"Failed converting `{in_val}`: `{out_val}` != `{gt_out}`"
 
 
 def test_type_string_conversion():
