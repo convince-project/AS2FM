@@ -129,8 +129,7 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
     - The {GLOBAL_TIMER_TICK_EVENT}_on_receive action the global timer step, and is renamed.
     """
     global_timer_edges = timer_automaton.get_edges()
-    for index in reversed(range(len(global_timer_edges))):
-        jani_edge = global_timer_edges[index]
+    for jani_edge in global_timer_edges:
         action_name = jani_edge.get_action()
         if action_name is not None:
             if action_name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
