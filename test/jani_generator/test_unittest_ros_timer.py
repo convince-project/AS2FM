@@ -54,8 +54,8 @@ def get_time_step_from_timer_automaton(automaton: JaniAutomaton) -> int:
         edge for edge in automaton.get_edges() if edge.get_action() == GLOBAL_TIMER_TICK_ACTION
     ]
     assert (
-        len(global_tick_edge) == 1
-    ), f"Expected exactly one edge advancing the global timer in >{automaton.get_name()}<"
+        len(global_tick_edge) == 2
+    ), f"Expected exactly two edges advancing the global timer in >{automaton.get_name()}<"
     edge_dict = global_tick_edge[0].as_dict({})
     return int(edge_dict["destinations"][0]["assignments"][0]["value"]["right"])
 
