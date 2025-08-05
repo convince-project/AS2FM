@@ -46,6 +46,7 @@ def _test_with_main(
     skip_properties_load_check: bool,
     disable_cache: bool,
     n_threads: int,
+    batch_size: int,
     _case_name: str,
 ):
     """
@@ -62,7 +63,8 @@ def _test_with_main(
     :param n_traces_limit: The max. number of iterations to run in SMC.
     :param skip_properties_load_check: Disable the equality check for the loaded properties.
     :param disable_cache: Whether to disable cache in smc_storm.
-    :param n_threads: How many threads to use
+    :param n_threads: How many threads to use.
+    :param batch_size: How many traces to compute in a batch before checking for convergence.
     :param _case_name: Unused here. Needed to name the parameterized tests.
     """
     test_data_dir = os.path.join(os.path.dirname(__file__), "_test_data", folder)
@@ -74,11 +76,15 @@ def _test_with_main(
         os.remove(jani_path)
     generated_scxml_path = "generated_plain_scxml" if generate_plain_scxml else None
 
+    if generate_plain_scxml:
+        plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+
     try:
-        interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
+        interpret_top_level_xml(
+            xml_main_path, jani_file=model_jani, scxmls_dir=generated_scxml_path
+        )
         if generate_plain_scxml:
-            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
-            assert os.path.exists(plain_scxml_path)
+            assert os.path.exists(plain_scxml_path), "Expected to find generated plain SCXMl files"
             generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
             assert len(generated_files) > 0, "Expected at least one gen. SCXML file."
@@ -98,15 +104,15 @@ def _test_with_main(
             ), "Properties from input json and generated jani file do not match."
         if not skip_smc:
             assert len(property_name) > 0, "Property name must be provided for SMC."
-            storm_command = (
+            storm_args = (
                 f"--model {jani_path} --properties-names {property_name} "
                 + f"--max-trace-length {trace_length_limit} --max-n-traces {n_traces_limit} "
-                + f"--n-threads {n_threads}"
+                + f"--n-threads {n_threads} --batch-size {batch_size} --hide-progress-bar"
             )
             if disable_cache:
-                storm_command += " --disable-explored-states-caching"
+                storm_args += " --disable-explored-states-caching"
             run_smc_storm_with_output(
-                storm_command,
+                storm_args,
                 [property_name, jani_path],
                 [],
                 expected_result_probability,
@@ -137,6 +143,7 @@ def _default_case():
         "skip_properties_load_check": False,
         "disable_cache": False,
         "n_threads": 1,
+        "batch_size": 100,
     }
 
 
@@ -287,6 +294,7 @@ def get_cases():
             "model_xml": "main_xml_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # JSON struct definitions
         _default_case()
@@ -296,6 +304,7 @@ def get_cases():
             "model_xml": "main_json_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # -------------------------------------------------------------------------------------
         # String support
@@ -338,6 +347,13 @@ def get_cases():
             "expected_result_probability": 0.1,
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
             "skip_properties_load_check": True,
+        },
+        # Arrays of strings
+        _default_case()
+        | {
+            "_case_name": "array_of_strings",
+            "folder": "array_of_strings",
+            "property_name": "array_check",
         },
         # -------------------------------------------------------------------------------------
         # ROS features
@@ -465,6 +481,19 @@ def get_cases():
             "expected_result_probability": 0.0,
             "trace_length_limit": 1_000_000,
             "n_threads": 8,
+        },
+        # UC1 Complete Mission
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main.xml",
+            "property_name": "tree_finished_robot_docked",
+            "expected_result_probability": 1.0,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 50,
+            "n_threads": 8,
+            "batch_size": 1,
         },
         # UC2 Assembly recovery
         _default_case()

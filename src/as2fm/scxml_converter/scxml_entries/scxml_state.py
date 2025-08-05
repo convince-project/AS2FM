@@ -23,9 +23,10 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
+    EventsToAutomata,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
@@ -40,11 +41,13 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BtPortsHandler,
 )
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+    add_targets_to_scxml_sends,
     as_plain_execution_body,
     execution_body_from_xml,
     has_bt_blackboard_input,
     instantiate_exec_body_bt_events,
     is_plain_execution_body,
+    replace_string_expressions_in_execution_body,
     set_execution_body_callback_type,
     valid_execution_body,
 )
@@ -155,9 +158,21 @@ class ScxmlState(ScxmlBase):
         self, bt_ports_handler: BtPortsHandler
     ) -> List["ScxmlState"]:
         generated_states: List[ScxmlState] = [self]
-        assert not has_bt_blackboard_input(self._on_entry, bt_ports_handler), (
-            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
-            "This isn't yet supported."
+        check_assertion(
+            not has_bt_blackboard_input(self._on_entry, bt_ports_handler),
+            self.get_xml_origin(),
+            (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
+                "This isn't yet supported."
+            ),
+        )
+        check_assertion(
+            not has_bt_blackboard_input(self._on_exit, bt_ports_handler),
+            self.get_xml_origin(),
+            (
+                f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
+                "This isn't yet supported."
+            ),
         )
         assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
             f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
@@ -306,6 +321,20 @@ class ScxmlState(ScxmlBase):
         for entry in self._body:
             plain_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
         return [ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)]
+
+    def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
+        """Update all send event tags to include the target scxml model."""
+        self._on_entry = add_targets_to_scxml_sends(self._on_entry, events_to_targets)
+        self._on_exit = add_targets_to_scxml_sends(self._on_exit, events_to_targets)
+        for transition in self._body:
+            transition.add_targets_to_scxml_sends(events_to_targets)
+
+    def replace_strings_types_with_integer_arrays(self) -> None:
+        """Replace all the strings that appear in the SCXML expressions."""
+        self._on_entry = replace_string_expressions_in_execution_body(self._on_entry)
+        self._on_exit = replace_string_expressions_in_execution_body(self._on_exit)
+        for transition in self._body:
+            transition.replace_strings_types_with_integer_arrays()
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."

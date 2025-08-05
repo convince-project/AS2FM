@@ -108,7 +108,7 @@ It can be checked with SMC Storm:
 .. code-block:: bash
 
     $ cd examples/quick_start_battery_monitor/ && \
-      smc_storm --model main.jani --properties-names battery_depleted
+      smc_storm --model main.jani --properties-names battery_depleted --hide-progress-bar
 
     Welcome to SMC Storm
     Checking model: main.jani

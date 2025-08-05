@@ -36,7 +36,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlData,
     ScxmlDataModel,
-    ScxmlExecutionBody,
     ScxmlParam,
     ScxmlRoot,
     ScxmlSend,
@@ -199,7 +198,7 @@ def generate_bt_root_scxml(
             BtChildTickStatus.make_single_target_transition(0, "error"),
         ],
     )
-    tick_res_body: ScxmlExecutionBody = (
+    tick_res_body: List[ScxmlTransition] = (
         # In case we keep ticking after BT root finishes running
         [BtChildTickStatus.make_single_target_transition(0, "idle")]
         if tick_if_not_running
