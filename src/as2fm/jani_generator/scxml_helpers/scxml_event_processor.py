@@ -142,9 +142,9 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
                 ), f"Unexpected n. of assignments for timer edge '{action_name}'"
                 # Get rid of the assignment
                 jani_edge.destinations[0]["assignments"] = []
-            elif action_name.startswith(f"{GLOBAL_TIMER_TICK_EVENT}_on_receive"):
+            elif action_name == f"{GLOBAL_TIMER_TICK_EVENT}_on_receive":
                 jani_edge.set_action(GLOBAL_TIMER_TICK_ACTION)
-            elif action_name.startswith(f"{GLOBAL_TIMER_TICK_EVENT}_on_send"):
+            elif action_name == f"{GLOBAL_TIMER_TICK_EVENT}_on_send":
                 jani_edge.set_action(GLOBAL_TIMER_TICK_EVENT)
                 jani_edge.destinations[0]["assignments"] = []
 
