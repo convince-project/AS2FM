@@ -48,6 +48,11 @@ GLOBAL_TIMER_TICK_EVENT = "global_timer_tick_event"
 ROS_TIMER_RATE_EVENT_PREFIX = "ros_time_rate."
 
 
+def is_global_timer_event(event_name: str):
+    """Check if the event name is the one stepping the global automaton forward."""
+    return event_name == f"{GLOBAL_TIMER_TICK_EVENT}"
+
+
 def convert_time_between_units(time: int, from_unit: str, to_unit: str) -> int:
     """Convert time from one unit to another."""
     assert from_unit in TIME_UNITS, f"Unit {from_unit} not supported."
