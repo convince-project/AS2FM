@@ -225,6 +225,7 @@ class DatamodelTag(BaseTag):
                     f"Expected type '{data_type_str}': to be an array, because the expression is.",
                 )
                 evaluated_expr_type.array_max_sizes = declared_data_type.array_max_sizes
+                evaluated_expr_type.array_dimensions = declared_data_type.array_dimensions
 
             check_assertion(
                 evaluated_expr_type == declared_data_type,
