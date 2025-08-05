@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+from typing import MutableSequence, Optional
 
 import pytest
 
@@ -28,6 +28,9 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )
+from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
+    check_data_base_type_ok,
+)
 
 
 def check_ecmascript_matches_gt_expression(
@@ -35,6 +38,18 @@ def check_ecmascript_matches_gt_expression(
 ):
     ecmascript_expr = parse_ecmascript_to_jani_expression(ecmascript, None, array_info)
     assert ecmascript_expr == gt_expr, f"{ecmascript_expr} is not matching with {gt_expr}"
+
+
+def test_check_data_type():
+    assert not check_data_base_type_ok("'abc'", str, None)
+    assert not check_data_base_type_ok(
+        "['abc']", MutableSequence, ArrayInfo("string", 1, [2], False)
+    )
+    assert check_data_base_type_ok(1, int, None)
+    assert check_data_base_type_ok(1.0, float, None)
+    assert check_data_base_type_ok([1, 2, 3], MutableSequence, ArrayInfo(int, 1, [5]))
+    assert check_data_base_type_ok([1, 2, 3.0], MutableSequence, ArrayInfo(float, 1, [5]))
+    assert not check_data_base_type_ok([1, 2, 3.0], MutableSequence, ArrayInfo(int, 1, [5]))
 
 
 def test_parse_ecmascript_to_jani_expression_basic():
@@ -69,6 +84,7 @@ def test_parse_ecmascript_to_jani_expression_with_array():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
+@pytest.mark.xfail(reason="No strings processing expected in the JANI conversion", strict=True)
 def test_parse_ecmascript_to_jani_expression_with_string():
     ecmascript_expr = "''"
     array_info = ArrayInfo(int, 1, [10])
@@ -76,6 +92,7 @@ def test_parse_ecmascript_to_jani_expression_with_string():
     check_ecmascript_matches_gt_expression(ecmascript_expr, expected_jani_expr, array_info)
 
 
+@pytest.mark.xfail(reason="No strings processing expected in the JANI conversion", strict=True)
 def test_parse_ecmascript_to_jani_expression_with_escaped_string():
     # Check if double quotes are handled as well
     ecmascript_expr = '""'

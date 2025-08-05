@@ -24,7 +24,11 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
-from as2fm.as2fm_common.logging import get_error_msg, set_filepath_for_all_sub_elements
+from as2fm.as2fm_common.logging import (
+    check_assertion,
+    get_error_msg,
+    set_filepath_for_all_sub_elements,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtInputPortDeclaration,
@@ -36,7 +40,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlDataModel,
     ScxmlRosDeclarationsContainer,
     ScxmlState,
-    add_targets_to_scxml_send,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
 from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
@@ -172,18 +175,6 @@ class ScxmlRoot(ScxmlBase):
             for transition in state.get_body():
                 transition_events.update({ev for ev in transition.get_events()})
         return transition_events
-
-    def add_targets_to_scxml_sends(self, events_to_targets: EventsToAutomata) -> None:
-        """
-        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
-
-        :param events_to_targets: Mapping between the event name and the automata recipients.
-        """
-        for state in self._states:
-            state.set_on_entry(add_targets_to_scxml_send(state.get_onentry(), events_to_targets))
-            state.set_on_exit(add_targets_to_scxml_send(state.get_onexit(), events_to_targets))
-            for transition in state.get_body():
-                transition.add_targets_to_scxml_sends(events_to_targets)
 
     def get_state_by_id(self, state_id: str) -> Optional[ScxmlState]:
         for state in self._states:
@@ -394,6 +385,30 @@ class ScxmlRoot(ScxmlBase):
                 "conversion to plain SCXML failed."
             )
         return (converted_scxmls, ros_declarations)
+
+    def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
+        """
+        For each "ScxmlSend" instance, add the names of the automata receiving the sent event.
+
+        :param events_to_targets: Mapping between the event name and the automata recipients.
+        """
+        for state in self._states:
+            state.add_target_to_event_send(events_to_targets)
+
+    def replace_strings_types_with_integer_arrays(self) -> None:
+        """
+        Replace all occurrences of strings in the datamodel and the expressions with array of int.
+        """
+        check_assertion(
+            self.is_plain_scxml(),
+            self.get_xml_origin(),
+            f"{self.get_name()} model is not plain SCXML yet.",
+        )
+        # Replace string entries in the datamodel
+        self._data_model.replace_strings_types_with_integer_arrays()
+        # Go over the various states and substitute all the strings in the expressions
+        for scxml_state in self._states:
+            scxml_state.replace_strings_types_with_integer_arrays()
 
     def as_xml(self, **kwargs) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid root object."

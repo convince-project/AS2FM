@@ -21,7 +21,7 @@ from typing import Dict, List, Optional, Tuple, Type
 
 import escodegen
 import esprima
-from esprima.nodes import ComputedMemberExpression, Identifier
+from esprima.nodes import ArrayExpression, ComputedMemberExpression, Identifier, Literal
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
@@ -377,6 +377,39 @@ def _split_array_indexes_out(
         raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {ast.type}"))
 
 
+def _convert_string_literals_to_int_arrays(node: esprima.nodes.Node) -> esprima.nodes.Node:
+    """
+    Convert all string literals in the expression to an array of ints.
+    """
+    if node.type == Syntax.Identifier:
+        return node
+    elif node.type == Syntax.Literal:
+        if isinstance(node.value, str):
+            # Found a string, convert it to an array of ints
+            return ArrayExpression([Literal(x, str(x)) for x in node.value.encode()])
+        return node
+    elif node.type == Syntax.ArrayExpression:
+        return ArrayExpression(
+            [_convert_string_literals_to_int_arrays(entry) for entry in node.elements]
+        )
+    elif node.type == Syntax.MemberExpression:
+        return node
+    elif node.type in (Syntax.BinaryExpression, Syntax.LogicalExpression):
+        node.left = _convert_string_literals_to_int_arrays(node.left)
+        node.right = _convert_string_literals_to_int_arrays(node.right)
+        return node
+    elif node.type == Syntax.CallExpression:
+        node.arguments = [
+            _convert_string_literals_to_int_arrays(node_arg) for node_arg in node.arguments
+        ]
+        return node
+    elif node.type == Syntax.UnaryExpression:
+        node.argument = _convert_string_literals_to_int_arrays(node.argument)
+        return node
+    else:
+        raise NotImplementedError(get_error_msg(None, f"Unhandled expression type: {node.type}"))
+
+
 def convert_expression_with_object_arrays(
     expr: str,
     elem: Optional[XmlElement] = None,
@@ -390,6 +423,24 @@ def convert_expression_with_object_arrays(
         obj, idxs = _split_array_indexes_out(ast, struct_declarations)
         exp = _reassemble_expression(obj, idxs)
         exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
+    except MemberAccessCheckException as e:
+        log_error(elem, "Failed to expand the provided expression.")
+        raise e
+    return escodegen.generate(exp)
+
+
+def convert_expression_with_string_literals(
+    expr: str,
+    elem: Optional[XmlElement] = None,
+) -> str:
+    """
+    Convert an expression with strings to use array of ints instead.
+
+    e.g. `'as2fm'` => `[97, 115, 50, 102, 109]`
+    """
+    try:
+        ast = parse_expression_to_ast(expr, elem)
+        exp = _convert_string_literals_to_int_arrays(ast)
     except MemberAccessCheckException as e:
         log_error(elem, "Failed to expand the provided expression.")
         raise e

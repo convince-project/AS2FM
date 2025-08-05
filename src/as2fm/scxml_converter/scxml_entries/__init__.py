@@ -28,7 +28,6 @@ from .scxml_executable_entries import (  # noqa: F401
     valid_execution_body,
     valid_execution_body_entry_types,
     instantiate_exec_body_bt_events,
-    add_targets_to_scxml_send,
 )  # noqa: F401
 from .scxml_transition_target import ScxmlTransitionTarget  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401

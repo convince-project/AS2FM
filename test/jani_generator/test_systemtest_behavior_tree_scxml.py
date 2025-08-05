@@ -50,7 +50,9 @@ class TestConversion(unittest.TestCase):
         generated_scxml_path = "generated_plain_scxml"
         jani_file = "main.jani"
         test_folder = os.path.dirname(main_xml_full_path)
-        interpret_top_level_xml(main_xml_full_path, "main.jani", generated_scxml_path)
+        interpret_top_level_xml(
+            main_xml_full_path, jani_file="main.jani", scxmls_dir=generated_scxml_path
+        )
         jani_file_path = os.path.join(test_folder, jani_file)
         generated_scxml_path = os.path.join(test_folder, generated_scxml_path)
         self.assertTrue(os.path.exists(jani_file_path))

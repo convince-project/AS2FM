@@ -18,14 +18,14 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union, get_args
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import (
     SupportedECMAScriptSequences,
-    convert_string_to_int_array,
+    ValidJaniTypes,
     get_array_type_and_sizes,
     value_to_type,
 )
@@ -183,9 +183,12 @@ def generate_jani_assignments(
                 assignment_value_name: str = assignment_value.as_identifier()
                 assignment_value_ids: List[JaniExpression] = []
             elif assignment_value_type == JaniExpressionType.OPERATOR:
-                assignment_value_name, assignment_value_ids = __get_array_access_name_and_indexes(
-                    assignment_value
-                )
+                if assignment_value.op == "aa":
+                    assignment_value_name, assignment_value_ids = (
+                        __get_array_access_name_and_indexes(assignment_value)
+                    )
+                else:
+                    raise NotImplementedError("Unexpected operator found: '{assignment_value.op}'")
             else:
                 raise NotImplementedError("Cannot assign explicitly arrays to a specific var index")
             assignment_n_dims = len(assignment_value_ids)
@@ -306,6 +309,47 @@ def hash_element(element: Union[XmlElement, ScxmlBase, List[str]]) -> str:
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
     return sha256(s).hexdigest()[:8]
+
+
+def check_data_base_type_ok(
+    data_value: ValidJaniTypes,
+    expected_data_type: Type[ValidJaniTypes],
+    array_info: Optional[ArrayInfo] = None,
+) -> bool:
+    """
+    Checks if the given data value matches the expected data type (and the opt. array information).
+
+    This function is to be used only on base types and arrays of those.
+    :param data_value: The value to be checked, expected to be of a valid Jani type.
+    :param expected_data_type: The expected type of the data value.
+    :param array_info: Information about the array, if the data value is expected to one.
+    :return: True if the data value matches the expected type, otherwise False.
+    """
+    valid_types = get_args(ValidJaniTypes)
+    if expected_data_type not in valid_types:
+        return False
+    expected_types: Tuple[Type, ...] = (expected_data_type,)
+    if isinstance(data_value, valid_types):
+        if isinstance(data_value, MutableSequence):
+            assert array_info is not None
+            # TODO: Small hack to accept integer values in case array type is float
+            expected_types = (int,) if array_info.array_type is int else (int, float)
+
+            # We are dealing with a list, use array_info data
+            def recurse_on_array(
+                data_value: MutableSequence, dims_left: int, base_types: Tuple[Type, ...]
+            ) -> bool:
+                assert dims_left > 0
+                if dims_left == 1:
+                    return all(isinstance(entry, base_types) for entry in data_value)
+                return all(
+                    recurse_on_array(entry, dims_left - 1, base_types) for entry in data_value
+                )
+
+            return recurse_on_array(data_value, array_info.array_dimensions, expected_types)
+        else:
+            return isinstance(data_value, expected_types)
+    return False
 
 
 def _interpret_scxml_assign(
@@ -434,7 +478,7 @@ def append_scxml_body_to_jani_edge(
                 # In case of MutableSequences, we need to get the dimensionality of the result
                 if res_eval_type == MutableSequence:
                     if isinstance(res_eval_value, str):
-                        res_eval_value = convert_string_to_int_array(res_eval_value)
+                        raise RuntimeError("This should not contain string expressions any more.")
                     array_info = array_value_to_type_info(res_eval_value)
                     if array_info.array_type is None:
                         # TODO: Better handling of array type than assigning int by default
