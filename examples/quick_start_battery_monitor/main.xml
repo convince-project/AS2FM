@@ -1,4 +1,6 @@
-<convince_mc_tc>
+<convince_mc_tc
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://github.com/convince-project/data-model/raw/refs/heads/high_level_xsd/data-format-specifications/RoAML/main.xsd">
     <mc_parameters>
         <max_time value="100" unit="s" />
         <bt_tick_rate value="1.0" />
