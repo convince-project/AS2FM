@@ -1,4 +1,4 @@
-# Copyright (c) 2024 - for information on the respective copyright owner
+# Copyright (c) 2025 - for information on the respective copyright owner
 # see the NOTICE file
 
 # Licensed under the Apache License, Version 2.0 (the "License");

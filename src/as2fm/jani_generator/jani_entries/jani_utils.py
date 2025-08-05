@@ -44,7 +44,12 @@ def is_expression_variable_or_array_access(expr: JaniExpression) -> bool:
 
 
 def get_array_access_name_and_indexes(expr: JaniExpression) -> Tuple[str, List[int]]:
-    """Extract the identifier name and the list of access indexes from an aa expression."""
+    """
+    Extract the identifier name and the list of access indexes from an aa expression.
+
+    :param expr: The array access Jani expression.
+    :return: A tuple with the name of the array var. and the accessed indexes.
+    """
     expr_operator, expr_operand = expr.as_operator()
     assert expr_operator == "aa", f"Unexpected array operator: '{expr_operator}' != 'aa'."
     assert isinstance(expr_operand, dict)

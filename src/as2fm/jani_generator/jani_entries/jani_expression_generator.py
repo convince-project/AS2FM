@@ -172,8 +172,10 @@ def array_access_operator(
     """
     if isinstance(index, list):
         if len(index) > 1:
+            # N-Dimensional array case
             inner_expr = array_access_operator(exp, index[0:-1])
             return JaniExpression({"op": "aa", "exp": inner_expr, "index": index[-1]})
+        # 1-D array case
         index = index[0]
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
 
