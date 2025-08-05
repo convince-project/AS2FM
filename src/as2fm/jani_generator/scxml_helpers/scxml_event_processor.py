@@ -31,6 +31,7 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import array_cr
 from as2fm.jani_generator.ros_helpers.ros_timer import (
     GLOBAL_TIMER_AUTOMATON,
     GLOBAL_TIMER_TICK_ACTION,
+    GLOBAL_TIMER_TICK_EVENT,
     ROS_TIMER_RATE_EVENT_PREFIX,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
@@ -123,13 +124,13 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
     Modify the global timer automaton to meet different assumptions.
 
     - We expect no assignments to timer_name.valid variables.
-    - We expect the action associated to a global timer step to have a different name.
-
-    Note: timer_name.valid vars are auto-generated for each event, when translating from scxml.
-    However, they are not required in the case of a global_timer automaton.
+    - Similarly, no assignments for the {GLOBAL_TIMER_TICK_EVENT}.valid variable.
+    - The {GLOBAL_TIMER_TICK_EVENT}_on_send action is treated as a non-sync action.
+    - The {GLOBAL_TIMER_TICK_EVENT}_on_receive action the global timer step, and is renamed.
     """
     global_timer_edges = timer_automaton.get_edges()
-    for jani_edge in global_timer_edges:
+    for index in reversed(range(len(global_timer_edges))):
+        jani_edge = global_timer_edges[index]
         action_name = jani_edge.get_action()
         if action_name is not None:
             if action_name.startswith(ROS_TIMER_RATE_EVENT_PREFIX):
@@ -141,8 +142,11 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
                 ), f"Unexpected n. of assignments for timer edge '{action_name}'"
                 # Get rid of the assignment
                 jani_edge.destinations[0]["assignments"] = []
-            elif action_name.startswith("transition-idle-eventless"):
+            elif action_name.startswith(f"{GLOBAL_TIMER_TICK_EVENT}_on_receive"):
                 jani_edge.set_action(GLOBAL_TIMER_TICK_ACTION)
+            elif action_name.startswith(f"{GLOBAL_TIMER_TICK_EVENT}_on_send"):
+                jani_edge.set_action(GLOBAL_TIMER_TICK_EVENT)
+                jani_edge.destinations[0]["assignments"] = []
 
 
 def implement_scxml_events_as_jani_syncs(
@@ -172,6 +176,8 @@ def implement_scxml_events_as_jani_syncs(
         # Distinguish between timer and non-timer events
         if event_obj.is_timer_event():
             timer_events.append(event_obj)
+        elif event_obj.name == GLOBAL_TIMER_TICK_EVENT:
+            pass
         else:
             event_automaton = _generate_event_automaton(event_obj, has_timer_automaton)
             event_send_action, event_receive_action = _generate_event_action_names(event_obj)
