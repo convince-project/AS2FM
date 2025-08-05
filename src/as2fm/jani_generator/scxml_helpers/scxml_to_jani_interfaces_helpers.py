@@ -30,7 +30,7 @@ from as2fm.as2fm_common.common import (
 )
 from as2fm.as2fm_common.ecmascript_interpretation import (
     get_array_expr_as_list,
-    get_esprima_expr_type,
+    parse_ecmascript_expr_to_type,
 )
 from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.jani_generator.jani_entries import (
@@ -467,7 +467,7 @@ def append_scxml_body_to_jani_edge(
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...
                 # See https://github.com/convince-project/AS2FM/issues/84
-                res_eval_type = get_esprima_expr_type(expr, datamodel_vars, element_origin)
+                res_eval_type = parse_ecmascript_expr_to_type(expr, datamodel_vars, element_origin)
                 res_eval_dims = 0
                 # In case of MutableSequences, we need to get the dimensionality of the result
                 if res_eval_type is str:
@@ -483,9 +483,12 @@ def append_scxml_body_to_jani_edge(
                     res_eval_type.substitute_unbounded_dims(max_array_size)
                     res_eval_dims = res_eval_type.array_dimensions
                     res_eval_array_type = res_eval_type.array_type
-                data_structure_for_event[param.get_name()] = EventParamType(
-                    res_eval_type, res_eval_array_type, res_eval_dims
-                )
+                    assert res_eval_array_type is not str, "This can not be a string."
+                    data_structure_for_event[param.get_name()] = EventParamType(
+                        MutableSequence, res_eval_array_type, res_eval_dims
+                    )
+                else:
+                    data_structure_for_event[param.get_name()] = EventParamType(res_eval_type)
                 param_variable = generate_jani_variable(
                     param_assign_name, res_eval_type, res_eval_type
                 )

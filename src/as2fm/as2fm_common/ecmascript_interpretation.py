@@ -20,18 +20,14 @@ Module for interpreting ecmascript.
 from typing import Dict, List, Optional, Type, Union, get_args
 
 import esprima
-import STPyV8
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import ArrayInfo, array_value_to_type_info
 from as2fm.as2fm_common.common import (
     ValidPlainScxmlTypes,
-    convert_string_to_int_array,
-    is_array_type,
-    value_to_type,
 )
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg, get_warn_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 
 BasicJsTypes = Union[int, float, bool, str]
 
@@ -73,13 +69,6 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
         "The ecmascript must contain exactly one expression.",
     )
     return ast.expression
-
-
-def __extract_type_from_instance(var_value) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
-    var_type = value_to_type(var_value)
-    if is_array_type(var_type):
-        return array_value_to_type_info(var_value)
-    return var_type
 
 
 def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
@@ -270,9 +259,10 @@ def get_ast_expression_type(
     return __get_ast_expression_type(ast, variables)
 
 
-def get_esprima_expr_type(
+def parse_ecmascript_expr_to_type(
     expr: str, variables: Dict[str, ValidPlainScxmlTypes], elem: Optional[XmlElement] = None
 ):
+    """Interpret a string of ecmacript expression and get the type that is evaluates to."""
     ast_node = parse_expression_to_ast(expr, elem)
     return get_ast_expression_type(ast_node, variables)
 
@@ -283,48 +273,9 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
     if ast_node.type == Syntax.ArrayExpression:
         return __get_list_from_array_expr_type(ast_node)
     elif ast_node.type == Syntax.Literal:  # a string
-        assert expr[0] == "'", f"expected to be a string expression: >{expr}<."
-        assert expr[-1] == "'", f"expected to be a string expression: >{expr}<."
-        raw_str = expr[1:-1]
-        return convert_string_to_int_array(raw_str)
-
-
-def __evaluate_js_variable_content(result):
-    if isinstance(result, ValidPlainScxmlTypes):
-        return result
-    if isinstance(result, STPyV8.JSArray):
-        return [__evaluate_js_variable_content(result[i]) for i in result.keys()]
-    if isinstance(result, STPyV8.JSObject):
-        return {k: __evaluate_js_variable_content(result[k]) for k in result.keys()}
-    raise RuntimeError(f"unsupported expression type {type(result)} of {result}.")
-
-
-def _interpret_ecmascript_expr(
-    expr: str, variables: Dict[str, ValidPlainScxmlTypes]
-) -> Union[ValidPlainScxmlTypes, dict]:
-    """
-    Process a JS expression and return the resulting value.
-
-    :param expr: The ECMA script expression to evaluate.
-    :param variables: A dictionary of variables to be used in the ECMA script context.
-    """
-    eval_res = None
-    eval_str = f"result = {expr}"
-    print(get_warn_msg(None, f"evaluating:\n{eval_str}\nwith:{variables}\n"))
-    with STPyV8.JSContext(variables) as context:
-        try:
-            context.eval(eval_str)
-        except Exception:
-            msg_addition = ""
-            if expr in ("True", "False"):
-                msg_addition = "Did you mean to use 'true' or 'false' instead?"
-            raise RuntimeError(
-                f"Failed to interpret JS expression using variables {variables}: ",
-                f"'result = {expr}'. {msg_addition}",
-            )
-        eval_res = __evaluate_js_variable_content(context.locals.result)
-    assert eval_res is not None
-    return eval_res
+        raise ValueError(f"This should not be a string: {expr}")
+    else:
+        raise ValueError(f"This was expected to be an array expression: {expr}")
 
 
 def _get_variable_instances(variables):
@@ -337,30 +288,6 @@ def _get_variable_instances(variables):
         else:
             raise RuntimeError(f"Unsupported type {type}.")
     return out_d
-
-
-def interpret_ecma_script_expr(
-    expr: str,
-    variables: Optional[Dict[str, ValidPlainScxmlTypes]] = None,
-    allow_dict_results: bool = False,
-) -> Union[ValidPlainScxmlTypes, dict]:
-    """
-    Interpret the ECMA script expression and return the resulting value.
-
-    :param expr: The ECMA script expression
-    :param variables: A dictionary of variables to be used in the ECMA script context
-    :param allow_dict_results: Whether the result of the expr. can be an object (encoded by a dict)
-    :return: The interpreted object
-    """
-    if variables is None:
-        variables = {}
-    variable_instances = _get_variable_instances(variables)
-    expr_result = _interpret_ecmascript_expr(expr, variable_instances)
-    if not allow_dict_results and isinstance(expr_result, dict):
-        raise ValueError(
-            f"Expected expr. {expr} to be of type {BasicJsTypes} or a list, got a dictionary."
-        )
-    return expr_result
 
 
 def has_array_access(expr: str, elem: Optional[XmlElement]) -> bool:

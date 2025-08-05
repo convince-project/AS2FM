@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ecmascript_interpretation import interpret_ecma_script_expr
+from as2fm.as2fm_common.array_type import ArrayInfo
+from as2fm.as2fm_common.common import ValidPlainScxmlTypes
+from as2fm.as2fm_common.ecmascript_interpretation import parse_ecmascript_expr_to_type
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.data_types.type_utils import (
     get_array_type_and_dimensions_from_string,
@@ -26,6 +28,9 @@ from as2fm.scxml_converter.data_types.type_utils import (
 )
 
 ExpandedDataStructType = Dict[str, Union[str, Dict[str, "ExpandedDataStructType"]]]
+
+# Members (= params) of object can be base types or arrays
+AllowedMemberTypes = Union[Type[ValidPlainScxmlTypes], ArrayInfo]
 
 
 class StructDefinition:
@@ -141,33 +146,38 @@ class StructDefinition:
                         expanded_type = child_type_only + array_info + child_array_info
                     self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
-    def get_instance_from_expression(self, expr: str) -> Dict[str, str]:
+    def get_type_from_expression(self, expr: str) -> Dict[str, AllowedMemberTypes]:
         """
-        Creates an instance of the data structure from an ECMAScript-like expression.
+        Infer type of the data structure from an ECMAScript-like expression.
 
-        :param expr: The expression defining the instance.
-        :return: A dictionary representing the instance.
+        This assumes that the expression declares an object and returns a dictionary with entries
+        of the objects parameters.
+
+        :param expr: The expression defining the data structure instance.
+        :return: A dictionary representing the types.
         """
         if self._members_list is None:
             raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
         # Interpret the expression
-        interpreted_expr = interpret_ecma_script_expr(expr, {}, True)
-        assert isinstance(interpreted_expr, dict)
-        return self._expand_object_dict(interpreted_expr, "")
+        expr_type = parse_ecmascript_expr_to_type(expr, {}, True)
+        assert isinstance(expr_type, dict), "This assumes an object."
+        return self._expand_object_dict(expr_type, "")
 
-    def _expand_object_dict(self, object_to_convert: Dict[str, Any], prefix: str) -> Dict[str, Any]:
-        ret_dict: Dict[str, Any] = {}
-        for obj_key, obj_value in object_to_convert.items():
+    def _expand_object_dict(
+        self, object_to_convert: Dict[str, AllowedMemberTypes], prefix: str
+    ) -> Dict[str, AllowedMemberTypes]:
+        ret_dict: Dict[str, AllowedMemberTypes] = {}
+        for obj_key, obj_type in object_to_convert.items():
             obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
-            if isinstance(obj_value, list):
-                if len(obj_value) > 0:
+            if isinstance(obj_type, list):
+                if len(obj_type) > 0:
                     assert not isinstance(
-                        obj_value[0], list
+                        obj_type[0], list
                     ), "An object list entry can only contain other objects or base types."
-                    if isinstance(obj_value[0], dict):
+                    if isinstance(obj_type[0], dict):
                         # List of dictionaries
-                        tmp_instances_list: List[Any] = []
-                        for obj_entry in obj_value:
+                        tmp_instances_list: List[AllowedMemberTypes] = []
+                        for obj_entry in obj_type:
                             # Ensure we are not mixing types in the same list
                             assert isinstance(obj_entry, dict)
                             tmp_instances_list.append(
@@ -182,21 +192,21 @@ class StructDefinition:
                             self._update_instance_dictionary(ret_dict, tmp_key, tmp_values_list)
                     else:
                         # List of base types
-                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
+                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
                 else:
                     # Empty list
-                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
-            elif isinstance(obj_value, dict):
-                assert len(obj_value) > 0, "Unexpected empty dictionary in value definition."
-                ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))
+                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
+            elif isinstance(obj_type, dict):
+                assert len(obj_type) > 0, "Unexpected empty dictionary in value definition."
+                ret_dict.update(self._expand_object_dict(obj_type, obj_full_name))
             # Not a list
-            elif isinstance(obj_value, str):
+            elif isinstance(obj_type, str):
                 # Turn this into a string that evaluates to a string in ecmascript
-                obj_value = f"'{obj_value}'"
-                self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
+                obj_type = f"'{obj_type}'"
+                self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
             else:
                 # Any other base type
-                self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
+                self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
         return ret_dict
 
     def _update_instance_dictionary(self, instance_dict, entry_key, entry_value):

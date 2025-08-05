@@ -84,7 +84,7 @@ def test_instance_evaluation():
                 'frame': '',
             },
         ]}"""
-    poly_instance = struct_definitions["PolygonsArray"].get_instance_from_expression(js_expression)
+    poly_instance = struct_definitions["PolygonsArray"].get_type_from_expression(js_expression)
     assert len(poly_instance) == 3
     assert poly_instance["polygons.points.x"] == [[1, 3], [-1.5, -2.0], []]
     assert poly_instance["polygons.points.y"] == [[2, 4], [3, 5], []]
@@ -101,7 +101,7 @@ def test_empty_instance_evaluation():
     expand_struct_definitions(struct_definitions)
     js_expression = """{
         'polygons': []}"""
-    poly_instance = struct_definitions["PolygonsArray"].get_instance_from_expression(js_expression)
+    poly_instance = struct_definitions["PolygonsArray"].get_type_from_expression(js_expression)
     assert len(poly_instance) == 2
     assert poly_instance["polygons.points.x"] == []
     assert poly_instance["polygons.points.y"] == []
