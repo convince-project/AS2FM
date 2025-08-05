@@ -19,8 +19,7 @@ Module to process events from scxml and implement them as syncs between jani aut
 
 from typing import Dict, List, MutableSequence, Optional, Tuple
 
-from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import is_array_type
+from as2fm.as2fm_common.array_type import ArrayInfo, is_array_type
 from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniComposition,

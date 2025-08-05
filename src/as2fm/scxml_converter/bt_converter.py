@@ -25,7 +25,8 @@ from typing import Dict, List, Tuple
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
+from as2fm.as2fm_common.array_type import get_default_expression_for_type
+from as2fm.as2fm_common.common import value_to_string_expr
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 from as2fm.scxml_converter.scxml_entries import (

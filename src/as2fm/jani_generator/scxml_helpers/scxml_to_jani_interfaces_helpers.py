@@ -23,11 +23,8 @@ from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Unio
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import (
-    ValidJaniTypes,
-    get_array_type_and_sizes,
-)
+from as2fm.as2fm_common.array_type import ArrayInfo, get_array_type_and_sizes
+from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.as2fm_common.ecmascript_interpretation import (
     get_array_expr_as_list,
     parse_ecmascript_expr_to_type,
@@ -60,9 +57,7 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
     get_array_length_var_name,
     parse_ecmascript_to_jani_expression,
 )
-from as2fm.scxml_converter.data_types.type_utils import (
-    MEMBER_ACCESS_SUBSTITUTION,
-)
+from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlBase,

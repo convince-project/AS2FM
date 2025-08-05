@@ -17,7 +17,7 @@
 
 import pytest
 
-from as2fm.as2fm_common.common import get_padded_array
+from as2fm.as2fm_common.array_type import get_padded_array
 
 
 def test_array_padding_1d():

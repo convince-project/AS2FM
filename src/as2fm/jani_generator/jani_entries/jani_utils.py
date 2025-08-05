@@ -15,10 +15,10 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import List, Optional, Tuple, Type, Union
+from typing import List, MutableSequence, Optional, Tuple, Type, Union
 
-from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
+from as2fm.as2fm_common.array_type import ArrayInfo, get_default_expression_for_type, is_array_type
+from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniExpressionType, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
 
@@ -96,6 +96,7 @@ def generate_jani_variable(
     if is_array_type(var_type):
         assert array_info is not None, f"No array info  provided for array variable {var_name}."
         init_value = array_create_operator(array_info)
+        var_type = MutableSequence
     else:
         init_value = JaniExpression(get_default_expression_for_type(var_type))
     return JaniVariable(var_name, var_type, init_value, False, array_info)

@@ -99,7 +99,6 @@ def parse_ecmascript_to_jani_expression(
 
     :param ecmascript: The ecmascript to parse.
     :param elem: The xml element associated to the expression, for error logging.
-    :param max_array_size: The max size for an array dimension, if left undefined.
     :param target_array_info: The array info required by the target variable (if any).
 
     :return: The jani expression.

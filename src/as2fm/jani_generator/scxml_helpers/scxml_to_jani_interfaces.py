@@ -19,8 +19,8 @@ Interface classes between SCXML tags and related JANI output.
 
 from typing import Any, Dict, List, MutableSequence, Optional, Set, Tuple
 
-from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import EPSILON, get_array_type_and_sizes, get_padded_array
+from as2fm.as2fm_common.array_type import ArrayInfo, get_array_type_and_sizes, get_padded_array
+from as2fm.as2fm_common.common import EPSILON
 from as2fm.as2fm_common.ecmascript_interpretation import (
     get_array_expr_as_list,
     parse_ecmascript_expr_to_type,
@@ -205,18 +205,26 @@ class DatamodelTag(BaseTag):
             # evaluated_expr_type = get_esprima_expr_type(scxml_data.get_expr(), {}, scxml_origin)
 
             # Handle special case when the expression is an empty array
-            print(f"{evaluated_expr_type.array_type=}")
             if (
                 isinstance(evaluated_expr_type, ArrayInfo)
                 and evaluated_expr_type.array_type is None
             ):
-                print(f"{evaluated_expr_type.array_type=}")
                 check_assertion(
                     isinstance(declared_data_type, ArrayInfo),
                     scxml_origin,
                     f"Expected type '{data_type_str}': to be an array, because the expression is.",
                 )
                 evaluated_expr_type.array_type = declared_data_type.array_type
+            if (
+                isinstance(evaluated_expr_type, ArrayInfo)
+                and evaluated_expr_type.array_max_sizes[0] is None
+            ):
+                check_assertion(
+                    isinstance(declared_data_type, ArrayInfo),
+                    scxml_origin,
+                    f"Expected type '{data_type_str}': to be an array, because the expression is.",
+                )
+                evaluated_expr_type.array_max_sizes = declared_data_type.array_max_sizes
 
             check_assertion(
                 evaluated_expr_type == declared_data_type,
@@ -227,6 +235,8 @@ class DatamodelTag(BaseTag):
             potential_array_info: Optional[ArrayInfo] = (
                 evaluated_expr_type if isinstance(evaluated_expr_type, ArrayInfo) else None
             )
+            if potential_array_info is not None:
+                potential_array_info.substitute_unbounded_dims(self.max_array_size)
             jani_data_init_expr = parse_ecmascript_to_jani_expression(
                 scxml_data.get_expr(), scxml_origin, potential_array_info
             )
