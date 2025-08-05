@@ -163,10 +163,12 @@ def array_access_operator(
     exp, index: Union[int, JaniExpression, List[int], List[JaniExpression]]
 ) -> JaniExpression:
     """
-    Generate an array access expression
+    Generate an array access expression, for 1 or N-dimensional arrays.
 
-    :param exp: The array variable to access
-    :param index: The index to access on exp
+    E.g. array_access_operator(exp = [[1,2,3],[4,5,6]], index = [1,0]) = 4
+
+    :param exp: The array variable to access.
+    :param index: The index to access on exp. For N-D arrays, it expects a list of N values.
     """
     if isinstance(index, list):
         if len(index) > 1:
