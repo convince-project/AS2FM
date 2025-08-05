@@ -2,12 +2,12 @@
 <scxml
     initial="receive"
     version="1.0"
-    name="Receiver"
+    name="receiver"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
     <datamodel>
-        <data id="recv_point" expr="{'x': 0, 'y': 0}" type="Point2D" />
+        <data id="recv_point" expr="{'x': 0, 'y': 0, 'frame': 'old_world'}" type="Point2D" />
         <data
             id="recv_polygon"
             expr="{'points': []}"
@@ -35,7 +35,8 @@
                 recv_polygon.points[0].x &gt;= 100 &amp;&amp;
                 recv_polygons.length == 3 &amp;&amp;
                 recv_polygons.polygons[1].points[1].y &gt;= 100 &amp;&amp;
-                recv_polygons.polygons[2].points.length == 2"
+                recv_polygons.polygons[1].points.length == 2 &amp;&amp;
+                recv_polygons.polygons[1].points[1].frame == 'world?'"
             target="end" />
     </state>
 

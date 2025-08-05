@@ -41,13 +41,13 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
     append_scxml_body_to_jani_automaton,
     append_scxml_body_to_jani_edge,
+    check_data_base_type_ok,
     hash_element,
     merge_conditions,
 )
 from as2fm.scxml_converter.bt_converter import is_bt_root_scxml
 from as2fm.scxml_converter.data_types.type_utils import (
     ArrayInfo,
-    check_variable_base_type_ok,
     get_array_info,
     get_data_type_from_string,
     is_type_string_array,
@@ -185,16 +185,12 @@ class DatamodelTag(BaseTag):
                     f"Unexpected type {data_type_str} found in scxml data.",
                 )
                 data_type = get_data_type_from_string(data_type_str)
-                # Special handling of strings: treat them as array of integers
-                if data_type is str:
-                    # Keep data_type == str, since we use it for the JS evaluation.
-                    array_info = ArrayInfo(int, 1, [self.max_array_size])
             evaluated_expr = interpret_ecma_script_expr(scxml_data.get_expr(), self.model_variables)
             # TODO: This special casing is needed since JavaScript typing is funny
             if data_type is float and isinstance(evaluated_expr, int):
                 evaluated_expr = float(evaluated_expr)
             check_assertion(
-                check_variable_base_type_ok(evaluated_expr, data_type, array_info),
+                check_data_base_type_ok(evaluated_expr, data_type, array_info),
                 scxml_data.get_xml_origin(),
                 f"Expression >{scxml_data.get_expr()}< did not evaluate to the expected "
                 + f"type {data_type} (according to type string {data_type_str}).",

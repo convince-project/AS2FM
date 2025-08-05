@@ -93,8 +93,6 @@ def value_to_type(value: ValidPlainScxmlTypes) -> Type[ValidJaniTypes]:
         return MutableSequence
     elif isinstance(value, (int, float, bool)):
         return type(value)
-    elif isinstance(value, str):  # Strings are interpreted as arrays of integers
-        return MutableSequence
     else:
         raise ValueError(f"Unsupported value type {type(value)} for {value}.")
 
@@ -122,11 +120,9 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
     This does *not* check that all sub-lists have the same depth (e.g. [[1], [[1,2,3]]]).
     """
     assert isinstance(
-        in_sequence, (list, str)
+        in_sequence, list
     ), f"Input values are expected to be lists, found '{in_sequence}' of type {type(in_sequence)}."
     if len(in_sequence) == 0:
-        return True
-    if isinstance(in_sequence, str):
         return True
     if isinstance(in_sequence[0], MutableSequence):
         return all(
@@ -134,6 +130,10 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
             for seq_value in in_sequence
         )
     # base case: simple array of base types
+    first_value_type = type(in_sequence[0])
+    assert first_value_type in (int, float, str), f"Unexpected list entry type: {first_value_type}."
+    if first_value_type is str:
+        return all(isinstance(seq_value, str) for seq_value in in_sequence)
     return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
 
 
@@ -150,7 +150,7 @@ def get_array_type_and_sizes(
     if not is_valid_array(in_sequence):
         raise ValueError(f"Invalid sub-array found: {in_sequence}")
     if isinstance(in_sequence, str):
-        return get_array_type_and_sizes(convert_string_to_int_array(in_sequence))
+        raise ValueError("This should not contain string expressions any more.")
     if len(in_sequence) == 0:
         return None, [0]
     if not isinstance(in_sequence[0], MutableSequence):
@@ -257,10 +257,3 @@ def is_valid_variable_name(var_name: str) -> bool:
     Alternatively, a variable name can be a single character.
     """
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
-
-
-def convert_string_to_int_array(value: str) -> List[int]:
-    """
-    Convert a string to a list of integers.
-    """
-    return [int(x) for x in value.encode()]

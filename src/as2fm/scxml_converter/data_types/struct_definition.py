@@ -159,9 +159,6 @@ class StructDefinition:
         ret_dict: Dict[str, Any] = {}
         for obj_key, obj_value in object_to_convert.items():
             obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
-            if isinstance(obj_value, dict):
-                assert len(obj_value) > 0, "Unexpected empty dictionary in value definition."
-                ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))
             if isinstance(obj_value, list):
                 if len(obj_value) > 0:
                     assert not isinstance(
@@ -189,15 +186,38 @@ class StructDefinition:
                 else:
                     # Empty list
                     self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
+            elif isinstance(obj_value, dict):
+                assert len(obj_value) > 0, "Unexpected empty dictionary in value definition."
+                ret_dict.update(self._expand_object_dict(obj_value, obj_full_name))
+            # Not a list
+            elif isinstance(obj_value, str):
+                # Turn this into a string that evaluates to a string in ecmascript
+                obj_value = f"'{obj_value}'"
+                self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
             else:
-                # Not a list
-                if isinstance(obj_value, str):
-                    # Turn this into a string that evaluates to a string in ecmascript
-                    obj_value = f"'{obj_value}'"
+                # Any other base type
                 self._update_instance_dictionary(ret_dict, obj_full_name, obj_value)
         return ret_dict
 
     def _update_instance_dictionary(self, instance_dict, entry_key, entry_value):
+        """
+        Add the value provided in entry_value to instance_dict.
+
+        :param instance_dict: The dict containing the fields of the processed instance
+        :param entry_key: The key of the entry to add to instance_dict
+        :param entry_value: The value we want to add to instance_dict
+        """
+        # Special case: for array of strings, we need to remove the quotes around the string
+        if (
+            isinstance(entry_value, list)
+            and len(entry_value) > 0
+            and isinstance(entry_value[0], str)
+        ):
+            for entry_idx in range(len(entry_value)):
+                assert isinstance(
+                    entry_value[entry_idx], str
+                ), "Mixed types: some are strings some are not."
+                entry_value[entry_idx] = entry_value[entry_idx].strip("'")
         if entry_key in self._members_list:
             assert entry_key not in instance_dict
             instance_dict[entry_key] = entry_value

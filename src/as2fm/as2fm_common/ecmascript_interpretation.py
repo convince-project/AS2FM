@@ -58,6 +58,7 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
 
     AST = Abstract Syntax Tree
     """
+    assert isinstance(expression, str), f"Provided esprima expr is {type(expression)} != string."
     try:
         ast = esprima.parseScript(expression)
     except esprima.error_handler.Error as e:

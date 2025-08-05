@@ -190,10 +190,16 @@ def parse_main_xml(xml_path: str) -> FullModel:
     return model
 
 
-def generate_plain_scxml_models_and_timers(
-    model: FullModel, custom_data_types: Dict[str, StructDefinition]
-) -> List[ScxmlRoot]:
+def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
+    custom_data_types: Dict[str, StructDefinition] = {}
+    for struct_format, path in model.data_declarations:
+        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[struct_format]
+        loaded_structs = struct_definition_class.from_file(path)
+        custom_data_types.update(loaded_structs)
+
+    for custom_struct_instance in custom_data_types.values():
+        custom_struct_instance.expand_members(custom_data_types)
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
     ros_scxmls: List[ScxmlRoot] = []
@@ -272,7 +278,7 @@ def export_plain_scxml_models(
             event_targets[event].add(scxml_model.get_name())
     # Add the target automaton to each event sent
     for scxml_model in models_to_export:
-        scxml_model.add_targets_to_scxml_sends(event_targets)
+        scxml_model.add_target_to_event_send(event_targets)
     # Export the models
     for scxml_model in models_to_export:
         with open(
@@ -284,7 +290,7 @@ def export_plain_scxml_models(
 
 
 def interpret_top_level_xml(
-    xml_path: str, jani_file: str, generated_scxmls_dir: Optional[str] = None
+    xml_path: str, *, jani_file: Optional[str] = None, scxmls_dir: Optional[str] = None
 ):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
@@ -293,39 +299,31 @@ def interpret_top_level_xml(
 
     :param xml_path: The path to the XML file to interpret.
     :param jani_file: The path to the output Jani file.
-    :param generated_scxmls_dir: The directory to store the generated plain SCXML files.
+    :param scxmls_dir: The directory to store the generated plain SCXML files.
     """
+    # Complete Model handling
     model_dir = os.path.dirname(xml_path)
     model = parse_main_xml(xml_path)
 
-    custom_data_types: Dict[str, StructDefinition] = {}
-    for struct_format, path in model.data_declarations:
-        struct_definition_class = AVAILABLE_STRUCT_DEFINITIONS[struct_format]
-        loaded_structs = struct_definition_class.from_file(path)
-        custom_data_types.update(loaded_structs)
+    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
-    for custom_struct_instance in custom_data_types.values():
-        custom_struct_instance.expand_members(custom_data_types)
-
-    plain_scxml_models = generate_plain_scxml_models_and_timers(model, custom_data_types)
-
-    if generated_scxmls_dir is not None:
-        plain_scxml_dir = os.path.join(model_dir, generated_scxmls_dir)
+    if scxmls_dir is not None:
+        plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
+    if jani_file is not None:
+        jani_model: JaniModel = convert_multiple_scxmls_to_jani(
+            plain_scxml_models, model.max_array_size
+        )
+        with open(model.properties[0], "r", encoding="utf-8") as f:
+            all_properties = json.load(f)["properties"]
+            for property_dict in all_properties:
+                jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
 
-    jani_model: JaniModel = convert_multiple_scxmls_to_jani(
-        plain_scxml_models, model.max_array_size
-    )
-    with open(model.properties[0], "r", encoding="utf-8") as f:
-        all_properties = json.load(f)["properties"]
-        for property_dict in all_properties:
-            jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
+        # Preprocess the JANI file, to remove non-standard artifacts
+        preprocess_jani_expressions(jani_model)
 
-    # Preprocess the JANI file, to remove non-standard artifacts
-    preprocess_jani_expressions(jani_model)
-
-    output_path = os.path.join(model_dir, jani_file)
-    with open(output_path, "w", encoding="utf-8") as f:
-        temp_dict = jani_model.as_dict()
-        # print(temp_dict)
-        json.dump(temp_dict, f, indent=2, ensure_ascii=False)
+        output_path = os.path.join(model_dir, jani_file)
+        with open(output_path, "w", encoding="utf-8") as f:
+            temp_dict = jani_model.as_dict()
+            # print(temp_dict)
+            json.dump(temp_dict, f, indent=2, ensure_ascii=False)

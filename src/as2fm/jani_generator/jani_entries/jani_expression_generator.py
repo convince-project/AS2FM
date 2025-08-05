@@ -17,7 +17,7 @@
 Generate full expressions in Jani
 """
 
-from typing import MutableSequence, Union
+from typing import List, MutableSequence, Union
 
 from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.jani_generator.jani_entries import JaniDistribution, JaniExpression
@@ -159,13 +159,24 @@ def array_create_operator(array_info: ArrayInfo, *, curr_dim: int = 1) -> JaniEx
     )
 
 
-def array_access_operator(exp, index) -> JaniExpression:
+def array_access_operator(
+    exp, index: Union[int, JaniExpression, List[int], List[JaniExpression]]
+) -> JaniExpression:
     """
-    Generate an array access expression
+    Generate an array access expression, for 1 or N-dimensional arrays.
 
-    :param exp: The array variable to access
-    :param index: The index to access on exp
+    E.g. array_access_operator(exp = [[1,2,3],[4,5,6]], index = [1,0]) = 4
+
+    :param exp: The array variable to access.
+    :param index: The index to access on exp. For N-D arrays, it expects a list of N values.
     """
+    if isinstance(index, list):
+        if len(index) > 1:
+            # N-Dimensional array case
+            inner_expr = array_access_operator(exp, index[0:-1])
+            return JaniExpression({"op": "aa", "exp": inner_expr, "index": index[-1]})
+        # 1-D array case
+        index = index[0]
     return JaniExpression({"op": "aa", "exp": exp, "index": index})
 
 

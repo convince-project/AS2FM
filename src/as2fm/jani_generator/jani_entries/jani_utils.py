@@ -15,11 +15,11 @@
 
 """Collection of various utilities for Jani entries."""
 
-from typing import Optional, Type, Union
+from typing import List, Optional, Tuple, Type, Union
 
 from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import ValidJaniTypes, get_default_expression_for_type, is_array_type
-from as2fm.jani_generator.jani_entries import JaniExpression, JaniVariable
+from as2fm.jani_generator.jani_entries import JaniExpression, JaniExpressionType, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
 
 
@@ -27,6 +27,47 @@ def is_expression_array(expr: JaniExpression) -> bool:
     """Determine is an expression is an array operator ('av' or 'ac')."""
     exp_operator, _ = expr.as_operator()
     return exp_operator is not None and exp_operator in ("ac", "av")
+
+
+def is_expression_variable_or_array_access(expr: JaniExpression) -> bool:
+    """Determine whether an expression refers to a variable (with or without array access)."""
+    assert isinstance(expr, JaniExpression), f"Unexpected input type '{type(expr)}'."
+    expr_type = expr.get_expression_type()
+    if expr_type == JaniExpressionType.IDENTIFIER:
+        assert expr.as_identifier() is not None, "Cannot extract identifier from input expression."
+        return True
+    if expr_type == JaniExpressionType.OPERATOR:
+        expr_operator, _ = expr.as_operator()
+        assert expr_operator is not None, "Cannot extract operator from input expression."
+        return expr_operator == "aa"
+    return False
+
+
+def get_array_access_name_and_indexes(expr: JaniExpression) -> Tuple[str, List[int]]:
+    """
+    Extract the identifier name and the list of access indexes from an aa expression.
+
+    :param expr: The array access Jani expression.
+    :return: A tuple with the name of the array var. and the accessed indexes.
+    """
+    expr_operator, expr_operand = expr.as_operator()
+    assert expr_operator == "aa", f"Unexpected array operator: '{expr_operator}' != 'aa'."
+    assert isinstance(expr_operand, dict)
+    aa_exp = expr_operand["exp"]
+    assert isinstance(aa_exp, JaniExpression)
+    aa_idx_expr = expr_operand["index"]
+    assert isinstance(aa_idx_expr, JaniExpression)
+    aa_index_jani_val = aa_idx_expr.as_literal()
+    assert aa_index_jani_val is not None
+    aa_index_value = aa_index_jani_val.value()
+    assert isinstance(aa_index_value, int)
+    if aa_exp.get_expression_type() == JaniExpressionType.IDENTIFIER:
+        array_var_name = aa_exp.as_identifier()
+        assert array_var_name is not None
+        return array_var_name, [aa_index_value]
+    # else
+    array_var_name, nested_idxs = get_array_access_name_and_indexes(aa_exp)
+    return array_var_name, nested_idxs + [aa_index_value]
 
 
 def is_variable_array(variable: JaniVariable) -> bool:

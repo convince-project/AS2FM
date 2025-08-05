@@ -19,6 +19,7 @@ Functions for the conversion from SCXML to Jani.
 The main entrypoint is `convert_scxml_root_to_jani_automaton`.
 """
 
+from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 from as2fm.as2fm_common.logging import log_error
@@ -36,7 +37,11 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     equal_operator,
 )
 from as2fm.jani_generator.jani_entries.jani_helpers import expand_random_variables_in_jani_model
-from as2fm.jani_generator.jani_entries.jani_utils import is_expression_array, is_variable_array
+from as2fm.jani_generator.jani_entries.jani_utils import (
+    get_array_access_name_and_indexes,
+    is_expression_array,
+    is_expression_variable_or_array_access,
+)
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     remove_empty_self_loops_from_interface_handlers_in_jani,
 )
@@ -83,12 +88,15 @@ def convert_multiple_scxmls_to_jani(scxmls: List[ScxmlRoot], max_array_size: int
     base_model.add_feature("arrays")
     base_model.add_feature("trigonometric-functions")
     events_holder = EventsHolder()
-    for input_scxml in scxmls:
+    # Not really needed, added for consistency
+    processed_scxmls = deepcopy(scxmls)
+    for input_scxml in processed_scxmls:
         assert isinstance(input_scxml, ScxmlRoot)
         assert (
             input_scxml.is_plain_scxml()
         ), f"Input model {input_scxml.get_name()} does not contain a plain SCXML model."
         try:
+            input_scxml.replace_strings_types_with_integer_arrays()
             automaton = convert_scxml_root_to_jani_automaton(
                 input_scxml, events_holder, max_array_size
             )
@@ -164,29 +172,40 @@ def _preprocess_array_comparison(
     exp_operator, exp_operands = jani_expression.as_operator()
     assert exp_operator == "=", f"Expected an '=' operator, found {exp_operator}."
     assert exp_operands is not None
+    # The components used for the comparison
     array_elements: Optional[List[JaniExpression]] = None
-    array_var_id = None
-    array_length_var_ids = []
+    array_var_expr: Optional[JaniExpression] = None
+    array_var_name: Optional[str] = None
+    array_var_idxs: List[int] = []
+    # Extract the two sides of the comparison
     for operand in exp_operands.values():
-        expr_type = operand.get_expression_type()
-        if expr_type == JaniExpressionType.IDENTIFIER:
-            array_var_id = operand.as_identifier()
-            assert isinstance(array_var_id, str)
-            array_variable = context_vars.get(array_var_id)
+        assert isinstance(operand, JaniExpression), "Expected to find a single JaniExpression."
+        if is_expression_variable_or_array_access(operand):
+            # This is the "variable" section
+            assert array_var_expr is None, "Invalid array comparison: found 2 variables!"
+            array_var_expr = operand
+            expr_type = operand.get_expression_type()
+            if expr_type == JaniExpressionType.IDENTIFIER:
+                # Directly check an array variable: expect it to be a 1D array
+                array_var_name = operand.as_identifier()
+                array_var_idxs = []
+            else:
+                # We expect it to be an array access operator
+                array_var_name, array_var_idxs = get_array_access_name_and_indexes(operand)
+            assert isinstance(
+                array_var_name, str
+            ), f"Unexpected identifier type {type(array_var_name)}."
+            array_jani_var = context_vars.get(array_var_name)
+            assert array_jani_var is not None
+            array_var_info = array_jani_var.get_array_info()
             assert (
-                array_variable is not None
-            ), f"Can't find '{array_var_id}' in context vars {context_vars.keys()}."
-            assert is_variable_array(array_variable), f"Variable {array_var_id} is not an array."
-            array_info = array_variable.get_array_info()
-            assert array_info is not None, f"Cannot get array_info from JANI Var. {array_var_id}."
-            array_length_var_ids = [
-                get_array_length_var_name(array_var_id, d + 1)
-                for d in range(array_info.array_dimensions)
-            ]
-            assert all(
-                array_len_id in context_vars for array_len_id in array_length_var_ids
-            ), f"Missing length variables in context. Checked vars: {array_length_var_ids}."
+                array_var_info is not None
+            ), f"Cannot get array_info from JANI Var. {array_var_name}."
+            assert (
+                array_var_info.array_dimensions == len(array_var_idxs) + 1
+            ), "Expected the target variable to be a 1D array."
         else:
+            # Here we expect to find a constant array
             array_operator, array_operands = operand.as_operator()
             assert array_operator == "av", f"Expected {operand.as_dict()} has op=='av'."
             assert isinstance(array_operands, dict), "Expect array_operands to be a dict."
@@ -196,18 +215,21 @@ def _preprocess_array_comparison(
                 array_entry.get_expression_type() == JaniExpressionType.LITERAL
                 for array_entry in array_elements
             ), "Found non-literal expressions in 'av' operator. Are all array comparisons in 1D?"
-    assert array_operator is not None, "No array operator found in the eq. operator."
-    assert array_var_id is not None, "No array variable found in the eq. operator."
+    assert array_elements is not None, "No constant array found in the eq. operator."
     assert isinstance(array_elements, list), f"Unexpected value for array elements {array_elements}"
+    assert array_var_name is not None, "No array variable found in the eq. operator."
+    array_length_var = get_array_length_var_name(array_var_name, len(array_var_idxs) + 1)
+    if len(array_var_idxs) <= 0:
+        array_len_var_expr = JaniExpression(array_length_var)
+    else:
+        array_len_var_expr = array_access_operator(array_length_var, array_var_idxs)
     # Turn equality into a series of equality checks (exp. length and entry values)
     n_elements = len(array_elements)
-    assert (
-        len(array_length_var_ids) == 1
-    ), "Trying to make comparisons across multi-dimensional arrays. Unsupported."
-    last_expr = equal_operator(array_length_var_ids[0], n_elements)
+    last_expr = equal_operator(array_len_var_expr, n_elements)
     for idx in range(n_elements):
         last_expr = and_operator(
-            last_expr, equal_operator(array_elements[idx], array_access_operator(array_var_id, idx))
+            last_expr,
+            equal_operator(array_elements[idx], array_access_operator(array_var_expr, idx)),
         )
     # Preserve the comment in the JANI file
     last_expr.comment = jani_expression.comment
