@@ -55,20 +55,37 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
     AST = Abstract Syntax Tree
     """
     assert isinstance(expression, str), f"Provided esprima expr is {type(expression)} != string."
+
+    # Adding a variable, because bare object declarations don't seem to work.
+    expression = f"value = {expression}"
     try:
         ast = esprima.parseScript(expression)
     except esprima.error_handler.Error as e:
         raise RuntimeError(
             get_error_msg(elem, f"Failed parsing ecmascript: {expression}. Error: {e}.")
         )
+
     check_assertion(len(ast.body) == 1, elem, "The ecmascript must contain exactly one expression.")
     ast = ast.body[0]
+
+    # remove the 'value ='-bit' we added above
     check_assertion(
         ast.type == "ExpressionStatement",
         elem,
         "The ecmascript must contain exactly one expression.",
     )
-    return ast.expression
+    ast = ast.expression
+    check_assertion(
+        ast.left.type == "Identifier",
+        elem,
+        "Assuming an identifier.",
+    )
+    check_assertion(
+        ast.left.name == "value",
+        elem,
+        "Assuming the identifier to be 'value'.",
+    )
+    return ast.right
 
 
 def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
@@ -78,7 +95,8 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxm
     if extracted_type not in (int, float, bool, str):
         raise ValueError(f"Unexpected literal type {extracted_type}.")
     if extracted_type is str:
-        return ArrayInfo(int, 1, [None])
+        return str
+        # return ArrayInfo(int, 1, [None])
     n_dots = ast.raw.count(".")
     if extracted_type is int and n_dots > 0:
         assert n_dots == 1, f"Unexpected literal's raw string {ast.raw}."
@@ -86,7 +104,9 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxm
     return extracted_type
 
 
-def __get_list_from_array_expr_type(ast: esprima.nodes.Node) -> List:
+def __get_list_from_array_expr_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes]]]
+) -> List:
     ret_list = []
     for elem in ast.elements:
         if elem.type == Syntax.Literal:
@@ -97,13 +117,19 @@ def __get_list_from_array_expr_type(ast: esprima.nodes.Node) -> List:
             ), f"Found entry of type {lit_type}. Only arrays of int and floats are supported."
             ret_list.append(lit_type(elem.value))
         elif elem.type == Syntax.ArrayExpression:
-            ret_list.append(__get_list_from_array_expr_type(elem))
+            ret_list.append(__get_list_from_array_expr_type(elem, variables))
+        elif elem.type == Syntax.ObjectExpression:
+            ret_list.append(__get_ast_expression_type(elem, variables))
+        else:
+            raise ValueError(f"Unexpected array element type {elem.type}.")
     return ret_list
 
 
-def __get_ast_array_expr_type(ast: esprima.nodes.Node) -> ArrayInfo:
+def __get_ast_array_expr_type(
+    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes]]]
+) -> ArrayInfo:
     assert ast.type == Syntax.ArrayExpression
-    converted_array = __get_list_from_array_expr_type(ast)
+    converted_array = __get_list_from_array_expr_type(ast, variables)
     return array_value_to_type_info(converted_array)
 
 
@@ -225,7 +251,7 @@ def __get_ast_expression_type(
     elif ast.type == Syntax.Identifier:
         return variables[ast.name]
     elif ast.type == Syntax.ArrayExpression:
-        return __get_ast_array_expr_type(ast)
+        return __get_ast_array_expr_type(ast, variables)
     elif ast.type == Syntax.MemberExpression:
         if ast.computed:
             # Array Access Operator
@@ -243,6 +269,12 @@ def __get_ast_expression_type(
         return __get_binary_expr_type(ast, variables)
     elif ast.type == Syntax.UnaryExpression:
         return __get_unary_expr_type(ast, variables)
+    elif ast.type == Syntax.ObjectExpression:
+        obj_dict = {}
+        for property in ast.properties:
+            assert property.key.type == Syntax.Literal, "Property key must be literal."
+            obj_dict[property.key.value] = __get_ast_expression_type(property.value, variables)
+        return obj_dict
     else:
         raise ValueError(f"Unknown ast type {ast.type}")
 

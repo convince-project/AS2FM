@@ -92,7 +92,12 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
         )
     # base case: simple array of base types
     first_value_type = type(in_sequence[0])
-    assert first_value_type in (int, float, str), f"Unexpected list entry type: {first_value_type}."
+    assert first_value_type in (
+        int,
+        float,
+        str,
+        dict,
+    ), f"Unexpected list entry type: {first_value_type}."
     if first_value_type is str:
         return all(isinstance(seq_value, str) for seq_value in in_sequence)
     return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
