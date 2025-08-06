@@ -21,7 +21,10 @@ import re
 from dataclasses import dataclass
 from typing import Dict, List, MutableSequence, Optional, Type, Union
 
-from as2fm.jani_generator.ros_helpers.ros_timer import ROS_TIMER_RATE_EVENT_PREFIX
+from as2fm.jani_generator.ros_helpers.ros_timer import (
+    ROS_TIMER_RATE_EVENT_PREFIX,
+    is_global_timer_event,
+)
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     is_bt_halt_event,
     is_bt_halt_response_event,
@@ -205,4 +208,5 @@ def is_event_synched(event_name: str) -> bool:
         or is_action_result_event(event_name)
         or is_action_thread_event(event_name)
         or is_srv_event(event_name)
+        or is_global_timer_event(event_name)
     )
