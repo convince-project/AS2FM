@@ -19,7 +19,8 @@ Utilities for handling AST expressions.
 
 from typing import List, Type, Union
 
-from esprima.nodes import ArrayExpression, Syntax
+import escodegen
+from esprima.nodes import ArrayExpression, Node, Syntax
 
 
 def get_type_ast_array_expression(array_ast: ArrayExpression) -> Type[Union[int, float]]:
@@ -67,3 +68,8 @@ def ast_array_expression_to_list(
         else:
             raise ValueError(f"Unsupported AST node type: {elem.type}")
     return result
+
+
+def ast_expression_to_string(ast_node: Node) -> str:
+    """Generate a string starting from an AST node"""
+    return escodegen.generate(ast_node)

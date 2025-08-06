@@ -19,7 +19,6 @@ classifiers = [
 keywords = []
 dependencies = [
     # as2fm_common
-    "STPyV8==13.0.245.18",
     "lxml",
     # jani_generator
     "jsonschema",

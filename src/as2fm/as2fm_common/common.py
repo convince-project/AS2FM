@@ -39,9 +39,6 @@ from lxml.etree import _Element as XmlElement
 # Additionally, we support the array types from the array extension.
 ValidJaniTypes = Union[bool, int, float, MutableSequence]
 
-# When interpreting ECMAScript, we support either MutableSequence that are arrays in ECMAScript or
-# Strings.
-SupportedECMAScriptSequences = (MutableSequence, str)
 ValidPlainScxmlTypes = Union[bool, int, float, MutableSequence, str]
 
 # Small number used for float comparison.

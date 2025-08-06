@@ -290,13 +290,13 @@ class ScxmlData(ScxmlBase):
         assert isinstance(self._expr, str), get_error_msg(
             self.get_xml_origin(), "We only support string init expr. for custom types."
         )
-        expanded_data_values = data_type_def.get_type_from_expression(self._expr)
+        expanded_data_exprs = data_type_def.get_expanded_expressions(self._expr)
         expanded_data_types = data_type_def.get_expanded_members()
         try:
             plain_data = [
                 ScxmlData(
                     f"{self._id}.{key}",
-                    expanded_data_values[key],
+                    expanded_data_exprs[key],
                     expanded_data_types[key],
                 )
                 for key in expanded_data_types
@@ -305,7 +305,7 @@ class ScxmlData(ScxmlBase):
             log_error(
                 self.get_xml_origin(),
                 f"Error for struct field {e}.\n\tStruct def.: {expanded_data_types}"
-                f"\n\tInit values: {expanded_data_values}.",
+                f"\n\tInit values: {expanded_data_exprs}.",
             )
         for single_data in plain_data:
             single_data._id = get_plain_variable_name(single_data._id, self.get_xml_origin())

@@ -19,8 +19,8 @@ import unittest
 
 import pytest
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.ecmascript_interpretation import (
-    ArrayInfo,
     MemberAccessCheckException,
     has_array_access,
     has_member_access,

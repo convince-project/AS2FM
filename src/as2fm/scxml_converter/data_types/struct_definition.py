@@ -18,8 +18,12 @@ from typing import Any, Dict, List, Optional, Type, Union
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import ArrayInfo
+from as2fm.as2fm_common.ast_utils import ast_expression_to_string
 from as2fm.as2fm_common.common import ValidPlainScxmlTypes
-from as2fm.as2fm_common.ecmascript_interpretation import parse_ecmascript_expr_to_type
+from as2fm.as2fm_common.ecmascript_interpretation import (
+    get_object_expression_as_dict,
+    make_ast_array_expression,
+)
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.data_types.type_utils import (
     get_array_type_and_dimensions_from_string,
@@ -146,67 +150,63 @@ class StructDefinition:
                         expanded_type = child_type_only + array_info + child_array_info
                     self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
-    def get_type_from_expression(self, expr: str) -> Dict[str, AllowedMemberTypes]:
-        """
-        Infer type of the data structure from an ECMAScript-like expression.
-
-        This assumes that the expression declares an object and returns a dictionary with entries
-        of the objects parameters.
-
-        :param expr: The expression defining the data structure instance.
-        :return: A dictionary representing the types.
-        """
+    def get_expanded_expressions(self, expr: str) -> Dict[str, str]:
+        """Extracts all object keys from a given ecmascript object definition."""
         if self._members_list is None:
             raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
         # Interpret the expression
-        expr_type = parse_ecmascript_expr_to_type(expr, {}, True)
-        assert isinstance(expr_type, dict), "This assumes an object."
-        return self._expand_object_dict(expr_type, "")
+        expr_type = get_object_expression_as_dict(expr)
+        flat_dict = self._flatten_object_dict(expr_type, "")
+        for key in flat_dict:
+            flat_dict[key] = ast_expression_to_string(flat_dict[key])
+        return flat_dict
 
-    def _expand_object_dict(
-        self, object_to_convert: Dict[str, AllowedMemberTypes], prefix: str
-    ) -> Dict[str, AllowedMemberTypes]:
-        ret_dict: Dict[str, AllowedMemberTypes] = {}
-        for obj_key, obj_type in object_to_convert.items():
+    def _flatten_object_dict(
+        self, object_to_convert: Dict[str, Any], prefix: str
+    ) -> Dict[str, Any]:
+        """
+        Expand an input dictionary to have all possible entries in the first level.
+        """
+        ret_dict: Dict[str, str] = {}
+        for obj_key, obj_val in object_to_convert.items():
             obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
-            if isinstance(obj_type, list):
-                if len(obj_type) > 0:
+            if isinstance(obj_val, list):
+                if len(obj_val) > 0:
                     assert not isinstance(
-                        obj_type[0], list
+                        obj_val[0], list
                     ), "An object list entry can only contain other objects or base types."
-                    if isinstance(obj_type[0], dict):
+                    if isinstance(obj_val[0], dict):
                         # List of dictionaries
-                        tmp_instances_list: List[AllowedMemberTypes] = []
-                        for obj_entry in obj_type:
-                            # Ensure we are not mixing types in the same list
-                            assert isinstance(obj_entry, dict)
-                            tmp_instances_list.append(
-                                self._expand_object_dict(obj_entry, obj_full_name)
+                        expanded_dicts_list: List[Dict[str, str]] = []
+                        for single_obj_dict in obj_val:
+                            # Ensure we are not dict and base types in the same list
+                            assert isinstance(single_obj_dict, dict), "Expected only dict entries."
+                            expanded_dicts_list.append(
+                                self._flatten_object_dict(single_obj_dict, obj_full_name)
                             )
-                        # Check tmp_instances_list[0] has all sub-keys of obj_full_name
-                        self._validate_object(tmp_instances_list[0], obj_full_name)
-                        for tmp_key in tmp_instances_list[0]:
-                            tmp_values_list = [
-                                tmp_instance[tmp_key] for tmp_instance in tmp_instances_list
+                        # Check single_obj_dict[0] has all sub-keys of obj_full_name
+                        self._validate_object(expanded_dicts_list[0], obj_full_name)
+                        # Make sure that array access is at the end
+                        for obj_sub_key in expanded_dicts_list[0]:
+                            # Make a list of all entries related to a single-sub-key
+                            single_key_list = [
+                                single_dict[obj_sub_key] for single_dict in expanded_dicts_list
                             ]
-                            self._update_instance_dictionary(ret_dict, tmp_key, tmp_values_list)
+                            # Write them in the dictionary to be returned
+                            self._update_instance_dictionary(ret_dict, obj_sub_key, single_key_list)
                     else:
-                        # List of base types
-                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
+                        # List of base types (AST nodes)
+                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_val)
                 else:
                     # Empty list
-                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
-            elif isinstance(obj_type, dict):
-                assert len(obj_type) > 0, "Unexpected empty dictionary in value definition."
-                ret_dict.update(self._expand_object_dict(obj_type, obj_full_name))
-            # Not a list
-            elif isinstance(obj_type, str):
-                # Turn this into a string that evaluates to a string in ecmascript
-                obj_type = f"'{obj_type}'"
-                self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
+                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_val)
+            elif isinstance(obj_val, dict):
+                assert len(obj_val) > 0, "Unexpected empty dictionary in value definition."
+                ret_dict.update(self._flatten_object_dict(obj_val, obj_full_name))
+            # Neither a dict nor a list: just an AST (base) expression
             else:
                 # Any other base type
-                self._update_instance_dictionary(ret_dict, obj_full_name, obj_type)
+                self._update_instance_dictionary(ret_dict, obj_full_name, obj_val)
         return ret_dict
 
     def _update_instance_dictionary(self, instance_dict, entry_key, entry_value):
@@ -217,35 +217,28 @@ class StructDefinition:
         :param entry_key: The key of the entry to add to instance_dict
         :param entry_value: The value we want to add to instance_dict
         """
-        # Special case: for array of strings, we need to remove the quotes around the string
-        if (
-            isinstance(entry_value, list)
-            and len(entry_value) > 0
-            and isinstance(entry_value[0], str)
-        ):
-            for entry_idx in range(len(entry_value)):
-                assert isinstance(
-                    entry_value[entry_idx], str
-                ), "Mixed types: some are strings some are not."
-                entry_value[entry_idx] = entry_value[entry_idx].strip("'")
         if entry_key in self._members_list:
-            assert entry_key not in instance_dict
-            instance_dict[entry_key] = entry_value
+            assert entry_key not in instance_dict, f"Found duplicate key '{entry_key}'."
+            if isinstance(entry_value, list):
+                instance_dict[entry_key] = make_ast_array_expression(entry_value)
+            else:
+                # This is a base type, expected to be already an AST node
+                instance_dict[entry_key] = entry_value
         else:
-            # Check if the entry key is found as a prefix
+            # We couldn't find the complete entry key: check if it is a valid prefix
             sub_keys = self._get_list_keys_with_prefix(entry_key)
             assert len(sub_keys) > 0, get_error_msg(
                 self.get_xml_origin(),
                 f"Provided key '{entry_key}' is incompatible with {self._name} type."
                 f"Expected keys shall be in {[x for x in self._members_list.keys()]} set.",
             )
-            # Check for compatible entry_value
+            # Incomplete key shall be used only with empty lists
             assert (
                 isinstance(entry_value, list) and len(entry_value) == 0
             ), f"The provided incomplete key '{entry_key}' can be used only with empty lists."
             for sub_key in sub_keys:
                 assert sub_key not in instance_dict, f"Error: found duplicate key {sub_key}."
-                instance_dict[sub_key] = []
+                instance_dict[sub_key] = make_ast_array_expression([])
 
     def _get_list_keys_with_prefix(self, prefix: str):
         return [
