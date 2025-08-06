@@ -300,10 +300,11 @@ def parse_ecmascript_expr_to_type(
 
 
 def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List:
-    """Reads a string as a, EcmaScript expression and returns it as an ArrayExpression."""
+    """Reads a string as an EcmaScript expression and returns it as an ArrayExpression."""
     ast_node = parse_expression_to_ast(expr, elem)
     if ast_node.type == Syntax.ArrayExpression:
-        return __get_list_from_array_expr_type(ast_node)
+        # We expect no variable reference in an array expression, hence the '{}'
+        return __get_list_from_array_expr_type(ast_node, {})
     elif ast_node.type == Syntax.Literal:  # a string
         raise ValueError(f"This should not be a string: {expr}")
     else:

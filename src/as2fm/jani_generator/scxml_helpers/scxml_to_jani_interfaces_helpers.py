@@ -245,7 +245,7 @@ def generate_jani_assignments(
                     elem_xml, "Array variables must be assigned array expressions."
                 )
                 # The assigned_expr is a Literal ArrayExpression
-                assign_expr_list = get_array_expr_as_list(assign_expr)
+                assign_expr_list = get_array_expr_as_list(assign_expr, elem_xml)
                 _, array_sizes = get_array_type_and_sizes(assign_expr_list)
                 assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
                     elem_xml,
