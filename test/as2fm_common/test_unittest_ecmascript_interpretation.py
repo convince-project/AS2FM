@@ -45,7 +45,7 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         self.assertEqual(parse_ecmascript_expr_to_type("1.1", {}), float)
         self.assertEqual(parse_ecmascript_expr_to_type("true", {}), bool)
         self.assertEqual(parse_ecmascript_expr_to_type("false", {}), bool)
-        self.assertEqual(parse_ecmascript_expr_to_type("'ecma'", {}), ArrayInfo(int, 1, [None]))
+        self.assertEqual(parse_ecmascript_expr_to_type("'ecma'", {}), str)
         self.assertEqual(parse_ecmascript_expr_to_type("[1,2,3]", {}), ArrayInfo(int, 1, [None]))
         # Identifiers
         self.assertEqual(parse_ecmascript_expr_to_type("x", {"x": int}), int)

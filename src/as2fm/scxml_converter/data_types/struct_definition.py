@@ -18,9 +18,9 @@ from typing import Any, Dict, List, Optional, Type, Union
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.ast_utils import ast_expression_to_string
 from as2fm.as2fm_common.common import ValidPlainScxmlTypes
 from as2fm.as2fm_common.ecmascript_interpretation import (
+    ast_expression_to_string,
     get_object_expression_as_dict,
     make_ast_array_expression,
 )

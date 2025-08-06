@@ -19,6 +19,7 @@ Module for interpreting ecmascript.
 
 from typing import Dict, List, Optional, Union
 
+import escodegen
 import esprima
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
@@ -106,7 +107,7 @@ def get_array_expr_as_list(expr: str, elem: Optional[XmlElement] = None) -> List
     ast_node = parse_expression_to_ast(expr, elem)
     if ast_node.type == Syntax.ArrayExpression:
         # We expect no variable reference in an array expression, hence the '{}'
-        return get_list_from_array_expr(ast_node, {})
+        return get_list_from_array_expr(ast_node)
     elif ast_node.type == Syntax.Literal:  # a string
         raise ValueError(f"This should not be a string: {expr}")
     else:
@@ -227,3 +228,8 @@ def _split_by_access(ast: esprima.nodes.Node) -> List:
             return _split_by_access(ast.object) + _split_by_access(ast.property)
     else:
         raise MemberAccessCheckException(f"Can not evaluate {ast.type} to a variable identifier.")
+
+
+def ast_expression_to_string(ast_node: esprima.nodes.Node) -> str:
+    """Generate a string starting from an AST node"""
+    return escodegen.generate(ast_node)

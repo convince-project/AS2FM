@@ -24,9 +24,9 @@ from esprima.nodes import ArrayExpression, ComputedMemberExpression, Identifier,
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ast_utils import ast_expression_to_string
 from as2fm.as2fm_common.ecmascript_interpretation import (
     MemberAccessCheckException,
+    ast_expression_to_string,
     has_array_access,
     parse_expression_to_ast,
     split_by_access,

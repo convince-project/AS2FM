@@ -44,24 +44,43 @@ def get_ast_expression_type(
     return __get_ast_expression_type(ast, variables)
 
 
+def __get_value_from_expr(ast: esprima.nodes.Node) -> Union[int, float, bool, str]:
+    if ast.type == Syntax.Literal:
+        lit_type = __get_ast_literal_type(ast)
+        assert lit_type in (
+            int,
+            float,
+            bool,
+            str,
+        ), f"Found entry of type {lit_type}. Only int, float, bool and string can be evaluated."
+        return lit_type(ast.value)
+    elif ast.type == Syntax.UnaryExpression:
+        assert ast.prefix is True
+        op_arg = __get_value_from_expr(ast.argument)
+        op = ast.operator
+        if op == "-":
+            assert isinstance(
+                op_arg, (int, float)
+            ), f"Operator '-' expects a number, found {type(op_arg)}."
+            return -op_arg
+        elif op == "!":
+            assert isinstance(op_arg, bool), f"Operator '!' expects a bool, found {type(op_arg)}."
+            return not op_arg
+    raise ValueError(f"Unexpected element type {ast.type}.")
+
+
 def get_list_from_array_expr(
-    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
+    ast: esprima.nodes.Node, expected_type: Optional[Type[Union[int, float]]] = None
 ) -> List:
     ret_list: List[Union[ValidPlainScxmlTypes | Dict]] = []
     for elem in ast.elements:
-        if elem.type == Syntax.Literal:
-            lit_type = __get_ast_literal_type(elem)
-            assert lit_type in (
-                int,
-                float,
-            ), f"Found entry of type {lit_type}. Only arrays of int and floats are supported."
-            ret_list.append(lit_type(elem.value))
-        elif elem.type == Syntax.ArrayExpression:
-            ret_list.append(get_list_from_array_expr(elem, variables))
-        # elif elem.type == Syntax.ObjectExpression:
-        #     extracted_object_types = __get_ast_expression_type(elem, variables)
-        #     assert isinstance(extracted_object_types, dict)
-        #     ret_list.append(extracted_object_types)
+        if elem.type == Syntax.ArrayExpression:
+            ret_list.append(get_list_from_array_expr(elem))
+        elif elem.type in (Syntax.Literal, Syntax.UnaryExpression):
+            extracted_value = __get_value_from_expr(elem)
+            if expected_type is not None:
+                extracted_value = expected_type(extracted_value)
+            ret_list.append(extracted_value)
         else:
             raise ValueError(f"Unexpected array element type {elem.type}.")
     return ret_list
@@ -80,11 +99,9 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Type[ValidPlainScxmlTypes
     return extracted_type
 
 
-def __get_ast_array_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
-) -> ArrayInfo:
+def __get_ast_array_expr_type(ast: esprima.nodes.Node) -> ArrayInfo:
     assert ast.type == Syntax.ArrayExpression
-    converted_array = get_list_from_array_expr(ast, variables)
+    converted_array = get_list_from_array_expr(ast)
     return array_value_to_type_info(converted_array)
 
 
@@ -206,7 +223,7 @@ def __get_ast_expression_type(
     elif ast.type == Syntax.Identifier:
         return variables[ast.name]
     elif ast.type == Syntax.ArrayExpression:
-        return __get_ast_array_expr_type(ast, variables)
+        return __get_ast_array_expr_type(ast)
     elif ast.type == Syntax.MemberExpression:
         if ast.computed:
             # Array Access Operator

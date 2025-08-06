@@ -1,5 +1,6 @@
 from typing import Dict
 
+from as2fm.as2fm_common.ecmascript_interpretation import get_array_expr_as_list
 from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 
 
@@ -84,11 +85,11 @@ def test_instance_evaluation():
                 'frame': '',
             },
         ]}"""
-    poly_instance = struct_definitions["PolygonsArray"].get_type_from_expression(js_expression)
+    poly_instance = struct_definitions["PolygonsArray"].get_expanded_expressions(js_expression)
     assert len(poly_instance) == 3
-    assert poly_instance["polygons.points.x"] == [[1, 3], [-1.5, -2.0], []]
-    assert poly_instance["polygons.points.y"] == [[2, 4], [3, 5], []]
-    assert poly_instance["polygons.frame"] == ["map", "world", ""]
+    assert get_array_expr_as_list(poly_instance["polygons.points.x"]) == [[1, 3], [-1.5, -2.0], []]
+    assert get_array_expr_as_list(poly_instance["polygons.points.y"]) == [[2, 4], [3, 5], []]
+    assert get_array_expr_as_list(poly_instance["polygons.frame"]) == ["map", "world", ""]
 
 
 def test_empty_instance_evaluation():

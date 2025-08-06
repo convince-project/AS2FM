@@ -25,7 +25,10 @@ import esprima
 from esprima.syntax import Syntax
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.ast_utils import ast_array_expression_to_list, get_type_ast_array_expression
+from as2fm.as2fm_common.ecmascript_interpretation_functions import (
+    get_ast_expression_type,
+    get_list_from_array_expr,
+)
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
     CALLABLE_OPERATORS_MAP,
@@ -202,10 +205,19 @@ def _parse_ecmascript_to_jani_expression(
         )
     elif ast.type == Syntax.ArrayExpression:
         # This is an Array literal, will result in an array_value operator
-        array_entries_type = get_type_ast_array_expression(ast)
+        array_entries_info = get_ast_expression_type(ast, {})
+        assert isinstance(array_entries_info, ArrayInfo), "Unexpected type extracted from AST expr."
+        assert array_entries_info.array_type in (int, float, None), "Unexpected array type."
+        expected_type: Optional[Type[Union[int, float]]] = array_entries_info.array_type
         if target_array_info is not None:
-            array_entries_type = target_array_info.array_type
-        extracted_list = ast_array_expression_to_list(ast, array_entries_type)
+            # If target type is float, we are ok with everything
+            # If entries type is int or None, we are OK with everything as well
+            assert target_array_info.array_type is float or array_entries_info.array_type in (
+                int,
+                None,
+            ), "The target var and the expr. type are not compatible."
+            expected_type = target_array_info.array_type
+        extracted_list = get_list_from_array_expr(ast, expected_type)
         if target_array_info is not None:
             extracted_list = _add_padding_to_array(extracted_list, target_array_info)
         return array_value_operator(extracted_list)
