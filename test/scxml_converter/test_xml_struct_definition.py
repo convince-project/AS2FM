@@ -102,7 +102,7 @@ def test_empty_instance_evaluation():
     expand_struct_definitions(struct_definitions)
     js_expression = """{
         'polygons': []}"""
-    poly_instance = struct_definitions["PolygonsArray"].get_type_from_expression(js_expression)
+    poly_instance = struct_definitions["PolygonsArray"].get_expanded_expressions(js_expression)
     assert len(poly_instance) == 2
-    assert poly_instance["polygons.points.x"] == []
-    assert poly_instance["polygons.points.y"] == []
+    assert poly_instance["polygons.points.x"] == "[]"
+    assert poly_instance["polygons.points.y"] == "[]"
