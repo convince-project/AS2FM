@@ -29,7 +29,10 @@ from as2fm.as2fm_common.common import (
 )
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 
-BasicJsTypes = Union[int, float, bool, str]
+# Definition of a valid ECMAScript expression type
+ValidECMAScriptTypes = Union[
+    Dict[str, "ValidECMAScriptTypes"], ArrayInfo, Type[ValidPlainScxmlTypes]
+]
 
 
 class ArrayAccess:
@@ -88,15 +91,12 @@ def parse_expression_to_ast(expression: str, elem: XmlElement):
     return ast.right
 
 
-def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
+def __get_ast_literal_type(ast: esprima.nodes.Node) -> Type[ValidPlainScxmlTypes]:
     """Extract the type of a literal node. Special handling for floats."""
     assert ast.type == Syntax.Literal
     extracted_type = type(ast.value)
     if extracted_type not in (int, float, bool, str):
         raise ValueError(f"Unexpected literal type {extracted_type}.")
-    if extracted_type is str:
-        return str
-        # return ArrayInfo(int, 1, [None])
     n_dots = ast.raw.count(".")
     if extracted_type is int and n_dots > 0:
         assert n_dots == 1, f"Unexpected literal's raw string {ast.raw}."
@@ -105,9 +105,9 @@ def __get_ast_literal_type(ast: esprima.nodes.Node) -> Union[Type[ValidPlainScxm
 
 
 def __get_list_from_array_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes]]]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
 ) -> List:
-    ret_list = []
+    ret_list: List[Union[ValidPlainScxmlTypes | Dict]] = []
     for elem in ast.elements:
         if elem.type == Syntax.Literal:
             lit_type = __get_ast_literal_type(elem)
@@ -119,14 +119,16 @@ def __get_list_from_array_expr_type(
         elif elem.type == Syntax.ArrayExpression:
             ret_list.append(__get_list_from_array_expr_type(elem, variables))
         elif elem.type == Syntax.ObjectExpression:
-            ret_list.append(__get_ast_expression_type(elem, variables))
+            extracted_object_types = __get_ast_expression_type(elem, variables)
+            assert isinstance(extracted_object_types, dict)
+            ret_list.append(extracted_object_types)
         else:
             raise ValueError(f"Unexpected array element type {elem.type}.")
     return ret_list
 
 
 def __get_ast_array_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes]]]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
 ) -> ArrayInfo:
     assert ast.type == Syntax.ArrayExpression
     converted_array = __get_list_from_array_expr_type(ast, variables)
@@ -150,8 +152,8 @@ def __get_member_access_name(ast: esprima.nodes.Node) -> str:
 
 
 def __get_member_access_array(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
-) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
+) -> ValidECMAScriptTypes:
     """
     Compute the type resulting from an array access operator.
 
@@ -180,7 +182,7 @@ def __get_member_access_array(
 
 
 def __get_call_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
 ) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.CallExpression
     callee_str: str = ""
@@ -205,7 +207,7 @@ def __get_call_expr_type(
 
 
 def __get_unary_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
 ) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.UnaryExpression
     assert ast.prefix is True
@@ -221,7 +223,7 @@ def __get_unary_expr_type(
 
 
 def __get_binary_expr_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
 ) -> Type[ValidPlainScxmlTypes]:
     assert ast.type == Syntax.BinaryExpression
     left_type = __get_ast_expression_type(ast.left, variables)
@@ -244,8 +246,8 @@ def __get_binary_expr_type(
 
 
 def __get_ast_expression_type(
-    ast: esprima.nodes.Node, variables: Dict[str, Union[Type[ValidPlainScxmlTypes], ArrayInfo]]
-) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
+) -> ValidECMAScriptTypes:
     if ast.type == Syntax.Literal:
         return __get_ast_literal_type(ast)
     elif ast.type == Syntax.Identifier:
@@ -281,13 +283,19 @@ def __get_ast_expression_type(
 
 # TODO: Turn the variables into a name->type map, instead of name->instance.
 def get_ast_expression_type(
-    ast: esprima.nodes.Node, variables: Dict[str, ValidPlainScxmlTypes]
-) -> Union[Type[ValidPlainScxmlTypes], ArrayInfo]:
-    """TODO"""
-    # var_to_type = {
-    #     var_name: __extract_type_from_instance(var_value)
-    #     for var_name, var_value in variables.items()
-    # }
+    ast: esprima.nodes.Node, variables: Dict[str, ValidECMAScriptTypes]
+) -> ValidECMAScriptTypes:
+    """
+    Extracts the type from a given AST expression.
+
+    Valid types are the following:
+    - base types (e.g. int, float, string);
+    - Arrays (Collection of elements of the same type), represented by an ArrayInfo object
+    - objects (a composition of base types, arrays and other objects) represented as a Dict
+
+    :param ast: The AST object containing the expression
+    :param variables: Collection of existing variables, and their related types
+    """
     return __get_ast_expression_type(ast, variables)
 
 
