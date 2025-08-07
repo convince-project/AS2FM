@@ -66,10 +66,12 @@ def parse_expression_to_ast(expression: str, elem: XmlElement) -> esprima.nodes.
             get_error_msg(elem, f"Failed parsing ecmascript: {expression}. Error: {e}.")
         )
 
-    check_assertion(len(ast.body) == 1, elem, "The ecmascript must contain exactly one expression.")
+    check_assertion(
+        len(ast.body) == 1, elem, "The ecmascript body must contain exactly one element."
+    )
     ast = ast.body[0]
 
-    # remove the 'value ='-bit' we added above
+    # Remove the 'value ='-bit we added above.
     check_assertion(
         ast.type == "ExpressionStatement",
         elem,
