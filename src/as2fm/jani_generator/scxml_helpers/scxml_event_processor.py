@@ -19,7 +19,7 @@ Module to process events from scxml and implement them as syncs between jani aut
 
 from typing import Dict, List, MutableSequence, Optional, Tuple
 
-from as2fm.as2fm_common.common import is_array_type
+from as2fm.as2fm_common.array_type import ArrayInfo, is_array_type
 from as2fm.jani_generator.jani_entries import (
     JaniAutomaton,
     JaniComposition,
@@ -36,7 +36,7 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
-from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION, ArrayInfo
+from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 
 JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
 

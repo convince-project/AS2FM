@@ -95,5 +95,12 @@ def test_run_smc_storm():
     assert result == 0, "smc_storm failed to run"
 
 
+def test_smc_storm_version():
+    """Testing that you have the correct `smc_storm` version."""
+    out, _, result = _run_smc_storm("-v")
+    assert result == 0, "smc_storm failed to run"
+    assert out.strip() == "0.1.4"
+
+
 if __name__ == "__main__":
     pytest.main(["-s", "-vv", __file__])

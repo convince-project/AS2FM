@@ -22,7 +22,7 @@
             {'polygons': [
                 {'points': []},
                 {'points': [
-                    {'frame': 'world1', 'x': 1, 'y': 2},
+                    {'frame': 'world1', 'x': -1, 'y': 2},
                     {'frame': 'world?', 'x': 3, 'y': 4}
                 ]},
                 ]

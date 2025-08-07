@@ -19,7 +19,6 @@ import re
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Type
 
-import escodegen
 import esprima
 from esprima.nodes import ArrayExpression, ComputedMemberExpression, Identifier, Literal
 from esprima.syntax import Syntax
@@ -27,6 +26,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import (
     MemberAccessCheckException,
+    ast_expression_to_string,
     has_array_access,
     parse_expression_to_ast,
     split_by_access,
@@ -319,7 +319,7 @@ def _assemble_object_for_length_access(
             raise AttributeError("Trying to access a member length, but no struct def. provided.")
         return _reassemble_expression(ast_array, array_idxs)
     # Generate the member access expression w.o. index access
-    member_var = escodegen.generate(ast_array)
+    member_var = ast_expression_to_string(ast_array)
     data_type, _ = struct_declarations.get_data_type(member_var, None)
     if isinstance(data_type, str):
         # not an object (a base type)
@@ -426,7 +426,7 @@ def convert_expression_with_object_arrays(
     except MemberAccessCheckException as e:
         log_error(elem, "Failed to expand the provided expression.")
         raise e
-    return escodegen.generate(exp)
+    return ast_expression_to_string(exp)
 
 
 def convert_expression_with_string_literals(
@@ -444,7 +444,7 @@ def convert_expression_with_string_literals(
     except MemberAccessCheckException as e:
         log_error(elem, "Failed to expand the provided expression.")
         raise e
-    return escodegen.generate(exp)
+    return ast_expression_to_string(exp)
 
 
 # ------------ String-related utilities ------------
