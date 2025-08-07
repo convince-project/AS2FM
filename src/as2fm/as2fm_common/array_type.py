@@ -68,7 +68,7 @@ class ArrayInfo:
 
 
 def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
-    """Small helper function to generate the array info from a given value instance."""
+    """Generate the `ArrayInfo` from a given instance."""
     array_type, array_sizes = get_array_type_and_sizes(data_value)
     n_dims = len(array_sizes)
     return ArrayInfo(array_type, n_dims, [None] * n_dims)
@@ -76,7 +76,7 @@ def array_value_to_type_info(data_value: MutableSequence) -> ArrayInfo:
 
 def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
     """
-    Check that the array is composed by a list of (int, float, list).
+    Check that the array is composed of a list of (int, float, list).
 
     This does *not* check that all sub-lists have the same depth (e.g. [[1], [[1,2,3]]]).
     """
@@ -98,9 +98,7 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
         str,
         dict,
     ), f"Unexpected list entry type: {first_value_type}."
-    if first_value_type is str:
-        return all(isinstance(seq_value, str) for seq_value in in_sequence)
-    return all(isinstance(seq_value, (int, float)) for seq_value in in_sequence)
+    return all(isinstance(seq_value, first_value_type) for seq_value in in_sequence)
 
 
 def get_array_type_and_sizes(
