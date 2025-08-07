@@ -197,7 +197,7 @@ def get_padded_array(
     return array_to_pad
 
 
-def is_array_type(field_type: Type[ValidPlainScxmlTypes]) -> bool:
+def is_array_type(field_type: Union[Type[ValidPlainScxmlTypes], ArrayInfo]) -> bool:
     """Check if the field type is an array type."""
     return field_type is MutableSequence or isinstance(field_type, ArrayInfo)
 
