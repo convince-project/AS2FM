@@ -204,9 +204,6 @@ def is_array_type(field_type: Type[ValidPlainScxmlTypes]) -> bool:
 
 def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> ValidPlainScxmlTypes:
     """Generate a default expression for a field type."""
-    # if isinstance(field_type, ArrayInfo):
-    #     # TODO: We need to handle types properly.
-    #     return []
     assert field_type in get_args(
         ValidPlainScxmlTypes
     ), f"Error: Unsupported SCXML data type {field_type}."
