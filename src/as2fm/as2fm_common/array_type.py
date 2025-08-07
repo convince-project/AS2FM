@@ -98,7 +98,11 @@ def is_valid_array(in_sequence: Union[MutableSequence, str]) -> bool:
         str,
         dict,
     ), f"Unexpected list entry type: {first_value_type}."
-    return all(isinstance(seq_value, first_value_type) for seq_value in in_sequence)
+    if first_value_type is float or first_value_type is int:
+        expected_type: Union[Tuple[Type, Type], Type] = (int, float)
+    else:
+        expected_type = first_value_type
+    return all(isinstance(seq_value, expected_type) for seq_value in in_sequence)
 
 
 def get_array_type_and_sizes(
@@ -213,3 +217,19 @@ def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> V
         return ""
     else:
         return field_type()
+
+
+def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
+    """Takes a python object and returns it as a (SCXML compatible) string."""
+    if isinstance(value, MutableSequence):
+        assert is_valid_array(value), f"Found invalid input array {value}."
+        # Expect value to be a list, so casting to string is enough.
+        return str(value)
+    elif isinstance(value, bool):
+        return str(value).lower()
+    elif isinstance(value, (int, float)):
+        return str(value)
+    elif isinstance(value, str):
+        return f"'{value}'"
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")
