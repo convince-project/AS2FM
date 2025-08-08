@@ -22,7 +22,11 @@ import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import remove_namespace, string_as_bool
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.as2fm_common.logging import (
+    check_assertion,
+    get_error_msg,
+    set_filepath_for_all_sub_elements,
+)
 from as2fm.scxml_converter.data_types.json_struct_definition import JsonStructDefinition
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
@@ -70,6 +74,7 @@ class RoamlParameters:
 
     def _parse_parameters(self, params_element: XmlElement) -> None:
         """Parse the parameters section from XML."""
+        print("aaa")
         for param in params_element:
             param_tag = remove_namespace(param.tag)
             if param_tag == "max_time":
@@ -81,7 +86,7 @@ class RoamlParameters:
             elif param_tag == "bt_tick_if_not_running":
                 self._bt_tick_when_not_running = string_as_bool(param.attrib["value"])
             else:
-                raise ValueError(get_error_msg(param, f"Invalid parameter tag: {param.tag}"))
+                raise ValueError(get_error_msg(param, f"Invalid parameter tag: {param_tag}"))
 
         if self._max_time is None:
             raise ValueError(get_error_msg(params_element, "`max_time` must be defined."))
@@ -276,6 +281,7 @@ class RoamlMain:
         with open(xml_path, "r", encoding="utf-8") as f:
             xml = ET.parse(f, parser=parser_wo_comments)
             self._xml_root_orig = xml.getroot()
+            set_filepath_for_all_sub_elements(self._xml_root_orig, xml_path)
         roaml_tag: str = remove_namespace(self._xml_root_orig.tag)
         # Check the tags
         if roaml_tag == "convince_mc_tc":
@@ -293,13 +299,13 @@ class RoamlMain:
             )
         # Initialize the children entries
         # -- Params
-        params_xml = self._xml_root_orig.get(RoamlParameters.get_tag())
-        if params_xml is None:
-            params_xml = self._xml_root_orig.get("mc_parameters")
+        params_xml = self._xml_root_orig.findall(RoamlParameters.get_tag())
+        if len(params_xml) == 0:
+            params_xml = self._xml_root_orig.findall("mc_parameters")
             check_assertion(
-                params_xml is not None,
+                len(params_xml) == 1,
                 self._xml_root_orig,
-                f"Missing tag {RoamlParameters.get_tag()}",
+                f"Found {len(params_xml)} tags {RoamlParameters.get_tag()}, expected 1.",
             )
             warn(
                 get_error_msg(
@@ -308,7 +314,7 @@ class RoamlMain:
                     + f"the tag '{RoamlParameters.get_tag()}'.",
                 )
             )
-        self._roaml_params = RoamlParameters(params_xml)
+        self._roaml_params = RoamlParameters(params_xml[0])
         # -- Data Structures
         data_xml = self._xml_root_orig.get(RoamlDataStructures.get_tag())
         self._roaml_data = RoamlDataStructures(data_xml, self._folder_path)
