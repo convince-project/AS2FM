@@ -1,0 +1,337 @@
+# Copyright (c) 2025 - for information on the respective copyright owner
+# see the NOTICE file
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple, Type
+from warnings import warn
+
+import lxml.etree as ET
+from lxml.etree import _Element as XmlElement
+
+from as2fm.as2fm_common.common import remove_namespace, string_as_bool
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.scxml_converter.data_types.json_struct_definition import JsonStructDefinition
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
+
+
+@dataclass()
+class FullModel:
+    # The maximum time the model is allowed to run, in nanoseconds
+    max_time: Optional[int] = None
+    # Max size of "dynamic" arrays defined in the SCXML models
+    max_array_size: int = field(default=100)
+    # Tick rate for the loaded BT in Hz
+    bt_tick_rate: float = field(default=1.0)
+    # Whether to keep ticking the BT after it returns SUCCESS / FAILURE
+    bt_tick_when_not_running: bool = field(default=False)
+    # List of data declarations. Each entry will contain the type and path to the file
+    data_declarations: List[Tuple[str, str]] = field(default_factory=list)
+    # Path to the behavior tree loaded in the model
+    bt: Optional[str] = None
+    # Paths to the SCXML models of the BT nodes used in the model
+    plugins: List[str] = field(default_factory=list)
+    # Paths to the SCXML models of the non-BT nodes in the model
+    skills: List[str] = field(default_factory=list)
+    # Similar to the skills, currently unused
+    components: List[str] = field(default_factory=list)
+    # Path to the properties definition, currently in JANI
+    properties: List[str] = field(default_factory=list)
+
+
+class RoamlParameters:
+    """Handler for the parameters section of a ROAML file."""
+
+    @staticmethod
+    def get_tag():
+        return "parameters"
+
+    def __init__(self, params_element: Optional[XmlElement]):
+        self._max_time: Optional[int] = None
+        self._max_array_size: int = 100
+        self._bt_tick_rate: float = 1.0
+        self._bt_tick_when_not_running: bool = False
+
+        assert params_element is not None, "No params elements provided."
+        self._parse_parameters(params_element)
+
+    def _parse_parameters(self, params_element: XmlElement) -> None:
+        """Parse the parameters section from XML."""
+        for param in params_element:
+            param_tag = remove_namespace(param.tag)
+            if param_tag == "max_time":
+                self._max_time = self._parse_time_element(param)
+            elif param_tag == "max_array_size":
+                self._max_array_size = int(param.attrib["value"])
+            elif param_tag == "bt_tick_rate":
+                self._bt_tick_rate = float(param.attrib["value"])
+            elif param_tag == "bt_tick_if_not_running":
+                self._bt_tick_when_not_running = string_as_bool(param.attrib["value"])
+            else:
+                raise ValueError(get_error_msg(param, f"Invalid parameter tag: {param.tag}"))
+
+        if self._max_time is None:
+            raise ValueError(get_error_msg(params_element, "`max_time` must be defined."))
+
+    @staticmethod
+    def _parse_time_element(time_element: XmlElement) -> int:
+        """
+        Interpret a time element. Output is in nanoseconds.
+
+        :param time_element: The time element to interpret.
+        :return: The interpreted time in nanoseconds.
+        """
+        TIME_MULTIPLIERS = {"s": 1_000_000_000, "ms": 1_000_000, "us": 1_000, "ns": 1}
+        time_unit = time_element.attrib["unit"]
+        assert time_unit in TIME_MULTIPLIERS, f"Invalid time unit: {time_unit}"
+        return int(time_element.attrib["value"]) * TIME_MULTIPLIERS[time_unit]
+
+    def get_max_time(self) -> Optional[int]:
+        return self._max_time
+
+    def get_max_array_size(self) -> int:
+        return self._max_array_size
+
+    def get_bt_tick_rate(self) -> float:
+        return self._bt_tick_rate
+
+    def get_tick_when_not_running(self) -> bool:
+        return self._bt_tick_when_not_running
+
+
+class RoamlDataStructures:
+    """Handler for the data_declarations section of a ROAML file."""
+
+    AVAILABLE_STRUCT_DEFINITIONS: Dict[str, Type[StructDefinition]] = {
+        "xml": XmlStructDefinition,
+        "json": JsonStructDefinition,
+    }
+
+    @staticmethod
+    def get_tag():
+        return "data_declarations"
+
+    def __init__(self, data_element: Optional[XmlElement], folder_path: str):
+        self._data_declarations: List[Tuple[str, str]] = []
+
+        if data_element is not None:
+            self._parse_data_declarations(data_element, folder_path)
+
+    def _parse_data_declarations(self, data_element: XmlElement, folder_path: str) -> None:
+        """Parse the data_declarations section from XML."""
+        for child in data_element:
+            if remove_namespace(child.tag) == "input":
+                if child.attrib["type"] not in self.AVAILABLE_STRUCT_DEFINITIONS.keys():
+                    raise ValueError(
+                        get_error_msg(child, f"Unsupported type {child.attrib['type']}.")
+                    )
+                self._data_declarations.append(
+                    (child.attrib["type"], os.path.join(folder_path, child.attrib["src"]))
+                )
+            else:
+                raise ValueError(
+                    get_error_msg(child, f"Invalid data_declarations tag: {child.tag} != input")
+                )
+
+    def get_data_declarations(self) -> List[Tuple[str, str]]:
+        return self._data_declarations
+
+
+class RoamlBehaviorTree:
+    """Handler for the behavior_tree section of a ROAML file."""
+
+    @staticmethod
+    def get_tag():
+        return "behavior_tree"
+
+    def __init__(self, bt_element: Optional[XmlElement], folder_path: str):
+        self._bt_path: Optional[str] = None
+        self._plugins: List[str] = []
+
+        if bt_element is not None:
+            self._parse_behavior_tree(bt_element, folder_path)
+
+    def _parse_behavior_tree(self, bt_element: XmlElement, folder_path: str) -> None:
+        """Parse the behavior_tree section from XML."""
+        for child in bt_element:
+            if remove_namespace(child.tag) == "input":
+                if child.attrib["type"] == "bt.cpp-xml":
+                    if self._bt_path is not None:
+                        raise ValueError("Only one Behavior Tree is supported.")
+                    self._bt_path = os.path.join(folder_path, child.attrib["src"])
+                elif child.attrib["type"] in ["bt-plugin-ros-scxml", "bt-plugin-ascxml"]:
+                    self._plugins.append(os.path.join(folder_path, child.attrib["src"]))
+                else:
+                    raise ValueError(
+                        get_error_msg(child, f"Invalid input type: {child.attrib['type']}")
+                    )
+            else:
+                raise ValueError(
+                    get_error_msg(child, f"Invalid behavior_tree tag: {child.tag} != input")
+                )
+
+        if self._bt_path is None:
+            raise ValueError(get_error_msg(bt_element, "A Behavior Tree must be defined."))
+
+    def get_bt_path(self) -> Optional[str]:
+        return self._bt_path
+
+    def get_plugins(self) -> List[str]:
+        return self._plugins
+
+
+class RoamlNodes:
+    """Handler for the node_models section of a ROAML file."""
+
+    @staticmethod
+    def get_tag():
+        return "node_models"
+
+    def __init__(self, nodes_element: Optional[XmlElement], folder_path: str):
+        self._skills: List[str] = []
+
+        if nodes_element is not None:
+            self._parse_node_models(nodes_element, folder_path)
+
+    def _parse_node_models(self, nodes_element: XmlElement, folder_path: str) -> None:
+        """Parse the node_models section from XML."""
+        for node_model in nodes_element:
+            if remove_namespace(node_model.tag) != "input":
+                raise ValueError(get_error_msg(node_model, "Only input tags are supported."))
+
+            node_type = node_model.attrib["type"]
+            if node_type in ["ros-scxml", "node-ascxml"]:
+                self._skills.append(os.path.join(folder_path, node_model.attrib["src"]))
+            else:
+                raise ValueError(
+                    get_error_msg(node_model, f"Unsupported node model type: {node_type}")
+                )
+
+    def get_skills(self) -> List[str]:
+        return self._skills
+
+
+class RoamlProperties:
+    """Handler for the properties section of a RoAML file."""
+
+    @staticmethod
+    def get_tag():
+        return "properties"
+
+    def __init__(self, props_element: Optional[XmlElement] = None, folder_path: str = ""):
+        self._properties: List[str] = []
+
+        if props_element is not None:
+            self._parse_properties(props_element, folder_path)
+
+    def _parse_properties(self, props_element: XmlElement, folder_path: str) -> None:
+        """Parse the properties section from XML."""
+        for jani_property in props_element:
+            if remove_namespace(jani_property.tag) != "input":
+                raise ValueError(get_error_msg(jani_property, "Only input tags are supported."))
+
+            if jani_property.attrib["type"] != "jani":
+                raise ValueError(
+                    get_error_msg(
+                        jani_property,
+                        f"Only Jani properties are supported, not {jani_property.attrib['type']}.",
+                    )
+                )
+
+            self._properties.append(os.path.join(folder_path, jani_property.attrib["src"]))
+
+        if len(self._properties) != 1:
+            raise ValueError(
+                get_error_msg(props_element, "Only exactly one Jani property is supported.")
+            )
+
+    def get_properties(self) -> List[str]:
+        return self._properties
+
+
+class RoamlMain:
+    """This is the entry point of any RoAML model."""
+
+    @staticmethod
+    def get_tag():
+        return "roaml"
+
+    def __init__(self, xml_path: str):
+        # Load the XML
+        self._folder_path = os.path.dirname(xml_path)
+        parser_wo_comments = ET.XMLParser(remove_comments=True)
+        with open(xml_path, "r", encoding="utf-8") as f:
+            xml = ET.parse(f, parser=parser_wo_comments)
+            self._xml_root_orig = xml.getroot()
+        roaml_tag: str = remove_namespace(self._xml_root_orig.tag)
+        # Check the tags
+        if roaml_tag == "convince_mc_tc":
+            warn(
+                get_error_msg(
+                    self._xml_root_orig,
+                    f"The tag {roaml_tag} is deprecated: switch to the tag '{self.get_tag()}'.",
+                )
+            )
+        else:
+            check_assertion(
+                roaml_tag == self.get_tag(),
+                xml.getroot(),
+                f"Unknown top level tag {roaml_tag}: expected '{self.get_tag()}'.",
+            )
+        # Initialize the children entries
+        # -- Params
+        params_xml = self._xml_root_orig.get(RoamlParameters.get_tag())
+        if params_xml is None:
+            params_xml = self._xml_root_orig.get("mc_parameters")
+            check_assertion(
+                params_xml is not None,
+                self._xml_root_orig,
+                f"Missing tag {RoamlParameters.get_tag()}",
+            )
+            warn(
+                get_error_msg(
+                    self._xml_root_orig,
+                    "The tag 'mc_parameters' is deprecated: switch to "
+                    + f"the tag '{RoamlParameters.get_tag()}'.",
+                )
+            )
+        self._roaml_params = RoamlParameters(params_xml)
+        # -- Data Structures
+        data_xml = self._xml_root_orig.get(RoamlDataStructures.get_tag())
+        self._roaml_data = RoamlDataStructures(data_xml, self._folder_path)
+        # -- BT
+        bt_xml = self._xml_root_orig.get(RoamlBehaviorTree.get_tag())
+        self._roaml_bt = RoamlBehaviorTree(bt_xml, self._folder_path)
+        # -- Nodes
+        nodes_xml = self._xml_root_orig.get(RoamlNodes.get_tag())
+        self._roaml_nodes = RoamlNodes(nodes_xml, self._folder_path)
+        # -- Properties
+        properties_xml = self._xml_root_orig.get(RoamlProperties.get_tag())
+        self._roaml_properties = RoamlProperties(properties_xml, self._folder_path)
+
+    def get_loaded_model(self) -> FullModel:
+        """Get the parsed model as a FullModel object."""
+        loaded_model = FullModel()
+        loaded_model.max_time = self._roaml_params.get_max_time()
+        loaded_model.max_array_size = self._roaml_params.get_max_array_size()
+        loaded_model.bt_tick_rate = self._roaml_params.get_bt_tick_rate()
+        loaded_model.bt_tick_when_not_running = self._roaml_params.get_tick_when_not_running()
+        loaded_model.data_declarations = self._roaml_data.get_data_declarations()
+        loaded_model.bt = self._roaml_bt.get_bt_path()
+        loaded_model.plugins = self._roaml_bt.get_plugins()
+        loaded_model.skills = self._roaml_nodes.get_skills()
+        loaded_model.properties = self._roaml_properties.get_properties()
+        return loaded_model
