@@ -42,6 +42,7 @@ from as2fm.jani_generator.scxml_helpers.scxml_expression import (
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani_interfaces_helpers import (
     append_scxml_body_to_jani_automaton,
     append_scxml_body_to_jani_edge,
+    check_valid_data_declaration,
     hash_element,
     merge_conditions,
 )
@@ -190,7 +191,7 @@ class DatamodelTag(BaseTag):
             if declared_data_type is float and evaluated_expr_type is int:
                 evaluated_expr_type = float
             # TODO: Check that declared type and expression type are matching
-            # check_valid_data_declaration(declared_data_type, evaluated_expr_type, scxml_origin)
+            check_valid_data_declaration(declared_data_type, evaluated_expr_type, scxml_origin)
             # Handle special case when the expression is an empty array
             data_array_info: Optional[ArrayInfo] = None
             if isinstance(evaluated_expr_type, ArrayInfo):

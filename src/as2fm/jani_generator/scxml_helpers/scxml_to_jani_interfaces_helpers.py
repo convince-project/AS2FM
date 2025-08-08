@@ -18,18 +18,18 @@ Helper functions used in `as2fm.jani_generator.scxml_helpers.scxml_to_jani_inter
 """
 
 from hashlib import sha256
-from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Type, Union, get_args
+from typing import Any, Dict, List, MutableSequence, Optional, Tuple, Union
 
 import lxml.etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import ArrayInfo, get_array_type_and_sizes
-from as2fm.as2fm_common.common import ValidJaniTypes
 from as2fm.as2fm_common.ecmascript_interpretation import (
+    ValidECMAScriptTypes,
     get_array_expr_as_list,
     parse_ecmascript_expr_to_type,
 )
-from as2fm.as2fm_common.logging import get_error_msg, log_warning
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_warning
 from as2fm.jani_generator.jani_entries import (
     JaniAssignment,
     JaniAutomaton,
@@ -65,6 +65,33 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlIf,
     ScxmlSend,
 )
+
+
+def check_valid_data_declaration(
+    data_type: ValidECMAScriptTypes, expr_type: ValidECMAScriptTypes, scxml_origin: XmlElement
+) -> None:
+    """
+    Checks if the data type and the extracted instance type are compatible for JANI conversion.
+    """
+    err_msg = f"{expr_type=} and {data_type=} aren't compatible."
+    if isinstance(data_type, ArrayInfo):
+        check_assertion(isinstance(expr_type, ArrayInfo), scxml_origin, err_msg)
+        check_assertion(data_type.is_base_type, scxml_origin, f"{data_type=} is not a base type.")
+        check_assertion(
+            data_type.array_type in (int, float),
+            scxml_origin,
+            f"{data_type.array_type} is not a valid array type.",
+        )
+        check_assertion(expr_type.is_base_type, scxml_origin, f"{expr_type=} is not a base type.")
+        if data_type.array_type is int:
+            check_assertion(expr_type.array_type in (None, int), scxml_origin, err_msg)
+        # If data_type.array_type is float, nothing to check
+    elif data_type in (int, bool):
+        check_assertion(expr_type is data_type, scxml_origin, err_msg)
+    elif data_type is float:
+        check_assertion(expr_type in (int, float), scxml_origin, err_msg)
+    else:
+        raise RuntimeError(get_error_msg(scxml_origin, f"{data_type=} is not a supported type."))
 
 
 def __generate_nested_array_access_expr(
@@ -301,47 +328,6 @@ def hash_element(element: Union[XmlElement, ScxmlBase, List[str]]) -> str:
     else:
         raise ValueError(f"Element type {type(element)} not supported.")
     return sha256(s).hexdigest()[:8]
-
-
-def check_data_base_type_ok(
-    data_value: ValidJaniTypes,
-    expected_data_type: Type[ValidJaniTypes],
-    array_info: Optional[ArrayInfo] = None,
-) -> bool:
-    """
-    Checks if the given data value matches the expected data type (and the opt. array information).
-
-    This function is to be used only on base types and arrays of those.
-    :param data_value: The value to be checked, expected to be of a valid Jani type.
-    :param expected_data_type: The expected type of the data value.
-    :param array_info: Information about the array, if the data value is expected to one.
-    :return: True if the data value matches the expected type, otherwise False.
-    """
-    valid_types = get_args(ValidJaniTypes)
-    if expected_data_type not in valid_types:
-        return False
-    expected_types: Tuple[Type, ...] = (expected_data_type,)
-    if isinstance(data_value, valid_types):
-        if isinstance(data_value, MutableSequence):
-            assert array_info is not None
-            # TODO: Small hack to accept integer values in case array type is float
-            expected_types = (int,) if array_info.array_type is int else (int, float)
-
-            # We are dealing with a list, use array_info data
-            def recurse_on_array(
-                data_value: MutableSequence, dims_left: int, base_types: Tuple[Type, ...]
-            ) -> bool:
-                assert dims_left > 0
-                if dims_left == 1:
-                    return all(isinstance(entry, base_types) for entry in data_value)
-                return all(
-                    recurse_on_array(entry, dims_left - 1, base_types) for entry in data_value
-                )
-
-            return recurse_on_array(data_value, array_info.array_dimensions, expected_types)
-        else:
-            return isinstance(data_value, expected_types)
-    return False
 
 
 def _interpret_scxml_assign(
