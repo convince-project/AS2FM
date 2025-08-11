@@ -59,10 +59,10 @@ All of those components are summarized and collected in the `main.xml <https://g
 
     .. code-block:: xml
 
-        <mc_parameters>
+        <parameters>
             <max_time value="100" unit="s" />
             <max_array_size value="10" />
-        </mc_parameters>
+        </parameters>
 
 * Afterwards the Behavior Tree is fully specified in terms of the BT in the BT.cpp XML format and the used BT plugins in SCXML for navigating, picking, and placing. We will go into the details of the individual files later.
 
@@ -70,9 +70,9 @@ All of those components are summarized and collected in the `main.xml <https://g
 
         <behavior_tree>
             <input type="bt.cpp-xml" src="./bt_tree.xml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_navigate_action.scxml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_pick_action.scxml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_place_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_navigate_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_pick_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_place_action.scxml" />
         </behavior_tree>
 
 * In addition, the model of the environment, also known as world, is given in SCXML. We will go into the details of the environment model later.
@@ -80,7 +80,7 @@ All of those components are summarized and collected in the `main.xml <https://g
     .. code-block:: xml
 
         <node_models>
-            <input type="ros-scxml" src="./world.scxml" />
+            <input type="node-ascxml" src="./world.scxml" />
         </node_models>
 
 * In the end the properties are specified. We will go into the details of the checked property later.

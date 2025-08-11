@@ -393,35 +393,35 @@ An exemplary system description is the following:
 
 .. code-block:: xml
 
-    <convince_mc_tc>
-        <mc_parameters>
+    <roaml>
+        <parameters>
             <max_time value="100" unit="s" />
             <bt_tick_rate value="1.0" />
             <bt_tick_if_not_running value="true" />
-        </mc_parameters>
+        </parameters>
 
         <behavior_tree>
             <input type="bt.cpp-xml" src="./bt.xml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_topic_condition.scxml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_topic_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_topic_condition.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_topic_action.scxml" />
         </behavior_tree>
 
         <node_models>
-            <input type="ros-scxml" src="./battery_drainer.scxml" />
-            <input type="ros-scxml" src="./battery_manager.scxml" />
+            <input type="node-ascxml" src="./battery_drainer.scxml" />
+            <input type="node-ascxml" src="./battery_manager.scxml" />
         </node_models>
 
         <properties>
             <input type="jani" src="./battery_properties.jani" />
         </properties>
-    </convince_mc_tc>
+    </roaml>
 
-.. _mc_parameters:
+.. _parameters:
 
 Available Parameters
 ~~~~~~~~~~~~~~~~~~~~~
 
-AS2FM provides a number of parameters to control the generation of the formal model. They are all contained in the tag `<mc_parameters>`.
+AS2FM provides a number of parameters to control the generation of the formal model. They are all contained in the tag `<parameters>`.
 
 Max Time
 ____________

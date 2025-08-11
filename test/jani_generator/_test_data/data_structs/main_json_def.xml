@@ -1,19 +1,19 @@
-<convince_mc_tc>
-    <mc_parameters>
+<roaml>
+    <parameters>
         <max_time value="100" unit="s" />
         <max_array_size value="10" />
-    </mc_parameters>
+    </parameters>
 
     <data_declarations>
         <input type="json" src="./my_types.json" />
     </data_declarations>
 
     <node_models>
-        <input type="ros-scxml" src="./sender.scxml" />
-        <input type="ros-scxml" src="./receiver.scxml" />
+        <input type="node-ascxml" src="./sender.scxml" />
+        <input type="node-ascxml" src="./receiver.scxml" />
     </node_models>
 
     <properties>
         <input type="jani" src="./properties.jani" />
     </properties>
-</convince_mc_tc>
+</roaml>

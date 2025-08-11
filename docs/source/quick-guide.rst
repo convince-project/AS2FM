@@ -35,7 +35,7 @@ The **Behavior Tree** continuously checks the alarm topic and, once it is trigge
 The JANI property `battery_charged` given in `battery_properties.jani <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/battery_properties.jani>`_ defines the property of interest to be model-checked.
 In this case, it calculates the minimal probability that the battery level will eventually be 100%, after an initial depletion time, i.e., all we verify here is that the battery is charged at some point.
 
-In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <mc_parameters>` of the :ref:`How-To page <howto>`.
+In the `main.xml file <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ introduced earlier, the maximum run time of the system is specified with ``max_time`` and shared across the components. To make sure that the model-checked property makes sense, the allowed runtime needs to be high enough to have enough time to deplete the battery, i.e., in this example the maximal time needs to be at least 100s because the battery is depleted by 1% per second. Further information about this and other configuration parameters can be found in the :ref:`Available Parameters section <parameters>` of the :ref:`How-To page <howto>`.
 
 In addition, in this main file, all the components of the example are put together, and the property to use is indicated.
 
@@ -49,13 +49,13 @@ The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://g
 
     .. code-block:: xml
 
-        <input type="ros-scxml" src="./battery_manager.scxml" />
+        <input type="node-ascxml" src="./battery_manager.scxml" />
 
 * the environment model in SCXML:
 
     .. code-block:: xml
 
-        <input type="ros-scxml" src="./battery_drainer.scxml" />
+        <input type="node-ascxml" src="./battery_drainer.scxml" />
 
 * the behavior tree in XML,
 * the plugins of the behavior tree leaf nodes in SCXML,
@@ -71,9 +71,9 @@ The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://g
 
     .. code-block:: xml
 
-        <mc_parameters>
+        <parameters>
             <max_time value="100" unit="s" />
-        </mc_parameters>
+        </parameters>
 
 All of those components are converted into one JANI DTMC model by the ``as2fm_scxml_to_jani`` tool.
 

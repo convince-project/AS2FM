@@ -20,8 +20,8 @@ import os
 import pytest
 
 from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
+    RoamlMain,
     interpret_top_level_xml,
-    parse_main_xml,
 )
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
@@ -98,7 +98,10 @@ def _test_with_main(
                     if "<send" in content:
                         assert "target=" in content
         assert os.path.exists(jani_path)
-        properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
+
+        properties_file = os.path.join(
+            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties[0]
+        )
         if not skip_properties_load_check:
             assert json_jani_properties_match(
                 properties_file, jani_path
