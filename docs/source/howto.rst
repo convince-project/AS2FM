@@ -416,7 +416,7 @@ An exemplary system description is the following:
         </properties>
     </roaml>
 
-.. _mc_parameters:
+.. _parameters:
 
 Available Parameters
 ~~~~~~~~~~~~~~~~~~~~~
