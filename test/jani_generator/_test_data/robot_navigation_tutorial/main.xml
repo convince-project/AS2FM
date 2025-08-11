@@ -1,14 +1,14 @@
-<convince_mc_tc>
-    <mc_parameters>
+<roaml>
+    <parameters>
         <max_time value="100" unit="s" />
-    </mc_parameters>
+    </parameters>
 
     <node_models>
-        <input type="ros-scxml" src="./robot_control.scxml" />
-        <input type="ros-scxml" src="./robot_platform.scxml" />
+        <input type="node-ascxml" src="./robot_control.scxml" />
+        <input type="node-ascxml" src="./robot_platform.scxml" />
     </node_models>
 
     <properties>
         <input type="jani" src="./properties.jani" />
     </properties>
-</convince_mc_tc>
+</roaml>

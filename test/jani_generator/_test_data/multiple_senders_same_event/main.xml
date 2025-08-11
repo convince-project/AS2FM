@@ -1,15 +1,15 @@
-<convince_mc_tc>
-    <mc_parameters>
+<roaml>
+    <parameters>
         <max_time value="100" unit="s" />
-    </mc_parameters>
+    </parameters>
 
     <node_models>
-        <input type="ros-scxml" src="./sender_a.scxml" />
-        <input type="ros-scxml" src="./sender_b.scxml" />
-        <input type="ros-scxml" src="./receiver.scxml" />
+        <input type="node-ascxml" src="./sender_a.scxml" />
+        <input type="node-ascxml" src="./sender_b.scxml" />
+        <input type="node-ascxml" src="./receiver.scxml" />
     </node_models>
 
     <properties>
         <input type="jani" src="./properties.jani" />
     </properties>
-</convince_mc_tc>
+</roaml>
