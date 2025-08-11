@@ -7,7 +7,6 @@
     <node_models>
         <input type="node-ascxml" src="./server.scxml" />
         <input type="node-ascxml" src="./client_1.scxml" />
-        <!-- <input type="node-ascxml" src="./client_2.scxml" /> -->
     </node_models>
 
     <properties>
