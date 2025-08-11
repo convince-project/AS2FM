@@ -63,6 +63,27 @@ class RoamlParameters:
     def get_tag():
         return "parameters"
 
+    @staticmethod
+    def from_roaml_xml(parent_element: XmlElement) -> "RoamlParameters":
+        """Generate a RoamlParameters instance from the roaml (parent) xml def."""
+        params_xml = parent_element.findall(RoamlParameters.get_tag())
+        if len(params_xml) == 0:
+            params_xml = parent_element.findall("mc_parameters")
+            if len(params_xml) > 0:
+                warn(
+                    get_error_msg(
+                        params_xml[0],
+                        "The tag 'mc_parameters' is deprecated: switch to "
+                        + f"the tag '{RoamlParameters.get_tag()}'.",
+                    )
+                )
+        check_assertion(
+            len(params_xml) == 1,
+            parent_element,
+            f"Found {len(params_xml)} tags {RoamlParameters.get_tag()}, expected 1.",
+        )
+        return RoamlParameters(params_xml[0])
+
     def __init__(self, params_element: Optional[XmlElement]):
         self._max_time: Optional[int] = None
         self._max_array_size: int = 100
@@ -74,7 +95,6 @@ class RoamlParameters:
 
     def _parse_parameters(self, params_element: XmlElement) -> None:
         """Parse the parameters section from XML."""
-        print("aaa")
         for param in params_element:
             param_tag = remove_namespace(param.tag)
             if param_tag == "max_time":
@@ -129,6 +149,28 @@ class RoamlDataStructures:
     def get_tag():
         return "data_declarations"
 
+    @staticmethod
+    def from_roaml_xml(parent_element: XmlElement, folder: str) -> "RoamlDataStructures":
+        """
+        Load the Data Structures declaration from the RoAML XML node.
+
+        :parent_element: The RoAML element to extract the information from.
+        :parent folder: Path to the folder containing the RoAML xml file.
+        :return: An instance of RoamlDataStructures.
+        """
+        data_tag = RoamlDataStructures.get_tag()
+        data_decls = parent_element.findall(data_tag)
+        if len(data_decls) == 0:
+            return RoamlDataStructures(None, folder)
+        elif len(data_decls) == 1:
+            return RoamlDataStructures(data_decls[0], folder)
+        else:
+            raise AssertionError(
+                get_error_msg(
+                    data_decls[1], f"Expected one {data_tag} entry, found {len(data_decls)}"
+                )
+            )
+
     def __init__(self, data_element: Optional[XmlElement], folder_path: str):
         self._data_declarations: List[Tuple[str, str]] = []
 
@@ -162,6 +204,26 @@ class RoamlBehaviorTree:
     def get_tag():
         return "behavior_tree"
 
+    @staticmethod
+    def from_roaml_xml(parent_element: XmlElement, folder: str) -> "RoamlBehaviorTree":
+        """
+        Load the BT declaration and related plugins from the RoAML XML node.
+
+        :parent_element: The RoAML element to extract the information from.
+        :parent folder: Path to the folder containing the RoAML xml file.
+        :return: An instance of RoamlBehaviorTree.
+        """
+        bt_tag = RoamlBehaviorTree.get_tag()
+        bt_decls = parent_element.findall(bt_tag)
+        if len(bt_decls) == 0:
+            return RoamlBehaviorTree(None, folder)
+        elif len(bt_decls) == 1:
+            return RoamlBehaviorTree(bt_decls[0], folder)
+        else:
+            raise AssertionError(
+                get_error_msg(bt_decls[1], f"Expected one {bt_tag} entry, found {len(bt_decls)}")
+            )
+
     def __init__(self, bt_element: Optional[XmlElement], folder_path: str):
         self._bt_path: Optional[str] = None
         self._plugins: List[str] = []
@@ -177,8 +239,16 @@ class RoamlBehaviorTree:
                     if self._bt_path is not None:
                         raise ValueError("Only one Behavior Tree is supported.")
                     self._bt_path = os.path.join(folder_path, child.attrib["src"])
-                elif child.attrib["type"] in ["bt-plugin-ros-scxml", "bt-plugin-ascxml"]:
+                elif child.attrib["type"] == "bt-plugin-ascxml":
                     self._plugins.append(os.path.join(folder_path, child.attrib["src"]))
+                elif child.attrib["type"] == "bt-plugin-ros-scxml":
+                    self._plugins.append(os.path.join(folder_path, child.attrib["src"]))
+                    warn(
+                        get_error_msg(
+                            bt_element,
+                            "Deprecated type 'bt-plugin-ros-scxml', switch to 'bt-plugin-ascxml'.",
+                        )
+                    )
                 else:
                     raise ValueError(
                         get_error_msg(child, f"Invalid input type: {child.attrib['type']}")
@@ -205,6 +275,28 @@ class RoamlNodes:
     def get_tag():
         return "node_models"
 
+    @staticmethod
+    def from_roaml_xml(parent_element: XmlElement, folder: str) -> "RoamlNodes":
+        """
+        Load the executable nodes declaration from the RoAML XML node.
+
+        :parent_element: The RoAML element to extract the information from.
+        :parent folder: Path to the folder containing the RoAML xml file.
+        :return: An instance of RoamlNodes.
+        """
+        nodes_tag = RoamlNodes.get_tag()
+        nodes_entries = parent_element.findall(nodes_tag)
+        if len(nodes_entries) == 0:
+            return RoamlNodes(None, folder)
+        elif len(nodes_entries) == 1:
+            return RoamlNodes(nodes_entries[0], folder)
+        else:
+            raise AssertionError(
+                get_error_msg(
+                    nodes_entries[1], f"Expected one {nodes_tag} entry, found {len(nodes_entries)}"
+                )
+            )
+
     def __init__(self, nodes_element: Optional[XmlElement], folder_path: str):
         self._skills: List[str] = []
 
@@ -218,8 +310,15 @@ class RoamlNodes:
                 raise ValueError(get_error_msg(node_model, "Only input tags are supported."))
 
             node_type = node_model.attrib["type"]
-            if node_type in ["ros-scxml", "node-ascxml"]:
+            if node_type == "node-ascxml":
                 self._skills.append(os.path.join(folder_path, node_model.attrib["src"]))
+            elif node_type == "ros-scxml":
+                self._skills.append(os.path.join(folder_path, node_model.attrib["src"]))
+                warn(
+                    get_error_msg(
+                        nodes_element, "Deprecated type 'ros-scxml', switch to 'node-ascxml'."
+                    )
+                )
             else:
                 raise ValueError(
                     get_error_msg(node_model, f"Unsupported node model type: {node_type}")
@@ -235,6 +334,26 @@ class RoamlProperties:
     @staticmethod
     def get_tag():
         return "properties"
+
+    @staticmethod
+    def from_roaml_xml(parent_element: XmlElement, folder: str) -> "RoamlProperties":
+        """
+        Load the declaration of the properties to be verified from the RoAML XML node.
+
+        :parent_element: The RoAML element to extract the information from.
+        :parent folder: Path to the folder containing the RoAML xml file.
+        :return: An instance of RoamlProperties.
+        """
+        prop_tag = RoamlProperties.get_tag()
+        prop_entries = parent_element.findall(prop_tag)
+        if len(prop_entries) == 1:
+            return RoamlProperties(prop_entries[0], folder)
+        else:
+            raise AssertionError(
+                get_error_msg(
+                    prop_entries[1], f"Expected one {prop_tag} entry, found {len(prop_entries)}"
+                )
+            )
 
     def __init__(self, props_element: Optional[XmlElement] = None, folder_path: str = ""):
         self._properties: List[str] = []
@@ -299,34 +418,15 @@ class RoamlMain:
             )
         # Initialize the children entries
         # -- Params
-        params_xml = self._xml_root_orig.findall(RoamlParameters.get_tag())
-        if len(params_xml) == 0:
-            params_xml = self._xml_root_orig.findall("mc_parameters")
-            check_assertion(
-                len(params_xml) == 1,
-                self._xml_root_orig,
-                f"Found {len(params_xml)} tags {RoamlParameters.get_tag()}, expected 1.",
-            )
-            warn(
-                get_error_msg(
-                    self._xml_root_orig,
-                    "The tag 'mc_parameters' is deprecated: switch to "
-                    + f"the tag '{RoamlParameters.get_tag()}'.",
-                )
-            )
-        self._roaml_params = RoamlParameters(params_xml[0])
-        # -- Data Structures
-        data_xml = self._xml_root_orig.get(RoamlDataStructures.get_tag())
-        self._roaml_data = RoamlDataStructures(data_xml, self._folder_path)
-        # -- BT
-        bt_xml = self._xml_root_orig.get(RoamlBehaviorTree.get_tag())
-        self._roaml_bt = RoamlBehaviorTree(bt_xml, self._folder_path)
-        # -- Nodes
-        nodes_xml = self._xml_root_orig.get(RoamlNodes.get_tag())
-        self._roaml_nodes = RoamlNodes(nodes_xml, self._folder_path)
-        # -- Properties
-        properties_xml = self._xml_root_orig.get(RoamlProperties.get_tag())
-        self._roaml_properties = RoamlProperties(properties_xml, self._folder_path)
+        self._roaml_params = RoamlParameters.from_roaml_xml(self._xml_root_orig)
+        self._roaml_data = RoamlDataStructures.from_roaml_xml(
+            self._xml_root_orig, self._folder_path
+        )
+        self._roaml_bt = RoamlBehaviorTree.from_roaml_xml(self._xml_root_orig, self._folder_path)
+        self._roaml_nodes = RoamlNodes.from_roaml_xml(self._xml_root_orig, self._folder_path)
+        self._roaml_properties = RoamlProperties.from_roaml_xml(
+            self._xml_root_orig, self._folder_path
+        )
 
     def get_loaded_model(self) -> FullModel:
         """Get the parsed model as a FullModel object."""
