@@ -99,7 +99,7 @@ def test_smc_storm_version():
     """Testing that you have the correct `smc_storm` version."""
     out, _, result = _run_smc_storm("-v")
     assert result == 0, "smc_storm failed to run"
-    assert out.strip() == "0.1.4"
+    assert out.strip() == "0.1.8"
 
 
 if __name__ == "__main__":
