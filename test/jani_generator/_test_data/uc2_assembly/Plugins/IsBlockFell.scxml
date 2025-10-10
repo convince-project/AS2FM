@@ -1,30 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
-    initial="idle"
-    version="1.0"
-    name="IsBlockFell"
-    model_src=""
-    xmlns="http://www.w3.org/2005/07/scxml">
+<ascxml initial="idle" version="1.0" name="IsBlockFell">
 
-    <ros_service_client name="get_block_status" service_name="/uc2/world/get_block_status" type="uc2_interfaces/GetBlockStatus" />
+    <ros_service_client
+      name="get_block_status"
+      service_name="/uc2/get_block_status"
+      type="uc2_interfaces/GetBlockStatus" />
 
     <datamodel>
         <data id="block_down" type="int32" expr="-1" />
     </datamodel>
 
     <state id="idle">
-        <bt_tick target="send_req" />
+        <bt_tick target="wait_answer">
+            <ros_service_send_request name="get_block_status" />
+        </bt_tick>
         <bt_halt target="idle">
             <bt_return_halted />
         </bt_halt>
-    </state>
-
-    <state id="send_req">
-        <onentry>
-            <ros_service_send_request name="get_block_status">
-            </ros_service_send_request>
-        </onentry>
-        <transition target="wait_answer" />
     </state>
 
     <state id="wait_answer">
@@ -38,4 +30,4 @@
         </ros_service_handle_response>
     </state>
 
-</scxml>
+</ascxml>
