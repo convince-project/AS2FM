@@ -41,6 +41,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
+    load_scxml_file,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BT_BLACKBOARD_EVENT_VALUE,
@@ -124,14 +125,14 @@ def load_available_bt_plugins(
     available_bt_plugins = {}
     for path in bt_plugins_scxml_paths:
         assert os.path.exists(path), f"SCXML must exist. {path} not found."
-        bt_plugin_scxml = ScxmlRoot.from_scxml_file(path, custom_data_types)
+        bt_plugin_scxml = load_scxml_file(path, custom_data_types)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     internal_bt_plugins_path = (
         resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
     )
     for plugin_path in internal_bt_plugins_path.iterdir():
         if plugin_path.is_file() and plugin_path.suffix == ".scxml":
-            bt_plugin_scxml = ScxmlRoot.from_scxml_file(str(plugin_path), custom_data_types)
+            bt_plugin_scxml = load_scxml_file(str(plugin_path), custom_data_types)
             available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     return available_bt_plugins
 

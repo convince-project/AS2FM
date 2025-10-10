@@ -17,11 +17,12 @@
 The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
 """
 
-from os.path import isfile
+from os.path import isfile, splitext
 from typing import Dict, List, Optional, Set, Tuple, get_args
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.as2fm_common.common import is_comment, remove_namespace
 from as2fm.as2fm_common.logging import (
@@ -59,19 +60,24 @@ class ScxmlRoot(ScxmlBase):
     def get_tag_name() -> str:
         return "scxml"
 
+    @staticmethod
+    def get_file_extension() -> str:
+        """Return the expected file extensions for xml files representing the SCXML root."""
+        return ".scxml"
+
     @classmethod
     def from_xml_tree_impl(
         cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
-    ) -> "ScxmlRoot":
+    ) -> Self:
         """Create a ScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
-        assert_xml_tag_ok(ScxmlRoot, xml_tree)
-        scxml_name: str = get_xml_attribute(ScxmlRoot, xml_tree, "name")
-        scxml_version = get_xml_attribute(ScxmlRoot, xml_tree, "version")
+        assert_xml_tag_ok(cls, xml_tree)
+        scxml_name: str = get_xml_attribute(cls, xml_tree, "name")
+        scxml_version = get_xml_attribute(cls, xml_tree, "version")
         assert (
             scxml_version == "1.0"
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
-        scxml_init_state = get_xml_attribute(ScxmlRoot, xml_tree, "initial")
+        scxml_init_state = get_xml_attribute(cls, xml_tree, "initial")
         # Data Model
         datamodel_elements = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         assert (
@@ -93,7 +99,7 @@ class ScxmlRoot(ScxmlBase):
         )
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the ScxmlRoot object
-        scxml_root = ScxmlRoot(scxml_name)
+        scxml_root = cls(scxml_name)
         # Data Model
         if len(datamodel_elements) > 0:
             scxml_root.set_data_model(datamodel_elements[0])
@@ -110,27 +116,6 @@ class ScxmlRoot(ScxmlBase):
             is_initial = scxml_state.get_id() == scxml_init_state
             scxml_root.add_state(scxml_state, initial=is_initial)
         return scxml_root
-
-    @staticmethod
-    def from_scxml_file(
-        xml_file: str, custom_data_types: Dict[str, StructDefinition]
-    ) -> "ScxmlRoot":
-        """Create a ScxmlRoot object from an SCXML file."""
-        print(f"{xml_file=}")
-        if isfile(xml_file):
-            xml_element = ET.parse(xml_file).getroot()
-            set_filepath_for_all_sub_elements(xml_element, xml_file)
-        elif xml_file.startswith("<?xml"):
-            raise NotImplementedError("Can only parse files, not strings.")
-        else:
-            raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' isn't a file / xml string.")
-        # Remove the namespace from all tags in the XML file
-        for child in xml_element.iter():
-            if is_comment(child):
-                continue
-            child.tag = remove_namespace(child.tag)
-        # Do the conversion
-        return ScxmlRoot.from_xml_tree(xml_element, custom_data_types)
 
     def __init__(self, name: str):
         self._name = name
@@ -150,7 +135,7 @@ class ScxmlRoot(ScxmlBase):
 
     def set_name(self, name: str) -> None:
         """Rename the automaton represented by this SCXML model."""
-        assert is_non_empty_string(ScxmlRoot, "name", name)
+        assert is_non_empty_string(type(self), "name", name)
         self._name = name
 
     def get_initial_state_id(self) -> str:
@@ -288,8 +273,8 @@ class ScxmlRoot(ScxmlBase):
         return ros_decl_container
 
     def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(ScxmlRoot, "name", self._name)
-        valid_initial_state = is_non_empty_string(ScxmlRoot, "initial state", self._initial_state)
+        valid_name = is_non_empty_string(type(self), "name", self._name)
+        valid_initial_state = is_non_empty_string(type(self), "initial state", self._initial_state)
         valid_data_model = self._data_model.check_validity()
         valid_states = all(
             isinstance(state, ScxmlState) and state.check_validity() for state in self._states
@@ -415,7 +400,7 @@ class ScxmlRoot(ScxmlBase):
         assert self._initial_state is not None, "Error: SCXML root: no initial state set."
         data_type_as_attribute = kwargs.get("data_type_as_attribute", True)
         xml_root = ET.Element(
-            "scxml",
+            self.get_tag_name(),
             {
                 "name": self._name,
                 "version": self._version,
@@ -439,3 +424,38 @@ class ScxmlRoot(ScxmlBase):
 
     def as_xml_string(self, **kwargs) -> str:
         return ET.tostring(self.as_xml(**kwargs), encoding="unicode")
+
+
+class AScxmlRoot(ScxmlRoot):
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ascxml"
+
+    @staticmethod
+    def get_file_extension() -> str:
+        """Return the expected file extensions for xml files representing the SCXML root."""
+        return ".ascxml"
+
+
+def load_scxml_file(xml_file: str, custom_data_types: Dict[str, StructDefinition]) -> ScxmlRoot:
+    """Create a ScxmlRoot object from an SCXML file."""
+    print(f"{xml_file=}")
+    if isfile(xml_file):
+        xml_element = ET.parse(xml_file).getroot()
+        set_filepath_for_all_sub_elements(xml_element, xml_file)
+    elif xml_file.startswith("<?xml"):
+        raise NotImplementedError("Can only parse files, not strings.")
+    else:
+        raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' isn't a file / xml string.")
+    # Remove the namespace from all tags in the XML file
+    for child in xml_element.iter():
+        if is_comment(child):
+            continue
+        child.tag = remove_namespace(child.tag)
+    # Do the conversion
+    _, fext = splitext(xml_file)
+    if fext == ScxmlRoot.get_file_extension():
+        return ScxmlRoot.from_xml_tree(xml_element, custom_data_types)
+    elif fext == AScxmlRoot.get_file_extension():
+        return AScxmlRoot.from_xml_tree(xml_element, custom_data_types)
+    raise ValueError(f"Error: SCXML root: xml_file '{xml_file}' uses an unsupported extension.")

@@ -19,7 +19,7 @@ from typing import Dict, List, Tuple
 from test_utils import canonicalize_xml, to_snake_case
 
 from as2fm.scxml_converter.bt_converter import bt_converter
-from as2fm.scxml_converter.scxml_entries import ScxmlRoot
+from as2fm.scxml_converter.scxml_entries import load_scxml_file
 
 
 def get_output_folder(test_folder: str):
@@ -99,7 +99,7 @@ def ros_to_plain_scxml_test(
         input_file = os.path.join(test_data_path, fname)
         # gt_file = os.path.join(test_data_path, 'gt_plain_scxml', fname)
         try:
-            scxml_obj = ScxmlRoot.from_scxml_file(input_file, {})
+            scxml_obj = load_scxml_file(input_file, {})
             if fname in scxml_bt_ports:
                 bt_index += 1
                 scxml_obj.set_bt_plugin_id(bt_index)
