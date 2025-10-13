@@ -7,14 +7,14 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./Policy0.xml" />
-        <input type="bt-plugin-ascxml" src="../Plugins/MoveBlock.scxml" />
-        <input type="bt-plugin-ascxml" src="../Plugins/RecoverBlock.scxml" />
-        <input type="bt-plugin-ascxml" src="../Plugins/IsBlockFell.scxml" />
+        <input type="bt-plugin-ascxml" src="../Plugins/MoveBlock.ascxml" />
+        <input type="bt-plugin-ascxml" src="../Plugins/RecoverBlock.ascxml" />
+        <input type="bt-plugin-ascxml" src="../Plugins/IsBlockFell.ascxml" />
     </behavior_tree>
 
     <node_models>
-        <input type="node-ascxml" src="../Skills/MoveBlockSkill.scxml" />
-        <input type="node-ascxml" src="../Skills/RecoverBlockSkill.scxml" />
+        <input type="node-ascxml" src="../Skills/MoveBlockSkill.ascxml" />
+        <input type="node-ascxml" src="../Skills/RecoverBlockSkill.ascxml" />
     </node_models>
 
     <properties>
