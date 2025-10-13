@@ -5,7 +5,7 @@
     <Sequence>
       <Fallback>
         <Inverter name="not">
-          <IsBlockFell name="BlockFell?"/>
+          <IsBlockFell name="IsBlockFell"/>
         </Inverter>
         <Action name="RecoverBlock" ID="RecoverBlock" block_id="0"/>
       </Fallback>

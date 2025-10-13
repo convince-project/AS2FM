@@ -157,7 +157,7 @@ Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
 
 .. sybil-new-environment: first_model_checking
     :cwd: examples/tutorial_fetch_and_carry
-    :expected-files: main.jani, traces.csv
+    :expected-files: main.jani, generated_traces/*.csv
 
 .. code-block:: bash
 
@@ -198,6 +198,9 @@ Executing SMC Storm on this example works as follows:
         N. of times no termination:	0
         Tot. n. of tries (samples):	500
         Estimated success prob.:	1
+        Confidence score: 0.95
+        Estimated Epsilon: ...
+
         Min trace length:	...
         Max trace length:	...
     =========================================
@@ -210,7 +213,7 @@ It is also possible to log the traces generated during model checking in a csv f
 
 .. code-block:: bash
 
-    $ smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1 --hide-progress-bar
+    $ smc_storm --model main.jani --properties-names snack_at_table --traces-folder generated_traces --max-n-traces 1 --hide-progress-bar
 
     Welcome to SMC Storm
     Checking model: main.jani
@@ -219,7 +222,7 @@ It is also possible to log the traces generated during model checking in a csv f
 
 One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
 
-A tool to inspect the changes in the variables graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d traces.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot.
+A tool to inspect the changes in the variables graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d generated_traces/trace_name.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot.
 
 The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world_obj_locs_at_0`, and `topic_clock_msg__ros_fields__sec` looks as follows:
 

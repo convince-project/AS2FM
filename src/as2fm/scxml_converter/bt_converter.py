@@ -20,7 +20,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 import os
 from copy import deepcopy
 from importlib.resources import files as resource_files
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -240,6 +240,13 @@ def get_bt_plugin_type(bt_xml_subtree: XmlElement) -> str:
     return plugin_type
 
 
+def get_bt_plugin_name(bt_xml_subtree: XmlElement) -> Optional[str]:
+    """
+    Get the name assigned to a plugin instance. Return None is not defined.
+    """
+    return bt_xml_subtree.get("name")
+
+
 def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
     """
     Get the ports of a BT child node.
@@ -258,11 +265,14 @@ def generate_bt_children_scxmls(
     """
     generated_scxmls: List[ScxmlRoot] = []
     plugin_type = get_bt_plugin_type(bt_xml_subtree)
+    plugin_name = get_bt_plugin_name(bt_xml_subtree)
+    if plugin_name is None:
+        plugin_name = plugin_type
     assert (
         plugin_type in available_bt_plugins
     ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
-    bt_plugin_scxml.set_name(f"{subtree_tick_idx}_{plugin_type}")
+    bt_plugin_scxml.set_name(f"BT_plugin_{subtree_tick_idx}_{plugin_name}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
     bt_plugin_scxml.set_bt_ports_values(get_bt_child_ports(bt_xml_subtree))
     generated_scxmls.append(bt_plugin_scxml)
