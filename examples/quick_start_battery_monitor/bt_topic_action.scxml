@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="initial"
     version="1.0"
     name="TopicAction"
     model_src=""
-    xmlns="http://www.w3.org/2005/07/scxml">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://github.com/convince-project/data-model/raw/refs/heads/fix_root_tag/data-format-specifications/bt-plugin-ASCXML/bt_plugin.xsd">
 
     <ros_topic_publisher topic="charge" type="std_msgs/Empty" />
 
@@ -21,4 +22,4 @@
         </bt_halt>
     </state>
 
-</scxml>
+</ascxml>

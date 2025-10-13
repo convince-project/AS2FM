@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="check_battery"
     version="1.0"
     name="BatteryManager"
     model_src=""
-    xmlns="http://www.w3.org/2005/07/scxml">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://github.com/convince-project/data-model/raw/refs/heads/fix_root_tag/data-format-specifications/skill-components-(A)SCXML/ascxml_component.xsd">
 
     <datamodel>
         <data id="battery_alarm" expr="false" type="bool" />
@@ -23,4 +24,4 @@
             </ros_topic_publish>
         </onentry>
     </state>
-</scxml>
+</ascxml>
