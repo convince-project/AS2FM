@@ -526,7 +526,7 @@ def get_cases():
         # UC3 generic
         _default_case()
         | {
-            "_case_name": "uc2_assembly_with_bug",
+            "_case_name": "uc3_museum_guide",
             "folder": os.path.join("uc3_museum_guide", "Main"),
             "property_name": "tree_success",
         },
