@@ -3,7 +3,7 @@
 
     <ros_service_client
       name="get_block_status"
-      service_name="/uc2/get_block_status"
+      service_name="/uc2/world/get_block_status"
       type="uc2_interfaces/GetBlockStatus" />
 
     <datamodel>
