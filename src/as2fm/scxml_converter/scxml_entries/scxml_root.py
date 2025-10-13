@@ -14,9 +14,11 @@
 # limitations under the License.
 
 """
-The main entry point of an SCXML Model. In XML, it has the tag `scxml`.
+The main entry point of the supported SCXML Models and a loader function.
+In XML, it has either the tag `scxml` or `ascxml`.
 """
 
+from abc import abstractmethod
 from os.path import isfile, splitext
 from typing import Dict, List, Optional, Set, Tuple, get_args
 
@@ -53,23 +55,25 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 )
 
 
-class ScxmlRoot(ScxmlBase):
-    """This class represents a whole scxml model, that is used to define specific skills."""
+class GenericScxmlRoot(ScxmlBase):
+    """Generic container for the (A)Scxml models."""
 
-    @staticmethod
-    def get_tag_name() -> str:
-        return "scxml"
+    @classmethod
+    @abstractmethod
+    def get_tag_name(cls) -> str:
+        """Get the expected tag name related to this class."""
+        pass
 
-    @staticmethod
-    def get_file_extension() -> str:
-        """Return the expected file extensions for xml files representing the SCXML root."""
-        return ".scxml"
+    @classmethod
+    def get_file_extension(cls) -> str:
+        """Get the expected file extension depending on the specific root tag (scxml vs ascxml)."""
+        return f".{cls.get_tag_name()}"
 
     @classmethod
     def from_xml_tree_impl(
         cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> Self:
-        """Create a ScxmlRoot object from an XML tree."""
+        """Create a GenericScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(cls, xml_tree)
         scxml_name: str = get_xml_attribute(cls, xml_tree, "name")
@@ -98,7 +102,7 @@ class ScxmlRoot(ScxmlBase):
             xml_tree, custom_data_types, (ScxmlState,)
         )
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
-        # --- Fill Data in the ScxmlRoot object
+        # --- Fill Data in the GenericScxmlRoot object
         scxml_root = cls(scxml_name)
         # Data Model
         if len(datamodel_elements) > 0:
@@ -331,11 +335,14 @@ class ScxmlRoot(ScxmlBase):
         Convert all internal ROS specific entries to plain SCXML.
 
         :return: A tuple with:
-            - a list of ScxmlRoot objects with all ROS specific entries converted to plain SCXML
+            - a list of GenericScxmlRoot objects with all custom converted to plain SCXML
             - The Ros declarations contained in the original SCXML object
         """
         if self.is_plain_scxml():
-            return [self], ScxmlRosDeclarationsContainer(self._name)
+            # Cast any instance to the ScxmlRoot type before returning it
+            new_root = ScxmlRoot(self.get_name())
+            new_root.__dict__.update(self.__dict__)
+            return [new_root], ScxmlRosDeclarationsContainer(self._name)
         converted_scxmls: List[ScxmlRoot] = []
         # Convert the ROS specific entries to plain SCXML
         main_scxml = ScxmlRoot(self._name)
@@ -426,19 +433,28 @@ class ScxmlRoot(ScxmlBase):
         return ET.tostring(self.as_xml(**kwargs), encoding="unicode")
 
 
-class AScxmlRoot(ScxmlRoot):
+class ScxmlRoot(GenericScxmlRoot):
+    """A whole SCXML model, complying with the existing standard (https://www.w3.org/TR/scxml/)."""
+
     @staticmethod
     def get_tag_name() -> str:
-        return "ascxml"
+        """Get the expected tag name related to this class."""
+        return "scxml"
+
+
+class AScxmlRoot(GenericScxmlRoot):
+    """SCXML model with additional features, e.g., ROS and BT functionalities."""
 
     @staticmethod
-    def get_file_extension() -> str:
-        """Return the expected file extensions for xml files representing the SCXML root."""
-        return ".ascxml"
+    def get_tag_name() -> str:
+        """Get the expected tag name related to this class."""
+        return "ascxml"
 
 
-def load_scxml_file(xml_file: str, custom_data_types: Dict[str, StructDefinition]) -> ScxmlRoot:
-    """Create a ScxmlRoot object from an SCXML file."""
+def load_scxml_file(
+    xml_file: str, custom_data_types: Dict[str, StructDefinition]
+) -> GenericScxmlRoot:
+    """Create a `ScxmlRoot` or `AScxmlRoot` object from an .scxml or .ascxml file respectively."""
     print(f"{xml_file=}")
     if isfile(xml_file):
         xml_element = ET.parse(xml_file).getroot()
