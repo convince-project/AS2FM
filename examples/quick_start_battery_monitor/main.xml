@@ -1,6 +1,6 @@
-<convince_mc_tc
+<roaml
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://github.com/convince-project/data-model/raw/refs/heads/high_level_xsd/data-format-specifications/RoAML/main.xsd">
+    xsi:noNamespaceSchemaLocation="https://github.com/convince-project/data-model/raw/refs/heads/fix_root_tag/data-format-specifications/RoAML/main.xsd">
     <mc_parameters>
         <max_time value="100" unit="s" />
         <bt_tick_rate value="1.0" />
@@ -21,4 +21,4 @@
     <properties>
         <input type="jani" src="./battery_properties.jani" />
     </properties>
-</convince_mc_tc>
+</roaml>
