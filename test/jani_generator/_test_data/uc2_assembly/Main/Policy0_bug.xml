@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<root main_tree_to_execute="Policy0">
+<root main_tree_to_execute="Policy0" BTCPP_format="3">
 
   <BehaviorTree ID="Policy0">
     <Sequence>
       <Fallback>
         <Inverter name="not">
-          <Condition name="BlockFell?" ID="IsBlockFell"/>
+          <IsBlockFell name="IsBlockFell"/>
         </Inverter>
         <Action name="RecoverBlock" ID="RecoverBlock" block_id="0"/>
       </Fallback>

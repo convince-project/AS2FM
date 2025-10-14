@@ -20,7 +20,7 @@ Convert Behavior Trees (BT xml) to SCXML.
 import os
 from copy import deepcopy
 from importlib.resources import files as resource_files
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -41,6 +41,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
+    load_scxml_file,
 )
 from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BT_BLACKBOARD_EVENT_VALUE,
@@ -124,14 +125,14 @@ def load_available_bt_plugins(
     available_bt_plugins = {}
     for path in bt_plugins_scxml_paths:
         assert os.path.exists(path), f"SCXML must exist. {path} not found."
-        bt_plugin_scxml = ScxmlRoot.from_scxml_file(path, custom_data_types)
+        bt_plugin_scxml = load_scxml_file(path, custom_data_types)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     internal_bt_plugins_path = (
         resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
     )
     for plugin_path in internal_bt_plugins_path.iterdir():
         if plugin_path.is_file() and plugin_path.suffix == ".scxml":
-            bt_plugin_scxml = ScxmlRoot.from_scxml_file(str(plugin_path), custom_data_types)
+            bt_plugin_scxml = load_scxml_file(str(plugin_path), custom_data_types)
             available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     return available_bt_plugins
 
@@ -239,6 +240,13 @@ def get_bt_plugin_type(bt_xml_subtree: XmlElement) -> str:
     return plugin_type
 
 
+def get_bt_plugin_name(bt_xml_subtree: XmlElement) -> Optional[str]:
+    """
+    Get the name assigned to a plugin instance. Return None is not defined.
+    """
+    return bt_xml_subtree.get("name")
+
+
 def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
     """
     Get the ports of a BT child node.
@@ -257,11 +265,14 @@ def generate_bt_children_scxmls(
     """
     generated_scxmls: List[ScxmlRoot] = []
     plugin_type = get_bt_plugin_type(bt_xml_subtree)
+    plugin_name = get_bt_plugin_name(bt_xml_subtree)
+    if plugin_name is None:
+        plugin_name = plugin_type
     assert (
         plugin_type in available_bt_plugins
     ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
-    bt_plugin_scxml.set_name(f"{subtree_tick_idx}_{plugin_type}")
+    bt_plugin_scxml.set_name(f"BT_plugin_{subtree_tick_idx}_{plugin_name}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
     bt_plugin_scxml.set_bt_ports_values(get_bt_child_ports(bt_xml_subtree))
     generated_scxmls.append(bt_plugin_scxml)

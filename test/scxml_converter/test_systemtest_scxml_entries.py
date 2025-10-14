@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
+    load_scxml_file,
 )
 from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
 
@@ -51,7 +52,7 @@ def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):
 
 
 def _test_xml_parsing(xml_file_path: str, valid_xml: bool = True):
-    scxml_root = ScxmlRoot.from_scxml_file(xml_file_path, {})
+    scxml_root = load_scxml_file(xml_file_path, {})
     # Check output xml
     if valid_xml:
         test_output = scxml_root.as_xml_string()
