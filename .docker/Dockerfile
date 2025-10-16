@@ -1,4 +1,4 @@
-FROM ros:jazzy
+FROM ros:jazzy AS as2fm
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install requirements
@@ -31,4 +31,5 @@ CMD /bin/bash
 COPY .docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x entrypoint.sh
 WORKDIR /colcon_ws/src/as2fm
+
 ENTRYPOINT [ "/entrypoint.sh" ]
