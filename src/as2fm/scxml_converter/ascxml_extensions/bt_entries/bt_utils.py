@@ -186,8 +186,8 @@ class BtPortsHandler:
 
     def __init__(self):
         # For each port name, store the port type string and value.
-        self._in_ports: Dict[str, Tuple[str, str]] = {}
-        self._out_ports: Dict[str, Tuple[str, str]] = {}
+        self._in_ports: Dict[str, Tuple[str, Optional[str]]] = {}
+        self._out_ports: Dict[str, Tuple[str, Optional[str]]] = {}
 
     def in_port_exists(self, port_name: str) -> bool:
         """Check if an input port exists."""
@@ -234,7 +234,7 @@ class BtPortsHandler:
         else:
             raise RuntimeError(f"Error: Port {port_name} is not declared.")
 
-    def get_all_ports(self) -> Dict[str, Tuple[str, str]]:
+    def get_all_ports(self) -> Dict[str, Tuple[str, Optional[str]]]:
         """Get all declaed ports as a dict referencing port names to type and value."""
         return self._in_ports | self._out_ports
 

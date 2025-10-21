@@ -23,25 +23,29 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.ascxml_extensions import AscxmlThread
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtPortsHandler
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
+    RosActionServer,
+    RosCallback,
     RosField,
-    ScxmlBase,
-    ScxmlDataModel,
-    ScxmlParam,
+    RosTrigger,
     ScxmlRosDeclarationsContainer,
-    ScxmlState,
-    ScxmlTransition,
-    ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_action_thread_execution_start_event,
     generate_action_thread_free_event,
     sanitize_ros_interface_name,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_ros_action_server import RosActionServer
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosTrigger
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlBase,
+    ScxmlDataModel,
+    ScxmlParam,
+    ScxmlState,
+    ScxmlTransition,
+    ScxmlTransitionTarget,
+)
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
@@ -55,7 +59,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 )
 
 
-class RosActionThread(ScxmlBase):
+class RosActionThread(AscxmlThread):
     """
     SCXML declaration of a set of threads for executing the action server code.
     """

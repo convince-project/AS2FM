@@ -25,18 +25,18 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BtPortsHandler,
+    get_input_variable_as_scxml_expression,
+    is_blackboard_reference,
+    is_removed_bt_event,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     BtGetValueInputPort,
     ScxmlBase,
     ScxmlParam,
     ScxmlRosDeclarationsContainer,
-)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    get_input_variable_as_scxml_expression,
-    is_blackboard_reference,
-    is_removed_bt_event,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (

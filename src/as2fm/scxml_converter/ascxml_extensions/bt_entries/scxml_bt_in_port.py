@@ -17,7 +17,7 @@
 SCXML get input for Behavior Trees' Ports.
 """
 
-from typing import Dict, List
+from typing import Dict
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -43,6 +43,7 @@ class BtGetValueInputPort(ScxmlBase):
     ) -> "BtGetValueInputPort":
         assert_xml_tag_ok(BtGetValueInputPort, xml_tree)
         key_str = get_xml_attribute(BtGetValueInputPort, xml_tree, "key")
+        assert isinstance(key_str, str)  # This is always satisfied: only for MyPy
         return BtGetValueInputPort(key_str)
 
     def __init__(self, key_str: str):
@@ -54,8 +55,8 @@ class BtGetValueInputPort(ScxmlBase):
     def get_key_name(self) -> str:
         return self._key
 
-    def as_plain_scxml(self, _, __) -> List[ScxmlBase]:
-        # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
+    def as_plain_scxml(self, _, __):
+        # When starting the conversion to plain SCXML, we expect this to be already converted
         raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
 
     def as_xml(self) -> XmlElement:

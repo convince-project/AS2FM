@@ -20,7 +20,7 @@ In XML, it has either the tag `scxml` or `ascxml`.
 
 from abc import abstractmethod
 from os.path import isfile, splitext
-from typing import Dict, List, Optional, Set, Tuple, get_args
+from typing import Dict, List, Optional, Set, Tuple, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -32,11 +32,9 @@ from as2fm.as2fm_common.logging import (
     get_error_msg,
     set_filepath_for_all_sub_elements,
 )
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
-    BtInputPortDeclaration,
-    BtOutputPortDeclaration,
-    BtPortDeclarations,
     EventsToAutomata,
     RosActionThread,
     ScxmlBase,
@@ -44,8 +42,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlRosDeclarationsContainer,
     ScxmlState,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosDeclaration
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
@@ -70,37 +66,56 @@ class GenericScxmlRoot(ScxmlBase):
         return f".{cls.get_tag_name()}"
 
     @classmethod
+    @abstractmethod
+    def get_declaration_classes(cls) -> List[Type[AscxmlDeclaration]]:
+        """
+        List the supported AscxmlDeclaration classes related to the specific ASCXML class loader.
+
+        E.g. ASCXML for ROS nodes can support topic, service, actions and timers.
+        ASCXML for BT plugins, can support the ROS declarations plus BT ports.
+        Plain SCXML, has no additional declaration class to support.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_thread_classes(cls) -> List[Type[AscxmlThread]]:
+        """
+        List the supported AscxmlThread classes related to the specific ASCXML class loader.
+
+        E.g. ASCXML for ROS nodes can action threads, as well as BT plugins.
+        Plain SCXML, has no additional thread class to support.
+        """
+        pass
+
+    @classmethod
     def from_xml_tree_impl(
         cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> Self:
         """Create a GenericScxmlRoot object from an XML tree."""
         # --- Get the ElementTree objects
         assert_xml_tag_ok(cls, xml_tree)
-        scxml_name: str = get_xml_attribute(cls, xml_tree, "name")
+        scxml_name = get_xml_attribute(cls, xml_tree, "name")
+        assert isinstance(scxml_name, str)  # MyPy check only
         scxml_version = get_xml_attribute(cls, xml_tree, "version")
         assert (
             scxml_version == "1.0"
         ), f"Error: SCXML root: expected version 1.0, found {scxml_version}."
         scxml_init_state = get_xml_attribute(cls, xml_tree, "initial")
+        assert isinstance(scxml_init_state, str)  # MyPy check only
         # Data Model
         datamodel_elements = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlDataModel,))
         assert (
             len(datamodel_elements) <= 1
         ), f"Error: SCXML root: {len(datamodel_elements)} datamodels found, max 1 allowed."
-        # ROS Declarations
-        ros_declarations: List[RosDeclaration] = get_children_as_scxml(
-            xml_tree, custom_data_types, RosDeclaration.__subclasses__()
-        )
-        # BT Declarations
-        bt_port_declarations: List[BtPortDeclarations] = get_children_as_scxml(
-            xml_tree, custom_data_types, get_args(BtPortDeclarations)
+        # ASCXML Declarations
+        extra_declarations = get_children_as_scxml(
+            xml_tree, custom_data_types, AscxmlDeclaration.__subclasses__()
         )
         # Additional threads
         additional_threads = get_children_as_scxml(xml_tree, custom_data_types, (RosActionThread,))
         # States
-        scxml_states: List[ScxmlState] = get_children_as_scxml(
-            xml_tree, custom_data_types, (ScxmlState,)
-        )
+        scxml_states = get_children_as_scxml(xml_tree, custom_data_types, (ScxmlState,))
         assert len(scxml_states) > 0, "Error: SCXML root: no state found in input xml."
         # --- Fill Data in the GenericScxmlRoot object
         scxml_root = cls(scxml_name)
@@ -440,6 +455,10 @@ class ScxmlRoot(GenericScxmlRoot):
     def get_tag_name() -> str:
         """Get the expected tag name related to this class."""
         return "scxml"
+
+    @classmethod
+    def get_declaration_classes(cls) -> List[Type[AscxmlDeclaration]]:
+        return []
 
 
 class AScxmlRoot(GenericScxmlRoot):

@@ -17,18 +17,18 @@
 SCXML entries related to Behavior Trees' Ports declaration.
 """
 
-from typing import Dict, List, Union
+from typing import Dict, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
-class BtInputPortDeclaration(ScxmlBase):
+class BtInputPortDeclaration(AscxmlDeclaration):
     """
     Declare an input port in a bt plugin.
     """
@@ -44,6 +44,7 @@ class BtInputPortDeclaration(ScxmlBase):
         assert_xml_tag_ok(BtInputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtInputPortDeclaration, xml_tree, "type")
+        assert isinstance(key_str, str) and isinstance(type_str, str)  # Only for MyPy
         return BtInputPortDeclaration(key_str, type_str)
 
     def __init__(self, key_str: str, type_str: str):
@@ -61,7 +62,7 @@ class BtInputPortDeclaration(ScxmlBase):
     def get_key_type(self) -> str:
         return self._type
 
-    def as_plain_scxml(self, _, __) -> List[ScxmlBase]:
+    def as_plain_scxml(self, _, __):
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Ports declarations cannot be converted to plain SCXML.")
 
@@ -73,7 +74,7 @@ class BtInputPortDeclaration(ScxmlBase):
         return xml_bt_in_port
 
 
-class BtOutputPortDeclaration(ScxmlBase):
+class BtOutputPortDeclaration(AscxmlDeclaration):
     """
     Declare an input port in a bt plugin.
     """
@@ -89,6 +90,7 @@ class BtOutputPortDeclaration(ScxmlBase):
         assert_xml_tag_ok(BtOutputPortDeclaration, xml_tree)
         key_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "key")
         type_str = get_xml_attribute(BtOutputPortDeclaration, xml_tree, "type")
+        assert isinstance(key_str, str) and isinstance(type_str, str)  # Only for MyPy
         return BtOutputPortDeclaration(key_str, type_str)
 
     def __init__(self, key_str: str, type_str: str):
@@ -106,7 +108,7 @@ class BtOutputPortDeclaration(ScxmlBase):
     def get_key_type(self) -> str:
         return self._type
 
-    def as_plain_scxml(self, _, __) -> List[ScxmlBase]:
+    def as_plain_scxml(self, _, __):
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError("Error: SCXML BT Ports declarations cannot be converted to plain SCXML.")
 

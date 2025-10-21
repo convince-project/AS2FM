@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Type, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import process_bt_child_seq_id
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
@@ -31,7 +32,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransition,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import process_bt_child_seq_id
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     convert_expression_with_object_arrays,

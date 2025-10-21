@@ -23,25 +23,25 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_valid_variable_name
 from as2fm.as2fm_common.logging import check_assertion
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import (
-    ScxmlExecutionBody,
-    ScxmlParam,
-    ScxmlSend,
-    ScxmlTransitionTarget,
-)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     BtResponse,
     generate_bt_halt_event,
     generate_bt_halt_response_event,
     generate_bt_tick_event,
     generate_bt_tick_response_event,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_bt_base import (
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.scxml_bt_base import (
     BtGenericRequestHandle,
     BtGenericRequestSend,
     BtGenericStatusHandle,
     BtGenericStatusSend,
+)
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlExecutionBody,
+    ScxmlParam,
+    ScxmlSend,
+    ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
@@ -192,6 +192,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
     ) -> "BtReturnTickStatus":
         assert_xml_tag_ok(BtReturnTickStatus, xml_tree)
         status = get_xml_attribute(BtReturnTickStatus, xml_tree, "status")
+        assert isinstance(status, str)  # Only for MyPy
         return BtReturnTickStatus(status)
 
     def __init__(self, status: str):
@@ -207,7 +208,7 @@ class BtReturnTickStatus(BtGenericStatusSend):
     def instantiate_bt_events(
         self, instance_id: int, children_ids: List[int]
     ) -> ScxmlExecutionBody:
-        plain_send: List[ScxmlSend] = super().instantiate_bt_events(instance_id, children_ids)
+        plain_send = super().instantiate_bt_events(instance_id, children_ids)
         plain_status: Optional[Union[str, int]] = BtResponse.str_to_int(self._status)
         if plain_status is None:
             check_assertion(
@@ -217,6 +218,8 @@ class BtReturnTickStatus(BtGenericStatusSend):
                 + "Should be in [{BtResponse._member_names_}] set.",
             )
             plain_status = self._status
+        assert len(plain_send) == 1
+        assert isinstance(plain_send[0], ScxmlSend)
         plain_send[0].append_param(ScxmlParam("status", expr=f"{plain_status}"))
         return plain_send
 

@@ -21,9 +21,11 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGetValueInputPort, BtPortsHandler
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import is_blackboard_reference
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
-    BtGetValueInputPort,
     RosField,
     ScxmlBase,
     ScxmlExecutionBody,
@@ -33,7 +35,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransition,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_blackboard_reference
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     set_execution_body_callback_type,
 )
@@ -50,7 +51,7 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
 )
 
 
-class RosDeclaration(ScxmlBase):
+class RosDeclaration(AscxmlDeclaration):
     """Base class for ROS declarations in SCXML."""
 
     @classmethod

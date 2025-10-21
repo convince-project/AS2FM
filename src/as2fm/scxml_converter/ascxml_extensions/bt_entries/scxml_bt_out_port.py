@@ -17,25 +17,25 @@
 SCXML set output for Behavior Trees' Ports.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlSend
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     BT_SET_BLACKBOARD_PARAM,
     BtPortsHandler,
     generate_bt_blackboard_set,
     get_blackboard_variable_name,
     is_blackboard_reference,
 )
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 
 
-class BtSetValueOutputPort(ScxmlSend):
+class BtSetValueOutputPort(ScxmlBase):
     """
     Get the value of an input port in a bt plugin.
     """
@@ -51,12 +51,13 @@ class BtSetValueOutputPort(ScxmlSend):
         assert_xml_tag_ok(BtSetValueOutputPort, xml_tree)
         key_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "key")
         expr_str = get_xml_attribute(BtSetValueOutputPort, xml_tree, "expr")
+        assert isinstance(key_str, str) and isinstance(expr_str, str)  # Always true, for MyPy!
         return BtSetValueOutputPort(key_str, expr_str)
 
     def __init__(self, key_str: str, expr_str: str):
         self._key = key_str
         self._expr = expr_str
-        self._blackboard_reference = None
+        self._blackboard_reference: Optional[str] = None
 
     def check_validity(self) -> bool:
         return is_non_empty_string(BtSetValueOutputPort, "key", self._key) and is_non_empty_string(
