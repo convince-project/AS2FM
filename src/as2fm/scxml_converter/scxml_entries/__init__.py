@@ -22,4 +22,4 @@ from .scxml_executable_entries import (  # noqa: F401
 from .scxml_transition_target import ScxmlTransitionTarget  # noqa: F401
 from .scxml_transition import ScxmlTransition  # noqa: F401
 from .scxml_state import ScxmlState  # noqa: F401
-from .scxml_root import ScxmlRoot, AScxmlRoot, load_scxml_file  # noqa: F401
+from .scxml_root import ScxmlRoot, GenericScxmlRoot  # noqa: F401

@@ -15,3 +15,4 @@ from .scxml_bt_comm_interfaces import (  # noqa: F401
     BtHalt,
     BtHaltChild,
 )  # noqa: F401
+from .ascxml_root_bt import AscxmlRootBT  # noqa: F401
