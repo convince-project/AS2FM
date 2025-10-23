@@ -147,8 +147,8 @@ def export_plain_scxml_models(
             event_targets[event].add(scxml_model.get_name())
         # Turn transitions with multiple targets and probabilities
         # into (multiple) plain SCXML transitions
-        rand_location_id = "__RAND__"
-        rand_location_declared = False
+        rand_variable_id = "__RAND__"
+        rand_variable_declared = False
         for state in scxml_model.get_states():
             plain_scxml_transitions: List[ScxmlTransition] = []
             randomize = False
@@ -162,18 +162,18 @@ def export_plain_scxml_models(
                         # - Declare rand variable in datamodel (if not already done)
                         # - Randomize variable on state entry (if not already done)
                         # - Turn probability into a condition on the transition
-                        if rand_location_declared is False:
+                        if rand_variable_declared is False:
                             scxml_model.get_data_model().get_data_entries().append(
                                 ScxmlData(
-                                    id_=rand_location_id,
+                                    id_=rand_variable_id,
                                     expr="0.0",
                                     data_type="float64",
                                 )
                             )
-                            rand_location_declared = True
+                            rand_variable_declared = True
                         if randomize is False:
                             state.append_on_entry(
-                                ScxmlAssign(location=rand_location_id, expr="Math.random()")
+                                ScxmlAssign(location=rand_variable_id, expr="Math.random()")
                             )
                             randomize = True
                         if plain_scxml_condition is None:
@@ -181,16 +181,15 @@ def export_plain_scxml_models(
                         else:
                             plain_scxml_condition = plain_scxml_condition + " && "
                         plain_scxml_condition = (
-                            plain_scxml_condition + f"{probability} <= {rand_location_id}"
+                            plain_scxml_condition + f"{probability} < {rand_variable_id}"
                         )
                         probability += target_probability
                         plain_scxml_condition = (
-                            plain_scxml_condition + f" && {rand_location_id} < {probability}"
+                            plain_scxml_condition
+                            + f" && {rand_variable_id} <= {probability}"
                         )
                     plain_scxml_target = ScxmlTransitionTarget(
-                        target_id=target._target_id,
-                        probability=None,
-                        body=target.get_body(),
+                        target_id=target._target_id, probability=None, body=target.get_body()
                     )
                     plain_scxml_transition = ScxmlTransition(
                         targets=[plain_scxml_target],
