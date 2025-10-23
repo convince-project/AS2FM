@@ -31,7 +31,11 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 )
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
-from as2fm.jani_generator.scxml_helpers.roaml_model import FullModel, RoamlDataStructures, RoamlMain
+from as2fm.jani_generator.scxml_helpers.roaml_model import (
+    FullModel,
+    RoamlDataStructures,
+    RoamlMain,
+)
 from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
     preprocess_jani_expressions,
@@ -42,11 +46,17 @@ from as2fm.scxml_converter.bt_converter import (
     get_blackboard_variables_from_models,
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import EventsToAutomata, ScxmlRoot, load_scxml_file
+from as2fm.scxml_converter.scxml_entries import (
+    EventsToAutomata,
+    ScxmlRoot,
+    load_scxml_file,
+)
 from as2fm.scxml_converter.scxml_entries.scxml_data import ScxmlData
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import ScxmlAssign
 from as2fm.scxml_converter.scxml_entries.scxml_transition import ScxmlTransition
-from as2fm.scxml_converter.scxml_entries.scxml_transition_target import ScxmlTransitionTarget
+from as2fm.scxml_converter.scxml_entries.scxml_transition_target import (
+    ScxmlTransitionTarget,
+)
 
 
 def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
@@ -135,7 +145,8 @@ def export_plain_scxml_models(
             if event not in event_targets:
                 event_targets[event] = set()
             event_targets[event].add(scxml_model.get_name())
-        # Turn transitions with multiple targets and probabilities into (multiple) plain SCXML transitions
+        # Turn transitions with multiple targets and probabilities
+        # into (multiple) plain SCXML transitions
         rand_location_id = "__RAND__"
         rand_location_declared = False
         for state in scxml_model.get_states():
@@ -152,19 +163,35 @@ def export_plain_scxml_models(
                         # - Randomize variable on state entry (if not already done)
                         # - Turn probability into a condition on the transition
                         if rand_location_declared is False:
-                            scxml_model.get_data_model().get_data_entries().append(ScxmlData(id_=rand_location_id, expr="0.0", data_type="float64"))
+                            scxml_model.get_data_model().get_data_entries().append(
+                                ScxmlData(
+                                    id_=rand_location_id,
+                                    expr="0.0",
+                                    data_type="float64",
+                                )
+                            )
                             rand_location_declared = True
                         if randomize is False:
-                            state.append_on_entry(ScxmlAssign(location=rand_location_id, expr="Math.random()"))
+                            state.append_on_entry(
+                                ScxmlAssign(location=rand_location_id, expr="Math.random()")
+                            )
                             randomize = True
                         if plain_scxml_condition is None:
                             plain_scxml_condition = ""
                         else:
                             plain_scxml_condition = plain_scxml_condition + " && "
-                        plain_scxml_condition = plain_scxml_condition + f"{probability} < {rand_location_id}"
+                        plain_scxml_condition = (
+                            plain_scxml_condition + f"{probability} <= {rand_location_id}"
+                        )
                         probability += target_probability
-                        plain_scxml_condition = plain_scxml_condition + f"&& {rand_location_id} <= {probability}"
-                    plain_scxml_target = ScxmlTransitionTarget(target_id=target._target_id, probability=None, body=target.get_body())
+                        plain_scxml_condition = (
+                            plain_scxml_condition + f" && {rand_location_id} < {probability}"
+                        )
+                    plain_scxml_target = ScxmlTransitionTarget(
+                        target_id=target._target_id,
+                        probability=None,
+                        body=target.get_body(),
+                    )
                     plain_scxml_transition = ScxmlTransition(
                         targets=[plain_scxml_target],
                         events=transition.get_events(),
