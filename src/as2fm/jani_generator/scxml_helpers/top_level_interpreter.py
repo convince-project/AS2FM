@@ -160,7 +160,7 @@ def export_plain_scxml_models(
                         if plain_scxml_condition is None:
                             plain_scxml_condition = ""
                         else:
-                            plain_scxml_condition = plain_scxml_condition + " && "
+                            plain_scxml_condition = plain_scxml_condition + " &amp;&amp; "
                         plain_scxml_condition = plain_scxml_condition + f"{probability} < {rand_location_id}"
                         probability += target_probability
                         plain_scxml_condition = plain_scxml_condition + f"&& {rand_location_id} <= {probability}"
