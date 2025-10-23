@@ -182,8 +182,7 @@ def export_plain_scxml_models(
                         )
                         probability += target_probability
                         plain_scxml_condition = (
-                            plain_scxml_condition
-                            + f" && {rand_variable_id} <= {probability}"
+                            plain_scxml_condition + f" && {rand_variable_id} <= {probability}"
                         )
                     plain_scxml_transitions.append(
                         ScxmlTransition.make_single_target_transition(
