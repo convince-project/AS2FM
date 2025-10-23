@@ -188,15 +188,14 @@ def export_plain_scxml_models(
                             plain_scxml_condition
                             + f" && {rand_variable_id} <= {probability}"
                         )
-                    plain_scxml_target = ScxmlTransitionTarget(
-                        target_id=target._target_id, probability=None, body=target.get_body()
+                    plain_scxml_transitions.append(
+                        ScxmlTransition.make_single_target_transition(
+                            target=target._target_id,
+                            events=transition.get_events(),
+                            condition=plain_scxml_condition,
+                            body=target.get_body(),
+                        )
                     )
-                    plain_scxml_transition = ScxmlTransition(
-                        targets=[plain_scxml_target],
-                        events=transition.get_events(),
-                        condition=plain_scxml_condition,
-                    )
-                    plain_scxml_transitions.append(plain_scxml_transition)
             # Replace ASCXML transition with plain SCXML transition
             state._body = plain_scxml_transitions
     # Add the target automaton to each event sent
