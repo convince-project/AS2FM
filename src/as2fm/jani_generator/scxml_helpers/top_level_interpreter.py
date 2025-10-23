@@ -54,9 +54,6 @@ from as2fm.scxml_converter.scxml_entries import (
 from as2fm.scxml_converter.scxml_entries.scxml_data import ScxmlData
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import ScxmlAssign
 from as2fm.scxml_converter.scxml_entries.scxml_transition import ScxmlTransition
-from as2fm.scxml_converter.scxml_entries.scxml_transition_target import (
-    ScxmlTransitionTarget,
-)
 
 
 def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
