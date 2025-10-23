@@ -163,7 +163,7 @@ def export_plain_scxml_models(
                             plain_scxml_condition = plain_scxml_condition + " &amp;&amp; "
                         plain_scxml_condition = plain_scxml_condition + f"{probability} < {rand_location_id}"
                         probability += target_probability
-                        plain_scxml_condition = plain_scxml_condition + f"&& {rand_location_id} <= {probability}"
+                        plain_scxml_condition = plain_scxml_condition + f" &amp;&amp; {rand_location_id} <= {probability}"
                     plain_scxml_target = ScxmlTransitionTarget(target_id=target._target_id, probability=None, body=target.get_body())
                     plain_scxml_transition = ScxmlTransition(
                         targets=[plain_scxml_target],
