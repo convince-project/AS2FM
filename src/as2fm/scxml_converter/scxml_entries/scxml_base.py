@@ -80,31 +80,22 @@ class ScxmlBase:
         pass
 
     @abstractmethod
-    def instantiate_expressions(ascxml_declarations):
-        """Update expressions' content based on the actual value of specific declarations."""
-        pass
-
-    @abstractmethod
     def is_plain_scxml(self) -> bool:
         """Check if the object is compatible with the plain SCXML standard."""
         pass
 
     @abstractmethod
-    def as_plain_scxml(self, struct_declarations, ascxml_declarations) -> List[Self]:
-        """Convert the object to its plain SCXML  version."""
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs) -> List["ScxmlBase"]:
+        """""
+        Convert the object to its plain SCXML  version.
+        
+        :param struct_declarations: List of custom structures defined in the model
+        :param ascxml_declarations: Additional declarations, like ROS or BT specific ones
+        :param kwargs: Additional framework specific entries, e.g. the BT plugin ID.
+        """
         pass
 
     @abstractmethod
     def as_xml(self):
         """Convert the object to an XML element."""
-        pass
-
-    @abstractmethod
-    def get_body(self):
-        """Get the body of the object."""
-        pass
-
-    @abstractmethod
-    def get_id(self) -> str:
-        """Get the ID of the object."""
         pass

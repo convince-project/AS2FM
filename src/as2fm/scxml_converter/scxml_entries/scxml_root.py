@@ -20,7 +20,7 @@ In XML, it has either the tag `scxml` or `ascxml`.
 
 from abc import abstractmethod
 from os.path import isfile, splitext
-from typing import Dict, List, Optional, Set, Tuple, Type
+from typing import Dict, List, Optional, Set, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -270,12 +270,13 @@ class GenericScxmlRoot(ScxmlBase):
         no_threads = len(self._ascxml_threads) == 0
         plain_states = all(state.is_plain_scxml() for state in self._states)
         return plain_data_model and no_declarations and no_threads and plain_states
-
-    def to_plain_scxml(self) -> List["ScxmlRoot"]:
+    
+    def _to_plain_scxml_impl(self, **kwargs):
         """
-        Convert a GenericScxmlRoot object to ScxmlRoot ones, that are framework agnostic.
-
-        :return: a list of ScxmlRoot objects with all custom entries as plain SCXML.
+        Convert a GenericScxmlRoot object to ScxmlRoot ones.
+        
+        This method should be called from the to_plain_scxml one.
+        kwargs is used to pass possible, framework specific arguments to the underlying content.
         """
         check_assertion(self.check_validity(), self.get_xml_origin(), f"Invalid content.")
         if self.is_plain_scxml():
@@ -287,20 +288,21 @@ class GenericScxmlRoot(ScxmlBase):
         # Convert the ROS specific entries to plain SCXML
         main_scxml = ScxmlRoot(self._name)
         main_scxml._initial_state = self._initial_state
-        ascxml_declarations = self._ascxml_declarations
+        for ascxml_decl in self._ascxml_declarations:
+            ascxml_decl.preprocess_declaration(self._ascxml_declarations)
         data_information = ScxmlStructDeclarationsContainer(
             self._name, self._data_model, self.get_custom_data_types()
         )
-        data_models = self._data_model.as_plain_scxml(data_information, ascxml_declarations)
+        data_models = self._data_model.as_plain_scxml(data_information, self._ascxml_declarations, **kwargs)
         assert len(data_models) == 1, "There can only be on data model per SCXML."
         main_scxml._data_model = data_models[0]
         main_scxml._states = []
         for state in self._states:
-            main_scxml._states.extend(state.as_plain_scxml(data_information, ascxml_declarations))
+            main_scxml._states.extend(state.as_plain_scxml(data_information, self._ascxml_declarations, **kwargs))
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._ascxml_threads:
             # Threads have their own datamodel, do not pass the one from this object
-            converted_scxmls.extend(scxml_thread.as_plain_scxml(None, ascxml_declarations))
+            converted_scxmls.extend(scxml_thread.as_plain_scxml(None, self._ascxml_declarations, **kwargs))
         for plain_scxml in converted_scxmls:
             assert isinstance(plain_scxml, ScxmlRoot), (
                 "Error: SCXML root: conversion to plain SCXML resulted in invalid object "
@@ -315,6 +317,14 @@ class GenericScxmlRoot(ScxmlBase):
                 "conversion to plain SCXML failed."
             )
         return converted_scxmls
+
+    def to_plain_scxml(self) -> List["ScxmlRoot"]:
+        """
+        Convert a GenericScxmlRoot object to ScxmlRoot ones, that are framework agnostic.
+
+        :return: a list of ScxmlRoot objects with all custom entries as plain SCXML.
+        """
+        return self._to_plain_scxml_impl()
 
     def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
         """

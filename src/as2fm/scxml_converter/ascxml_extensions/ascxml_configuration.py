@@ -13,19 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generic declaration ASCXML entry."""
+"""Declaration of a generic ASCXML Configuration superclass."""
 
 from abc import abstractmethod
 
-from typing import List
+from typing import Type, List
 
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
-class AscxmlDeclaration(ScxmlBase):
-    """Base class for any declarations in SCXML."""
+class AscxmlConfiguration(ScxmlBase):
+    """
+    Base class for a generic configuration entry in ASCXML.
+    
+    Children classes will contain values coming from external configuration.
+    The configured value can be retrieved using the provided method.
+    """
 
     @abstractmethod
-    def preprocess_declaration(self, ascxml_declararions: List["AscxmlDeclaration"]):
-        """Update the content of this declaration fi needed, using the other declarations."""
+    def get_configured_value(self, type: Type, ascxml_declarations: List[AscxmlDeclaration]):
+        """Retrieve the configured value from the existing AscxmlDeclarations."""
         pass

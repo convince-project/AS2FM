@@ -15,6 +15,7 @@
 
 """Collection of SCXML ROS Base classes to derive from."""
 
+from abc import abstractmethod
 from typing import Dict, List, Optional, Type, Union
 
 from lxml import etree as ET
@@ -128,12 +129,12 @@ class RosDeclaration(AscxmlDeclaration):
 
     def get_name(self) -> str:
         """Get the alias name of the ROS interface."""
+        assert isinstance(self._interface_alias, str)  # MyPy  check
         return self._interface_alias
 
+    @abstractmethod
     def check_valid_interface_type(self) -> bool:
-        return NotImplementedError(
-            f"{self.__class__.__name__} doesn't implement check_valid_interface_type."
-        )
+        pass
 
     def check_validity(self) -> bool:
         valid_alias = is_non_empty_string(self.__class__, "name", self._interface_alias)
@@ -156,11 +157,14 @@ class RosDeclaration(AscxmlDeclaration):
             ), f"Error: SCXML {self.__class__.__name__}: interface can't come  from BT Blackboard."
             self._interface_name = port_value
 
-    def as_plain_scxml(self, _, __) -> List[ScxmlBase]:
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
         raise RuntimeError(
             f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML."
         )
+    
+    def is_plain_scxml(self):
+        return False
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."

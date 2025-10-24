@@ -15,24 +15,9 @@
 
 """Generic declaration ASCXML entry."""
 
-from abc import abstractmethod
-
-from typing_extensions import Self
-
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
 class AscxmlThread(ScxmlBase):
     """Base class for thread definition in ASCXML."""
-
-    @classmethod
-    @abstractmethod
-    def get_tag_name(cls) -> str:
-        """The xml tag related to the declaration."""
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_xml_tree_impl(cls, xml_tree, custom_data_types) -> Self:
-        """Create an instance of the class from an XML tree."""
-        pass
+    pass

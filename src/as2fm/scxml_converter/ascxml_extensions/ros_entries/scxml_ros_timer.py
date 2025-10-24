@@ -15,18 +15,17 @@
 
 """Declaration of SCXML tags related to ROS Timers."""
 
-from typing import Dict, Type
+from typing import Dict, Type, List, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.ros_utils import generate_rate_timer_event
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import RosCallback, RosDeclaration
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlConfiguration
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosDeclaration, RosCallback
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import generate_rate_timer_event
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
+from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute, read_value_from_xml_arg_or_child
 
 
 class RosTimeRate(RosDeclaration):
@@ -38,37 +37,46 @@ class RosTimeRate(RosDeclaration):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, _: Dict[str, StructDefinition]
+        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "RosTimeRate":
         """Create a RosTimeRate object from an XML tree."""
         assert_xml_tag_ok(RosTimeRate, xml_tree)
         timer_name = get_xml_attribute(RosTimeRate, xml_tree, "name")
-        timer_rate_str = get_xml_attribute(RosTimeRate, xml_tree, "rate_hz")
-        try:
-            timer_rate = float(timer_rate_str)
-        except ValueError as e:
-            raise ValueError("Error: SCXML rate timer: rate is not a number.") from e
+        valid_rate_types = AscxmlConfiguration.__subclasses__() + [str]
+        timer_rate = read_value_from_xml_arg_or_child(
+            cls, xml_tree, "rate_hz", custom_data_types, valid_rate_types
+        )
+        assert isinstance(timer_name, str)  # MyPy Check
+        assert isinstance(timer_rate, (str, AscxmlConfiguration))  # MyPy check
         return RosTimeRate(timer_name, timer_rate)
 
-    def __init__(self, name: str, rate_hz: float):
+    def __init__(self, name: str, rate_hz: Union[str, AscxmlConfiguration]):
         self._name = name
-        self._rate_hz = float(rate_hz)
+        self._rate_hz: Union[float, AscxmlConfiguration] = 0.0
+        if isinstance(rate_hz, AscxmlConfiguration):
+            self._rate_hz = rate_hz
+        else:
+            self._rate_hz = float(rate_hz)
 
     def get_interface_name(self) -> str:
         raise RuntimeError("Error: SCXML rate timer: deleted method 'get_interface_name'.")
 
     def get_interface_type(self) -> str:
         raise RuntimeError("Error: SCXML rate timer: deleted method 'get_interface_type'.")
+    
+    def check_valid_interface_type(self) -> bool:
+        # Timers have no type, so it can always return true
+        return True
 
     def get_name(self) -> str:
         return self._name
 
-    def get_rate(self) -> float:
+    def get_rate(self) -> Union[float, AscxmlConfiguration]:
         return self._rate_hz
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        pass
+    
+    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
+        if isinstance(self._rate_hz, AscxmlConfiguration):
+            self._rate_hz = self._rate_hz.get_configured_value(float, ascxml_declarations)
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(RosTimeRate, "name", self._name)
@@ -104,8 +112,12 @@ class RosRateCallback(RosCallback):
     def get_declaration_type() -> Type[RosTimeRate]:
         return RosTimeRate
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_timer_defined(self._interface_name)
+    def check_interface_defined(self, ascxml_declarations: List[AscxmlDeclaration]) -> bool:
+        for ascxml_decl in ascxml_declarations:
+            if isinstance(ascxml_decl, RosTimeRate):
+                if ascxml_decl.get_name() == self._interface_name:
+                    return True
+        return False
 
     def get_plain_scxml_event(self, _) -> str:
         return generate_rate_timer_event(self._interface_name)
