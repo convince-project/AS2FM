@@ -26,9 +26,6 @@ from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlData
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok
 
 
@@ -69,10 +66,6 @@ class ScxmlDataModel(ScxmlBase):
     def get_data_entries(self) -> List[ScxmlData]:
         return self._data_entries
 
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        for data_entry in self._data_entries:
-            data_entry.update_bt_ports_values(bt_ports_handler)
-
     def check_validity(self) -> bool:
         xml_origin = self.get_xml_origin()
         if not isinstance(self._data_entries, list):
@@ -97,15 +90,11 @@ class ScxmlDataModel(ScxmlBase):
         """Check if all data entries are already plain-scxml (using only base types)."""
         return self.check_validity() and all(data.is_plain_scxml() for data in self._data_entries)
 
-    def as_plain_scxml(
-        self,
-        struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlDataModel"]:
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         plain_data_entries = []
         for data_entry in self._data_entries:
             plain_data_entries.extend(
-                data_entry.as_plain_scxml(struct_declarations, ros_declarations)
+                data_entry.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
             )
         return [ScxmlDataModel(plain_data_entries)]
 
