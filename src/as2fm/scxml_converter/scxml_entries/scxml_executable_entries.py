@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
@@ -434,8 +435,9 @@ class ScxmlSend(ScxmlBase):
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlSend"]:
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
         assert self._cb_type is not None, "Error: SCXML send: callback type not set."
         expanded_params: List[ScxmlParam] = []

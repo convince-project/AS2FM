@@ -165,6 +165,9 @@ class ScxmlParam(ScxmlBase):
         for plain_param in plain_params:
             plain_param._set_plain_name_and_expression(struct_declarations)
         return plain_params
+    
+    def is_plain_scxml(self):
+        return isinstance(self._expr, str)
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid param."

@@ -32,6 +32,6 @@ class AscxmlConfiguration(ScxmlBase):
     """
 
     @abstractmethod
-    def get_configured_value(self, type: Type, ascxml_declarations: List[AscxmlDeclaration]):
+    def get_configured_value(self, exp_type: Type, ascxml_declarations: List[AscxmlDeclaration]):
         """Retrieve the configured value from the existing AscxmlDeclarations."""
         pass
