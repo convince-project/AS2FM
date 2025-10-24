@@ -23,13 +23,10 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
+from as2fm.as2fm_common.logging import check_assertion
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    get_input_variable_as_scxml_expression,
-    is_blackboard_reference,
-)
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
@@ -58,18 +55,19 @@ class ScxmlParam(ScxmlBase):
         """Create a ScxmlParam object from an XML tree."""
         assert_xml_tag_ok(ScxmlParam, xml_tree)
         name = get_xml_attribute(ScxmlParam, xml_tree, "name")
+        assert name is not None  # MyPy check
+        valid_expr_types = AscxmlConfiguration.__subclasses__() + [str]
         expr = read_value_from_xml_arg_or_child(
-            ScxmlParam, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str), True
+            ScxmlParam, xml_tree, "expr", custom_data_types, valid_expr_types
         )
-        location = get_xml_attribute(ScxmlParam, xml_tree, "location", undefined_allowed=True)
-        return ScxmlParam(name, expr=expr, location=location)
+        assert isinstance(expr, (str, AscxmlConfiguration))  # MyPy check
+        return ScxmlParam(name, expr=expr)
 
     def __init__(
         self,
         name: str,
         *,
-        expr: Optional[Union[BtGetValueInputPort, str]] = None,
-        location: Optional[str] = None,
+        expr: Union[AscxmlConfiguration, str],
         cb_type: Optional[CallbackType] = None,
     ):
         """
@@ -84,7 +82,6 @@ class ScxmlParam(ScxmlBase):
         # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
         self._name = name
         self._expr = expr
-        self._location = location
         self._cb_type: Optional[CallbackType] = cb_type
 
     def set_callback_type(self, cb_type: CallbackType):
@@ -93,54 +90,28 @@ class ScxmlParam(ScxmlBase):
     def get_name(self) -> str:
         return self._name
 
-    def get_expr(self) -> Optional[Union[BtGetValueInputPort, str]]:
+    def get_expr(self) -> Optional[Union[AscxmlConfiguration, str]]:
         return self._expr
-
-    def get_expr_or_location(self) -> str:
-        """
-        Return either the expr or location argument, depending on which one is None.
-
-        Ensures that at least one is valid.
-        """
-        # Deprecated
-        if self._expr is not None:
-            return self._expr
-        assert is_non_empty_string(ScxmlParam, "location", self._location)
-        return self._location
-
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
-            bt_ports_handler.get_port_value(self._expr.get_key_name())
-        )
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = get_input_variable_as_scxml_expression(
-                bt_ports_handler.get_port_value(self._expr.get_key_name())
-            )
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(ScxmlParam, "name", self._name)
-        valid_expr = False
-        if self._location is None:
-            valid_expr = is_non_empty_string(ScxmlParam, "expr", self._expr)
-        elif self._expr is None:
-            valid_expr = is_non_empty_string(ScxmlParam, "location", self._location)
-        else:
-            print("Error: SCXML param: expr and location are both set.")
+        valid_expr = isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
+            ScxmlParam, "expr", self._expr
+        )
         return valid_name and valid_expr
 
     def _set_plain_name_and_expression(self, struct_declarations: ScxmlStructDeclarationsContainer):
         """In place substitution of member accesses in the name and expression."""
         self._name = get_plain_variable_name(self._name, self.get_xml_origin())
+        assert isinstance(self._expr, str)  # MyPy check
         self._expr = convert_expression_with_object_arrays(
             self._expr, self.get_xml_origin(), struct_declarations
         )
 
-    def as_plain_scxml(
-        self, struct_declarations: ScxmlStructDeclarationsContainer, _
-    ) -> List["ScxmlParam"]:
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
+        if isinstance(self._expr, AscxmlConfiguration):
+            self._expr.update_configured_value(ascxml_declarations)
+            self._expr = self._expr.get_configured_value()
         plain_params: List[ScxmlParam] = []
         assert isinstance(self._expr, str)
         if has_operators(self._expr, self.get_xml_origin()) or is_literal(
@@ -158,22 +129,18 @@ class ScxmlParam(ScxmlBase):
             else:
                 for member_key in struct_def.get_expanded_members().keys():
                     new_name = f"{self.get_name()}.{member_key}"
-                    new_expr = f"{self.get_expr_or_location()}.{member_key}"
+                    new_expr = f"{self.get_expr()}.{member_key}"
                     plain_params.append(
                         ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
                     )
         for plain_param in plain_params:
             plain_param._set_plain_name_and_expression(struct_declarations)
         return plain_params
-    
+
     def is_plain_scxml(self):
         return isinstance(self._expr, str)
 
     def as_xml(self) -> XmlElement:
-        assert self.check_validity(), "SCXML: found invalid param."
-        xml_param = ET.Element(ScxmlParam.get_tag_name(), {"name": self._name})
-        if self._expr is not None:
-            xml_param.set("expr", self._expr)
-        if self._location is not None:
-            xml_param.set("location", self._location)
+        check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid object instance.")
+        xml_param = ET.Element(ScxmlParam.get_tag_name(), {"name": self._name, "expr": self._expr})
         return xml_param

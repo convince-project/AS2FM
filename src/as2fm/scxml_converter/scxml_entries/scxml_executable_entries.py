@@ -23,9 +23,9 @@ from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     BtPortsHandler,
     get_input_variable_as_scxml_expression,
@@ -452,7 +452,9 @@ class ScxmlSend(ScxmlBase):
         """Replace all string literals in the contained expressions."""
         new_params: List[ScxmlParam] = []
         for param in self._params:
-            new_param_expr = convert_expression_with_string_literals(param.get_expr_or_location())
+            param_expr = param.get_expr()
+            assert isinstance(param_expr, str)  # MyPy check
+            new_param_expr = convert_expression_with_string_literals(param_expr)
             new_params.append(
                 ScxmlParam(param.get_name(), expr=new_param_expr, cb_type=param._cb_type)
             )

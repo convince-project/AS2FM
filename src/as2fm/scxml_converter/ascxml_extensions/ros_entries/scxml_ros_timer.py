@@ -15,17 +15,21 @@
 
 """Declaration of SCXML tags related to ROS Timers."""
 
-from typing import Dict, Type, List, Union
+from typing import Dict, List, Type, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlConfiguration
-from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosDeclaration, RosCallback
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosCallback, RosDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import generate_rate_timer_event
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
-from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute, read_value_from_xml_arg_or_child
+from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    assert_xml_tag_ok,
+    get_xml_attribute,
+    read_value_from_xml_arg_or_child,
+)
 
 
 class RosTimeRate(RosDeclaration):
@@ -63,7 +67,7 @@ class RosTimeRate(RosDeclaration):
 
     def get_interface_type(self) -> str:
         raise RuntimeError("Error: SCXML rate timer: deleted method 'get_interface_type'.")
-    
+
     def check_valid_interface_type(self) -> bool:
         # Timers have no type, so it can always return true
         return True
@@ -73,10 +77,11 @@ class RosTimeRate(RosDeclaration):
 
     def get_rate(self) -> Union[float, AscxmlConfiguration]:
         return self._rate_hz
-    
+
     def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
         if isinstance(self._rate_hz, AscxmlConfiguration):
-            self._rate_hz = self._rate_hz.get_configured_value(float, ascxml_declarations)
+            self._rate_hz.update_configured_value(ascxml_declarations)
+            self._rate_hz = float(self._rate_hz.get_configured_value())
 
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(RosTimeRate, "name", self._name)

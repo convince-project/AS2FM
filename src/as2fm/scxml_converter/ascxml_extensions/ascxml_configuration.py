@@ -16,9 +16,9 @@
 """Declaration of a generic ASCXML Configuration superclass."""
 
 from abc import abstractmethod
+from typing import List, Optional
 
-from typing import Type, List
-
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
@@ -26,12 +26,22 @@ from as2fm.scxml_converter.scxml_entries import ScxmlBase
 class AscxmlConfiguration(ScxmlBase):
     """
     Base class for a generic configuration entry in ASCXML.
-    
+
     Children classes will contain values coming from external configuration.
     The configured value can be retrieved using the provided method.
     """
 
+    def __init__(self):
+        self._entry_value: Optional[str] = None
+
     @abstractmethod
-    def get_configured_value(self, exp_type: Type, ascxml_declarations: List[AscxmlDeclaration]):
-        """Retrieve the configured value from the existing AscxmlDeclarations."""
+    def update_configured_value(self, ascxml_declarations: List[AscxmlDeclaration]):
+        """Configure the entry value using the existing AscxmlDeclarations"""
         pass
+
+    def get_configured_value(self) -> str:
+        """Retrieve the previously configured value."""
+        assert self._entry_value is not None, get_error_msg(
+            self.get_xml_origin(), "The entry value is not yet set."
+        )
+        return self._entry_value

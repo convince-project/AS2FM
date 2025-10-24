@@ -22,13 +22,16 @@ from typing import Dict, List, Type
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.logging import get_error_msg, check_assertion
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    get_input_variable_as_scxml_expression,
+    is_blackboard_reference,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
-from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
-from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
-from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import is_blackboard_reference
 
 
 class BtGetValueInputPort(AscxmlConfiguration):
@@ -57,24 +60,33 @@ class BtGetValueInputPort(AscxmlConfiguration):
 
     def get_key_name(self) -> str:
         return self._key
-    
-    def get_configured_value(self, exp_type: Type, ascxml_declarations: List[AscxmlDeclaration]):
+
+    def update_configured_value(self, ascxml_declarations: List[AscxmlDeclaration]):
         for ascxml_decl in ascxml_declarations:
             if isinstance(ascxml_decl, BtGenericPortDeclaration):
                 if ascxml_decl.get_key_name() == self._key:
-                    port_value = ascxml_decl.get_key_value()
-                    check_assertion(port_value is not None, self.get_xml_origin(), f"BT port {self._key} has no assigned value.")
-                    assert port_value is not None  # MyPy check
-                    if is_blackboard_reference(port_value):
-                        return port_value
-                    else:
-                        return exp_type(port_value)
-        raise RuntimeError(get_error_msg(self.get_xml_origin(), f"Cannot find declaration of BT port {self._key}."))
+                    self._entry_value = ascxml_decl.get_key_value()
+                    assert self._entry_value is not None, get_error_msg(
+                        self.get_xml_origin(), f"BT port {self._key} has no assigned value."
+                    )
+        raise RuntimeError(
+            get_error_msg(self.get_xml_origin(), f"Cannot find declaration of BT port {self._key}.")
+        )
+
+    def get_configured_value(self):
+        return get_input_variable_as_scxml_expression(super().get_configured_value())
+
+    def has_blackboard_reference(self):
+        """Check if the BT port getter refers to a blackboard entry."""
+        assert self._entry_value is not None, get_error_msg(
+            self.get_xml_origin(), "The entry did not get updated with the port's values yet."
+        )
+        return is_blackboard_reference(self._entry_value)
 
     def as_plain_scxml(self, _, __):
         # When starting the conversion to plain SCXML, we expect this to be already converted
         raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
-    
+
     def is_plain_scxml(self):
         return False
 
