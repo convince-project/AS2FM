@@ -24,13 +24,13 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutionBody,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     EventsToAutomata,
     ScxmlExecutableEntry,
@@ -90,7 +90,7 @@ class ScxmlTransition(ScxmlBase):
                 ]
             )
         else:
-            assert is_non_empty_string(cls, "target", target)
+            assert target is not None and is_non_empty_string(cls, "target", target)  # MyPy check
             target_children.append(
                 ScxmlTransitionTarget(
                     target, body=execution_body_from_xml(xml_tree, custom_data_types)
@@ -186,7 +186,9 @@ class ScxmlTransition(ScxmlBase):
                 if target.get_probability() is None:  # This is the last target entry
                     target.set_probability(1.0 - prob_sum)
                 self._targets.append(target)
-                prob_sum += target.get_probability()
+                target_probability = target.get_probability()
+                assert target_probability is not None  # MyPy check
+                prob_sum += target_probability
             assert (
                 abs(prob_sum - 1.0) < EPSILON
             ), f"The sum of probabilities is {prob_sum}, must be 1.0."
@@ -198,34 +200,6 @@ class ScxmlTransition(ScxmlBase):
     def get_condition(self) -> Optional[str]:
         """Return the condition required to execute this transition (if any)."""
         return self._condition
-
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        """Check if the transition contains references to blackboard inputs."""
-        return any(target.has_bt_blackboard_input(bt_ports_handler) for target in self._targets)
-
-    def _instantiate_bt_events_in_targets(self, instance_id: int, children_ids: List[int]):
-        """Instantiate (in place) all bt events for all transitions targets."""
-        for target in self._targets:
-            target.instantiate_bt_events(instance_id, children_ids)
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> List["ScxmlTransition"]:
-        """Instantiate the BT events of this transition."""
-        # Make sure to replace received events only for ScxmlTransition objects.
-        if type(self) is ScxmlTransition:
-            assert not any(is_removed_bt_event(event) for event in self._events), (
-                "Error SCXML transition: BT events should not be found in SCXML transitions.",
-                "Use the 'bt_tick' ROS-scxml tag instead.",
-            )
-        # The body of a transition needs to be replaced on derived classes, too
-        self._instantiate_bt_events_in_targets(instance_id, children_ids)
-        return [self]
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        for target in self._targets:
-            target.update_bt_ports_values(bt_ports_handler)
 
     def add_event(self, event: str):
         self._events.append(event)
@@ -264,15 +238,6 @@ class ScxmlTransition(ScxmlBase):
             valid_targets = False
         return valid_targets and valid_events and valid_condition
 
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        """Check if the ros instantiations have been declared."""
-        # For SCXML transitions, ROS interfaces can be found only in the exec body
-        return all(
-            target.check_valid_ros_instantiations(ros_declarations) for target in self._targets
-        )
-
     def set_thread_id(self, thread_id: int) -> None:
         """Set the thread ID for the executable entries of this transition."""
         for target in self._targets:
@@ -288,12 +253,14 @@ class ScxmlTransition(ScxmlBase):
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
         ascxml_declarations: List[AscxmlDeclaration],
-        **kwargs
+        **kwargs,
     ) -> List[ScxmlBase]:
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(CallbackType.TRANSITION)
-            plain_targets.extend(target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs))
+            plain_targets.extend(
+                target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+            )
         if self._condition is not None:
             self._condition = get_plain_expression(
                 self._condition, CallbackType.TRANSITION, struct_declarations
