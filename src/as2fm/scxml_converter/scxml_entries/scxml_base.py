@@ -17,6 +17,7 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from abc import abstractmethod
 from typing import Dict, List, Optional, Type
 
 from lxml.etree import _Element as XmlElement
@@ -28,10 +29,11 @@ from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
 
-    @staticmethod
-    def get_tag_name() -> str:
+    @classmethod
+    @abstractmethod
+    def get_tag_name(cls: Type[Self]) -> str:
         """Get the tag name of the XML element."""
-        raise NotImplementedError
+        pass
 
     @classmethod
     def from_xml_tree(
@@ -72,30 +74,37 @@ class ScxmlBase:
         except AttributeError:
             return None
 
+    @abstractmethod
     def check_validity(self) -> bool:
         """Check if the object is valid."""
-        raise NotImplementedError
+        pass
 
-    def update_bt_ports_values(self, bt_ports_handler):
-        """Update the values of potential entries making use of BT ports."""
-        raise NotImplementedError
+    @abstractmethod
+    def instantiate_expressions(ascxml_declarations):
+        """Update expressions' content based on the actual value of specific declarations."""
+        pass
 
+    @abstractmethod
     def is_plain_scxml(self) -> bool:
         """Check if the object is compatible with the plain SCXML standard."""
-        raise NotImplementedError
+        pass
 
-    def as_plain_scxml(self, struct_declarations, ros_declarations) -> List:
+    @abstractmethod
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations) -> List[Self]:
         """Convert the object to its plain SCXML  version."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def as_xml(self):
         """Convert the object to an XML element."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get_body(self):
         """Get the body of the object."""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get_id(self) -> str:
         """Get the ID of the object."""
-        raise NotImplementedError
+        pass

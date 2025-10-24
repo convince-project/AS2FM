@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import process_bt_child_seq_id
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
@@ -62,11 +63,12 @@ class BtGenericRequestHandle(ScxmlTransition):
 
     @classmethod
     def make_single_target_transition(
-        cls: Type["BtGenericRequestHandle"],
+        cls: Type[Self],
         target: str,
+        events: Optional[List[str]] = None,
         condition: Optional[str] = None,
         body=Optional[ScxmlExecutionBody],
-    ):
+    ) -> Self:
         """
         Generate a "traditional" bt transition with exactly one target.
 
@@ -74,6 +76,9 @@ class BtGenericRequestHandle(ScxmlTransition):
         :param condition: The condition guard to enable/disable the transition
         :param body: Content that is executed when the transition happens
         """
+        assert (
+            events is None
+        ), f"Class {cls} already encodes an event:, no extra ones shall be defined."
         return cls([ScxmlTransitionTarget(target, body=body)], condition)
 
     @classmethod

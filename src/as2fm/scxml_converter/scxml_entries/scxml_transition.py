@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
@@ -116,12 +117,12 @@ class ScxmlTransition(ScxmlBase):
 
     @classmethod
     def make_single_target_transition(
-        cls: Type["ScxmlTransition"],
+        cls: Type[Self],
         target: str,
         events: Optional[List[str]] = None,
         condition: Optional[str] = None,
         body: Optional[ScxmlExecutionBody] = None,
-    ):
+    ) -> Self:
         """
         Generate a "traditional" transition with exactly one target.
 

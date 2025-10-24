@@ -273,11 +273,9 @@ class GenericScxmlRoot(ScxmlBase):
 
     def to_plain_scxml(self) -> List["ScxmlRoot"]:
         """
-        Convert a GenericScxmlRoot object to a ScxmlRoot one,the is framework agnostic.
+        Convert a GenericScxmlRoot object to ScxmlRoot ones, that are framework agnostic.
 
-        :return: A tuple with:
-            - a list of GenericScxmlRoot objects with all custom converted to plain SCXML.
-            - The Ros declarations contained in the original SCXML object.
+        :return: a list of ScxmlRoot objects with all custom entries as plain SCXML.
         """
         check_assertion(self.check_validity(), self.get_xml_origin(), f"Invalid content.")
         if self.is_plain_scxml():

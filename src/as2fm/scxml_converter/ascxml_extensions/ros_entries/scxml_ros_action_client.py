@@ -177,7 +177,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
+        ros_declarations: List[AscxmlDeclaration],
     ) -> List[ScxmlTransition]:
         assert self.check_valid_ros_instantiations(
             ros_declarations

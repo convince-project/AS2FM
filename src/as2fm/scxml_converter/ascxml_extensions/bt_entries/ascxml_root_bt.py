@@ -19,6 +19,7 @@ from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import AscxmlRootROS, RosDeclaration
+from as2fm.scxml_converter.scxml_entries import ScxmlState
 
 ValidDeclarationTypes = Union[RosDeclaration, BtGenericPortDeclaration]
 
@@ -91,6 +92,19 @@ class AscxmlRootBT(AscxmlRootROS):
         assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
         self._bt_children_ids.append(child_id)
 
+    def _process_state_entry(self, in_state: ScxmlState) -> ScxmlState:
+        """Replace the BT-specific information in the provided state."""
+        # TODO: States are a beast of their own, since they need to
+        #  Process the BT-related events, replacing the correct BT IDs
+        #  Process the communication among BT variables
+        #  Replace, as for the entries before, the BT ports values
+        # Try to handle all of it from an external function, removing it from ScxmlState
+        assert self._bt_plugin_id is not None  # MyPy check
+        in_state.instantiate_bt_events(
+            self._bt_plugin_id, self._bt_children_ids, self._ascxml_declarations
+        )
+        return in_state
+
     def instantiate_bt_information(self):
         """Instantiate the values of BT ports and children IDs in the SCXML entries."""
         n_bt_children = len(self._bt_children_ids)
@@ -100,20 +114,11 @@ class AscxmlRootBT(AscxmlRootROS):
         if bt_children_count_port is not None:
             bt_children_count_port.set_key_value(str(n_bt_children))
         self._data_model.instantiate_expressions(self._ascxml_declarations)
-        for ros_decl_scxml in self._ros_declarations:
-            ros_decl_scxml.instantiate_expressions(self._ascxml_declarations)
-        for scxml_thread in self._additional_threads:
+        for ascxml_decl in self._ascxml_declarations:
+            ascxml_decl.instantiate_expressions(self._ascxml_declarations)
+        for scxml_thread in self._ascxml_threads:
             scxml_thread.instantiate_expressions(self._ascxml_declarations)
         processed_states: List[ScxmlState] = []
         for state in self._states:
-            # TODO: States are a beast of their own, since they need to
-            #  Process the BT-related events, replacing the correct BT IDs
-            #  Process the communication among BT variables
-            #  Replace, as for the entries before, the BT ports values
-            # Try to handle all of it from an external function, removing it from ScxmlState
-            processed_states.extend(
-                state.instantiate_bt_events(
-                    self._bt_plugin_id, self._bt_children_ids, self._bt_ports_handler
-                )
-            )
+            processed_states.extend(self._process_state_entry(state))
         self._states = processed_states
