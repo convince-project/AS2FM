@@ -17,6 +17,7 @@
 SCXML base classes for BT-related classes.
 """
 
+from abc import abstractmethod
 from copy import deepcopy
 from typing import Dict, List, Optional, Type, Union
 
@@ -49,8 +50,9 @@ class BtGenericRequestHandle(ScxmlTransition):
     """
 
     @classmethod
+    @abstractmethod
     def get_tag_name(cls: Type["BtGenericRequestHandle"]):
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+        pass
 
     @classmethod
     def from_xml_tree_impl(
@@ -84,11 +86,12 @@ class BtGenericRequestHandle(ScxmlTransition):
         return cls([ScxmlTransitionTarget(target, body=body)], condition)
 
     @classmethod
+    @abstractmethod
     def generate_bt_event_name(cls: Type[ScxmlTransition], instance_id: int):
         """
         Generate the plain scxml event associated to the BT Transition instance_id.
         """
-        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+        pass
 
     def __init__(
         self,
@@ -123,15 +126,17 @@ class BtGenericRequestSend(ScxmlSend):
     """
 
     @classmethod
+    @abstractmethod
     def get_tag_name(cls: Type["BtGenericRequestSend"]):
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+        pass
 
     @classmethod
+    @abstractmethod
     def generate_bt_event_name(cls: Type["BtGenericRequestSend"], instance_id: int):
         """
         Generate the plain scxml event associated to the BT Transition instance_id.
         """
-        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+        pass
 
     @classmethod
     def from_xml_tree_impl(
@@ -191,15 +196,17 @@ class BtGenericStatusHandle(ScxmlTransition):
     """
 
     @classmethod
+    @abstractmethod
     def get_tag_name(cls: Type["BtGenericStatusHandle"]):
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+        pass
 
     @classmethod
+    @abstractmethod
     def generate_bt_event_name(cls: Type["BtGenericStatusHandle"], instance_id: int):
         """
         Generate the plain scxml event associated to the BT Transition instance_id.
         """
-        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+        pass
 
     @classmethod
     def from_xml_tree_impl(
@@ -298,8 +305,9 @@ class BtGenericStatusSend(ScxmlSend):
     """
 
     @classmethod
+    @abstractmethod
     def get_tag_name(cls: Type["BtGenericStatusSend"]):
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+        pass
 
     @classmethod
     def from_xml_tree_impl(
@@ -309,12 +317,14 @@ class BtGenericStatusSend(ScxmlSend):
         return cls()
 
     @classmethod
+    @abstractmethod
     def generate_bt_event_name(cls: Type["BtGenericStatusSend"], instance_id: int):
         """
         Generate the plain scxml event associated to the BT Transition instance_id.
         """
-        raise NotImplementedError(f"{cls.__name__} doesn't implement generate_bt_event_name.")
+        pass
 
+    @abstractmethod
     def __init__(self):
         pass
 

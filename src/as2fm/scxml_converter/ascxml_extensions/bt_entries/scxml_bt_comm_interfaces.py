@@ -38,7 +38,6 @@ from as2fm.scxml_converter.ascxml_extensions.bt_entries.scxml_bt_base import (
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
-    ScxmlExecutionBody,
     ScxmlParam,
     ScxmlSend,
     ScxmlTransitionTarget,
@@ -200,15 +199,9 @@ class BtReturnTickStatus(BtGenericStatusSend):
 
     def check_validity(self) -> bool:
         return True
-
-    def has_bt_blackboard_input(self, _) -> bool:
-        """We do not expect reading from BT Ports here. Return False!"""
-        return False
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> ScxmlExecutionBody:
-        plain_send = super().instantiate_bt_events(instance_id, children_ids)
+    
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
+        plain_send = super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
         plain_status: Optional[Union[str, int]] = BtResponse.str_to_int(self._status)
         if plain_status is None:
             check_assertion(
@@ -244,7 +237,3 @@ class BtReturnHalted(BtGenericStatusSend):
 
     def check_validity(self) -> bool:
         return True
-
-    def has_bt_blackboard_input(self, _) -> bool:
-        """We do not expect reading from BT Ports here. Return False!"""
-        return False
