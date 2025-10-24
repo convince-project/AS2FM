@@ -28,10 +28,9 @@ from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlExecutionBody,
-    ScxmlRosDeclarationsContainer,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_removed_bt_event
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
     EventsToAutomata,
     ScxmlExecutableEntry,
@@ -288,18 +287,13 @@ class ScxmlTransition(ScxmlBase):
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlTransition"]:
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML transition: invalid ROS declarations container."
-        assert self.check_valid_ros_instantiations(
-            ros_declarations
-        ), "Error: SCXML transition: invalid ROS instantiations in transition body."
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs
+    ) -> List[ScxmlBase]:
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
             target.set_callback_type(CallbackType.TRANSITION)
-            plain_targets.extend(target.as_plain_scxml(struct_declarations, ros_declarations))
+            plain_targets.extend(target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs))
         if self._condition is not None:
             self._condition = get_plain_expression(
                 self._condition, CallbackType.TRANSITION, struct_declarations
