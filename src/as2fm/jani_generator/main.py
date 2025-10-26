@@ -45,7 +45,7 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--generated-scxml-dir",
         type=str,
-        default="",
+        default="./output",
         help="Path to the folder containing the generated plain-SCXML files.",
     )
     parser.add_argument(
@@ -67,40 +67,10 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
         else main_xml_file.removesuffix("xml") + "jani"
     )
 
-    print("AS2FM - SCXML to JANI.\n")
+    print("AS2FM - RoAML to SCXML.\n")
     print(f"Loading model from {main_xml_file}.")
 
     interpret_top_level_xml(main_xml_file, jani_file=jani_out_file, scxmls_dir=scxml_out_dir)
-
-
-def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
-    """
-    Entry point for the conversion of a CONVINCE JANI file to a plain JANI file.
-
-    :param args: The arguments to parse. If None, sys.argv is used.
-    :return: None
-    """
-    parser = argparse.ArgumentParser(description="Convert CONVINCE JANI to plain JANI.")
-    parser.add_argument("--convince_jani", help="The convince-jani file.", type=str, required=True)
-    parser.add_argument("--output", help="The output Plain JANI file.", type=str, required=True)
-    args = parser.parse_args(_args)
-
-    start_time = timeit.default_timer()
-    model_loaded = False
-    jani_model = JaniModel()
-    if args.convince_jani is not None:
-        assert os.path.isfile(args.convince_jani), f"File {args.convince_jani} does not exist."
-        # Check the file's extension
-        _, extension = os.path.splitext(args.convince_jani)
-        assert extension == ".jani", f"File {args.convince_jani} is not a JANI file."
-        convince_jani_parser(jani_model, args.convince_jani)
-        model_loaded = True
-    assert model_loaded, "No input file was provided. Check your input."
-    # Write the loaded model to the output file
-    with open(args.output, "w", encoding="utf-8") as output_file:
-        json.dump(jani_model.as_dict(), output_file, indent=4, ensure_ascii=False)
-    print(f"Converted jani model written to {args.output}.")
-    print(f"Conversion took {timeit.default_timer() - start_time} seconds.")
 
 
 if __name__ == "__main__":

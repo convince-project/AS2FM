@@ -125,7 +125,7 @@ def __convince_properties_to_jani(base_model: JaniModel, properties: List[dict])
         )
 
 
-def convince_jani_parser(base_model: JaniModel, convince_jani_path: str):
+def convince_jani_parser(base_model: JaniModel, convince_jani_path: str): # TODO: Remove this function
     """Read a convince-jani file and add it to a JaniModel object."""
     # Check if the jani_model is a JaniModel instance
     assert isinstance(base_model, JaniModel), "The jani_model should be a JaniModel instance"

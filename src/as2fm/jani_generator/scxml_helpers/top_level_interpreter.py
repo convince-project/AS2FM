@@ -166,20 +166,20 @@ def interpret_top_level_xml(
     if scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
-    if jani_file is not None:
-        jani_model: JaniModel = convert_multiple_scxmls_to_jani(
-            plain_scxml_models, model.max_array_size
-        )
-        with open(model.properties[0], "r", encoding="utf-8") as f:
-            all_properties = json.load(f)["properties"]
-            for property_dict in all_properties:
-                jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
+    # if jani_file is not None:
+    #     jani_model: JaniModel = convert_multiple_scxmls_to_jani(
+    #         plain_scxml_models, model.max_array_size
+    #     )
+    #     with open(model.properties[0], "r", encoding="utf-8") as f:
+    #         all_properties = json.load(f)["properties"]
+    #         for property_dict in all_properties:
+    #             jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
 
-        # Preprocess the JANI file, to remove non-standard artifacts
-        preprocess_jani_expressions(jani_model)
+    #     # Preprocess the JANI file, to remove non-standard artifacts
+    #     preprocess_jani_expressions(jani_model)
 
-        output_path = os.path.join(model_dir, jani_file)
-        with open(output_path, "w", encoding="utf-8") as f:
-            temp_dict = jani_model.as_dict()
-            # print(temp_dict)
-            json.dump(temp_dict, f, indent=2, ensure_ascii=False)
+    #     output_path = os.path.join(model_dir, jani_file)
+    #     with open(output_path, "w", encoding="utf-8") as f:
+    #         temp_dict = jani_model.as_dict()
+    #         # print(temp_dict)
+    #         json.dump(temp_dict, f, indent=2, ensure_ascii=False)

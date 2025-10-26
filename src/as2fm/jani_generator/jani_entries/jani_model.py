@@ -34,7 +34,7 @@ from as2fm.jani_generator.jani_entries import (
 ValidValue = Union[int, float, bool, dict, JaniExpression]
 
 
-class JaniModel:
+class JaniModel: # TODO: Remove this class
     """
     Class representing a complete Jani Model, containing all necessary information to generate
     a plain Jani file.
