@@ -25,9 +25,7 @@ from action_msgs.msg import GoalStatus
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer, ScxmlTransition
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_action_feedback_handle_event,
     generate_action_goal_handle_accepted_event,
     generate_action_goal_handle_rejected_event,
@@ -35,11 +33,13 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_result_handle_event,
     is_action_type_known,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosCallback,
     RosDeclaration,
     RosTrigger,
 )
+from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.scxml_entries import ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute

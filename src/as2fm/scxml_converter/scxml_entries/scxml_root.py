@@ -232,11 +232,13 @@ class GenericScxmlRoot(ScxmlBase):
             isinstance(state, ScxmlState) and state.check_validity() for state in self._states
         )
         valid_declarations = all(
-            isinstance(scxml_decl, AscxmlDeclaration) and scxml_decl.check_validity()
+            isinstance(scxml_decl, tuple(self.get_declaration_classes()))
+            and scxml_decl.check_validity()
             for scxml_decl in self._ascxml_declarations
         )
         valid_threads = all(
-            isinstance(scxml_thread, AscxmlThread) and scxml_thread.check_validity()
+            isinstance(scxml_thread, tuple(self.get_thread_classes()))
+            and scxml_thread.check_validity()
             for scxml_thread in self._ascxml_threads
         )
         xml_orig = self.get_xml_origin()
@@ -270,15 +272,15 @@ class GenericScxmlRoot(ScxmlBase):
         no_threads = len(self._ascxml_threads) == 0
         plain_states = all(state.is_plain_scxml() for state in self._states)
         return plain_data_model and no_declarations and no_threads and plain_states
-    
+
     def _to_plain_scxml_impl(self, **kwargs):
         """
         Convert a GenericScxmlRoot object to ScxmlRoot ones.
-        
+
         This method should be called from the to_plain_scxml one.
         kwargs is used to pass possible, framework specific arguments to the underlying content.
         """
-        check_assertion(self.check_validity(), self.get_xml_origin(), f"Invalid content.")
+        check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid content.")
         if self.is_plain_scxml():
             # Cast any instance to the ScxmlRoot type before returning it
             new_root = ScxmlRoot(self.get_name())
@@ -293,16 +295,22 @@ class GenericScxmlRoot(ScxmlBase):
         data_information = ScxmlStructDeclarationsContainer(
             self._name, self._data_model, self.get_custom_data_types()
         )
-        data_models = self._data_model.as_plain_scxml(data_information, self._ascxml_declarations, **kwargs)
+        data_models = self._data_model.as_plain_scxml(
+            data_information, self._ascxml_declarations, **kwargs
+        )
         assert len(data_models) == 1, "There can only be on data model per SCXML."
         main_scxml._data_model = data_models[0]
         main_scxml._states = []
         for state in self._states:
-            main_scxml._states.extend(state.as_plain_scxml(data_information, self._ascxml_declarations, **kwargs))
+            main_scxml._states.extend(
+                state.as_plain_scxml(data_information, self._ascxml_declarations, **kwargs)
+            )
         converted_scxmls.append(main_scxml)
         for scxml_thread in self._ascxml_threads:
             # Threads have their own datamodel, do not pass the one from this object
-            converted_scxmls.extend(scxml_thread.as_plain_scxml(None, self._ascxml_declarations, **kwargs))
+            converted_scxmls.extend(
+                scxml_thread.as_plain_scxml(None, self._ascxml_declarations, **kwargs)
+            )
         for plain_scxml in converted_scxmls:
             assert isinstance(plain_scxml, ScxmlRoot), (
                 "Error: SCXML root: conversion to plain SCXML resulted in invalid object "

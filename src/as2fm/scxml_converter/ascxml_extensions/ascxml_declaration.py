@@ -16,7 +16,6 @@
 """Generic declaration ASCXML entry."""
 
 from abc import abstractmethod
-
 from typing import List
 
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
@@ -26,6 +25,6 @@ class AscxmlDeclaration(ScxmlBase):
     """Base class for any declarations in SCXML."""
 
     @abstractmethod
-    def preprocess_declaration(self, ascxml_declararions: List["AscxmlDeclaration"]):
-        """Update the content of this declaration fi needed, using the other declarations."""
+    def preprocess_declaration(self, ascxml_declarations: List["AscxmlDeclaration"]):
+        """Update the content of this declaration if needed, using the other declarations."""
         pass

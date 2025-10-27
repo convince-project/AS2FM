@@ -23,9 +23,11 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 from typing import Type
 
 from as2fm.as2fm_common.logging import log_error
-from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.ros_utils import generate_topic_event, is_msg_type_known
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    generate_topic_event,
+    is_msg_type_known,
+)
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosCallback,
     RosDeclaration,
     RosTrigger,
@@ -43,6 +45,10 @@ class RosTopicPublisher(RosDeclaration):
     @staticmethod
     def get_xml_arg_interface_name() -> str:
         return "topic"
+
+    @classmethod
+    def get_communication_interface(cls):
+        raise RuntimeError("Unexpected method call.")
 
     def check_valid_interface_type(self) -> bool:
         if not is_msg_type_known(self._interface_type):

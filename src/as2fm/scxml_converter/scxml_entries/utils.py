@@ -17,7 +17,7 @@
 
 import re
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import esprima
 from esprima.nodes import ArrayExpression, ComputedMemberExpression, Identifier, Literal
@@ -462,7 +462,7 @@ def all_non_empty_strings(*in_args) -> bool:
 
 
 def is_non_empty_string(
-    scxml_type: Type[ScxmlBase], arg_name: str, arg_value: Optional[str]
+    scxml_type: Type[ScxmlBase], arg_name: str, arg_value: Optional[Any]
 ) -> bool:
     """
     Check if a string is non-empty.

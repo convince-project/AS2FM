@@ -20,6 +20,7 @@ from typing import Dict, List, Type, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosCallback, RosDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import generate_rate_timer_event
@@ -38,6 +39,10 @@ class RosTimeRate(RosDeclaration):
     @staticmethod
     def get_tag_name() -> str:
         return "ros_time_rate"
+
+    @classmethod
+    def get_communication_interface(cls):
+        raise RuntimeError("Unexpected method call.")
 
     @classmethod
     def from_xml_tree_impl(
@@ -81,6 +86,9 @@ class RosTimeRate(RosDeclaration):
     def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
         if isinstance(self._rate_hz, AscxmlConfiguration):
             self._rate_hz.update_configured_value(ascxml_declarations)
+            assert self._rate_hz.is_constant_value(), get_error_msg(
+                self.get_xml_origin(), "ROS declarations require a constant configurable value."
+            )
             self._rate_hz = float(self._rate_hz.get_configured_value())
 
     def check_validity(self) -> bool:

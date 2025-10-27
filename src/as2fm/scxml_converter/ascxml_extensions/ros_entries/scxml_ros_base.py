@@ -20,11 +20,11 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGetValueInputPort, BtPortsHandler
-from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import is_blackboard_reference
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     RosField,
@@ -56,18 +56,20 @@ class RosDeclaration(AscxmlDeclaration):
     """Base class for ROS declarations in SCXML."""
 
     @classmethod
+    @abstractmethod
     def get_tag_name(cls) -> str:
         """The xml tag related to the ROS declaration."""
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_tag_name.")
+        pass
 
     @classmethod
+    @abstractmethod
     def get_communication_interface(cls) -> str:
         """
         Which communication interface is used by the ROS declaration.
 
         Expected values: "service", "action"
         """
-        raise NotImplementedError(f"{cls.__name__} doesn't implement get_communication_interface.")
+        pass
 
     @classmethod
     def get_xml_arg_interface_name(cls) -> str:
@@ -75,26 +77,29 @@ class RosDeclaration(AscxmlDeclaration):
 
     @classmethod
     def from_xml_tree_impl(
-        cls: Type["RosDeclaration"],
+        cls: Type[Self],
         xml_tree: XmlElement,
         custom_data_types: Dict[str, StructDefinition],
-    ) -> "RosDeclaration":
+    ) -> Self:
         """Create an instance of the class from an XML tree."""
         assert_xml_tag_ok(cls, xml_tree)
+        valid_interface_name_types = [str] + AscxmlConfiguration.__subclasses__()
         interface_name = read_value_from_xml_arg_or_child(
             cls,
             xml_tree,
             cls.get_xml_arg_interface_name(),
             custom_data_types,
-            (BtGetValueInputPort, str),
+            valid_interface_name_types,
         )
         interface_type = get_xml_attribute(cls, xml_tree, "type")
         interface_alias = get_xml_attribute(cls, xml_tree, "name", undefined_allowed=True)
+        assert isinstance(interface_name, (str, AscxmlConfiguration))  # MyPy check
+        assert interface_type is not None  # MyPy check
         return cls(interface_name, interface_type, interface_alias)
 
     def __init__(
         self,
-        interface_name: Union[str, BtGetValueInputPort],
+        interface_name: Union[str, AscxmlConfiguration],
         interface_type: str,
         interface_alias: Optional[str] = None,
     ):
@@ -108,19 +113,21 @@ class RosDeclaration(AscxmlDeclaration):
         self._interface_name = interface_name
         self._interface_type = interface_type
         self._interface_alias = interface_alias
-        assert isinstance(interface_name, (str, BtGetValueInputPort)), (
+        assert isinstance(interface_name, (str, AscxmlConfiguration)), (
             f"Error: SCXML {self.get_tag_name()}: "
             f"invalid type of interface_name {type(interface_name)}."
         )
         if self._interface_alias is None:
-            assert is_non_empty_string(self.__class__, "interface_name", self._interface_name), (
-                f"Error: SCXML {self.__class__.__name__}: "
-                "an alias name is required for dynamic ROS interfaces."
+            assert isinstance(interface_name, str) and len(interface_name) > 0, get_error_msg(
+                self.get_xml_origin(), "An alias name is required for dynamic ROS interfaces."
             )
             self._interface_alias = interface_name
 
     def get_interface_name(self) -> str:
         """Get the name of the ROS comm. interface."""
+        assert isinstance(self._interface_name, str), get_error_msg(
+            self.get_xml_origin(), "Need to extract the interface name from config variables."
+        )
         return self._interface_name
 
     def get_interface_type(self) -> str:
@@ -137,25 +144,24 @@ class RosDeclaration(AscxmlDeclaration):
         pass
 
     def check_validity(self) -> bool:
-        valid_alias = is_non_empty_string(self.__class__, "name", self._interface_alias)
+        valid_alias = is_non_empty_string(type(self), "name", self._interface_alias)
         valid_action_name = isinstance(
-            self._interface_name, BtGetValueInputPort
-        ) or is_non_empty_string(self.__class__, "interface_name", self._interface_name)
+            self._interface_name, AscxmlConfiguration
+        ) or is_non_empty_string(type(self), "interface_name", self._interface_name)
         valid_action_type = self.check_valid_interface_type()
         return valid_alias and valid_action_name and valid_action_type
 
     def check_valid_instantiation(self) -> bool:
         """Check if the interface name is still undefined (i.e. from BT ports)."""
-        return is_non_empty_string(self.__class__, "interface_name", self._interface_name)
+        return is_non_empty_string(type(self), "interface_name", self._interface_name)
 
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._interface_name, BtGetValueInputPort):
-            port_value = bt_ports_handler.get_in_port_value(self._interface_name.get_key_name())
-            assert not is_blackboard_reference(
-                port_value
-            ), f"Error: SCXML {self.__class__.__name__}: interface can't come  from BT Blackboard."
-            self._interface_name = port_value
+    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
+        if isinstance(self._interface_name, AscxmlConfiguration):
+            self._interface_name.update_configured_value(ascxml_declarations)
+            assert self._interface_name.is_constant_value(), get_error_msg(
+                self.get_xml_origin(), "ROS declaration expect constant configurable values."
+            )
+            self._interface_name = self._interface_name.get_configured_value()
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot
