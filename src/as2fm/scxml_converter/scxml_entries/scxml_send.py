@@ -13,36 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Optional
+from copy import deepcopy
+from typing import Dict, List, Optional, Tuple
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
-
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry, ScxmlExecutionBody
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlParam,
 )
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
+    EventsToAutomata,
+    ScxmlExecutableEntry,
+)
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
-    convert_expression_with_object_arrays,
     convert_expression_with_string_literals,
-    generate_tag_to_class_map,
-    get_plain_expression,
-    is_non_empty_string,
 )
-from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok,
-    get_xml_attribute,
-    read_value_from_xml_child,
-)
+
 
 class ScxmlSend(ScxmlExecutableEntry):
     """This class represents a send action."""
@@ -100,6 +94,26 @@ class ScxmlSend(ScxmlExecutableEntry):
         """Set the cb type for this entry and its children."""
         self._cb_type = cb_type
 
+    def update_configurable_entry(self, ascxml_declarations: List[AscxmlDeclaration]):
+        for param in self._params:
+            param.update_configured_value(ascxml_declarations)
+
+    def get_config_request_receive_events(self) -> Optional[Tuple[str, str]]:
+        """
+        Return the events for requesting-receiving the updated value of a conf. entry, if any."""
+        req_rec_events: Optional[Tuple[str, str]] = None
+        for param in self._params:
+            param_expr = param.get_expr()
+            if isinstance(param_expr, AscxmlConfiguration):
+                param_events = param_expr.get_config_request_response_events()
+                if req_rec_events is None:
+                    req_rec_events = param_events
+                elif param_events is not None:
+                    assert req_rec_events == param_events, get_error_msg(
+                        self.get_xml_origin(), "Only one kind of configurable variables expected."
+                    )
+        return req_rec_events
+
     def get_event(self) -> str:
         """Get the event to send."""
         return self._event
@@ -115,27 +129,6 @@ class ScxmlSend(ScxmlExecutableEntry):
     def set_target_automaton(self, target_automaton: str) -> None:
         """Set the target automata associated to this send event."""
         self._target_automaton = target_automaton
-
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        """Check whether the If entry reads content from the BT Blackboard."""
-        for param in self._params:
-            if param.has_bt_blackboard_input(bt_ports_handler):
-                return True
-        return False
-
-    def instantiate_bt_events(self, instance_id: int, _) -> ScxmlExecutionBody:
-        """Instantiate the behavior tree events in the send action, if available."""
-        # Make sure this method is executed only on ScxmlSend objects, and not on derived classes
-        assert type(self) is not ScxmlSend or not is_removed_bt_event(self._event), (
-            "Error: SCXML send: BT events should not be found in SCXML send. "
-            "Use the 'bt_return_status' ROS-scxml tag instead."
-        )
-        return [self]
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        """Update the values of potential entries making use of BT ports."""
-        for param in self._params:
-            param.update_bt_ports_values(bt_ports_handler)
 
     def check_validity(self) -> bool:
         valid_event = isinstance(self._event, str) and len(self._event) > 0
@@ -177,15 +170,16 @@ class ScxmlSend(ScxmlExecutableEntry):
         expanded_params: List[ScxmlParam] = []
         for param in self._params:
             param.set_callback_type(self._cb_type)
-            expanded_params.extend(param.as_plain_scxml(struct_declarations, ros_declarations))
-        # For now, no conversion to plain scxml is expected for params
-        # param.as_plain_scxml()
+            expanded_params.extend(
+                param.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+            )
         return [ScxmlSend(self._event, expanded_params, delay=self._delay)]
 
     def replace_strings_types_with_integer_arrays(self) -> "ScxmlSend":
         """Replace all string literals in the contained expressions."""
         new_params: List[ScxmlParam] = []
         for param in self._params:
+            param.evaluate_expr()
             param_expr = param.get_expr()
             assert isinstance(param_expr, str)  # MyPy check
             new_param_expr = convert_expression_with_string_literals(param_expr)
@@ -193,6 +187,18 @@ class ScxmlSend(ScxmlExecutableEntry):
                 ScxmlParam(param.get_name(), expr=new_param_expr, cb_type=param._cb_type)
             )
         return ScxmlSend(self._event, new_params, self._target_automaton)
+
+    def add_events_targets(self, events_to_models: EventsToAutomata):
+        new_sends: List[ScxmlExecutableEntry] = []
+        target_automata = events_to_models.get(self.get_event(), {"NONE"})
+        assert self.get_target_automaton() is None, get_error_msg(
+            self.get_xml_origin(), f"Target automaton already set for event {self.get_event()}."
+        )
+        for model in target_automata:
+            new_entry = deepcopy(self)
+            new_entry.set_target_automaton(model)
+            new_sends.append(new_entry)
+        return new_sends
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid send object."

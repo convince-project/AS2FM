@@ -23,7 +23,8 @@ from typing import Dict, List, Optional, Type, Union
 
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.ascxml_extensions import AscxmlThread
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtPortsHandler
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosActionServer,
@@ -42,6 +43,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
     ScxmlDataModel,
     ScxmlParam,
+    ScxmlRoot,
     ScxmlState,
     ScxmlTransition,
     ScxmlTransitionTarget,
@@ -174,17 +176,27 @@ class RosActionThread(AscxmlThread):
             return False
         return True
 
+    def _find_action_name(self, ascxml_declarations: List[AscxmlDeclaration]) -> str:
+        for decl in ascxml_declarations:
+            if isinstance(decl, RosActionServer) and decl.get_name() == self._name:
+                return decl.get_interface_name()
+        raise RuntimeError(
+            get_error_msg(
+                self.get_xml_origin(), f"Cannot find declaration of action server {self._name}"
+            )
+        )
+
     def as_plain_scxml(
         self,
         struct_declarations: Optional[ScxmlStructDeclarationsContainer],
-        ros_declarations: ScxmlRosDeclarationsContainer,
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
     ) -> List[ScxmlBase]:
         """
         Convert the ROS-specific entries to be plain SCXML.
 
         This returns a list of ScxmlRoot objects, using ScxmlBase to avoid circular dependencies.
         """
-        from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
         # This is an independent automaton, no structs shall be provided from outside.
         assert struct_declarations is None, "Unexpected struct_declarations. Should be None."
@@ -194,18 +206,17 @@ class RosActionThread(AscxmlThread):
             self._name, self._data_model, self.get_custom_data_types()
         )
 
-        thread_instances: List[ScxmlRoot] = []
-        action_name = sanitize_ros_interface_name(
-            ros_declarations.get_action_server_info(self._name)[0]
-        )
+        thread_instances: List[ScxmlBase] = []
+        action_name = sanitize_ros_interface_name(self._find_action_name(ascxml_declarations))
         for thread_idx in range(self._n_threads):
             thread_name = f"{action_name}_thread_{thread_idx}"
             plain_thread_instance = ScxmlRoot(thread_name)
             plain_thread_instance.set_data_model(self._data_model)
             for state in self._states:
                 initial_state = state.get_id() == self._initial_state
-                state.set_thread_id(thread_idx)
-                plain_states = state.as_plain_scxml(struct_declarations, ros_declarations)
+                plain_states = state.as_plain_scxml(
+                    struct_declarations, ascxml_declarations, thread_id=thread_idx
+                )
                 assert len(plain_states) == 1, "A state must also be one state in Plain SCXML"
                 plain_thread_instance.add_state(plain_states[0], initial=initial_state)
             assert plain_thread_instance.is_plain_scxml(), (
@@ -218,7 +229,7 @@ class RosActionThread(AscxmlThread):
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid state object."
         # TODO
-        pass
+        raise NotImplementedError("Export of AscxmlROSThreads in XML not done yet.")
 
 
 class RosActionHandleThreadStart(RosCallback):

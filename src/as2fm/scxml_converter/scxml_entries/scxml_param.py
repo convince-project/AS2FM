@@ -90,13 +90,17 @@ class ScxmlParam(ScxmlBase):
     def get_name(self) -> str:
         return self._name
 
-    def get_expr(self) -> Optional[Union[AscxmlConfiguration, str]]:
+    def get_expr(self) -> Union[AscxmlConfiguration, str]:
         return self._expr
 
-    def evaluate_expr(self, ascxml_declarations: List[AscxmlDeclaration]):
-        """Replace expression of type AscxmlConfiguration with their current value."""
+    def update_configured_value(self, ascxml_declarations: List[AscxmlDeclaration]):
+        """Set the value of the configured value based on the declarations content."""
         if isinstance(self._expr, AscxmlConfiguration):
             self._expr.update_configured_value(ascxml_declarations)
+
+    def evaluate_expr(self):
+        """Replace expression of type AscxmlConfiguration with their current value."""
+        if isinstance(self._expr, AscxmlConfiguration):
             self._expr = self._expr.get_configured_value()
 
     def check_validity(self) -> bool:

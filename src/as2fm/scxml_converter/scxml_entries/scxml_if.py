@@ -13,18 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry, ScxmlExecutionBody
-
 from as2fm.as2fm_common.common import is_comment
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-
+from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
+    EventsToAutomata,
+    ScxmlExecutableEntry,
+    ScxmlExecutionBody,
+    as_plain_execution_body,
+    execution_entry_from_xml,
+    get_config_entries_request_receive_events,
+    is_plain_execution_body,
+    replace_string_expressions_in_execution_body,
+    set_execution_body_callback_type,
+    update_exec_body_configurable_values,
+    valid_execution_body,
+)
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
@@ -34,6 +45,8 @@ from as2fm.scxml_converter.scxml_entries.utils import (
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
 )
+
+ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 
 
 class ScxmlIf(ScxmlExecutableEntry):
@@ -106,6 +119,9 @@ class ScxmlIf(ScxmlExecutableEntry):
     def set_callback_type(self, cb_type: CallbackType) -> None:
         """Set the cb type for this entry and its children."""
         self._cb_type = cb_type
+        for _, cond_body in self._conditional_executions:
+            set_execution_body_callback_type(cond_body, cb_type)
+        set_execution_body_callback_type(self._else_execution, cb_type)
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
@@ -115,31 +131,40 @@ class ScxmlIf(ScxmlExecutableEntry):
         """Get the else execution."""
         return self._else_execution
 
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        """Check whether the If entry reads content from the BT Blackboard."""
+    def update_configurable_entry(self, ascxml_declarations: List[AscxmlDeclaration]):
+        """Update the content of all execution bodies in the ScxmlIf statement."""
         for _, cond_body in self._conditional_executions:
-            if has_bt_blackboard_input(cond_body, bt_ports_handler):
-                return True
-        return has_bt_blackboard_input(self._else_execution, bt_ports_handler)
+            update_exec_body_configurable_values(cond_body, ascxml_declarations)
+        update_exec_body_configurable_values(self._else_execution, ascxml_declarations)
 
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> ScxmlExecutionBody:
-        """Instantiate the behavior tree events in the If action, if available."""
-        expanded_condition_bodies: List[ConditionalExecutionBody] = []
-        for condition, exec_body in self._conditional_executions:
-            expanded_condition_bodies.append(
-                (condition, instantiate_exec_body_bt_events(exec_body, instance_id, children_ids))
-            )
-        expanded_else_body = instantiate_exec_body_bt_events(
-            self._else_execution, instance_id, children_ids
+    def get_config_request_receive_events(self) -> Optional[Tuple[str, str]]:
+        """Extract and validate the request-receive event from the 'if' block."""
+        config_events: Optional[Tuple[str, str]] = None
+        # Check the 'else' block first
+        events_list = get_config_entries_request_receive_events(self._else_execution)
+        assert len(events_list) <= 1, get_error_msg(
+            self.get_xml_origin(),
+            f"Expected only one kind of configuration holder, found {len(events_list)}.",
         )
-        return [ScxmlIf(expanded_condition_bodies, expanded_else_body)]
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        for _, exec_body in self._conditional_executions:
-            update_exec_body_bt_ports_values(exec_body, bt_ports_handler)
-        update_exec_body_bt_ports_values(self._else_execution, bt_ports_handler)
+        if len(events_list) > 0:
+            config_events = events_list[0]
+        # And then the remaining conditional bodies
+        for _, cond_body in self._conditional_executions:
+            events_list = get_config_entries_request_receive_events(cond_body)
+            assert len(events_list) <= 1, get_error_msg(
+                self.get_xml_origin(),
+                f"Expected only one kind of configuration holder, found {len(events_list)}.",
+            )
+            if len(events_list) > 0:
+                if config_events is None:
+                    config_events = events_list[0]
+                else:
+                    # Make sure that there is only one pair across all bodies in the If statement.
+                    assert config_events == events_list[0], get_error_msg(
+                        self.get_xml_origin(),
+                        "Expected only one kind of configuration holder, but found more than one.",
+                    )
+        return config_events
 
     def check_validity(self) -> bool:
         valid_conditional_executions = len(self._conditional_executions) > 0 and all(
@@ -153,33 +178,6 @@ class ScxmlIf(ScxmlExecutableEntry):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        """Check if the ros instantiations have been declared."""
-        # Check the executable content
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML if: invalid ROS declarations type provided."
-        for _, exec_body in self._conditional_executions:
-            for exec_entry in exec_body:
-                if not exec_entry.check_valid_ros_instantiations(ros_declarations):
-                    return False
-        for exec_entry in self._else_execution:
-            if not exec_entry.check_valid_ros_instantiations(ros_declarations):
-                return False
-        return True
-
-    def set_thread_id(self, thread_id: int) -> None:
-        """Set the thread ID for the executable entries contained in the if object."""
-        for _, exec_body in self._conditional_executions:
-            for entry in exec_body:
-                if hasattr(entry, "set_thread_id"):
-                    entry.set_thread_id(thread_id)
-        for entry in self._else_execution:
-            if hasattr(entry, "set_thread_id"):
-                entry.set_thread_id(thread_id)
-
     def is_plain_scxml(self) -> bool:
         if type(self) is ScxmlIf:
             return all(
@@ -190,25 +188,28 @@ class ScxmlIf(ScxmlExecutableEntry):
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlIf"]:
-        assert self._cb_type is not None, "Error: SCXML if: callback type not set."
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        assert self._cb_type is not None, get_error_msg(
+            self.get_xml_origin(), "Callback type not set."
+        )
         conditional_executions = []
         for condition, execution in self._conditional_executions:
-            set_execution_body_callback_type(execution, self._cb_type)
             execution_body = as_plain_execution_body(
-                execution, struct_declarations, ros_declarations
+                execution, struct_declarations, ascxml_declarations, **kwargs
             )
-            assert execution_body is not None, "Error: SCXML if: invalid execution body."
+            assert execution_body is not None, get_error_msg(
+                self.get_xml_origin(), "Invalid execution body after conversion."
+            )
             conditional_executions.append(
                 (
                     get_plain_expression(condition, self._cb_type, struct_declarations),
                     execution_body,
                 )
             )
-        set_execution_body_callback_type(self._else_execution, self._cb_type)
         else_execution = as_plain_execution_body(
-            self._else_execution, struct_declarations, ros_declarations
+            self._else_execution, struct_declarations, ascxml_declarations, **kwargs
         )
         return [ScxmlIf(conditional_executions, else_execution)]
 
@@ -222,16 +223,40 @@ class ScxmlIf(ScxmlExecutableEntry):
         new_else_body = replace_string_expressions_in_execution_body(self._else_execution)
         return ScxmlIf(new_cond_execs, new_else_body)
 
+    def add_events_targets(self, events_to_models: EventsToAutomata):
+        """Add the events targets to the execution bodies in the If statement."""
+        if_conditionals: List[ConditionalExecutionBody] = []
+        for cond, cond_body in self._conditional_executions:
+            new_cond_body = []
+            for ex_entry in cond_body:
+                new_cond_body.extend(ex_entry.add_events_targets(events_to_models))
+            if_conditionals.append((cond, new_cond_body))
+        else_body = []
+        for ex_entry in self._else_execution:
+            else_body.extend(ex_entry.add_events_targets(events_to_models))
+        return [ScxmlIf(if_conditionals, else_body)]
+
+    @staticmethod
+    def _append_execution_body_to_xml(xml_parent: XmlElement, exec_body: ScxmlExecutionBody):
+        """
+        Append an execution body to an existing XML element.
+
+        :param xml_parent: The parent XML element to append the executable entries to
+        :param exec_body: The execution body to append
+        """
+        for exec_entry in exec_body:
+            xml_parent.append(exec_entry.as_xml())
+
     def as_xml(self) -> XmlElement:
         # Based on example in https://www.w3.org/TR/scxml/#if
         assert self.check_validity(), "SCXML: found invalid if object."
         first_conditional_execution = self._conditional_executions[0]
         xml_if = ET.Element(ScxmlIf.get_tag_name(), {"cond": first_conditional_execution[0]})
-        append_execution_body_to_xml(xml_if, first_conditional_execution[1])
+        self._append_execution_body_to_xml(xml_if, first_conditional_execution[1])
         for condition, execution in self._conditional_executions[1:]:
             xml_if.append(ET.Element("elseif", {"cond": condition}))
-            append_execution_body_to_xml(xml_if, execution)
+            self._append_execution_body_to_xml(xml_if, execution)
         if len(self._else_execution) > 0:
             xml_if.append(ET.Element("else"))
-            append_execution_body_to_xml(xml_if, self._else_execution)
+            self._append_execution_body_to_xml(xml_if, self._else_execution)
         return xml_if

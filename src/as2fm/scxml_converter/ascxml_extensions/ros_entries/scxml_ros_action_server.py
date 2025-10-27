@@ -24,6 +24,11 @@ from typing import List, Type
 from action_msgs.msg import GoalStatus
 from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
+    RosCallback,
+    RosDeclaration,
+    RosTrigger,
+)
 from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_feedback_event,
@@ -34,11 +39,6 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_thread_execution_start_event,
     generate_action_thread_free_event,
     is_action_type_known,
-)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
-    RosCallback,
-    RosDeclaration,
-    RosTrigger,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType

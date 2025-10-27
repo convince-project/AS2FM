@@ -13,44 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg
-
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry
-
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
-    BtPortsHandler,
-    get_input_variable_as_scxml_expression,
-    is_blackboard_reference,
-    is_removed_bt_event,
-)
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import (
-    BtGetValueInputPort,
-    ScxmlBase,
-    ScxmlParam,
-    ScxmlRosDeclarationsContainer,
-)
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,
     convert_expression_with_object_arrays,
     convert_expression_with_string_literals,
-    generate_tag_to_class_map,
     get_plain_expression,
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
-    read_value_from_xml_child,
+    read_value_from_xml_arg_or_child,
 )
+
 
 class ScxmlAssign(ScxmlExecutableEntry):
     """This class represents a variable assignment."""
@@ -70,15 +57,15 @@ class ScxmlAssign(ScxmlExecutableEntry):
         """
         assert_xml_tag_ok(ScxmlAssign, xml_tree)
         location = get_xml_attribute(ScxmlAssign, xml_tree, "location")
-        expr = get_xml_attribute(ScxmlAssign, xml_tree, "expr", undefined_allowed=True)
-        if expr is None:
-            expr = read_value_from_xml_child(
-                xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
-            )
-            assert expr is not None, "Error: SCXML assign: expr is not valid."
+        assert isinstance(location, str)  # MyPy check
+        expr_types = [str] + AscxmlConfiguration.__subclasses__()
+        expr = read_value_from_xml_arg_or_child(
+            ScxmlAssign, xml_tree, "expr", custom_data_types, expr_types
+        )
+        assert isinstance(expr, (str, AscxmlConfiguration))  # MyPy check
         return ScxmlAssign(location, expr)
 
-    def __init__(self, location: str, expr: Union[str, BtGetValueInputPort]):
+    def __init__(self, location: str, expr: Union[str, AscxmlConfiguration]):
         self._location = location
         self._expr = expr
         self._cb_type: Optional[CallbackType] = None
@@ -91,26 +78,18 @@ class ScxmlAssign(ScxmlExecutableEntry):
         """Get the location to assign."""
         return self._location
 
-    def get_expr(self) -> Union[str, BtGetValueInputPort]:
+    def get_expr(self) -> Union[str, AscxmlConfiguration]:
         """Get the expression to assign."""
         return self._expr
 
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        """Check whether the If entry reads content from the BT Blackboard."""
-        return isinstance(self._expr, BtGetValueInputPort) and is_blackboard_reference(
-            bt_ports_handler.get_port_value(self._expr.get_key_name())
-        )
+    def update_configurable_entry(self, ascxml_declarations: List[AscxmlDeclaration]):
+        if isinstance(self._expr, AscxmlConfiguration):
+            self._expr.update_configured_value(ascxml_declarations)
 
-    def instantiate_bt_events(self, _, __) -> List["ScxmlAssign"]:
-        """This functionality is not needed in this class."""
-        return [self]
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = get_input_variable_as_scxml_expression(
-                bt_ports_handler.get_port_value(self._expr.get_key_name())
-            )
+    def get_config_request_receive_events(self):
+        if isinstance(self._expr, AscxmlConfiguration):
+            return self._expr.get_config_request_response_events()
+        return None
 
     def check_validity(self) -> bool:
         """
@@ -120,7 +99,7 @@ class ScxmlAssign(ScxmlExecutableEntry):
         """
         # TODO: Check that the location to assign exists in the data-model
         valid_location = is_non_empty_string(ScxmlAssign, "location", self._location)
-        valid_expr = is_non_empty_string(ScxmlAssign, "expr", self._expr)
+        valid_expr = isinstance(self._expr, (str, AscxmlConfiguration))
         return valid_location and valid_expr
 
     def check_valid_ros_instantiations(self, _) -> bool:
@@ -134,12 +113,14 @@ class ScxmlAssign(ScxmlExecutableEntry):
         return False
 
     def as_plain_scxml(
-        self, struct_declarations: ScxmlStructDeclarationsContainer, _
-    ) -> List["ScxmlAssign"]:
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
-        assert isinstance(self._expr, str), get_error_msg(
-            self.get_xml_origin(), "Unexpected expr. type."
-        )
+        if isinstance(self._expr, AscxmlConfiguration):
+            self._expr = self._expr.get_configured_value()
         location_type, array_info = struct_declarations.get_data_type(
             self._location, self.get_xml_origin()
         )
@@ -157,7 +138,7 @@ class ScxmlAssign(ScxmlExecutableEntry):
         else:
             expanded_expressions = [self._expr]
             expanded_locations = [self._location]
-        plain_assignments: List[ScxmlAssign] = []
+        plain_assignments: List[ScxmlBase] = []
         for single_expr, single_loc in zip(expanded_expressions, expanded_locations):
             plain_expr = get_plain_expression(single_expr, self._cb_type, struct_declarations)
             plain_location = convert_expression_with_object_arrays(single_loc, struct_declarations)
@@ -166,9 +147,15 @@ class ScxmlAssign(ScxmlExecutableEntry):
 
     def replace_strings_types_with_integer_arrays(self) -> "ScxmlAssign":
         """Replace all string literals in the contained expressions."""
-        return ScxmlAssign(
-            self.get_location(), convert_expression_with_string_literals(self.get_expr())
+        # Make sure that possible configurable values are already evaluated at this point.
+        assert isinstance(self._expr, str), get_error_msg(
+            self.get_xml_origin(), "Expected expression to be already evaluate at this stage."
         )
+        return ScxmlAssign(self.get_location(), convert_expression_with_string_literals(self._expr))
+
+    def add_events_targets(self, _):
+        # Assignments have no events to handle: do nothing!
+        return [deepcopy(self)]
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
