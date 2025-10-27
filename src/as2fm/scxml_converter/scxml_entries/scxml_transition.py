@@ -238,10 +238,9 @@ class ScxmlTransition(ScxmlBase):
             valid_targets = False
         return valid_targets and valid_events and valid_condition
 
-    def set_thread_id(self, thread_id: int) -> None:
-        """Set the thread ID for the executable entries of this transition."""
+    def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
         for target in self._targets:
-            target.set_thread_id(thread_id)
+            target.update_exec_body_configurable_values(ascxml_declarations)
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""

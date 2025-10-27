@@ -17,13 +17,14 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from warnings import warn
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlBase,
@@ -35,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
     set_execution_body_callback_type,
+    update_exec_body_configurable_values,
     valid_execution_body,
     valid_execution_body_entry_types,
 )
@@ -152,12 +154,8 @@ class ScxmlTransitionTarget(ScxmlBase):
             print("Error SCXML transition target: executable content is not valid.")
         return valid_target and valid_probability and valid_body
 
-    def set_thread_id(self, thread_id: int) -> None:
-        """Set the thread ID for the executable entries of this transition."""
-        if self._body is not None:
-            for entry in self._body:
-                if hasattr(entry, "set_thread_id"):
-                    entry.set_thread_id(thread_id)
+    def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
+        update_exec_body_configurable_values(self._body, ascxml_declarations)
 
     def is_plain_scxml(self) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""

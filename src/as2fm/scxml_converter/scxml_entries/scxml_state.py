@@ -17,38 +17,33 @@
 A single state in SCXML. In XML, it has the tag `state`.
 """
 
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Optional
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     EventsToAutomata,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
-    ScxmlRosDeclarationsContainer,
     ScxmlSend,
     ScxmlTransition,
     ScxmlTransitionTarget,
-)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BT_BLACKBOARD_GET,
-    BT_BLACKBOARD_REQUEST,
-    BtPortsHandler,
 )
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     add_targets_to_scxml_sends,
     as_plain_execution_body,
     execution_body_from_xml,
-    has_bt_blackboard_input,
-    instantiate_exec_body_bt_events,
+    get_config_entries_request_receive_events,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
     set_execution_body_callback_type,
+    update_exec_body_configurable_values,
     valid_execution_body,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
@@ -72,7 +67,9 @@ class ScxmlState(ScxmlBase):
             if is_comment(child):
                 continue
             elif child.tag in tag_to_cls:
-                transitions.append(tag_to_cls[child.tag].from_xml_tree(child, custom_data_types))
+                TagClass = tag_to_cls[child.tag]
+                assert issubclass(TagClass, ScxmlTransition)  # MyPy check
+                transitions.append(TagClass.from_xml_tree(child, custom_data_types))
             else:
                 assert child.tag in (
                     "onentry",
@@ -117,9 +114,9 @@ class ScxmlState(ScxmlBase):
         self,
         state_id: str,
         *,
-        on_entry: ScxmlExecutionBody = None,
-        on_exit: ScxmlExecutionBody = None,
-        body: List[ScxmlTransition] = None,
+        on_entry: Optional[ScxmlExecutionBody] = None,
+        on_exit: Optional[ScxmlExecutionBody] = None,
+        body: Optional[List[ScxmlTransition]] = None,
     ):
         """
         Initialize a new ScxmlState object.
@@ -147,19 +144,15 @@ class ScxmlState(ScxmlBase):
         """Return the transitions leaving the state."""
         return self._body
 
-    def set_thread_id(self, thread_idx: int):
-        """Assign the thread ID to the thread-specific transitions in the body."""
-        for entry in self._on_entry + self._on_exit + self._body:
-            # Assign the thread only to the entries supporting it
-            if hasattr(entry, "set_thread_id"):
-                entry.set_thread_id(thread_idx)
-
-    def _generate_blackboard_retrieval(
-        self, bt_ports_handler: BtPortsHandler
-    ) -> List["ScxmlState"]:
+    def _generate_variable_config_retrieval(self):
+        """
+        Split the state in config. request and receive, if there are non constant ones.
+        """
         generated_states: List[ScxmlState] = [self]
+        on_entry_config_events = get_config_entries_request_receive_events(self._on_entry)
+        on_exit_config_events = get_config_entries_request_receive_events(self._on_exit)
         check_assertion(
-            not has_bt_blackboard_input(self._on_entry, bt_ports_handler),
+            len(on_entry_config_events) == 0,
             self.get_xml_origin(),
             (
                 f"Error: SCXML state {self.get_id()}: reading blackboard variables from onentry. "
@@ -167,72 +160,46 @@ class ScxmlState(ScxmlBase):
             ),
         )
         check_assertion(
-            not has_bt_blackboard_input(self._on_exit, bt_ports_handler),
+            len(on_exit_config_events) == 0,
             self.get_xml_origin(),
             (
                 f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
                 "This isn't yet supported."
             ),
         )
-        assert not has_bt_blackboard_input(self._on_exit, bt_ports_handler), (
-            f"Error: SCXML state {self.get_id()}: reading blackboard variables from onexit. "
-            "This isn't yet supported."
-        )
         for transition_idx in range(len(self._body)):
-            if self._body[transition_idx].has_bt_blackboard_input(bt_ports_handler):
+            transition_config_events = get_config_entries_request_receive_events(
+                self._body[transition_idx]
+            )
+            if len(transition_config_events) > 0:
+                check_assertion(
+                    len(transition_config_events) == 1,
+                    self.get_xml_origin(),
+                    "Only one category of variable conf. entries per body are currently supported.",
+                )
                 # For now, make sure this is a transitions with a single target
-                assert (
-                    len(self._body[transition_idx].get_targets()) == 1
-                ), "Blackboard support is not yet compatible with probabilistic transitions."
-                # Prepare the new state using the received BT info
+                check_assertion(
+                    len(self._body[transition_idx].get_targets()) == 1,
+                    self.get_xml_origin(),
+                    "Var. config entries support isn't compatible yet with prob. transitions.",
+                )
+                conf_req_event, conf_rec_event = transition_config_events[0]
+                # Prepare the new state with the original body, using the received config updates
                 states_count = len(generated_states)
                 new_state_id = (
                     f"{self.get_id()}_{self._body[transition_idx].get_tag_name()}_{states_count}"
                 )
                 new_state = ScxmlState(new_state_id)
                 blackboard_transition = ScxmlTransition(
-                    self._body[transition_idx].get_targets(), [BT_BLACKBOARD_GET]
+                    self._body[transition_idx].get_targets(), [conf_rec_event]
                 )
                 new_state.add_transition(blackboard_transition)
                 generated_states.append(new_state)
-                # Set the new target and body to the original transition
+                # Set the new target and body to the original transition: request the conf. updates
                 new_transition_target = ScxmlTransitionTarget(
-                    new_state_id, body=[ScxmlSend(BT_BLACKBOARD_REQUEST)]
+                    new_state_id, body=[ScxmlSend(conf_req_event)]
                 )
                 self._body[transition_idx].set_targets([new_transition_target])
-        return generated_states
-
-    def _substitute_bt_events_and_ports(
-        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
-    ) -> None:
-        instantiated_transitions: List[ScxmlTransition] = []
-        for transition in self._body:
-            new_transitions = transition.instantiate_bt_events(instance_id, children_ids)
-            assert isinstance(new_transitions, list) and all(
-                isinstance(t, ScxmlTransition) for t in new_transitions
-            ), f"Error: SCXML state {self._id}: found invalid transition in state body."
-            instantiated_transitions.extend(new_transitions)
-        self._body = instantiated_transitions
-        self._on_entry = instantiate_exec_body_bt_events(self._on_entry, instance_id, children_ids)
-        self._on_exit = instantiate_exec_body_bt_events(self._on_exit, instance_id, children_ids)
-        self._update_bt_ports_values(bt_ports_handler)
-
-    def _update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        for transition in self._body:
-            transition.update_bt_ports_values(bt_ports_handler)
-        for entry in self._on_entry:
-            entry.update_bt_ports_values(bt_ports_handler)
-        for entry in self._on_exit:
-            entry.update_bt_ports_values(bt_ports_handler)
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int], bt_ports_handler: BtPortsHandler
-    ) -> List["ScxmlState"]:
-        """Instantiate the BT events in all entries belonging to a state."""
-        generated_states = self._generate_blackboard_retrieval(bt_ports_handler)
-        for state in generated_states:
-            state._substitute_bt_events_and_ports(instance_id, children_ids, bt_ports_handler)
         return generated_states
 
     def add_transition(self, transition: ScxmlTransition) -> None:
@@ -275,31 +242,6 @@ class ScxmlState(ScxmlBase):
             print(f"Error: SCXML state {self._id}: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        """Check if the ros instantiations have been declared."""
-        valid_entry = ScxmlState._check_valid_ros_instantiations(self._on_entry, ros_declarations)
-        valid_exit = ScxmlState._check_valid_ros_instantiations(self._on_exit, ros_declarations)
-        valid_body = ScxmlState._check_valid_ros_instantiations(self._body, ros_declarations)
-        if not valid_entry:
-            print(f"Error: SCXML state {self._id}: onentry has invalid ROS instantiations.")
-        if not valid_exit:
-            print(f"Error: SCXML state {self._id}: onexit has invalid ROS instantiations.")
-        if not valid_body:
-            print(f"Error: SCXML state {self._id}: found invalid transition in state body.")
-        return valid_entry and valid_exit and valid_body
-
-    @staticmethod
-    def _check_valid_ros_instantiations(
-        body: Sequence[Union[ScxmlExecutableEntry, ScxmlTransition]],
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> bool:
-        """Check if the ros instantiations have been declared in the body."""
-        return len(body) == 0 or all(
-            entry.check_valid_ros_instantiations(ros_declarations) for entry in body
-        )
-
     def is_plain_scxml(self) -> bool:
         """Check if all SCXML entries in the state are plain scxml."""
         plain_entry = is_plain_execution_body(self._on_entry)
@@ -307,20 +249,52 @@ class ScxmlState(ScxmlBase):
         plain_body = all(transition.is_plain_scxml() for transition in self._body)
         return plain_entry and plain_exit and plain_body
 
+    def _as_plain_scxml_replacements(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> "ScxmlState":
+        """Implementation of plain scxml sub-entries conversion."""
+        set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
+        set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
+        plain_entry = as_plain_execution_body(
+            self._on_entry, struct_declarations, ascxml_declarations, **kwargs
+        )
+        plain_exit = as_plain_execution_body(
+            self._on_exit, struct_declarations, ascxml_declarations, **kwargs
+        )
+        plain_body: List[ScxmlBase] = []
+        for entry in self._body:
+            plain_body.extend(
+                entry.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+            )
+        assert all(isinstance(entry, ScxmlTransition) for entry in plain_body)  # MyPy check
+        return ScxmlState(
+            self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body
+        )  # type: ignore
+
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlState"]:
-        """Convert the ROS-specific entries to be plain SCXML"""
-        set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
-        set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
-        plain_entry = as_plain_execution_body(self._on_entry, struct_declarations, ros_declarations)
-        plain_exit = as_plain_execution_body(self._on_exit, struct_declarations, ros_declarations)
-        plain_body: List[ScxmlTransition] = []
-        for entry in self._body:
-            plain_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
-        return [ScxmlState(self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body)]
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        """Remove framework specific entries and make a state containing only plain SCXML."""
+        # Update the value of all AscxmlConfig entries in the state
+        update_exec_body_configurable_values(self._on_entry, ascxml_declarations)
+        update_exec_body_configurable_values(self._on_exit, ascxml_declarations)
+        for transition in self._body:
+            transition.update_exec_body_configurable_values(ascxml_declarations)
+        # Expand the state to get possible variable config entries
+        expanded_states = self._generate_variable_config_retrieval()
+        plain_states: List[ScxmlBase] = []
+        for new_state in expanded_states:
+            new_state._as_plain_scxml_replacements(
+                struct_declarations, ascxml_declarations, **kwargs
+            )
+            plain_states.append(new_state)
+        return plain_states
 
     def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
         """Update all send event tags to include the target scxml model."""
