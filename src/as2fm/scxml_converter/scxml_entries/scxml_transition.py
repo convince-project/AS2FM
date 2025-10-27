@@ -31,7 +31,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     EventsToAutomata,
     ScxmlExecutableEntry,
     add_targets_to_scxml_sends,

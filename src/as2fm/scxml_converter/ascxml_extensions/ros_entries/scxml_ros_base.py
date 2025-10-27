@@ -36,7 +36,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransition,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     set_execution_body_callback_type,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
@@ -162,7 +162,7 @@ class RosDeclaration(AscxmlDeclaration):
         raise RuntimeError(
             f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML."
         )
-    
+
     def is_plain_scxml(self):
         return False
 

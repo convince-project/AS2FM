@@ -16,7 +16,7 @@
 """Declaration of a generic ASCXML Configuration superclass."""
 
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
@@ -33,6 +33,7 @@ class AscxmlConfiguration(ScxmlBase):
 
     def __init__(self):
         self._entry_value: Optional[str] = None
+        self._is_constant_value: Optional[bool] = None
 
     @abstractmethod
     def update_configured_value(self, ascxml_declarations: List[AscxmlDeclaration]):
@@ -41,7 +42,22 @@ class AscxmlConfiguration(ScxmlBase):
 
     def get_configured_value(self) -> str:
         """Retrieve the previously configured value."""
-        assert self._entry_value is not None, get_error_msg(
+        assert self._entry_value is not None and self._is_constant_value is not None, get_error_msg(
             self.get_xml_origin(), "The entry value is not yet set."
         )
         return self._entry_value
+
+    def is_constant_value(self) -> bool:
+        assert self._is_constant_value is not None, get_error_msg(
+            self.get_xml_origin(), "The entry value is not yet set."
+        )
+        return self._is_constant_value
+
+    @abstractmethod
+    def get_config_request_response_events(self) -> Optional[Tuple[str, str]]:
+        """
+        A method returning the events to request and receive the non-constant config values.
+
+        :return: None if the value is constant, a tuple with the request-receive events otherwise.
+        """
+        pass

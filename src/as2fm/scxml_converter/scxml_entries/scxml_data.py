@@ -281,14 +281,25 @@ class ScxmlData(ScxmlBase):
         # TODO: This is fine also in case it is an array of base types...
         if isinstance(self._expr, AscxmlConfiguration):
             self._expr.update_configured_value(ascxml_declarations)
+            assert self._expr.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
             self._expr = self._expr.get_configured_value()
         if isinstance(self._lower_bound, AscxmlConfiguration):
             self._lower_bound.update_configured_value(ascxml_declarations)
+            assert self._lower_bound.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
             self._lower_bound = self._lower_bound.get_configured_value()
         if isinstance(self._upper_bound, AscxmlConfiguration):
             self._upper_bound.update_configured_value(ascxml_declarations)
+            assert self._upper_bound.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
             self._upper_bound = self._upper_bound.get_configured_value()
-        # TODO: CHeck that no expression is relating to a blackboard / event variable
         if self._is_plain_type():
             return [self]
         data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())

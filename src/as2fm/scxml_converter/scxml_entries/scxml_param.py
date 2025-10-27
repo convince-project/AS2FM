@@ -23,8 +23,8 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
-from as2fm.as2fm_common.logging import check_assertion
-from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
@@ -93,6 +93,12 @@ class ScxmlParam(ScxmlBase):
     def get_expr(self) -> Optional[Union[AscxmlConfiguration, str]]:
         return self._expr
 
+    def evaluate_expr(self, ascxml_declarations: List[AscxmlDeclaration]):
+        """Replace expression of type AscxmlConfiguration with their current value."""
+        if isinstance(self._expr, AscxmlConfiguration):
+            self._expr.update_configured_value(ascxml_declarations)
+            self._expr = self._expr.get_configured_value()
+
     def check_validity(self) -> bool:
         valid_name = is_non_empty_string(ScxmlParam, "name", self._name)
         valid_expr = isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
@@ -109,9 +115,10 @@ class ScxmlParam(ScxmlBase):
         )
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        if isinstance(self._expr, AscxmlConfiguration):
-            self._expr.update_configured_value(ascxml_declarations)
-            self._expr = self._expr.get_configured_value()
+        assert not isinstance(self._expr, AscxmlConfiguration), get_error_msg(
+            self.xml_origin(),
+            "Expressions with conf. entries should be already evaluated at this stage.",
+        )
         plain_params: List[ScxmlParam] = []
         assert isinstance(self._expr, str)
         if has_operators(self._expr, self.get_xml_origin()) or is_literal(

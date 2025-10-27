@@ -26,6 +26,8 @@ from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
     get_input_variable_as_scxml_expression,
     is_blackboard_reference,
 )
@@ -69,6 +71,7 @@ class BtGetValueInputPort(AscxmlConfiguration):
                     assert self._entry_value is not None, get_error_msg(
                         self.get_xml_origin(), f"BT port {self._key} has no assigned value."
                     )
+                    self._is_constant_value = self.has_blackboard_reference()
         raise RuntimeError(
             get_error_msg(self.get_xml_origin(), f"Cannot find declaration of BT port {self._key}.")
         )
@@ -76,10 +79,18 @@ class BtGetValueInputPort(AscxmlConfiguration):
     def get_configured_value(self):
         return get_input_variable_as_scxml_expression(super().get_configured_value())
 
+    def get_config_request_response_events(self):
+        assert self._is_constant_value is not None, get_error_msg(
+            self.get_xml_origin(), "The entry wasn't initialized with the port's values yet."
+        )
+        if self._is_constant_value:
+            return None
+        return (BT_BLACKBOARD_REQUEST, BT_BLACKBOARD_GET)
+
     def has_blackboard_reference(self):
         """Check if the BT port getter refers to a blackboard entry."""
         assert self._entry_value is not None, get_error_msg(
-            self.get_xml_origin(), "The entry did not get updated with the port's values yet."
+            self.get_xml_origin(), "The entry wasn't initialized with the port's values yet."
         )
         return is_blackboard_reference(self._entry_value)
 

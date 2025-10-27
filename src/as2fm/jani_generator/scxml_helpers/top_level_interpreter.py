@@ -48,12 +48,12 @@ from as2fm.scxml_converter.bt_converter import (
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     EventsToAutomata,
+    ScxmlAssign,
+    ScxmlData,
     ScxmlRoot,
+    ScxmlTransition,
     load_scxml_file,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_data import ScxmlData
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import ScxmlAssign
-from as2fm.scxml_converter.scxml_entries.scxml_transition import ScxmlTransition
 
 
 def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:

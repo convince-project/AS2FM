@@ -40,7 +40,7 @@ from as2fm.scxml_converter.scxml_entries.bt_utils import (
     BT_BLACKBOARD_REQUEST,
     BtPortsHandler,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     add_targets_to_scxml_sends,
     as_plain_execution_body,
     execution_body_from_xml,

@@ -5,13 +5,13 @@ from .utils import CallbackType  # noqa: F401
 from .scxml_param import ScxmlParam  # noqa: F401
 from .scxml_data import ScxmlData  # noqa: F401
 from .scxml_data_model import ScxmlDataModel  # noqa: F401
-from .scxml_executable_entries import ScxmlAssign, ScxmlIf, ScxmlSend  # noqa: F401
-from .scxml_executable_entries import (  # noqa: F401
+from .scxml_executable_entry import ScxmlAssign, ScxmlIf, ScxmlSend  # noqa: F401
+from .scxml_executable_entry import (  # noqa: F401
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
     EventsToAutomata,
 )  # noqa: F401
-from .scxml_executable_entries import (  # noqa: F401
+from .scxml_executable_entry import (  # noqa: F401
     execution_body_from_xml,
     as_plain_execution_body,
     execution_entry_from_xml,

@@ -17,6 +17,7 @@
 Definition of SCXML Tags that can be part of executable content
 """
 
+from abc import abstractmethod
 from copy import deepcopy
 from typing import Dict, List, Optional, Set, Tuple, Union, get_args
 
@@ -54,33 +55,34 @@ from as2fm.scxml_converter.scxml_entries.xml_utils import (
     read_value_from_xml_child,
 )
 
-# Use delayed type evaluation: https://peps.python.org/pep-0484/#forward-references
-ScxmlExecutableEntry = Union["ScxmlAssign", "ScxmlIf", "ScxmlSend"]
-ScxmlExecutionBody = List[ScxmlExecutableEntry]
+ScxmlExecutionBody = List["ScxmlExecutableEntry"]
 ConditionalExecutionBody = Tuple[str, ScxmlExecutionBody]
 # Map each event ID to a list of automata transitioning using that event
 EventsToAutomata = Dict[str, Set[str]]
 
 
-def instantiate_exec_body_bt_events(
-    exec_body: Optional[ScxmlExecutionBody], instance_id: int, children_ids: List[int]
-) -> Optional[ScxmlExecutionBody]:
-    """
-    Instantiate the behavior tree events in the execution body.
+def update_exec_body_configurable_values(
+    exec_body: Optional[ScxmlExecutionBody], ascxml_declarations: List[AscxmlDeclaration]
+):
+    """Update the value of each configurable entry in the execution body."""
+    if exec_body is not None:
+        for entry in exec_body:
+            entry.update_configurable_entry(ascxml_declarations)
 
-    :param exec_body: The execution body to instantiate the BT events in
-    :param instance_id: The instance ID of the BT node
+
+def get_config_entries_request_receive_events(
+    exec_body: Optional[ScxmlExecutionBody],
+) -> List[Tuple[str, str]]:
     """
-    if exec_body is None:
-        return None
-    processed_body: ScxmlExecutionBody = []
-    for entry in exec_body:
-        processed_entry = entry.instantiate_bt_events(instance_id, children_ids)
-        assert processed_entry is not None and valid_execution_body_entry_types(
-            processed_entry
-        ), f"Error instantiating BT events in {entry.get_tag_name()}: expected to get a list."
-        processed_body.extend(processed_entry)
-    return processed_body
+    Get the request-receive event pairs associated to all config. entries in the executable body.
+    """
+    body_conf_events: List[Tuple[str, str]] = []
+    if exec_body is not None:
+        for entry in exec_body:
+            config_events = entry.get_config_request_receive_events()
+            if config_events is not None and config_events not in body_conf_events:
+                body_conf_events.append(config_events)
+    return body_conf_events
 
 
 def update_exec_body_bt_ports_values(
@@ -107,6 +109,21 @@ def has_bt_blackboard_input(
         if entry.has_bt_blackboard_input(bt_ports_info):
             return True
     return False
+
+
+class ScxmlExecutableEntry(ScxmlBase):
+    """Generic class for entries that can be part of an executable block."""
+
+    @abstractmethod
+    def update_configurable_entry(self, ascxml_declarations: List[AscxmlDeclaration]):
+        """Update possible configurable entries in the executable object."""
+        pass
+
+    @abstractmethod
+    def get_config_request_receive_events(self) -> Optional[Tuple[str, str]]:
+        """
+        Return the events for requesting-receiving the updated value of a conf. entry, if any."""
+        pass
 
 
 class ScxmlIf(ScxmlBase):

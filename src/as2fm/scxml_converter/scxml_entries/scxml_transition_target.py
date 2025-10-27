@@ -30,7 +30,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     execution_body_from_xml,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
