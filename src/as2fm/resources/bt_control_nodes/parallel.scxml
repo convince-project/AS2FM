@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="init"
+    version="1.0"
+    name="Parallel"
+    model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/controls/parallel_node.cpp">
+
+    <!-- BT ports -->
+    <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
+    <bt_declare_port_in key="success_threshold" type="int8" />
+    <bt_declare_port_in key="failure_threshold" type="int8" />
+
+    <datamodel>
+        <data id="children_count" type="int8">
+            <expr>
+                <bt_get_input key="CHILDREN_COUNT" />
+            </expr>
+        </data>
+        <data id="success_threshold" type="int8">
+            <expr>
+                <bt_get_input key="success_threshold" />
+            </expr>
+        </data>
+        <data id="failure_threshold" type="int8">
+            <expr>
+                <bt_get_input key="failure_threshold" />
+            </expr>
+        </data>
+
+        <!-- Loop and counters -->
+        <data id="current_child_idx" type="int8" expr="0" />
+        <data id="success_count" type="int16" expr="0" />
+        <data id="failure_count" type="int16" expr="0" />
+    </datamodel>
+
+    <state id="init">
+        <!-- Validate configuration -->
+        <transition target="error" cond="children_count &lt;= 0" />
+        <transition target="error" cond="success_threshold &lt; 1 || success_threshold &gt; children_count" />
+        <transition target="error" cond="failure_threshold &lt; 1 || failure_threshold &gt; children_count" />
+        <transition target="wait_for_tick" />
+    </state>
+
+    <state id="wait_for_tick">
+        <bt_tick target="tick_children_init" />
+        <bt_halt target="halting_on_parent_halt">
+            <assign location="current_child_idx" expr="0" />
+        </bt_halt>
+    </state>
+
+    <state id="tick_children_init">
+        <onentry>
+            <assign location="current_child_idx" expr="0" />
+            <assign location="success_count" expr="0" />
+            <assign location="failure_count" expr="0" />
+        </onentry>
+        <transition cond="children_count == 0" target="wait_for_tick">
+            <bt_return_status status="SUCCESS" />
+        </transition>
+        <transition target="tick_current_child" />
+    </state>
+
+    <state id="tick_current_child">
+
+        <onentry>
+            <!-- Note: id can be an expression referring to current index -->
+            <bt_tick_child id="current_child_idx" />
+        </onentry>
+        
+        <!-- If all children processed and no threshold met, we are RUNNING -->
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <bt_return_status status="RUNNING" />
+        </transition>
+
+        <!-- Tick current child -->
+
+
+        <!-- Collect child result -->
+        <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="eval_after_child">
+            <assign location="success_count" expr="success_count + 1" />
+        </bt_child_status>
+        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="eval_after_child">
+            <assign location="failure_count" expr="failure_count + 1" />
+        </bt_child_status>
+        <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="eval_after_child" />
+    </state>
+
+    <state id="eval_after_child">
+        <!-- Threshold checks -->
+        <transition cond="success_count &gt;= success_threshold" target="halting_after_success">
+            <assign location="current_child_idx" expr="0" />
+        </transition>
+        <transition cond="failure_count &gt;= failure_threshold" target="halting_after_failure">
+            <assign location="current_child_idx" expr="0" />
+        </transition>
+
+        <!-- Move to next child -->
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="tick_current_child" />
+    </state>
+
+    <!-- Halt all children, then return SUCCESS -->
+    <state id="halting_after_success">
+        <onentry>
+            <bt_halt_child id="current_child_idx" />
+        </onentry>
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <bt_return_status status="SUCCESS" />
+        </transition>
+
+        <bt_child_halted id="current_child_idx" target="halting_after_success_next" />
+    </state>
+
+    <state id="halting_after_success_next">
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="halting_after_success" />
+    </state>
+
+    <!-- Halt all children, then return FAILURE -->
+    <state id="halting_after_failure">
+        <onentry>
+            <bt_halt_child id="current_child_idx" />
+        </onentry>
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <bt_return_status status="FAILURE" />
+        </transition>
+        <bt_child_halted id="current_child_idx" target="halting_after_failure_next" />
+    </state>
+
+    <state id="halting_after_failure_next">
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="halting_after_failure" />
+    </state>
+
+    <!-- Handle parent HALT: halt all children then return HALTED -->
+    <state id="halting_on_parent_halt">
+        <onentry>
+            <bt_halt_child id="current_child_idx" />
+        </onentry>
+
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <bt_return_halted />
+        </transition>
+        <bt_child_halted id="current_child_idx" target="halting_on_parent_halt_next" />
+    </state>
+
+    <state id="halting_on_parent_halt_next">
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="halting_on_parent_halt" />
+    </state>
+
+    <state id="error" />
+</scxml>
