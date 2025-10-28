@@ -35,7 +35,10 @@ as2fm_bt_only_verification \
     --seed 42 \
     --bt-tick-rate 1.0 \
     --max-time 100 \
-    --jani-out-file bt_verification.jani
+    --jani-out-file bt_verification.jani \
+    --condition-success-probability 0.8 \
+    --action-success-probability 0.7 \
+    --action-running-probability 0.2
 
 if [ $? -eq 0 ]; then
     echo ""

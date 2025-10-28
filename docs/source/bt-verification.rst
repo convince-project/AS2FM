@@ -28,22 +28,35 @@ Implementation
 
 ### Mock Plugin Generator
 
-The core of the implementation is the `MockBtPluginGenerator` class in `src/as2fm/scxml_converter/mock_bt_generator.py`:
+The implementation uses SCXML template files for generating mock BT plugins, providing better readability and maintainability:
 
 .. code-block:: python
 
-    class MockBtPluginGenerator:
-        def __init__(self, seed: Optional[int] = None):
-            """Initialize with optional random seed for reproducibility."""
+    from as2fm.scxml_converter.mock_bt_generator import create_mock_bt_converter_scxml
 
-        def generate_mock_condition_plugin(self, condition_id: str) -> ScxmlRoot:
-            """Generate mock condition that returns SUCCESS or FAILURE."""
+    # Generate mock BT converter using SCXML templates
+    scxml_models = create_mock_bt_converter_scxml(
+        bt_xml_path="bt.xml",
+        bt_tick_rate=2.0,
+        tick_if_not_running=True,
+        custom_data_types={},
+        seed=42,
+        condition_success_probability=0.8,  # Customize condition behavior
+        action_success_probability=0.7,     # Customize action behavior
+        action_running_probability=0.2      # Customize running behavior
+    )
 
-        def generate_mock_action_plugin(self, action_id: str) -> ScxmlRoot:
-            """Generate mock action that returns SUCCESS, FAILURE, or RUNNING."""
+**Template Files:**
+- `src/as2fm/resources/mock_bt_nodes/mock_condition.scxml` - Template for condition nodes
+- `src/as2fm/resources/mock_bt_nodes/mock_action.scxml` - Template for action nodes
 
-        def generate_mock_plugins_from_bt_xml(self, bt_xml_path: str) -> Dict[str, ScxmlRoot]:
-            """Generate mock plugins for all conditions and actions in BT XML."""
+**Benefits of SCXML Template Approach:**
+- **Readability**: Templates are human-readable and easy to understand
+- **Maintainability**: Easy to modify mock behavior by editing template files
+- **Consistency**: Uses the same approach as BT control nodes
+- **Customization**: Simple template-based parameter substitution
+- **Separation of Concerns**: Logic separated from code generation
+- **Debugging**: Easier to debug and verify mock behavior
 
 ### Mock Plugin Behavior
 
@@ -252,6 +265,46 @@ Usage Examples
 
 ### Basic Usage
 
+.. code-block:: python
+
+    from as2fm.scxml_converter.mock_bt_generator import create_mock_bt_converter_scxml
+
+    # Generate mock BT converter with custom probabilities
+    scxml_models = create_mock_bt_converter_scxml(
+        bt_xml_path="my_bt.xml",
+        bt_tick_rate=2.0,
+        tick_if_not_running=True,
+        custom_data_types={},
+        seed=42,
+        condition_success_probability=0.8,  # 80% success for conditions
+        action_success_probability=0.7,     # 70% success for actions
+        action_running_probability=0.2      # 20% running for actions
+    )
+
+### Advanced Usage with Custom Probabilities
+
+.. code-block:: python
+
+    from as2fm.scxml_converter.mock_bt_generator import generate_mock_plugins_scxml
+
+    # Generate individual mock plugins with different probabilities
+    mock_plugins = generate_mock_plugins_scxml(
+        bt_xml_path="my_bt.xml",
+        condition_success_probability=0.9,  # High reliability conditions
+        action_success_probability=0.6,     # Moderate reliability actions
+        action_running_probability=0.3,     # More running states
+        seed=123
+    )
+
+### Template Customization
+
+To modify mock behavior, edit the template files directly:
+
+- Edit `src/as2fm/resources/mock_bt_nodes/mock_condition.scxml` for condition behavior
+- Edit `src/as2fm/resources/mock_bt_nodes/mock_action.scxml` for action behavior
+
+### Command Line Usage
+
 1. **Create BT XML file:**
 
    .. code-block:: xml
@@ -358,7 +411,6 @@ Potential future improvements to the BT-only verification feature:
 
 1. **Configurable Probabilities**: Allow user-defined success/failure probabilities
 2. **Temporal Properties**: Support for time-based BT properties
-3. **Blackboard Integration**: Mock blackboard variables for complex BT state
-4. **Custom Mock Behaviors**: User-defined mock plugin behaviors
-5. **Property Templates**: Pre-defined property templates for common BT patterns
-6. **Visualization**: Tools for visualizing BT execution paths and properties
+3. **Custom Mock Behaviors**: User-defined mock plugin behaviors
+4. **Property Templates**: Pre-defined property templates for common BT patterns
+5. **Visualization**: Tools for visualizing BT execution paths and properties

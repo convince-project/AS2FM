@@ -150,6 +150,24 @@ def main_bt_only_verification(_args: Optional[Sequence[str]] = None) -> None:
         default="",
         help="Path to the folder containing the generated plain-SCXML files.",
     )
+    parser.add_argument(
+        "--condition-success-probability",
+        type=float,
+        default=0.5,
+        help="Success probability for condition nodes (default: 0.5).",
+    )
+    parser.add_argument(
+        "--action-success-probability",
+        type=float,
+        default=0.6,
+        help="Success probability for action nodes (default: 0.6).",
+    )
+    parser.add_argument(
+        "--action-running-probability",
+        type=float,
+        default=0.2,
+        help="Running probability for action nodes (default: 0.2).",
+    )
     args = parser.parse_args(_args)
 
     # Validate input files
@@ -173,15 +191,19 @@ def main_bt_only_verification(_args: Optional[Sequence[str]] = None) -> None:
         convert_multiple_scxmls_to_jani,
         preprocess_jani_expressions,
     )
-    from as2fm.scxml_converter.mock_bt_generator import create_mock_bt_converter
+    from as2fm.scxml_converter.mock_bt_generator import create_mock_bt_converter_scxml
 
-    # Generate mock BT SCXML models
-    mock_scxml_models = create_mock_bt_converter(
-        args.bt_xml,
-        args.bt_tick_rate,
-        True,  # Always tick when not running for thorough verification
-        {},  # No custom data types needed for mock plugins
-        args.seed,
+    # Generate mock BT SCXML models using SCXML templates
+    print("Using SCXML template-based mock generation.")
+    mock_scxml_models = create_mock_bt_converter_scxml(
+        bt_xml_path=args.bt_xml,
+        bt_tick_rate=args.bt_tick_rate,
+        tick_if_not_running=True,  # Always tick when not running for thorough verification
+        custom_data_types={},  # No custom data types needed for mock plugins
+        seed=args.seed,
+        condition_success_probability=args.condition_success_probability,
+        action_success_probability=args.action_success_probability,
+        action_running_probability=args.action_running_probability,
     )
 
     # Convert to plain SCXML and collect timers
