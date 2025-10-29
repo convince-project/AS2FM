@@ -20,4 +20,6 @@ from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 class AscxmlThread(ScxmlBase):
     """Base class for thread definition in ASCXML."""
-    pass
+
+    def is_plain_scxml(self):
+        return False

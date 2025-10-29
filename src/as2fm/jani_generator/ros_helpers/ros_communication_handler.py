@@ -117,7 +117,7 @@ class RosCommunicationHandler:
 
         :return: Scxml object representing the necessary file content.
         """
-        NotImplementedError("Method to_scxml must be implemented.")
+        raise NotImplementedError("Method to_scxml must be implemented.")
 
     def _generate_datamodel_from_ros_fields(self, fields: Dict[str, str]) -> List[ScxmlData]:
         """

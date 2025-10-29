@@ -336,6 +336,9 @@ class GenericScxmlRoot(ScxmlBase):
         """
         return self._to_plain_scxml_impl()
 
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
+        raise RuntimeError("Unexpected use of 'as_plain_scxml' for ScxmlRoot objects.")
+
     def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:
         """
         For each "ScxmlSend" instance, add the names of the automata receiving the sent event.

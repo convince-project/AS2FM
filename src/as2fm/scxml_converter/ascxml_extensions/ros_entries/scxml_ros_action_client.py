@@ -116,11 +116,11 @@ class RosActionHandleGoalResponse(RosCallback):
     @classmethod
     def get_callback_type(cls):
         # This class has no children to process: this function is not expected to be used anywhere.
-        RuntimeError("This method shouldn't be called for this class.")
+        raise RuntimeError("This method shouldn't be called for this class.")
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration):
         # This class generates two events: this is implemented in as_plain_scxml
-        RuntimeError("This method shouldn't be called for this class.")
+        raise RuntimeError("This method shouldn't be called for this class.")
 
     @classmethod
     def from_xml_tree_impl(
