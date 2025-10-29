@@ -22,15 +22,15 @@ Based loosely on https://design.ros2.org/articles/actions.html
 from typing import List, Type
 
 from action_msgs.msg import GoalStatus
-from lxml.etree import _Element as XmlElement
 
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosCallback,
     RosDeclaration,
     RosTrigger,
 )
-from as2fm.scxml_converter.scxml_entries import ScxmlParam, ScxmlRosDeclarationsContainer, ScxmlSend
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    check_all_fields_known,
     generate_action_feedback_event,
     generate_action_goal_accepted_event,
     generate_action_goal_handle_event,
@@ -38,8 +38,10 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_action_result_event,
     generate_action_thread_execution_start_event,
     generate_action_thread_free_event,
+    get_action_type_params,
     is_action_type_known,
 )
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
@@ -82,13 +84,9 @@ class RosActionHandleGoalRequest(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_ACTION_GOAL
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_goal_handle_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_goal_handle_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionAcceptGoal(RosTrigger):
@@ -108,20 +106,15 @@ class RosActionAcceptGoal(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
     def check_fields_validity(self, _) -> bool:
         return len(self._params) == 0
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_goal_accepted_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def check_validity(self):
+        return self.check_fields_validity(None) and super().check_validity()
 
-    def as_xml(self) -> XmlElement:
-        assert self.check_fields_validity(None), "Error: SCXML RosActionAcceptGoal: invalid fields."
-        return super().as_xml()
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_goal_accepted_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionRejectGoal(RosTrigger):
@@ -141,21 +134,16 @@ class RosActionRejectGoal(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
     def check_fields_validity(self, _) -> bool:
         # When accepting the goal, we send only the goal_id of the accepted goal
         return len(self._params) == 0
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_goal_rejected_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def check_validity(self):
+        return self.check_fields_validity(None) and super().check_validity()
 
-    def as_xml(self) -> XmlElement:
-        assert self.check_fields_validity(None), "Error: SCXML RosActionRejectGoal: invalid fields."
-        return super().as_xml()
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_goal_rejected_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionStartThread(RosTrigger):
@@ -175,18 +163,15 @@ class RosActionStartThread(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id", "thread_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        """Check if the action server has been declared."""
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
-    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._params)
+        assert isinstance(ascxml_declaration, RosActionServer)
+        goal_fields = get_action_type_params(ascxml_declaration.get_interface_type())[0]
+        return check_all_fields_known(self._params, goal_fields)
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_thread_execution_start_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_thread_execution_start_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionSendFeedback(RosTrigger):
@@ -204,19 +189,15 @@ class RosActionSendFeedback(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
-    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_feedback_fields(
-            self._interface_name, self._params
-        )
+        assert isinstance(ascxml_declaration, RosActionServer)
+        feedback_fields = get_action_type_params(ascxml_declaration.get_interface_type())[1]
+        return check_all_fields_known(self._params, feedback_fields)
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_feedback_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_feedback_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionSendSuccessResult(RosTrigger):
@@ -234,26 +215,26 @@ class RosActionSendSuccessResult(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
-    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_result_fields(self._interface_name, self._params)
+        assert isinstance(ascxml_declaration, RosActionServer)
+        result_fields = get_action_type_params(ascxml_declaration.get_interface_type())[2]
+        return check_all_fields_known(self._params, result_fields)
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_result_event(ascxml_declaration.get_interface_name())
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
-        for p_sends in plain_sends:
-            p_sends.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+        for p_send in plain_sends:
+            assert isinstance(p_send, ScxmlSend)
+            p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_SUCCEEDED}"))
         return plain_sends
 
 
@@ -272,25 +253,26 @@ class RosActionSendCanceledResult(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
     def check_fields_validity(self, _) -> bool:
         """Check if the goal_id and the request fields have been defined."""
         return len(self._params) == 0
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def check_validity(self):
+        return self.check_fields_validity(None) and super().check_validity()
+
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_result_event(ascxml_declaration.get_interface_name())
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
         for p_send in plain_sends:
+            assert isinstance(p_send, ScxmlSend)
             p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_CANCELED}"))
         return plain_sends
 
@@ -310,25 +292,26 @@ class RosActionSendAbortedResult(RosTrigger):
     def get_additional_arguments() -> List[str]:
         return ["goal_id"]
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
     def check_fields_validity(self, _) -> bool:
         """Check if the goal_id and the request fields have been defined."""
         return len(self._params) == 0
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_result_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def check_validity(self):
+        return self.check_fields_validity(None) and super().check_validity()
+
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_result_event(ascxml_declaration.get_interface_name())
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlSend]:
-        plain_sends = super().as_plain_scxml(struct_declarations, ros_declarations)
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        plain_sends = super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
         for p_send in plain_sends:
+            assert isinstance(p_send, ScxmlSend)
             p_send.append_param(ScxmlParam("code", expr=f"{GoalStatus.STATUS_ABORTED}"))
         return plain_sends
 
@@ -351,10 +334,6 @@ class RosActionHandleThreadFree(RosCallback):
     def get_declaration_type() -> Type[RosActionServer]:
         return RosActionServer
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_server_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_action_thread_free_event(
-            ros_declarations.get_action_server_info(self._interface_name)[0]
-        )
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_thread_free_event(ascxml_declaration.get_interface_name())

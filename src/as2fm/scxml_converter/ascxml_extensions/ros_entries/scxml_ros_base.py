@@ -533,7 +533,7 @@ class RosTrigger(ScxmlSend):
         return [ScxmlSend(event_name, plain_params)]
 
     def as_xml(self) -> XmlElement:
-        assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
+        assert self.check_validity(), get_error_msg(self.get_xml_origin(), "Invalid parameters.")
         xml_trigger = ET.Element(self.get_tag_name(), {"name": self._interface_name})
         for arg_name, arg_value in self._additional_args.items():
             xml_trigger.set(arg_name, arg_value)
