@@ -26,7 +26,6 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.logging import check_assertion
-
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import process_bt_child_seq_id
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -108,9 +107,9 @@ class BtGenericRequestHandle(ScxmlTransition):
             )
             return False
         return super().check_validity()
-    
+
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id = kwargs['bt_plugin_id']
+        instance_id = kwargs["bt_plugin_id"]
         self._events = [self.generate_bt_event_name(instance_id)]
         return super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
 
@@ -158,16 +157,16 @@ class BtGenericRequestSend(ScxmlSend):
 
     def check_validity(self) -> bool:
         return isinstance(self._child_seq_id, (int, str))
-    
+
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id: int = kwargs['bt_plugin_id']
-        children_ids: List[int] = kwargs['bt_children_ids']
+        instance_id: int = kwargs["bt_plugin_id"]
+        children_ids: List[int] = kwargs["bt_children_ids"]
         if isinstance(self._child_seq_id, int):
             # We know the exact child ID we want to send the request to
             check_assertion(
-                self._child_seq_id < len(children_ids), self.get_xml_origin(), (
-                    f"Child ID ({self._child_seq_id}) > n. of BT children ({len(children_ids)})."
-                )
+                self._child_seq_id < len(children_ids),
+                self.get_xml_origin(),
+                (f"Child ID ({self._child_seq_id}) > n. of BT children ({len(children_ids)})."),
             )
             return [ScxmlSend(self.generate_bt_event_name(children_ids[self._child_seq_id]))]
         else:
@@ -222,7 +221,7 @@ class BtGenericStatusHandle(ScxmlTransition):
         return cls(child_seq_id, targets, condition)
 
     @classmethod
-    def make_single_target_transition(
+    def make_single_target_transition(  # type: ignore[override]
         cls: Type["BtGenericStatusHandle"],
         child_seq_id: Union[str, int],
         target: str,
@@ -255,10 +254,10 @@ class BtGenericStatusHandle(ScxmlTransition):
         """
         super().__init__(targets, condition=condition)
         self._child_seq_id = process_bt_child_seq_id(type(self), child_seq_id)
-    
+
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id: int = kwargs['bt_plugin_id']
-        children_ids: List[int] = kwargs['bt_children_ids']
+        instance_id: int = kwargs["bt_plugin_id"]
+        children_ids: List[int] = kwargs["bt_children_ids"]
         plain_cond_expr = None
         if self._condition is not None:
             plain_cond_expr = get_plain_expression(self._condition, CallbackType.BT_RESPONSE, None)
@@ -330,9 +329,9 @@ class BtGenericStatusSend(ScxmlSend):
 
     def check_validity(self) -> bool:
         return True
-    
+
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id: int = kwargs['bt_plugin_id']
+        instance_id: int = kwargs["bt_plugin_id"]
         return [ScxmlSend(self.generate_bt_event_name(instance_id))]
 
     def as_xml(self) -> XmlElement:
