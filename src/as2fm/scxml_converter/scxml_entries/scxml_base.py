@@ -49,11 +49,12 @@ class ScxmlBase:
         return instance
 
     @classmethod
+    @abstractmethod
     def from_xml_tree_impl(
         cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> Self:
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
-        raise NotImplementedError
+        pass
 
     def set_custom_data_types(self, custom_data_types: Dict[str, StructDefinition]):
         """Save container with custom data types."""
@@ -85,10 +86,12 @@ class ScxmlBase:
         pass
 
     @abstractmethod
-    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs) -> List["ScxmlBase"]:
-        """""
+    def as_plain_scxml(
+        self, struct_declarations, ascxml_declarations, **kwargs
+    ) -> List["ScxmlBase"]:
+        """
         Convert the object to its plain SCXML  version.
-        
+
         :param struct_declarations: List of custom structures defined in the model
         :param ascxml_declarations: Additional declarations, like ROS or BT specific ones
         :param kwargs: Additional framework specific entries, e.g. the BT plugin ID.

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Type
+from typing import List, Type
 
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosActionThread, RosDeclaration
@@ -53,33 +53,3 @@ class AscxmlRootROS(GenericScxmlRoot):
             action_thread, RosActionThread
         ), f"Error: ASCXML root: invalid action thread type {type(action_thread)}."
         self._ascxml_threads.append(action_thread)
-
-    # def _check_valid_ros_declarations(self) -> bool:
-    #     """Check if the ros declarations and instantiations are valid."""
-    #     # Prepare the ROS declarations, to check no undefined ros instances exist
-    #     ros_decl_container = self._generate_ros_declarations_helper()
-    #     if ros_decl_container is None:
-    #         return False
-    #     # Check the ROS instantiations
-    #     if not all(
-    #         state.check_valid_ros_instantiations(ros_decl_container) for state in self._states
-    #     ):
-    #         return False
-    #     if not all(
-    #         isinstance(scxml_thread, RosActionThread)
-    #         and scxml_thread.check_valid_ros_instantiations(ros_decl_container)
-    #         for scxml_thread in self._ascxml_threads
-    #     ):
-    #         return False
-    #     return True
-
-    # def _generate_ros_declarations_helper(self) -> Optional[ScxmlRosDeclarationsContainer]:
-    #     """Generate a HelperRosDeclarations object from the existing ROS declarations."""
-    #     ros_decl_container = ScxmlRosDeclarationsContainer(self._name)
-    #     for ros_declaration in self._ros_declarations:
-    #         if not (
-    #             ros_declaration.check_validity() and ros_declaration.check_valid_instantiation()
-    #         ):
-    #             return None
-    #         ros_decl_container.append_ros_declaration(ros_declaration)
-    #     return ros_decl_container

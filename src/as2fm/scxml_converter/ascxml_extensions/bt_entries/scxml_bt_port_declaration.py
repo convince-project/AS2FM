@@ -17,7 +17,7 @@
 SCXML entries related to Behavior Trees' Ports declaration.
 """
 
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -66,8 +66,8 @@ class BtGenericPortDeclaration(AscxmlDeclaration):
 
     def get_key_value(self) -> Optional[str]:
         return self._value
-    
-    def preprocess_declaration(self, _: List[AscxmlDeclaration]):
+
+    def preprocess_declaration(self, ascxml_declarations, **kwargs):
         # Nothing to do here!
         pass
 

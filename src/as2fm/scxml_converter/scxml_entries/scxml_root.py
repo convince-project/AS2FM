@@ -291,7 +291,9 @@ class GenericScxmlRoot(ScxmlBase):
         main_scxml = ScxmlRoot(self._name)
         main_scxml._initial_state = self._initial_state
         for ascxml_decl in self._ascxml_declarations:
-            ascxml_decl.preprocess_declaration(self._ascxml_declarations)
+            ascxml_decl.preprocess_declaration(
+                self._ascxml_declarations, model_name=self._name, **kwargs
+            )
         data_information = ScxmlStructDeclarationsContainer(
             self._name, self._data_model, self.get_custom_data_types()
         )

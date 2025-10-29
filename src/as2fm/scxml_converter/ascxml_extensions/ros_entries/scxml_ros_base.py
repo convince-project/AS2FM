@@ -138,6 +138,14 @@ class RosDeclaration(AscxmlDeclaration):
         assert isinstance(self._interface_alias, str)  # MyPy  check
         return self._interface_alias
 
+    def set_node_name(self, node_name: str):
+        """Setter for the node name related to the ROS declaration."""
+        self._node_name = node_name
+
+    def get_node_name(self) -> str:
+        """Getter for the node name related to the ROS declaration."""
+        return self._node_name
+
     @abstractmethod
     def check_valid_interface_type(self) -> bool:
         """Ensure the type of the declared interface is a valid ROS type."""
@@ -155,7 +163,11 @@ class RosDeclaration(AscxmlDeclaration):
         """Check if the interface name is still undefined (i.e. from BT ports)."""
         return is_non_empty_string(type(self), "interface_name", self._interface_name)
 
-    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
+    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration], **kwargs):
+        assert "model_name" in kwargs, get_error_msg(
+            self.get_xml_origin(), "'model_name' not defined when processing a ROS declaration."
+        )
+        self.set_node_name(kwargs["model_name"])
         if isinstance(self._interface_name, AscxmlConfiguration):
             self._interface_name.update_configured_value(ascxml_declarations)
             assert self._interface_name.is_constant_value(), get_error_msg(
@@ -242,7 +254,7 @@ class RosCallback(ScxmlTransition):
         return interface_decl
 
     @classmethod
-    def make_single_target_transition(
+    def make_single_target_transition(  # type: ignore[override]
         cls: Type[Self],
         interface_decl: Union[str, RosDeclaration],
         target: str,

@@ -25,6 +25,6 @@ class AscxmlDeclaration(ScxmlBase):
     """Base class for any declarations in SCXML."""
 
     @abstractmethod
-    def preprocess_declaration(self, ascxml_declarations: List["AscxmlDeclaration"]):
+    def preprocess_declaration(self, ascxml_declarations: List["AscxmlDeclaration"], **kwargs):
         """Update the content of this declaration if needed, using the other declarations."""
         pass
