@@ -17,10 +17,11 @@
 Container for a single parameter, sent within an event. In XML, it has the tag `param`.
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
@@ -50,18 +51,18 @@ class ScxmlParam(ScxmlBase):
 
     @classmethod
     def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
+        cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> "ScxmlParam":
         """Create a ScxmlParam object from an XML tree."""
-        assert_xml_tag_ok(ScxmlParam, xml_tree)
-        name = get_xml_attribute(ScxmlParam, xml_tree, "name")
+        assert_xml_tag_ok(cls, xml_tree)
+        name = get_xml_attribute(cls, xml_tree, "name")
         assert name is not None  # MyPy check
         valid_expr_types = AscxmlConfiguration.__subclasses__() + [str]
         expr = read_value_from_xml_arg_or_child(
-            ScxmlParam, xml_tree, "expr", custom_data_types, valid_expr_types
+            cls, xml_tree, "expr", custom_data_types, valid_expr_types
         )
         assert isinstance(expr, (str, AscxmlConfiguration))  # MyPy check
-        return ScxmlParam(name, expr=expr)
+        return cls(name, expr=expr)
 
     def __init__(
         self,
@@ -104,9 +105,9 @@ class ScxmlParam(ScxmlBase):
             self._expr = self._expr.get_configured_value()
 
     def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(ScxmlParam, "name", self._name)
+        valid_name = is_non_empty_string(type(self), "name", self._name)
         valid_expr = isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
-            ScxmlParam, "expr", self._expr
+            type(self), "expr", self._expr
         )
         return valid_name and valid_expr
 
@@ -152,6 +153,6 @@ class ScxmlParam(ScxmlBase):
         return isinstance(self._expr, str)
 
     def as_xml(self) -> XmlElement:
-        check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid object instance.")
-        xml_param = ET.Element(ScxmlParam.get_tag_name(), {"name": self._name, "expr": self._expr})
+        check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid parameter.")
+        xml_param = ET.Element(self.get_tag_name(), {"name": self._name, "expr": self._expr})
         return xml_param

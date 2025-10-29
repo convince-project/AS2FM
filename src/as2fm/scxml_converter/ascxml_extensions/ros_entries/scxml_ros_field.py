@@ -15,24 +15,15 @@
 
 """Declaration of the ROS Field SCXML tag extension."""
 
-from typing import Dict, Optional, Union
+from typing import List
 
-from lxml import etree as ET
-from lxml.etree import _Element as XmlElement
-
-from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlParam
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     ROS_FIELD_PREFIX,
-    CallbackType,
     get_plain_expression,
-    is_non_empty_string,
-)
-from as2fm.scxml_converter.scxml_entries.xml_utils import (
-    assert_xml_tag_ok,
-    get_xml_attribute,
-    read_value_from_xml_arg_or_child,
 )
 
 
@@ -43,45 +34,24 @@ class RosField(ScxmlParam):
     def get_tag_name() -> str:
         return "field"
 
-    @classmethod
-    def from_xml_tree_impl(
-        cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
-    ) -> "RosField":
-        """Create a RosField object from an XML tree."""
-        assert_xml_tag_ok(RosField, xml_tree)
-        name = get_xml_attribute(RosField, xml_tree, "name")
-        expr = read_value_from_xml_arg_or_child(
-            RosField, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
-        )
-        return RosField(name, expr)
-
-    def __init__(self, name: str, expr: Union[BtGetValueInputPort, str]):
-        self._name = name
-        self._expr = expr
-        self._cb_type: Optional[CallbackType] = None
-        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
-
-    def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(RosField, "name", self._name)
-        valid_expr = isinstance(self._expr, BtGetValueInputPort) or is_non_empty_string(
-            RosField, "expr", self._expr
-        )
-        return valid_name and valid_expr
-
-    def as_plain_scxml(self, struct_declarations: ScxmlStructDeclarationsContainer, __):
+    def as_plain_scxml(
+        self,
+        struct_declarations: ScxmlStructDeclarationsContainer,
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         # In order to distinguish the message body from additional entries, add a prefix to the name
-        assert (
-            self._cb_type is not None
-        ), f"Error: SCXML ROS field: {self._name} has not callback type set."
+        assert self._cb_type is not None, get_error_msg(
+            self.get_xml_origin(), "No callback type set for ROS field."
+        )
         plain_field_name = ROS_FIELD_PREFIX + self._name
+        assert isinstance(self._expr, str), get_error_msg(
+            self.xml_origin(),
+            "Expressions with conf. entries should be already evaluated at this stage.",
+        )
         plain_scxml_param = ScxmlParam(
             plain_field_name,
             expr=get_plain_expression(self._expr, self._cb_type, struct_declarations),
         )
         plain_scxml_param._set_plain_name_and_expression(struct_declarations)
         return [plain_scxml_param]
-
-    def as_xml(self) -> XmlElement:
-        assert self.check_validity(), "Error: SCXML topic publish field: invalid parameters."
-        xml_field = ET.Element(RosField.get_tag_name(), {"name": self._name, "expr": self._expr})
-        return xml_field
