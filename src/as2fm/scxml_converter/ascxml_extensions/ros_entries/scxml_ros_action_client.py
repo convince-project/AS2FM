@@ -25,12 +25,16 @@ from action_msgs.msg import GoalStatus
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    check_all_fields_known,
     generate_action_feedback_handle_event,
     generate_action_goal_handle_accepted_event,
     generate_action_goal_handle_rejected_event,
     generate_action_goal_req_event,
     generate_action_result_handle_event,
+    get_action_type_params,
     is_action_type_known,
 )
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
@@ -39,7 +43,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosTrigger,
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlTransition
+from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlTransition
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
@@ -74,20 +78,20 @@ class RosActionSendGoal(RosTrigger):
     def get_declaration_type() -> Type[RosActionClient]:
         return RosActionClient
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._interface_name)
-
-    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._params)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
         return generate_action_goal_req_event(
-            ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name(),
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
         )
 
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
+        assert isinstance(ascxml_declaration, RosActionClient)
+        goal_fields = get_action_type_params(ascxml_declaration.get_interface_type())[0]
+        return check_all_fields_known(self._params, goal_fields)
 
-class RosActionHandleGoalResponse(ScxmlTransition):
+
+class RosActionHandleGoalResponse(RosCallback):
     """
     SCXML object representing the handler of an action response upon a goal request.
 
@@ -101,17 +105,39 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         return "ros_action_handle_goal_response"
 
     @classmethod
+    def get_declaration_type(cls) -> Type[RosDeclaration]:
+        """
+        Get the type of ROS declaration related to the callback.
+
+        Examples: RosSubscriber, RosPublisher, ...
+        """
+        return RosActionClient
+
+    @classmethod
+    def get_callback_type(cls):
+        # This class has no children to process: this function is not expected to be used anywhere.
+        RuntimeError("This method shouldn't be called for this class.")
+
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration):
+        # This class generates two events: this is implemented in as_plain_scxml
+        RuntimeError("This method shouldn't be called for this class.")
+
+    @classmethod
     def from_xml_tree_impl(
         cls, xml_tree: XmlElement, _: Dict[str, StructDefinition]
     ) -> "RosActionHandleGoalResponse":
         """Create a RosServiceServer object from an XML tree."""
         assert_xml_tag_ok(RosActionHandleGoalResponse, xml_tree)
         action_name = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "name")
+        assert action_name is not None  # MyPy check
         accept_target = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "accept")
+        assert accept_target is not None  # MyPy check
         reject_target = get_xml_attribute(RosActionHandleGoalResponse, xml_tree, "reject")
-        assert len(xml_tree) == 0, (
-            "Error: SCXML RosActionHandleGoalResponse can not have any children. "
-            "(Neither executable content nor probabilistic targets)"
+        assert reject_target is not None  # MyPy check
+        assert len(xml_tree) == 0, get_error_msg(
+            xml_tree,
+            f"The tag {cls.get_tag_name()} cannot have any content "
+            "(neither executable content nor probabilistic targets)",
         )
         return RosActionHandleGoalResponse(action_name, accept_target, reject_target)
 
@@ -132,6 +158,7 @@ class RosActionHandleGoalResponse(ScxmlTransition):
             self._client_name = action_client
         self._accept_target = accept_target
         self._reject_target = reject_target
+        self._targets = []  # This is unused, but needs to be defined for the parent class
         assert self.check_validity(), "Error: SCXML RosActionHandleGoalResponse: invalid params."
 
     def check_validity(self) -> bool:
@@ -144,46 +171,22 @@ class RosActionHandleGoalResponse(ScxmlTransition):
         )
         return valid_name and valid_accept and valid_reject
 
-    def instantiate_bt_events(self, _, __) -> List["RosActionHandleGoalResponse"]:
-        # We do not expect a body with BT events requiring substitutions
-        return [self]
-
-    def update_bt_ports_values(self, _) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        # We do not expect a body with BT ports to be substituted
+    def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
+        # No executable value expected
         pass
-
-    def has_bt_blackboard_input(self, _) -> bool:
-        """This can not have a body, so it can not have BT blackboard input."""
-        return False
-
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML Service Handle Response: invalid ROS declarations container."
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML action goal request: invalid ROS declarations container."
-        if not ros_declarations.is_action_client_defined(self._client_name):
-            print(
-                "Error: SCXML action goal request: "
-                f"action client {self._client_name} not declared."
-            )
-            return False
-        return True
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: List[AscxmlDeclaration],
-    ) -> List[ScxmlTransition]:
-        assert self.check_valid_ros_instantiations(
-            ros_declarations
-        ), "Error: SCXML service response handler: invalid ROS instantiations."
-        automaton_name = ros_declarations.get_automaton_name()
-        interface_name, _ = ros_declarations.get_action_client_info(self._client_name)
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
+        related_declaration = self.get_related_interface(ascxml_declarations)
+        assert related_declaration is not None, get_error_msg(
+            self.get_xml_origin(), "Cannot find related ROS declaration."
+        )
+        automaton_name = related_declaration.get_node_name()
+        interface_name = related_declaration.get_interface_name()
         accept_event = generate_action_goal_handle_accepted_event(interface_name, automaton_name)
         reject_event = generate_action_goal_handle_rejected_event(interface_name, automaton_name)
         accept_transition = ScxmlTransition.make_single_target_transition(
@@ -221,13 +224,11 @@ class RosActionHandleFeedback(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_ACTION_FEEDBACK
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
         return generate_action_feedback_handle_event(
-            ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name(),
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
         )
 
 
@@ -246,25 +247,24 @@ class RosActionHandleSuccessResult(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_ACTION_RESULT
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
         return generate_action_result_handle_event(
-            ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name(),
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
         )
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlTransition]:
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_SUCCEEDED}"
-        return super().as_plain_scxml(struct_declarations, ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
 
 
 class RosActionHandleCanceledResult(RosCallback):
@@ -282,25 +282,24 @@ class RosActionHandleCanceledResult(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_ACTION_RESULT
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
         return generate_action_result_handle_event(
-            ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name(),
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
         )
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlTransition]:
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_CANCELED}"
-        return super().as_plain_scxml(struct_declarations, ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
 
 
 class RosActionHandleAbortedResult(RosCallback):
@@ -318,22 +317,21 @@ class RosActionHandleAbortedResult(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_ACTION_RESULT
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_action_client_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
         return generate_action_result_handle_event(
-            ros_declarations.get_action_client_info(self._interface_name)[0],
-            ros_declarations.get_automaton_name(),
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
         )
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List[ScxmlTransition]:
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         assert (
             self._condition is None
         ), "Error: SCXML RosActionHandleSuccessResult: condition not supported."
         self._condition = f"_wrapped_result.code == {GoalStatus.STATUS_ABORTED}"
-        return super().as_plain_scxml(struct_declarations, ros_declarations)
+        return super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)

@@ -17,7 +17,7 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Tuple, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
@@ -36,6 +36,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     ScxmlExecutableEntry,
     add_targets_to_scxml_sends,
     execution_body_from_xml,
+    get_config_entries_request_receive_events,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -157,6 +158,16 @@ class ScxmlTransition(ScxmlBase):
         self.set_targets(targets)
         self._events: List[str] = events
         self._condition = condition
+
+    def get_config_request_receive_events(self) -> List[Tuple[str, str]]:
+        """Get all events for requesting and receiving the updated configurable values."""
+        all_events: List[Tuple[str, str]] = []
+        for target in self._targets:
+            temp_events = get_config_entries_request_receive_events(target.get_body())
+            for ev in temp_events:
+                if ev not in all_events:
+                    all_events.append(ev)
+        return all_events
 
     def get_targets(self) -> List[ScxmlTransitionTarget]:
         """Return all targets belonging to this transition."""

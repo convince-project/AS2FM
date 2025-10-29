@@ -342,7 +342,7 @@ class RosCallback(ScxmlTransition):
     ) -> List[ScxmlBase]:
         related_declaration = self.get_related_interface(ascxml_declarations)
         assert related_declaration is not None, get_error_msg(
-            self.get_xml_origin(), "Canot find related ROS declaration."
+            self.get_xml_origin(), "Cannot find related ROS declaration."
         )
         new_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:

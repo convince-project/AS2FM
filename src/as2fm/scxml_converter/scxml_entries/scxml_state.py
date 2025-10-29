@@ -167,10 +167,8 @@ class ScxmlState(ScxmlBase):
                 "This isn't yet supported."
             ),
         )
-        for transition_idx in range(len(self._body)):
-            transition_config_events = get_config_entries_request_receive_events(
-                self._body[transition_idx]
-            )
+        for transit_id in range(len(self._body)):
+            transition_config_events = self._body[transit_id].get_config_request_receive_events()
             if len(transition_config_events) > 0:
                 check_assertion(
                     len(transition_config_events) == 1,
@@ -179,7 +177,7 @@ class ScxmlState(ScxmlBase):
                 )
                 # For now, make sure this is a transitions with a single target
                 check_assertion(
-                    len(self._body[transition_idx].get_targets()) == 1,
+                    len(self._body[transit_id].get_targets()) == 1,
                     self.get_xml_origin(),
                     "Var. config entries support isn't compatible yet with prob. transitions.",
                 )
@@ -187,11 +185,11 @@ class ScxmlState(ScxmlBase):
                 # Prepare the new state with the original body, using the received config updates
                 states_count = len(generated_states)
                 new_state_id = (
-                    f"{self.get_id()}_{self._body[transition_idx].get_tag_name()}_{states_count}"
+                    f"{self.get_id()}_{self._body[transit_id].get_tag_name()}_{states_count}"
                 )
                 new_state = ScxmlState(new_state_id)
                 blackboard_transition = ScxmlTransition(
-                    self._body[transition_idx].get_targets(), [conf_rec_event]
+                    self._body[transit_id].get_targets(), [conf_rec_event]
                 )
                 new_state.add_transition(blackboard_transition)
                 generated_states.append(new_state)
@@ -199,7 +197,7 @@ class ScxmlState(ScxmlBase):
                 new_transition_target = ScxmlTransitionTarget(
                     new_state_id, body=[ScxmlSend(conf_req_event)]
                 )
-                self._body[transition_idx].set_targets([new_transition_target])
+                self._body[transit_id].set_targets([new_transition_target])
         return generated_states
 
     def add_transition(self, transition: ScxmlTransition) -> None:
@@ -271,8 +269,8 @@ class ScxmlState(ScxmlBase):
             )
         assert all(isinstance(entry, ScxmlTransition) for entry in plain_body)  # MyPy check
         return ScxmlState(
-            self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body
-        )  # type: ignore
+            self._id, on_entry=plain_entry, on_exit=plain_exit, body=plain_body  # type: ignore
+        )
 
     def as_plain_scxml(
         self,

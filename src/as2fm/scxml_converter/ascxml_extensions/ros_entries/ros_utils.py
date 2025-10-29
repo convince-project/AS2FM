@@ -18,7 +18,9 @@
 import re
 from typing import Any, Dict, List, Tuple, Type
 
-from as2fm.scxml_converter.scxml_entries import RosField, ScxmlBase
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_field import RosField
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
 from as2fm.scxml_converter.scxml_entries.utils import all_non_empty_strings
 
 MSG_TYPE_SUBSTITUTIONS = {
@@ -108,13 +110,19 @@ def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, st
     """
     for ros_field in ros_fields:
         if ros_field.get_name() not in field_types:
-            print(f"Error: SCXML ROS declarations: unknown field {ros_field.get_name()}.")
+            get_error_msg(
+                ros_field.get_xml_origin(), "Unknown field to the related ROS declaration."
+            )
             return False
         field_types.pop(ros_field.get_name())
     if len(field_types) > 0:
-        print("Error: SCXML ROS declarations: there are missing fields:")
+        missing_fields = ""
         for field_key in field_types.keys():
-            print(f"\t-{field_key}.")
+            missing_fields += f"{field_key}, "
+        missing_fields = missing_fields.removesuffix(", ")
+        get_error_msg(
+            ros_fields[0].get_xml_origin(), f"There are missing ROS fields: [{missing_fields}]"
+        )
         return False
     return True
 
