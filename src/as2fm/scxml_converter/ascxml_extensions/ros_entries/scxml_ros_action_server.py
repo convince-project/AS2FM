@@ -112,7 +112,7 @@ class RosActionAcceptGoal(RosTrigger):
         return ros_declarations.is_action_server_defined(self._interface_name)
 
     def check_fields_validity(self, _) -> bool:
-        return len(self._fields) == 0
+        return len(self._params) == 0
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_accepted_event(
@@ -146,7 +146,7 @@ class RosActionRejectGoal(RosTrigger):
 
     def check_fields_validity(self, _) -> bool:
         # When accepting the goal, we send only the goal_id of the accepted goal
-        return len(self._fields) == 0
+        return len(self._params) == 0
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_rejected_event(
@@ -181,7 +181,7 @@ class RosActionStartThread(RosTrigger):
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields)
+        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._params)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_thread_execution_start_event(
@@ -210,7 +210,7 @@ class RosActionSendFeedback(RosTrigger):
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the goal_id and the request fields have been defined."""
         return ros_declarations.check_valid_action_feedback_fields(
-            self._interface_name, self._fields
+            self._interface_name, self._params
         )
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
@@ -239,7 +239,7 @@ class RosActionSendSuccessResult(RosTrigger):
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return ros_declarations.check_valid_action_result_fields(self._interface_name, self._fields)
+        return ros_declarations.check_valid_action_result_fields(self._interface_name, self._params)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
@@ -277,7 +277,7 @@ class RosActionSendCanceledResult(RosTrigger):
 
     def check_fields_validity(self, _) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return len(self._fields) == 0
+        return len(self._params) == 0
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(
@@ -315,7 +315,7 @@ class RosActionSendAbortedResult(RosTrigger):
 
     def check_fields_validity(self, _) -> bool:
         """Check if the goal_id and the request fields have been defined."""
-        return len(self._fields) == 0
+        return len(self._params) == 0
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_result_event(

@@ -151,7 +151,8 @@ class ScxmlSend(ScxmlExecutableEntry):
         assert (
             self.__class__ is ScxmlSend
         ), f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
-        assert isinstance(param, ScxmlParam), "Error: SCXML send: invalid param."
+        assert isinstance(param, ScxmlParam), get_error_msg(self.get_xml_origin(), "Invalid param.")
+        param.set_callback_type(self._cb_type)
         self._params.append(param)
 
     def is_plain_scxml(self) -> bool:

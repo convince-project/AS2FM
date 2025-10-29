@@ -84,7 +84,7 @@ class ScxmlParam(ScxmlBase):
         self._expr = expr
         self._cb_type: Optional[CallbackType] = cb_type
 
-    def set_callback_type(self, cb_type: CallbackType):
+    def set_callback_type(self, cb_type: Optional[CallbackType]):
         self._cb_type = cb_type
 
     def get_name(self) -> str:

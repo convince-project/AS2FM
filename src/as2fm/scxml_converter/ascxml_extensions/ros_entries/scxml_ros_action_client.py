@@ -78,7 +78,7 @@ class RosActionSendGoal(RosTrigger):
         return ros_declarations.is_action_client_defined(self._interface_name)
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._fields)
+        return ros_declarations.check_valid_action_goal_fields(self._interface_name, self._params)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_action_goal_req_event(

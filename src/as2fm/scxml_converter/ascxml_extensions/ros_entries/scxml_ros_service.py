@@ -22,6 +22,11 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Ser
 
 from typing import Type
 
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
+    RosCallback,
+    RosDeclaration,
+    RosTrigger,
+)
 from as2fm.scxml_converter.scxml_entries import ScxmlRosDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_srv_request_event,
@@ -29,11 +34,6 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     generate_srv_server_request_event,
     generate_srv_server_response_event,
     is_srv_type_known,
-)
-from as2fm.scxml_converter.scxml_entries.scxml_ros_base import (
-    RosCallback,
-    RosDeclaration,
-    RosTrigger,
 )
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
@@ -89,7 +89,7 @@ class RosServiceSendRequest(RosTrigger):
         return ros_declarations.is_service_client_defined(self._interface_name)
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.check_valid_srv_req_fields(self._interface_name, self._fields)
+        return ros_declarations.check_valid_srv_req_fields(self._interface_name, self._params)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_request_event(
@@ -137,7 +137,7 @@ class RosServiceSendResponse(RosTrigger):
         return ros_declarations.is_service_server_defined(self._interface_name)
 
     def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.check_valid_srv_res_fields(self._interface_name, self._fields)
+        return ros_declarations.check_valid_srv_res_fields(self._interface_name, self._params)
 
     def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
         return generate_srv_server_response_event(

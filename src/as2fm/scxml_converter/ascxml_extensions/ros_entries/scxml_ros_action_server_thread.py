@@ -340,7 +340,7 @@ class RosActionThreadFree(RosTrigger):
         self._thread_id: Optional[int] = None
 
     def check_validity(self) -> bool:
-        if len(self._fields) > 0:
+        if len(self._params) > 0:
             print("Error: SCXML RosActionThreadFree: no fields expected.")
             return False
         return super().check_validity()
@@ -349,7 +349,7 @@ class RosActionThreadFree(RosTrigger):
         return ros_declarations.is_action_server_defined(self._interface_name)
 
     def check_fields_validity(self, _) -> bool:
-        return len(self._fields) == 0
+        return len(self._params) == 0
 
     def set_thread_id(self, thread_id: int) -> None:
         """Set the thread ID for this handler."""
