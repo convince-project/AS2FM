@@ -222,6 +222,11 @@ class RosCallback(ScxmlTransition):
         """Return the callback type of a specific ROS Callback subclass"""
         pass
 
+    @abstractmethod
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        """Translate the ROS interface name to a plain scxml event."""
+        pass
+
     @classmethod
     def from_xml_tree_impl(
         cls: Type[Self],
@@ -329,11 +334,6 @@ class RosCallback(ScxmlTransition):
         related_decl = self.get_related_interface(ascxml_declarations)
         return related_decl is not None
 
-    @abstractmethod
-    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
-        """Translate the ROS interface name to a plain scxml event."""
-        pass
-
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
@@ -387,6 +387,16 @@ class RosTrigger(ScxmlSend):
 
         Examples: RosServiceClient, RosActionClient, ...
         """
+        pass
+
+    @abstractmethod
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        """Translate the ROS interface name to a plain scxml event."""
+        pass
+
+    @abstractmethod
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
+        """Check if all the fields defined in the declared ROS interface are assigned."""
         pass
 
     @staticmethod
@@ -495,16 +505,6 @@ class RosTrigger(ScxmlSend):
         related_decl = self.get_related_interface(ascxml_declarations)
         return related_decl is not None
 
-    @abstractmethod
-    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
-        """Translate the ROS interface name to a plain scxml event."""
-        pass
-
-    @abstractmethod
-    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
-        """Check if all the fields defined in the declared ROS interface are assigned."""
-        pass
-
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
@@ -522,11 +522,13 @@ class RosTrigger(ScxmlSend):
             self.get_xml_origin(), "No callback type defined."
         )
         event_name = self.get_plain_scxml_event(related_ros_decl)
-        plain_params = []
+        plain_params: List[ScxmlParam] = []
         for single_field in self._params:
-            plain_params.extend(
-                single_field.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
-            )
+            for param in single_field.as_plain_scxml(
+                struct_declarations, ascxml_declarations, **kwargs
+            ):
+                assert isinstance(param, ScxmlParam)  # MyPy check
+                plain_params.append(param)
         for param_name, param_value in self._additional_args.items():
             expanded_value = get_plain_expression(param_value, self._cb_type, struct_declarations)
             plain_params.append(ScxmlParam(param_name, expr=expanded_value))

@@ -23,6 +23,7 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 from typing import Type
 
 from as2fm.as2fm_common.logging import log_error
+from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_topic_event,
     is_msg_type_known,
@@ -96,11 +97,9 @@ class RosTopicCallback(RosCallback):
     def get_callback_type() -> CallbackType:
         return CallbackType.ROS_TOPIC
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_subscriber_defined(self._interface_name)
-
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_topic_event(ros_declarations.get_subscriber_info(self._interface_name)[0])
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosTopicSubscriber)
+        return generate_topic_event(ascxml_declaration.get_interface_name())
 
 
 class RosTopicPublish(RosTrigger):
@@ -114,12 +113,10 @@ class RosTopicPublish(RosTrigger):
     def get_declaration_type() -> Type[RosTopicPublisher]:
         return RosTopicPublisher
 
-    def check_interface_defined(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
-        return ros_declarations.is_publisher_defined(self._interface_name)
-
-    def check_fields_validity(self, ros_declarations: ScxmlRosDeclarationsContainer) -> bool:
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
         # TODO: Check fields for topics, too
         return True
 
-    def get_plain_scxml_event(self, ros_declarations: ScxmlRosDeclarationsContainer) -> str:
-        return generate_topic_event(ros_declarations.get_publisher_info(self._interface_name)[0])
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosTopicPublisher)
+        return generate_topic_event(ascxml_declaration.get_interface_name())
