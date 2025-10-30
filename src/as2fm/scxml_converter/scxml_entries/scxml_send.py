@@ -20,7 +20,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -155,9 +155,12 @@ class ScxmlSend(ScxmlExecutableEntry):
         param.set_callback_type(self._cb_type)
         self._params.append(param)
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         if type(self) is ScxmlSend:
-            return all(isinstance(param.get_expr(), str) for param in self._params)
+            all_plain_params = all(isinstance(param.get_expr(), str) for param in self._params)
+            if not all_plain_params and verbose:
+                log_warning(None, "No plain SCXML send: non-plain params found.")
+        log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain send.")
         return False
 
     def as_plain_scxml(

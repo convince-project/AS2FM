@@ -23,7 +23,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -240,11 +240,18 @@ class ScxmlState(ScxmlBase):
             print(f"Error: SCXML state {self._id}: executable body is not valid.")
         return valid_on_entry and valid_on_exit and valid_body
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if all SCXML entries in the state are plain scxml."""
         plain_entry = is_plain_execution_body(self._on_entry)
         plain_exit = is_plain_execution_body(self._on_exit)
         plain_body = all(transition.is_plain_scxml() for transition in self._body)
+        if verbose:
+            if not plain_entry:
+                log_warning(None, f"Failed conversion of state {self._id}: onentry not plain.")
+            if not plain_exit:
+                log_warning(None, f"Failed conversion of state {self._id}: onexit not plain.")
+            if not plain_entry:
+                log_warning(None, f"Failed conversion of state {self._id}: non plain transitions.")
         return plain_entry and plain_exit and plain_body
 
     def _as_plain_scxml_replacements(

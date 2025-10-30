@@ -253,10 +253,10 @@ class ScxmlTransition(ScxmlBase):
         for target in self._targets:
             target.update_exec_body_configurable_values(ascxml_declarations)
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
         return type(self) is ScxmlTransition and all(
-            target.is_plain_scxml() for target in self._targets
+            target.is_plain_scxml(verbose) for target in self._targets
         )
 
     def as_plain_scxml(

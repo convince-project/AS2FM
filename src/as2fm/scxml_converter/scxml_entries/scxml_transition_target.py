@@ -23,7 +23,7 @@ from warnings import warn
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -157,9 +157,12 @@ class ScxmlTransitionTarget(ScxmlBase):
     def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
         update_exec_body_configurable_values(self._body, ascxml_declarations)
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        return is_plain_execution_body(self._body)
+        plain_body = is_plain_execution_body(self._body, verbose)
+        if not plain_body and verbose:
+            log_warning(None, "No plain SCXML transition target: body is not plain.")
+        return plain_body
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         new_body: ScxmlExecutionBody = []

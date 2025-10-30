@@ -86,9 +86,11 @@ class ScxmlDataModel(ScxmlBase):
                 return False
         return True
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if all data entries are already plain-scxml (using only base types)."""
-        return self.check_validity() and all(data.is_plain_scxml() for data in self._data_entries)
+        return self.check_validity() and all(
+            data.is_plain_scxml(verbose) for data in self._data_entries
+        )
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         plain_data_entries = []

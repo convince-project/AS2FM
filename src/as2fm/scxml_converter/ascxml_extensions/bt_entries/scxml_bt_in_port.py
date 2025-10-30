@@ -22,7 +22,7 @@ from typing import Dict, List
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
@@ -98,7 +98,9 @@ class BtGetValueInputPort(AscxmlConfiguration):
         # When starting the conversion to plain SCXML, we expect this to be already converted
         raise RuntimeError("Error: SCXML BT Port value getter cannot be converted to plain SCXML.")
 
-    def is_plain_scxml(self):
+    def is_plain_scxml(self, verbose: bool = False):
+        if verbose:
+            log_warning(None, f"No plain SCXML: {type(self)} is never plain.")
         return False
 
     def as_xml(self) -> XmlElement:

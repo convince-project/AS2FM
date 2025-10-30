@@ -19,7 +19,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries.scxml_base import ScxmlBase
@@ -178,11 +178,15 @@ class ScxmlIf(ScxmlExecutableEntry):
             print("Error: SCXML if: invalid else execution body found.")
         return valid_conditional_executions and valid_else_execution
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         if type(self) is ScxmlIf:
-            return all(
+            plain_if = all(
                 is_plain_execution_body(body) for _, body in self._conditional_executions
             ) and is_plain_execution_body(self._else_execution)
+            if verbose and not plain_if:
+                log_warning(None, "No plain SCXML if: condition bodies are not plain.")
+            return plain_if
+        log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain if.")
         return False
 
     def as_plain_scxml(

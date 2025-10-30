@@ -24,7 +24,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import (
     StructDefinition,
@@ -260,16 +260,19 @@ class ScxmlData(ScxmlBase):
             xml_data.set("upper_bound_incl", str(self._upper_bound))
         return xml_data
 
-    def _is_plain_type(self):
+    def _is_plain_type(self, verbose: bool):
         """Check if the data type is a plain type, accounting for arrays too."""
         data_type_str = self._data_type
         if is_type_string_array(data_type_str):
             data_type_str = get_type_string_of_array(data_type_str)
-        return is_type_string_base_type(data_type_str)
+        base_type_str = is_type_string_base_type(data_type_str)
+        if verbose and not base_type_str:
+            log_warning(None, f"No plain SCXML data: type {data_type_str} isn't a base type.")
+        return base_type_str
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the data type is a base type."""
-        return self.check_validity() and self._is_plain_type()
+        return self.check_validity() and self._is_plain_type(verbose)
 
     def as_plain_scxml(
         self,
@@ -300,7 +303,7 @@ class ScxmlData(ScxmlBase):
                 "Expected a constant configurable entry, found a variable one.",
             )
             self._upper_bound = self._upper_bound.get_configured_value()
-        if self._is_plain_type():
+        if self._is_plain_type(verbose=False):
             return [self]
         data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
         assert isinstance(data_type_def, StructDefinition), get_error_msg(

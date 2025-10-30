@@ -23,7 +23,7 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg, log_error
+from as2fm.as2fm_common.logging import get_error_msg, log_error, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosField
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
@@ -181,7 +181,9 @@ class RosDeclaration(AscxmlDeclaration):
             f"Error: SCXML {self.__class__.__name__} cannot be converted to plain SCXML."
         )
 
-    def is_plain_scxml(self):
+    def is_plain_scxml(self, verbose: bool = False):
+        if verbose:
+            log_warning(None, f"No plain SCXML: {type(self)} is never plain.")
         return False
 
     def as_xml(self) -> XmlElement:

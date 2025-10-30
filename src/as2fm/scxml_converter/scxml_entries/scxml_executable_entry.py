@@ -20,7 +20,6 @@ Definition of SCXML Tags that can be part of executable content
 from abc import abstractmethod
 from typing import Dict, List, Optional, Set, Tuple
 
-from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
@@ -118,7 +117,7 @@ def valid_execution_body_entry_types(exec_body: Optional[ScxmlExecutionBody]) ->
         return False
     for entry in exec_body:
         if not isinstance(entry, ScxmlExecutableEntry):
-            print(f"Error: SCXML execution body: invlaid entry type '{type(entry)}'.")
+            print(f"Error: SCXML execution body: invalid entry type '{type(entry)}'.")
             return False
     return True
 
@@ -189,11 +188,11 @@ def set_execution_body_callback_type(exec_body: ScxmlExecutionBody, cb_type: Cal
         entry.set_callback_type(cb_type)
 
 
-def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody]) -> bool:
+def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody], verbose: bool = False) -> bool:
     """Check if al entries in the exec body are plain scxml."""
     if exec_body is None:
         return True
-    return all(entry.is_plain_scxml() for entry in exec_body)
+    return all(entry.is_plain_scxml(verbose=verbose) for entry in exec_body)
 
 
 def as_plain_execution_body(

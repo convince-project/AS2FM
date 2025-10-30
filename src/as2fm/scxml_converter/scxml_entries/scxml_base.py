@@ -81,7 +81,7 @@ class ScxmlBase:
         pass
 
     @abstractmethod
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the object is compatible with the plain SCXML standard."""
         pass
 

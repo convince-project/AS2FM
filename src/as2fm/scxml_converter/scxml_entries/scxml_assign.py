@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Union
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
@@ -107,9 +107,16 @@ class ScxmlAssign(ScxmlExecutableEntry):
         # This has nothing to do with ROS. Return always True
         return True
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         if type(self) is ScxmlAssign:
-            return isinstance(self._expr, str)
+            valid_expr = isinstance(self._expr, str)
+            if not valid_expr and verbose:
+                log_warning(
+                    None, f"No plain SCXML assign: expr type {type(self._expr)} isn't a string."
+                )
+            return valid_expr
+        if verbose:
+            log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain assignment.")
         return False
 
     def as_plain_scxml(

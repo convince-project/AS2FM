@@ -24,7 +24,7 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
@@ -149,8 +149,10 @@ class ScxmlParam(ScxmlBase):
             plain_param._set_plain_name_and_expression(struct_declarations)
         return plain_params
 
-    def is_plain_scxml(self):
-        return isinstance(self._expr, str)
+    def is_plain_scxml(self, verbose: bool = False):
+        plain_expr = isinstance(self._expr, str)
+        if not plain_expr and verbose:
+            log_warning(None, f"No plain SCXML param: expr type {type(self._expr)} isn't a string.")
 
     def as_xml(self) -> XmlElement:
         check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid parameter.")

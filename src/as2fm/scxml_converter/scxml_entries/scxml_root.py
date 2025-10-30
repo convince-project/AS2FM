@@ -31,6 +31,7 @@ from as2fm.as2fm_common.logging import (
     check_assertion,
     get_error_msg,
     log_error,
+    log_warning,
     set_filepath_for_all_sub_elements,
 )
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
@@ -262,15 +263,24 @@ class GenericScxmlRoot(ScxmlBase):
             and valid_declarations
         )
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check whether there are ROS or BT specific tags in the SCXML model."""
         assert self.check_validity(), get_error_msg(
             self.get_xml_origin(), "SCXML: found invalid root object."
         )
-        plain_data_model = self._data_model.is_plain_scxml()
+        plain_data_model = self._data_model.is_plain_scxml(verbose)
         no_declarations = len(self._ascxml_declarations) == 0
         no_threads = len(self._ascxml_threads) == 0
-        plain_states = all(state.is_plain_scxml() for state in self._states)
+        plain_states = all(state.is_plain_scxml(verbose) for state in self._states)
+        if verbose:
+            if not plain_data_model:
+                log_warning(None, f"Failed conversion in {self._name}: no plain data model.")
+            if not no_declarations:
+                log_warning(None, f"Failed conversion in {self._name}: ASCXML declarations left.")
+            if not no_threads:
+                log_warning(None, f"Failed conversion in {self._name}: unprocessed threads left.")
+            if not plain_states:
+                log_warning(None, f"Failed conversion in {self._name}: non-plain states found.")
         return plain_data_model and no_declarations and no_threads and plain_states
 
     def _to_plain_scxml_impl(self, **kwargs):
@@ -322,7 +332,7 @@ class GenericScxmlRoot(ScxmlBase):
                 f"The SCXML root object {plain_scxml.get_name()} is not valid: "
                 "conversion to plain SCXML failed."
             )
-            assert plain_scxml.is_plain_scxml(), (
+            assert plain_scxml.is_plain_scxml(verbose=True), (
                 f"The SCXML root object {plain_scxml.get_name()} is not plain SCXML: "
                 "conversion to plain SCXML failed."
             )

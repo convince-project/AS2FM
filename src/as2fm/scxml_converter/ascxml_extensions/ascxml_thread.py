@@ -15,11 +15,14 @@
 
 """Generic declaration ASCXML entry."""
 
+from as2fm.as2fm_common.logging import log_warning
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
 class AscxmlThread(ScxmlBase):
     """Base class for thread definition in ASCXML."""
 
-    def is_plain_scxml(self):
+    def is_plain_scxml(self, verbose: bool = False):
+        if verbose:
+            log_warning(None, f"No plain SCXML: {type(self)} is never plain.")
         return False
