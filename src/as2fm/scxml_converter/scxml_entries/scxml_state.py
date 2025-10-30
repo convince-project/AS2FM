@@ -295,10 +295,11 @@ class ScxmlState(ScxmlBase):
         expanded_states = self._generate_variable_config_retrieval()
         plain_states: List[ScxmlBase] = []
         for new_state in expanded_states:
-            new_state._as_plain_scxml_replacements(
-                struct_declarations, ascxml_declarations, **kwargs
+            plain_states.append(
+                new_state._as_plain_scxml_replacements(
+                    struct_declarations, ascxml_declarations, **kwargs
+                )
             )
-            plain_states.append(new_state)
         return plain_states
 
     def add_target_to_event_send(self, events_to_targets: EventsToAutomata) -> None:

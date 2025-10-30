@@ -160,6 +160,7 @@ class ScxmlSend(ScxmlExecutableEntry):
             all_plain_params = all(isinstance(param.get_expr(), str) for param in self._params)
             if not all_plain_params and verbose:
                 log_warning(None, "No plain SCXML send: non-plain params found.")
+            return all_plain_params
         log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain send.")
         return False
 

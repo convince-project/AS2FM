@@ -46,7 +46,7 @@ class RosField(ScxmlParam):
         )
         plain_field_name = ROS_FIELD_PREFIX + self._name
         assert isinstance(self._expr, str), get_error_msg(
-            self.xml_origin(),
+            self.get_xml_origin(),
             "Expressions with conf. entries should be already evaluated at this stage.",
         )
         plain_scxml_param = ScxmlParam(

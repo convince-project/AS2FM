@@ -346,7 +346,7 @@ class ScxmlData(ScxmlBase):
             f"Unexpected type '{base_type}' found.",
         )
         assert isinstance(self._expr, str), get_error_msg(
-            self.xml_origin(), "Expected the default expr. to be a string at this point."
+            self.get_xml_origin(), "Expected the default expr. to be a string at this point."
         )
         if base_type == "string":
             # Handle the expected type

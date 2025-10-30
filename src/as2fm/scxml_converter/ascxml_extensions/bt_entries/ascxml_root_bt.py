@@ -96,7 +96,9 @@ class AscxmlRootBT(AscxmlRootROS):
         """
         First evaluate the values from the BT ports, then convert the model.
         """
-        check_assertion(self._bt_plugin_id is not None, self.xml_origin(), "BT plugin ID not set.")
+        check_assertion(
+            self._bt_plugin_id is not None, self.get_xml_origin(), "BT plugin ID not set."
+        )
         return self._to_plain_scxml_impl(
             bt_plugin_id=self._bt_plugin_id, bt_children_ids=self._bt_children_ids
         )

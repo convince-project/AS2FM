@@ -121,7 +121,7 @@ class ScxmlParam(ScxmlBase):
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         assert not isinstance(self._expr, AscxmlConfiguration), get_error_msg(
-            self.xml_origin(),
+            self.get_xml_origin(),
             "Expressions with conf. entries should be already evaluated at this stage.",
         )
         plain_params: List[ScxmlParam] = []
