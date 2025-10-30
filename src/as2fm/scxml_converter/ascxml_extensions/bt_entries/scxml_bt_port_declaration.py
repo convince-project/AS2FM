@@ -17,7 +17,7 @@
 SCXML entries related to Behavior Trees' Ports declaration.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
