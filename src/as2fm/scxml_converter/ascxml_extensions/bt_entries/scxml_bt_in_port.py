@@ -71,7 +71,8 @@ class BtGetValueInputPort(AscxmlConfiguration):
                     assert self._entry_value is not None, get_error_msg(
                         self.get_xml_origin(), f"BT port {self._key} has no assigned value."
                     )
-                    self._is_constant_value = self.has_blackboard_reference()
+                    self._is_constant_value = not self.has_blackboard_reference()
+                    return
         raise RuntimeError(
             get_error_msg(self.get_xml_origin(), f"Cannot find declaration of BT port {self._key}.")
         )

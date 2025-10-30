@@ -21,6 +21,7 @@ from math import floor, gcd
 from typing import List, Optional, Tuple
 
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
+    AscxmlRootROS,
     RosField,
     RosTopicPublish,
     RosTopicPublisher,
@@ -31,7 +32,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlDataModel,
     ScxmlExecutionBody,
     ScxmlIf,
-    ScxmlRoot,
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
@@ -111,7 +111,7 @@ def get_gcd_of_timer_periods(timers: List[RosTimer]) -> Tuple[int, str]:
     return common_period, common_unit
 
 
-def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optional[ScxmlRoot]:
+def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optional[AscxmlRootROS]:
     """
     Create a global timer SCXML automaton from a list of ROS timers.
 
@@ -135,11 +135,11 @@ def make_global_timer_scxml(timers: List[RosTimer], max_time_ns: int) -> Optiona
             "The max_time must have a unit that is greater or equal to the smallest timer period."
         )
     curr_time_var = "current_time"
-    scxml_root = ScxmlRoot(GLOBAL_TIMER_AUTOMATON)
+    scxml_root = AscxmlRootROS(GLOBAL_TIMER_AUTOMATON)
     # Explicitly set that there are no custom types
     scxml_root.set_custom_data_types({})
     clock_topic_decl = RosTopicPublisher("clock", "builtin_interfaces/Time")
-    scxml_root.add_ros_declaration(clock_topic_decl)
+    scxml_root.add_declaration(clock_topic_decl)
     scxml_root.set_data_model(ScxmlDataModel([ScxmlData(curr_time_var, "0", "int64")]))
     idle_state = ScxmlState("idle")
     # Tick timer with a delay of 1 (as there is no smaller time step needed in the model).
@@ -191,14 +191,16 @@ def _get_current_time_to_clock_msg_publish(
     assert time_unit in TIME_UNITS
     if time_unit == "s":
         return RosTopicPublish(
-            clock_decl, [RosField("sec", curr_time_var), RosField("nanosec", "0")]
+            clock_decl, [RosField("sec", expr=curr_time_var), RosField("nanosec", expr="0")]
         )
     n_units_per_sec = round(1.0 / TIME_UNITS[time_unit])
     time_unit_in_nsec = 1e9 / n_units_per_sec
     return RosTopicPublish(
         clock_decl,
         [
-            RosField("sec", f"Math.floor({curr_time_var} / {n_units_per_sec})"),
-            RosField("nanosec", f"({curr_time_var} % {n_units_per_sec}) * {time_unit_in_nsec}"),
+            RosField("sec", expr=f"Math.floor({curr_time_var} / {n_units_per_sec})"),
+            RosField(
+                "nanosec", expr=f"({curr_time_var} % {n_units_per_sec}) * {time_unit_in_nsec}"
+            ),
         ],
     )

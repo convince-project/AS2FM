@@ -195,11 +195,9 @@ class BtReturnTickStatus(BtGenericStatusSend):
         return BtReturnTickStatus(status)
 
     def __init__(self, status: str):
+        super().__init__()
         self._status: str = status
 
-    def check_validity(self) -> bool:
-        return True
-    
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         plain_send = super().as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
         plain_status: Optional[Union[str, int]] = BtResponse.str_to_int(self._status)
@@ -234,6 +232,3 @@ class BtReturnHalted(BtGenericStatusSend):
     @staticmethod
     def generate_bt_event_name(instance_id: int) -> str:
         return generate_bt_halt_response_event(instance_id)
-
-    def check_validity(self) -> bool:
-        return True

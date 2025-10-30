@@ -168,7 +168,6 @@ class BtGenericRequestSend(ScxmlSend):
         return valid_child_seq_id and no_params
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id: int = kwargs["bt_plugin_id"]
         children_ids: List[int] = kwargs["bt_children_ids"]
         if isinstance(self._child_seq_id, int):
             # We know the exact child ID we want to send the request to
@@ -188,7 +187,7 @@ class BtGenericRequestSend(ScxmlSend):
                         [ScxmlSend(self.generate_bt_event_name(child_id))],
                     )
                 )
-            return ScxmlIf(if_bodies).instantiate_bt_events(instance_id, children_ids)
+            return [ScxmlIf(if_bodies)]
 
     def as_xml(self) -> XmlElement:
         """
@@ -331,12 +330,14 @@ class BtGenericStatusSend(ScxmlSend):
         """
         pass
 
-    @abstractmethod
     def __init__(self):
-        pass
+        self._params = []
 
     def check_validity(self) -> bool:
-        return True
+        no_params = len(self._params) == 0
+        if not no_params:
+            log_error(self.get_xml_origin(), f"Unexpected params found in {self.get_tag_name()}.")
+        return no_params
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         instance_id: int = kwargs["bt_plugin_id"]
