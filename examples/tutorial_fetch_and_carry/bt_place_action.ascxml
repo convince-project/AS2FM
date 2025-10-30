@@ -1,29 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="initial"
     version="1.0"
-    name="PickAction"
+    name="PlaceAction"
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_action_client name="act" action_name="/pick_object" type="fetch_and_carry_msgs/Pick" />
+    <ros_action_client name="act" action_name="/place_object" type="fetch_and_carry_msgs/Place" />
 
     <datamodel>
         <data id="tmp_result" type="bool" expr="false" />
     </datamodel>
 
-    <bt_declare_port_in key="data" type="int32" />
-
     <state id="initial">
         <bt_tick target="wait_result">
-            <ros_action_send_goal name="act">
-                <field name="object_id">
-                    <expr>
-                        <bt_get_input key="data" />
-                    </expr>
-                </field>
-            </ros_action_send_goal>
-            <!-- Let's assume this is always successful. -->
+            <ros_action_send_goal name="act" />
             <bt_return_status status="RUNNING" />
         </bt_tick>
         <bt_halt target="initial">
@@ -52,7 +43,7 @@
         <bt_tick target="initial">
             <if cond="tmp_result">
                 <bt_return_status status="SUCCESS" />
-                <else/>
+                <else />
                 <bt_return_status status="FAILURE" />
             </if>
         </bt_tick>
@@ -62,4 +53,4 @@
         </bt_halt>
     </state>
 
-</scxml>
+</ascxml>

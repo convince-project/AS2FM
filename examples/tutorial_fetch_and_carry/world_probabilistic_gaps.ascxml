@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="idle"
     version="1.0"
     name="world"
@@ -63,25 +63,35 @@
     </state>
 
     <state id="handle_nav_request">
-        <!-- Navigation always successful -->
-        <transition target="idle">
-            <assign location="robot_loc" expr="req_loc_idx" />
-            <ros_action_succeed name="act_nav" goal_id="goal_id" />
+        <transition>
+            <!-- Successful navigation -->
+            <target id="idle" prob="TODO">
+                <!-- TODO -->
+            </target>
+            <!-- Unsuccessful navigation -->
+            <!-- TODO -->
         </transition>
     </state>
 
     <state id="handle_pick_request">
-        <transition target="idle">
-            <if  cond="obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0">
-                <!-- The robot and object location match and the robot is not holding anything: it may succeed -->
-                <assign location="robot_holding" expr="req_obj_idx" />
-                <assign location="obj_locs[req_obj_idx]" expr="-1" />
-                <ros_action_succeed name="act_pick" goal_id="goal_id" />
-            <else/>
-                <!-- Otherwise... FAIL!  -->
+        <transition>
+            <!-- Successful picking -->
+            <target id="idle" prob="TODO">
+                <if  cond="obj_locs[req_obj_idx] == robot_loc &amp;&amp; robot_holding &lt; 0">
+                    <!-- The robot and object location match and the robot is not holding anything: it may succeed -->
+                    <assign location="robot_holding" expr="req_obj_idx" />
+                    <assign location="obj_locs[req_obj_idx]" expr="-1" />
+                    <ros_action_succeed name="act_pick" goal_id="goal_id" />
+                <else/>
+                    <!-- Otherwise... FAIL!  -->
+                    <!-- TODO -->
+                </if>
+            </target>
+            <!-- Failing picking -->
+            <target id="idle">
                 <ros_action_aborted name="act_pick" goal_id="goal_id" />
-            </if>
+            </target>
         </transition>
     </state>
 
-</scxml>
+</ascxml>
