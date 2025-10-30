@@ -45,10 +45,8 @@ class RosField(ScxmlParam):
             self.get_xml_origin(), "No callback type set for ROS field."
         )
         plain_field_name = ROS_FIELD_PREFIX + self._name
-        assert isinstance(self._expr, str), get_error_msg(
-            self.get_xml_origin(),
-            "Expressions with conf. entries should be already evaluated at this stage.",
-        )
+        self.evaluate_expr()
+        assert isinstance(self._expr, str)  # We don't expect anything else after evaluate_expr
         plain_scxml_param = ScxmlParam(
             plain_field_name,
             expr=get_plain_expression(self._expr, self._cb_type, struct_declarations),

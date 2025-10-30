@@ -24,7 +24,7 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_warning
+from as2fm.as2fm_common.logging import check_assertion, log_warning
 from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlBase
@@ -120,12 +120,9 @@ class ScxmlParam(ScxmlBase):
         )
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        assert not isinstance(self._expr, AscxmlConfiguration), get_error_msg(
-            self.get_xml_origin(),
-            "Expressions with conf. entries should be already evaluated at this stage.",
-        )
         plain_params: List[ScxmlParam] = []
-        assert isinstance(self._expr, str)
+        self.evaluate_expr()
+        assert isinstance(self._expr, str)  # We don't expect anything else after evaluate_expr
         if has_operators(self._expr, self.get_xml_origin()) or is_literal(
             self._expr, self.get_xml_origin()
         ):

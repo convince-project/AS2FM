@@ -185,7 +185,6 @@ class ScxmlSend(ScxmlExecutableEntry):
         """Replace all string literals in the contained expressions."""
         new_params: List[ScxmlParam] = []
         for param in self._params:
-            param.evaluate_expr()
             param_expr = param.get_expr()
             assert isinstance(param_expr, str)  # MyPy check
             new_param_expr = convert_expression_with_string_literals(param_expr)
