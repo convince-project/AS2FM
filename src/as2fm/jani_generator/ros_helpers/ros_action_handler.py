@@ -20,18 +20,7 @@ Helper to create an orchestrator out of ROS Actions declarations.
 from typing import Callable, Dict, List, Tuple
 
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
-from as2fm.scxml_converter.scxml_entries import (
-    ScxmlAssign,
-    ScxmlData,
-    ScxmlDataModel,
-    ScxmlIf,
-    ScxmlParam,
-    ScxmlRoot,
-    ScxmlSend,
-    ScxmlState,
-    ScxmlTransition,
-)
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_action_feedback_event,
     generate_action_feedback_handle_event,
     generate_action_goal_accepted_event,
@@ -45,6 +34,17 @@ from as2fm.scxml_converter.scxml_entries.ros_utils import (
     get_action_goal_id_definition,
     get_action_type_params,
     sanitize_ros_interface_name,
+)
+from as2fm.scxml_converter.scxml_entries import (
+    ScxmlAssign,
+    ScxmlData,
+    ScxmlDataModel,
+    ScxmlIf,
+    ScxmlParam,
+    ScxmlRoot,
+    ScxmlSend,
+    ScxmlState,
+    ScxmlTransition,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,

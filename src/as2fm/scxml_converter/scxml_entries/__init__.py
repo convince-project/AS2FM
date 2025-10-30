@@ -16,7 +16,6 @@ from .scxml_executable_entry import (  # noqa: F401
     execution_entry_from_xml,
     valid_execution_body,
     valid_execution_body_entry_types,
-    instantiate_exec_body_bt_events,
 )  # noqa: F401
 from .scxml_assign import ScxmlAssign  # noqa: F401
 from .scxml_send import ScxmlSend  # noqa: F401

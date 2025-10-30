@@ -20,10 +20,12 @@ Representation of ROS timers.
 from math import floor, gcd
 from typing import List, Optional, Tuple
 
-from as2fm.scxml_converter.scxml_entries import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosField,
     RosTopicPublish,
     RosTopicPublisher,
+)
+from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlData,
     ScxmlDataModel,

@@ -17,7 +17,7 @@
 SCXML get input for Behavior Trees' Ports.
 """
 
-from typing import Dict, List, Type
+from typing import Dict, List
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement

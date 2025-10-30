@@ -70,7 +70,9 @@ class AscxmlRootBT(AscxmlRootROS):
         if bt_port_obj is not None:
             bt_port_obj.set_key_value(port_value)
         else:
-            raise RuntimeError(get_error_msg(self.xml_origin(), f"No port '{port_name}' declared."))
+            raise RuntimeError(
+                get_error_msg(self.get_xml_origin(), f"No port '{port_name}' declared.")
+            )
 
     def set_bt_ports_values(self, ports_values: List[Tuple[str, str]]):
         """Set the values of multiple input ports."""
