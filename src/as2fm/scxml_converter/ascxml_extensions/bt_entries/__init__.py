@@ -1,5 +1,5 @@
 # isort: skip_file
-from .bt_utils import RESERVED_BT_PORT_NAMES  # noqa: F401
+from .bt_utils import BT_N_CHILDREN_PORT, RESERVED_BT_PORT_NAMES  # noqa: F401
 from .scxml_bt_port_declaration import (  # noqa: F401
     BtGenericPortDeclaration,
     BtInputPortDeclaration,

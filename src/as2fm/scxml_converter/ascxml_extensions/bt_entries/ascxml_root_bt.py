@@ -17,7 +17,10 @@ from typing import List, Optional, Tuple, Type, Union, get_args
 
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-from as2fm.scxml_converter.ascxml_extensions.bt_entries import BtGenericPortDeclaration
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
+    RESERVED_BT_PORT_NAMES,
+    BtGenericPortDeclaration,
+)
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import AscxmlRootROS, RosDeclaration
 
 ValidDeclarationTypes = Union[RosDeclaration, BtGenericPortDeclaration]
@@ -70,9 +73,10 @@ class AscxmlRootBT(AscxmlRootROS):
         if bt_port_obj is not None:
             bt_port_obj.set_key_value(port_value)
         else:
-            raise RuntimeError(
-                get_error_msg(self.get_xml_origin(), f"No port '{port_name}' declared.")
-            )
+            if port_name not in RESERVED_BT_PORT_NAMES:
+                raise RuntimeError(
+                    get_error_msg(self.get_xml_origin(), f"No port '{port_name}' declared.")
+                )
 
     def set_bt_ports_values(self, ports_values: List[Tuple[str, str]]):
         """Set the values of multiple input ports."""
@@ -84,16 +88,15 @@ class AscxmlRootBT(AscxmlRootROS):
         assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
         self._bt_children_ids.append(child_id)
 
+    def get_bt_children_ids(self) -> List[int]:
+        """Get the list of all children attached to this BT Node."""
+        return self._bt_children_ids
+
     def to_plain_scxml(self):
         """
         First evaluate the values from the BT ports, then convert the model.
         """
-        n_bt_children = len(self._bt_children_ids)
         check_assertion(self._bt_plugin_id is not None, self.xml_origin(), "BT plugin ID not set.")
-        bt_children_count_port = self._get_port_instance("CHILDREN_COUNT")
-        if bt_children_count_port is not None:
-            bt_children_count_port.set_key_value(str(n_bt_children))
-        # TODO: Blackboard handling in ScxmlStates isn't done yet.
         return self._to_plain_scxml_impl(
             bt_plugin_id=self._bt_plugin_id, bt_children_ids=self._bt_children_ids
         )

@@ -37,6 +37,7 @@ from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     BT_BLACKBOARD_EVENT_VALUE,
     BT_BLACKBOARD_GET,
     BT_BLACKBOARD_REQUEST,
+    BT_N_CHILDREN_PORT,
     generate_bt_blackboard_set,
     get_blackboard_variable_name,
     is_blackboard_reference,
@@ -70,10 +71,11 @@ def get_blackboard_variables_from_models(ascxml_models: List[GenericScxmlRoot]) 
     for ascxml_model in ascxml_models:
         for ascxml_decl in ascxml_model.get_declarations():
             if isinstance(ascxml_decl, BtGenericPortDeclaration):
+                port_name = ascxml_decl.get_key_name()
                 port_type = ascxml_decl.get_key_type()
                 port_value = ascxml_decl.get_key_value()
                 assert port_value is not None, get_error_msg(
-                    ascxml_decl.get_xml_origin(), "The BT port has an undefined value."
+                    ascxml_decl.get_xml_origin(), f"The BT port {port_name} has an undefined value."
                 )
                 if is_blackboard_reference(port_value):
                     var_name = get_blackboard_variable_name(port_value)
@@ -293,4 +295,6 @@ def generate_bt_children_scxmls(
         last_tick_idx = generated_scxmls[-1].get_bt_plugin_id()
         assert last_tick_idx is not None  # MyPy check
         next_tick_idx = last_tick_idx + 1
+    bt_node_children = bt_plugin_scxml.get_bt_children_ids()
+    bt_plugin_scxml.set_bt_port_value(BT_N_CHILDREN_PORT, str(len(bt_node_children)))
     return generated_scxmls
