@@ -152,7 +152,7 @@ def bt_converter(
     bt_tick_rate: float,
     tick_if_not_running: bool,
     custom_data_types: Dict[str, StructDefinition],
-) -> List[ScxmlRoot]:
+) -> List[AscxmlRootBT]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
 
@@ -187,7 +187,7 @@ def bt_converter(
 
 def generate_bt_root_scxml(
     scxml_name: str, tick_id: int, tick_rate: float, tick_if_not_running: bool
-) -> ScxmlRoot:
+) -> AscxmlRootBT:
     """
     Generate the root SCXML for a Behavior Tree.
 
@@ -196,9 +196,9 @@ def generate_bt_root_scxml(
     :param tick_rate: The rate at which the root is ticked.
     :param tick_if_not_running: If true, tick the BT root after it stops returning RUNNING.
     """
-    bt_scxml_root = ScxmlRoot(BT_ROOT_PREFIX + scxml_name)
+    bt_scxml_root = AscxmlRootBT(BT_ROOT_PREFIX + scxml_name)
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
-    bt_scxml_root.add_ros_declaration(ros_rate_decl)
+    bt_scxml_root.add_declaration(ros_rate_decl)
     idle_state = ScxmlState(
         "idle",
         body=[
@@ -230,7 +230,6 @@ def generate_bt_root_scxml(
     # The BT root's ID is set to -1 (unused anyway)
     bt_scxml_root.set_bt_plugin_id(-1)
     bt_scxml_root.append_bt_child_id(tick_id)
-    bt_scxml_root.instantiate_bt_information()
     return bt_scxml_root
 
 
@@ -267,19 +266,20 @@ def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
 def generate_bt_children_scxmls(
     bt_xml_subtree: XmlElement,
     subtree_tick_idx: int,
-    available_bt_plugins: Dict[str, ScxmlRoot],
-) -> List[ScxmlRoot]:
+    available_bt_plugins: Dict[str, AscxmlRootBT],
+) -> List[AscxmlRootBT]:
     """
     Generate the SCXML files for the children of a Behavior Tree.
     """
-    generated_scxmls: List[ScxmlRoot] = []
+    generated_scxmls: List[AscxmlRootBT] = []
     plugin_type = get_bt_plugin_type(bt_xml_subtree)
     plugin_name = get_bt_plugin_name(bt_xml_subtree)
     if plugin_name is None:
         plugin_name = plugin_type
-    assert (
-        plugin_type in available_bt_plugins
-    ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
+    assert plugin_type in available_bt_plugins, get_error_msg(
+        bt_xml_subtree,
+        f"BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}",
+    )
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
     bt_plugin_scxml.set_name(f"BT_plugin_{subtree_tick_idx}_{plugin_name}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
@@ -290,6 +290,7 @@ def generate_bt_children_scxmls(
         bt_plugin_scxml.append_bt_child_id(next_tick_idx)
         child_scxmls = generate_bt_children_scxmls(child, next_tick_idx, available_bt_plugins)
         generated_scxmls.extend(child_scxmls)
-        next_tick_idx = generated_scxmls[-1].get_bt_plugin_id() + 1
-    bt_plugin_scxml.instantiate_bt_information()
+        last_tick_idx = generated_scxmls[-1].get_bt_plugin_id()
+        assert last_tick_idx is not None  # MyPy check
+        next_tick_idx = last_tick_idx + 1
     return generated_scxmls

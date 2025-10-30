@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="use_battery"
     version="1.0"
     name="BatteryDrainer"
@@ -27,4 +27,4 @@
             <assign location="battery_percent" expr="100" />
         </ros_topic_callback>
     </state>
-</scxml>
+</ascxml>

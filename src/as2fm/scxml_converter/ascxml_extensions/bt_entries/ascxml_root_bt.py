@@ -31,7 +31,10 @@ class AscxmlRootBT(AscxmlRootROS):
 
     @classmethod
     def get_declaration_classes(cls) -> List[Type[AscxmlDeclaration]]:
-        return AscxmlRootROS.get_declaration_classes() + BtGenericPortDeclaration.__subclasses__()  # type: ignore
+        return (
+            AscxmlRootROS.get_declaration_classes()
+            + BtGenericPortDeclaration.__subclasses__()  # type: ignore
+        )
 
     def __init__(self, name):
         super().__init__(name)
@@ -74,23 +77,11 @@ class AscxmlRootBT(AscxmlRootROS):
         for port_name, port_value in ports_values:
             self.set_bt_port_value(port_name, port_value)
 
-    def get_bt_ports_types_values(self) -> List[Tuple[str, str, Optional[str]]]:
-        """
-        Get information about the BT ports in the model.
-
-        :return: A list of Tuples containing bt_port_name, type and value.
-        """
-        return [
-            (bt_port.get_key_name(), bt_port.get_key_type(), bt_port.get_key_value())
-            for bt_port in self._ascxml_declarations
-            if isinstance(bt_port, BtGenericPortDeclaration)
-        ]
-
     def append_bt_child_id(self, child_id: int):
         """Append a child ID to the list of child IDs."""
         assert isinstance(child_id, int), "Error: SCXML root: invalid child ID type."
         self._bt_children_ids.append(child_id)
-    
+
     def to_plain_scxml(self):
         """
         First evaluate the values from the BT ports, then convert the model.
@@ -101,4 +92,6 @@ class AscxmlRootBT(AscxmlRootROS):
         if bt_children_count_port is not None:
             bt_children_count_port.set_key_value(str(n_bt_children))
         # TODO: Blackboard handling in ScxmlStates isn't done yet.
-        return self._to_plain_scxml_impl(bt_plugin_id=self._bt_plugin_id, bt_children_ids = self._bt_children_ids)
+        return self._to_plain_scxml_impl(
+            bt_plugin_id=self._bt_plugin_id, bt_children_ids=self._bt_children_ids
+        )

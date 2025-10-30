@@ -59,7 +59,7 @@ class RosTimeRate(RosDeclaration):
         assert isinstance(timer_rate, (str, AscxmlConfiguration))  # MyPy check
         return RosTimeRate(timer_name, timer_rate)
 
-    def __init__(self, name: str, rate_hz: Union[str, AscxmlConfiguration]):
+    def __init__(self, name: str, rate_hz: Union[str, float, AscxmlConfiguration]):
         self._name = name
         self._rate_hz: Union[float, AscxmlConfiguration] = 0.0
         if isinstance(rate_hz, AscxmlConfiguration):
