@@ -242,9 +242,9 @@ class ScxmlState(ScxmlBase):
 
     def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if all SCXML entries in the state are plain scxml."""
-        plain_entry = is_plain_execution_body(self._on_entry)
-        plain_exit = is_plain_execution_body(self._on_exit)
-        plain_body = all(transition.is_plain_scxml() for transition in self._body)
+        plain_entry = is_plain_execution_body(self._on_entry, verbose)
+        plain_exit = is_plain_execution_body(self._on_exit, verbose)
+        plain_body = all(transition.is_plain_scxml(verbose) for transition in self._body)
         if verbose:
             if not plain_entry:
                 log_warning(None, f"Failed conversion of state {self._id}: onentry not plain.")

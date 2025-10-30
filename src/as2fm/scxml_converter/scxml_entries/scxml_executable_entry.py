@@ -192,7 +192,7 @@ def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody], verbose: bo
     """Check if al entries in the exec body are plain scxml."""
     if exec_body is None:
         return True
-    return all(entry.is_plain_scxml(verbose=verbose) for entry in exec_body)
+    return all(entry.is_plain_scxml(verbose) for entry in exec_body)
 
 
 def as_plain_execution_body(

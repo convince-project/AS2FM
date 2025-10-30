@@ -186,7 +186,8 @@ class ScxmlIf(ScxmlExecutableEntry):
             if verbose and not plain_if:
                 log_warning(None, "No plain SCXML if: condition bodies are not plain.")
             return plain_if
-        log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain if.")
+        if verbose:
+            log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain if.")
         return False
 
     def as_plain_scxml(
