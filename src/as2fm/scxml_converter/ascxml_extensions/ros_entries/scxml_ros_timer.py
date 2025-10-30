@@ -83,7 +83,7 @@ class RosTimeRate(RosDeclaration):
     def get_rate(self) -> Union[float, AscxmlConfiguration]:
         return self._rate_hz
 
-    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration]):
+    def preprocess_declaration(self, ascxml_declarations: List[AscxmlDeclaration], **kwargs):
         if isinstance(self._rate_hz, AscxmlConfiguration):
             self._rate_hz.update_configured_value(ascxml_declarations)
             assert self._rate_hz.is_constant_value(), get_error_msg(

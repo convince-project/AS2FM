@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     xmlns="http://www.w3.org/2005/07/scxml"
     initial="init"
     version="1.0"
@@ -112,4 +112,4 @@
     <!-- A state to transition to when something did not work -->
     <state id="error" />
 
-</scxml>
+</ascxml>

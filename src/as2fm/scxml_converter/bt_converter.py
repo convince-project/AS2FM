@@ -26,13 +26,26 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import get_default_expression_for_type, value_to_string_expr
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
+    AscxmlRootBT,
+    BtChildTickStatus,
+    BtGenericPortDeclaration,
+    BtTickChild,
+)
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BT_BLACKBOARD_EVENT_VALUE,
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
+    generate_bt_blackboard_set,
+    get_blackboard_variable_name,
+    is_blackboard_reference,
+)
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosRateCallback, RosTimeRate
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 from as2fm.scxml_converter.scxml_entries import (
-    BtChildTickStatus,
-    BtTickChild,
-    RosRateCallback,
-    RosTimeRate,
+    GenericScxmlRoot,
     ScxmlAssign,
     ScxmlData,
     ScxmlDataModel,
@@ -41,39 +54,35 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
-    load_scxml_file,
-)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BT_BLACKBOARD_EVENT_VALUE,
-    BT_BLACKBOARD_GET,
-    BT_BLACKBOARD_REQUEST,
-    generate_bt_blackboard_set,
-    get_blackboard_variable_name,
-    is_blackboard_reference,
 )
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
 
 
-def get_blackboard_variables_from_models(models: List[ScxmlRoot]) -> Dict[str, str]:
+def get_blackboard_variables_from_models(ascxml_models: List[GenericScxmlRoot]) -> Dict[str, str]:
     """
     Collect all blackboard variables and return them as a dictionary.
 
-    :param models: List of ScxmlModel to extract the information from.
+    :param ascxml_models: List of AscxmlModel to extract the information from.
     :return: Dictionary with name and type of the detected blackboard variable.
     """
     blackboard_vars: Dict[str, str] = {}
-    for scxml_model in models:
-        declared_ports: List[Tuple[str, str, str]] = scxml_model.get_bt_ports_types_values()
-        for p_name, p_type, p_value in declared_ports:
-            assert (
-                p_value is not None
-            ), f"Error in model {scxml_model.get_name()}: undefined value in {p_name} BT port."
-            if is_blackboard_reference(p_value):
-                var_name = get_blackboard_variable_name(p_value)
-                existing_bt_type = blackboard_vars.get(var_name)
-                assert existing_bt_type is None or existing_bt_type == p_type
-                blackboard_vars.update({var_name: p_type})
+    for ascxml_model in ascxml_models:
+        for ascxml_decl in ascxml_model.get_declarations():
+            if isinstance(ascxml_decl, BtGenericPortDeclaration):
+                port_type = ascxml_decl.get_key_type()
+                port_value = ascxml_decl.get_key_value()
+                assert port_value is not None, get_error_msg(
+                    ascxml_decl.get_xml_origin(), "The BT port has an undefined value."
+                )
+                if is_blackboard_reference(port_value):
+                    var_name = get_blackboard_variable_name(port_value)
+                    existing_bt_type = blackboard_vars.get(var_name)
+                    assert existing_bt_type is None or existing_bt_type == port_type, get_error_msg(
+                        ascxml_decl.get_xml_origin(),
+                        f"The BT port '{var_name}' has more than one declared type.",
+                    )
+                    blackboard_vars.update({var_name: port_type})
     return blackboard_vars
 
 
@@ -121,18 +130,18 @@ def is_bt_root_scxml(scxml_name: str) -> bool:
 
 def load_available_bt_plugins(
     bt_plugins_scxml_paths: List[str], custom_data_types: Dict[str, StructDefinition]
-) -> Dict[str, ScxmlRoot]:
-    available_bt_plugins = {}
+) -> Dict[str, AscxmlRootBT]:
+    available_bt_plugins: Dict[str, AscxmlRootBT] = {}
     for path in bt_plugins_scxml_paths:
-        assert os.path.exists(path), f"SCXML must exist. {path} not found."
-        bt_plugin_scxml = load_scxml_file(path, custom_data_types)
+        assert os.path.exists(path), f"Cannot load BT plugin from non-existing path {path}."
+        bt_plugin_scxml = AscxmlRootBT.load_scxml_file(path, custom_data_types)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     internal_bt_plugins_path = (
         resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
     )
     for plugin_path in internal_bt_plugins_path.iterdir():
-        if plugin_path.is_file() and plugin_path.suffix == ".scxml":
-            bt_plugin_scxml = load_scxml_file(str(plugin_path), custom_data_types)
+        if plugin_path.is_file() and plugin_path.suffix == ".ascxml":  # type: ignore
+            bt_plugin_scxml = AscxmlRootBT.load_scxml_file(str(plugin_path), custom_data_types)
             available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     return available_bt_plugins
 
