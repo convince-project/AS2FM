@@ -19,20 +19,21 @@ import os
 
 import pytest
 
-from as2fm.scxml_converter.scxml_entries import load_scxml_file
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import AscxmlRootROS
+from as2fm.scxml_converter.scxml_entries import ScxmlRoot
 
 TEST_FOLDER: str = os.path.join(os.path.dirname(__file__), "_test_data", "battery_drainer_w_bt")
 
 
 def test_scxml_detect_non_plain():
     test_scxml = os.path.join(TEST_FOLDER, "battery_manager.scxml")
-    scxml_root = load_scxml_file(test_scxml, {})
+    scxml_root = AscxmlRootROS.load_scxml_file(test_scxml, {})
     assert not scxml_root.is_plain_scxml(), "Expected the loaded scxml model to be non-plain SCXML."
 
 
 def test_scxml_detect_plain():
     test_scxml = os.path.join(TEST_FOLDER, "gt_plain_scxml", "battery_manager.scxml")
-    scxml_root = load_scxml_file(test_scxml, {})
+    scxml_root = ScxmlRoot.load_scxml_file(test_scxml, {})
     assert scxml_root.is_plain_scxml(), "Expected the loaded scxml model to be plain SCXML."
 
 

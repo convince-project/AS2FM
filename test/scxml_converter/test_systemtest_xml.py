@@ -18,8 +18,8 @@ from typing import Dict, List, Tuple
 
 from test_utils import canonicalize_xml, to_snake_case
 
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import AscxmlRootBT
 from as2fm.scxml_converter.bt_converter import bt_converter
-from as2fm.scxml_converter.scxml_entries import load_scxml_file
 
 
 def get_output_folder(test_folder: str):
@@ -51,7 +51,7 @@ def bt_to_scxml_test(
     test_data_path = os.path.join(os.path.dirname(__file__), "_test_data", test_folder)
     bt_file = os.path.join(test_data_path, bt_file)
     plugin_files = [os.path.join(test_data_path, f) for f in bt_plugins]
-    scxml_objs = bt_converter(bt_file, plugin_files, 1.0, True, [])
+    scxml_objs = bt_converter(bt_file, plugin_files, 1.0, True, {})
     if store_generated:
         clear_output_folder(test_folder)
         for scxml_obj in scxml_objs:
@@ -99,13 +99,12 @@ def ros_to_plain_scxml_test(
         input_file = os.path.join(test_data_path, fname)
         # gt_file = os.path.join(test_data_path, 'gt_plain_scxml', fname)
         try:
-            scxml_obj = load_scxml_file(input_file, {})
+            ascxml_obj = AscxmlRootBT.load_scxml_file(input_file, {})
             if fname in scxml_bt_ports:
                 bt_index += 1
-                scxml_obj.set_bt_plugin_id(bt_index)
-                scxml_obj.set_bt_ports_values(scxml_bt_ports[fname])
-                scxml_obj.instantiate_bt_information()
-            plain_scxmls, _ = scxml_obj.to_plain_scxml_and_declarations()
+                ascxml_obj.set_bt_plugin_id(bt_index)
+                ascxml_obj.set_bt_ports_values(scxml_bt_ports[fname])
+            plain_scxmls = ascxml_obj.to_plain_scxml()
             if store_generated:
                 for generated_scxml in plain_scxmls:
                     output_file = os.path.join(
@@ -114,9 +113,9 @@ def ros_to_plain_scxml_test(
                     with open(output_file, "w", encoding="utf-8") as f_o:
                         f_o.write(generated_scxml.as_xml_string())
             if fname not in expected_scxmls:
-                gt_files: List[str] = [fname.removesuffix(".scxml")]
+                gt_files = [fname.removesuffix(".scxml")]
             else:
-                gt_files: List[str] = expected_scxmls[fname]
+                gt_files = expected_scxmls[fname]
             assert len(plain_scxmls) == len(
                 gt_files
             ), f"Expecting {len(gt_files)} scxml objects, found {len(plain_scxmls)}."
