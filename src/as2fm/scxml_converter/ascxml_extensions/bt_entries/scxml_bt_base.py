@@ -25,7 +25,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
-from as2fm.as2fm_common.logging import check_assertion
+from as2fm.as2fm_common.logging import check_assertion, log_error
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import process_bt_child_seq_id
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -153,10 +153,19 @@ class BtGenericRequestSend(ScxmlSend):
 
         :param child_seq_id: Which BT control node children to tick (relative the the BT-XML file).
         """
+        self._params = []
         self._child_seq_id = process_bt_child_seq_id(type(self), child_seq_id)
 
     def check_validity(self) -> bool:
-        return isinstance(self._child_seq_id, (int, str))
+        no_params = len(self._params) == 0
+        if not no_params:
+            log_error(self.get_xml_origin(), f"{self.get_tag_name} expects no param children.")
+        valid_child_seq_id = isinstance(self._child_seq_id, (int, str))
+        if not valid_child_seq_id:
+            log_error(
+                self.get_xml_origin(), f"Unexpected child id type {type(self._child_seq_id)}."
+            )
+        return valid_child_seq_id and no_params
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         instance_id: int = kwargs["bt_plugin_id"]
@@ -256,7 +265,6 @@ class BtGenericStatusHandle(ScxmlTransition):
         self._child_seq_id = process_bt_child_seq_id(type(self), child_seq_id)
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
-        instance_id: int = kwargs["bt_plugin_id"]
         children_ids: List[int] = kwargs["bt_children_ids"]
         plain_cond_expr = None
         if self._condition is not None:
@@ -270,7 +278,7 @@ class BtGenericStatusHandle(ScxmlTransition):
             target_child_id = children_ids[self._child_seq_id]
             return ScxmlTransition(
                 self._targets, [self.generate_bt_event_name(target_child_id)], plain_cond_expr
-            ).instantiate_bt_events(instance_id, children_ids)
+            ).as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
         else:
             # Handling a generic child ID, return a transition for each child
             condition_prefix = "" if plain_cond_expr is None else f"({plain_cond_expr}) && "
@@ -284,7 +292,7 @@ class BtGenericStatusHandle(ScxmlTransition):
                     deepcopy(self._targets),
                     [self.generate_bt_event_name(child_id)],
                     child_cond,
-                ).instantiate_bt_events(instance_id, children_ids)
+                ).as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
                 assert (
                     len(generated_transition) == 1
                 ), "Error: SCXML BT Child Status: Expected a single transition."

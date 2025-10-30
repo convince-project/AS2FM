@@ -100,7 +100,7 @@ class BtGetValueInputPort(AscxmlConfiguration):
 
     def is_plain_scxml(self, verbose: bool = False):
         if verbose:
-            log_warning(None, f"No plain SCXML: {type(self)} is never plain.")
+            log_warning(None, f"No plain SCXML: tag {self.get_tag_name()} is never plain.")
         return False
 
     def as_xml(self) -> XmlElement:

@@ -162,7 +162,7 @@ class ScxmlSend(ScxmlExecutableEntry):
                 log_warning(None, "No plain SCXML send: non-plain params found.")
             return all_plain_params
         if verbose:
-            log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain send.")
+            log_warning(None, f"No plain SCXML: tag {self.get_tag_name()} isn't a plain send.")
         return False
 
     def as_plain_scxml(

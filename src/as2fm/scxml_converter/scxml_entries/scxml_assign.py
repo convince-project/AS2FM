@@ -116,7 +116,9 @@ class ScxmlAssign(ScxmlExecutableEntry):
                 )
             return valid_expr
         if verbose:
-            log_warning(None, f"No plain SCXML: type {type(self)} isn't a plain assignment.")
+            log_warning(
+                None, f"No plain SCXML: tag {self.get_tag_name()} isn't a plain assignment."
+            )
         return False
 
     def as_plain_scxml(
