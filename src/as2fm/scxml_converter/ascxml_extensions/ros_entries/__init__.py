@@ -1,6 +1,5 @@
 # isort: skip_file
 from .scxml_ros_field import RosField  # noqa: F401
-from .ros_utils import ScxmlRosDeclarationsContainer  # noqa: F401
 from .scxml_ros_base import (  # noqa: F401
     RosDeclaration,
     RosCallback,
