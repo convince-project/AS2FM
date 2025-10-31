@@ -30,6 +30,7 @@ from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     BT_SET_BLACKBOARD_PARAM,
     generate_bt_blackboard_set,
+    get_blackboard_variable_name,
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam, ScxmlSend
@@ -93,9 +94,10 @@ class BtSetValueOutputPort(ScxmlSend):
         assert self._blackboard_reference is not None, get_error_msg(
             self.get_xml_origin(), "Expected the blackboard variable to be set at this stage."
         )
+        processed_bb_var = get_blackboard_variable_name(self._blackboard_reference)
         return [
             ScxmlSend(
-                generate_bt_blackboard_set(self._blackboard_reference),
+                generate_bt_blackboard_set(processed_bb_var),
                 [ScxmlParam(BT_SET_BLACKBOARD_PARAM, expr=self._expr)],
             )
         ]

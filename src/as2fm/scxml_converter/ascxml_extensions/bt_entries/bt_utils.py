@@ -94,7 +94,10 @@ def generate_bt_blackboard_set(bt_bb_ref_name: str) -> str:
     :param bt_bb_ref_name: The name of the blackboard variable to set.
     :return: The name of the event to use to generate the specific variable.
     """
-    return f"bt_blackboard_set_{bt_bb_ref_name}"
+    bb_var = bt_bb_ref_name.strip().rstrip()
+    assert len(bb_var) > 0, "Empty blackboard variable provided."
+    assert bb_var.count("{") + bb_var.count("}") == 0, "Invalid Blackboard variable name."
+    return f"bt_blackboard_set_{bb_var}"
 
 
 def generate_bt_tick_event(instance_id: int) -> str:
