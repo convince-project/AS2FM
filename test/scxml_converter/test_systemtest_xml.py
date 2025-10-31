@@ -56,7 +56,7 @@ def bt_to_scxml_test(
         clear_output_folder(test_folder)
         for scxml_obj in scxml_objs:
             output_file = os.path.join(
-                get_output_folder(test_folder), f"{scxml_obj.get_name()}.scxml"
+                get_output_folder(test_folder), f"{scxml_obj.get_name()}.ascxml"
             )
             with open(output_file, "w", encoding="utf-8") as f_o:
                 f_o.write(scxml_obj.as_xml_string())

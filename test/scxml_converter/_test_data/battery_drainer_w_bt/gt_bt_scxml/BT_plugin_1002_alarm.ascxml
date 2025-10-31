@@ -2,22 +2,18 @@
     <datamodel>
         <data id="last_msg" expr="False" type="bool"/>
     </datamodel>
-    <ros_topic_subscriber name="alarm" topic="alarm" type="std_msgs/Bool"/>
+    <ros_topic_subscriber name="alarm" type="std_msgs/Bool" topic="alarm"/>
     <state id="initial">
         <ros_topic_callback target="initial" name="alarm">
             <assign location="last_msg" expr="_msg.data"/>
         </ros_topic_callback>
-        <transition event="bt_1002_tick" target="initial">
+        <bt_tick target="initial">
             <if cond="last_msg">
-                <send event="bt_1002_response">
-                    <param name="status" expr="1"/>
-                </send>
+                <bt_return_status status="SUCCESS"/>
                 <else/>
-                <send event="bt_1002_response">
-                    <param name="status" expr="2"/>
-                </send>
+                <bt_return_status status="FAILURE"/>
             </if>
-        </transition>
-        <transition event="bt_1002_halt" target="initial"/>
+        </bt_tick>
+        <bt_halt target="initial"/>
     </state>
 </ascxml>

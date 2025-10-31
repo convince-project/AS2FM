@@ -1,42 +1,41 @@
 <ascxml name="BT_plugin_1001_Inverter" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
-        <data id="children_count" expr="1" type="int8"/>
+        <data id="children_count" type="int8">
+            <expr>
+                <bt_get_input key="CHILDREN_COUNT"/>
+            </expr>
+        </data>
     </datamodel>
+    <bt_declare_port_in key="CHILDREN_COUNT" type="int8"/>
     <state id="init">
         <transition cond="children_count != 1" target="error"/>
         <transition target="wait_for_tick"/>
     </state>
     <state id="wait_for_tick">
-        <transition event="bt_1001_tick" target="tick_child"/>
-        <transition event="bt_1001_halt" target="halting_child"/>
+        <bt_tick target="tick_child"/>
+        <bt_halt target="halting_child"/>
     </state>
     <state id="halting_child">
         <onentry>
-            <send event="bt_1002_halt"/>
+            <bt_halt_child id="0"/>
         </onentry>
-        <transition event="bt_1002_halt_response" target="wait_for_tick">
-            <send event="bt_1001_halt_response"/>
-        </transition>
+        <bt_child_halted target="wait_for_tick" id="0">
+            <bt_return_halted/>
+        </bt_child_halted>
     </state>
     <state id="tick_child">
         <onentry>
-            <send event="bt_1002_tick"/>
+            <bt_tick_child id="0"/>
         </onentry>
-        <transition event="bt_1002_response" cond="_event.data.status == 1" target="wait_for_tick">
-            <send event="bt_1001_response">
-                <param name="status" expr="2"/>
-            </send>
-        </transition>
-        <transition event="bt_1002_response" cond="_event.data.status == 2" target="wait_for_tick">
-            <send event="bt_1001_response">
-                <param name="status" expr="1"/>
-            </send>
-        </transition>
-        <transition event="bt_1002_response" cond="_event.data.status == 3" target="wait_for_tick">
-            <send event="bt_1001_response">
-                <param name="status" expr="3"/>
-            </send>
-        </transition>
+        <bt_child_status cond="_bt.status == 1" target="wait_for_tick" id="0">
+            <bt_return_status status="FAILURE"/>
+        </bt_child_status>
+        <bt_child_status cond="_bt.status == 2" target="wait_for_tick" id="0">
+            <bt_return_status status="SUCCESS"/>
+        </bt_child_status>
+        <bt_child_status cond="_bt.status == 3" target="wait_for_tick" id="0">
+            <bt_return_status status="RUNNING"/>
+        </bt_child_status>
     </state>
     <state id="error"/>
 </ascxml>
