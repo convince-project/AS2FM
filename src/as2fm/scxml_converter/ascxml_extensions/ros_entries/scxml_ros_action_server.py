@@ -23,7 +23,6 @@ from typing import List, Type
 
 from action_msgs.msg import GoalStatus
 
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosCallback,
     RosDeclaration,
@@ -41,7 +40,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     get_action_type_params,
     is_action_type_known,
 )
-from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam, ScxmlSend
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 

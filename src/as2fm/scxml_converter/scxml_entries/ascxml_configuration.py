@@ -19,8 +19,7 @@ from abc import abstractmethod
 from typing import List, Optional, Tuple
 
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase
 
 
 class AscxmlConfiguration(ScxmlBase):

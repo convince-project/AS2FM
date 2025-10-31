@@ -23,7 +23,6 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
     BtGenericPortDeclaration,
     BtOutputPortDeclaration,
@@ -33,7 +32,7 @@ from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     generate_bt_blackboard_set,
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam, ScxmlSend
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
 

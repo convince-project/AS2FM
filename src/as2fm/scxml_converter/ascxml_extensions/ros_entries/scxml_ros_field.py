@@ -18,8 +18,7 @@
 from typing import List
 
 from as2fm.as2fm_common.logging import get_error_msg
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
-from as2fm.scxml_converter.scxml_entries import ScxmlBase, ScxmlParam
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     ROS_FIELD_PREFIX,

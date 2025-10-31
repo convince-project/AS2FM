@@ -20,9 +20,8 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.logging import get_error_msg, log_warning
-from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (

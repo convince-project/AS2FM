@@ -15,9 +15,8 @@
 
 from typing import List, Type
 
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosActionThread, RosDeclaration
-from as2fm.scxml_converter.scxml_entries import GenericScxmlRoot
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, AscxmlThread, GenericScxmlRoot
 
 
 class AscxmlRootROS(GenericScxmlRoot):

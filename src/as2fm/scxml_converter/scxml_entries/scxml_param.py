@@ -25,9 +25,8 @@ from typing_extensions import Self
 
 from as2fm.as2fm_common.ecmascript_interpretation import has_operators, is_literal
 from as2fm.as2fm_common.logging import check_assertion, log_warning
-from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     CallbackType,

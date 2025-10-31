@@ -23,7 +23,6 @@ https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Top
 from typing import Type
 
 from as2fm.as2fm_common.logging import log_error
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_topic_event,
     is_msg_type_known,
@@ -33,6 +32,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosDeclaration,
     RosTrigger,
 )
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 

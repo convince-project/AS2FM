@@ -16,12 +16,12 @@
 from typing import List, Optional, Tuple, Type, Union, get_args
 
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
     RESERVED_BT_PORT_NAMES,
     BtGenericPortDeclaration,
 )
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import AscxmlRootROS, RosDeclaration
+from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration
 
 ValidDeclarationTypes = Union[RosDeclaration, BtGenericPortDeclaration]
 

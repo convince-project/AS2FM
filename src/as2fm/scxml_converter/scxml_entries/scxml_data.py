@@ -25,7 +25,6 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error, log_warning
-from as2fm.scxml_converter.ascxml_extensions import AscxmlConfiguration, AscxmlDeclaration
 from as2fm.scxml_converter.data_types.struct_definition import (
     StructDefinition,
 )
@@ -38,7 +37,7 @@ from as2fm.scxml_converter.data_types.type_utils import (
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     convert_expression_with_string_literals,

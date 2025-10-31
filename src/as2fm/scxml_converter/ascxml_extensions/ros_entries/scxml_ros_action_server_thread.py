@@ -25,7 +25,6 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.logging import get_error_msg, log_error
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosActionServer,
     RosCallback,
@@ -39,6 +38,8 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
+    AscxmlDeclaration,
+    AscxmlThread,
     ScxmlBase,
     ScxmlDataModel,
     ScxmlParam,

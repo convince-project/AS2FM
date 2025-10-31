@@ -34,9 +34,10 @@ from as2fm.as2fm_common.logging import (
     log_warning,
     set_filepath_for_all_sub_elements,
 )
-from as2fm.scxml_converter.ascxml_extensions import AscxmlDeclaration, AscxmlThread
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
+    AscxmlDeclaration,
+    AscxmlThread,
     EventsToAutomata,
     ScxmlBase,
     ScxmlDataModel,
