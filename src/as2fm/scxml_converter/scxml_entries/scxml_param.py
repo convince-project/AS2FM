@@ -35,6 +35,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    add_configurable_to_xml,
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
@@ -152,5 +153,6 @@ class ScxmlParam(ScxmlBase):
 
     def as_xml(self) -> XmlElement:
         check_assertion(self.check_validity(), self.get_xml_origin(), "Invalid parameter.")
-        xml_param = ET.Element(self.get_tag_name(), {"name": self._name, "expr": self._expr})
+        xml_param = ET.Element(self.get_tag_name(), {"name": self._name})
+        add_configurable_to_xml(xml_param, self._expr, "expr")
         return xml_param

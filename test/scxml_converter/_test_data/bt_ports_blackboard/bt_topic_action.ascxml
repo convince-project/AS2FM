@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     xmlns="http://www.w3.org/2005/07/scxml"
     initial="initial"
     version="1.0"
-    name="BtTopicAction"
+    name="TopicAction"
     model_src="">
 
     <datamodel>
@@ -23,16 +23,12 @@
     </ros_topic_publisher>
 
     <state id="initial">
-        <bt_tick target="initial">
-            <assign location="number">
-                <expr>
-                    <bt_get_input key="data" />
-                </expr>
-            </assign>
+        <transition event="bt_tick" target="initial">
+            <bt_get_input key="data" location="number" />
             <ros_topic_publish name="answer_pub">
                 <field name="data" expr="number" />
             </ros_topic_publish>
-        </bt_tick>
+        </transition>
     </state>
 
-</scxml>
+</ascxml>

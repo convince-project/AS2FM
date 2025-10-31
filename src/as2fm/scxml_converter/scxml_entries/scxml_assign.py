@@ -32,6 +32,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    add_configurable_to_xml,
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
@@ -168,10 +169,5 @@ class ScxmlAssign(ScxmlExecutableEntry):
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
         assign_xml = ET.Element(ScxmlAssign.get_tag_name(), {"location": self._location})
-        if isinstance(self._expr, str):
-            assign_xml.set("expr", self._expr)
-        else:
-            expr_xml = ET.Element("expr")
-            expr_xml.append(self._expr.as_xml())
-            assign_xml.append(expr_xml)
+        add_configurable_to_xml(assign_xml, self._expr, "expr")
         return assign_xml

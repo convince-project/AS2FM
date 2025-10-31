@@ -45,6 +45,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    add_configurable_to_xml,
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
@@ -243,22 +244,6 @@ class ScxmlData(ScxmlBase):
             [self._valid_id(), self._valid_type, self._valid_init_expr, self._valid_bounds()]
         )
 
-    def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
-        """
-        Generate the XML element representing the single data entry.
-
-        :param type_as_attribute: If True, the type of the data is added as an attribute.
-        """
-        assert self.check_validity(), "SCXML: found invalid data object."
-        xml_data = ET.Element(ScxmlData.get_tag_name(), {"id": self._id, "expr": self._expr})
-        if type_as_attribute:
-            xml_data.set("type", self._data_type)
-        if self._lower_bound is not None:
-            xml_data.set("lower_bound_incl", str(self._lower_bound))
-        if self._upper_bound is not None:
-            xml_data.set("upper_bound_incl", str(self._upper_bound))
-        return xml_data
-
     def _is_plain_type(self, verbose: bool):
         """Check if the data type is a plain type, accounting for arrays too."""
         data_type_str = self._data_type
@@ -353,3 +338,26 @@ class ScxmlData(ScxmlBase):
             self._data_type = get_type_string_from_type_and_dimensions("uint32", array_dims)
             # Handle the default expression
             self._expr = convert_expression_with_string_literals(self._expr, self.get_xml_origin())
+
+    def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
+        """
+        Generate the XML element representing the single data entry.
+
+        :param type_as_attribute: If True, the type of the data is added as an attribute.
+        """
+        assert self.check_validity(), "SCXML: found invalid data object."
+        xml_data = ET.Element(ScxmlData.get_tag_name(), {"id": self._id})
+        add_configurable_to_xml(xml_data, self._expr, "expr")
+        if type_as_attribute:
+            xml_data.set("type", self._data_type)
+        if self._lower_bound is not None:
+            if not isinstance(self._lower_bound, AscxmlConfiguration):
+                # This could be a numeric value, just ensure we are using strings
+                self._lower_bound = str(self._lower_bound)
+            add_configurable_to_xml(xml_data, self._lower_bound, "lower_bound_incl")
+        if self._upper_bound is not None:
+            if not isinstance(self._upper_bound, AscxmlConfiguration):
+                # This could be a numeric value, just ensure we are using strings
+                self._upper_bound = str(self._upper_bound)
+            add_configurable_to_xml(xml_data, self._upper_bound, "upper_bound_incl")
+        return xml_data

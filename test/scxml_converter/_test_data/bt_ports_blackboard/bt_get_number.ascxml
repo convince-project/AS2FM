@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="init"
     version="1.0"
     name="GetNumber"
@@ -18,4 +18,4 @@
             <bt_set_output key="out" expr="number" />
         </onentry>
     </state>
-</scxml>
+</ascxml>

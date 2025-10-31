@@ -62,13 +62,13 @@ def bt_to_scxml_test(
                 f_o.write(scxml_obj.as_xml_string())
     # Evaluate generated artifacts
     gt_scxml_dir_path = os.path.join(test_data_path, "gt_bt_scxml")
-    n_gt_models = len([f for f in os.listdir(gt_scxml_dir_path) if f.endswith(".scxml")])
+    n_gt_models = len([f for f in os.listdir(gt_scxml_dir_path) if f.endswith(".ascxml")])
     assert (
         len(scxml_objs) == n_gt_models
     ), f"Expecting {n_gt_models} scxml objects, found {len(scxml_objs)}."
     for scxml_root in scxml_objs:
         scxml_name = scxml_root.get_name()
-        gt_scxml_path = os.path.join(test_data_path, "gt_bt_scxml", f"{scxml_name}.scxml")
+        gt_scxml_path = os.path.join(test_data_path, "gt_bt_scxml", f"{scxml_name}.ascxml")
         with open(gt_scxml_path, "r", encoding="utf-8") as f_o:
             gt_xml = canonicalize_xml(f_o.read())
             scxml_xml = canonicalize_xml(scxml_root.as_xml_string())
@@ -143,7 +143,7 @@ def test_bt_to_scxml_battery_drainer():
     bt_to_scxml_test(
         "battery_drainer_w_bt",
         "bt.xml",
-        ["bt_topic_action.scxml", "bt_topic_condition.scxml"],
+        ["bt_topic_action.ascxml", "bt_topic_condition.ascxml"],
         False,
     )
 
@@ -152,7 +152,7 @@ def test_ros_to_plain_scxml_battery_drainer():
     """Test the conversion of the battery drainer with ROS macros to plain SCXML."""
     ros_to_plain_scxml_test(
         "battery_drainer_w_bt",
-        {"bt_topic_action.scxml": [], "bt_topic_condition.scxml": []},
+        {"bt_topic_action.ascxml": [], "bt_topic_condition.ascxml": []},
         {},
         True,
     )
@@ -160,13 +160,13 @@ def test_ros_to_plain_scxml_battery_drainer():
 
 def test_bt_to_scxml_bt_ports():
     """Test the conversion of the BT with ports to SCXML."""
-    bt_to_scxml_test("bt_ports_only", "bt.xml", ["bt_topic_action.scxml"], False)
+    bt_to_scxml_test("bt_ports_only", "bt.xml", ["bt_topic_action.ascxml"], False)
 
 
 def test_ros_to_plain_scxml_bt_ports():
     """Test the conversion of the BT with ports to plain SCXML."""
     ros_to_plain_scxml_test(
-        "bt_ports_only", {"bt_topic_action.scxml": [("name", "out"), ("data", "123")]}, {}, True
+        "bt_ports_only", {"bt_topic_action.ascxml": [("name", "out"), ("data", "123")]}, {}, True
     )
 
 

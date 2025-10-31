@@ -1,4 +1,4 @@
-<scxml name="BT_plugin_1001_Inverter" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
+<ascxml name="BT_plugin_1001_Inverter" version="1.0" model_src="" initial="init" xmlns="http://www.w3.org/2005/07/scxml">
     <datamodel>
         <data id="children_count" expr="1" type="int8"/>
     </datamodel>
@@ -39,4 +39,4 @@
         </transition>
     </state>
     <state id="error"/>
-</scxml>
+</ascxml>

@@ -46,6 +46,7 @@ from as2fm.scxml_converter.scxml_entries.utils import (
     is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    add_configurable_to_xml,
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
@@ -197,13 +198,9 @@ class RosDeclaration(AscxmlDeclaration):
                 "type": self._interface_type,
             },
         )
-        if isinstance(self._interface_name, str):
-            xml_declaration.set(self.get_xml_arg_interface_name(), self._interface_name)
-        else:
-            # This comes from a BT port: different handling needed
-            interface_name_xml = ET.Element(self.get_xml_arg_interface_name())
-            interface_name_xml.append(self._interface_name.as_xml())
-            xml_declaration.append(interface_name_xml)
+        add_configurable_to_xml(
+            xml_declaration, self._interface_name, self.get_xml_arg_interface_name()
+        )
         return xml_declaration
 
 

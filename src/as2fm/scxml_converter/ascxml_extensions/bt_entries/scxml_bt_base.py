@@ -300,7 +300,7 @@ class BtGenericStatusHandle(ScxmlTransition):
 
     def as_xml(self) -> XmlElement:
         xml_element = super().as_xml()
-        assert self._events is None, f"Error: SCXML {self.get_tag_name()}: Expected no events."
+        assert len(self._events) == 0, f"Error: SCXML {self.get_tag_name()}: Expected no events."
         xml_element.set("id", str(self._child_seq_id))
         return xml_element
 
