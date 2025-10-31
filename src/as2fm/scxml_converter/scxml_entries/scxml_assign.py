@@ -167,6 +167,11 @@ class ScxmlAssign(ScxmlExecutableEntry):
 
     def as_xml(self) -> XmlElement:
         assert self.check_validity(), "SCXML: found invalid assign object."
-        return ET.Element(
-            ScxmlAssign.get_tag_name(), {"location": self._location, "expr": self._expr}
-        )
+        assign_xml = ET.Element(ScxmlAssign.get_tag_name(), {"location": self._location})
+        if isinstance(self._expr, str):
+            assign_xml.set("expr", self._expr)
+        else:
+            expr_xml = ET.Element("expr")
+            expr_xml.append(self._expr.as_xml())
+            assign_xml.append(expr_xml)
+        return assign_xml

@@ -15,6 +15,7 @@
 
 import os
 
+import pytest
 from test_utils import canonicalize_xml
 
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
@@ -150,7 +151,7 @@ def test_battery_drainer_ros_from_code():
 
     use_battery_state = ScxmlState("use_battery")
     use_battery_state.append_on_entry(
-        RosTopicPublish(ros_topic_pub, [RosField("data", "battery_percent")])
+        RosTopicPublish(ros_topic_pub, [RosField("data", expr="battery_percent")])
     )
     use_battery_state.add_transition(
         RosRateCallback.make_single_target_transition(
@@ -170,7 +171,7 @@ def test_battery_drainer_ros_from_code():
             "_test_data",
             "battery_drainer_w_bt",
             "gt_parsed_scxml",
-            "battery_drainer.scxml",
+            "battery_drainer.ascxml",
         ),
     )
 
@@ -188,7 +189,7 @@ def test_bt_action_with_ports_from_code():
                 "initial",
                 body=[
                     ScxmlAssign("number", BtGetValueInputPort("data")),
-                    RosTopicPublish(topic_publisher, [RosField("data", "number")]),
+                    RosTopicPublish(topic_publisher, [RosField("data", expr="number")]),
                 ],
             )
         ],
@@ -200,16 +201,14 @@ def test_bt_action_with_ports_from_code():
     scxml_root.add_declaration(BtInputPortDeclaration("data", "int16"))
     scxml_root.add_declaration(topic_publisher)
     scxml_root.add_state(init_state, initial=True)
-    assert not scxml_root.check_validity(), "Currently, we handle unspecified BT entries as invalid"
-    scxml_root.set_bt_ports_values([("name", "/sys/add_srv"), ("data", "25")])
     _test_scxml_from_code(
         scxml_root,
         os.path.join(
             os.path.dirname(__file__),
             "_test_data",
             "bt_ports_only",
-            "gt_parsed_scxml",
-            "bt_topic_action.scxml",
+            "gt_parsed_ascxml",
+            "bt_topic_action.ascxml",
         ),
     )
 
@@ -218,7 +217,10 @@ def test_xml_parsing_battery_drainer():
     """Test the parsing of the battery drainer scxml file."""
     _test_xml_parsing(
         os.path.join(
-            os.path.dirname(__file__), "_test_data", "battery_drainer_w_bt", "battery_drainer.scxml"
+            os.path.dirname(__file__),
+            "_test_data",
+            "battery_drainer_w_bt",
+            "battery_drainer.ascxml",
         )
     )
 
@@ -230,26 +232,35 @@ def test_xml_parsing_bt_topic_condition():
             os.path.dirname(__file__),
             "_test_data",
             "battery_drainer_w_bt",
-            "bt_topic_condition.scxml",
+            "bt_topic_condition.ascxml",
         )
     )
 
 
+@pytest.mark.skip("Not working anymore: problem checked at conversion time now!")
 def test_xml_parsing_invalid_battery_drainer_xml():
-    """Test the parsing of the battery drainer scxml file with invalid xml."""
+    """
+    Test the parsing of the battery drainer scxml file with invalid xml.
+
+    Here we the declared "charge" topic isn't matching with the "charging" subscriber.
+    """
     _test_xml_parsing(
         os.path.join(
-            os.path.dirname(__file__), "_test_data", "invalid_xmls", "battery_drainer.scxml"
+            os.path.dirname(__file__), "_test_data", "invalid_xmls", "battery_drainer.ascxml"
         ),
         valid_xml=False,
     )
 
 
 def test_xml_parsing_invalid_bt_topic_action_xml():
-    """Test the parsing of the bt topic action scxml file with invalid xml."""
+    """
+    Test the parsing of the bt topic action scxml file with invalid xml.
+
+    Here we are using a non-existing type.
+    """
     _test_xml_parsing(
         os.path.join(
-            os.path.dirname(__file__), "_test_data", "invalid_xmls", "bt_topic_action.scxml"
+            os.path.dirname(__file__), "_test_data", "invalid_xmls", "bt_topic_action.ascxml"
         ),
         valid_xml=False,
     )

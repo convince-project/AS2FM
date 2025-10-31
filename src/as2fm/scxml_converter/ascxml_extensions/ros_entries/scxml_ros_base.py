@@ -193,10 +193,17 @@ class RosDeclaration(AscxmlDeclaration):
             self.get_tag_name(),
             {
                 "name": self._interface_alias,
-                self.get_xml_arg_interface_name(): self._interface_name,
+                # self.get_xml_arg_interface_name(): interface_name,
                 "type": self._interface_type,
             },
         )
+        if isinstance(self._interface_name, str):
+            xml_declaration.set(self.get_xml_arg_interface_name(), self._interface_name)
+        else:
+            # This comes from a BT port: different handling needed
+            interface_name_xml = ET.Element(self.get_xml_arg_interface_name())
+            interface_name_xml.append(self._interface_name.as_xml())
+            xml_declaration.append(interface_name_xml)
         return xml_declaration
 
 
