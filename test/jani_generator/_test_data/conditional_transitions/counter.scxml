@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="increase"
     version="1.0"
     name="Counter"
@@ -20,4 +20,4 @@
             <assign location="counter" expr="counter + 1" />
         </transition>
     </state>
-</scxml>
+</ascxml>

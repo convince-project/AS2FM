@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml version="1.0" xmlns="..." datamodel="ecmascript" name="ResetSkill" initial="idle">
+<ascxml version="1.0" xmlns="..." datamodel="ecmascript" name="ResetSkill" initial="idle">
 
     <datamodel>
         <data id="poi_number" type="int32" expr="1"/>
@@ -91,4 +91,4 @@
         </ros_service_handle_request> -->
     </state>
 
-</scxml>
+</ascxml>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="select_corridor"
     version="1.0"
     name="CorridorsEnvironment"
@@ -75,4 +75,4 @@
             <target id="corridor_three" prob="{remaining_prob}" />
         </transition>
     </state>
-</scxml>
+</ascxml>

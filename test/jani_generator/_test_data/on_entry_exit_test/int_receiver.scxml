@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     name="int_receiver"
     version="1.0"
     initial="init"
@@ -28,4 +28,4 @@
         </onexit>
         <transition target="init" event="new_int" cond="_event.data.data &lt; 10" />
     </state>
-</scxml>
+</ascxml>

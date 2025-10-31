@@ -4,8 +4,8 @@
     </parameters>
 
     <node_models>
-        <input type="node-ascxml" src="./battery_drainer.scxml" />
-        <input type="node-ascxml" src="./battery_manager.scxml" />
+        <input type="node-ascxml" src="./battery_drainer.ascxml" />
+        <input type="node-ascxml" src="./battery_manager.ascxml" />
     </node_models>
 
     <properties>

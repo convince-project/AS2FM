@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml version="1.0" xmlns="..." datamodel="ecmascript" name="TimerComponent" initial="idle">
+<ascxml version="1.0" xmlns="..." datamodel="ecmascript" name="TimerComponent" initial="idle">
 
 	<datamodel>
     <data id="timer_active" type="bool" expr="false" />
@@ -51,4 +51,4 @@
       <assign location="counter" expr="0"/>
     </transition>
   </state>
-</scxml>
+</ascxml>

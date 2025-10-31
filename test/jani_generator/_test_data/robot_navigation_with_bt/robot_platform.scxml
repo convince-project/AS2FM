@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="publish_info"
     version="1.0"
     name="RobotPlatform"
@@ -70,4 +70,4 @@
             <assign location="tf_world_robot_theta" expr="tf_world_robot_theta + 0.1 * last_cmd_ang" />
         </ros_rate_callback>
     </state>
-</scxml>
+</ascxml>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="wait_for_tick"
     version="1.0"
     name="ReadBB"
@@ -42,4 +42,4 @@
         </transition>
     </state>
 
-</scxml>
+</ascxml>

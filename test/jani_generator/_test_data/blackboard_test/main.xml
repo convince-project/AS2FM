@@ -7,8 +7,8 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./bt.xml" />
-        <input type="bt-plugin-ascxml" src="./bt_read_bb.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_write_bb.scxml" />
+        <input type="bt-plugin-ascxml" src="./bt_read_bb.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_write_bb.ascxml" />
     </behavior_tree>
 
     <properties>

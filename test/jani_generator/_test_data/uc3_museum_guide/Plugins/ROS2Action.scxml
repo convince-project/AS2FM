@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="idle"
     version="1.0"
     name="ROS2Action"
@@ -57,4 +57,4 @@
         </ros_service_handle_response>
     </state> -->
 
-</scxml>
+</ascxml>

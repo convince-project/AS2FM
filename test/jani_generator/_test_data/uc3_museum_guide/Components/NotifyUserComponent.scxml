@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
   version="1.0"
   xmlns="..."
   datamodel="ecmascript"
@@ -53,4 +53,4 @@
     </ros_service_handle_request>
   </state>
 
-</scxml>
+</ascxml>

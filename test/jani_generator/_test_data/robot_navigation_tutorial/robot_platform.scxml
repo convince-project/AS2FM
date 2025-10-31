@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="publish_pose"
     version="1.0"
     name="RobotPlatform"
@@ -42,4 +42,4 @@
             <assign location="robot_theta_pose" expr="robot_theta_pose + last_cmd_ang" />
         </ros_rate_callback>
     </state>
-</scxml>
+</ascxml>

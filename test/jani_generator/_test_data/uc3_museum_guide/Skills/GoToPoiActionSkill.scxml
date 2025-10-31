@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml version="1.0" xmlns="..." datamodel="ecmascript" name="GoToPoiActionSkill" initial="idle">
+<ascxml version="1.0" xmlns="..." datamodel="ecmascript" name="GoToPoiActionSkill" initial="idle">
 
     <datamodel>
         <!-- <data id="poi_name" type="string" expr=""/> -->
@@ -103,4 +103,4 @@
         </ros_action_handle_cancel_result>
     </state> -->
 
-</scxml>
+</ascxml>

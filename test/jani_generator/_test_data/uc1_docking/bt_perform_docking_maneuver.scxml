@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="initial"
     version="1.0"
     name="PerformDockingManeuver"
@@ -35,4 +35,4 @@
         </bt_halt>
     </state>
 
-</scxml>
+</ascxml>

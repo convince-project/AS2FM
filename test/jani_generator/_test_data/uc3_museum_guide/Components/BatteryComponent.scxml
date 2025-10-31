@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
   version="1.0"
   xmlns="..."
   datamodel="ecmascript"
@@ -33,4 +33,4 @@
     <!-- <transition target="idle"/> -->
   </state>
 
-</scxml>
+</ascxml>

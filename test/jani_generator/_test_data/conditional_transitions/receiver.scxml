@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="check_counter"
     version="1.0"
     name="Receiver"
@@ -14,4 +14,4 @@
     </state>
 
     <state id="done" />
-</scxml>
+</ascxml>

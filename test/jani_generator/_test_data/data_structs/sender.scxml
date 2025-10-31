@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="increase"
     version="1.0"
     name="sender"
@@ -51,4 +51,4 @@
             <assign location="multiple_polygons.polygons[1].points[1].y" expr="multiple_polygons.polygons[1].points[1].y + 1.0" />
         </transition>
     </state>
-</scxml>
+</ascxml>

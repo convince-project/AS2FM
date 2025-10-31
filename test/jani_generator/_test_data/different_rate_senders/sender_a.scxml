@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="send_msg"
     version="1.0"
     name="sender_a"
@@ -22,4 +22,4 @@
         </ros_rate_callback>
     </state>
 
-</scxml>
+</ascxml>

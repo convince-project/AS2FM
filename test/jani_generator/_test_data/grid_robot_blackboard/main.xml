@@ -8,13 +8,13 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./bt.xml" />
-        <input type="bt-plugin-ascxml" src="./bt_move.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_shall_move.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_update_goal_and_current_position.scxml" />
+        <input type="bt-plugin-ascxml" src="./bt_move.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_shall_move.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_update_goal_and_current_position.ascxml" />
     </behavior_tree>
 
     <node_models>
-        <input type="node-ascxml" src="./world.scxml" />
+        <input type="node-ascxml" src="./world.ascxml" />
     </node_models>
 
     <properties>

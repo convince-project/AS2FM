@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="check_battery"
     version="1.0"
     name="BatteryManager"
@@ -15,4 +15,4 @@
             <assign location="battery_alarm" expr="_event.data.data &lt; 30" />
         </transition>
     </state>
-</scxml>
+</ascxml>

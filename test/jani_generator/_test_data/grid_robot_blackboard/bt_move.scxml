@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="running"
     version="1.0"
     name="Move"
@@ -38,4 +38,4 @@
         </bt_halt>
     </state>
 
-</scxml>
+</ascxml>

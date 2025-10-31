@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     name="int_sender"
     version="1.0"
     initial="current"
@@ -19,4 +19,4 @@
         </transition>
     </state>
 
-</scxml>
+</ascxml>

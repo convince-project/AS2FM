@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="wait_for_action"
     version="1.0"
     name="DockingSkill"
@@ -59,4 +59,4 @@
         </transition>
     </state>
 
-</scxml>
+</ascxml>

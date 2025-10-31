@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="wait_first_msg"
     version="1.0"
     name="GoalCheck"
@@ -52,4 +52,4 @@
         </bt_halt>
     </state>
 
-</scxml>
+</ascxml>

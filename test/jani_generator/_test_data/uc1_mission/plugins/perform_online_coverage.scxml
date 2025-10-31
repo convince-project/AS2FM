@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="idle"
     version="1.0"
     name="PerformOnlineCoverage"
@@ -78,4 +78,4 @@
             </if>
         </bt_tick>
     </state>
-</scxml>
+</ascxml>

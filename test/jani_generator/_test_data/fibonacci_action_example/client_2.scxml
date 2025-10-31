@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
+<ascxml
     initial="send_req"
     version="1.0"
     name="client_2"
@@ -40,4 +40,4 @@
     </state>
 
     <state id="done" />
-</scxml>
+</ascxml>
