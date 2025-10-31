@@ -99,15 +99,6 @@ class BtGenericRequestHandle(ScxmlTransition):
     ):
         super().__init__(targets, [self.get_tag_name()], condition)
 
-    def check_validity(self) -> bool:
-        if len(self._targets) != 1:
-            print(
-                f"SCXML {self.get_tag_name()} error: "
-                f"there are {len(self._targets)} targets, expecting 1."
-            )
-            return False
-        return super().check_validity()
-
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         instance_id = kwargs["bt_plugin_id"]
         self._events = [self.generate_bt_event_name(instance_id)]

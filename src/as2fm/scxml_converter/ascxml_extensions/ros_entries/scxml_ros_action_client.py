@@ -150,18 +150,14 @@ class RosActionHandleGoalResponse(RosCallback):
         :param accept_target: State to transition to, in case of goal acceptance.
         :param reject_target: State to transition to, in case of goal refusal.
         """
-        if isinstance(action_client, RosActionClient):
-            self._client_name = action_client.get_name()
-        else:
-            assert is_non_empty_string(RosActionHandleGoalResponse, "name", action_client)
-            self._client_name = action_client
+        self._interface_name = self.get_interface_name(action_client)
         self._accept_target = accept_target
         self._reject_target = reject_target
         self._targets = []  # This is unused, but needs to be defined for the parent class
         assert self.check_validity(), "Error: SCXML RosActionHandleGoalResponse: invalid params."
 
     def check_validity(self) -> bool:
-        valid_name = is_non_empty_string(RosActionHandleGoalResponse, "name", self._client_name)
+        valid_name = is_non_empty_string(RosActionHandleGoalResponse, "name", self._interface_name)
         valid_accept = is_non_empty_string(
             RosActionHandleGoalResponse, "accept", self._accept_target
         )
@@ -201,7 +197,7 @@ class RosActionHandleGoalResponse(RosCallback):
         return ET.Element(
             RosActionHandleGoalResponse.get_tag_name(),
             {
-                "name": self._client_name,
+                "name": self._interface_name,
                 "accept": self._accept_target,
                 "reject": self._reject_target,
             },
