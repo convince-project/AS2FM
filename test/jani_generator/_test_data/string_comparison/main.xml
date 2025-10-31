@@ -5,8 +5,8 @@
     </parameters>
 
     <node_models>
-        <input type="node-ascxml" src="./string_send.scxml" />
-        <input type="node-ascxml" src="./string_receive.scxml" />
+        <input type="node-ascxml" src="./string_send.ascxml" />
+        <input type="node-ascxml" src="./string_receive.ascxml" />
     </node_models>
 
     <properties>

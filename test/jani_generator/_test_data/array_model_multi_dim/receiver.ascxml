@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="receive_array"
+    version="1.0"
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!-- Dummy receiver, doing nothing -->
+    <datamodel>
+        <data id="complete_array" expr="[]" type="int32[][][][]" />
+        <data id="sub_array" expr="[[], []]" type="int32[][][][]" />
+    </datamodel>
+
+    <state id="receive_array">
+        <transition target="receive_array" event="send_event">
+            <assign location="complete_array" expr="_event.data.msg" />
+            <assign location="sub_array[1]" expr="complete_array[1]" />
+            <if cond="complete_array[1][1][1][1] == 5 &amp;&amp; complete_array[1][1][1].length == 3">
+                <send event="complete_array_ok"/>
+            </if>
+            <if cond="sub_array[1][1][1][1] == 5 &amp;&amp; sub_array[1][1][1].length == 3 &amp;&amp; sub_array[0].length == 0">
+                <send event="sub_array_ok"/>
+            </if>
+        </transition>
+    </state>
+
+</ascxml>

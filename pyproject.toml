@@ -45,7 +45,7 @@ requires-python = ">=3.10"
 
 [tool.setuptools.package-data]
 "as2fm.trace_visualizer" = ["data/slkscr.ttf"]
-"as2fm.resources" = ["bt_control_nodes/*.scxml"]
+"as2fm.resources" = ["bt_control_nodes/*.ascxml"]
 
 [project.scripts]
 as2fm_convince_to_plain_jani = "as2fm.jani_generator.main:main_convince_to_plain_jani"

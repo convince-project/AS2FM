@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="wait_for_action"
+    version="1.0"
+    name="DockingSkill"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <!-- Support variable for actions -->
+        <data id="goal_id" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_action_server name="dock_action" action_name="/perform_docking" type="uc1_interfaces/PerformDocking" />
+    <ros_action_server name="undock_action" action_name="/perform_undocking" type="uc1_interfaces/PerformUndocking" />
+
+    <state id="wait_for_action">
+        <ros_action_handle_goal name="undock_action" target="process_undock_req">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <send event="undock_req" />
+        </ros_action_handle_goal>
+        <ros_action_handle_goal name="dock_action" target="process_dock_req">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <send event="dock_req" />
+        </ros_action_handle_goal>
+    </state>
+
+    <state id="process_undock_req">
+        <!-- Action call was accepted -->
+        <transition event="undock_res" cond="_event.data.accept" target="wait_for_action">
+            <!-- accept goal -->
+            <ros_action_accept_goal name="undock_action" goal_id="goal_id" />
+            <if cond="_event.data.success">
+                <ros_action_succeed name="undock_action" goal_id="goal_id" />
+            <else/>
+                <ros_action_aborted name="undock_action" goal_id="goal_id" />
+            </if>
+        </transition>
+        <!-- Action call was not accepted -->
+        <transition event="undock_res" target="wait_for_action">
+            <ros_action_reject_goal name="undock_action" goal_id="goal_id" />
+        </transition>
+    </state>
+
+    <state id="process_dock_req">
+        <!-- Action call was accepted -->
+        <transition event="dock_res" cond="_event.data.accept" target="wait_for_action">
+            <!-- accept goal -->
+            <ros_action_accept_goal name="dock_action" goal_id="goal_id" />
+            <if cond="_event.data.success">
+                <ros_action_succeed name="dock_action" goal_id="goal_id" />
+            <else/>
+                <ros_action_aborted name="dock_action" goal_id="goal_id" />
+            </if>
+        </transition>
+        <!-- Action call was not accepted -->
+        <transition event="dock_res" target="wait_for_action">
+            <ros_action_reject_goal name="dock_action" goal_id="goal_id" />
+        </transition>
+    </state>
+
+</ascxml>

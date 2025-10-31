@@ -6,13 +6,13 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./bt_tree_retry.xml" />
-        <input type="bt-plugin-ascxml" src="./bt_navigate_action.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_pick_action.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_place_action.scxml" />
+        <input type="bt-plugin-ascxml" src="./bt_navigate_action.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_pick_action.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_place_action.ascxml" />
     </behavior_tree>
 
     <node_models>
-        <input type="node-ascxml" src="./world_probabilistic.scxml" />
+        <input type="node-ascxml" src="./world_probabilistic.ascxml" />
     </node_models>
 
     <properties>

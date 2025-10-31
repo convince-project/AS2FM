@@ -22,12 +22,14 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Optional
 
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import JaniModel, JaniProperty
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
     generate_plain_scxml_from_handlers,
-    update_ros_communication_handlers,
+    update_ros_communication_handlers_clients,
+    update_ros_communication_handlers_servers,
 )
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
@@ -40,6 +42,14 @@ from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
     preprocess_jani_expressions,
 )
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
+    AscxmlRootROS,
+    RosActionClient,
+    RosActionServer,
+    RosServiceClient,
+    RosServiceServer,
+    RosTimeRate,
+)
 from as2fm.scxml_converter.bt_converter import (
     bt_converter,
     generate_blackboard_scxml,
@@ -48,12 +58,12 @@ from as2fm.scxml_converter.bt_converter import (
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     EventsToAutomata,
+    GenericScxmlRoot,
+    ScxmlAssign,
+    ScxmlData,
     ScxmlRoot,
-    load_scxml_file,
+    ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.scxml_data import ScxmlData
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import ScxmlAssign
-from as2fm.scxml_converter.scxml_entries.scxml_transition import ScxmlTransition
 
 
 def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
@@ -68,12 +78,12 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
         custom_struct_instance.expand_members(custom_data_types)
     # Load the skills and components scxml files (ROS-SCXML)
     scxml_files_to_convert: list = model.skills + model.components
-    ros_scxmls: List[ScxmlRoot] = []
+    ros_ascxmls: List[GenericScxmlRoot] = []
     for fname in scxml_files_to_convert:
-        ros_scxmls.append(load_scxml_file(fname, custom_data_types))
+        ros_ascxmls.append(AscxmlRootROS.load_scxml_file(fname, custom_data_types))
     # Convert behavior tree and plugins to ROS-SCXML
     if model.bt is not None:
-        ros_scxmls.extend(
+        ros_ascxmls.extend(
             bt_converter(
                 model.bt,
                 model.plugins,
@@ -87,31 +97,42 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     all_timers: List[RosTimer] = []
     all_services: Dict[str, RosCommunicationHandler] = {}
     all_actions: Dict[str, RosCommunicationHandler] = {}
-    bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_scxmls)
-    for scxml_entry in ros_scxmls:
-        plain_scxmls, ros_declarations = scxml_entry.to_plain_scxml_and_declarations()
+    bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_ascxmls)
+    for ascxml_entry in ros_ascxmls:
+        plain_scxmls = ascxml_entry.to_plain_scxml()
         for plain_scxml in plain_scxmls:
-            plain_scxml.set_xml_origin(scxml_entry.get_xml_origin())
-        # Handle ROS timers
-        for timer_name, timer_rate in ros_declarations._timers.items():
-            assert timer_name not in all_timers, f"Timer {timer_name} already exists."
-            all_timers.append(RosTimer(timer_name, timer_rate))
-        # Handle ROS Services
-        update_ros_communication_handlers(
-            scxml_entry.get_name(),
-            RosServiceHandler,
-            all_services,
-            ros_declarations._service_servers,
-            ros_declarations._service_clients,
-        )
-        # Handle ROS Actions
-        update_ros_communication_handlers(
-            scxml_entry.get_name(),
-            RosActionHandler,
-            all_actions,
-            ros_declarations._action_servers,
-            ros_declarations._action_clients,
-        )
+            plain_scxml.set_xml_origin(ascxml_entry.get_xml_origin())
+        for ascxml_declaration in ascxml_entry.get_declarations():
+            # Handle ROS Timers
+            if isinstance(ascxml_declaration, RosTimeRate):
+                existing_timer_names = [t.name for t in all_timers]
+                new_t_name = ascxml_declaration.get_name()
+                new_t_rate = ascxml_declaration.get_rate()
+                assert new_t_name not in existing_timer_names, get_error_msg(
+                    ascxml_declaration.get_xml_origin(), "Duplicate timer name!"
+                )
+                assert isinstance(new_t_rate, float), get_error_msg(
+                    ascxml_declaration.get_xml_origin(), "The timer rate isn't a number."
+                )
+                all_timers.append(RosTimer(new_t_name, new_t_rate))
+            # Handle ROS Services
+            if isinstance(ascxml_declaration, RosServiceServer):
+                update_ros_communication_handlers_servers(
+                    ascxml_entry.get_name(), RosServiceHandler, all_services, ascxml_declaration
+                )
+            if isinstance(ascxml_declaration, RosServiceClient):
+                update_ros_communication_handlers_clients(
+                    ascxml_entry.get_name(), RosServiceHandler, all_services, ascxml_declaration
+                )
+            # Handle ROS Actions
+            if isinstance(ascxml_declaration, RosActionServer):
+                update_ros_communication_handlers_servers(
+                    ascxml_entry.get_name(), RosActionHandler, all_actions, ascxml_declaration
+                )
+            if isinstance(ascxml_declaration, RosActionClient):
+                update_ros_communication_handlers_clients(
+                    ascxml_entry.get_name(), RosActionHandler, all_actions, ascxml_declaration
+                )
         plain_scxml_models.extend(plain_scxmls)
     # Generate sync SCXML model for BT Blackboard (if needed)
     if len(bt_blackboard_vars) > 0:
@@ -123,7 +144,7 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
     if timer_scxml is not None:
         timer_scxml.set_custom_data_types(custom_data_types)
-        plain_scxmls, _ = timer_scxml.to_plain_scxml_and_declarations()
+        plain_scxmls = timer_scxml.to_plain_scxml()
         plain_scxml_models.extend(plain_scxmls)
     return plain_scxml_models
 

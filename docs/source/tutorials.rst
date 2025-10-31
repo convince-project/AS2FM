@@ -166,10 +166,10 @@ Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
     AS2FM - SCXML to JANI.
 
     Loading model from main.xml.
-    xml_file='./world.scxml'
-    xml_file='./bt_navigate_action.scxml'
-    xml_file='./bt_pick_action.scxml'
-    xml_file='./bt_place_action.scxml'
+    xml_file='./world.ascxml'
+    xml_file='./bt_navigate_action.ascxml'
+    xml_file='./bt_pick_action.ascxml'
+    xml_file='./bt_place_action.ascxml'
     ...
 
 This produces the same model in the `JANI format <https://jani-spec.org/>`_ in the file `main.jani`.

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+  version="1.0"
+  xmlns="..."
+  datamodel="ecmascript"
+  name="SchedulerComponent"
+  initial="idle">
+
+	<datamodel>
+    <data id="current_poi_number" type="int32" expr="1" />
+		<!-- <data id="current_poi_name" type="string" expr="poi1" /> -->
+	</datamodel>
+
+  <ros_service_server service_name="/SchedulerComponent/GetCurrentPoi" type="scheduler_interfaces_dummy/GetCurrentPoi"/>
+  <ros_service_server service_name="/SchedulerComponent/SetPoi" type="scheduler_interfaces_dummy/SetPoi"/>
+  <ros_topic_publisher topic="/SchedulerComponent/PoiNumber" type="std_msgs/Int32" />
+
+  <state id="idle">
+    <onentry>
+      <ros_topic_publish name="/SchedulerComponent/PoiNumber">
+        <field name="data" expr="current_poi_number"/>
+      </ros_topic_publish>
+    </onentry>
+    <ros_service_handle_request name="/SchedulerComponent/GetCurrentPoi" target="idle">
+      <ros_service_send_response name="/SchedulerComponent/GetCurrentPoi">
+        <field name="poi_number" expr="current_poi_number"/>
+        <!-- <field name="poi_name" expr="current_poi_name"/> -->
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+
+    <ros_service_handle_request name="/SchedulerComponent/SetPoi" target="idle">
+      <assign location="current_poi_number" expr="_req.poi_number"/>
+      <ros_service_send_response name="/SchedulerComponent/SetPoi">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+
+  </state>
+
+</ascxml>

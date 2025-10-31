@@ -443,7 +443,7 @@ def append_scxml_body_to_jani_edge(
                 param_assign_name = (
                     f"{ec.get_event()}{MEMBER_ACCESS_SUBSTITUTION}{param.get_name()}"
                 )
-                expr = param.get_expr_or_location()
+                expr = param.get_expr()
                 # Update the events holder
                 # TODO: expr might contain reference to event variables, that have no type specified
                 # For now, we avoid the problem by using support variables in the model...

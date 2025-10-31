@@ -1,0 +1,10 @@
+<ascxml name="BT_plugin_1003_charge" version="1.0" model_src="" initial="initial" xmlns="http://www.w3.org/2005/07/scxml">
+    <ros_topic_publisher name="charge" type="std_msgs/Empty" topic="charge"/>
+    <state id="initial">
+        <bt_tick target="initial">
+            <ros_topic_publish name="charge"/>
+            <bt_return_status status="SUCCESS"/>
+        </bt_tick>
+        <bt_halt target="initial"/>
+    </state>
+</ascxml>

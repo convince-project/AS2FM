@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="receive_array"
+    version="1.0"
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="msg_array" expr="[]" type="string[]" />
+    </datamodel>
+
+    <!-- Dummy receiver, doing nothing -->
+    <state id="receive_array">
+        <transition target="receive_array" event="new_msg_array">
+            <assign location="msg_array" expr="_event.data.msg" />
+        </transition>
+    </state>
+
+</ascxml>
