@@ -75,9 +75,9 @@ AS2FM Python Package
 
     .. code-block:: bash
 
-        python3 -m pip uninstall as2fm_common
-        python3 -m pip uninstall jani_generator
-        python3 -m pip uninstall scxml_converter
+        python3 -m pip uninstall moco_common
+        python3 -m pip uninstall roaml_generator
+        python3 -m pip uninstall roaml_converter
         python3 -m pip uninstall jani_visualizer
         python3 -m pip uninstall trace_visualizer
 

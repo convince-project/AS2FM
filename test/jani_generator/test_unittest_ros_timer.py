@@ -17,17 +17,17 @@
 
 from typing import List
 
-from as2fm.jani_generator.jani_entries import JaniAutomaton
-from as2fm.jani_generator.ros_helpers.ros_timer import (
+from moco.roaml_generator.jani_entries import JaniAutomaton
+from moco.roaml_generator.ros_helpers.ros_timer import (
     GLOBAL_TIMER_TICK_ACTION,
     RosTimer,
     make_global_timer_scxml,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
-from as2fm.jani_generator.scxml_helpers.scxml_event_processor import (
+from moco.roaml_generator.scxml_helpers.scxml_event import EventsHolder
+from moco.roaml_generator.scxml_helpers.scxml_event_processor import (
     _preprocess_global_timer_automaton,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_to_jani import convert_scxml_root_to_jani_automaton
+from moco.roaml_generator.scxml_helpers.scxml_to_jani import convert_scxml_root_to_jani_automaton
 
 
 def generic_ros_timer_check(rate_hz: float, expected_unit: str, expected_int_period: int):

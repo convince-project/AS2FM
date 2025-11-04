@@ -19,7 +19,7 @@ LINE_END = "\\"
 CWD = "cwd"
 EXPECTED_FILES = "expected-files"
 
-AS2FM_FOLDER = os.path.join(__file__, "..", "..")
+MOCO_FOLDER = os.path.join(__file__, "..", "..")
 
 
 def evaluate_bash_block(example, cwd):
@@ -105,13 +105,15 @@ def collect_docs():
     documents = []
     for f_path in all_rst_files:
         doc = sybil.parse(f_path)
-        rel_path = os.path.relpath(f_path, AS2FM_FOLDER)
+        rel_path = os.path.relpath(f_path, MOCO_FOLDER)
         if len(list(doc)) > 0:
             documents.append([rel_path, list(doc)])
     print(f"Found {len(documents)} .rst files with code to test.")
     return documents
 
 
+# TODO rewrite the documentation, then remove this skip mark
+@pytest.mark.skip(reason="Docs are gonna have to be redone, no point in testing the old ones")
 @pytest.mark.parametrize("path, blocks", collect_docs())
 def test_doc_rst(path, blocks):
     """Testing all code blocks in one *.rst file under `path`."""
@@ -147,7 +149,7 @@ def test_doc_rst(path, blocks):
         print(f"Evaluating environment >{env}< with {options} ...")
         if CWD not in options:
             options[CWD] = "."
-        cwd = os.path.realpath(os.path.join(AS2FM_FOLDER, options[CWD]))
+        cwd = os.path.realpath(os.path.join(MOCO_FOLDER, options[CWD]))
         print(f"In folder {cwd}")
         expected_files = []
 

@@ -1,4 +1,4 @@
-FROM ros:jazzy AS as2fm
+FROM ros:jazzy AS moco
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install requirements
@@ -16,10 +16,12 @@ RUN cd /smc_storm_executable && \
     rm -rf /var/lib/apt/lists/*
 RUN ln /smc_storm_executable/bin/smc_storm /usr/local/bin
 
-# Add AS2FM
+# Add MOCO
 RUN mkdir -p /colcon_ws/src
-COPY . /colcon_ws/src/as2fm
-RUN pip3 install --break-system-packages /colcon_ws/src/as2fm[dev]
+COPY . /colcon_ws/src/moco
+#TODO fix package name once release is up
+RUN pip3 install --break-system-packages /colcon_ws/src/moco[dev]  
+
 
 # Make ROS workspace and build it
 RUN source /opt/ros/jazzy/setup.bash && \
@@ -30,6 +32,6 @@ RUN source /opt/ros/jazzy/setup.bash && \
 CMD /bin/bash
 COPY .docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x entrypoint.sh
-WORKDIR /colcon_ws/src/as2fm
+WORKDIR /colcon_ws/src/moco
 
 ENTRYPOINT [ "/entrypoint.sh" ]

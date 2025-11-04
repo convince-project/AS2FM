@@ -6,7 +6,7 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <ros_service_client name="srv" service_name="/add_float" type="as2fm_test_srvs/SetFloat" />
+    <ros_service_client name="srv" service_name="/add_float" type="moco_test_srvs/SetFloat" />
     <ros_topic_publisher name="pub" topic="/recv_float" type="std_msgs/Bool" />
 
     <datamodel>

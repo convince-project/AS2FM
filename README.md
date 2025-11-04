@@ -1,4 +1,4 @@
-# Autonomous Systems to Formal Models (AS2FM)
+# Autonomous Systems to Formal Models (moco)
 
 ## Summary overview
 
@@ -6,7 +6,7 @@ This package provides tools to convert the high level representation of an auton
 
 ## Documentation
 
-Please access the documentation via [convince-project.github.io/AS2FM](https://convince-project.github.io/AS2FM)
+Please access the documentation via [convince-project.github.io/moco](https://convince-project.github.io/moco)
 
 ## Further Information
 
@@ -16,8 +16,8 @@ See [Contributing](./CONTRIBUTING.md).
 
 ### Feedback
 
-Feedback is highly appreciated. Please open issues on new ideas, bugs, etc. here at [as2fm/issues](https://github.com/convince-project/as2fm/issues) or reach out to the maintainers.
+Feedback is highly appreciated. Please open issues on new ideas, bugs, etc. here at [moco/issues](https://github.com/convince-project/moco/issues) or reach out to the maintainers.
 
 ### License
 
-AS2FM comes under the Apache-2.0 license, see [LICENSE](./LICENSE).
+moco comes under the Apache-2.0 license, see [LICENSE](./LICENSE).

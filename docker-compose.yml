@@ -1,11 +1,11 @@
 
 services:
   base:
-    image: ghcr.io/convince-project/as2fm:latest
+    image: ghcr.io/nevertools/moco:latest # TODO fix link once release is up
     build:
       context: .
       dockerfile: .docker/Dockerfile
-      target: as2fm
+      target: moco
     # Ensures signals are actually passed and reaped in the container for shutdowns.
     # https://docs.docker.com/compose/compose-file/compose-file-v3/#init
     init: true
@@ -29,7 +29,7 @@ services:
       - QTWEBENGINE_DISABLE_SANDBOX=1
     volumes:
       # Mount the workshop source code
-      - ./:/colcon_ws/src/as2fm:rw
+      - ./:/colcon_ws/src/moco:rw
       # Allows graphical programs in the container
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
@@ -39,6 +39,6 @@ services:
     extends: base
     command: >
       bash -c "
-        python3 -m pytest /colcon_ws/src/as2fm
+        python3 -m pytest /colcon_ws/src/moco
       "
     profiles: [test]

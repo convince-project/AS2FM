@@ -18,7 +18,7 @@
 import json
 import os
 
-from as2fm.jani_generator.jani_entries import JaniModel
+from moco.roaml_generator.jani_entries import JaniModel
 
 
 def test_jani_file_loading():

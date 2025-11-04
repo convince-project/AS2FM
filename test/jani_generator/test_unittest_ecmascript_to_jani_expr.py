@@ -17,14 +17,14 @@ from typing import Optional
 
 import pytest
 
-from as2fm.jani_generator.jani_entries import JaniExpression
-from as2fm.jani_generator.jani_entries.jani_expression_generator import (
+from moco.roaml_generator.jani_entries import JaniExpression
+from moco.roaml_generator.jani_entries.jani_expression_generator import (
     array_value_operator,
     max_operator,
     plus_operator,
     sin_operator,
 )
-from as2fm.jani_generator.scxml_helpers.scxml_expression import (
+from moco.roaml_generator.scxml_helpers.scxml_expression import (
     ArrayInfo,
     parse_ecmascript_to_jani_expression,
 )

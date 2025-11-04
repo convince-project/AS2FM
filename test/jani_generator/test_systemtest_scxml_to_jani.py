@@ -24,13 +24,13 @@ import unittest
 import lxml.etree as ET
 import pytest
 
-from as2fm.jani_generator.scxml_helpers.scxml_event import EventsHolder
-from as2fm.jani_generator.scxml_helpers.scxml_to_jani import (
+from moco.roaml_generator.scxml_helpers.scxml_event import EventsHolder
+from moco.roaml_generator.scxml_helpers.scxml_to_jani import (
     convert_multiple_scxmls_to_jani,
     convert_scxml_root_to_jani_automaton,
 )
-from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
-from as2fm.scxml_converter.scxml_entries import ScxmlRoot
+from moco.roaml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
+from moco.roaml_converter.scxml_entries import ScxmlRoot
 
 rel_examples_folder = os.path.join("..", "..", "..", "examples")
 
@@ -200,7 +200,7 @@ class TestConversion(unittest.TestCase):
 
     def test_command_line_output_with_line_numbers(self):
         """Test the command line output with line numbers for the main.xml file."""
-        tmp_test_dir = os.path.join("/tmp", "test_as2fm")
+        tmp_test_dir = os.path.join("/tmp", "test_moco")
         if not os.path.exists(tmp_test_dir):
             os.makedirs(tmp_test_dir)
         for file in os.listdir(tmp_test_dir):
@@ -211,7 +211,7 @@ class TestConversion(unittest.TestCase):
         with open(xml_main_path, "w", encoding="utf-8") as f:
             f.write(xml_content)
         p = subprocess.Popen(
-            ["as2fm_scxml_to_jani", xml_main_path],
+            ["moco_roaml_to_scxml", xml_main_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=tmp_test_dir,

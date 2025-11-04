@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel", "pip>=24.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "as2fm"
+name = "moco"
 version = "0.0.1"
 description = ""
 readme = "README.md"
@@ -19,13 +19,13 @@ classifiers = [
 keywords = []
 # TODO: Check dependencies to remove
 dependencies = [
-    # as2fm_common
+    # moco_common
     "lxml",
-    # jani_generator
+    # roaml_generator
     "jsonschema",
     "esprima",
     "escodegen",
-    # scxml_converter
+    # roaml_converter
     "typing-extensions>=4.12.2",
 ]
 requires-python = ">=3.10"
@@ -33,16 +33,16 @@ requires-python = ">=3.10"
 # Comment these lines out, since they prevent the package from being found in code
 # [tool.setuptools.packages.find]
 # where = ["src"]
-# include = ["as2fm", "as2fm.*"]
+# include = ["moco", "moco.*"]
 #
 # [tool.setuptools.package-dir]
-# "as2fm" = "src/as2fm"
+# "moco" = "src/moco"
 
 [tool.setuptools.package-data]
-"as2fm.resources" = ["bt_control_nodes/*.scxml"]
+"moco.resources" = ["bt_control_nodes/*.scxml"]
 
 [project.scripts]
-as2fm_scxml_to_jani = "as2fm.jani_generator.main:main_scxml_to_jani" # TODO: rename this function
+moco_roaml_to_scxml = "moco.roaml_generator.main:main_roaml_to_scxml" # TODO: rename this function
 
 [project.optional-dependencies]
 dev = [

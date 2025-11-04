@@ -15,8 +15,8 @@
 
 import pytest
 
-from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.jani_generator.jani_entries.jani_expression_generator import (
+from moco.moco_common.array_type import ArrayInfo
+from moco.roaml_generator.jani_entries.jani_expression_generator import (
     array_create_operator,
     array_value_operator,
 )
