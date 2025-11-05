@@ -20,7 +20,8 @@ Generic class for generators of SCXML state machine for specific ROS communicati
 from typing import Dict, Iterator, List, Optional, Type
 
 from moco.moco_common.array_type import get_default_expression_for_type, value_to_string_expr
-from moco.roaml_generator.jani_entries import JaniModel
+# TODO: Remove import below
+# from moco.roaml_generator.jani_entries import JaniModel
 from moco.roaml_converter.data_types.type_utils import get_data_type_from_string
 from moco.roaml_converter.scxml_entries import ScxmlData, ScxmlRoot
 from moco.roaml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
@@ -175,19 +176,20 @@ def generate_plain_scxml_from_handlers(
     for handler in handlers_dict.values():
         yield handler.to_scxml()
 
-
-def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniModel) -> None:
-    """
-    Remove self-loops from srv_handler automata in the Jani model.
-
-    :param jani_model: The Jani model to modify.
-    """
-    handlers_prefixes = [
-        handler.get_interface_prefix() for handler in RosCommunicationHandler.__subclasses__()
-    ]
-    for automaton in jani_model.get_automata():
-        # Modify the automaton in place
-        for prefix in handlers_prefixes:
-            if automaton.get_name().startswith(prefix):
-                automaton.remove_empty_self_loop_edges()
-                break
+# TODO: Remove
+# def remove_empty_self_loops_from_interface_handlers_in_jani(jani_model: JaniModel) -> None:
+#     """
+#     Remove self-loops from srv_handler automata in the Jani model.
+# 
+#     :param jani_model: The Jani model to modify.
+#     """
+#     handlers_prefixes = [
+#         handler.get_interface_prefix() for handler in RosCommunicationHandler.__subclasses__()
+#     ]
+#     for automaton in jani_model.get_automata():
+#         # Modify the automaton in place
+#         for prefix in handlers_prefixes:
+#             if automaton.get_name().startswith(prefix):
+#                 automaton.remove_empty_self_loop_edges()
+#                 break
+# 

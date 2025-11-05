@@ -147,98 +147,98 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
                 jani_edge.set_action(GLOBAL_TIMER_TICK_EVENT)
                 jani_edge.destinations[0]["assignments"] = []
 
-
-def implement_scxml_events_as_jani_syncs(
-    events_holder: EventsHolder, max_array_size: int, jani_model: JaniModel
-) -> List[str]:
-    """
-    Implement the scxml events as jani syncs.
-
-    :param events_holder: The holder of the events.
-    :param timers: The timers to add to the jani model.
-    :param jani_model: The jani model to add the syncs to.
-    :return: The list of events having only senders.
-    """
-    jc = JaniComposition()
-    events_without_receivers: List[str] = []
-    has_timer_automaton = False
-    # Determine if we have timers
-    for automaton in jani_model.get_automata():
-        automaton_name = automaton.get_name()
-        if automaton_name == GLOBAL_TIMER_AUTOMATON:
-            has_timer_automaton = True
-            _preprocess_global_timer_automaton(automaton)
-        jc.add_element(automaton_name)
-    timer_enable_syncs: Dict[str, str] = {}
-    timer_events: List[Event] = []
-    for event_obj in events_holder.get_events().values():
-        # Distinguish between timer and non-timer events
-        if event_obj.is_timer_event():
-            timer_events.append(event_obj)
-        elif event_obj.name == GLOBAL_TIMER_TICK_EVENT:
-            pass
-        else:
-            event_automaton = _generate_event_automaton(event_obj, has_timer_automaton)
-            event_send_action, event_receive_action = _generate_event_action_names(event_obj)
-            if event_automaton is not None:
-                automaton_name = event_automaton.get_name()
-                jani_model.add_jani_automaton(event_automaton)
-                jc.add_element(automaton_name)
-                # Generate the required syncs (for senders)
-                for sender_ev in event_obj.get_senders():
-                    assert sender_ev.edge_action_name == event_send_action, (
-                        "Unexpected event sender action name: "
-                        f"'{sender_ev.edge_action_name}'!='{event_send_action}'"
-                    )
-                    senders_syncs = {
-                        automaton_name: event_send_action,
-                        sender_ev.automaton_name: event_send_action,
-                    }
-                    jc.add_sync(event_send_action, senders_syncs)
-                if event_obj.has_receivers():
-                    # Generate the required syncs (for receivers)
-                    receivers_syncs: Dict[str, str] = {automaton_name: event_receive_action}
-                    for receiver_ev in event_obj.get_receivers():
-                        assert receiver_ev.edge_action_name == event_receive_action, (
-                            "Unexpected event receiver action name: "
-                            f"'{receiver_ev.edge_action_name}'!='{event_receive_action}'"
-                        )
-                        receivers_syncs.update({receiver_ev.automaton_name: event_receive_action})
-                    jc.add_sync(event_receive_action, receivers_syncs)
-                    # In case need timer syncs as well, store the timer syncs in a separate dict
-                    if has_timer_automaton:
-                        timer_enable_syncs.update({automaton_name: JANI_TIMER_ENABLE_ACTION})
-                else:
-                    events_without_receivers.append(automaton_name)
-                # Generate the (global) event parameters, for exchanging data across automata
-                jani_model.add_jani_variables(_generate_event_variables(event_obj, max_array_size))
-            else:
-                # This action was skipped: ensure all receivers in the model are removed
-                jani_model.remove_edges_with_action(event_receive_action)
-    # Add syncs for global timer
-    if has_timer_automaton:
-        # Add sync action for global timer tick
-        jc.add_sync(
-            GLOBAL_TIMER_TICK_ACTION,
-            timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
-        )
-    # Add syncs for rate timers
-    for timer_event in timer_events:
-        timer_send_event, timer_recv_event = _generate_event_action_names(timer_event)
-        n_timer_senders = len(timer_event.get_senders())
-        n_timer_recvs = len(timer_event.get_receivers())
-        assert (
-            n_timer_senders == 1
-        ), f"Error: timer {timer_event.name} sender are {n_timer_senders} != 1"
-        # TODO: Check if having the same timer name in multiple automata creates problems
-        assert (
-            n_timer_recvs == 1
-        ), f"Error: timer {timer_event.name} receivers are {n_timer_recvs} != 1"
-        recv_automaton_name = timer_event.get_receivers()[0].automaton_name
-        timer_trigger_syncs = {
-            GLOBAL_TIMER_AUTOMATON: timer_send_event,
-            recv_automaton_name: timer_recv_event,
-        } | timer_enable_syncs
-        jc.add_sync(timer_recv_event, timer_trigger_syncs)
-    jani_model.add_system_sync(jc)
-    return events_without_receivers
+# TODO: Remove the function below
+# def implement_scxml_events_as_jani_syncs(
+#     events_holder: EventsHolder, max_array_size: int, jani_model: JaniModel
+# ) -> List[str]:
+#     """
+#     Implement the scxml events as jani syncs.
+# 
+#     :param events_holder: The holder of the events.
+#     :param timers: The timers to add to the jani model.
+#     :param jani_model: The jani model to add the syncs to.
+#     :return: The list of events having only senders.
+#     """
+#     jc = JaniComposition()
+#     events_without_receivers: List[str] = []
+#     has_timer_automaton = False
+#     # Determine if we have timers
+#     for automaton in jani_model.get_automata():
+#         automaton_name = automaton.get_name()
+#         if automaton_name == GLOBAL_TIMER_AUTOMATON:
+#             has_timer_automaton = True
+#             _preprocess_global_timer_automaton(automaton)
+#         jc.add_element(automaton_name)
+#     timer_enable_syncs: Dict[str, str] = {}
+#     timer_events: List[Event] = []
+#     for event_obj in events_holder.get_events().values():
+#         # Distinguish between timer and non-timer events
+#         if event_obj.is_timer_event():
+#             timer_events.append(event_obj)
+#         elif event_obj.name == GLOBAL_TIMER_TICK_EVENT:
+#             pass
+#         else:
+#             event_automaton = _generate_event_automaton(event_obj, has_timer_automaton)
+#             event_send_action, event_receive_action = _generate_event_action_names(event_obj)
+#             if event_automaton is not None:
+#                 automaton_name = event_automaton.get_name()
+#                 jani_model.add_jani_automaton(event_automaton)
+#                 jc.add_element(automaton_name)
+#                 # Generate the required syncs (for senders)
+#                 for sender_ev in event_obj.get_senders():
+#                     assert sender_ev.edge_action_name == event_send_action, (
+#                         "Unexpected event sender action name: "
+#                         f"'{sender_ev.edge_action_name}'!='{event_send_action}'"
+#                     )
+#                     senders_syncs = {
+#                         automaton_name: event_send_action,
+#                         sender_ev.automaton_name: event_send_action,
+#                     }
+#                     jc.add_sync(event_send_action, senders_syncs)
+#                 if event_obj.has_receivers():
+#                     # Generate the required syncs (for receivers)
+#                     receivers_syncs: Dict[str, str] = {automaton_name: event_receive_action}
+#                     for receiver_ev in event_obj.get_receivers():
+#                         assert receiver_ev.edge_action_name == event_receive_action, (
+#                             "Unexpected event receiver action name: "
+#                             f"'{receiver_ev.edge_action_name}'!='{event_receive_action}'"
+#                         )
+#                         receivers_syncs.update({receiver_ev.automaton_name: event_receive_action})
+#                     jc.add_sync(event_receive_action, receivers_syncs)
+#                     # In case need timer syncs as well, store the timer syncs in a separate dict
+#                     if has_timer_automaton:
+#                         timer_enable_syncs.update({automaton_name: JANI_TIMER_ENABLE_ACTION})
+#                 else:
+#                     events_without_receivers.append(automaton_name)
+#                 # Generate the (global) event parameters, for exchanging data across automata
+#                 jani_model.add_jani_variables(_generate_event_variables(event_obj, max_array_size))
+#             else:
+#                 # This action was skipped: ensure all receivers in the model are removed
+#                 jani_model.remove_edges_with_action(event_receive_action)
+#     # Add syncs for global timer
+#     if has_timer_automaton:
+#         # Add sync action for global timer tick
+#         jc.add_sync(
+#             GLOBAL_TIMER_TICK_ACTION,
+#             timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
+#         )
+#     # Add syncs for rate timers
+#     for timer_event in timer_events:
+#         timer_send_event, timer_recv_event = _generate_event_action_names(timer_event)
+#         n_timer_senders = len(timer_event.get_senders())
+#         n_timer_recvs = len(timer_event.get_receivers())
+#         assert (
+#             n_timer_senders == 1
+#         ), f"Error: timer {timer_event.name} sender are {n_timer_senders} != 1"
+#         # TODO: Check if having the same timer name in multiple automata creates problems
+#         assert (
+#             n_timer_recvs == 1
+#         ), f"Error: timer {timer_event.name} receivers are {n_timer_recvs} != 1"
+#         recv_automaton_name = timer_event.get_receivers()[0].automaton_name
+#         timer_trigger_syncs = {
+#             GLOBAL_TIMER_AUTOMATON: timer_send_event,
+#             recv_automaton_name: timer_recv_event,
+#         } | timer_enable_syncs
+#         jc.add_sync(timer_recv_event, timer_trigger_syncs)
+#     jani_model.add_system_sync(jc)
+#     return events_without_receivers
