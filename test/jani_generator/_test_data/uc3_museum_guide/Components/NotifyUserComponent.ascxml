@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+  version="1.0"
+  xmlns="..."
+  datamodel="ecmascript"
+  name="NotifyUserComponent"
+  initial="idle">
+
+	<datamodel>
+    <data id="alarm_active" type="bool" expr="false" />
+	</datamodel>
+
+  <ros_service_server service_name="/NotifyUserComponent/StartAlarm" type="notify_user_interfaces_dummy/StartAlarm"/>
+  <!-- <ros_service_server service_name="/NotifyUserComponent/StopAlarm" type="notify_user_interfaces_dummy/StopAlarm"/> -->
+  <ros_topic_publisher topic="/NotifyUserComponent/alarm" type="std_msgs/Bool" />
+
+  <state id="idle">
+    <onentry>
+      <ros_topic_publish name="/NotifyUserComponent/alarm">
+        <field name="data" expr="false" />
+      </ros_topic_publish>
+    </onentry>
+    <ros_service_handle_request name="/NotifyUserComponent/StartAlarm" target="active">
+      <assign location="alarm_active" expr="true"/>
+      <ros_service_send_response name="/NotifyUserComponent/StartAlarm">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+    <!-- <ros_service_handle_request name="/NotifyUserComponent/StopAlarm" target="idle">
+      <assign location="alarm_active" expr="false"/>
+      <ros_service_send_response name="/NotifyUserComponent/StopAlarm">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request> -->
+  </state>
+
+  <state id="active">
+    <onentry>
+      <ros_topic_publish name="/NotifyUserComponent/alarm">
+        <field name="data" expr="true" />
+      </ros_topic_publish>
+    </onentry>
+    <!-- <ros_service_handle_request name="/NotifyUserComponent/StopAlarm" target="idle">
+      <assign location="alarm_active" expr="false"/>
+      <ros_service_send_response name="/NotifyUserComponent/StopAlarm">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request> -->
+    <ros_service_handle_request name="/NotifyUserComponent/StartAlarm" target="active">
+      <ros_service_send_response name="/NotifyUserComponent/StartAlarm">
+        <field name="is_ok" expr="true"/>
+      </ros_service_send_response>
+    </ros_service_handle_request>
+  </state>
+
+</ascxml>

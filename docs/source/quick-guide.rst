@@ -49,13 +49,13 @@ The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://g
 
     .. code-block:: xml
 
-        <input type="node-ascxml" src="./battery_manager.scxml" />
+        <input type="node-ascxml" src="./battery_manager.ascxml" />
 
 * the environment model in SCXML:
 
     .. code-block:: xml
 
-        <input type="node-ascxml" src="./battery_drainer.scxml" />
+        <input type="node-ascxml" src="./battery_drainer.ascxml" />
 
 * the behavior tree in XML,
 * the plugins of the behavior tree leaf nodes in SCXML,
@@ -95,10 +95,10 @@ After installing the AS2FM packages as described in the :ref:`installation secti
     AS2FM - SCXML to JANI.
 
     Loading model from main.xml.
-    xml_file='./battery_drainer.scxml'
-    xml_file='./battery_manager.scxml'
-    xml_file='./bt_topic_condition.scxml'
-    xml_file='./bt_topic_action.scxml'
+    xml_file='./battery_drainer.ascxml'
+    xml_file='./battery_manager.ascxml'
+    xml_file='./bt_topic_condition.ascxml'
+    xml_file='./bt_topic_action.ascxml'
     ...
 
 The output is a JANI file called `main.jani` that will be located in the same folder.

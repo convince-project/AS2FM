@@ -1,0 +1,14 @@
+<ascxml name="bt_root_fsm_bt" version="1.0" model_src="" initial="idle" xmlns="http://www.w3.org/2005/07/scxml">
+    <ros_time_rate rate_hz="1.0" name="bt_tick"/>
+    <state id="idle">
+        <ros_rate_callback target="wait_tick_res" name="bt_tick">
+            <bt_tick_child id="0"/>
+        </ros_rate_callback>
+        <bt_child_status target="error" id="0"/>
+    </state>
+    <state id="wait_tick_res">
+        <bt_child_status target="idle" id="0"/>
+    </state>
+    <state id="done"/>
+    <state id="error"/>
+</ascxml>

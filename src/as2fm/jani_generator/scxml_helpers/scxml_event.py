@@ -25,13 +25,13 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
     ROS_TIMER_RATE_EVENT_PREFIX,
     is_global_timer_event,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
     is_bt_halt_event,
     is_bt_halt_response_event,
     is_bt_tick_event,
     is_bt_tick_response_event,
 )
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     is_action_request_event,
     is_action_result_event,
     is_action_thread_event,

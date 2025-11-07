@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="idle"
+    version="1.0"
+    name="server"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="recv_float" type="float32" expr="0.0" />
+    </datamodel>
+
+    <ros_service_server name="srv" service_name="/add_float" type="as2fm_test_srvs/SetFloat" />
+
+    <state id="idle">
+        <ros_service_handle_request name="srv" target="idle">
+            <assign location="recv_float" expr="_req.data" />
+            <ros_service_send_response name="srv">
+                <field name="data" expr="recv_float" />
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+</ascxml>
