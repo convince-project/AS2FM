@@ -26,8 +26,9 @@ class AscxmlConfiguration(ScxmlBase):
     """
     Base class for a generic configuration entry in ASCXML.
 
-    Children classes will contain values coming from external configuration.
-    The configured value can be retrieved using the provided method.
+    Inheriting classes will contain values coming from external configuration.
+    At compile time, the `get_configured_value` method can be used to get the actual config. value.
+    Examples of configuration entries are getters of BT ports values, ROS 2 Parameters and so on.
     """
 
     def __init__(self):

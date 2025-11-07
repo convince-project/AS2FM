@@ -22,7 +22,12 @@ from as2fm.scxml_converter.scxml_entries import ScxmlBase
 
 
 class AscxmlDeclaration(ScxmlBase):
-    """Base class for any declarations in SCXML."""
+    """
+    Base class for declarations in ASCXML.
+
+    Declarations are used for preparing framework specific functionalities.
+    Exemplary declarations are ROS 2 topics, timers, actions, and BT input / output ports.
+    """
 
     @abstractmethod
     def preprocess_declaration(self, ascxml_declarations: List["AscxmlDeclaration"], **kwargs):
