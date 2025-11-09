@@ -16,13 +16,10 @@
 """
 Module reading the top level xml file containing the whole model to check.
 """
-# TODO: Remove commented imports
-# import json
 import os
 from copy import deepcopy
 from typing import Dict, List, Optional
 
-# from moco.roaml_generator.jani_entries import JaniModel, JaniProperty
 from moco.roaml_generator.ros_helpers.ros_action_handler import RosActionHandler
 from moco.roaml_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -32,11 +29,6 @@ from moco.roaml_generator.ros_helpers.ros_communication_handler import (
 from moco.roaml_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from moco.roaml_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from moco.roaml_generator.scxml_helpers.roaml_model import FullModel, RoamlDataStructures, RoamlMain
-# TODO: Remove
-# from moco.roaml_generator.scxml_helpers.scxml_to_jani import (
-#     convert_multiple_scxmls_to_jani,
-#     preprocess_jani_expressions,
-# )
 from moco.roaml_converter.bt_converter import (
     bt_converter,
     generate_blackboard_scxml,

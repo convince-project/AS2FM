@@ -16,5 +16,3 @@ from .jani_automaton import JaniAutomaton  # noqa: F401
 from .jani_composition import JaniComposition  # noqa: F401
 from .jani_property import JaniProperty  # noqa: F401
 
-# TODO: Remove following import
-# from .jani_model import JaniModel  # noqa: F401
