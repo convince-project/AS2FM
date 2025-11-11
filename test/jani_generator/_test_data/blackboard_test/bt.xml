@@ -1,9 +1,0 @@
-<root BTCPP_format="4">
-    <BehaviorTree ID="blackboard_test">
-        <ReactiveSequence name="bb_test">
-            <!-- Store goal and robot pose in 4 blackboard variables -->
-            <Action ID="WriteBB" bb_var="{counter}" />
-            <Action ID="ReadBB" bb_var="{counter}" target="10" />
-        </ReactiveSequence>
-    </BehaviorTree>
-</root>
