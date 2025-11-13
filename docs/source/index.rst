@@ -37,5 +37,6 @@ Contents
    tutorials
    howto
    scxml-jani-conversion
+   bt-verification
    api
    contacts
