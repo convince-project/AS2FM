@@ -37,14 +37,16 @@ def main_roaml_to_scxml(_args: Optional[Sequence[str]] = None) -> None:
     :param args: The arguments to parse. If None, sys.argv is used.
     :return: None
     """
-    parser = argparse.ArgumentParser(description="Convert RoaML robot system models to plain SCXML.")
+    parser = argparse.ArgumentParser(
+        description="Convert RoaML robot system models to plain SCXML."
+    )
     parser.add_argument(
         "--generated-scxml-dir",
         type=str,
         default="./output",
         help="Path to the folder containing the generated plain-SCXML files.",
     )
- 
+
     parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
     args = parser.parse_args(_args)
 
@@ -55,13 +57,14 @@ def main_roaml_to_scxml(_args: Optional[Sequence[str]] = None) -> None:
     # Process additional, optional parameters
     scxml_out_dir = args.generated_scxml_dir
     scxml_out_dir = None if len(scxml_out_dir) == 0 else scxml_out_dir
-    
+
     print("MOCO - RoAML to SCXML.\n")
     print(f"Loading model from {main_xml_file}.")
 
     interpret_top_level_xml(main_xml_file, scxmls_dir=scxml_out_dir)
 
     print(f"SCXML model saved to {scxml_out_dir}")
+
 
 if __name__ == "__main__":
     # for testing purposes only

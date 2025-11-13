@@ -20,6 +20,13 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Optional
 
+from moco.roaml_converter.bt_converter import (
+    bt_converter,
+    generate_blackboard_scxml,
+    get_blackboard_variables_from_models,
+)
+from moco.roaml_converter.data_types.struct_definition import StructDefinition
+from moco.roaml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
 from moco.roaml_generator.ros_helpers.ros_action_handler import RosActionHandler
 from moco.roaml_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -29,13 +36,6 @@ from moco.roaml_generator.ros_helpers.ros_communication_handler import (
 from moco.roaml_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from moco.roaml_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
 from moco.roaml_generator.scxml_helpers.roaml_model import FullModel, RoamlDataStructures, RoamlMain
-from moco.roaml_converter.bt_converter import (
-    bt_converter,
-    generate_blackboard_scxml,
-    get_blackboard_variables_from_models,
-)
-from moco.roaml_converter.data_types.struct_definition import StructDefinition
-from moco.roaml_converter.scxml_entries import EventsToAutomata, ScxmlRoot
 
 
 def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
@@ -137,9 +137,7 @@ def export_plain_scxml_models(
             f.write(scxml_model.as_xml_string(data_type_as_attribute=False))
 
 
-def interpret_top_level_xml(
-    xml_path: str, scxmls_dir: Optional[str] = None
-):
+def interpret_top_level_xml(xml_path: str, scxmls_dir: Optional[str] = None):
     """
     Interpret the top-level XML file as a Jani model. And write it to a file.
     The generated Jani model is written to the same directory as the input XML file under the
@@ -159,4 +157,3 @@ def interpret_top_level_xml(
     if scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
-

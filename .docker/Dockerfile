@@ -11,7 +11,7 @@ RUN apt update && \
 RUN mkdir -p /colcon_ws/src
 COPY . /colcon_ws/src/moco
 #TODO fix package name once release is up
-RUN pip3 install --break-system-packages /colcon_ws/src/moco[dev]  
+RUN pip3 install --break-system-packages /colcon_ws/src/moco[dev]
 
 
 # Make ROS workspace and build it
