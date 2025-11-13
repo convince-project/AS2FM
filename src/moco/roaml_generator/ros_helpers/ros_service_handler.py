@@ -19,7 +19,6 @@ Representation of ROS Services.
 
 from typing import Dict, List
 
-from moco.roaml_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 from moco.roaml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlDataModel,
@@ -38,6 +37,7 @@ from moco.roaml_converter.scxml_entries.ros_utils import (
     sanitize_ros_interface_name,
 )
 from moco.roaml_converter.scxml_entries.utils import PLAIN_FIELD_EVENT_PREFIX, ROS_FIELD_PREFIX
+from moco.roaml_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 
 class RosServiceHandler(RosCommunicationHandler):

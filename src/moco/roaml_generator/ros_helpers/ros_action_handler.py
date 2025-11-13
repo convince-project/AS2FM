@@ -19,7 +19,6 @@ Helper to create an orchestrator out of ROS Actions declarations.
 
 from typing import Callable, Dict, List, Tuple
 
-from moco.roaml_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 from moco.roaml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlData,
@@ -51,6 +50,7 @@ from moco.roaml_converter.scxml_entries.utils import (
     PLAIN_SCXML_EVENT_DATA_PREFIX,
     ROS_FIELD_PREFIX,
 )
+from moco.roaml_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
 
 
 class RosActionHandler(RosCommunicationHandler):

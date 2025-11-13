@@ -21,10 +21,6 @@ import re
 from dataclasses import dataclass
 from typing import Dict, List, MutableSequence, Optional, Type, Union
 
-from moco.roaml_generator.ros_helpers.ros_timer import (
-    ROS_TIMER_RATE_EVENT_PREFIX,
-    is_global_timer_event,
-)
 from moco.roaml_converter.scxml_entries.bt_utils import (
     is_bt_halt_event,
     is_bt_halt_response_event,
@@ -36,6 +32,10 @@ from moco.roaml_converter.scxml_entries.ros_utils import (
     is_action_result_event,
     is_action_thread_event,
     is_srv_event,
+)
+from moco.roaml_generator.ros_helpers.ros_timer import (
+    ROS_TIMER_RATE_EVENT_PREFIX,
+    is_global_timer_event,
 )
 
 
