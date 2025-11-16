@@ -27,7 +27,6 @@ def main_roaml_to_scxml(_args: Optional[Sequence[str]] = None) -> None:
     Main function for the RoaML to SCXML conversion.
 
     Module containing the main entry points, pulling all necessary files together.
-    convince.jani \
     BT.xml         \
     plugin.scxml    \
     node1.scxml      => main_roaml_to_scxml  =>  output folder

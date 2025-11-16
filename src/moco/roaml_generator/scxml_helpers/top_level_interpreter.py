@@ -107,6 +107,18 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
         timer_scxml.set_custom_data_types(custom_data_types)
         plain_scxmls, _ = timer_scxml.to_plain_scxml_and_declarations()
         plain_scxml_models.extend(plain_scxmls)
+    
+    # Compute the set of target automaton for each event
+    event_targets: EventsToAutomata = {}
+    for scxml_model in plain_scxml_models:
+        for event in scxml_model.get_transition_events():
+            if event not in event_targets:
+                event_targets[event] = set()
+            event_targets[event].add(scxml_model.get_name())
+    # Add the target automaton to each event sent
+    for scxml_model in plain_scxml_models:
+        scxml_model.add_target_to_event_send(event_targets)
+
     return plain_scxml_models
 
 
@@ -117,16 +129,6 @@ def export_plain_scxml_models(
     """Generate the plain SCXML files adding all compatibility entries to fit the SCXML standard."""
     os.makedirs(generated_scxml_path, exist_ok=True)
     models_to_export = deepcopy(plain_scxml_models)
-    # Compute the set of target automaton for each event
-    event_targets: EventsToAutomata = {}
-    for scxml_model in models_to_export:
-        for event in scxml_model.get_transition_events():
-            if event not in event_targets:
-                event_targets[event] = set()
-            event_targets[event].add(scxml_model.get_name())
-    # Add the target automaton to each event sent
-    for scxml_model in models_to_export:
-        scxml_model.add_target_to_event_send(event_targets)
     # Export the models
     for scxml_model in models_to_export:
         with open(
@@ -154,6 +156,6 @@ def interpret_top_level_xml(xml_path: str, scxmls_dir: Optional[str] = None):
 
     plain_scxml_models = generate_plain_scxml_models_and_timers(model)
 
-    if scxmls_dir is not None:
-        plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
-        export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
+    # if scxmls_dir is not None: # not needed since the export of scxml model is mandatory
+    plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
+    export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
