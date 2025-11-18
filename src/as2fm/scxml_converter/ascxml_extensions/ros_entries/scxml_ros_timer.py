@@ -22,10 +22,13 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosCallback, RosDeclaration
-from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import generate_rate_timer_event
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    ROS_INTERFACE_TO_PREFIXES,
+    generate_rate_timer_event,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
     assert_xml_tag_ok,
     get_xml_attribute,
@@ -118,8 +121,8 @@ class RosRateCallback(RosCallback):
         return "ros_rate_callback"
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_TIMER
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_timer"]
 
     @staticmethod
     def get_declaration_type() -> Type[RosTimeRate]:

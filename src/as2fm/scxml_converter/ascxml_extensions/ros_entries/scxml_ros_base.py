@@ -37,7 +37,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
-    set_execution_body_callback_type,
+    set_execution_body_callback_prefixes,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
@@ -225,7 +225,7 @@ class RosCallback(ScxmlTransition):
 
     @classmethod
     @abstractmethod
-    def get_callback_type(cls) -> CallbackType:
+    def get_callback_prefixes(cls) -> List[str]:
         """Return the callback type of a specific ROS Callback subclass"""
         pass
 
@@ -353,17 +353,19 @@ class RosCallback(ScxmlTransition):
         )
         new_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
-            target.set_callback_type(self.get_callback_type())
+            target.set_callback_prefixes(self.get_callback_prefixes())
             new_targets.extend(
                 target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
             )
             if new_targets[-1]._body is not None:
-                set_execution_body_callback_type(new_targets[-1]._body, self.get_callback_type())
+                set_execution_body_callback_prefixes(
+                    new_targets[-1]._body, self.get_callback_prefixes()
+                )
         event_name = self.get_plain_scxml_event(related_declaration)
         condition = self._condition
         if condition is not None:
             condition = get_plain_expression(
-                condition, self.get_callback_type(), struct_declarations
+                condition, self.get_callback_prefixes(), struct_declarations
             )
         return [ScxmlTransition(new_targets, [event_name], condition)]
 
@@ -467,11 +469,11 @@ class RosTrigger(ScxmlSend):
         self._cb_type: Optional[CallbackType] = None
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
 
-    def set_callback_type(self, cb_type: CallbackType):
+    def set_callback_prefixes(self, cb_type: CallbackType):
         """Set the callback executing this trigger for this instance and its children."""
         self._cb_type = cb_type
         for field in self._params:
-            field.set_callback_type(cb_type)
+            field.set_callback_prefixes(cb_type)
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), get_error_msg(self.get_xml_origin(), "Invalid field.")

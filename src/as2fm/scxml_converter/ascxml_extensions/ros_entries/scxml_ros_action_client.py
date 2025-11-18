@@ -27,6 +27,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    ROS_INTERFACE_TO_PREFIXES,
     check_all_fields_known,
     generate_action_feedback_handle_event,
     generate_action_goal_handle_accepted_event,
@@ -113,7 +114,7 @@ class RosActionHandleGoalResponse(RosCallback):
         return RosActionClient
 
     @classmethod
-    def get_callback_type(cls):
+    def get_callback_prefixes(cls):
         # This class has no children to process: this function is not expected to be used anywhere.
         raise RuntimeError("This method shouldn't be called for this class.")
 
@@ -216,8 +217,8 @@ class RosActionHandleFeedback(RosCallback):
         return RosActionClient
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_ACTION_FEEDBACK
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_feedback"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionClient)
@@ -239,8 +240,8 @@ class RosActionHandleSuccessResult(RosCallback):
         return RosActionClient
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_ACTION_RESULT
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_result"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionClient)
@@ -274,8 +275,8 @@ class RosActionHandleCanceledResult(RosCallback):
         return RosActionClient
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_ACTION_RESULT
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_result"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionClient)
@@ -309,8 +310,8 @@ class RosActionHandleAbortedResult(RosCallback):
         return RosActionClient
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_ACTION_RESULT
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_result"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionClient)

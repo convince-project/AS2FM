@@ -16,7 +16,6 @@
 """Collection of various utilities for SCXML entries."""
 
 import re
-from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 import esprima
@@ -60,43 +59,6 @@ ROS_EVENT_PREFIXES = [
 
 
 # ------------ Expression-conversion functionalities ------------
-class CallbackType(Enum):
-    """Enumeration of the different types of callbacks containing a body."""
-
-    STATE = auto()  # No callback (e.g. state entry/exit)
-    TRANSITION = auto()  # Transition callback
-    ROS_TIMER = auto()  # Timer callback
-    ROS_TOPIC = auto()  # Topic callback
-    ROS_SERVICE_REQUEST = auto()  # Service callback
-    ROS_SERVICE_RESULT = auto()  # Service callback
-    ROS_ACTION_GOAL = auto()  # Action callback
-    ROS_ACTION_RESULT = auto()  # Action callback
-    ROS_ACTION_FEEDBACK = auto()  # Action callback
-    BT_RESPONSE = auto()  # BT response callback
-
-    @staticmethod
-    def get_expected_prefixes(cb_type: "CallbackType") -> List[str]:
-        if cb_type in (CallbackType.STATE, CallbackType.ROS_TIMER):
-            return []
-        elif cb_type == CallbackType.TRANSITION:
-            return [PLAIN_SCXML_EVENT_DATA_PREFIX]
-        elif cb_type == CallbackType.ROS_TOPIC:
-            return ["_msg."]
-        elif cb_type == CallbackType.ROS_SERVICE_REQUEST:
-            return ["_req."]
-        elif cb_type == CallbackType.ROS_SERVICE_RESULT:
-            return ["_res."]
-        elif cb_type == CallbackType.ROS_ACTION_GOAL:
-            return ["_action.goal_id", "_goal."]
-        elif cb_type == CallbackType.ROS_ACTION_RESULT:
-            return ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."]
-        elif cb_type == CallbackType.ROS_ACTION_FEEDBACK:
-            return ["_action.goal_id", "_feedback."]
-        elif cb_type == CallbackType.BT_RESPONSE:
-            return ["_bt.status"]
-        raise ValueError(f"Unexpected CallbackType {cb_type}")
-
-
 def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
     """
     Generate a map from (xml) tags to their associated classes.
@@ -175,7 +137,7 @@ def get_plain_variable_name(in_name: str, xml_origin: Optional[XmlElement]) -> s
 
 def get_plain_expression(
     in_expr: str,
-    cb_type: CallbackType,
+    expr_prefixes: List[str],
     struct_declarations: Optional[ScxmlStructDeclarationsContainer],
 ) -> str:
     """
@@ -185,19 +147,19 @@ def get_plain_expression(
          `objects[2].x` => `objects.x[2]`
 
     :param in_expr: The expression to convert.
-    :param cb_type: The type of callback the expression is used in.
+    :param expr_prefixes: The prefixes we expect in the provided expression.
+    :param struct_declarations: Declared structs in the ASCXML model.
     """
-    expected_prefixes = CallbackType.get_expected_prefixes(cb_type)
     # pre-check over the expression
-    if PLAIN_SCXML_EVENT_DATA_PREFIX not in expected_prefixes:
+    if PLAIN_SCXML_EVENT_DATA_PREFIX not in expr_prefixes:
         assert not _contains_prefixes(in_expr, [PLAIN_SCXML_EVENT_DATA_PREFIX]), (
             "Error: SCXML-ROS expression conversion: "
             f"unexpected {PLAIN_SCXML_EVENT_DATA_PREFIX} prefix in expr. {in_expr}"
         )
     forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
-    if len(expected_prefixes) == 0:
+    if len(expr_prefixes) == 0:
         forbidden_prefixes.append(PLAIN_SCXML_EVENT_DATA_PREFIX)
-    new_expr = _replace_ros_interface_expression(in_expr, expected_prefixes)
+    new_expr = _replace_ros_interface_expression(in_expr, expr_prefixes)
     assert not _contains_prefixes(new_expr, forbidden_prefixes), (
         f"Error: SCXML-ROS expression conversion with Cb type {cb_type.name}: "
         f"unexpected ROS interface prefixes in expr.: {in_expr}"

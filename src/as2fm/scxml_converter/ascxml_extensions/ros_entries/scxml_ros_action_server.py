@@ -29,6 +29,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosTrigger,
 )
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    ROS_INTERFACE_TO_PREFIXES,
     check_all_fields_known,
     generate_action_feedback_event,
     generate_action_goal_accepted_event,
@@ -42,7 +43,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
 )
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam, ScxmlSend
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType
+from as2fm.scxml_converter.scxml_entries.utils import PLAIN_SCXML_EVENT_DATA_PREFIX
 
 
 class RosActionServer(RosDeclaration):
@@ -80,8 +81,8 @@ class RosActionHandleGoalRequest(RosCallback):
         return RosActionServer
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_ACTION_GOAL
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_goal"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionServer)
@@ -325,9 +326,9 @@ class RosActionHandleThreadFree(RosCallback):
         return "ros_action_handle_thread_free"
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
+    def get_callback_prefixes() -> List[str]:
         # No ROS-specific fields are expected within this callback
-        return CallbackType.TRANSITION
+        return [PLAIN_SCXML_EVENT_DATA_PREFIX]
 
     @staticmethod
     def get_declaration_type() -> Type[RosActionServer]:

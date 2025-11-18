@@ -26,7 +26,10 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.logging import check_assertion, log_error
-from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import process_bt_child_seq_id
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BT_STATUS_EVENT,
+    process_bt_child_seq_id,
+)
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlExecutionBody,
@@ -258,7 +261,7 @@ class BtGenericStatusHandle(ScxmlTransition):
         children_ids: List[int] = kwargs["bt_children_ids"]
         plain_cond_expr = None
         if self._condition is not None:
-            plain_cond_expr = get_plain_expression(self._condition, CallbackType.BT_RESPONSE, None)
+            plain_cond_expr = get_plain_expression(self._condition, [BT_STATUS_EVENT], None)
         if isinstance(self._child_seq_id, int):
             # Handling specific child seq. ID, return a single transition
             assert self._child_seq_id < len(children_ids), (

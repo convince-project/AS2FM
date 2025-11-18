@@ -20,10 +20,11 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html
 """
 
-from typing import Type
+from typing import List, Type
 
 from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    ROS_INTERFACE_TO_PREFIXES,
     generate_topic_event,
     is_msg_type_known,
 )
@@ -33,7 +34,6 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosTrigger,
 )
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
 class RosTopicPublisher(RosDeclaration):
@@ -94,8 +94,8 @@ class RosTopicCallback(RosCallback):
         return RosTopicSubscriber
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_TOPIC
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_topic"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosTopicSubscriber)

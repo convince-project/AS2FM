@@ -20,10 +20,11 @@ Additional information:
 https://docs.ros.org/en/iron/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html
 """
 
-from typing import Type
+from typing import List, Type
 
 from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    ROS_INTERFACE_TO_PREFIXES,
     check_all_fields_known,
     generate_srv_request_event,
     generate_srv_response_event,
@@ -38,7 +39,6 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
     RosTrigger,
 )
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType
 
 
 class RosServiceServer(RosDeclaration):
@@ -119,8 +119,8 @@ class RosServiceHandleRequest(RosCallback):
         return RosServiceServer
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_SERVICE_REQUEST
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_service_request"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosServiceServer)
@@ -160,8 +160,8 @@ class RosServiceHandleResponse(RosCallback):
         return RosServiceClient
 
     @staticmethod
-    def get_callback_type() -> CallbackType:
-        return CallbackType.ROS_SERVICE_RESULT
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_service_result"]
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosServiceClient)

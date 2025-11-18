@@ -44,8 +44,16 @@ BASIC_FIELD_TYPES = [
     "sequence<double>",
 ]
 
-# Container for the ROS interface name (e.g. topic or service name) and the related type
-RosInterfaceAndType = Tuple[str, str]
+# Collection of all the prefixes related to each ROS interface
+ROS_INTERFACE_TO_PREFIXES = {
+    "ros_timer": [],
+    "ros_topic": ["_msg."],
+    "ros_service_request": ["_req."],
+    "ros_service_result": ["_res."],
+    "ros_action_goal": ["_action.goal_id", "_goal."],
+    "ros_action_result": ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."],
+    "ros_action_feedback": ["_action.goal_id", "_feedback."],
+}
 
 
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
