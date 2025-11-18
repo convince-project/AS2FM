@@ -97,9 +97,9 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani --help
+    $ as2fm_roaml_to_jani --help
 
-    usage: as2fm_scxml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR]
+    usage: as2fm_roaml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR]
                             [--jani-out-file JANI_OUT_FILE]
                             main_xml
 

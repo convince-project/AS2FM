@@ -43,7 +43,7 @@ In addition, in this main file, all the components of the example are put togeth
 Structure of Inputs
 `````````````````````
 
-The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ with the following content:
+The `as2fm_roaml_to_jani` tool takes a main XML file, e.g., `main.xml <https://github.com/convince-project/AS2FM/blob/main/examples/quick_start_battery_monitor/main.xml>`_ with the following content:
 
 * one or multiple ROS nodes in SCXML:
 
@@ -75,7 +75,7 @@ The `as2fm_scxml_to_jani` tool takes a main XML file, e.g., `main.xml <https://g
             <max_time value="100" unit="s" />
         </parameters>
 
-All of those components are converted into one JANI DTMC model by the ``as2fm_scxml_to_jani`` tool.
+All of those components are converted into one JANI DTMC model by the ``as2fm_roaml_to_jani`` tool.
 
 
 Running the Script
@@ -90,7 +90,7 @@ After installing the AS2FM packages as described in the :ref:`installation secti
 .. code-block:: bash
 
     $ cd examples/quick_start_battery_monitor/ && \
-      as2fm_scxml_to_jani main.xml
+      as2fm_roaml_to_jani main.xml
 
     AS2FM - SCXML to JANI.
 
