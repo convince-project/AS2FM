@@ -99,7 +99,9 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
 
     $ as2fm_roaml_to_jani --help
 
-    usage: as2fm_roaml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR] [--jani-out-file JANI_OUT_FILE] roaml_xml
+    usage: as2fm_roaml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR]
+                               [--jani-out-file JANI_OUT_FILE]
+                               roaml_xml
 
     Convert SCXML robot system models to JANI model.
 
@@ -109,6 +111,7 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
     options:
       -h, --help            show this help message and exit
       --generated-scxml-dir GENERATED_SCXML_DIR
-                            Path to the folder containing the generated plain-SCXML files.
+                            Path to the folder containing the generated plain-
+                            SCXML files.
       --jani-out-file JANI_OUT_FILE
                             Path to the generated jani file.
