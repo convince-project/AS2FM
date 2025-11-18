@@ -41,7 +41,6 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     get_plain_expression,
     is_non_empty_string,
 )
@@ -466,14 +465,14 @@ class RosTrigger(ScxmlSend):
             self._interface_name = interface_decl
         self._params: List[RosField] = fields  # type: ignore
         self._additional_args: Dict[str, str] = additional_args
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
         assert self.check_validity(), f"Error: SCXML {self.__class__.__name__}: invalid parameters."
 
-    def set_callback_prefixes(self, cb_type: CallbackType):
+    def set_callback_prefixes(self, cb_prefixes: List[str]):
         """Set the callback executing this trigger for this instance and its children."""
-        self._cb_type = cb_type
+        self._cb_prefixes = cb_prefixes
         for field in self._params:
-            field.set_callback_prefixes(cb_type)
+            field.set_callback_prefixes(cb_prefixes)
 
     def append_field(self, field: RosField) -> None:
         assert isinstance(field, RosField), get_error_msg(self.get_xml_origin(), "Invalid field.")
@@ -527,7 +526,7 @@ class RosTrigger(ScxmlSend):
         assert self.check_fields_validity(related_ros_decl), get_error_msg(
             self.get_xml_origin(), "Found invalid fields, w.r.t. the declared type."
         )
-        assert self._cb_type is not None, get_error_msg(
+        assert self._cb_prefixes is not None, get_error_msg(
             self.get_xml_origin(), "No callback type defined."
         )
         event_name = self.get_plain_scxml_event(related_ros_decl)
@@ -539,7 +538,9 @@ class RosTrigger(ScxmlSend):
                 assert isinstance(param, ScxmlParam)  # MyPy check
                 plain_params.append(param)
         for param_name, param_value in self._additional_args.items():
-            expanded_value = get_plain_expression(param_value, self._cb_type, struct_declarations)
+            expanded_value = get_plain_expression(
+                param_value, self._cb_prefixes, struct_declarations
+            )
             plain_params.append(ScxmlParam(param_name, expr=expanded_value))
         return [ScxmlSend(event_name, plain_params)]
 

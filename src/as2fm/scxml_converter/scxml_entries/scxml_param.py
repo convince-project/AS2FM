@@ -29,7 +29,6 @@ from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     convert_expression_with_object_arrays,
     get_plain_variable_name,
     is_non_empty_string,
@@ -69,7 +68,7 @@ class ScxmlParam(ScxmlBase):
         name: str,
         *,
         expr: Union[AscxmlConfiguration, str],
-        cb_type: Optional[CallbackType] = None,
+        cb_prefixes: Optional[List[str]] = None,
     ):
         """
         Initialize the SCXML Parameter object.
@@ -78,15 +77,15 @@ class ScxmlParam(ScxmlBase):
 
         :param name: The name of the parameter.
         :param expr: The expression to assign to the parameter. Can come from a BT port.
-        :param location: The expression to assign to the parameter, if that's a data variable.
+        :param cb_prefixes: The list of prefixes we can expect in the expression.
         """
         # TODO: We might need types in ScxmlParams as well, for later converting them to JANI.
         self._name = name
         self._expr = expr
-        self._cb_type: Optional[CallbackType] = cb_type
+        self._cb_prefixes: Optional[List[str]] = cb_prefixes
 
-    def set_callback_type(self, cb_type: Optional[CallbackType]):
-        self._cb_type = cb_type
+    def set_callback_prefixes(self, cb_prefixes: Optional[List[str]]):
+        self._cb_prefixes = cb_prefixes
 
     def get_name(self) -> str:
         return self._name
@@ -140,7 +139,7 @@ class ScxmlParam(ScxmlBase):
                     new_name = f"{self.get_name()}.{member_key}"
                     new_expr = f"{self.get_expr()}.{member_key}"
                     plain_params.append(
-                        ScxmlParam(name=new_name, expr=new_expr, cb_type=self._cb_type)
+                        ScxmlParam(name=new_name, expr=new_expr, cb_prefixes=self._cb_prefixes)
                     )
         for plain_param in plain_params:
             plain_param._set_plain_name_and_expression(struct_declarations)

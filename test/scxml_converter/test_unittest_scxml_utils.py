@@ -19,6 +19,7 @@ from typing import List, MutableSequence, Tuple
 
 import pytest
 
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import ROS_INTERFACE_TO_PREFIXES
 from as2fm.scxml_converter.data_types.type_utils import get_data_type_from_string
 from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
@@ -26,7 +27,6 @@ from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclaratio
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
-    CallbackType,
     convert_expression_with_object_arrays,
     convert_expression_with_string_literals,
     get_plain_expression,
@@ -42,7 +42,7 @@ def test_standard_good_expressions():
         ("cos(x+y+z) > 0 && sin(z - y) <= 0", "cos(x + y + z) > 0 && sin(z - y) <= 0"),
     ]
     for in_expr, gt_expr in test_expressions:
-        conv_expr = get_plain_expression(in_expr, CallbackType.STATE, None)
+        conv_expr = get_plain_expression(in_expr, [], None)
         assert conv_expr == gt_expr
 
 
@@ -56,7 +56,7 @@ def test_standard_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.STATE, None)
+            get_plain_expression(expr, [], None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -79,7 +79,7 @@ def test_topic_good_expressions():
         + f"{PLAIN_FIELD_EVENT_PREFIX}index",
     ]
     for test_expr, gt_expr in zip(test_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC, None)
+        conv_expr = get_plain_expression(test_expr, ROS_INTERFACE_TO_PREFIXES["ros_topic"], None)
         assert conv_expr == gt_expr
 
 
@@ -93,7 +93,7 @@ def test_topic_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.ROS_TOPIC, None)
+            get_plain_expression(expr, ROS_INTERFACE_TO_PREFIXES["ros_topic"], None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -106,7 +106,9 @@ def test_action_goal_good_expressions():
         f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_goal"], None
+        )
         assert conv_expr == gt_expr
 
 
@@ -123,7 +125,9 @@ def test_action_feedback_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_feedback"], None
+        )
         assert conv_expr == gt_expr
 
 
@@ -142,7 +146,9 @@ def test_action_result_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_result"], None
+        )
         assert conv_expr == gt_expr
 
 

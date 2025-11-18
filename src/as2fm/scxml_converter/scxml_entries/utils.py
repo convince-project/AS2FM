@@ -16,6 +16,7 @@
 """Collection of various utilities for SCXML entries."""
 
 import re
+from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 import esprima
@@ -44,7 +45,7 @@ PLAIN_EVENT_DATA_KEY: str = "data"
 PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY + "."
 
 # Constants related to the conversion of expression from ROS to plain SCXML
-ROS_FIELD_PREFIX: str = "ros_fields__"
+ROS_FIELD_PREFIX: str = "fields__"
 PLAIN_FIELD_EVENT_PREFIX: str = PLAIN_SCXML_EVENT_DATA_PREFIX + ROS_FIELD_PREFIX
 
 ROS_EVENT_PREFIXES = [
@@ -76,23 +77,23 @@ def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]
     return ret_dict
 
 
-def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str]) -> str:
+def _replace_ascxml_prefix_in_expression(msg_expr: str, expected_prefixes: List[str]) -> str:
     """
-    Given an expression with the ROS entries from a list, it generates a plain SCXML expression.
+    Given an expression with the framework-specific entries, it generates a plain SCXML expression.
 
     :param msg_expr: The expression to convert.
-    :param expected_prefixes: The list of (ROS) prefixes that are expected in the expression.
+    :param expected_prefixes: The list of prefixes that are expected in the expression.
     """
-
-    if PLAIN_SCXML_EVENT_DATA_PREFIX in expected_prefixes:
-        expected_prefixes.remove(PLAIN_SCXML_EVENT_DATA_PREFIX)
+    prefixes_to_replace = deepcopy(expected_prefixes)
+    if PLAIN_SCXML_EVENT_DATA_PREFIX in prefixes_to_replace:
+        prefixes_to_replace.remove(PLAIN_SCXML_EVENT_DATA_PREFIX)
     msg_expr.strip()
-    for prefix in expected_prefixes:
+    for prefix in prefixes_to_replace:
         assert prefix.startswith(
             "_"
-        ), f"Error: SCXML ROS conversion: prefix {prefix} does not start with underscore."
+        ), f"Error: ASCXML conversion: prefix {prefix} does not start with underscore."
         if prefix.endswith("."):
-            # Generic field substitution, adding the ROS_FIELD_PREFIX
+            # Generic field substitution, adding the PLAIN_FIELD_EVENT_PREFIX
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
                 rf"(^|[^a-zA-Z0-9_.]){prefix_reg}([a-zA-Z0-9_.])",
@@ -100,7 +101,7 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
                 msg_expr,
             )
         else:
-            # Special fields substitution, no need to add the ROS_FIELD_PREFIX
+            # Special fields substitution, no need to add the PLAIN_FIELD_EVENT_PREFIX
             split_prefix = prefix.split(".", maxsplit=1)
             assert (
                 len(split_prefix) == 2
@@ -115,13 +116,24 @@ def _replace_ros_interface_expression(msg_expr: str, expected_prefixes: List[str
     return msg_expr
 
 
-def _contains_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
-    """Check if string expression contains prefixes like `_event.`."""
-    for prefix in prefixes:
-        prefix_reg = prefix.replace(".", r"\.")
-        if re.search(rf"(^|[^a-zA-Z0-9_.]){prefix_reg}", msg_expr) is not None:
-            return True
-    return False
+def _validate_event_prefixes(msg_expr: str, prefixes: List[str]) -> bool:
+    """Ensure that the expression contains only the expected event prefixes."""
+    all_matches = re.findall(r"(^|[^a-zA-Z0-9_.])(_[a-zA-Z0-9_]+\.[a-zA-Z0-9_.]+)", msg_expr)
+    for single_match in all_matches:
+        # We have an event prefix: ensure it is a valid one
+        match_entry = single_match[1]
+        match_valid = False
+        for prefix in prefixes:
+            if match_entry.startswith(prefix):
+                match_valid = True
+                break
+        if not match_valid:
+            print(
+                f"Error: the entry '{match_entry}' of expression '{msg_expr}' uses an unknown "
+                f"event prefix. Known prefixes: {prefixes}."
+            )
+            return False
+    return True
 
 
 def get_plain_variable_name(in_name: str, xml_origin: Optional[XmlElement]) -> str:
@@ -151,19 +163,13 @@ def get_plain_expression(
     :param struct_declarations: Declared structs in the ASCXML model.
     """
     # pre-check over the expression
-    if PLAIN_SCXML_EVENT_DATA_PREFIX not in expr_prefixes:
-        assert not _contains_prefixes(in_expr, [PLAIN_SCXML_EVENT_DATA_PREFIX]), (
-            "Error: SCXML-ROS expression conversion: "
-            f"unexpected {PLAIN_SCXML_EVENT_DATA_PREFIX} prefix in expr. {in_expr}"
-        )
-    forbidden_prefixes = ROS_EVENT_PREFIXES.copy()
-    if len(expr_prefixes) == 0:
-        forbidden_prefixes.append(PLAIN_SCXML_EVENT_DATA_PREFIX)
-    new_expr = _replace_ros_interface_expression(in_expr, expr_prefixes)
-    assert not _contains_prefixes(new_expr, forbidden_prefixes), (
-        f"Error: SCXML-ROS expression conversion with Cb type {cb_type.name}: "
-        f"unexpected ROS interface prefixes in expr.: {in_expr}"
-    )
+    assert _validate_event_prefixes(in_expr, expr_prefixes), f"Invalid input expr. {in_expr}"
+    new_expr = _replace_ascxml_prefix_in_expression(in_expr, expr_prefixes)
+    if len(expr_prefixes) > 0:
+        # Make sure the only prefix left is PLAIN_SCXML_EVENT_DATA_PREFIX
+        assert _validate_event_prefixes(
+            new_expr, [PLAIN_SCXML_EVENT_DATA_PREFIX]
+        ), f"Error: the converted expression {new_expr} contains framework specific prefixes."
     # arrays of custom structs
     new_expr = convert_expression_with_object_arrays(new_expr, None, struct_declarations)
     return new_expr

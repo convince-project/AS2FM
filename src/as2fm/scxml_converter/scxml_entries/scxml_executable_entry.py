@@ -31,7 +31,6 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     generate_tag_to_class_map,
 )
 
@@ -54,9 +53,9 @@ class ScxmlExecutableEntry(ScxmlBase):
         pass
 
     @abstractmethod
-    def set_callback_type(self, cb_type: CallbackType):
+    def set_callback_prefixes(self, cb_prefixes: List[str]):
         """
-        Set the callback type of the body this entry belongs to.
+        Set the callback prefixes of the body this entry belongs to.
 
         It needs to be done for this entry and its children.
         """
@@ -177,15 +176,17 @@ def execution_body_from_xml(
     return exec_body
 
 
-def set_execution_body_callback_type(exec_body: ScxmlExecutionBody, cb_type: CallbackType) -> None:
+def set_execution_body_callback_prefixes(
+    exec_body: ScxmlExecutionBody, cb_prefixes: List[str]
+) -> None:
     """
     Set the callback type for the provided execution body.
 
     :param exec_body: The execution body that required the callback type to be set.
-    :param cb_type: The callback type to set.
+    :param cb_prefixes: The callback type to set.
     """
     for entry in exec_body:
-        entry.set_callback_type(cb_type)
+        entry.set_callback_prefixes(cb_prefixes)
 
 
 def is_plain_execution_body(exec_body: Optional[ScxmlExecutionBody], verbose: bool = False) -> bool:

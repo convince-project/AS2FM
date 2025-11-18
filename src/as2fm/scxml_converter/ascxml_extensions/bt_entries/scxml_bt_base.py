@@ -39,7 +39,6 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlTransitionTarget,
 )
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     convert_expression_with_object_arrays,
     get_plain_expression,
 )

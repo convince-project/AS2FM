@@ -34,7 +34,6 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     convert_expression_with_string_literals,
 )
 
@@ -89,11 +88,11 @@ class ScxmlSend(ScxmlExecutableEntry):
         self._params = params
         self._target_automaton = target_automaton
         self._delay = delay
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
 
-    def set_callback_type(self, cb_type: CallbackType) -> None:
+    def set_callback_prefixes(self, cb_prefixes: List[str]) -> None:
         """Set the cb type for this entry and its children."""
-        self._cb_type = cb_type
+        self._cb_prefixes = cb_prefixes
 
     def update_configurable_entry(self, ascxml_declarations: List[AscxmlDeclaration]):
         for param in self._params:
@@ -153,7 +152,7 @@ class ScxmlSend(ScxmlExecutableEntry):
             self.__class__ is ScxmlSend
         ), f"Error: SCXML send: cannot append param to derived class {self.__class__.__name__}."
         assert isinstance(param, ScxmlParam), get_error_msg(self.get_xml_origin(), "Invalid param.")
-        param.set_callback_type(self._cb_type)
+        param.set_callback_prefixes(self._cb_prefixes)
         self._params.append(param)
 
     def is_plain_scxml(self, verbose: bool = False) -> bool:
@@ -173,10 +172,10 @@ class ScxmlSend(ScxmlExecutableEntry):
         **kwargs,
     ) -> List[ScxmlBase]:
         # For now we don't need to do anything here. Change this to handle ros expr in scxml params.
-        assert self._cb_type is not None, "Error: SCXML send: callback type not set."
+        assert self._cb_prefixes is not None, "Error: SCXML send: callback type not set."
         expanded_params: List[ScxmlParam] = []
         for param in self._params:
-            param.set_callback_type(self._cb_type)
+            param.set_callback_prefixes(self._cb_prefixes)
             expanded_params.extend(
                 param.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
             )
@@ -190,7 +189,7 @@ class ScxmlSend(ScxmlExecutableEntry):
             assert isinstance(param_expr, str)  # MyPy check
             new_param_expr = convert_expression_with_string_literals(param_expr)
             new_params.append(
-                ScxmlParam(param.get_name(), expr=new_param_expr, cb_type=param._cb_type)
+                ScxmlParam(param.get_name(), expr=new_param_expr, cb_prefixes=param._cb_prefixes)
             )
         return ScxmlSend(self._event, new_params, self._target_automaton)
 

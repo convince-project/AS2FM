@@ -42,12 +42,12 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     get_config_entries_request_receive_events,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
-    set_execution_body_callback_type,
+    set_execution_body_callback_prefixes,
     update_exec_body_configurable_values,
     valid_execution_body,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, generate_tag_to_class_map
+from as2fm.scxml_converter.scxml_entries.utils import generate_tag_to_class_map
 
 
 class ScxmlState(ScxmlBase):
@@ -261,8 +261,9 @@ class ScxmlState(ScxmlBase):
         **kwargs,
     ) -> "ScxmlState":
         """Implementation of plain scxml sub-entries conversion."""
-        set_execution_body_callback_type(self._on_entry, CallbackType.STATE)
-        set_execution_body_callback_type(self._on_exit, CallbackType.STATE)
+        # In this case, we do not expect any callback data
+        set_execution_body_callback_prefixes(self._on_entry, [])
+        set_execution_body_callback_prefixes(self._on_exit, [])
         plain_entry = as_plain_execution_body(
             self._on_entry, struct_declarations, ascxml_declarations, **kwargs
         )

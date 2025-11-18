@@ -25,7 +25,6 @@ from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDecla
 from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import ScxmlExecutableEntry
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     convert_expression_with_object_arrays,
     convert_expression_with_string_literals,
     get_plain_expression,
@@ -68,11 +67,11 @@ class ScxmlAssign(ScxmlExecutableEntry):
     def __init__(self, location: str, expr: Union[str, AscxmlConfiguration]):
         self._location = location
         self._expr = expr
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
 
-    def set_callback_type(self, cb_type: CallbackType) -> None:
+    def set_callback_prefixes(self, cb_prefixes: List[str]) -> None:
         """Set the cb type for this assignment."""
-        self._cb_type = cb_type
+        self._cb_prefixes = cb_prefixes
 
     def get_location(self) -> str:
         """Get the location to assign."""
@@ -127,7 +126,7 @@ class ScxmlAssign(ScxmlExecutableEntry):
         ascxml_declarations: List[AscxmlDeclaration],
         **kwargs,
     ) -> List[ScxmlBase]:
-        assert self._cb_type is not None, "Error: SCXML assign: callback type not set."
+        assert self._cb_prefixes is not None, "Error: SCXML assign: callback type not set."
         if isinstance(self._expr, AscxmlConfiguration):
             self._expr = self._expr.get_configured_value()
         location_type, array_info = struct_declarations.get_data_type(
@@ -149,7 +148,7 @@ class ScxmlAssign(ScxmlExecutableEntry):
             expanded_locations = [self._location]
         plain_assignments: List[ScxmlBase] = []
         for single_expr, single_loc in zip(expanded_expressions, expanded_locations):
-            plain_expr = get_plain_expression(single_expr, self._cb_type, struct_declarations)
+            plain_expr = get_plain_expression(single_expr, self._cb_prefixes, struct_declarations)
             plain_location = convert_expression_with_object_arrays(single_loc, struct_declarations)
             plain_assignments.append(ScxmlAssign(plain_location, plain_expr))
         return plain_assignments

@@ -32,13 +32,12 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     get_config_entries_request_receive_events,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
-    set_execution_body_callback_type,
+    set_execution_body_callback_prefixes,
     update_exec_body_configurable_values,
     valid_execution_body,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
     convert_expression_with_string_literals,
     get_plain_expression,
 )
@@ -108,20 +107,19 @@ class ScxmlIf(ScxmlExecutableEntry):
 
         :param conditional_executions: List of (condition - exec. body) pairs. Min n. pairs is one.
         :param else_execution: Execution to be done if no condition is met.
-        :param cb_type: The kind of callback executing this SCXML entry.
         """
         self._conditional_executions: List[ConditionalExecutionBody] = conditional_executions
         self._else_execution: ScxmlExecutionBody = []
         if else_execution is not None:
             self._else_execution = else_execution
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
 
-    def set_callback_type(self, cb_type: CallbackType) -> None:
+    def set_callback_prefixes(self, cb_prefixes: List[str]) -> None:
         """Set the cb type for this entry and its children."""
-        self._cb_type = cb_type
+        self._cb_prefixes = cb_prefixes
         for _, cond_body in self._conditional_executions:
-            set_execution_body_callback_type(cond_body, cb_type)
-        set_execution_body_callback_type(self._else_execution, cb_type)
+            set_execution_body_callback_prefixes(cond_body, cb_prefixes)
+        set_execution_body_callback_prefixes(self._else_execution, cb_prefixes)
 
     def get_conditional_executions(self) -> List[ConditionalExecutionBody]:
         """Get the conditional executions."""
@@ -196,7 +194,7 @@ class ScxmlIf(ScxmlExecutableEntry):
         ascxml_declarations: List[AscxmlDeclaration],
         **kwargs,
     ) -> List[ScxmlBase]:
-        assert self._cb_type is not None, get_error_msg(
+        assert self._cb_prefixes is not None, get_error_msg(
             self.get_xml_origin(), "Callback type not set."
         )
         conditional_executions = []
@@ -209,7 +207,7 @@ class ScxmlIf(ScxmlExecutableEntry):
             )
             conditional_executions.append(
                 (
-                    get_plain_expression(condition, self._cb_type, struct_declarations),
+                    get_plain_expression(condition, self._cb_prefixes, struct_declarations),
                     execution_body,
                 )
             )

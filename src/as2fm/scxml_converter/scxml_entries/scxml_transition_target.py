@@ -35,12 +35,12 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     execution_body_from_xml,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
-    set_execution_body_callback_type,
+    set_execution_body_callback_prefixes,
     update_exec_body_configurable_values,
     valid_execution_body,
     valid_execution_body_entry_types,
 )
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 
 
@@ -99,11 +99,11 @@ class ScxmlTransitionTarget(ScxmlBase):
         self._target_id = target_id
         self._probability = probability
         self._body: ScxmlExecutionBody = body if body is not None else []
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
 
-    def set_callback_type(self, cb_type: CallbackType):
-        """Configure the callback type associated to this transition_target instance."""
-        self._cb_type = cb_type
+    def set_callback_prefixes(self, cb_prefixes: List[str]):
+        """Configure the callback prefixes associated to this transition_target instance."""
+        self._cb_prefixes = cb_prefixes
 
     def get_target_id(self) -> str:
         """Return the ID of the target state of this transition."""
@@ -166,10 +166,10 @@ class ScxmlTransitionTarget(ScxmlBase):
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         new_body: ScxmlExecutionBody = []
-        assert self._cb_type is not None, get_error_msg(
+        assert self._cb_prefixes is not None, get_error_msg(
             self.get_xml_origin(), "Unknown callback type."
         )
-        set_execution_body_callback_type(self._body, self._cb_type)
+        set_execution_body_callback_prefixes(self._body, self._cb_prefixes)
         for entry in self._body:
             new_body.extend(
                 entry.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)

@@ -4,7 +4,6 @@ from .scxml_base import ScxmlBase  # noqa: F401
 from .ascxml_declaration import AscxmlDeclaration  # noqa: F401
 from .ascxml_configuration import AscxmlConfiguration  # noqa: F401
 from .ascxml_thread import AscxmlThread  # noqa: F401
-from .utils import CallbackType  # noqa: F401
 from .scxml_param import ScxmlParam  # noqa: F401
 from .scxml_data import ScxmlData  # noqa: F401
 from .scxml_data_model import ScxmlDataModel  # noqa: F401

@@ -40,7 +40,7 @@ from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
     convert_expression_with_string_literals,
     get_plain_expression,
     is_non_empty_string,
@@ -54,6 +54,11 @@ class ScxmlTransition(ScxmlBase):
     @staticmethod
     def get_tag_name() -> str:
         return "transition"
+
+    @staticmethod
+    def get_callback_prefixes() -> List[str]:
+        """Return the callback type of a specific ROS Callback subclass"""
+        return [PLAIN_SCXML_EVENT_DATA_PREFIX]
 
     @staticmethod
     def contains_transition_target(xml_tree: XmlElement) -> bool:
@@ -267,13 +272,13 @@ class ScxmlTransition(ScxmlBase):
     ) -> List[ScxmlBase]:
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
-            target.set_callback_type(CallbackType.TRANSITION)
+            target.set_callback_prefixes(ScxmlTransition.get_callback_prefixes())
             plain_targets.extend(
                 target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
             )
         if self._condition is not None:
             self._condition = get_plain_expression(
-                self._condition, CallbackType.TRANSITION, struct_declarations
+                self._condition, ScxmlTransition.get_callback_prefixes(), struct_declarations
             )
         return [ScxmlTransition(plain_targets, self._events, self._condition)]
 
