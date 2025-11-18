@@ -72,7 +72,7 @@
         <onentry>
             <send event="cov_step_req" />
         </onentry>
-        <transition event="cov_step_res" cond="!_event.data.accept" target="wait_for_action">
+        <transition event="cov_step_res" cond="!_event.data.accept || coverage_fail_count &gt; 2" target="wait_for_action">
             <assign location="coverage_running" expr="false" />
             <ros_action_aborted name="coverage_action" goal_id="cov_goal_id" />
         </transition>

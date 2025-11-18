@@ -6,7 +6,7 @@
     </parameters>
 
     <behavior_tree>
-        <input type="bt.cpp-xml" src="./bt/bt_mission_no_obstacles.xml" />
+        <input type="bt.cpp-xml" src="./bt/bt_mission_no_obstacles_bug.xml" />
         <input type="bt-plugin-ascxml" src="./plugins/is_robot_stuck.ascxml" />
         <input type="bt-plugin-ascxml" src="./plugins/navigate_to_location.ascxml" />
         <input type="bt-plugin-ascxml" src="./plugins/perform_docking_action.ascxml" />

@@ -6,11 +6,12 @@
     model_src=""
     xmlns="http://www.w3.org/2005/07/scxml">
 
-    <!-- MoveBlock is a client for the MoveBlockSkill -->
     <ros_action_client name="plugins_action" action_name="/do_coverage" type="uc1_interfaces/Coverage" />
+    <ros_topic_publisher name="n_fail_topic" topic="/coverage_failures" type="std_msgs/Int16" />
 
     <datamodel>
         <data id="action_success" expr="false" type="bool" />
+        <data id="n_failures" expr="0" type="int16" />
     </datamodel>
 
     <state id="idle">
@@ -73,7 +74,11 @@
         <bt_tick target="idle">
             <if cond="action_success == true">
                 <bt_return_status status="SUCCESS" />
-                <else />
+            <else />
+                <assign location="n_failures" expr="n_failures + 1" />
+                <ros_topic_publish name="n_fail_topic">
+                    <field name="data" expr="n_failures" />
+                </ros_topic_publish>
                 <bt_return_status status="FAILURE" />
             </if>
         </bt_tick>

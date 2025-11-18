@@ -67,23 +67,4 @@
         </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
-
-  <!-- Description of Node Models (used by Groot) -->
-  <TreeNodesModel>
-    <Action ID="IsRobotStuck"
-            editable="true"/>
-    <Action ID="NavigateToLocation"
-            editable="true">
-      <input_port name="goal"/>
-    </Action>
-    <Action ID="PerformDockingAction"
-            editable="true"/>
-    <Action ID="PerformOnlineCoverage"
-            editable="true"/>
-    <Action ID="PerformUndockingAction"
-            editable="true"/>
-    <Action ID="PerformUnstuckAction"
-            editable="true"/>
-  </TreeNodesModel>
-
 </root>
