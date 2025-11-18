@@ -44,19 +44,10 @@ PLAIN_SCXML_EVENT_PREFIX: str = f"{PLAIN_EVENT_KEY}."
 PLAIN_EVENT_DATA_KEY: str = "data"
 PLAIN_SCXML_EVENT_DATA_PREFIX: str = PLAIN_SCXML_EVENT_PREFIX + PLAIN_EVENT_DATA_KEY + "."
 
-# Constants related to the conversion of expression from ROS to plain SCXML
-ROS_FIELD_PREFIX: str = "fields__"
-PLAIN_FIELD_EVENT_PREFIX: str = PLAIN_SCXML_EVENT_DATA_PREFIX + ROS_FIELD_PREFIX
-
-ROS_EVENT_PREFIXES = [
-    "_msg.",  # Topic-related
-    "_req.",
-    "_res.",  # Service-related
-    "_goal.",
-    "_feedback.",
-    "_wrapped_result.",
-    "_action.",  # Action-related
-]
+# Constants related to the conversion of expression from ASCXML to plain SCXML
+# TODO: Switch to a framework agnostic name! Do it once the XML properties are implemented.
+ASCXML_FIELD_PREFIX: str = "ros_fields__"
+PLAIN_FIELD_EVENT_PREFIX: str = PLAIN_SCXML_EVENT_DATA_PREFIX + ASCXML_FIELD_PREFIX
 
 
 # ------------ Expression-conversion functionalities ------------
@@ -103,9 +94,7 @@ def _replace_ascxml_prefix_in_expression(msg_expr: str, expected_prefixes: List[
         else:
             # Special fields substitution, no need to add the PLAIN_FIELD_EVENT_PREFIX
             split_prefix = prefix.split(".", maxsplit=1)
-            assert (
-                len(split_prefix) == 2
-            ), f"Error: SCXML ROS conversion: prefix {prefix} has no dots."
+            assert len(split_prefix) == 2, f"Error: ASCXML conversion: prefix {prefix} has no dots."
             substitution = f"{PLAIN_SCXML_EVENT_DATA_PREFIX}{split_prefix[1]}"
             prefix_reg = prefix.replace(".", r"\.")
             msg_expr = re.sub(
@@ -153,7 +142,7 @@ def get_plain_expression(
     struct_declarations: Optional[ScxmlStructDeclarationsContainer],
 ) -> str:
     """
-    Convert ROS-specific PREFIXES, custom struct array indexing to plain SCXML.
+    Convert framework-specific PREFIXES, custom struct and array indexing to plain SCXML.
 
     e.g. `_msg.a` => `_event.data.a` and
          `objects[2].x` => `objects.x[2]`

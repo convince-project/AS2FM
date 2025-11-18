@@ -21,7 +21,7 @@ from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration, ScxmlBase, ScxmlParam
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    ROS_FIELD_PREFIX,
+    ASCXML_FIELD_PREFIX,
     get_plain_expression,
 )
 
@@ -43,7 +43,7 @@ class RosField(ScxmlParam):
         assert self._cb_prefixes is not None, get_error_msg(
             self.get_xml_origin(), "No callback type set for ROS field."
         )
-        plain_field_name = ROS_FIELD_PREFIX + self._name
+        plain_field_name = ASCXML_FIELD_PREFIX + self._name
         self.evaluate_expr()
         assert isinstance(self._expr, str)  # We don't expect anything else after evaluate_expr
         plain_scxml_param = ScxmlParam(

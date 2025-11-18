@@ -37,7 +37,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.utils import PLAIN_FIELD_EVENT_PREFIX, ROS_FIELD_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ASCXML_FIELD_PREFIX, PLAIN_FIELD_EVENT_PREFIX
 
 
 class RosServiceHandler(RosCommunicationHandler):
@@ -62,7 +62,7 @@ class RosServiceHandler(RosCommunicationHandler):
         assignments: List[ScxmlAssign] = []
         event_params: List[ScxmlParam] = []
         for field_name in req_fields:
-            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_w_pref = ASCXML_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         return ScxmlTransition.make_single_target_transition(
@@ -81,7 +81,7 @@ class RosServiceHandler(RosCommunicationHandler):
         assignments: List[ScxmlAssign] = []
         event_params: List[ScxmlParam] = []
         for field_name in res_fields:
-            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_w_pref = ASCXML_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         return ScxmlTransition.make_single_target_transition(

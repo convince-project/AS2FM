@@ -24,7 +24,7 @@ from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosDeclaration
 from as2fm.scxml_converter.data_types.type_utils import get_data_type_from_string
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlRoot
-from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ASCXML_FIELD_PREFIX
 
 
 class RosCommunicationHandler:
@@ -129,7 +129,7 @@ class RosCommunicationHandler:
         """
         scxml_fields: List[ScxmlData] = []
         for field_name, field_type in fields.items():
-            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_w_pref = ASCXML_FIELD_PREFIX + field_name
             field_py_type = get_data_type_from_string(field_type)
             default_expr = value_to_string_expr(get_default_expression_for_type(field_py_type))
             scxml_fields.append(ScxmlData(field_w_pref, default_expr, field_type))

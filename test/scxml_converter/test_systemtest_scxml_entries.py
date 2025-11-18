@@ -44,7 +44,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.utils import ROS_FIELD_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ASCXML_FIELD_PREFIX
 
 
 def _test_scxml_from_code(scxml_root: ScxmlRoot, ref_file_path: str):
@@ -87,7 +87,8 @@ def test_battery_drainer_from_code():
         "use_battery",
         on_entry=[
             ScxmlSend(
-                "topic_level_msg", [ScxmlParam(f"{ROS_FIELD_PREFIX}data", expr="battery_percent")]
+                "topic_level_msg",
+                [ScxmlParam(f"{ASCXML_FIELD_PREFIX}data", expr="battery_percent")],
             )
         ],
         body=[
