@@ -48,10 +48,7 @@
                             <PerformOnlineCoverage/>
                             <SetBlackboard output_key="{online_coverage_done}" value="1"/>
                         </Sequence>
-                        <Sequence name="break_coverage">
-                            <SetBlackboard output_key="{online_coverage_done}" value="1"/>
-                            <SetBlackboard output_key="{mission_failed}" value="1"/>
-                        </Sequence>
+                        <SetBlackboard output_key="{mission_failed}" value="1"/>
                     </Fallback>
                 </BlackboardCheckInt>
                 <SetBlackboard output_key="{mission_stage}" value="2"/>
@@ -70,4 +67,23 @@
         </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="IsRobotStuck"
+            editable="true"/>
+    <Action ID="NavigateToLocation"
+            editable="true">
+      <input_port name="goal"/>
+    </Action>
+    <Action ID="PerformDockingAction"
+            editable="true"/>
+    <Action ID="PerformOnlineCoverage"
+            editable="true"/>
+    <Action ID="PerformUndockingAction"
+            editable="true"/>
+    <Action ID="PerformUnstuckAction"
+            editable="true"/>
+  </TreeNodesModel>
+
 </root>
