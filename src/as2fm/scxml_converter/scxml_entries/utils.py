@@ -96,14 +96,6 @@ class CallbackType(Enum):
             return ["_bt.status"]
         raise ValueError(f"Unexpected CallbackType {cb_type}")
 
-    @staticmethod
-    def get_plain_callback(cb_type: "CallbackType") -> "CallbackType":
-        """Convert ROS-specific transitions to plain ones."""
-        if cb_type == CallbackType.STATE:
-            return CallbackType.STATE
-        else:
-            return CallbackType.TRANSITION
-
 
 def generate_tag_to_class_map(cls: Type[ScxmlBase]) -> Dict[str, Type[ScxmlBase]]:
     """
