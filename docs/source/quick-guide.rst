@@ -92,7 +92,7 @@ After installing the AS2FM packages as described in the :ref:`installation secti
     $ cd examples/quick_start_battery_monitor/ && \
       as2fm_roaml_to_jani main.xml
 
-    AS2FM - SCXML to JANI.
+    AS2FM - RoAML to JANI.
 
     Loading model from main.xml.
     xml_file='./battery_drainer.ascxml'

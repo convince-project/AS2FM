@@ -26,7 +26,7 @@ class AscxmlDeclaration(ScxmlBase):
     Base class for declarations in ASCXML.
 
     Declarations are used for preparing framework specific functionalities.
-    Exemplary declarations are ROS 2 topics, timers, actions, and BT input / output ports.
+    Exemplary declarations are ROS 2 topics, services, actions, timers and BT ports.
     """
 
     @abstractmethod

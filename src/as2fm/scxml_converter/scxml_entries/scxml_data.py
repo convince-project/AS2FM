@@ -196,10 +196,9 @@ class ScxmlData(ScxmlBase):
 
     def _valid_init_expr(self) -> bool:
         """Check if the initial expression makes sense."""
-        valid_expr = isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
+        return isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
             ScxmlData, "id", self._expr
         )
-        return valid_expr
 
     def _valid_bounds(self) -> bool:
         if self._lower_bound is None and self._upper_bound is None:

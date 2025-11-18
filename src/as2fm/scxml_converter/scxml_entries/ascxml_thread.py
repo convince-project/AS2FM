@@ -24,7 +24,8 @@ class AscxmlThread(ScxmlBase):
     Base class for thread definition in ASCXML.
 
     Threads are often associated to framework specific functionalities, e.g. ROS 2 actions.
-    Processing them results in additional SCXML models running alongside the existing ones.
+    Processing them results in one or more additional SCXML state machines running alongside
+    the existing ones.
     """
 
     def is_plain_scxml(self, verbose: bool = False):

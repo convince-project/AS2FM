@@ -163,7 +163,7 @@ Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
 
     $ as2fm_roaml_to_jani main.xml
 
-    AS2FM - SCXML to JANI.
+    AS2FM - RoAML to JANI.
 
     Loading model from main.xml.
     xml_file='./world.ascxml'
