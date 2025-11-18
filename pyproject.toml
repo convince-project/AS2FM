@@ -81,4 +81,7 @@ profile = "black"
 line_length = 100
 
 [tool.codespell]
-ignore-words-list = 'assertIn'
+ignore-words-list = [
+    'assertIn',
+    'Studi'
+]
