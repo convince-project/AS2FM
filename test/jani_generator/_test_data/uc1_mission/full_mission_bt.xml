@@ -43,12 +43,12 @@
                 <BlackboardCheckInt name="if_cleaned_skip" return_on_mismatch="1"
                     value_A="{online_coverage_done}" value_B="0">
                     <Fallback name="do_online_coverage">
-                        <Sequence>
+                        <Sequence name="continue_coverage">
                             <SetBlackboard output_key="{mission_stage}" value="5"/>
                             <PerformOnlineCoverage/>
                             <SetBlackboard output_key="{online_coverage_done}" value="1"/>
                         </Sequence>
-                        <Sequence>
+                        <Sequence name="break_coverage">
                             <SetBlackboard output_key="{online_coverage_done}" value="1"/>
                             <SetBlackboard output_key="{mission_failed}" value="1"/>
                         </Sequence>

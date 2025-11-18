@@ -161,15 +161,15 @@ Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main.xml
+    $ as2fm_roaml_to_jani main.xml
 
-    AS2FM - SCXML to JANI.
+    AS2FM - RoAML to JANI.
 
     Loading model from main.xml.
-    xml_file='./world.scxml'
-    xml_file='./bt_navigate_action.scxml'
-    xml_file='./bt_pick_action.scxml'
-    xml_file='./bt_place_action.scxml'
+    xml_file='./world.ascxml'
+    xml_file='./bt_navigate_action.ascxml'
+    xml_file='./bt_pick_action.ascxml'
+    xml_file='./bt_place_action.ascxml'
     ...
 
 This produces the same model in the `JANI format <https://jani-spec.org/>`_ in the file `main.jani`.
@@ -257,7 +257,7 @@ You can then run SMC Storm again on the modified model after generating the JANI
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main_probabilistic.xml && \
+    $ as2fm_roaml_to_jani main_probabilistic.xml && \
       smc_storm --model main_probabilistic.jani --properties-names snack_at_table --show-statistics --hide-progress-bar
 
     ...
@@ -315,7 +315,7 @@ We can again run SMC Storm on the modified model after generating the JANI model
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main_probabilistic_extended_bt.xml && \
+    $ as2fm_roaml_to_jani main_probabilistic_extended_bt.xml && \
       smc_storm --model main_probabilistic_extended_bt.jani --properties-names snack_at_table --show-statistics --hide-progress-bar
 
     ...

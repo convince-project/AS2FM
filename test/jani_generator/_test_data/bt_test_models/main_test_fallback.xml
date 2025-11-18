@@ -7,7 +7,7 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./bt_test_fallback.xml" />
-        <input type="bt-plugin-ascxml" src="./bt_count_ticks.scxml" />
+        <input type="bt-plugin-ascxml" src="./bt_count_ticks.ascxml" />
     </behavior_tree>
 
     <properties>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="initial"
+    version="1.0"
+    name="BtTopicAction"
+    model_src="">
+
+    <datamodel>
+        <data id="number" type="int16" expr="0" />
+    </datamodel>
+    <bt_declare_port_in key="name" type="string"/>
+    <bt_declare_port_in key="data" type="int16"/>
+
+    <!-- using name as reference to a port in the behavior tree XML.
+     This should fail if the port contains a blackboard reference (e.g. {the_answer}) -->
+    <ros_topic_publisher name="answer_pub" type="std_msgs/Int16">
+        <topic>
+            <bt_get_input key="name"/>
+        </topic>
+    </ros_topic_publisher>
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <assign location="number">
+                <expr>
+                    <bt_get_input key="data"/>
+                </expr>
+            </assign>
+            <ros_topic_publish name="answer_pub">
+                <field name="data" expr="number" />
+            </ros_topic_publish>
+        </bt_tick>
+    </state>
+
+</ascxml>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+  initial="idle"
+  version="1.0"
+  name="VisitorsFollowingRobotSkill"
+  datamodel="ecmascript"
+  xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="is_followed" type="bool" expr="true" />
+        <data id="SKILL_SUCCESS" type="int8" expr="0" />
+        <data id="SKILL_FAILURE" type="int8" expr="1" />
+    </datamodel>
+
+    <!-- VisitorsFollowingRobotSkill is a server for tick from the ROS2Condition plugin-->
+    <ros_service_server service_name="/VisitorsFollowingRobotSkill/tick" type ="bt_interfaces_dummy/TickCondition"/>
+    <!-- VisitorsFollowingRobotSkill is a subscriber for the /is_followed topic from the PeopleDetectorFilterComponent-->
+    <ros_topic_subscriber topic="/PeopleDetectorFilterComponent/is_followed" type="std_msgs/Bool" />
+
+    <state id="idle">
+        <ros_service_handle_request name="/VisitorsFollowingRobotSkill/tick" target="areFollowing"/>
+        <ros_topic_callback name="/PeopleDetectorFilterComponent/is_followed" target="idle">
+            <assign location="is_followed" expr="_msg.data" />
+        </ros_topic_callback>
+    </state>
+
+    <state id="areFollowing">
+        <onentry>
+            <if cond="is_followed">
+                <ros_service_send_response name="/VisitorsFollowingRobotSkill/tick">
+                    <field name="status" expr="SKILL_SUCCESS"/>
+                    <field name="is_ok" expr="true"/>
+                </ros_service_send_response>
+            <else/>
+                <ros_service_send_response name="/VisitorsFollowingRobotSkill/tick">
+                    <field name="status" expr="SKILL_FAILURE"/>
+                    <field name="is_ok" expr="true"/>
+                </ros_service_send_response>
+            </if>
+        </onentry>
+        <transition target="idle" />
+    </state>
+
+</ascxml>

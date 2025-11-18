@@ -5,7 +5,7 @@
     </parameters>
 
     <node_models>
-        <input type="node-ascxml" src="./array_ops.scxml" />
+        <input type="node-ascxml" src="./array_ops.ascxml" />
     </node_models>
 
     <properties>

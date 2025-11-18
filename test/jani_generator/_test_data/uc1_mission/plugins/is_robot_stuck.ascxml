@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="idle"
+    version="1.0"
+    name="IsRobotStuck"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_topic_subscriber name="stuck_sub" topic="/stuck_info" type="uc1_interfaces/StuckInfo" />
+
+    <datamodel>
+        <data id="last_stuck_info" expr="0" type="int16" />
+    </datamodel>
+
+    <state id="idle">
+        <bt_tick target="idle">
+            <if cond="last_stuck_info == 0">
+                <!-- The robot isn't stuck -->
+                <bt_return_status status="FAILURE" />
+                <else />
+                <!-- The robot is stuck -->
+                <bt_return_status status="SUCCESS" />
+            </if>
+        </bt_tick>
+        <bt_halt target="idle">
+            <!-- Do not delete the latest stuck info on reset, consider it as a latched msg -->
+            <!-- <assign location="last_stuck_info" expr="0" /> -->
+            <bt_return_halted />
+        </bt_halt>
+        <ros_topic_callback name="stuck_sub" target="idle">
+            <assign location="last_stuck_info" expr="_msg.state" />
+        </ros_topic_callback>
+    </state>
+
+</ascxml>

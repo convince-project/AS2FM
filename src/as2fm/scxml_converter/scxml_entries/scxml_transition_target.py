@@ -23,26 +23,24 @@ from warnings import warn
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
+from as2fm.as2fm_common.logging import get_error_msg, log_warning
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
+    AscxmlDeclaration,
     ScxmlBase,
     ScxmlExecutableEntry,
     ScxmlExecutionBody,
-    ScxmlRosDeclarationsContainer,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     execution_body_from_xml,
-    has_bt_blackboard_input,
-    instantiate_exec_body_bt_events,
     is_plain_execution_body,
     replace_string_expressions_in_execution_body,
-    set_execution_body_callback_type,
+    set_execution_body_callback_prefixes,
+    update_exec_body_configurable_values,
     valid_execution_body,
     valid_execution_body_entry_types,
 )
-from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
-from as2fm.scxml_converter.scxml_entries.utils import CallbackType, is_non_empty_string
+from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import get_xml_attribute
 
 
@@ -101,11 +99,11 @@ class ScxmlTransitionTarget(ScxmlBase):
         self._target_id = target_id
         self._probability = probability
         self._body: ScxmlExecutionBody = body if body is not None else []
-        self._cb_type: Optional[CallbackType] = None
+        self._cb_prefixes: Optional[List[str]] = None
 
-    def set_callback_type(self, cb_type: CallbackType):
-        """Configure the callback type associated to this transition_target instance."""
-        self._cb_type = cb_type
+    def set_callback_prefixes(self, cb_prefixes: List[str]):
+        """Configure the callback prefixes associated to this transition_target instance."""
+        self._cb_prefixes = cb_prefixes
 
     def get_target_id(self) -> str:
         """Return the ID of the target state of this transition."""
@@ -130,22 +128,6 @@ class ScxmlTransitionTarget(ScxmlBase):
     def set_body(self, body: ScxmlExecutionBody) -> None:
         """Set the body of this transition."""
         self._body = body
-
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        return has_bt_blackboard_input(self._body, bt_ports_handler)
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> "ScxmlTransitionTarget":
-        """Instantiate the BT events in the object's body."""
-        self._body = instantiate_exec_body_bt_events(self._body, instance_id, children_ids)
-        return self
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        if self._body is not None:
-            for entry in self._body:
-                entry.update_bt_ports_values(bt_ports_handler)
 
     def append_body_executable_entry(self, exec_entry: ScxmlExecutableEntry):
         if self._body is None:
@@ -172,42 +154,26 @@ class ScxmlTransitionTarget(ScxmlBase):
             print("Error SCXML transition target: executable content is not valid.")
         return valid_target and valid_probability and valid_body
 
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        """Check if the ros instantiations have been declared."""
-        # For SCXML transitions, ROS interfaces can be found only in the exec body
-        return self._body is None or all(
-            entry.check_valid_ros_instantiations(ros_declarations) for entry in self._body
-        )
+    def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
+        update_exec_body_configurable_values(self._body, ascxml_declarations)
 
-    def set_thread_id(self, thread_id: int) -> None:
-        """Set the thread ID for the executable entries of this transition."""
-        if self._body is not None:
-            for entry in self._body:
-                if hasattr(entry, "set_thread_id"):
-                    entry.set_thread_id(thread_id)
-
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
-        return is_plain_execution_body(self._body)
+        plain_body = is_plain_execution_body(self._body, verbose)
+        if not plain_body and verbose:
+            log_warning(None, "No plain SCXML transition target: body is not plain.")
+        return plain_body
 
-    def as_plain_scxml(
-        self,
-        struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlTransitionTarget"]:
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML transition target: invalid ROS declarations container."
-        assert self.check_valid_ros_instantiations(
-            ros_declarations
-        ), "Error: SCXML transition target: invalid ROS instantiations in transition body."
+    def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs):
         new_body: ScxmlExecutionBody = []
-        assert self._cb_type is not None, "Error: SCXML transition target: cb type not assigned."
-        set_execution_body_callback_type(self._body, self._cb_type)
+        assert self._cb_prefixes is not None, get_error_msg(
+            self.get_xml_origin(), "Unknown callback type."
+        )
+        set_execution_body_callback_prefixes(self._body, self._cb_prefixes)
         for entry in self._body:
-            new_body.extend(entry.as_plain_scxml(struct_declarations, ros_declarations))
+            new_body.extend(
+                entry.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+            )
         return [ScxmlTransitionTarget(self._target_id, self._probability, new_body)]
 
     def replace_strings_types_with_integer_arrays(self) -> None:

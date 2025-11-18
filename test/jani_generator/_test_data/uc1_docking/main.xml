@@ -7,16 +7,16 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./policy.xml" />
-        <input type="bt-plugin-ascxml" src="./bt_perform_docking_maneuver.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_simple_wait.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_is_charging.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_reset_bumper_state.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_back_up.scxml" />
-        <input type="bt-plugin-ascxml" src="./bt_is_bump_detected.scxml" />
+        <input type="bt-plugin-ascxml" src="./bt_perform_docking_maneuver.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_simple_wait.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_is_charging.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_reset_bumper_state.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_back_up.ascxml" />
+        <input type="bt-plugin-ascxml" src="./bt_is_bump_detected.ascxml" />
     </behavior_tree>
 
     <node_models>
-        <input type="node-ascxml" src="./robot_model.scxml" />
+        <input type="node-ascxml" src="./robot_model.ascxml" />
     </node_models>
 
     <properties>

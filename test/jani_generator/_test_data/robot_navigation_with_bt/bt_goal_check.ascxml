@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="wait_first_msg"
+    version="1.0"
+    name="GoalCheck"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_in key="topic" type="string" />
+
+    <ros_topic_subscriber name="goal_sub" type="geometry_msgs/Point">
+        <topic>
+            <bt_get_input key="topic" />
+        </topic>
+    </ros_topic_subscriber>
+
+    <datamodel>
+        <data id="goal_x" expr="0" type="float64" />
+        <data id="goal_y" expr="0" type="float64" />
+    </datamodel>
+
+    <!-- Assumption: We get an event when the node is ticked by the BT, named "bt_tick". -->
+    <!-- Assumption: We have to send an event to the BT, that is either "bt_success" or "bt_failure". -->
+
+    <state id="wait_first_msg">
+        <bt_tick target="wait_first_msg">
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
+        <ros_topic_callback name="goal_sub" target="ready_to_check">
+            <assign location="goal_x" expr="_msg.x" />
+            <assign location="goal_y" expr="_msg.y" />
+        </ros_topic_callback>
+        <bt_halt target="wait_first_msg">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="ready_to_check">
+        <bt_tick target="ready_to_check">
+            <if cond="goal_x > Math.abs(goal_y)">
+                <bt_return_status status="SUCCESS" />
+            <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+        <ros_topic_callback name="goal_sub" target="ready_to_check">
+            <assign location="goal_x" expr="_msg.x" />
+            <assign location="goal_y" expr="_msg.y" />
+        </ros_topic_callback>
+        <bt_halt target="wait_first_msg">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

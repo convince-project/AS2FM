@@ -7,19 +7,19 @@
 
     <behavior_tree>
         <input type="bt.cpp-xml" src="./full_mission_bt.xml" />
-        <input type="bt-plugin-ascxml" src="./plugins/is_robot_stuck.scxml" />
-        <input type="bt-plugin-ascxml" src="./plugins/navigate_to_location.scxml" />
-        <input type="bt-plugin-ascxml" src="./plugins/perform_docking_action.scxml" />
-        <input type="bt-plugin-ascxml" src="./plugins/perform_online_coverage.scxml" />
-        <input type="bt-plugin-ascxml" src="./plugins/perform_undocking_action.scxml" />
-        <input type="bt-plugin-ascxml" src="./plugins/perform_unstuck_action.scxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/is_robot_stuck.ascxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/navigate_to_location.ascxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/perform_docking_action.ascxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/perform_online_coverage.ascxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/perform_undocking_action.ascxml" />
+        <input type="bt-plugin-ascxml" src="./plugins/perform_unstuck_action.ascxml" />
     </behavior_tree>
 
     <node_models>
-        <input type="node-ascxml" src="./simulation_model.scxml" />
-        <input type="node-ascxml" src="./skills/docking_skill.scxml" />
-        <input type="node-ascxml" src="./skills/navigate_skill.scxml" />
-        <input type="node-ascxml" src="./skills/unstuck_skill.scxml" />
+        <input type="node-ascxml" src="./simulation_model.ascxml" />
+        <input type="node-ascxml" src="./skills/docking_skill.ascxml" />
+        <input type="node-ascxml" src="./skills/navigate_skill.ascxml" />
+        <input type="node-ascxml" src="./skills/unstuck_skill.ascxml" />
     </node_models>
 
     <properties>

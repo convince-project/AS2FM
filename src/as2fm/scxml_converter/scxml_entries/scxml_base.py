@@ -17,6 +17,7 @@
 Base SCXML class, defining the methods all SCXML entries shall implement.
 """
 
+from abc import abstractmethod
 from typing import Dict, List, Optional, Type
 
 from lxml.etree import _Element as XmlElement
@@ -28,10 +29,11 @@ from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 class ScxmlBase:
     """This class is the base class for all SCXML entries."""
 
-    @staticmethod
-    def get_tag_name() -> str:
+    @classmethod
+    @abstractmethod
+    def get_tag_name(cls: Type[Self]) -> str:
         """Get the tag name of the XML element."""
-        raise NotImplementedError
+        pass
 
     @classmethod
     def from_xml_tree(
@@ -47,11 +49,12 @@ class ScxmlBase:
         return instance
 
     @classmethod
+    @abstractmethod
     def from_xml_tree_impl(
         cls: Type[Self], xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
     ) -> Self:
         """Child-specific implementation to create a ScxmlBase object from an XML tree."""
-        raise NotImplementedError
+        pass
 
     def set_custom_data_types(self, custom_data_types: Dict[str, StructDefinition]):
         """Save container with custom data types."""
@@ -72,30 +75,30 @@ class ScxmlBase:
         except AttributeError:
             return None
 
+    @abstractmethod
     def check_validity(self) -> bool:
         """Check if the object is valid."""
-        raise NotImplementedError
+        pass
 
-    def update_bt_ports_values(self, bt_ports_handler):
-        """Update the values of potential entries making use of BT ports."""
-        raise NotImplementedError
-
-    def is_plain_scxml(self) -> bool:
+    @abstractmethod
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the object is compatible with the plain SCXML standard."""
-        raise NotImplementedError
+        pass
 
-    def as_plain_scxml(self, struct_declarations, ros_declarations) -> List:
-        """Convert the object to its plain SCXML  version."""
-        raise NotImplementedError
+    @abstractmethod
+    def as_plain_scxml(
+        self, struct_declarations, ascxml_declarations, **kwargs
+    ) -> List["ScxmlBase"]:
+        """
+        Convert the object to its plain SCXML  version.
 
+        :param struct_declarations: List of custom structures defined in the model
+        :param ascxml_declarations: Additional declarations, like ROS or BT specific ones
+        :param kwargs: Additional framework specific entries, e.g. the BT plugin ID.
+        """
+        pass
+
+    @abstractmethod
     def as_xml(self):
         """Convert the object to an XML element."""
-        raise NotImplementedError
-
-    def get_body(self):
-        """Get the body of the object."""
-        raise NotImplementedError
-
-    def get_id(self) -> str:
-        """Get the ID of the object."""
-        raise NotImplementedError
+        pass

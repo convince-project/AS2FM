@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    name="string_receive"
+    version="1.0"
+    initial="init"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_topic_subscriber name="subscriber" topic="/str_topic" type="nested_interfaces/Internal" />
+
+    <datamodel>
+        <data id="string_store" expr="''" type="string" />
+    </datamodel>
+
+    <state id="init">
+        <ros_topic_callback name="subscriber" target="done">
+            <assign location="string_store" expr="_msg.data" />
+        </ros_topic_callback>
+    </state>
+
+    <state id="done">
+        <onentry>
+            <if cond="string_store == 'a string'">
+                <send event="success" />
+            </if>
+        </onentry>
+    </state>
+</ascxml>

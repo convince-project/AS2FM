@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="initial"
+    version="1.0"
+    name="BackUp"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_topic_publisher name="cmd" topic="/cmd_vel" type="std_msgs/Int16" />
+
+    <state id="initial">
+        <bt_tick>
+            <!-- Another option -->
+            <target id="initial" prob="0.2">
+                <bt_return_status status="FAILURE" />
+            </target>
+            <target id="initial" prob="0.8">
+                <ros_topic_publish name="cmd">
+                    <field name="data" expr="-1" />
+                </ros_topic_publish>
+                <bt_return_status status="SUCCESS" />
+            </target>
+        </bt_tick>
+        <bt_halt target="initial">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

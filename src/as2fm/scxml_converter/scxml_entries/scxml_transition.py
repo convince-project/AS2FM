@@ -17,29 +17,30 @@
 A single transition in SCXML. In XML, it has the tag `transition`.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Tuple, Type
 
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
+from typing_extensions import Self
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
+    AscxmlDeclaration,
     ScxmlBase,
     ScxmlExecutionBody,
-    ScxmlRosDeclarationsContainer,
     ScxmlTransitionTarget,
 )
-from as2fm.scxml_converter.scxml_entries.bt_utils import BtPortsHandler, is_removed_bt_event
-from as2fm.scxml_converter.scxml_entries.scxml_executable_entries import (
+from as2fm.scxml_converter.scxml_entries.scxml_executable_entry import (
     EventsToAutomata,
     ScxmlExecutableEntry,
     add_targets_to_scxml_sends,
     execution_body_from_xml,
+    get_config_entries_request_receive_events,
 )
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
-    CallbackType,
+    PLAIN_SCXML_EVENT_DATA_PREFIX,
     convert_expression_with_string_literals,
     get_plain_expression,
     is_non_empty_string,
@@ -53,6 +54,11 @@ class ScxmlTransition(ScxmlBase):
     @staticmethod
     def get_tag_name() -> str:
         return "transition"
+
+    @staticmethod
+    def get_callback_prefixes() -> List[str]:
+        """Return the callback type of a specific ROS Callback subclass"""
+        return [PLAIN_SCXML_EVENT_DATA_PREFIX]
 
     @staticmethod
     def contains_transition_target(xml_tree: XmlElement) -> bool:
@@ -90,7 +96,7 @@ class ScxmlTransition(ScxmlBase):
                 ]
             )
         else:
-            assert is_non_empty_string(cls, "target", target)
+            assert target is not None and is_non_empty_string(cls, "target", target)  # MyPy check
             target_children.append(
                 ScxmlTransitionTarget(
                     target, body=execution_body_from_xml(xml_tree, custom_data_types)
@@ -116,12 +122,12 @@ class ScxmlTransition(ScxmlBase):
 
     @classmethod
     def make_single_target_transition(
-        cls: Type["ScxmlTransition"],
+        cls: Type[Self],
         target: str,
         events: Optional[List[str]] = None,
         condition: Optional[str] = None,
         body: Optional[ScxmlExecutionBody] = None,
-    ):
+    ) -> Self:
         """
         Generate a "traditional" transition with exactly one target.
 
@@ -158,6 +164,16 @@ class ScxmlTransition(ScxmlBase):
         self._events: List[str] = events
         self._condition = condition
 
+    def get_config_request_receive_events(self) -> List[Tuple[str, str]]:
+        """Get all events for requesting and receiving the updated configurable values."""
+        all_events: List[Tuple[str, str]] = []
+        for target in self._targets:
+            temp_events = get_config_entries_request_receive_events(target.get_body())
+            for ev in temp_events:
+                if ev not in all_events:
+                    all_events.append(ev)
+        return all_events
+
     def get_targets(self) -> List[ScxmlTransitionTarget]:
         """Return all targets belonging to this transition."""
         return self._targets
@@ -186,7 +202,9 @@ class ScxmlTransition(ScxmlBase):
                 if target.get_probability() is None:  # This is the last target entry
                     target.set_probability(1.0 - prob_sum)
                 self._targets.append(target)
-                prob_sum += target.get_probability()
+                target_probability = target.get_probability()
+                assert target_probability is not None  # MyPy check
+                prob_sum += target_probability
             assert (
                 abs(prob_sum - 1.0) < EPSILON
             ), f"The sum of probabilities is {prob_sum}, must be 1.0."
@@ -198,34 +216,6 @@ class ScxmlTransition(ScxmlBase):
     def get_condition(self) -> Optional[str]:
         """Return the condition required to execute this transition (if any)."""
         return self._condition
-
-    def has_bt_blackboard_input(self, bt_ports_handler: BtPortsHandler):
-        """Check if the transition contains references to blackboard inputs."""
-        return any(target.has_bt_blackboard_input(bt_ports_handler) for target in self._targets)
-
-    def _instantiate_bt_events_in_targets(self, instance_id: int, children_ids: List[int]):
-        """Instantiate (in place) all bt events for all transitions targets."""
-        for target in self._targets:
-            target.instantiate_bt_events(instance_id, children_ids)
-
-    def instantiate_bt_events(
-        self, instance_id: int, children_ids: List[int]
-    ) -> List["ScxmlTransition"]:
-        """Instantiate the BT events of this transition."""
-        # Make sure to replace received events only for ScxmlTransition objects.
-        if type(self) is ScxmlTransition:
-            assert not any(is_removed_bt_event(event) for event in self._events), (
-                "Error SCXML transition: BT events should not be found in SCXML transitions.",
-                "Use the 'bt_tick' ROS-scxml tag instead.",
-            )
-        # The body of a transition needs to be replaced on derived classes, too
-        self._instantiate_bt_events_in_targets(instance_id, children_ids)
-        return [self]
-
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler) -> None:
-        """Update the values of potential entries making use of BT ports."""
-        for target in self._targets:
-            target.update_bt_ports_values(bt_ports_handler)
 
     def add_event(self, event: str):
         self._events.append(event)
@@ -264,44 +254,31 @@ class ScxmlTransition(ScxmlBase):
             valid_targets = False
         return valid_targets and valid_events and valid_condition
 
-    def check_valid_ros_instantiations(
-        self, ros_declarations: ScxmlRosDeclarationsContainer
-    ) -> bool:
-        """Check if the ros instantiations have been declared."""
-        # For SCXML transitions, ROS interfaces can be found only in the exec body
-        return all(
-            target.check_valid_ros_instantiations(ros_declarations) for target in self._targets
-        )
-
-    def set_thread_id(self, thread_id: int) -> None:
-        """Set the thread ID for the executable entries of this transition."""
+    def update_exec_body_configurable_values(self, ascxml_declarations: List[AscxmlDeclaration]):
         for target in self._targets:
-            target.set_thread_id(thread_id)
+            target.update_exec_body_configurable_values(ascxml_declarations)
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the transition is a plain scxml entry and contains only plain scxml."""
         return type(self) is ScxmlTransition and all(
-            target.is_plain_scxml() for target in self._targets
+            target.is_plain_scxml(verbose) for target in self._targets
         )
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlTransition"]:
-        assert isinstance(
-            ros_declarations, ScxmlRosDeclarationsContainer
-        ), "Error: SCXML transition: invalid ROS declarations container."
-        assert self.check_valid_ros_instantiations(
-            ros_declarations
-        ), "Error: SCXML transition: invalid ROS instantiations in transition body."
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ) -> List[ScxmlBase]:
         plain_targets: List[ScxmlTransitionTarget] = []
         for target in self._targets:
-            target.set_callback_type(CallbackType.TRANSITION)
-            plain_targets.extend(target.as_plain_scxml(struct_declarations, ros_declarations))
+            target.set_callback_prefixes(ScxmlTransition.get_callback_prefixes())
+            plain_targets.extend(
+                target.as_plain_scxml(struct_declarations, ascxml_declarations, **kwargs)
+            )
         if self._condition is not None:
             self._condition = get_plain_expression(
-                self._condition, CallbackType.TRANSITION, struct_declarations
+                self._condition, ScxmlTransition.get_callback_prefixes(), struct_declarations
             )
         return [ScxmlTransition(plain_targets, self._events, self._condition)]
 

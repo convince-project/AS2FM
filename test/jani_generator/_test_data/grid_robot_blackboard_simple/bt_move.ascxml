@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="running"
+    version="1.0"
+    name="Move"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!--
+        Movement enum in the world.
+        0: right,
+        1: left,
+        2: up,
+        3: down
+    -->
+    <bt_declare_port_in key="direction" type="int32" />
+    <bt_declare_port_out key="curr_x" type="int32" />
+    <bt_declare_port_out key="curr_y" type="int32" />
+
+    <datamodel>
+        <data id="direction" type="int32">
+            <expr>
+                <bt_get_input key="direction" />
+            </expr>
+        </data>
+        <data id="curr_x" expr="0" type="int32" />
+        <data id="curr_y" expr="0" type="int32" />
+    </datamodel>
+
+
+    <state id="running">
+        <bt_tick target="running">
+            <assign location="curr_x">
+                <expr>
+                    <bt_get_input key="curr_x" />
+                </expr>
+            </assign>
+            <assign location="curr_y">
+                <expr>
+                    <bt_get_input key="curr_y" />
+                </expr>
+            </assign>
+            <if cond="direction == 0">
+                <bt_set_output key="curr_x" expr="curr_x + 1" />
+            <elseif cond="direction == 1" />
+                <bt_set_output key="curr_x" expr="curr_x - 1" />
+            <elseif cond="direction == 2" />
+                <bt_set_output key="curr_y" expr="curr_y + 1" />
+            <else />
+                <bt_set_output key="curr_y" expr="curr_y - 1" />
+            </if>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+        <bt_halt target="running">
+            <assign location="curr_x" expr="0" />
+            <assign location="curr_y" expr="0" />
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

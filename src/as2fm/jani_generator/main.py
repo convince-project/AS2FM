@@ -21,22 +21,23 @@ import os
 import timeit
 from typing import Optional, Sequence
 
+from as2fm.as2fm_common.logging import get_warn_msg
 from as2fm.jani_generator.convince_jani_helpers import convince_jani_parser
 from as2fm.jani_generator.jani_entries import JaniModel
 from as2fm.jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 
 
-def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
+def roaml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     """
-    Main function for the SCXML to JANI conversion.
+    Main function for the RoAML model (with ASCXML models) to JANI conversion.
 
-    Module containing the main entry points, pulling all necessary files together.
-    convince.jani \
-    BT.xml         \
-    plugin.scxml    \
-    node1.scxml      => main_scxml_to_jani  =>  main.jani
-    node2.scxml     /
-    env.scxml      /
+    The RoAML model describes the full system, and pulls all necessary files together:
+    properties.jani \
+    BT.xml           \
+    plugin.ascxml     \
+    node1.ascxml       => roaml_to_jani  =>  main.jani
+    node2.ascxml      /
+    env.ascxml       /
 
     :param args: The arguments to parse. If None, sys.argv is used.
     :return: None
@@ -51,11 +52,11 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--jani-out-file", type=str, default="", help="Path to the generated jani file."
     )
-    parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
+    parser.add_argument("roaml_xml", type=str, help="The path to the RoAML XML file to interpret.")
     args = parser.parse_args(_args)
 
     # Check the main xml file provided by the user
-    main_xml_file = args.main_xml
+    main_xml_file = args.roaml_xml
     assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
     assert main_xml_file.endswith(".xml"), "File {main_xml_file} is not a '.xml' file."
     # Process additional, optional parameters
@@ -67,10 +68,20 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
         else main_xml_file.removesuffix("xml") + "jani"
     )
 
-    print("AS2FM - SCXML to JANI.\n")
+    # Proceed with the conversion
+    print("AS2FM - RoAML to JANI.\n")
     print(f"Loading model from {main_xml_file}.")
-
     interpret_top_level_xml(main_xml_file, jani_file=jani_out_file, scxmls_dir=scxml_out_dir)
+
+
+def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
+    """Support function for the old enry-point. Deprecated!"""
+    get_warn_msg(
+        None,
+        "The `main_scxml_to_jani` executable is deprecated. "
+        "Switch to the new `roaml_to_jani` one.",
+    )
+    roaml_to_jani(_args)
 
 
 def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
@@ -107,4 +118,4 @@ if __name__ == "__main__":
     # for testing purposes only
     import sys
 
-    main_scxml_to_jani(sys.argv[1:])
+    roaml_to_jani(sys.argv[1:])

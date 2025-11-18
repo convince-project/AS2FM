@@ -402,13 +402,13 @@ An exemplary system description is the following:
 
         <behavior_tree>
             <input type="bt.cpp-xml" src="./bt.xml" />
-            <input type="bt-plugin-ascxml" src="./bt_topic_condition.scxml" />
-            <input type="bt-plugin-ascxml" src="./bt_topic_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_topic_condition.ascxml" />
+            <input type="bt-plugin-ascxml" src="./bt_topic_action.ascxml" />
         </behavior_tree>
 
         <node_models>
-            <input type="node-ascxml" src="./battery_drainer.scxml" />
-            <input type="node-ascxml" src="./battery_manager.scxml" />
+            <input type="node-ascxml" src="./battery_drainer.ascxml" />
+            <input type="node-ascxml" src="./battery_manager.ascxml" />
         </node_models>
 
         <properties>

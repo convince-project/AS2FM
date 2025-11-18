@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="receive"
+    version="1.0"
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="recv_point" expr="{'x': 0, 'y': 0, 'frame': 'old_world'}" type="Point2D" />
+        <data
+            id="recv_polygon"
+            expr="{'points': []}"
+            type="Polygon"
+        />
+        <data
+            id="recv_polygons"
+            expr="{'polygons': []}"
+            type="PolygonArray"
+        />
+    </datamodel>
+
+    <state id="receive">
+        <transition event="data" target="receive">
+            <assign location="recv_point" expr="_event.data.point" />
+            <assign location="recv_polygon" expr="_event.data.polygon" />
+            <assign location="recv_polygons" expr="_event.data.polygons" />
+        </transition>
+
+        <transition
+            cond="
+                recv_point.x &gt;= 100 &amp;&amp;
+                recv_point.y &gt; 3 &amp;&amp;
+                recv_polygon.points.length == 2 &amp;&amp;
+                recv_polygon.points[0].x &gt;= 100 &amp;&amp;
+                recv_polygons.length == 3 &amp;&amp;
+                recv_polygons.polygons[1].points[1].y &gt;= 100 &amp;&amp;
+                recv_polygons.polygons[1].points.length == 2 &amp;&amp;
+                recv_polygons.polygons[1].points[1].frame == 'world?'"
+            target="end" />
+    </state>
+
+    <state id="end">
+        <onentry>
+            <send event="success" />
+        </onentry>
+    </state>
+</ascxml>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="init"
+    version="1.0"
+    name="SimulationModel"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <!--
+        In this model the following applies:
+        - The robot starts in the dock
+        - The robot can start cleaning only after undocking
+        - The robot can dock only when it is in the undocked location
+        - Cleaning coverage will not increase in case an anomaly is raised and not solved yet
+    -->
+
+    <datamodel>
+        <!-- 0 = Docked -->
+        <!-- 1 = Undocked -->
+        <!-- 2 = CleaningArea -->
+        <data id="current_location" expr="0" type="int16" />
+        <data id="clean_percentage" type="int16" expr="0" />
+        <data id="is_stuck" type="bool" expr="false" />
+        <!-- Additional failure counter variables, to ignore probabilities after n. attempts -->
+        <data id="undock_count" expr="0" type="int16" />
+        <data id="dock_count" expr="0" type="int16" />
+        <data id="nav_count" expr="0" type="int16" />
+        <data id="unstuck_count" expr="0" type="int16" />
+        <data id="cov_count" expr="0" type="int16" />
+        <!-- Additional settings from skill nodes -->
+        <data id="goal_location" expr="0" type="int16" />
+    </datamodel>
+
+    <ros_topic_publisher name="current_coverage" topic="/coverage_percentage" type="std_msgs/Int16" />
+    <ros_topic_publisher name="current_state" topic="/robot_state" type="std_msgs/Int16" />
+    <ros_topic_publisher name="stuck_info" topic="/stuck_info" type="uc1_interfaces/StuckInfo" />
+
+    <state id="init">
+        <transition target="running">
+            <assign location="current_location" expr="0" />
+            <assign location="clean_percentage" expr="0" />
+            <assign location="is_stuck" expr="false" />
+        </transition>
+    </state>
+
+    <!-- ====== Requests orchestration ====== -->
+    <state id="running">
+        <onentry>
+            <ros_topic_publish name="current_state">
+                <field name="data" expr="current_location" />
+            </ros_topic_publish>
+            <ros_topic_publish name="current_coverage">
+                <field name="data" expr="clean_percentage" />
+            </ros_topic_publish>
+            <if cond="is_stuck">
+                <ros_topic_publish name="stuck_info">
+                    <field name="state" expr="1" />
+                </ros_topic_publish>
+                <else/>
+                <ros_topic_publish name="stuck_info">
+                    <field name="state" expr="0" />
+                </ros_topic_publish>
+            </if>
+        </onentry>
+        <!-- Undocking requests -->
+        <transition event="undock_req" cond="current_location == 0" target="valid_undock_req" />
+        <transition event="undock_req" target="invalid_undock_req" />
+        <!-- Docking requests -->
+        <transition event="dock_req" cond="current_location == 1" target="valid_dock_req" />
+        <transition event="dock_req" target="invalid_dock_req" />
+        <!-- Navigate requests -->
+        <transition event="nav_req" cond="current_location != 0 &amp;&amp; _event.data.goal_location &gt; 0 &amp;&amp; _event.data.goal_location &lt; 3" target="valid_nav_req">
+            <assign location="goal_location" expr="_event.data.goal_location" />
+        </transition>
+        <transition event="nav_req" target="invalid_nav_req" />
+        <!-- Coverage requests -->
+        <transition event="cov_step_req" cond="current_location != 0" target="valid_cov_step_req" />
+        <transition event="cov_step_req" target="invalid_cov_step_req" />
+        <!-- Unstuck requests -->
+        <transition event="unstuck_req" cond="current_location == 0" target="invalid_unstuck_req" />
+        <transition event="unstuck_req" cond="is_stuck" target="valid_unstuck_req" />
+        <transition event="unstuck_req" target="valid_unstuck_req_dummy" />
+    </state>
+
+    <!-- ====== Undocking ====== -->
+    <state id="invalid_undock_req">
+        <transition target="running">
+            <send event="undock_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_undock_req">
+        <onentry>
+            <assign location="undock_count" expr="undock_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success -->
+                <assign location="current_location" expr="1" />
+                <assign location="undock_count" expr="0" />
+                <send event="undock_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="true" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="undock_count &gt; 3">
+                    <!-- Success -->
+                    <assign location="current_location" expr="1" />
+                    <assign location="undock_count" expr="0" />
+                    <send event="undock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <send event="undock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Docking ====== -->
+    <state id="invalid_dock_req">
+        <transition target="running">
+            <send event="dock_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_dock_req">
+        <onentry>
+            <assign location="dock_count" expr="dock_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success -->
+                <assign location="current_location" expr="0" />
+                <assign location="dock_count" expr="0" />
+                <send event="dock_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="true" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="dock_count &gt; 3">
+                    <!-- Success -->
+                    <assign location="current_location" expr="0" />
+                    <assign location="dock_count" expr="0" />
+                    <send event="dock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <send event="dock_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Navigation ====== -->
+    <state id="invalid_nav_req">
+        <transition target="running">
+            <send event="nav_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_nav_req">
+        <onentry>
+            <if cond="!is_stuck">
+                <assign location="nav_count" expr="nav_count + 1" />
+            </if>
+        </onentry>
+        <transition>
+            <target id="running" prob="0.8">
+                <!-- Success if not stuck -->
+                <if cond="!is_stuck">
+                    <assign location="current_location" expr="goal_location" />
+                    <assign location="nav_count" expr="0" />
+                </if>
+                <send event="nav_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="!is_stuck" />
+                </send>
+            </target>
+            <target id="running" prob="0.2">
+                <if cond="!is_stuck &amp;&amp; (current_location == goal_location || nav_count &gt; 1)">
+                    <!-- Success -->
+                    <assign location="current_location" expr="goal_location" />
+                    <assign location="nav_count" expr="0" />
+                    <send event="nav_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <assign location="is_stuck" expr="true" />
+                    <send event="nav_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Coverage Step ====== -->
+    <state id="invalid_cov_step_req">
+        <transition target="running">
+            <send event="cov_step_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_cov_step_req">
+        <onentry>
+            <if cond="!is_stuck">
+                <assign location="cov_count" expr="cov_count + 1" />
+                <assign location="current_location" expr="2" />
+            </if>
+        </onentry>
+        <transition>
+            <target id="running" prob="0.9">
+                <!-- Success if not stuck -->
+                <if cond="!is_stuck">
+                    <assign location="clean_percentage" expr="clean_percentage + 3" />
+                    <assign location="cov_count" expr="0" />
+                </if>
+                <send event="cov_step_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="!is_stuck" />
+                </send>
+            </target>
+            <target id="running" prob="0.1">
+                <if cond="!is_stuck &amp;&amp; cov_count &gt; 2">
+                    <!-- Success -->
+                    <assign location="clean_percentage" expr="clean_percentage + 3" />
+                    <assign location="cov_count" expr="0" />
+                    <send event="cov_step_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <!-- Failure -->
+                    <assign location="is_stuck" expr="true" />
+                    <send event="cov_step_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <!-- ====== Unstuck Step ====== -->
+    <state id="invalid_unstuck_req">
+        <transition target="running">
+            <send event="unstuck_res">
+                <param name="accept" expr="false" />
+            </send>
+        </transition>
+    </state>
+
+    <state id="valid_unstuck_req">
+        <onentry>
+            <assign location="unstuck_count" expr="unstuck_count + 1" />
+        </onentry>
+        <transition>
+            <target id="running" prob="0.7">
+                <assign location="is_stuck" expr="false" />
+                <assign location="unstuck_count" expr="0" />
+                <send event="unstuck_res">
+                    <param name="accept" expr="true" />
+                    <param name="success" expr="true" />
+                </send>
+            </target>
+            <target id="running" prob="0.3">
+                <if cond="unstuck_count &gt; 4">
+                    <!-- Force success at the 5th attempt -->
+                    <assign location="is_stuck" expr="false" />
+                    <assign location="unstuck_count" expr="0" />
+                    <send event="unstuck_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="true" />
+                    </send>
+                <else/>
+                    <send event="unstuck_res">
+                        <param name="accept" expr="true" />
+                        <param name="success" expr="false" />
+                    </send>
+                </if>
+            </target>
+        </transition>
+    </state>
+
+    <state id="valid_unstuck_req_dummy">
+        <transition target="running">
+            <send event="unstuck_res">
+                <param name="accept" expr="true" />
+                <param name="success" expr="true" />
+            </send>
+        </transition>
+    </state>
+
+</ascxml>

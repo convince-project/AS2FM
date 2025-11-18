@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="wait_for_tick"
+    version="1.0"
+    name="ReadBB"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_in key="bb_var" type="int32" />
+    <bt_declare_port_in key="target" type="int32" />
+
+    <datamodel>
+        <data id="bb_var" expr="0" type="int32" />
+        <data id="target" expr="0" type="int32" />
+    </datamodel>
+
+    <state id="wait_for_tick">
+        <bt_tick target="running" />
+        <bt_halt target="wait_for_tick">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="running">
+        <transition target="wait_for_tick">
+            <assign location="bb_var">
+                <expr>
+                    <bt_get_input key="bb_var" />
+                </expr>
+            </assign>
+            <assign location="target">
+                <expr>
+                    <bt_get_input key="target" />
+                </expr>
+            </assign>
+            <!-- Leaf node tick -->
+            <if cond="bb_var == target">
+                <bt_return_status status="SUCCESS" />
+            <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </transition>
+    </state>
+
+</ascxml>

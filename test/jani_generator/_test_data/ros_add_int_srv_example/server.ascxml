@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="idle"
+    version="1.0"
+    name="server"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="temp_a" type="int64" expr="0" />
+        <data id="temp_b" type="int64" expr="0" />
+    </datamodel>
+
+    <ros_service_server service_name="/adder" type="example_interfaces/AddTwoInts" />
+
+    <state id="idle">
+        <ros_service_handle_request name="/adder" target="idle">
+            <assign location="temp_a" expr="_req.a" />
+            <assign location="temp_b" expr="_req.b" />
+            <ros_service_send_response name="/adder">
+                <field name="sum" expr="temp_a + temp_b" />
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+</ascxml>

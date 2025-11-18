@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    name="int_receiver"
+    version="1.0"
+    initial="init"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="entry_count" expr="0" type="int32" />
+        <data id="exit_count" expr="0" type="int32" />
+    </datamodel>
+
+    <state id="init">
+        <onentry>
+            <!-- We expect this to publish up to 10, then no more! -->
+            <assign location="entry_count" expr="entry_count + 1" />
+            <send event="entry">
+                <param name="data" expr="entry_count" />
+            </send>
+        </onentry>
+        <onexit>
+            <!-- We expect this to publish up to 9, then no more! -->
+            <assign location="exit_count" expr="exit_count + 1" />
+            <send event="exit">
+                <param name="data" expr="exit_count" />
+            </send>
+        </onexit>
+        <transition target="init" event="new_int" cond="_event.data.data &lt; 10" />
+    </state>
+</ascxml>

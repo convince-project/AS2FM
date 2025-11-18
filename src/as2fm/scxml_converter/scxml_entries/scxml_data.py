@@ -24,7 +24,7 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error, log_warning
 from as2fm.scxml_converter.data_types.struct_definition import (
     StructDefinition,
 )
@@ -37,29 +37,25 @@ from as2fm.scxml_converter.data_types.type_utils import (
     is_type_string_array,
     is_type_string_base_type,
 )
-from as2fm.scxml_converter.scxml_entries import BtGetValueInputPort, ScxmlBase
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BtPortsHandler,
-    BtResponse,
-    is_blackboard_reference,
-)
-from as2fm.scxml_converter.scxml_entries.ros_utils import ScxmlRosDeclarationsContainer
+from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, AscxmlDeclaration, ScxmlBase
 from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclarationsContainer
 from as2fm.scxml_converter.scxml_entries.utils import (
     convert_expression_with_string_literals,
     get_plain_variable_name,
+    is_non_empty_string,
 )
 from as2fm.scxml_converter.scxml_entries.xml_utils import (
+    add_configurable_to_xml,
     assert_xml_tag_ok,
     get_xml_attribute,
     read_value_from_xml_arg_or_child,
 )
 
 # List of names that shall not be used for variable names
-RESERVED_NAMES: List[str] = [] + BtResponse._member_names_
+RESERVED_NAMES: List[str] = ["SUCCESS", "RUNNING", "FAILURE"]
 
-ValidExpr = Union[BtGetValueInputPort, str, int, float, bool]
-ValidBound = Optional[Union[BtGetValueInputPort, str, int, float]]
+ValidExpr = Union[AscxmlConfiguration, str, int, float, bool]
+ValidBound = Optional[Union[AscxmlConfiguration, str, int, float]]
 
 
 def valid_bound(bound_value: Any) -> bool:
@@ -116,15 +112,16 @@ class ScxmlData(ScxmlBase):
                 f"({comment_tuple[0]}!={data_id})."
             )
             data_type = comment_tuple[1]
+        expr_valid_types = AscxmlConfiguration.__subclasses__() + [str]
         data_expr = read_value_from_xml_arg_or_child(
-            ScxmlData, xml_tree, "expr", custom_data_types, (BtGetValueInputPort, str)
+            ScxmlData, xml_tree, "expr", custom_data_types, expr_valid_types
         )
         lower_bound = read_value_from_xml_arg_or_child(
             ScxmlData,
             xml_tree,
             "lower_bound_incl",
             custom_data_types,
-            (BtGetValueInputPort, str),
+            expr_valid_types,
             none_allowed=True,
         )
         upper_bound = read_value_from_xml_arg_or_child(
@@ -132,9 +129,17 @@ class ScxmlData(ScxmlBase):
             xml_tree,
             "upper_bound_incl",
             custom_data_types,
-            (BtGetValueInputPort, str),
+            expr_valid_types,
             none_allowed=True,
         )
+        assert data_id is not None  # MyPy check
+        assert isinstance(data_expr, (str, AscxmlConfiguration))  # MyPy check
+        assert lower_bound is None or isinstance(
+            lower_bound, (str, AscxmlConfiguration)
+        )  # MyPy check
+        assert upper_bound is None or isinstance(
+            upper_bound, (str, AscxmlConfiguration)
+        )  # MyPy check
         instance = ScxmlData(data_id, data_expr, data_type, lower_bound, upper_bound)
         instance.set_xml_origin(xml_tree)
         instance.set_custom_data_types(custom_data_types)
@@ -149,7 +154,7 @@ class ScxmlData(ScxmlBase):
         upper_bound: ValidBound = None,
     ):
         self._id: str = id_
-        if isinstance(expr, (str, BtGetValueInputPort)):
+        if isinstance(expr, (str, AscxmlConfiguration)):
             self._expr = expr
         else:
             self._expr = str(expr)
@@ -191,16 +196,9 @@ class ScxmlData(ScxmlBase):
 
     def _valid_init_expr(self) -> bool:
         """Check if the initial expression makes sense."""
-        if isinstance(self._expr, str):
-            if len(self._expr) == 0:
-                log_error(self.get_xml_origin(), "Empty init expr. found.")
-                return False
-            return True
-        log_error(
-            self.get_xml_origin(),
-            f"Expected init expr. to be strings, found {type(self._expr)} for data ID {self._id}",
+        return isinstance(self._expr, AscxmlConfiguration) or is_non_empty_string(
+            ScxmlData, "id", self._expr
         )
-        return False
 
     def _valid_bounds(self) -> bool:
         if self._lower_bound is None and self._upper_bound is None:
@@ -221,11 +219,11 @@ class ScxmlData(ScxmlBase):
             return False
         lower_bound = None
         upper_bound = None
-        if self._lower_bound is not None:
+        if isinstance(self._lower_bound, str):
             lower_bound = convert_string_to_type(
                 self._lower_bound, self._data_type, self.get_xml_origin()
             )
-        if self._upper_bound is not None:
+        if isinstance(self._upper_bound, str):
             upper_bound = convert_string_to_type(
                 self._upper_bound, self._data_type, self.get_xml_origin()
             )
@@ -245,41 +243,50 @@ class ScxmlData(ScxmlBase):
             [self._valid_id(), self._valid_type, self._valid_init_expr, self._valid_bounds()]
         )
 
-    def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
-        """
-        Generate the XML element representing the single data entry.
-
-        :param type_as_attribute: If True, the type of the data is added as an attribute.
-        """
-        assert self.check_validity(), "SCXML: found invalid data object."
-        xml_data = ET.Element(ScxmlData.get_tag_name(), {"id": self._id, "expr": self._expr})
-        if type_as_attribute:
-            xml_data.set("type", self._data_type)
-        if self._lower_bound is not None:
-            xml_data.set("lower_bound_incl", str(self._lower_bound))
-        if self._upper_bound is not None:
-            xml_data.set("upper_bound_incl", str(self._upper_bound))
-        return xml_data
-
-    def _is_plain_type(self):
+    def _is_plain_type(self, verbose: bool):
         """Check if the data type is a plain type, accounting for arrays too."""
         data_type_str = self._data_type
         if is_type_string_array(data_type_str):
             data_type_str = get_type_string_of_array(data_type_str)
-        return is_type_string_base_type(data_type_str)
+        base_type_str = is_type_string_base_type(data_type_str)
+        if verbose and not base_type_str:
+            log_warning(None, f"No plain SCXML data: type {data_type_str} isn't a base type.")
+        return base_type_str
 
-    def is_plain_scxml(self) -> bool:
+    def is_plain_scxml(self, verbose: bool = False) -> bool:
         """Check if the data type is a base type."""
-        return self.check_validity() and self._is_plain_type()
+        return self.check_validity() and self._is_plain_type(verbose)
 
     def as_plain_scxml(
         self,
         struct_declarations: ScxmlStructDeclarationsContainer,
-        ros_declarations: ScxmlRosDeclarationsContainer,
-    ) -> List["ScxmlData"]:
+        ascxml_declarations: List[AscxmlDeclaration],
+        **kwargs,
+    ):
         # TODO: By using ROS declarations, we can add the support for the ROS types as well.
         # TODO: This is fine also in case it is an array of base types...
-        if self._is_plain_type():
+        if isinstance(self._expr, AscxmlConfiguration):
+            self._expr.update_configured_value(ascxml_declarations)
+            assert self._expr.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
+            self._expr = self._expr.get_configured_value()
+        if isinstance(self._lower_bound, AscxmlConfiguration):
+            self._lower_bound.update_configured_value(ascxml_declarations)
+            assert self._lower_bound.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
+            self._lower_bound = self._lower_bound.get_configured_value()
+        if isinstance(self._upper_bound, AscxmlConfiguration):
+            self._upper_bound.update_configured_value(ascxml_declarations)
+            assert self._upper_bound.is_constant_value(), get_error_msg(
+                self.get_xml_origin(),
+                "Expected a constant configurable entry, found a variable one.",
+            )
+            self._upper_bound = self._upper_bound.get_configured_value()
+        if self._is_plain_type(verbose=False):
             return [self]
         data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
         assert isinstance(data_type_def, StructDefinition), get_error_msg(
@@ -311,26 +318,6 @@ class ScxmlData(ScxmlBase):
             single_data._id = get_plain_variable_name(single_data._id, self.get_xml_origin())
         return plain_data
 
-    def update_bt_ports_values(self, bt_ports_handler: BtPortsHandler):
-        if isinstance(self._expr, BtGetValueInputPort):
-            self._expr = bt_ports_handler.get_in_port_value(self._expr.get_key_name())
-            assert not is_blackboard_reference(self._expr), (
-                f"Error: SCXML Data: '{self._id}': cannot set the initial expression from "
-                f" the BT blackboard variable {self._expr}"
-            )
-        if isinstance(self._lower_bound, BtGetValueInputPort):
-            self._lower_bound = bt_ports_handler.get_in_port_value(self._lower_bound.get_key_name())
-            assert not is_blackboard_reference(self._lower_bound), (
-                f"Error: SCXML Data: '{self._id}': cannot set the lower bound from "
-                f" the BT blackboard variable {self._lower_bound}"
-            )
-        if isinstance(self._upper_bound, BtGetValueInputPort):
-            self._upper_bound = bt_ports_handler.get_in_port_value(self._upper_bound.get_key_name())
-            assert not is_blackboard_reference(self._upper_bound), (
-                f"Error: SCXML Data: '{self._id}': cannot set the upper bound from "
-                f" the BT blackboard variable {self._upper_bound}"
-            )
-
     def replace_strings_types_with_integer_arrays(self) -> None:
         base_type: str = self._data_type
         array_dims: List[Optional[int]] = []
@@ -341,10 +328,8 @@ class ScxmlData(ScxmlBase):
             self.get_xml_origin(),
             f"Unexpected type '{base_type}' found.",
         )
-        check_assertion(
-            isinstance(self._expr, str),
-            self.get_xml_origin(),
-            "Expected the default expr. to be a string at this point.",
+        assert isinstance(self._expr, str), get_error_msg(
+            self.get_xml_origin(), "Expected the default expr. to be a string at this point."
         )
         if base_type == "string":
             # Handle the expected type
@@ -352,3 +337,26 @@ class ScxmlData(ScxmlBase):
             self._data_type = get_type_string_from_type_and_dimensions("uint32", array_dims)
             # Handle the default expression
             self._expr = convert_expression_with_string_literals(self._expr, self.get_xml_origin())
+
+    def as_xml(self, type_as_attribute: bool = True) -> XmlElement:
+        """
+        Generate the XML element representing the single data entry.
+
+        :param type_as_attribute: If True, the type of the data is added as an attribute.
+        """
+        assert self.check_validity(), "SCXML: found invalid data object."
+        xml_data = ET.Element(ScxmlData.get_tag_name(), {"id": self._id})
+        add_configurable_to_xml(xml_data, self._expr, "expr")
+        if type_as_attribute:
+            xml_data.set("type", self._data_type)
+        if self._lower_bound is not None:
+            if not isinstance(self._lower_bound, AscxmlConfiguration):
+                # This could be a numeric value, just ensure we are using strings
+                self._lower_bound = str(self._lower_bound)
+            add_configurable_to_xml(xml_data, self._lower_bound, "lower_bound_incl")
+        if self._upper_bound is not None:
+            if not isinstance(self._upper_bound, AscxmlConfiguration):
+                # This could be a numeric value, just ensure we are using strings
+                self._upper_bound = str(self._upper_bound)
+            add_configurable_to_xml(xml_data, self._upper_bound, "upper_bound_incl")
+        return xml_data

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml version="1.0" xmlns="..." datamodel="ecmascript" name="ResetSkill" initial="idle">
+
+    <datamodel>
+        <data id="poi_number" type="int32" expr="1"/>
+        <data id="poi_number_1" type="int32" expr="1"/>
+        <data id="poi_number_2" type="int32" expr="2"/>
+        <!-- <data id="poi_name" type="string" expr=""/> -->
+        <!-- <data id="field_name" type="string" expr='"PoiDone"'/>
+        <data id="field_name_init" type="string" expr='"PoiDone"'/> -->
+        <data id="value" type="int32" expr="0"/>
+        <data id="SKILL_SUCCESS" type="int8" expr="0" />
+        <data id="SKILL_FAILURE" type="int8" expr="1" />
+        <data id="SKILL_RUNNING" type="int8" expr="2" />
+    </datamodel>
+
+    <!-- ResetSkill is a server for tick from the ROS2Action plugin-->
+    <ros_service_server service_name="/ResetSkill/tick" type ="bt_interfaces_dummy/TickAction"/>
+    <!-- ResetSkill is a server for halt from the ROS2Action plugin-->
+    <!-- <ros_service_server service_name="/ResetSkill/halt" type ="bt_interfaces_dummy/HaltAction"/> -->
+    <!-- ResetSkill is a client for SetPoi from the SchedulerComponent -->
+    <ros_service_client service_name="/SchedulerComponent/SetPoi" type ="scheduler_interfaces_dummy/SetPoi"/>
+    <!-- ResetSkill is a client for SetInt from the BlackboardComponent -->
+    <ros_service_client service_name="/BlackboardComponent/SetInt" type ="blackboard_interfaces_dummy/SetIntBlackboard"/>
+
+    <state id="idle">
+        <ros_service_handle_request name="/ResetSkill/tick" target="setCurrentPoi">
+            <ros_service_send_request name="/SchedulerComponent/SetPoi">
+                <field name="poi_number" expr="poi_number"/>
+            </ros_service_send_request>
+        </ros_service_handle_request>
+        <!-- <ros_service_handle_request name="/ResetSkill/halt" target="idle">
+            <ros_service_send_response name="/ResetSkill/halt"/>
+        </ros_service_handle_request> -->
+
+    </state>
+
+    <state id="setCurrentPoi">
+        <ros_service_handle_response name="/SchedulerComponent/SetPoi" cond="_res.is_ok" target="setInt1">
+            <ros_service_send_request name="/BlackboardComponent/SetInt">
+                <!-- <field name="field_name" expr="field_name"/> -->
+                <field name="field_name" expr="poi_number_1"/>
+                <field name="value" expr="value"/>
+            </ros_service_send_request>
+        </ros_service_handle_response>
+        <ros_service_handle_response name="/SchedulerComponent/SetPoi" cond="(_res.is_ok) == false" target="idle">
+            <ros_service_send_response name="/ResetSkill/tick">
+                <field name="status" expr="SKILL_FAILURE"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <!-- <ros_service_handle_request name="/ResetSkill/halt" target="idle">
+            <ros_service_send_response name="/ResetSkill/halt"/>
+        </ros_service_handle_request> -->
+    </state>
+
+    <state id="setInt1">
+        <ros_service_handle_response name="/BlackboardComponent/SetInt" cond="_res.is_ok" target="setInt2">
+            <ros_service_send_request name="/BlackboardComponent/SetInt">
+                <!-- <field name="field_name" expr="field_name"/> -->
+                <field name="field_name" expr="poi_number_2"/>
+                <field name="value" expr="value"/>
+            </ros_service_send_request>
+        </ros_service_handle_response>
+        <ros_service_handle_response name="/BlackboardComponent/SetInt" cond="(_res.is_ok) == false" target="idle">
+            <ros_service_send_response name="/ResetSkill/tick">
+                <field name="status" expr="SKILL_FAILURE"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <!-- <ros_service_handle_request name="/ResetSkill/halt" target="idle">
+            <ros_service_send_response name="/ResetSkill/halt"/>
+        </ros_service_handle_request> -->
+    </state>
+
+    <state id="setInt2">
+        <ros_service_handle_response name="/BlackboardComponent/SetInt" cond="_res.is_ok" target="idle">
+            <ros_service_send_response name="/ResetSkill/tick">
+                <field name="status" expr="SKILL_SUCCESS"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <ros_service_handle_response name="/BlackboardComponent/SetInt" cond="(_res.is_ok) == false" target="idle">
+            <ros_service_send_response name="/ResetSkill/tick">
+                <field name="status" expr="SKILL_FAILURE"/>
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_response>
+        <!-- <ros_service_handle_request name="/ResetSkill/halt" target="idle">
+            <ros_service_send_response name="/ResetSkill/halt"/>
+        </ros_service_handle_request> -->
+    </state>
+
+</ascxml>

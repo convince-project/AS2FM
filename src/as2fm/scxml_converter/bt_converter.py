@@ -26,13 +26,27 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import get_default_expression_for_type, value_to_string_expr
+from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
+    AscxmlRootBT,
+    BtChildTickStatus,
+    BtGenericPortDeclaration,
+    BtTickChild,
+)
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BT_BLACKBOARD_EVENT_VALUE,
+    BT_BLACKBOARD_GET,
+    BT_BLACKBOARD_REQUEST,
+    BT_N_CHILDREN_PORT,
+    generate_bt_blackboard_set,
+    get_blackboard_variable_name,
+    is_blackboard_reference,
+)
+from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosRateCallback, RosTimeRate
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import SCXML_DATA_STR_TO_TYPE
 from as2fm.scxml_converter.scxml_entries import (
-    BtChildTickStatus,
-    BtTickChild,
-    RosRateCallback,
-    RosTimeRate,
+    GenericScxmlRoot,
     ScxmlAssign,
     ScxmlData,
     ScxmlDataModel,
@@ -41,39 +55,36 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlSend,
     ScxmlState,
     ScxmlTransition,
-    load_scxml_file,
-)
-from as2fm.scxml_converter.scxml_entries.bt_utils import (
-    BT_BLACKBOARD_EVENT_VALUE,
-    BT_BLACKBOARD_GET,
-    BT_BLACKBOARD_REQUEST,
-    generate_bt_blackboard_set,
-    get_blackboard_variable_name,
-    is_blackboard_reference,
 )
 
 BT_ROOT_PREFIX = "bt_root_fsm_"
 
 
-def get_blackboard_variables_from_models(models: List[ScxmlRoot]) -> Dict[str, str]:
+def get_blackboard_variables_from_models(ascxml_models: List[GenericScxmlRoot]) -> Dict[str, str]:
     """
     Collect all blackboard variables and return them as a dictionary.
 
-    :param models: List of ScxmlModel to extract the information from.
+    :param ascxml_models: List of AscxmlModel to extract the information from.
     :return: Dictionary with name and type of the detected blackboard variable.
     """
     blackboard_vars: Dict[str, str] = {}
-    for scxml_model in models:
-        declared_ports: List[Tuple[str, str, str]] = scxml_model.get_bt_ports_types_values()
-        for p_name, p_type, p_value in declared_ports:
-            assert (
-                p_value is not None
-            ), f"Error in model {scxml_model.get_name()}: undefined value in {p_name} BT port."
-            if is_blackboard_reference(p_value):
-                var_name = get_blackboard_variable_name(p_value)
-                existing_bt_type = blackboard_vars.get(var_name)
-                assert existing_bt_type is None or existing_bt_type == p_type
-                blackboard_vars.update({var_name: p_type})
+    for ascxml_model in ascxml_models:
+        for ascxml_decl in ascxml_model.get_declarations():
+            if isinstance(ascxml_decl, BtGenericPortDeclaration):
+                port_name = ascxml_decl.get_key_name()
+                port_type = ascxml_decl.get_key_type()
+                port_value = ascxml_decl.get_key_value()
+                assert port_value is not None, get_error_msg(
+                    ascxml_decl.get_xml_origin(), f"The BT port {port_name} has an undefined value."
+                )
+                if is_blackboard_reference(port_value):
+                    var_name = get_blackboard_variable_name(port_value)
+                    existing_bt_type = blackboard_vars.get(var_name)
+                    assert existing_bt_type is None or existing_bt_type == port_type, get_error_msg(
+                        ascxml_decl.get_xml_origin(),
+                        f"The BT port '{var_name}' has more than one declared type.",
+                    )
+                    blackboard_vars.update({var_name: port_type})
     return blackboard_vars
 
 
@@ -121,18 +132,18 @@ def is_bt_root_scxml(scxml_name: str) -> bool:
 
 def load_available_bt_plugins(
     bt_plugins_scxml_paths: List[str], custom_data_types: Dict[str, StructDefinition]
-) -> Dict[str, ScxmlRoot]:
-    available_bt_plugins = {}
+) -> Dict[str, AscxmlRootBT]:
+    available_bt_plugins: Dict[str, AscxmlRootBT] = {}
     for path in bt_plugins_scxml_paths:
-        assert os.path.exists(path), f"SCXML must exist. {path} not found."
-        bt_plugin_scxml = load_scxml_file(path, custom_data_types)
+        assert os.path.exists(path), f"Cannot load BT plugin from non-existing path {path}."
+        bt_plugin_scxml = AscxmlRootBT.load_scxml_file(path, custom_data_types)
         available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     internal_bt_plugins_path = (
         resource_files("as2fm").joinpath("resources").joinpath("bt_control_nodes")
     )
     for plugin_path in internal_bt_plugins_path.iterdir():
-        if plugin_path.is_file() and plugin_path.suffix == ".scxml":
-            bt_plugin_scxml = load_scxml_file(str(plugin_path), custom_data_types)
+        if plugin_path.is_file() and plugin_path.suffix == ".ascxml":  # type: ignore
+            bt_plugin_scxml = AscxmlRootBT.load_scxml_file(str(plugin_path), custom_data_types)
             available_bt_plugins.update({bt_plugin_scxml.get_name(): bt_plugin_scxml})
     return available_bt_plugins
 
@@ -143,7 +154,7 @@ def bt_converter(
     bt_tick_rate: float,
     tick_if_not_running: bool,
     custom_data_types: Dict[str, StructDefinition],
-) -> List[ScxmlRoot]:
+) -> List[AscxmlRootBT]:
     """
     Generate all Scxml files resulting from a Behavior Tree (BT) in XML format.
 
@@ -178,7 +189,7 @@ def bt_converter(
 
 def generate_bt_root_scxml(
     scxml_name: str, tick_id: int, tick_rate: float, tick_if_not_running: bool
-) -> ScxmlRoot:
+) -> AscxmlRootBT:
     """
     Generate the root SCXML for a Behavior Tree.
 
@@ -187,9 +198,9 @@ def generate_bt_root_scxml(
     :param tick_rate: The rate at which the root is ticked.
     :param tick_if_not_running: If true, tick the BT root after it stops returning RUNNING.
     """
-    bt_scxml_root = ScxmlRoot(BT_ROOT_PREFIX + scxml_name)
+    bt_scxml_root = AscxmlRootBT(BT_ROOT_PREFIX + scxml_name)
     ros_rate_decl = RosTimeRate(f"{scxml_name}_tick", tick_rate)
-    bt_scxml_root.add_ros_declaration(ros_rate_decl)
+    bt_scxml_root.add_declaration(ros_rate_decl)
     idle_state = ScxmlState(
         "idle",
         body=[
@@ -221,7 +232,6 @@ def generate_bt_root_scxml(
     # The BT root's ID is set to -1 (unused anyway)
     bt_scxml_root.set_bt_plugin_id(-1)
     bt_scxml_root.append_bt_child_id(tick_id)
-    bt_scxml_root.instantiate_bt_information()
     return bt_scxml_root
 
 
@@ -258,19 +268,20 @@ def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
 def generate_bt_children_scxmls(
     bt_xml_subtree: XmlElement,
     subtree_tick_idx: int,
-    available_bt_plugins: Dict[str, ScxmlRoot],
-) -> List[ScxmlRoot]:
+    available_bt_plugins: Dict[str, AscxmlRootBT],
+) -> List[AscxmlRootBT]:
     """
     Generate the SCXML files for the children of a Behavior Tree.
     """
-    generated_scxmls: List[ScxmlRoot] = []
+    generated_scxmls: List[AscxmlRootBT] = []
     plugin_type = get_bt_plugin_type(bt_xml_subtree)
     plugin_name = get_bt_plugin_name(bt_xml_subtree)
     if plugin_name is None:
         plugin_name = plugin_type
-    assert (
-        plugin_type in available_bt_plugins
-    ), f"Error: BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}"
+    assert plugin_type in available_bt_plugins, get_error_msg(
+        bt_xml_subtree,
+        f"BT plugin {plugin_type} not found. Available plugins: {available_bt_plugins.keys()}",
+    )
     bt_plugin_scxml = deepcopy(available_bt_plugins[plugin_type])
     bt_plugin_scxml.set_name(f"BT_plugin_{subtree_tick_idx}_{plugin_name}")
     bt_plugin_scxml.set_bt_plugin_id(subtree_tick_idx)
@@ -281,6 +292,9 @@ def generate_bt_children_scxmls(
         bt_plugin_scxml.append_bt_child_id(next_tick_idx)
         child_scxmls = generate_bt_children_scxmls(child, next_tick_idx, available_bt_plugins)
         generated_scxmls.extend(child_scxmls)
-        next_tick_idx = generated_scxmls[-1].get_bt_plugin_id() + 1
-    bt_plugin_scxml.instantiate_bt_information()
+        last_tick_idx = generated_scxmls[-1].get_bt_plugin_id()
+        assert last_tick_idx is not None  # MyPy check
+        next_tick_idx = last_tick_idx + 1
+    bt_node_children = bt_plugin_scxml.get_bt_children_ids()
+    bt_plugin_scxml.set_bt_port_value(BT_N_CHILDREN_PORT, str(len(bt_node_children)))
     return generated_scxmls
