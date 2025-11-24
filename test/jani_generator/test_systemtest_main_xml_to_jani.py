@@ -499,6 +499,33 @@ def get_cases():
             "n_threads": 8,
             "batch_size": 1,
         },
+        # UC1 Complete Mission: property to uncover bug
+        # If the robot gets stuck while driving to the dock or docking, coverage is started again
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main.xml",
+            "property_name": "no_coverage_failures_after_mission_failed",
+            "expected_result_probability": 1.0,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 50,
+            "n_threads": 8,
+            "batch_size": 1,
+        },
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main_bug.xml",
+            "property_name": "no_coverage_failures_after_mission_failed",
+            "expected_result_probability": 0.96,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 208,
+            "n_threads": 8,
+            "batch_size": 2,
+            "result_probability_tolerance": 0.3,
+        },
         # UC2 Assembly recovery
         _default_case()
         | {
