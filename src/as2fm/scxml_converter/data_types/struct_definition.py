@@ -150,10 +150,14 @@ class StructDefinition:
                         expanded_type = child_type_only + array_info + child_array_info
                     self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
-    def get_expanded_expressions(self, expr: str) -> Dict[str, str]:
+    def get_expanded_expressions(
+        self, expr: str, array_info: Optional[ArrayInfo] = None
+    ) -> Dict[str, str]:
         """Extracts all object keys from a given ecmascript object definition."""
         if self._members_list is None:
             raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
+        if array_info is not None:
+            raise NotImplementedError(f"There is an array, we need to implement it! {array_info}.")
         # Interpret the expression
         expr_type = get_object_expression_as_dict(expr)
         flat_dict = self._flatten_object_dict(expr_type, "")
