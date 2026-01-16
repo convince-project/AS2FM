@@ -69,6 +69,10 @@ class ScxmlStructDeclarationsContainer:
             if is_type_string_base_type(data_type_single):
                 self._type_per_variable[variable_name] = (data_type_def, array_info)
             else:
+                assert data_type_single in struct_definitions, (
+                    f"Cannot find data type {data_type_single}. "
+                    f"Available custom types: {[x for x in struct_definitions.keys()]}."
+                )
                 data_type_struct = struct_definitions[data_type_single]
                 self._type_per_variable[variable_name] = (
                     data_type_struct,
