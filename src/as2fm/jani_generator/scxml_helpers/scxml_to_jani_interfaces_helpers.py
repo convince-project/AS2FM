@@ -89,7 +89,7 @@ def check_valid_data_declaration(
     elif data_type in (int, bool):
         check_assertion(expr_type is data_type, scxml_origin, err_msg)
     elif data_type is float:
-        check_assertion(expr_type in (int, float), scxml_origin, err_msg)
+        check_assertion(expr_type is int or expr_type is float, scxml_origin, err_msg)
     else:
         raise RuntimeError(get_error_msg(scxml_origin, f"{data_type=} is not a supported type."))
 
