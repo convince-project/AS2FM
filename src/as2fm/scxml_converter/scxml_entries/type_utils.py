@@ -124,7 +124,11 @@ class ScxmlStructDeclarationsContainer:
         if len(access_trace) == 1:
             variable_name = access_trace[0]
             assert variable_name != ArrayAccess, get_error_msg(
-                elem, "Can not be only an array access."
+                elem, "Can't be only an array access."
+            )
+            assert variable_name in self._type_per_variable, get_error_msg(
+                elem,
+                f"Can't find {variable_name} in the available variables: {self._type_per_variable}",
             )
             return self._type_per_variable[variable_name]
         if access_trace[-1] == ArrayAccess:

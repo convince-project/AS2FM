@@ -16,7 +16,7 @@
 """Collection of SCXML utilities related to ROS functionalities."""
 
 import re
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_field import RosField
@@ -56,29 +56,39 @@ ROS_INTERFACE_TO_PREFIXES = {
 }
 
 
+def import_ros_type(type_definition: str, ros_interface: str) -> Optional[Type]:
+    """
+    Try to import a ROS definition (msg, srv or action).
+
+    :param type_definition: The type definition to check (e.g. std_msgs/Empty).
+    :param ros_interface: msg, srv or action.
+    :return The loaded interface in case of success. None in case the interface does not exist.
+    """
+    assert (
+        isinstance(type_definition, str) and type_definition.count("/") == 1
+    ), f"Unexpected {type_definition=}"
+    interface_ns, interface_type = type_definition.split("/")
+    assert len(interface_ns) > 0 and len(interface_type) > 0, f"Invalid {type_definition=}"
+    assert ros_interface in [
+        "msg",
+        "srv",
+        "action",
+    ], f"Error: SCXML ROS declarations: unknown ROS interface {ros_interface}."
+    try:
+        interface_importer = __import__(interface_ns + f".{ros_interface}", fromlist=[""])
+        loaded_interface = getattr(interface_importer, interface_type)
+    except (ImportError, AttributeError):
+        return None
+    return loaded_interface
+
+
 def is_ros_type_known(type_definition: str, ros_interface: str) -> bool:
     """
     Check if python can import the provided type definition.
 
     :param type_definition: The type definition to check (e.g. std_msgs/Empty).
     """
-    if not (isinstance(type_definition, str) and type_definition.count("/") == 1):
-        return False
-    interface_ns, interface_type = type_definition.split("/")
-    if len(interface_ns) == 0 or len(interface_type) == 0:
-        return False
-    assert ros_interface in [
-        "msg",
-        "srv",
-        "action",
-    ], "Error: SCXML ROS declarations: unknown ROS interface."
-    try:
-        interface_importer = __import__(interface_ns + f".{ros_interface}", fromlist=[""])
-        _ = getattr(interface_importer, interface_type)
-    except (ImportError, AttributeError):
-        print(f"Error: SCXML ROS declarations: interface type {type_definition} not found.")
-        return False
-    return True
+    return import_ros_type(type_definition, ros_interface) is not None
 
 
 def is_msg_type_known(topic_definition: str) -> bool:
@@ -100,14 +110,21 @@ def extract_params_from_ros_type(ros_interface_type: Type[Any]) -> Dict[str, str
     """
     Extract the data fields of a ROS message type as pairs of name and type objects.
     """
-    fields = ros_interface_type.get_fields_and_field_types()
-    for key in fields.keys():
-        assert fields[key] in BASIC_FIELD_TYPES, (
-            f"Error: SCXML ROS declarations: {ros_interface_type} {key} field is "
-            f"of type {fields[key]}, that is not supported."
-        )
-        fields[key] = MSG_TYPE_SUBSTITUTIONS.get(fields[key], fields[key])
-    return fields
+    fields: Dict[str, str] = ros_interface_type.get_fields_and_field_types()
+    proc_fields: Dict[str, str] = {}
+    for field_key, field_type in fields.items():
+        if field_type in BASIC_FIELD_TYPES:
+            proc_fields[field_key] = MSG_TYPE_SUBSTITUTIONS.get(field_type, field_type)
+        elif "/" in field_type:
+            assert not field_type.startswith(
+                "sequence<"
+            ), f"Error: cannot handle yet array of custom msg types '{field_type}'"
+            custom_msg_type = import_ros_type(field_type, "msg")
+            assert custom_msg_type is not None, f"Error: unknown msg subtype {field_type}."
+            key_sub_fields = extract_params_from_ros_type(custom_msg_type)
+            for subkey, subtype in key_sub_fields.items():
+                proc_fields[f"{field_key}.{subkey}"] = subtype
+    return proc_fields
 
 
 def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, str]) -> bool:
@@ -133,21 +150,25 @@ def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, st
     return True
 
 
+def get_msg_type_params(topic_definition: str) -> Dict[str, str]:
+    """Get the fields of a ROS message type, usually related to a topic."""
+    ros_msg_type = import_ros_type(topic_definition, "msg")
+    assert (
+        ros_msg_type is not None
+    ), f"Error: SCXML ROS declarations: msg type {topic_definition} not found."
+    return extract_params_from_ros_type(ros_msg_type)
+
+
 def get_srv_type_params(service_definition: str) -> Tuple[Dict[str, str], Dict[str, str]]:
     """
     Get the fields of a service request and response as pairs of name and type objects.
     """
-    assert is_srv_type_known(
-        service_definition
+    srv_data_type = import_ros_type(service_definition, "srv")
+    assert (
+        srv_data_type is not None
     ), f"Error: SCXML ROS declarations: service type {service_definition} not found."
-    interface_ns, interface_type = service_definition.split("/")
-    srv_module = __import__(interface_ns + ".srv", fromlist=[""])
-    srv_class = getattr(srv_module, interface_type)
-
-    # TODO: Fields can be nested. Look AS2FM/scxml_converter/src/scxml_converter/scxml_converter.py
-    req_fields = extract_params_from_ros_type(srv_class.Request)
-    res_fields = extract_params_from_ros_type(srv_class.Response)
-
+    req_fields = extract_params_from_ros_type(srv_data_type.Request)
+    res_fields = extract_params_from_ros_type(srv_data_type.Response)
     return req_fields, res_fields
 
 
@@ -157,15 +178,13 @@ def get_action_type_params(
     """
     Get the fields of an action goal, feedback and result as pairs of name and type objects.
     """
-    assert is_action_type_known(
-        action_definition
+    action_data_type = import_ros_type(action_definition, "action")
+    assert (
+        action_data_type is not None
     ), f"Error: SCXML ROS declarations: action type {action_definition} not found."
-    interface_ns, interface_type = action_definition.split("/")
-    action_module = __import__(interface_ns + ".action", fromlist=[""])
-    action_class = getattr(action_module, interface_type)
-    action_goal_fields = extract_params_from_ros_type(action_class.Goal)
-    action_feedback_fields = extract_params_from_ros_type(action_class.Feedback)
-    action_result_fields = extract_params_from_ros_type(action_class.Result)
+    action_goal_fields = extract_params_from_ros_type(action_data_type.Goal)
+    action_feedback_fields = extract_params_from_ros_type(action_data_type.Feedback)
+    action_result_fields = extract_params_from_ros_type(action_data_type.Result)
     return action_goal_fields, action_feedback_fields, action_result_fields
 
 
