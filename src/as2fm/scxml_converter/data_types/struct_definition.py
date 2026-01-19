@@ -81,7 +81,7 @@ class StructDefinition:
         """Get members and their type. e.g. `{'x': 'int', 's': 'Point2D'}`."""
         return self._members
 
-    def get_expanded_members(self) -> Dict[str, str]:
+    def get_expanded_members(self, array_info: Optional[ArrayInfo] = None) -> Dict[str, str]:
         """
         Return a dictionary containing the members belonging to that struct and the related types.
 
@@ -89,7 +89,18 @@ class StructDefinition:
         For a Polygon, the expanded members are {'points.x': float32[], 'points.y': float32[]}
         """
         assert self._members_list is not None
-        return self._members_list
+        if array_info is None:
+            return self._members_list
+        array_suffix = ""
+        for dim in range(array_info.array_dimensions):
+            if array_info.array_max_sizes[dim] is None:
+                array_suffix += "[]"
+            else:
+                array_suffix += f"[{array_info.array_max_sizes[dim]}]"
+        return {
+            mem_name: f"{mem_type}{array_suffix}"
+            for mem_name, mem_type in self._members_list.items()
+        }
 
     def expand_members(self, all_structs: Dict[str, "StructDefinition"]):
         """

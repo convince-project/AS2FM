@@ -301,7 +301,7 @@ class ScxmlData(ScxmlBase):
         )
         try:
             expanded_data_exprs = data_type_def.get_expanded_expressions(self._expr, array_info)
-            expanded_data_types = data_type_def.get_expanded_members()
+            expanded_data_types = data_type_def.get_expanded_members(array_info)
         except Exception as e:
             log_error(self.get_xml_origin(), f"Error on expanding input expression {self._expr}.")
             raise e
