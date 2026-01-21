@@ -18,7 +18,7 @@
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 from as2fm.as2fm_common.ecmascript_interpretation import ArrayAccess, split_by_access
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.data_types.type_utils import (
     ARRAY_LENGTH_SUFFIX,
@@ -123,12 +123,14 @@ class ScxmlStructDeclarationsContainer:
         """
         if len(access_trace) == 1:
             variable_name = access_trace[0]
-            assert variable_name != ArrayAccess, get_error_msg(
+            assert isinstance(variable_name, str), get_error_msg(
                 elem, "Can't be only an array access."
             )
-            assert variable_name in self._type_per_variable, get_error_msg(
+            check_assertion(
+                variable_name in self._type_per_variable,
                 elem,
                 f"Can't find {variable_name} in the available variables: {self._type_per_variable}",
+                KeyError,
             )
             return self._type_per_variable[variable_name]
         if access_trace[-1] == ArrayAccess:
