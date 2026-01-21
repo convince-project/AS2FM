@@ -24,6 +24,7 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.common import EPSILON, is_comment
+from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
     AscxmlDeclaration,
@@ -104,6 +105,12 @@ class ScxmlTransition(ScxmlBase):
             )
         return target_children
 
+    @staticmethod
+    def valid_xml_attributes() -> List[str]:
+        """Return a tuple with all the valid XML arguments."""
+        # TODO: Make this method for all ASCXML classes...
+        return ["event", "cond", "target"]
+
     @classmethod
     def from_xml_tree_impl(
         cls, xml_tree: XmlElement, custom_data_types: Dict[str, StructDefinition]
@@ -112,6 +119,15 @@ class ScxmlTransition(ScxmlBase):
         assert (
             xml_tree.tag == ScxmlTransition.get_tag_name()
         ), f"Error: SCXML transition: XML root tag name is not {ScxmlTransition.get_tag_name()}."
+        # TODO: Move this bit to own method in ScxmlBase, and call it in from_xml_tree
+        for xml_key in xml_tree.keys():
+            if xml_key == "_filepath":  # This is INTERNAL_FILEPATH_ATTR
+                continue
+            assert xml_key in cls.valid_xml_attributes(), get_error_msg(
+                xml_tree,
+                f"Unexpected XML attribute '{xml_key}' in {ScxmlTransition.get_tag_name()}. "
+                f"Valid ones: {cls.valid_xml_attributes()}",
+            )
         events_str = get_xml_attribute(ScxmlTransition, xml_tree, "event", undefined_allowed=True)
         events = events_str.split(" ") if events_str is not None else []
         condition = get_xml_attribute(ScxmlTransition, xml_tree, "cond", undefined_allowed=True)

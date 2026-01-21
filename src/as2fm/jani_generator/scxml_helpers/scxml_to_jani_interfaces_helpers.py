@@ -49,7 +49,6 @@ from as2fm.jani_generator.jani_entries.jani_expression_generator import (
 )
 from as2fm.jani_generator.jani_entries.jani_utils import (
     generate_jani_variable,
-    is_expression_array,
     is_variable_array,
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventParamType, EventsHolder
@@ -268,29 +267,62 @@ def generate_jani_assignments(
             )
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type is JaniExpressionType.OPERATOR:
-                assert is_expression_array(assignment_value), get_error_msg(
-                    elem_xml, "Array variables must be assigned array expressions."
-                )
-                # The assigned_expr is a Literal ArrayExpression
-                assign_expr_list = get_array_expr_as_list(assign_expr, elem_xml)
-                _, array_sizes = get_array_type_and_sizes(assign_expr_list)
-                assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
-                    elem_xml,
-                    "Mismatch between expected n. of dimension and result from JS interpreter.",
-                )
-                for level in range(array_info.array_dimensions):
-                    array_length_name = get_array_length_var_name(assignment_target_id, level + 1)
-                    if level == 0:
-                        array_length_expr = JaniExpression(array_sizes[level])
-                    else:
-                        array_length_expr = array_value_operator(array_sizes[level])
-                    assignments.append(
-                        JaniAssignment(
-                            {
-                                "ref": array_length_name,
-                                "value": array_length_expr,
-                                "index": assign_index,
-                            }
+                operator_type, _ = assignment_value.as_operator()
+                if operator_type in ("ac", "av"):
+                    # The assigned_expr is a Literal ArrayExpression
+                    assign_expr_list = get_array_expr_as_list(assign_expr, elem_xml)
+                    _, array_sizes = get_array_type_and_sizes(assign_expr_list)
+                    assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
+                        elem_xml,
+                        "Mismatch between expected n. of dimension and result from JS interpreter.",
+                    )
+                    for level in range(array_info.array_dimensions):
+                        array_length_name = get_array_length_var_name(
+                            assignment_target_id, level + 1
+                        )
+                        if level == 0:
+                            array_length_expr = JaniExpression(array_sizes[level])
+                        else:
+                            array_length_expr = array_value_operator(array_sizes[level])
+                        assignments.append(
+                            JaniAssignment(
+                                {
+                                    "ref": array_length_name,
+                                    "value": array_length_expr,
+                                    "index": assign_index,
+                                }
+                            )
+                        )
+                elif operator_type == "aa":
+                    assignment_value_name, assignment_value_ids = (
+                        __get_array_access_name_and_indexes(assignment_value)
+                    )
+                    assignment_start_level = len(assignment_value_ids)
+                    for level in range(array_info.array_dimensions):
+                        target_len_var_name = get_array_length_var_name(
+                            assignment_target_id, level + 1
+                        )
+                        assignment_value_len_var_name = get_array_length_var_name(
+                            assignment_value_name, assignment_start_level + level + 1
+                        )
+                        target_len_expr = __generate_nested_array_access_expr(
+                            assignment_value_len_var_name, assignment_value_ids
+                        )
+                        assignments.append(
+                            JaniAssignment(
+                                {
+                                    "ref": target_len_var_name,
+                                    "value": target_len_expr,
+                                    "index": assign_index,
+                                }
+                            )
+                        )
+                else:
+                    raise RuntimeError(
+                        get_error_msg(
+                            elem_xml,
+                            f"Operator {operator_type} cannot be assigned to the array variable "
+                            f"{assignment_target_id}.",
                         )
                     )
             else:
