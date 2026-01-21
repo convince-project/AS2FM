@@ -235,6 +235,11 @@ def test_convert_expression_with_object_arrays():
                 "{'points': [{'x': 5.0, 'y': 6.0}]}]",
                 "Polygons",
             ),
+            ScxmlData(
+                "polygon_array",
+                "[{'points': [{'x': 1.0, 'y': 2.0}, {'x': 3.0, 'y': 4.0}]}]",
+                "Polygon[4]",
+            ),
         ]
     )
     data_model.set_custom_data_types(custom_structs)
@@ -255,6 +260,10 @@ def test_convert_expression_with_object_arrays():
     assert (
         convert_expression_with_object_arrays("points.length", None, data_vars_structs)
         == "points__x.length"
+    )
+    assert (
+        convert_expression_with_object_arrays("points[0].x", None, data_vars_structs)
+        == "points__x[0]"
     )
     assert (
         convert_expression_with_object_arrays("polygons.length", None, data_vars_structs)
@@ -286,6 +295,19 @@ def test_convert_expression_with_object_arrays():
         )
         == "polygons__polygons__points[2][polygons__polygons__points__x[2].length]"
     )
+    # Unit test for array if structs functionality
+    pa_struct_def, pa_arr_info = data_vars_structs.get_data_type("polygon_array", None)
+    assert isinstance(pa_struct_def, XmlStructDefinition) and pa_struct_def.get_name() == "Polygon"
+    assert pa_arr_info is not None and pa_arr_info.array_max_sizes == [4]
+    pa_exp_mem = pa_struct_def.get_expanded_members(pa_arr_info)
+    assert len(pa_exp_mem) == 2
+    assert pa_exp_mem["points.x"] == "float32[4][]"
+    assert pa_exp_mem["points.y"] == "float32[4][]"
+    pa_exp_data = pa_struct_def.get_expanded_expressions(
+        data_model.get_data_entries()[5].get_expr(), pa_arr_info
+    )
+    assert pa_exp_data["points.x"].replace("\n", "").replace(" ", "") == "[[1,3]]"
+    assert pa_exp_data["points.y"].replace("\n", "").replace(" ", "") == "[[2,4]]"
 
 
 def test_convert_expression_with_string_literals():
