@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_field import RosField
+from as2fm.scxml_converter.scxml_entries.utils import get_plain_variable_name
 
 MSG_TYPE_SUBSTITUTIONS = {
     "boolean": "bool",
@@ -148,6 +149,11 @@ def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, st
         )
         return False
     return True
+
+
+def get_plain_ros_param_dict(type_params: Dict[str, str]) -> Dict[str, str]:
+    """Replace the keys in the ROS type params dict with the default separator."""
+    return {get_plain_variable_name(key, None): val for key, val in type_params.items()}
 
 
 def get_msg_type_params(topic_definition: str) -> Dict[str, str]:

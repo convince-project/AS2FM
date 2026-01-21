@@ -33,6 +33,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_action_result_handle_event,
     get_action_goal_id_definition,
     get_action_type_params,
+    get_plain_ros_param_dict,
     sanitize_ros_interface_name,
 )
 from as2fm.scxml_converter.scxml_entries import (
@@ -232,6 +233,9 @@ class RosActionHandler(RosCommunicationHandler):
         ]
 
         goal_params, feedback_params, result_params = get_action_type_params(self._interface_type)
+        goal_params = get_plain_ros_param_dict(goal_params)
+        feedback_params = get_plain_ros_param_dict(feedback_params)
+        result_params = get_plain_ros_param_dict(result_params)
 
         # Hack: Using support variables in the data model to avoid having _event in send params
         goal_id_def = get_action_goal_id_definition()

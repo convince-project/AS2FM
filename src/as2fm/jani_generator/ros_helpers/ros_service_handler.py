@@ -25,6 +25,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_srv_response_event,
     generate_srv_server_request_event,
     generate_srv_server_response_event,
+    get_plain_ros_param_dict,
     get_srv_type_params,
     sanitize_ros_interface_name,
 )
@@ -106,6 +107,8 @@ class RosServiceHandler(RosCommunicationHandler):
         """
         self._assert_validity()
         req_params, res_params = get_srv_type_params(self._interface_type)
+        req_params = get_plain_ros_param_dict(req_params)
+        res_params = get_plain_ros_param_dict(res_params)
         # Hack: Using support variables in the data model to avoid having _event in send params
         req_fields_as_data = self._generate_datamodel_from_ros_fields(req_params | res_params)
         # Make sure the service name has no slashes and spaces
