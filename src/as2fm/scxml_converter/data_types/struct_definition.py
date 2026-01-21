@@ -91,16 +91,25 @@ class StructDefinition:
         assert self._members_list is not None
         if array_info is None:
             return self._members_list
-        array_suffix = ""
+        array_prefix = ""
         for dim in range(array_info.array_dimensions):
             if array_info.array_max_sizes[dim] is None:
-                array_suffix += "[]"
+                array_prefix += "[]"
             else:
-                array_suffix += f"[{array_info.array_max_sizes[dim]}]"
-        return {
-            mem_name: f"{mem_type}{array_suffix}"
-            for mem_name, mem_type in self._members_list.items()
-        }
+                array_prefix += f"[{array_info.array_max_sizes[dim]}]"
+        flattened_members = {}
+        for mem_name, mem_type in self._members_list.items():
+            first_array_idx = mem_type.find("[")
+            if first_array_idx > 0:
+                mem_type_base = mem_type[:first_array_idx]
+                mem_type_array_dims = mem_type[first_array_idx:]
+            elif first_array_idx < 0:
+                mem_type_base = mem_type
+                mem_type_array_dims = ""
+            else:
+                raise RuntimeError(f"Member {mem_name} type {mem_type} is not valid.")
+            flattened_members[mem_name] = f"{mem_type_base}{array_prefix}{mem_type_array_dims}"
+        return flattened_members
 
     def expand_members(self, all_structs: Dict[str, "StructDefinition"]):
         """
