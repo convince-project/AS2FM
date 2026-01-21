@@ -130,6 +130,90 @@ def __get_array_access_name_and_indexes(
     return array_var_name, array_indexes
 
 
+def __assign_array_dimensions_from_variable(
+    target_variable_name,
+    target_variable_indexes,
+    target_variable_array_info: ArrayInfo,
+    assigned_variable_name,
+    assigned_variable_indexes,
+    assignment_index,
+) -> List[JaniAssignment]:
+    target_used_levels = len(target_variable_indexes)
+    target_total_levels = len(target_variable_array_info.array_max_sizes)
+    remaining_levels = target_total_levels - target_used_levels
+    assert remaining_levels >= 0, get_error_msg(
+        None, f"Trying to access a non-existing dimension of {target_variable_name}."
+    )
+    if remaining_levels == 0:
+        return []
+    new_assignments: List[JaniAssignment] = []
+    assignment_used_levels = len(assigned_variable_indexes)
+    for next_level in range(1, remaining_levels + 1):
+        target_curr_level = target_used_levels + next_level
+        assignment_curr_level = assignment_used_levels + next_level
+        target_len_var_name = get_array_length_var_name(target_variable_name, target_curr_level)
+        assignment_len_var_name = get_array_length_var_name(
+            assigned_variable_name, assignment_curr_level
+        )
+        target_len_ref_expr = __generate_nested_array_access_expr(
+            target_len_var_name, target_variable_indexes
+        )
+        assignment_len_ref_expr = __generate_nested_array_access_expr(
+            assignment_len_var_name, assigned_variable_indexes
+        )
+        new_assignments.append(
+            JaniAssignment(
+                {
+                    "ref": target_len_ref_expr,
+                    "value": assignment_len_ref_expr,
+                    "index": assignment_index,
+                }
+            )
+        )
+    return new_assignments
+
+
+def __assign_array_dimensions_from_expression(
+    target_variable_name,
+    target_variable_indexes,
+    target_variable_array_info: ArrayInfo,
+    assign_expression_str: str,
+    assignment_index,
+) -> List[JaniAssignment]:
+    target_used_levels = len(target_variable_indexes)
+    target_total_levels = len(target_variable_array_info.array_max_sizes)
+    remaining_levels = target_total_levels - target_used_levels
+    assert remaining_levels >= 0, get_error_msg(
+        None, f"Trying to access a non-existing dimension of {target_variable_name}."
+    )
+    assert remaining_levels > 0, get_error_msg(
+        None, f"Trying to assign an array to a base type on {target_variable_name}."
+    )
+    new_assignments: List[JaniAssignment] = []
+    assign_expr_as_list = get_array_expr_as_list(assign_expression_str, None)
+    _, assign_expression_sizes = get_array_type_and_sizes(assign_expr_as_list)
+    for next_level in range(1, remaining_levels + 1):
+        target_curr_level = target_used_levels + next_level
+        target_len_var_name = get_array_length_var_name(target_variable_name, target_curr_level)
+        if next_level == 1:
+            assign_curr_level_size = JaniExpression(assign_expression_sizes[0])
+        else:
+            assign_curr_level_size = array_value_operator(assign_expression_sizes[next_level - 1])
+        target_len_ref_expr = __generate_nested_array_access_expr(
+            target_len_var_name, target_variable_indexes
+        )
+        new_assignments.append(
+            JaniAssignment(
+                {
+                    "ref": target_len_ref_expr,
+                    "value": assign_curr_level_size,
+                    "index": assignment_index,
+                }
+            )
+        )
+    return new_assignments
+
+
 def generate_jani_assignments(
     target_expr: Union[JaniExpression, JaniVariable],
     assign_expr: str,
@@ -201,40 +285,46 @@ def generate_jani_assignments(
         if remaining_dimensions > 0:
             assignment_value_type = assignment_value.get_expression_type()
             if assignment_value_type == JaniExpressionType.IDENTIFIER:
-                assignment_value_name: str = assignment_value.as_identifier()
-                assignment_value_ids: List[JaniExpression] = []
+                assignments.extend(
+                    __assign_array_dimensions_from_variable(
+                        target_array_name,
+                        target_array_indexes,
+                        target_array_info,
+                        assignment_value.as_identifier(),
+                        [],
+                        assign_index,
+                    )
+                )
             elif assignment_value_type == JaniExpressionType.OPERATOR:
                 if assignment_value.op == "aa":
                     assignment_value_name, assignment_value_ids = (
                         __get_array_access_name_and_indexes(assignment_value)
                     )
+                    assignments.extend(
+                        __assign_array_dimensions_from_variable(
+                            target_array_name,
+                            target_array_indexes,
+                            target_array_info,
+                            assignment_value_name,
+                            assignment_value_ids,
+                            assign_index,
+                        )
+                    )
+                elif assignment_value.op == "av":
+                    # Directly assigning the dimensions from the input array
+                    assignments.extend(
+                        __assign_array_dimensions_from_expression(
+                            target_array_name,
+                            target_array_indexes,
+                            target_array_info,
+                            assign_expr,
+                            assign_index,
+                        )
+                    )
                 else:
                     raise NotImplementedError("Unexpected operator found: '{assignment_value.op}'")
             else:
-                raise NotImplementedError("Cannot assign explicitly arrays to a specific var index")
-            assignment_n_dims = len(assignment_value_ids)
-            for next_idx in range(1, remaining_dimensions + 1):
-                target_dimension = assigned_dimension + next_idx
-                assignment_dimension = assignment_n_dims + next_idx
-                target_len_var_name = get_array_length_var_name(target_array_name, target_dimension)
-                assignment_len_var_name = get_array_length_var_name(
-                    assignment_value_name, assignment_dimension
-                )
-                target_len_ref_expr = __generate_nested_array_access_expr(
-                    target_len_var_name, target_array_indexes
-                )
-                assignment_len_ref_expr = __generate_nested_array_access_expr(
-                    assignment_len_var_name, assignment_value_ids
-                )
-                assignments.append(
-                    JaniAssignment(
-                        {
-                            "ref": target_len_ref_expr,
-                            "value": assignment_len_ref_expr,
-                            "index": assign_index,
-                        }
-                    )
-                )
+                raise NotImplementedError("Cannot assign Literals to an array entry.")
     else:
         # In this case, we expect the assign target to be a variable
         if isinstance(target_expr, JaniVariable):
@@ -270,6 +360,7 @@ def generate_jani_assignments(
                 operator_type, _ = assignment_value.as_operator()
                 if operator_type in ("ac", "av"):
                     # The assigned_expr is a Literal ArrayExpression
+                    # TODO: Use the newly implemented __assign_array_dimensions_from_expression
                     assign_expr_list = get_array_expr_as_list(assign_expr, elem_xml)
                     _, array_sizes = get_array_type_and_sizes(assign_expr_list)
                     assert len(array_sizes) == array_info.array_dimensions, get_error_msg(
