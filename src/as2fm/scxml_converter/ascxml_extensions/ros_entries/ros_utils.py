@@ -67,7 +67,7 @@ def import_ros_type(type_definition: str, ros_interface: str) -> Optional[Type]:
 
     :param type_definition: The type definition to check (e.g. std_msgs/Empty).
     :param ros_interface: msg, srv or action.
-    :return The loaded interface in case of success. None in case the interface does not exist.
+    :return: The loaded interface in case of success. None in case the interface does not exist.
     """
     assert (
         isinstance(type_definition, str) and type_definition.count("/") == 1
