@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="receive"
+    version="1.0"
+    name="receiver"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="latest_id" expr="0" type="uint8" />
+        <data id="recv_points" expr="[]" type="Point2D[]" />
+        <data id="final_length" expr="0" type="uint8" />
+    </datamodel>
+
+    <state id="receive">
+        <transition event="data" target="receive">
+            <assign location="latest_id" expr="_event.data.idx" />
+            <assign location="recv_points[latest_id]" expr="_event.data.point" />
+        </transition>
+        <transition cond="latest_id == 1" target="end" />
+    </state>
+
+    <state id="end">
+        <onentry>
+            <!-- TODO: Support array length in the param expressions -->
+            <assign location="final_length" expr="recv_points.length" />
+            <send event="success">
+                <param name="data" expr="
+                    final_length == 2 &amp;&amp;
+                    recv_points[0].x == -1 &amp;&amp; recv_points[0].y == 2 &amp;&amp; recv_points[0].frame == 'world_a' &amp;&amp;
+                    recv_points[1].x == 3 &amp;&amp; recv_points[1].y == -4 &amp;&amp; recv_points[1].frame == 'world_b'
+                " />
+            </send>
+        </onentry>
+    </state>
+</ascxml>
