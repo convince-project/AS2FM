@@ -25,7 +25,9 @@ from typing import List, Type
 from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     ROS_INTERFACE_TO_PREFIXES,
+    check_all_fields_known,
     generate_topic_event,
+    get_msg_type_params,
     is_msg_type_known,
 )
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_base import (
@@ -114,8 +116,9 @@ class RosTopicPublish(RosTrigger):
         return RosTopicPublisher
 
     def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
-        # TODO: Check fields for topics, too
-        return True
+        assert isinstance(ascxml_declaration, RosTopicPublisher)
+        msg_fields = get_msg_type_params(ascxml_declaration.get_interface_type())
+        return check_all_fields_known(self._params, msg_fields)
 
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosTopicPublisher)

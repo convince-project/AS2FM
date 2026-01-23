@@ -524,7 +524,9 @@ class RosTrigger(ScxmlSend):
             self.get_xml_origin(), "Cannot find related ROS declaration."
         )
         assert self.check_fields_validity(related_ros_decl), get_error_msg(
-            self.get_xml_origin(), "Found invalid fields, w.r.t. the declared type."
+            self.get_xml_origin(),
+            f"Found invalid fields for ROS interface '{related_ros_decl.get_interface_name()}' "
+            f"of type '{related_ros_decl.get_interface_type()}'.",
         )
         assert self._cb_prefixes is not None, get_error_msg(
             self.get_xml_origin(), "No callback type defined."

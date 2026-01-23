@@ -18,7 +18,7 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import log_error
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.scxml_ros_field import RosField
 from as2fm.scxml_converter.scxml_entries.utils import get_plain_variable_name
 
@@ -33,6 +33,10 @@ MSG_TYPE_SUBSTITUTIONS = {
 
 BASIC_FIELD_TYPES = [
     "boolean",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
     "int8",
     "int16",
     "int32",
@@ -134,8 +138,9 @@ def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, st
     """
     for ros_field in ros_fields:
         if ros_field.get_name() not in field_types:
-            get_error_msg(
-                ros_field.get_xml_origin(), "Unknown field to the related ROS declaration."
+            log_error(
+                ros_field.get_xml_origin(),
+                f"Unknown ROS field {ros_field.get_name()}. Expected ones: {field_types}.",
             )
             return False
         field_types.pop(ros_field.get_name())
@@ -144,7 +149,7 @@ def check_all_fields_known(ros_fields: List[RosField], field_types: Dict[str, st
         for field_key in field_types.keys():
             missing_fields += f"{field_key}, "
         missing_fields = missing_fields.removesuffix(", ")
-        get_error_msg(
+        log_error(
             ros_fields[0].get_xml_origin(), f"There are missing ROS fields: [{missing_fields}]"
         )
         return False
