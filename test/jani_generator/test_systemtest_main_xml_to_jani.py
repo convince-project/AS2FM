@@ -292,6 +292,7 @@ def get_cases():
             "folder": "probabilistic_transitions",
             "property_name": "expected_counts",
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
+            "disable_cache": True,
             "n_threads": 8,
             "trace_length_limit": 20_000,
         },
