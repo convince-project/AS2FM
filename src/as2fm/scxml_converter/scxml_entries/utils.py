@@ -199,7 +199,7 @@ def _convert_non_computed_member_exprs_to_identifiers(
                 f"{ARRAY_LENGTH_SUFFIX} is a reserved keyword. Cannot be used here."
             )
         return node
-    elif node.type == Syntax.Literal:
+    elif node.type in (Syntax.Literal, Syntax.ArrayExpression):
         return node
     elif node.type == Syntax.MemberExpression:
         # If not array index, convert to identifier
@@ -290,7 +290,7 @@ def _split_array_indexes_out(
     `a[0].x[2]` => 'a.x', ['0', '2']
     `a` => 'a', []
     """
-    if ast.type in (Syntax.Identifier, Syntax.Literal):
+    if ast.type in (Syntax.Identifier, Syntax.Literal, Syntax.ArrayExpression):
         return ast, []
     elif ast.type == Syntax.MemberExpression:
         obj, obj_idxs = _split_array_indexes_out(ast.object, struct_declarations)
@@ -372,8 +372,8 @@ def convert_expression_with_object_arrays(
         obj, idxs = _split_array_indexes_out(ast, struct_declarations)
         exp = _reassemble_expression(obj, idxs)
         exp = _convert_non_computed_member_exprs_to_identifiers(exp, None)
-    except MemberAccessCheckException as e:
-        log_error(elem, "Failed to expand the provided expression.")
+    except Exception as e:
+        log_error(elem, f"Failed to expand the provided expression '{expr}'.")
         raise e
     return ast_expression_to_string(exp)
 

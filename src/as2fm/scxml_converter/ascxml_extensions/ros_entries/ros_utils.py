@@ -121,13 +121,23 @@ def extract_params_from_ros_type(ros_interface_type: Type[Any]) -> Dict[str, str
         if field_type in BASIC_FIELD_TYPES:
             proc_fields[field_key] = MSG_TYPE_SUBSTITUTIONS.get(field_type, field_type)
         elif "/" in field_type:
-            assert not field_type.startswith(
-                "sequence<"
-            ), f"Error: cannot handle yet array of custom msg types '{field_type}'"
+            prepend_array_brackets = False
+            if field_type.startswith("sequence<"):
+                field_type = field_type.removeprefix("sequence<").removesuffix(">")
+                prepend_array_brackets = True
             custom_msg_type = import_ros_type(field_type, "msg")
             assert custom_msg_type is not None, f"Error: unknown msg subtype {field_type}."
             key_sub_fields = extract_params_from_ros_type(custom_msg_type)
             for subkey, subtype in key_sub_fields.items():
+                if prepend_array_brackets:
+                    subtype_str_first_bracket = subtype.find("[")
+                    if subtype_str_first_bracket < 0:
+                        # No additional array dimension -> just append
+                        subtype += "[]"
+                    else:
+                        subtype_base = subtype[:subtype_str_first_bracket]
+                        subtype_array_dims = subtype[subtype_str_first_bracket:]
+                        subtype = f"{subtype_base}[]{subtype_array_dims}"
                 proc_fields[f"{field_key}.{subkey}"] = subtype
     return proc_fields
 
