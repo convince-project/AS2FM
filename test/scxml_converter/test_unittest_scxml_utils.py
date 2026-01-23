@@ -306,17 +306,17 @@ def test_convert_expression_with_object_arrays():
     pa_exp_data = pa_struct_def.get_expanded_expressions(
         data_model.get_data_entries()[5].get_expr(), pa_arr_info
     )
-    assert pa_exp_data["points.x"].replace("\n", "").replace(" ", "") == "[[1,3]]"
-    assert pa_exp_data["points.y"].replace("\n", "").replace(" ", "") == "[[2,4]]"
+    assert pa_exp_data["points.x"] == "[[1,3]]"
+    assert pa_exp_data["points.y"] == "[[2,4]]"
 
 
 def test_convert_expression_with_string_literals():
     """Test if the functionality works in a number of cases."""
     test_cases = [
-        ("'as2fm'", "[97, 115, 50, 102, 109]"),
-        ("as2fm_str == 'as2fm'", "as2fm_str == [97, 115, 50, 102, 109]"),
-        ("'as2fm' == as2fm_str", "[97, 115, 50, 102, 109] == as2fm_str"),
-        ("['as', '2', 'fm']", "[[97, 115], [50], [102, 109]]"),
+        ("'as2fm'", "[97,115,50,102,109]"),
+        ("as2fm_str == 'as2fm'", "as2fm_str == [97,115,50,102,109]"),
+        ("'as2fm' == as2fm_str", "[97,115,50,102,109] == as2fm_str"),
+        ("['as', '2', 'fm']", "[[97,115],[50],[102,109]]"),
     ]
 
     for in_val, gt_out in test_cases:
