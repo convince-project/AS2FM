@@ -23,7 +23,7 @@ jobs:
               uses: actions/checkout@v2
             # Set up ROS
             - name: Set up ROS
-              uses: ros-tooling/setup-ros@v0.7
+              uses: ros-tooling/setup-ros@0.7.15
               with:
                 required-ros-distributions: ${{ matrix.ros-distro }}
             # Get smc_storm for testing
