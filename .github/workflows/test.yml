@@ -28,6 +28,10 @@ jobs:
             #   uses: ros-tooling/setup-ros@0.7.15
             #   with:
             #     required-ros-distributions: ${{ matrix.ros-distro }}
+            # Install missing packages in docker
+            - name: Docker APT packages installation
+              id: docker_pkg_install_apt_packages
+              run: apt update && apt install -y wget
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
