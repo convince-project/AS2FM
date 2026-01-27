@@ -66,9 +66,11 @@ jobs:
                 rosdep update
                 rosdep install --from-paths src -y --ignore-src
                 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+              shell: bash
             # run the tests
             - name: Run tests
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 source ros_interfaces_ws/install/setup.bash
                 pytest-3 -vs .
+              shell: bash
