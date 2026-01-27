@@ -12,9 +12,7 @@ jobs:
             matrix:
                 include:
                   - ros-distro: jazzy
-                    os: ubuntu-24.04
                   - ros-distro: humble
-                    os: ubuntu-22.04
             fail-fast: false
         runs-on: ubuntu-latest
         container:
@@ -43,17 +41,18 @@ jobs:
                 echo SMC_STORM_PATH=$PWD/bin/ >> $GITHUB_OUTPUT
             # Update pip
             - name: Update pip
-              run: python3 -m pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} --upgrade pip
+              run: python3 -m pip install --upgrade pip
+              if: ${{ matrix.ros-distro == 'humble' }}
             # install the packages
             - name: Install packages
               run: |
-                python3 -m pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} .[dev]
+                python3 -m pip install ${{ matrix.ros-distro == 'jazzy' && '--break-system-packages' || '' }} .[dev]
             # this solves
             # E   ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
             - name: Downgrade numpy
               run: |
                 python3 -m pip install numpy==1.26.4
-              if: ${{ matrix.os == 'ubuntu-22.04' }}
+              if: ${{ matrix.ros-distro == 'jazzy' }}
             # lint packages
             # TODO: add linting
             # Prepare ROS WS for the tests
