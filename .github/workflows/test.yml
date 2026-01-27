@@ -12,20 +12,24 @@ jobs:
             matrix:
                 include:
                   - ros-distro: jazzy
-                    os: ubuntu-24.04
                   - ros-distro: humble
-                    os: ubuntu-22.04
             fail-fast: false
-        runs-on: ${{ matrix.os }}
+        runs-on: ubuntu-latest
+        container:
+          image: ros:${{ matrix.ros-distro }}
         steps:
             # Checkout the repository
             - name: Checkout repository
               uses: actions/checkout@v2
             # Set up ROS
-            - name: Set up ROS
-              uses: ros-tooling/setup-ros@v0.7
-              with:
-                required-ros-distributions: ${{ matrix.ros-distro }}
+            # - name: Set up ROS
+            #   uses: ros-tooling/setup-ros@0.7.15
+            #   with:
+            #     required-ros-distributions: ${{ matrix.ros-distro }}
+            # Install missing packages in docker
+            - name: Docker APT packages installation
+              id: docker_pkg_install_apt_packages
+              run: apt update && apt install -y wget python3-pip
             # Get smc_storm for testing
             - name: Get smc_storm
               id: get_smc_storm
@@ -37,17 +41,12 @@ jobs:
                 echo SMC_STORM_PATH=$PWD/bin/ >> $GITHUB_OUTPUT
             # Update pip
             - name: Update pip
-              run: python -m pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} --upgrade pip
+              run: python3 -m pip install --upgrade pip
+              if: ${{ matrix.ros-distro == 'humble' }}
             # install the packages
             - name: Install packages
               run: |
-                pip install ${{ matrix.os == 'ubuntu-24.04' && '--break-system-packages' || '' }} .[dev]
-            # this solves
-            # E   ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
-            - name: Downgrade numpy
-              run: |
-                pip install numpy==1.26.4
-              if: ${{ matrix.os == 'ubuntu-22.04' }}
+                python3 -m pip install ${{ matrix.ros-distro == 'jazzy' && '--break-system-packages' || '' }} .[dev]
             # lint packages
             # TODO: add linting
             # Prepare ROS WS for the tests
@@ -60,9 +59,11 @@ jobs:
                 rosdep update
                 rosdep install --from-paths src -y --ignore-src
                 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+              shell: bash
             # run the tests
             - name: Run tests
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
                 source ros_interfaces_ws/install/setup.bash
                 pytest-3 -vs .
+              shell: bash

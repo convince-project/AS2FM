@@ -32,6 +32,10 @@
         <onentry>
             <ros_topic_publish name="state">
                 <field name="data" expr="counts"/>
+                <field name="layout.data_offset" expr="0"/>
+                <field name="layout.dim.label" expr="[]"/>
+                <field name="layout.dim.size" expr="[]"/>
+                <field name="layout.dim.stride" expr="[]"/>
             </ros_topic_publish>
         </onentry>
 

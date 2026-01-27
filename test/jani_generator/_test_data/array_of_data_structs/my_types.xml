@@ -1,0 +1,7 @@
+<types>
+    <struct id="Point2D">
+        <member id="frame" type="string" />
+        <member id="x" type="int32" />
+        <member id="y" type="int32" />
+    </struct>
+</types>

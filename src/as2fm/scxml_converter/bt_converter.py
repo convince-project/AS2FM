@@ -26,7 +26,11 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import get_default_expression_for_type, value_to_string_expr
-from as2fm.as2fm_common.logging import get_error_msg
+from as2fm.as2fm_common.logging import (
+    INTERNAL_FILEPATH_ATTR,
+    get_error_msg,
+    set_filepath_for_all_sub_elements,
+)
 from as2fm.scxml_converter.ascxml_extensions.bt_entries import (
     AscxmlRootBT,
     BtChildTickStatus,
@@ -165,6 +169,7 @@ def bt_converter(
     """
     available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths, custom_data_types)
     xml_tree: XmlElement = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
+    set_filepath_for_all_sub_elements(xml_tree, bt_xml_path)
     root_children = xml_tree.getchildren()
     assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
     assert (
@@ -261,7 +266,11 @@ def get_bt_child_ports(bt_xml_subtree: XmlElement) -> List[Tuple[str, str]]:
     """
     Get the ports of a BT child node.
     """
-    ports = [(attr_key, attr_value) for attr_key, attr_value in bt_xml_subtree.attrib.items()]
+    ports = [
+        (attr_key, attr_value)
+        for attr_key, attr_value in bt_xml_subtree.attrib.items()
+        if attr_key != INTERNAL_FILEPATH_ATTR
+    ]
     return ports
 
 

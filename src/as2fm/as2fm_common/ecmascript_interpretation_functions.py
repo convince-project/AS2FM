@@ -81,6 +81,8 @@ def get_list_from_array_expr(
             if expected_type is not None:
                 extracted_value = expected_type(extracted_value)
             ret_list.append(extracted_value)
+        elif elem.type == Syntax.ObjectExpression:
+            ret_list.append(get_dict_from_object_expression(elem))
         else:
             raise ValueError(f"Unexpected array element type {elem.type}.")
     return ret_list

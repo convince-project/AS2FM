@@ -274,6 +274,13 @@ def get_cases():
         # Test the array model with multiple dimensions.
         _default_case()
         | {
+            "_case_name": "array_of_data_structs",
+            "folder": "array_of_data_structs",
+            "property_name": "success",
+        },
+        # Test arrays of data structs.
+        _default_case()
+        | {
             "_case_name": "array_model_multi_dim",
             "folder": "array_model_multi_dim",
             "property_name": "array_check",
@@ -285,6 +292,7 @@ def get_cases():
             "folder": "probabilistic_transitions",
             "property_name": "expected_counts",
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
+            "disable_cache": True,
             "n_threads": 8,
             "trace_length_limit": 20_000,
         },

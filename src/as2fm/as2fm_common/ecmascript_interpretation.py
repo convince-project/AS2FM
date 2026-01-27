@@ -234,4 +234,6 @@ def _split_by_access(ast: esprima.nodes.Node) -> List:
 
 def ast_expression_to_string(ast_node: esprima.nodes.Node) -> str:
     """Generate a string starting from an AST node"""
-    return escodegen.generate(ast_node)
+    return escodegen.generate(
+        ast_node, options={"format": {"newline": "", "indent": {"style": ""}}}
+    )

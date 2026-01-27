@@ -7,6 +7,8 @@
   <maintainer email="stefano.bernagozzi@iit.it">ste</maintainer>
   <license>TODO: License declaration</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <exec_depend>blackboard_interfaces_dummy</exec_depend>
   <exec_depend>bt_interfaces_dummy</exec_depend>
   <exec_depend>navigation_interfaces_dummy</exec_depend>

@@ -21,6 +21,7 @@ from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.common import ValidPlainScxmlTypes
 from as2fm.as2fm_common.ecmascript_interpretation import (
     ast_expression_to_string,
+    get_array_expr_as_list,
     get_object_expression_as_dict,
     make_ast_array_expression,
 )
@@ -80,7 +81,7 @@ class StructDefinition:
         """Get members and their type. e.g. `{'x': 'int', 's': 'Point2D'}`."""
         return self._members
 
-    def get_expanded_members(self) -> Dict[str, str]:
+    def get_expanded_members(self, array_info: Optional[ArrayInfo] = None) -> Dict[str, str]:
         """
         Return a dictionary containing the members belonging to that struct and the related types.
 
@@ -88,7 +89,27 @@ class StructDefinition:
         For a Polygon, the expanded members are {'points.x': float32[], 'points.y': float32[]}
         """
         assert self._members_list is not None
-        return self._members_list
+        if array_info is None:
+            return self._members_list
+        array_prefix = ""
+        for dim in range(array_info.array_dimensions):
+            if array_info.array_max_sizes[dim] is None:
+                array_prefix += "[]"
+            else:
+                array_prefix += f"[{array_info.array_max_sizes[dim]}]"
+        flattened_members = {}
+        for mem_name, mem_type in self._members_list.items():
+            first_array_idx = mem_type.find("[")
+            if first_array_idx > 0:
+                mem_type_base = mem_type[:first_array_idx]
+                mem_type_array_dims = mem_type[first_array_idx:]
+            elif first_array_idx < 0:
+                mem_type_base = mem_type
+                mem_type_array_dims = ""
+            else:
+                raise RuntimeError(f"Member {mem_name} type {mem_type} is not valid.")
+            flattened_members[mem_name] = f"{mem_type_base}{array_prefix}{mem_type_array_dims}"
+        return flattened_members
 
     def expand_members(self, all_structs: Dict[str, "StructDefinition"]):
         """
@@ -150,16 +171,67 @@ class StructDefinition:
                         expanded_type = child_type_only + array_info + child_array_info
                     self._members_list.update({f"{member_name}.{child_m_name}": expanded_type})
 
-    def get_expanded_expressions(self, expr: str) -> Dict[str, str]:
+    def get_expanded_expressions(
+        self, expr: str, array_info: Optional[ArrayInfo] = None
+    ) -> Dict[str, str]:
         """Extracts all object keys from a given ecmascript object definition."""
         if self._members_list is None:
             raise ValueError(f"Struct '{self._name}' has not been expanded yet.")
         # Interpret the expression
-        expr_type = get_object_expression_as_dict(expr)
-        flat_dict = self._flatten_object_dict(expr_type, "")
+        eval_expr: Union[List, Dict]
+        flat_dict: Dict[str, Any] = {}
+        if array_info is not None:
+            eval_expr = get_array_expr_as_list(expr)
+            flat_dict = self._flatten_objects_list(eval_expr, "")
+        else:
+            eval_expr = get_object_expression_as_dict(expr)
+            flat_dict = self._flatten_object_dict(eval_expr, "")
         for key in flat_dict:
             flat_dict[key] = ast_expression_to_string(flat_dict[key])
         return flat_dict
+
+    def _flatten_objects_list(
+        self, list_of_objects: List[Dict[str, Any]], prefix: str
+    ) -> Dict[str, Any]:
+        """
+        Flatted a list of objects to a collection of lists, all related to base types.
+
+        Example: a: Point[] becomes {a.x: float32[], a.y: float32[]}
+
+        :param list_of_objects: The list to be flattened
+        :param prefix: The prefix of the list, if that is related to a object's member.
+        :return: The flattened version of the list.
+        """
+        ret_dict: Dict[str, str] = {}
+        assert isinstance(
+            list_of_objects, list
+        ), f"list_of_objects should be a list, it is a {type(list_of_objects)} instead."
+        if len(list_of_objects) == 0:
+            # No value provided: this results in a number of empty lists.
+            self._update_instance_dictionary(ret_dict, prefix, list_of_objects)
+        elif isinstance(list_of_objects[0], dict):
+            # Handling a list of objects
+            expanded_dicts_list: List[Dict[str, str]] = []
+            for single_obj_dict in list_of_objects:
+                # Ensure we are not dict and base types in the same list
+                assert isinstance(single_obj_dict, dict), "Expected only dict entries."
+                expanded_dicts_list.append(self._flatten_object_dict(single_obj_dict, prefix))
+            # Check single_obj_dict[0] has all sub-keys of obj_full_name
+            self._validate_object(expanded_dicts_list[0], prefix)
+            # Make sure that array access is at the end
+            for obj_sub_key in expanded_dicts_list[0]:
+                # Make a list of all entries related to a single-sub-key
+                single_key_list = [single_dict[obj_sub_key] for single_dict in expanded_dicts_list]
+                # Write them in the dictionary to be returned
+                self._update_instance_dictionary(ret_dict, obj_sub_key, single_key_list)
+        else:
+            # Ensure we are not having a list of lists
+            assert not isinstance(
+                list_of_objects[0], list
+            ), "An object list entry can only contain other objects or base types."
+            # Handling a list of base types (AST nodes)
+            self._update_instance_dictionary(ret_dict, prefix, list_of_objects)
+        return ret_dict
 
     def _flatten_object_dict(
         self, object_to_convert: Dict[str, Any], prefix: str
@@ -171,35 +243,7 @@ class StructDefinition:
         for obj_key, obj_val in object_to_convert.items():
             obj_full_name = obj_key if prefix == "" else f"{prefix}.{obj_key}"
             if isinstance(obj_val, list):
-                if len(obj_val) > 0:
-                    assert not isinstance(
-                        obj_val[0], list
-                    ), "An object list entry can only contain other objects or base types."
-                    if isinstance(obj_val[0], dict):
-                        # List of dictionaries
-                        expanded_dicts_list: List[Dict[str, str]] = []
-                        for single_obj_dict in obj_val:
-                            # Ensure we are not dict and base types in the same list
-                            assert isinstance(single_obj_dict, dict), "Expected only dict entries."
-                            expanded_dicts_list.append(
-                                self._flatten_object_dict(single_obj_dict, obj_full_name)
-                            )
-                        # Check single_obj_dict[0] has all sub-keys of obj_full_name
-                        self._validate_object(expanded_dicts_list[0], obj_full_name)
-                        # Make sure that array access is at the end
-                        for obj_sub_key in expanded_dicts_list[0]:
-                            # Make a list of all entries related to a single-sub-key
-                            single_key_list = [
-                                single_dict[obj_sub_key] for single_dict in expanded_dicts_list
-                            ]
-                            # Write them in the dictionary to be returned
-                            self._update_instance_dictionary(ret_dict, obj_sub_key, single_key_list)
-                    else:
-                        # List of base types (AST nodes)
-                        self._update_instance_dictionary(ret_dict, obj_full_name, obj_val)
-                else:
-                    # Empty list
-                    self._update_instance_dictionary(ret_dict, obj_full_name, obj_val)
+                ret_dict.update(self._flatten_objects_list(obj_val, obj_full_name))
             elif isinstance(obj_val, dict):
                 assert len(obj_val) > 0, "Unexpected empty dictionary in value definition."
                 ret_dict.update(self._flatten_object_dict(obj_val, obj_full_name))

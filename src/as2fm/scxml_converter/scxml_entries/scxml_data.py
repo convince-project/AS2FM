@@ -288,7 +288,9 @@ class ScxmlData(ScxmlBase):
             self._upper_bound = self._upper_bound.get_configured_value()
         if self._is_plain_type(verbose=False):
             return [self]
-        data_type_def, _ = struct_declarations.get_data_type(self.get_name(), self.get_xml_origin())
+        data_type_def, array_info = struct_declarations.get_data_type(
+            self.get_name(), self.get_xml_origin()
+        )
         assert isinstance(data_type_def, StructDefinition), get_error_msg(
             self.get_xml_origin(),
             f"Information for data variable {self.get_name()} "
@@ -297,8 +299,12 @@ class ScxmlData(ScxmlBase):
         assert isinstance(self._expr, str), get_error_msg(
             self.get_xml_origin(), "We only support string init expr. for custom types."
         )
-        expanded_data_exprs = data_type_def.get_expanded_expressions(self._expr)
-        expanded_data_types = data_type_def.get_expanded_members()
+        try:
+            expanded_data_exprs = data_type_def.get_expanded_expressions(self._expr, array_info)
+            expanded_data_types = data_type_def.get_expanded_members(array_info)
+        except Exception as e:
+            log_error(self.get_xml_origin(), f"Error on expanding input expression {self._expr}.")
+            raise e
         try:
             plain_data = [
                 ScxmlData(
@@ -314,6 +320,7 @@ class ScxmlData(ScxmlBase):
                 f"Error for struct field {e}.\n\tStruct def.: {expanded_data_types}"
                 f"\n\tInit values: {expanded_data_exprs}.",
             )
+            raise e
         for single_data in plain_data:
             single_data._id = get_plain_variable_name(single_data._id, self.get_xml_origin())
         return plain_data
