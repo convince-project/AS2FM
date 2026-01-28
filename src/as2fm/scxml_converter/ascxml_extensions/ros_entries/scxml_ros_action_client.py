@@ -29,6 +29,7 @@ from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     ROS_INTERFACE_TO_PREFIXES,
     check_all_fields_known,
+    generate_action_cancel_goal_req_event,
     generate_action_feedback_handle_event,
     generate_action_goal_handle_accepted_event,
     generate_action_goal_handle_rejected_event,
@@ -68,7 +69,7 @@ class RosActionClient(RosDeclaration):
 
 
 class RosActionSendGoal(RosTrigger):
-    """Object representing a ROS Action Goal (request, from the client side) in SCXML."""
+    """Object representing a ROS Action Goal (request, from the client side) in ASCXML."""
 
     @staticmethod
     def get_tag_name() -> str:
@@ -89,6 +90,29 @@ class RosActionSendGoal(RosTrigger):
         assert isinstance(ascxml_declaration, RosActionClient)
         goal_fields = get_action_type_params(ascxml_declaration.get_interface_type())[0]
         return check_all_fields_known(self._params, goal_fields)
+
+
+class RosActionCancelGoal(RosTrigger):
+    """A request to cancel a running ROS Action (from the client side) in ASCXML."""
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_cancel_goal"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionClient]:
+        return RosActionClient
+
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionClient)
+        return generate_action_cancel_goal_req_event(
+            ascxml_declaration.get_interface_name(),
+            ascxml_declaration.get_node_name(),
+        )
+
+    def check_fields_validity(self, ascxml_declaration: AscxmlDeclaration) -> bool:
+        assert isinstance(ascxml_declaration, RosActionClient)
+        return len(self._params) == 0
 
 
 class RosActionHandleGoalResponse(RosCallback):

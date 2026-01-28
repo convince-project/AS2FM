@@ -56,6 +56,7 @@ ROS_INTERFACE_TO_PREFIXES = {
     "ros_service_request": ["_req."],
     "ros_service_result": ["_res."],
     "ros_action_goal": ["_action.goal_id", "_goal."],
+    "ros_action_cancel_goal": ["_action.goal_id"],
     "ros_action_result": ["_action.goal_id", "_wrapped_result.code", "_wrapped_result.result."],
     "ros_action_feedback": ["_action.goal_id", "_feedback."],
 }
@@ -271,6 +272,11 @@ def generate_action_goal_req_event(action_name: str, client_name: str) -> str:
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_req_client_{client_name}"
 
 
+def generate_action_cancel_goal_req_event(action_name: str, client_name: str) -> str:
+    """Generate the name of the event that requests to cancels an action goal (client to server)."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_cancel_goal_client_{client_name}"
+
+
 def generate_action_goal_accepted_event(action_name: str) -> str:
     """Generate the name of the event sent from the server in case of goal acceptance."""
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_accepted"
@@ -283,6 +289,11 @@ def generate_action_goal_rejected_event(action_name: str) -> str:
 
 def generate_action_goal_handle_event(action_name: str) -> str:
     """Generate the name of the event that triggers an action goal handling in the server."""
+    return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
+
+
+def generate_action_cancel_goal_handle_event(action_name: str) -> str:
+    """Generate the name of the event that triggers an action goal cancellation in the server."""
     return f"action_{sanitize_ros_interface_name(action_name)}_goal_handle"
 
 

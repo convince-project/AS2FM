@@ -31,6 +31,7 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     ROS_INTERFACE_TO_PREFIXES,
     check_all_fields_known,
+    generate_action_cancel_goal_handle_event,
     generate_action_feedback_event,
     generate_action_goal_accepted_event,
     generate_action_goal_handle_event,
@@ -69,7 +70,7 @@ class RosActionHandleGoalRequest(RosCallback):
     SCXML object representing the handler for a goal request.
 
     A server receives the request, containing the action goal fields and the goal_id.
-    The goal_id is set from the action handler, based on the client.
+    The goal_id is set from the action handler, based on the client's ID.
     """
 
     @staticmethod
@@ -87,6 +88,31 @@ class RosActionHandleGoalRequest(RosCallback):
     def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
         assert isinstance(ascxml_declaration, RosActionServer)
         return generate_action_goal_handle_event(ascxml_declaration.get_interface_name())
+
+
+class RosActionHandleCancelGoal(RosCallback):
+    """
+    SCXML object representing the handler for a goal cancellation request.
+
+    A server receives the request, containing the action's goal_id.
+    The goal_id is set from the action handler, based on the client's ID.
+    """
+
+    @staticmethod
+    def get_tag_name() -> str:
+        return "ros_action_handle_cancel_goal"
+
+    @staticmethod
+    def get_declaration_type() -> Type[RosActionServer]:
+        return RosActionServer
+
+    @staticmethod
+    def get_callback_prefixes() -> List[str]:
+        return ROS_INTERFACE_TO_PREFIXES["ros_action_cancel_goal"]
+
+    def get_plain_scxml_event(self, ascxml_declaration: AscxmlDeclaration) -> str:
+        assert isinstance(ascxml_declaration, RosActionServer)
+        return generate_action_cancel_goal_handle_event(ascxml_declaration.get_interface_name())
 
 
 class RosActionAcceptGoal(RosTrigger):
