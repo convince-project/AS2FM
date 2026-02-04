@@ -104,6 +104,14 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
+    def test_repeat(self):
+        """Test the repeat BT plugin."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_repeat.xml"),
+            "repeats_and_success",
+            expected_result_probability=1.0,
+        )
+
 
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])
