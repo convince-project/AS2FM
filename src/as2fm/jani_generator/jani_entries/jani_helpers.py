@@ -16,7 +16,7 @@
 from typing import List, Union
 
 from as2fm.jani_generator.jani_entries import JaniAssignment, JaniEdge, JaniExpression, JaniModel
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
+from as2fm.jani_generator.jani_entries.jani_expression_support import (
     expand_distribution_expressions,
 )
 

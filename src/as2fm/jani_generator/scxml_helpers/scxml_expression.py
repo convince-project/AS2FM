@@ -30,15 +30,15 @@ from as2fm.as2fm_common.ecmascript_interpretation_functions import (
     get_list_from_array_expr,
 )
 from as2fm.as2fm_common.logging import check_assertion, get_error_msg
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
-    CALLABLE_OPERATORS_MAP,
-    OPERATORS_TO_JANI_MAP,
-    UNARY_OPERATORS_MAP,
-)
 from as2fm.jani_generator.jani_entries.jani_expression import JaniExpression
 from as2fm.jani_generator.jani_entries.jani_expression_generator import (
     array_access_operator,
     array_value_operator,
+)
+from as2fm.jani_generator.jani_entries.jani_expression_support import (
+    CALLABLE_OPERATORS_MAP,
+    OPERATORS_TO_JANI_MAP,
+    UNARY_OPERATORS_MAP,
 )
 from as2fm.jani_generator.jani_entries.jani_value import JaniValue
 from as2fm.scxml_converter.data_types.type_utils import ARRAY_LENGTH_SUFFIX, ArrayInfo
