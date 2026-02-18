@@ -21,7 +21,7 @@ Properties in Jani
 from typing import Any, Dict, Optional
 
 from as2fm.jani_generator.jani_entries import JaniConstant, JaniExpression
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
+from as2fm.jani_generator.jani_entries.jani_expression_support import expand_expression
 
 
 class FilterProperty:

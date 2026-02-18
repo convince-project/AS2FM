@@ -211,7 +211,7 @@ class TestConversion(unittest.TestCase):
         with open(xml_main_path, "w", encoding="utf-8") as f:
             f.write(xml_content)
         p = subprocess.Popen(
-            ["as2fm_scxml_to_jani", xml_main_path],
+            ["as2fm_scxml_to_jani", xml_main_path, "--jani-out-file", "main.jani"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=tmp_test_dir,

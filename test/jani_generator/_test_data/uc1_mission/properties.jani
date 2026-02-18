@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "name": "tree_success",
+            "name": "tree_success_and_covered_or_tree_fail",
             "expression": {
                 "op": "filter",
                 "fun": "values",
@@ -10,17 +10,25 @@
                     "exp": {
                         "op": "F",
                         "exp": {
-                            "op": "∧",
+                            "op": "∨",
                             "left": {
-                                "op": "=",
-                                "left": "bt_1000_response__status",
-                                "right": 1,
-                                "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "bt_1000_response__status",
+                                    "right": 1,
+                                    "comment": "1: SUCCESS, 2: FAILURE, 3: RUNNING"
+                                },
+                                "right": {
+                                    "op": "≥",
+                                    "left": "topic_coverage_percentage_msg__ros_fields__data",
+                                    "right": 95
+                                }
                             },
                             "right": {
-                                "op": "≥",
-                                "left": "topic_coverage_percentage_msg__ros_fields__data",
-                                "right": 95
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 2
                             }
                         }
                     }

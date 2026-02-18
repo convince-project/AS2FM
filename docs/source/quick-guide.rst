@@ -90,7 +90,7 @@ After installing the AS2FM packages as described in the :ref:`installation secti
 .. code-block:: bash
 
     $ cd examples/quick_start_battery_monitor/ && \
-      as2fm_roaml_to_jani main.xml
+      as2fm_roaml_to_jani main.xml --jani-out-file main.jani
 
     AS2FM - RoAML to JANI.
 

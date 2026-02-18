@@ -99,7 +99,7 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
 
     $ as2fm_roaml_to_jani --help
 
-    usage: as2fm_roaml_to_jani [-h] [--generated-scxml-dir GENERATED_SCXML_DIR]
+    usage: as2fm_roaml_to_jani [-h] [--scxml-out-dir SCXML_OUT_DIR]
                                [--jani-out-file JANI_OUT_FILE]
                                roaml_xml
 
@@ -110,7 +110,7 @@ Verify your installation by **sourcing your ROS distribution** (i.e. running `so
 
     options:
       -h, --help            show this help message and exit
-      --generated-scxml-dir GENERATED_SCXML_DIR
+      --scxml-out-dir SCXML_OUT_DIR
                             Path to the folder containing the generated plain-
                             SCXML files.
       --jani-out-file JANI_OUT_FILE
