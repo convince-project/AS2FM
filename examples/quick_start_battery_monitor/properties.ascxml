@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<properties>
+  <ports>
+
+    <ros_topic topic_name="level" type="std_msgs/Int32" event="publish">
+      <state_var id="battery_level" type="int32" field="data" expr="100"/>
+      <event_var id="battery_published"/>
+    </ros_topic>
+
+    <ros_topic topic_name="alarm" type="std_msgs/Bool" event="publish">
+      <event_var id="alarm"/>
+    </ros_topic>
+
+  </ports>
+
+  <guarantees>
+
+    <property id="battery_always_published" pattern="universality">
+      <event>battery_published</event>
+      <scope type="globally"/>
+    </property>
+
+    <property id="battery_alarm_precedence" pattern="precedence">
+      <events>
+        <event>battery_level &lt;= 30</event>
+        <event>alarm</event>
+      </events>
+      <scope type="globally"/>
+      <time_interval after="2" within="5" time_unit="s" />
+    </property>
+
+  </guarantees>
+
+</properties>
