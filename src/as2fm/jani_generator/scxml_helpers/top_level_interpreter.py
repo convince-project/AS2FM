@@ -211,6 +211,7 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> Tuple[List[Scxml
                                                 service_info=service_info,
                                                 action_info=action_info,)
     ros_events_info = info_transformer.transform_data()
+    print(ros_events_info)
     return plain_scxml_models, ros_events_info, model_time_step, model_time_unit
 
 
@@ -315,7 +316,7 @@ def interpret_top_level_xml(
     if scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
         property_converter = PropertyConverter(
-            input_path=model.properties[0],
+            input_path=model.properties["scxml"],
             ros_events_info=ros_events_info,
             model_time_step=model_time_step,
             model_time_unit=model_time_unit,
@@ -326,7 +327,7 @@ def interpret_top_level_xml(
         jani_model: JaniModel = convert_multiple_scxmls_to_jani(
             plain_scxml_models, model.max_array_size
         )
-        with open(model.properties[0], "r", encoding="utf-8") as f:
+        with open(model.properties["jani"], "r", encoding="utf-8") as f:
             all_properties = json.load(f)["properties"]
             for property_dict in all_properties:
                 jani_model.add_jani_property(JaniProperty.from_dict(property_dict))

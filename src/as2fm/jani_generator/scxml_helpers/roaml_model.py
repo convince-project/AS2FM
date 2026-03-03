@@ -356,7 +356,7 @@ class RoamlProperties:
             )
 
     def __init__(self, props_element: Optional[XmlElement] = None, folder_path: str = ""):
-        self._properties: List[str] = []
+        self._properties: Dict[str, str] = {}
 
         if props_element is not None:
             self._parse_properties(props_element, folder_path)
@@ -375,14 +375,16 @@ class RoamlProperties:
                     )
                 )
 
-            self._properties.append(os.path.join(folder_path, property.attrib["src"]))
+            self._properties[property.attrib["type"]] = os.path.join(folder_path, property.attrib["src"])
 
-        if len(self._properties) != 1:
+        if len(self._properties) not in [1, 2]:
             raise ValueError(
-                get_error_msg(props_element, "Only exactly one property file is supported.")
+                get_error_msg(props_element, "Only one or two property files are supported.")
             )
+        
+        
 
-    def get_properties(self) -> List[str]:
+    def get_properties(self) -> Dict[str, str]:
         return self._properties
 
 

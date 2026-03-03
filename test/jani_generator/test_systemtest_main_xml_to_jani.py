@@ -100,7 +100,7 @@ def _test_with_main(
         assert os.path.exists(jani_path)
 
         properties_file = os.path.join(
-            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties[0]
+            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties["jani"]
         )
         if not skip_properties_load_check:
             assert json_jani_properties_match(
