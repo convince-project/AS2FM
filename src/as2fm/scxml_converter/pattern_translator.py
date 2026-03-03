@@ -29,6 +29,7 @@ class Pattern(Enum):
     RESPONSE = auto()
     RECURRENCE = auto()
     PRECEDENCE = auto()
+    EXISTENCE = auto()
 
 class Scope(Enum):
     """List of supported scopes."""
@@ -44,6 +45,7 @@ class PropertyTemplates:
     MTL_RESPONSE_GLOBALLY: str = "historically( not( not({ {{ response }} }) since{% if time != None %}[{{ time }}:]{% endif %} ({ {{ request }} }) ) )"
     MTL_RECURRENCE_GLOBALLY: str = "historically( (once[{{time}}:]) -> (once[:{{time}}]{ {{event}} }) )"
     MTL_PRECEDENCE_GLOBALLY: str = "historically( ({ {{second}} }) -> once{% if after != None and within != None %}[{{after}}:{{within}}]{% elif after != None %}[{{after}}:]{% elif within != None %}[:{{within}}]{% endif %}({ {{first}} }) )"
+    MTL_EXISTENCE_GLOBALLY: str = "once{% if time != None %}[:{{ time }}]{% endif %}({ {{event}} })"
 
 @dataclass()
 class PatternInfo:
@@ -74,6 +76,8 @@ def translate_pattern(pattern: PatternInfo) -> str:
                 return _translate_recurrence(pattern)
             case Pattern.PRECEDENCE:
                 return _translate_precedence(pattern)
+            case Pattern.EXISTENCE:
+                return _translate_existence(pattern)
             case _:
                 raise ValueError("Unsupported pattern")
 
@@ -144,5 +148,15 @@ def _translate_precedence(pattern: PatternInfo) -> str:
             second=pattern.events[1],
             after=pattern.time[0],
             within=pattern.time[1],
+        )
+    return property
+
+def _translate_existence(pattern: PatternInfo) -> str:
+    assert pattern.scope in [Scope.GLOBALLY], "Unsupported scope"
+    if pattern.scope == Scope.GLOBALLY:
+        template = Template(PropertyTemplates.MTL_EXISTENCE_GLOBALLY)
+        property = template.render(
+            event=pattern.events[0],
+            time=pattern.time,
         )
     return property

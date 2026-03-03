@@ -152,7 +152,7 @@ class PropertyConverter:
                     v.set("expr", var.attrib["expr"])
                     for field in ros_info_entry.fields:
                         if var.attrib["field"] in field.keys():
-                            v.set("field", field[var.attrib["field"]])
+                            v.set("param", field[var.attrib["field"]])
 
     def _process_assumes(self, assumes: XmlElement) -> None:
         self._process_properties(assumes, self._assumes_node)
@@ -204,6 +204,8 @@ class PropertyConverter:
                     pattern = Pattern.RECURRENCE
                 case "precedence":
                     pattern = Pattern.PRECEDENCE
+                case "existence":
+                    pattern = Pattern.EXISTENCE
                 case _:
                     raise Exception
 
