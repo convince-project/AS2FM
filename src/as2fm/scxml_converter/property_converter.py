@@ -94,7 +94,7 @@ class PropertyConverter:
         if not os.path.exists(output_path):
             os.mkdir(output_path)
 
-        with open(os.path.join(output_path, "properties.scxml"), "wb") as f:
+        with open(os.path.join(output_path, "properties.xml"), "wb") as f:
             f.write(
                 ET.tostring(
                     scxml_properties,

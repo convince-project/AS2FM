@@ -367,7 +367,7 @@ class RoamlProperties:
             if remove_namespace(property.tag) != "input":
                 raise ValueError(get_error_msg(property, "Only input tags are supported."))
 
-            if property.attrib["type"] not in ["jani", "scxml",]:
+            if property.attrib["type"] not in ["jani", "xml",]:
                 raise ValueError(
                     get_error_msg(
                         property,
