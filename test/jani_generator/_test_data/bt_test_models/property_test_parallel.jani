@@ -1,0 +1,151 @@
+{
+    "properties": [
+        {
+            "name": "parallel_success_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 1,
+                                "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_tick_count_0_msg__ros_fields__data",
+                                    "right": 1,
+                                    "comment": "Child 0 ticked once (returns success immediately)"
+                                },
+                                "right": {
+                                    "op": "∧",
+                                    "left": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_1_msg__ros_fields__data",
+                                        "right": 1,
+                                        "comment": "Child 1 ticked once (returns success immediately)"
+                                    },
+                                    "right": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_2_msg__ros_fields__data",
+                                        "right": 1,
+                                        "comment": "Child 2 ticked once (parallel halts after threshold met)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_failure_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 2,
+                                "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_tick_count_0_msg__ros_fields__data",
+                                    "right": 1,
+                                    "comment": "Child 0 ticked once (keeps running, halted after threshold)"
+                                },
+                                "right": {
+                                    "op": "∧",
+                                    "left": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_1_msg__ros_fields__data",
+                                        "right": 1,
+                                        "comment": "Child 1 ticked once (returns failure immediately)"
+                                    },
+                                    "right": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_2_msg__ros_fields__data",
+                                        "right": 1,
+                                        "comment": "Child 2 ticked once (returns failure immediately)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_running_then_success_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "bt_1000_response__status",
+                                "right": 1,
+                                "comment": "BT root eventually returns SUCCESS"
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_tick_count_0_msg__ros_fields__data",
+                                    "right": 1,
+                                    "comment": "Child 0 ticked once (returns success immediately)"
+                                },
+                                "right": {
+                                    "op": "∧",
+                                    "left": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_1_msg__ros_fields__data",
+                                        "right": 1,
+                                        "comment": "Child 1 ticked once (returns failure immediately)"
+                                    },
+                                    "right": {
+                                        "op": "=",
+                                        "left": "topic_tick_count_2_msg__ros_fields__data",
+                                        "right": 3,
+                                        "comment": "Child 2 ticked 3 times (runs twice, then succeeds)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}
