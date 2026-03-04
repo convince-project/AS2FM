@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
+from re import search
 from typing import Dict, List
 
 
@@ -37,3 +38,10 @@ class RosEventInfo:
     origin: str
     target: str
     fields: List[Dict[str, str]] = field(default_factory=list)
+
+    def is_bt_info(self) -> bool:
+        # Either origin or target of the SCXML event start with BT/bt
+        IS_BT_INFO_REGEX = "(?i:^bt.*)"
+        if search(IS_BT_INFO_REGEX, self.origin) or search(IS_BT_INFO_REGEX, self.target):
+            return True
+        return False

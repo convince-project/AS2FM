@@ -75,7 +75,7 @@ class PropertyConverter:
 
         self._ros_events_info: List[RosEventInfo] = ros_events_info
         self._model_time_step: int = model_time_step
-        self._model_time_unit: TimeUnit = self._string_to_time_unit(model_time_unit)
+        self._model_time_unit: TimeUnit = PropertyConverter._string_to_time_unit(model_time_unit)
 
     def export_properties(self, output_path: str) -> None:
         scxml_properties = ET.Element("properties")
@@ -132,11 +132,12 @@ class PropertyConverter:
             interface_name = sanitize_ros_interface_name(interface_name)
             event_type = interface.attrib["event"]
 
-            ros_info_entry: RosEventInfo = None
+            ros_info_entries: List[RosEventInfo] = []
             for entry in self._ros_events_info:
                 if entry.interface_name == interface_name and entry.event_type == event_type:
-                    ros_info_entry = entry
-                    break
+                    ros_info_entries.append(entry)
+
+            ros_info_entry = PropertyConverter._get_most_relevant_entry(ros_info_entries)
 
             port = ET.SubElement(ports, "scxml_event_send")
             port.set("event", ros_info_entry.scxml_event_name)
@@ -144,7 +145,7 @@ class PropertyConverter:
             port.set("target", ros_info_entry.target)
 
             for var in interface:
-                assert var.tag in ["state_var", "event_var"], "Invalid variable type"
+                assert var.tag in ["state_var", "event_var", "goal_id", "result_code"], "Invalid variable type"
                 v = ET.SubElement(port, var.tag)
                 v.set("id", var.attrib["id"])
                 if var.tag == "state_var":
@@ -153,6 +154,14 @@ class PropertyConverter:
                     for field in ros_info_entry.fields:
                         if var.attrib["field"] in field.keys():
                             v.set("param", field[var.attrib["field"]])
+                if var.tag == "goal_id":
+                    v.set("type", "int32")
+                    v.set("expr", var.attrib["expr"])
+                    v.set("param", "goal_id")
+                if var.tag == "result_code":
+                    v.set("type", "int32")
+                    v.set("expr", var.attrib["expr"])
+                    v.set("param", "code")
 
     def _process_assumes(self, assumes: XmlElement) -> None:
         self._process_properties(assumes, self._assumes_node)
@@ -177,7 +186,7 @@ class PropertyConverter:
                     for event in child:
                         events.append(event.text)
                 if tag == "time_interval":
-                    property_time_unit = self._string_to_time_unit(child.attrib["time_unit"])
+                    property_time_unit = PropertyConverter._string_to_time_unit(child.attrib["time_unit"])
                     if child.attrib.get("time") == None:
                         after = child.attrib.get("after")
                         within = child.attrib.get("within")
@@ -239,7 +248,14 @@ class PropertyConverter:
 
         return str(interval_value)
 
-    def _string_to_time_unit(self, time_unit: str) -> TimeUnit:
+    def _exists_none_target(self) -> bool:
+        for info in self._ros_events_info:
+            if info.target == "NONE":
+                return True
+        return False
+    
+    @staticmethod
+    def _string_to_time_unit(time_unit: str) -> TimeUnit:
         assert time_unit in ["s", "ms", "us", "ns"], "Unsupported time unit"
         match time_unit:
             case "s":
@@ -250,9 +266,14 @@ class PropertyConverter:
                 return TimeUnit.MICROSECONDS
             case "ns":
                 return TimeUnit.NANOSECONDS
-
-    def _exists_none_target(self) -> bool:
-        for info in self._ros_events_info:
-            if info.target == "NONE":
-                return True
-        return False
+    
+    @staticmethod
+    def _get_most_relevant_entry(entries: List[RosEventInfo]) -> RosEventInfo:
+        """Returns an entry not containing events sent to/received by the BT if possible"""
+        relevant_entries: List[RosEventInfo] = []
+        for e in entries:
+            if not e.is_bt_info():
+                relevant_entries.append(e)
+        if len(relevant_entries) == 0:
+            relevant_entries = entries
+        return relevant_entries[0]

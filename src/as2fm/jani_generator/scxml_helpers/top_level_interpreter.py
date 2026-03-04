@@ -211,7 +211,6 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> Tuple[List[Scxml
                                                 service_info=service_info,
                                                 action_info=action_info,)
     ros_events_info = info_transformer.transform_data()
-    print(ros_events_info)
     return plain_scxml_models, ros_events_info, model_time_step, model_time_unit
 
 
