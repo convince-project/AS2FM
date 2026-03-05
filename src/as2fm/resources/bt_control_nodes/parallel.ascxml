@@ -32,6 +32,7 @@
         <data id="current_child_idx" type="int8" expr="0" />
         <data id="success_count" type="int16" expr="0" />
         <data id="failure_count" type="int16" expr="0" />
+        <data id="child_state" type="int8[]" expr="[]" />
     </datamodel>
 
     <state id="init">
@@ -49,57 +50,95 @@
         </bt_halt>
     </state>
 
+    <state id="wait_for_tick_running">
+        <bt_tick target="tick_children_continue" />
+        <bt_halt target="halting_on_parent_halt">
+            <assign location="current_child_idx" expr="0" />
+        </bt_halt>
+    </state>
+
     <state id="tick_children_init">
         <onentry>
             <assign location="current_child_idx" expr="0" />
             <assign location="success_count" expr="0" />
             <assign location="failure_count" expr="0" />
+            <assign location="child_state" expr="[]" />
         </onentry>
-        <transition cond="children_count == 0" target="wait_for_tick">
-            <bt_return_status status="SUCCESS" />
-        </transition>
         <transition target="tick_current_child" />
     </state>
 
+    <state id="tick_children_continue">
+        <onentry>
+            <assign location="current_child_idx" expr="0" />
+        </onentry>
+        <transition target="tick_current_child" />
+    </state>
+
+
+
     <state id="tick_current_child">
 
+        <!-- Iterate through children -->
+        <transition cond="current_child_idx &gt;= children_count" target="eval_thresholds" />
+        <transition cond="current_child_idx &gt;= child_state.length" target="ensure_child_state" />
+        <transition cond="child_state[current_child_idx] != 0" target="advance_child" />
+        <transition target="tick_current_child_active" />
+    </state>
+
+    <state id="ensure_child_state">
         <onentry>
-            <!-- Note: id can be an expression referring to current index -->
+            <assign location="child_state[child_state.length]" expr="0" />
+        </onentry>
+        <transition target="tick_current_child" />
+    </state>
+
+    <state id="tick_current_child_active">
+        <onentry>
             <bt_tick_child id="current_child_idx" />
         </onentry>
 
-        <!-- If all children processed and no threshold met, we are RUNNING -->
-        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
-            <bt_return_status status="RUNNING" />
-        </transition>
-
-        <!-- Tick current child -->
-
-
-        <!-- Collect child result -->
-        <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="eval_after_child">
+        <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS">
             <assign location="success_count" expr="success_count + 1" />
+            <assign location="child_state[current_child_idx]" expr="1" />
+            <transition cond="success_count + 1 >= success_threshold" target="halting_after_success" />
+            <transition target="eval_after_child" />
         </bt_child_status>
-        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="eval_after_child">
+
+        <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE">
             <assign location="failure_count" expr="failure_count + 1" />
+            <assign location="child_state[current_child_idx]" expr="2" />
+            <transition cond="failure_count + 1 >= failure_threshold" target="halting_after_failure" />
+            <transition target="eval_after_child" />
         </bt_child_status>
+
         <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="eval_after_child" />
     </state>
 
     <state id="eval_after_child">
-        <!-- Threshold checks -->
+        <!-- Move to next child -->
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="tick_current_child" />
+    </state>
+
+    <state id="advance_child">
+        <onentry>
+            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        </onentry>
+        <transition target="tick_current_child" />
+    </state>
+
+    <state id="eval_thresholds">
         <transition cond="success_count &gt;= success_threshold" target="halting_after_success">
             <assign location="current_child_idx" expr="0" />
         </transition>
         <transition cond="failure_count &gt;= failure_threshold" target="halting_after_failure">
             <assign location="current_child_idx" expr="0" />
         </transition>
-
-        <!-- Move to next child -->
-        <onentry>
-            <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="tick_current_child" />
+        <transition target="wait_for_tick_running">
+            <bt_return_status status="RUNNING" />
+        </transition>
     </state>
 
     <!-- Halt all children, then return SUCCESS -->
