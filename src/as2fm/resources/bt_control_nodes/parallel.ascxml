@@ -61,47 +61,36 @@
         <transition target="tick_current_child" />
     </state>
 
-
-
     <state id="tick_current_child">
-
-        <onentry>
-            <!-- Note: id can be an expression referring to current index -->
-            <bt_tick_child id="current_child_idx" />
-        </onentry>
-
-        <!-- If all children processed and no threshold met, we are RUNNING -->
         <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </transition>
 
-        <!-- Tick current child -->
+        <onentry>
+            <bt_tick_child id="current_child_idx" />
+        </onentry>
 
-
-        <!-- Collect child result -->
         <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="eval_after_child">
             <assign location="success_count" expr="success_count + 1" />
         </bt_child_status>
+        
         <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="eval_after_child">
             <assign location="failure_count" expr="failure_count + 1" />
         </bt_child_status>
+        
         <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="eval_after_child" />
     </state>
 
     <state id="eval_after_child">
-        <!-- Threshold checks -->
         <transition cond="success_count &gt;= success_threshold" target="halting_after_success">
             <assign location="current_child_idx" expr="0" />
         </transition>
         <transition cond="failure_count &gt;= failure_threshold" target="halting_after_failure">
             <assign location="current_child_idx" expr="0" />
         </transition>
-
-        <!-- Move to next child -->
-        <onentry>
+        <transition target="tick_current_child">
             <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="tick_current_child" />
+        </transition>
     </state>
 
     <state id="advance_child">
@@ -112,7 +101,7 @@
     </state>
 
     <state id="eval_thresholds">
-        <transition target="wait_for_tick_running">
+        <transition target="wait_for_tick">
             <bt_return_status status="RUNNING" />
         </transition>
     </state>
