@@ -67,7 +67,7 @@
             <!-- Note: id can be an expression referring to current index -->
             <bt_tick_child id="current_child_idx" />
         </onentry>
-        
+
         <!-- If all children processed and no threshold met, we are RUNNING -->
         <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
