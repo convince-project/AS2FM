@@ -73,11 +73,11 @@
         <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="eval_after_child">
             <assign location="success_count" expr="success_count + 1" />
         </bt_child_status>
-        
+
         <bt_child_status id="current_child_idx" cond="_bt.status == FAILURE" target="eval_after_child">
             <assign location="failure_count" expr="failure_count + 1" />
         </bt_child_status>
-        
+
         <bt_child_status id="current_child_idx" cond="_bt.status == RUNNING" target="eval_after_child" />
     </state>
 
