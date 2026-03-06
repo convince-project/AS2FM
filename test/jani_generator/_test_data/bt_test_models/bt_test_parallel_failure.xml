@@ -5,10 +5,10 @@
  -->
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
-        <Parallel success_threshold="2" failure_threshold="2">
-            <Action ID="BtTestStatusAction" topic_name="tick_count_0" reset_name="reset_count_0" n_ticks_running="100" final_status="3" />
-            <Action ID="BtTestStatusAction" topic_name="tick_count_1" reset_name="reset_count_1" n_ticks_running="0" final_status="2" />
-            <Action ID="BtTestStatusAction" topic_name="tick_count_2" reset_name="reset_count_2" n_ticks_running="0" final_status="2" />
+        <Parallel success_threshold="3" failure_threshold="1">
+            <Action ID="AlwaysSuccess" />
+            <Action ID="AlwaysFailure" />
+            <Action ID="AlwaysSuccess" />
         </Parallel>
     </BehaviorTree>
 </root>

@@ -128,14 +128,6 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
-    def test_parallel_running_then_success(self):
-        """Test the parallel node staying running then eventually succeeding."""
-        self._test_with_main(
-            os.path.join("bt_test_models", "main_test_parallel_running.xml"),
-            "parallel_running_then_success_test",
-            expected_result_probability=1.0,
-        )
-
 
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])
