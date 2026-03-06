@@ -38,24 +38,24 @@
 
     <state id="reset_children">
         <onentry>
-            <if cond="current_child_idx &lt; children_count">
-                <bt_halt_child id="current_child_idx" />
+            <if cond="child_idx &lt; children_count">
+                <bt_halt_child id="child_idx" />
             </if>
         </onentry>
-        <bt_child_halted id="current_child_idx" target="reset_children">
-            <assign location="current_child_idx" expr="current_child_idx + 1" />
+        <bt_child_halted id="child_idx" target="reset_children">
+            <assign location="child_idx" expr="child_idx + 1" />
         </bt_child_halted>
-        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
-            <if cond="seq_failure">
+        <transition cond="child_idx &gt;= children_count" target="wait_for_tick">
+            <if cond="ret_failure">
                 <bt_return_status status="FAILURE" />
-            <elseif cond="seq_success" />
+            <elseif cond="ret_success" />
                 <bt_return_status status="SUCCESS" />
             <else/>
                 <bt_return_halted/>
             </if>
-            <assign location="current_child_idx" expr="0" />
-            <assign location="seq_failure" expr="false" />
-            <assign location="seq_success" expr="false" />
+            <assign location="child_idx" expr="0" />
+            <assign location="ret_failure" expr="false" />
+            <assign location="ret_success" expr="false" />
         </transition>
     </state>
 
@@ -86,11 +86,11 @@
         <transition target="error" cond="child_idx >= children_count" />
         <bt_child_status id="child_idx" cond="_bt.status == SUCCESS" target="reset_children">
             <assign location="child_idx" expr="0" />
-            <assign location="seq_success" expr="true" />
+            <assign location="ret_success" expr="true" />
         </bt_child_status>
         <bt_child_status id="child_idx" cond="_bt.status == FAILURE" target="reset_children">
             <assign location="child_idx" expr="0" />
-            <assign location="seq_failure" expr="true" />
+            <assign location="ret_failure" expr="true" />
         </bt_child_status>
         <bt_child_status id="child_idx" cond="_bt.status == RUNNING" target="wait_for_tick">
             <bt_return_status status="RUNNING" />
