@@ -7,31 +7,31 @@
     model_src="https://raw.githubusercontent.com/BehaviorTree/BehaviorTree.CPP/refs/heads/v3.8/src/controls/parallel_node.cpp">
 
     <!-- BT ports -->
-    <bt_declare_port_in key="CHILDREN_COUNT" type="int8" />
-    <bt_declare_port_in key="success_threshold" type="int8" />
-    <bt_declare_port_in key="failure_threshold" type="int8" />
+    <bt_declare_port_in key="CHILDREN_COUNT" type="uint8" />
+    <bt_declare_port_in key="success_threshold" type="uint8" />
+    <bt_declare_port_in key="failure_threshold" type="uint8" />
 
     <datamodel>
-        <data id="children_count" type="int8">
+        <data id="children_count" type="uint8">
             <expr>
                 <bt_get_input key="CHILDREN_COUNT" />
             </expr>
         </data>
-        <data id="success_threshold" type="int8">
+        <data id="success_threshold" type="uint8">
             <expr>
                 <bt_get_input key="success_threshold" />
             </expr>
         </data>
-        <data id="failure_threshold" type="int8">
+        <data id="failure_threshold" type="uint8">
             <expr>
                 <bt_get_input key="failure_threshold" />
             </expr>
         </data>
 
         <!-- Loop and counters -->
-        <data id="current_child_idx" type="int8" expr="0" />
-        <data id="success_count" type="int16" expr="0" />
-        <data id="failure_count" type="int16" expr="0" />
+        <data id="current_child_idx" type="uint8" expr="0" />
+        <data id="success_count" type="uint8" expr="0" />
+        <data id="failure_count" type="uint8" expr="0" />
     </datamodel>
 
     <state id="init">
@@ -55,20 +55,17 @@
             <assign location="success_count" expr="0" />
             <assign location="failure_count" expr="0" />
         </onentry>
-        <transition cond="children_count == 0" target="wait_for_tick">
-            <bt_return_status status="SUCCESS" />
-        </transition>
         <transition target="tick_current_child" />
     </state>
 
     <state id="tick_current_child">
-        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
-            <bt_return_status status="RUNNING" />
-        </transition>
-
         <onentry>
             <bt_tick_child id="current_child_idx" />
         </onentry>
+
+        <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
+            <bt_return_status status="RUNNING" />
+        </transition>
 
         <bt_child_status id="current_child_idx" cond="_bt.status == SUCCESS" target="eval_after_child">
             <assign location="success_count" expr="success_count + 1" />
@@ -93,36 +90,19 @@
         </transition>
     </state>
 
-    <state id="advance_child">
-        <onentry>
-            <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="tick_current_child" />
-    </state>
-
-    <state id="eval_thresholds">
-        <transition target="wait_for_tick">
-            <bt_return_status status="RUNNING" />
-        </transition>
-    </state>
-
     <!-- Halt all children, then return SUCCESS -->
     <state id="halting_after_success">
         <onentry>
             <bt_halt_child id="current_child_idx" />
         </onentry>
+
         <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
             <bt_return_status status="SUCCESS" />
         </transition>
 
-        <bt_child_halted id="current_child_idx" target="halting_after_success_next" />
-    </state>
-
-    <state id="halting_after_success_next">
-        <onentry>
+        <bt_child_halted id="current_child_idx" target="halting_after_success">
             <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="halting_after_success" />
+        </bt_child_halted>
     </state>
 
     <!-- Halt all children, then return FAILURE -->
@@ -133,14 +113,9 @@
         <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
             <bt_return_status status="FAILURE" />
         </transition>
-        <bt_child_halted id="current_child_idx" target="halting_after_failure_next" />
-    </state>
-
-    <state id="halting_after_failure_next">
-        <onentry>
+        <bt_child_halted id="current_child_idx" target="halting_after_failure">
             <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="halting_after_failure" />
+        </bt_child_halted>
     </state>
 
     <!-- Handle parent HALT: halt all children then return HALTED -->
@@ -152,14 +127,9 @@
         <transition cond="current_child_idx &gt;= children_count" target="wait_for_tick">
             <bt_return_halted />
         </transition>
-        <bt_child_halted id="current_child_idx" target="halting_on_parent_halt_next" />
-    </state>
-
-    <state id="halting_on_parent_halt_next">
-        <onentry>
+        <bt_child_halted id="current_child_idx" target="halting_on_parent_halt">
             <assign location="current_child_idx" expr="current_child_idx + 1" />
-        </onentry>
-        <transition target="halting_on_parent_halt" />
+        </bt_child_halted>
     </state>
 
     <state id="error" />
