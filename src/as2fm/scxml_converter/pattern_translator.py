@@ -61,7 +61,7 @@ class PropertyTemplates:
         "[{{ time }}:]{% endif %} ({ {{ request }} }) ) )"
     )
     MTL_RECURRENCE_GLOBALLY: str = (
-        "historically( (once[{{time}}:]) -> (once[:{{time}}]{ {{event}} }) )"
+        "historically( (once[{{time}}:] true) -> (once[:{{time}}]{ {{event}} }) )"
     )
     MTL_PRECEDENCE_GLOBALLY: str = (
         "historically( ({ {{second}} }) -> once{% if after != None and within != None %}"

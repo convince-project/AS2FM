@@ -85,6 +85,7 @@ class PropertyConverter:
             self._assumes_node is not None or self._guarantees_node is not None
         ), "No properties defined"
 
+        self._property_ids = []
         self._ros_events_info: List[RosEventInfo] = ros_events_info
         self._model_time_step: int = model_time_step
         self._model_time_unit: TimeUnit = PropertyConverter._string_to_time_unit(model_time_unit)
@@ -191,6 +192,8 @@ class PropertyConverter:
     ) -> None:
         for property in input_properties:
             property_id = property.attrib["id"]
+            assert property_id not in self._property_ids, "Duplicate property id"
+            self._property_ids.append(property_id)
             pattern = property.attrib["pattern"]
             events = []
             scope = ""
