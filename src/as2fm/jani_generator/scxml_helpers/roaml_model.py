@@ -367,22 +367,26 @@ class RoamlProperties:
             if remove_namespace(property.tag) != "input":
                 raise ValueError(get_error_msg(property, "Only input tags are supported."))
 
-            if property.attrib["type"] not in ["jani", "xml",]:
+            if property.attrib["type"] not in [
+                "jani",
+                "xml",
+            ]:
                 raise ValueError(
                     get_error_msg(
                         property,
-                        f"Only Jani and XML properties are supported, not {property.attrib['type']}.",
+                        f"Only Jani and XML properties are supported,\
+                         not {property.attrib['type']}.",
                     )
                 )
 
-            self._properties[property.attrib["type"]] = os.path.join(folder_path, property.attrib["src"])
+            self._properties[property.attrib["type"]] = os.path.join(
+                folder_path, property.attrib["src"]
+            )
 
         if len(self._properties) not in [1, 2]:
             raise ValueError(
                 get_error_msg(props_element, "Only one or two property files are supported.")
             )
-        
-        
 
     def get_properties(self) -> Dict[str, str]:
         return self._properties

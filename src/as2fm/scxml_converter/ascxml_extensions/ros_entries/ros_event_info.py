@@ -26,11 +26,13 @@ class RosEventInfo:
     :attribute interface_name: Sanitized interface name.
     :attribute interface_type: Type of ROS interface ("topic", "service", or "action")
     :attribute scxml_event_name: SCXML event name
-    :attribute event_type: Event type ("publish", "request", "response", "goal_request", "goal_response", "feedback", "result")
+    :attribute event_type: Event type ("publish", "request", "response", "goal_request",\
+     "goal_response", "feedback", "result")
     :attribute origin: Name of the automaton that sends the event
     :attribute target: Name of the automaton that receives the event
     :attribute fields: ROS field names mapped to their type strings
     """
+
     interface_name: str
     interface_type: str
     scxml_event_name: str

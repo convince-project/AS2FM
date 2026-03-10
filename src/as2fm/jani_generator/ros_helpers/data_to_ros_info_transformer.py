@@ -17,7 +17,6 @@ from typing import Dict, List, Optional
 
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
-
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_event_info import RosEventInfo
 from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
     generate_action_feedback_event,
@@ -48,16 +47,17 @@ class DataToRosInfoTransformer:
     """
     Generates a list of RosEventInfo from collected information about ROS communications.
     """
-    def __init__(self, 
-                 topic_info: Optional[Dict[str, Dict]] = None, 
-                 service_info: Optional[Dict[str, Dict]] = None, 
-                 action_info: Optional[Dict[str, Dict]] = None,
-                ):
+
+    def __init__(
+        self,
+        topic_info: Optional[Dict[str, Dict]] = None,
+        service_info: Optional[Dict[str, Dict]] = None,
+        action_info: Optional[Dict[str, Dict]] = None,
+    ):
         self._ros_events_info = []
         self._topic_info = topic_info
         self._service_info = service_info
         self._action_info = action_info
-
 
     def transform_data(self) -> List:
         if self._topic_info is not None:
@@ -70,7 +70,6 @@ class DataToRosInfoTransformer:
             self._transform_action_info()
 
         return self._ros_events_info
-
 
     def _transform_topic_info(self):
         for interface_name, info in self._topic_info.items():
@@ -98,8 +97,12 @@ class DataToRosInfoTransformer:
         for interface_name, info in self._service_info.items():
             sanitized_name = sanitize_ros_interface_name(interface_name)
             req_fields, res_fields = get_srv_type_params(info["type"])
-            req_field_names = [{name: self._to_scxml_field_name(name)} for name in req_fields.keys()]
-            res_field_names = [{name: self._to_scxml_field_name(name)} for name in res_fields.keys()]
+            req_field_names = [
+                {name: self._to_scxml_field_name(name)} for name in req_fields.keys()
+            ]
+            res_field_names = [
+                {name: self._to_scxml_field_name(name)} for name in res_fields.keys()
+            ]
             server = info["server"]
             handler = RosServiceHandler.get_interface_prefix() + sanitized_name
             for client in info["clients"]:
@@ -152,9 +155,15 @@ class DataToRosInfoTransformer:
         for interface_name, info in self._action_info.items():
             sanitized_name = sanitize_ros_interface_name(interface_name)
             goal_fields, feedback_fields, result_fields = get_action_type_params(info["type"])
-            goal_field_names = [{name: self._to_scxml_field_name(name)} for name in goal_fields.keys()]
-            feedback_field_names = [{name: self._to_scxml_field_name(name)} for name in feedback_fields.keys()]
-            result_field_names = [{name: self._to_scxml_field_name(name)} for name in result_fields.keys()]
+            goal_field_names = [
+                {name: self._to_scxml_field_name(name)} for name in goal_fields.keys()
+            ]
+            feedback_field_names = [
+                {name: self._to_scxml_field_name(name)} for name in feedback_fields.keys()
+            ]
+            result_field_names = [
+                {name: self._to_scxml_field_name(name)} for name in result_fields.keys()
+            ]
             server = info["server"]
             handler = RosActionHandler.get_interface_prefix() + sanitized_name
             for client in info["clients"]:
