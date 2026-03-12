@@ -218,6 +218,20 @@ def get_cases():
             "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
             "property_name": "battery_charged",
         },
+        # Expect battery is published (from xml-properties)
+        _default_case()
+        | {
+            "_case_name": "battery_published_xml",
+            "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            "property_name": "battery_always_published",
+        },
+        # Expect alarm preceding the battery being empty (from xml-properties)
+        _default_case()
+        | {
+            "_case_name": "battery_precedence_xml",
+            "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            "property_name": "battery_alarm_precedence",
+        },
         # -------------------------------------------------------------------------------------
         # HL-SCXML features
         # Test that the synchronization can handle events being sent in different orders
