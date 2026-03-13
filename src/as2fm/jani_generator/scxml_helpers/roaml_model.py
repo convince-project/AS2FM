@@ -356,33 +356,39 @@ class RoamlProperties:
             )
 
     def __init__(self, props_element: Optional[XmlElement] = None, folder_path: str = ""):
-        self._properties: List[str] = []
+        self._properties: Dict[str, str] = {}
 
         if props_element is not None:
             self._parse_properties(props_element, folder_path)
 
     def _parse_properties(self, props_element: XmlElement, folder_path: str) -> None:
         """Parse the properties section from XML."""
-        for jani_property in props_element:
-            if remove_namespace(jani_property.tag) != "input":
-                raise ValueError(get_error_msg(jani_property, "Only input tags are supported."))
+        for property in props_element:
+            if remove_namespace(property.tag) != "input":
+                raise ValueError(get_error_msg(property, "Only input tags are supported."))
 
-            if jani_property.attrib["type"] != "jani":
+            if property.attrib["type"] not in [
+                "jani",
+                "xml",
+            ]:
                 raise ValueError(
                     get_error_msg(
-                        jani_property,
-                        f"Only Jani properties are supported, not {jani_property.attrib['type']}.",
+                        property,
+                        f"Only Jani and XML properties are supported,\
+                         not {property.attrib['type']}.",
                     )
                 )
 
-            self._properties.append(os.path.join(folder_path, jani_property.attrib["src"]))
-
-        if len(self._properties) != 1:
-            raise ValueError(
-                get_error_msg(props_element, "Only exactly one Jani property is supported.")
+            self._properties[property.attrib["type"]] = os.path.join(
+                folder_path, property.attrib["src"]
             )
 
-    def get_properties(self) -> List[str]:
+        if len(self._properties) not in [1, 2]:
+            raise ValueError(
+                get_error_msg(props_element, "Only one or two property files are supported.")
+            )
+
+    def get_properties(self) -> Dict[str, str]:
         return self._properties
 
 
