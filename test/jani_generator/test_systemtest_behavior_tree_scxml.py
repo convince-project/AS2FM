@@ -136,5 +136,6 @@ class TestConversion(unittest.TestCase):
             expected_result_probability=1.0,
         )
 
+
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])
