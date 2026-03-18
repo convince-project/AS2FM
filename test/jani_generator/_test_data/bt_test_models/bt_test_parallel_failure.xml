@@ -1,13 +1,13 @@
 <!-- Test that the Parallel node fails when failure_threshold is met:
     - 3 children where 2 return success immediately, 1 return failure immediately
     - success_threshold = 3, failure_threshold = 1
-    - Expected: Parallel returns FAILURE after 2 children fail
+    - Expected: Parallel returns FAILURE after one child fails
  -->
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
         <Parallel success_threshold="3" failure_threshold="1">
+            <Action ID="BtTestStatusAction" topic_name="tick_count_parallel_failure" reset_name="reset_count_parallel_failure" n_ticks_running="0" final_status="2" />
             <Action ID="AlwaysSuccess" />
-            <Action ID="AlwaysFailure" />
             <Action ID="AlwaysSuccess" />
         </Parallel>
     </BehaviorTree>

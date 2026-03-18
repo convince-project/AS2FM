@@ -6,9 +6,9 @@
 <root BTCPP_format="4" >
     <BehaviorTree ID="MainTree">
         <Parallel success_threshold="2" failure_threshold="2">
-            <Action ID="AlwaysSuccess" />
-            <Action ID="AlwaysSuccess" />
+            <Action ID="BtTestStatusAction" topic_name="tick_count_parallel_success" reset_name="reset_count_parallel_success" n_ticks_running="0" final_status="2" />
             <Action ID="AlwaysFailure" />
+            <Action ID="AlwaysSuccess" />
         </Parallel>
     </BehaviorTree>
 </root>

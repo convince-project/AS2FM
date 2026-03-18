@@ -116,7 +116,7 @@ class TestConversion(unittest.TestCase):
         """Test the parallel node with success threshold met."""
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_parallel_success.xml"),
-            "parallel_success_test",
+            "parallel_success_status_action_child_test",
             expected_result_probability=1.0,
         )
 
@@ -124,10 +124,17 @@ class TestConversion(unittest.TestCase):
         """Test the parallel node with failure threshold met."""
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_parallel_failure.xml"),
-            "parallel_failure_test",
+            "parallel_failure_status_action_child_test",
             expected_result_probability=1.0,
         )
 
+    def test_parallel_running(self):
+        """Test the parallel node with running children."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_parallel_running.xml"),
+            "parallel_running_status_action_child_test",
+            expected_result_probability=1.0,
+        )
 
 if __name__ == "__main__":
     pytest.main(["-s", "-v", __file__])
