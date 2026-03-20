@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    xmlns="http://www.w3.org/2005/07/scxml"
+    initial="initial"
+    version="1.0"
+    name="BtTestStatusAction"
+    model_src="">
+    <!--
+        A BT plugin for testing that returns a configurable status after n_ticks_running ticks.
+        published counter on tick_topic and reset counter on reset_topic.
+    -->
+
+    <bt_declare_port_in key="topic_name" type="string" />
+    <bt_declare_port_in key="reset_name" type="string" />
+    <bt_declare_port_in key="n_ticks_running" type="int8" />
+    <bt_declare_port_in key="final_status" type="int8" />  <!-- 1=SUCCESS, 2=FAILURE, 3=RUNNING -->
+
+    <datamodel>
+        <data id="resets" type="int16" expr="0" />
+        <data id="counter" type="int16" expr="0" />
+        <data id="ticks_before_final" type="int8">
+            <expr>
+                <bt_get_input key="n_ticks_running" />
+            </expr>
+        </data>
+        <data id="final_status" type="int8">
+            <expr>
+                <bt_get_input key="final_status" />
+            </expr>
+        </data>
+    </datamodel>
+
+    <ros_topic_publisher type="std_msgs/Int16" name="counter_pub">
+        <topic>
+            <bt_get_input key="topic_name" />
+        </topic>
+    </ros_topic_publisher>
+
+    <ros_topic_publisher type="std_msgs/Int16" name="reset_pub">
+        <topic>
+            <bt_get_input key="reset_name" />
+        </topic>
+    </ros_topic_publisher>
+
+    <state id="initial">
+        <transition target="error" cond="ticks_before_final &lt; 0" />
+        <transition target="error" cond="final_status &lt; 1 || final_status &gt; 3" />
+        <bt_tick target="initial">
+            <assign location="counter" expr="counter + 1" />
+            <ros_topic_publish name="counter_pub">
+                <field name="data" expr="counter" />
+            </ros_topic_publish>
+            <if cond="counter &lt;= ticks_before_final">
+                <bt_return_status status="RUNNING" />
+            <elseif cond="final_status == 1"/>
+                <bt_return_status status="SUCCESS" />
+            <elseif cond="final_status == 2"/>
+                <bt_return_status status="FAILURE" />
+            <else/>
+                <bt_return_status status="RUNNING" />
+            </if>
+        </bt_tick>
+        <bt_halt target="initial">
+            <assign location="resets" expr="resets + 1" />
+            <ros_topic_publish name="reset_pub">
+                <field name="data" expr="resets" />
+            </ros_topic_publish>
+            <bt_return_halted/>
+        </bt_halt>
+    </state>
+
+    <state id="error" />
+
+</ascxml>

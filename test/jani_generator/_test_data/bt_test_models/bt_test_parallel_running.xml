@@ -1,0 +1,14 @@
+<!-- Test that the Parallel node keeps running when thresholds are not met:
+    - 3 children where 2 return success immediately, 1 returns running indefinitely
+    - success_threshold = 3, failure_threshold = 1
+    - Expected: Parallel returns RUNNING
+ -->
+<root BTCPP_format="4" >
+    <BehaviorTree ID="MainTree">
+        <Parallel success_threshold="3" failure_threshold="1">
+            <Action ID="BtTestStatusAction" topic_name="tick_count_parallel_running" reset_name="reset_count_parallel_running" n_ticks_running="127" final_status="2" />
+            <Action ID="AlwaysSuccess" />
+            <Action ID="AlwaysSuccess" />
+        </Parallel>
+    </BehaviorTree>
+</root>
