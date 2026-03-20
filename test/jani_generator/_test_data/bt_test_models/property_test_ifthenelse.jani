@@ -1,0 +1,84 @@
+{
+    "properties": [
+        {
+            "expression": {
+                "fun": "values",
+                "op": "filter",
+                "states": {
+                    "op": "initial"
+                },
+                "values": {
+                    "exp": {
+                        "exp": {
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}",
+                            "left": "bt_1000_response__status",
+                            "op": "=",
+                            "right": 1
+                        },
+                        "op": "F"
+                    },
+                    "op": "Pmin"
+                }
+            },
+            "name": "tree_success"
+        },
+        {
+            "expression": {
+                "fun": "values",
+                "op": "filter",
+                "states": {
+                    "op": "initial"
+                },
+                "values": {
+                    "exp": {
+                        "exp": {
+                            "comment": "10 ticks to the then branch and the else branch should have never had a message.",
+                            "left": {
+                                "left": "topic_tick_count_then_msg__ros_fields__data",
+                                "op": "=",
+                                "right": 10
+                            },
+                            "op": "∧",
+                            "right": {
+                                "exp": "topic_tick_count_else_msg.valid",
+                                "op": "¬"
+                            }
+                        },
+                        "op": "F"
+                    },
+                    "op": "Pmin"
+                }
+            },
+            "name": "counter_then_10"
+        },
+        {
+            "expression": {
+                "fun": "values",
+                "op": "filter",
+                "states": {
+                    "op": "initial"
+                },
+                "values": {
+                    "exp": {
+                        "exp": {
+                            "comment": "10 ticks to the else branch and the then branch should have never had a message.",
+                            "left": {
+                                "left": "topic_tick_count_else_msg__ros_fields__data",
+                                "op": "=",
+                                "right": 10
+                            },
+                            "op": "∧",
+                            "right": {
+                                "exp": "topic_tick_count_then_msg.valid",
+                                "op": "¬"
+                            }
+                        },
+                        "op": "F"
+                    },
+                    "op": "Pmin"
+                }
+            },
+            "name": "counter_else_10"
+        }
+    ]
+}
