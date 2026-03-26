@@ -25,7 +25,7 @@ from typing import Dict, List, Optional, Tuple
 from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
-from as2fm.as2fm_common.array_type import get_default_expression_for_type, value_to_string_expr
+from as2fm.as2fm_common.common import get_default_expression_for_type, value_to_string_expr
 from as2fm.as2fm_common.logging import (
     INTERNAL_FILEPATH_ATTR,
     get_error_msg,

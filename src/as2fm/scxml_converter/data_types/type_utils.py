@@ -87,9 +87,12 @@ def convert_string_to_type(value: str, data_type: str, elem: XmlElement) -> Any:
     Convert a value to the provided data type.
     """
     expected_type = get_data_type_from_string(data_type)
+    if expected_type is str:
+        value = value.replace("'", r"\'")
+        value = f"'{value}'"
     interpreted_type = parse_ecmascript_expr_to_type(value, {}, elem)
-    assert isinstance(
-        interpreted_type, expected_type
+    assert (
+        interpreted_type is expected_type
     ), f"Mismatched type: {value} evaluates to {interpreted_type}, but {expected_type} is expected."
     return interpreted_type(value)
 

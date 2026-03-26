@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, MutableSequence, Optional, Tuple, Type, Union, get_args
+from typing import List, MutableSequence, Optional, Tuple, Type, Union
 
-from as2fm.as2fm_common.common import ValidPlainScxmlTypes
+from as2fm.as2fm_common.types import ValidPlainScxmlTypes
 
 ARRAY_BASE_TYPES = (int, float, None)
 
@@ -204,32 +204,3 @@ def get_padded_array(
 def is_array_type(field_type: Union[Type[ValidPlainScxmlTypes], ArrayInfo]) -> bool:
     """Check if the field type is an array type."""
     return field_type is MutableSequence or isinstance(field_type, ArrayInfo)
-
-
-def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> ValidPlainScxmlTypes:
-    """Generate a default expression for a field type."""
-    assert field_type in get_args(
-        ValidPlainScxmlTypes
-    ), f"Error: Unsupported SCXML data type {field_type}."
-    if field_type is MutableSequence:
-        return []
-    if field_type is str:
-        return ""
-    else:
-        return field_type()
-
-
-def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
-    """Takes a python object and returns it as a (SCXML compatible) string."""
-    if isinstance(value, MutableSequence):
-        assert is_valid_array(value), f"Found invalid input array {value}."
-        # Expect value to be a list, so casting to string is enough.
-        return str(value)
-    elif isinstance(value, bool):
-        return str(value).lower()
-    elif isinstance(value, (int, float)):
-        return str(value)
-    elif isinstance(value, str):
-        return f"'{value}'"
-    else:
-        raise ValueError(f"Unsupported value type {type(value)}.")

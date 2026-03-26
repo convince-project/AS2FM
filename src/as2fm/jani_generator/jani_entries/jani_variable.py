@@ -20,7 +20,7 @@ Variables in Jani
 from typing import MutableSequence, Optional, Tuple, Type, Union, get_args
 
 from as2fm.as2fm_common.array_type import ArrayInfo
-from as2fm.as2fm_common.common import ValidJaniTypes
+from as2fm.as2fm_common.types import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniValue
 from as2fm.jani_generator.jani_entries.jani_expression import SupportedExp
 

@@ -23,9 +23,13 @@ from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
+from as2fm.as2fm_common.common import value_to_string_expr
 from as2fm.as2fm_common.logging import check_assertion
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import is_blackboard_reference
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.data_types.type_utils import (
+    convert_string_to_type,
+)
 from as2fm.scxml_converter.scxml_entries import AscxmlDeclaration
 from as2fm.scxml_converter.scxml_entries.utils import is_non_empty_string
 from as2fm.scxml_converter.scxml_entries.xml_utils import assert_xml_tag_ok, get_xml_attribute
@@ -62,7 +66,13 @@ class BtGenericPortDeclaration(AscxmlDeclaration):
             self.get_xml_origin(),
             f"Multiple assignments to BT port {self._key}",
         )
-        self._value = val
+        if is_blackboard_reference(val):
+            # If this is a blackboard reference, keep it as is
+            self._value = val
+        else:
+            # Try casting the input string to the required type
+            casted_value = convert_string_to_type(val, self._type, self.get_xml_origin())
+            self._value = value_to_string_expr(casted_value)
 
     def get_key_value(self) -> Optional[str]:
         return self._value
