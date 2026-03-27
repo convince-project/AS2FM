@@ -11,7 +11,6 @@
 
     <datamodel>
         <data id="bb_var" expr="''" type="string" />
-        <data id="target" expr="'test'" type="string" />
     </datamodel>
 
     <state id="wait_for_tick">
@@ -29,7 +28,7 @@
                 </expr>
             </assign>
             <!-- Leaf node tick -->
-            <if cond="bb_var == target">
+            <if cond="bb_var == 'test'">
                 <bt_return_status status="SUCCESS" />
             <else />
                 <bt_return_status status="FAILURE" />

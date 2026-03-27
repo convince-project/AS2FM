@@ -111,6 +111,9 @@ def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
     elif isinstance(value, (int, float)):
         return str(value)
     elif isinstance(value, str):
+        # Make sure to correctly escape quotes
+        value = value.replace("'", r"\'")
+        # Add quotes around the value, to make it a valid JS string
         return f"'{value}'"
     else:
         raise ValueError(f"Unsupported value type {type(value)}.")
