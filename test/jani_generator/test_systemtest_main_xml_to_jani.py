@@ -482,6 +482,8 @@ def get_cases():
             "folder": "uc1_docking",
             "property_name": "charging_starts",
             "trace_length_limit": 1_000_000,
+            "n_threads": 8,
+            "disable_cache": True,
         },
         # UC1 docking BT (with a bug).
         _default_case()
@@ -493,6 +495,7 @@ def get_cases():
             "expected_result_probability": 0.0,
             "trace_length_limit": 1_000_000,
             "n_threads": 8,
+            "disable_cache": True,
         },
         # UC1 Complete Mission
         _default_case()

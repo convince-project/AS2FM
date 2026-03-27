@@ -92,9 +92,11 @@ def convert_string_to_type(value: str, data_type: str, elem: XmlElement) -> Any:
     if expected_type is str:
         return value
     interpreted_type = parse_ecmascript_expr_to_type(value, {}, elem)
-    assert (
-        interpreted_type is expected_type
-    ), f"Mismatched type: {value} evaluates to {interpreted_type}, but {expected_type} is expected."
+    check_assertion(
+        interpreted_type is expected_type,
+        elem,
+        f"Mismatched type: {value} evaluates to {interpreted_type} != {expected_type} (expected).",
+    )
     return interpreted_type(value)
 
 
