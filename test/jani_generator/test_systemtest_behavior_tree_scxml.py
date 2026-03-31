@@ -50,7 +50,9 @@ class TestConversion(unittest.TestCase):
         generated_scxml_path = "generated_plain_scxml"
         jani_file = "main.jani"
         test_folder = os.path.dirname(main_xml_full_path)
-        interpret_top_level_xml(main_xml_full_path, "main.jani", generated_scxml_path)
+        interpret_top_level_xml(
+            main_xml_full_path, jani_file="main.jani", scxmls_dir=generated_scxml_path
+        )
         jani_file_path = os.path.join(test_folder, jani_file)
         generated_scxml_path = os.path.join(test_folder, generated_scxml_path)
         self.assertTrue(os.path.exists(jani_file_path))
@@ -99,6 +101,70 @@ class TestConversion(unittest.TestCase):
         self._test_with_main(
             os.path.join("bt_test_models", "main_test_fallback.xml"),
             "regular_bt_test",
+            expected_result_probability=1.0,
+        )
+
+    def test_repeat(self):
+        """Test the repeat BT plugin."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_repeat.xml"),
+            "repeats_and_success",
+            expected_result_probability=1.0,
+        )
+
+    def test_ifthenelse_then_tree_success(self):
+        """Test the ifthenelse BT plugins then branch for tree success."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_ifthenelse_then.xml"),
+            "tree_success",
+            expected_result_probability=1.0,
+        )
+
+    def test_ifthenelse_then_counter(self):
+        """Test the ifthenelse BT plugins then branch for correct number of ticks."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_ifthenelse_then.xml"),
+            "counter_then_10",
+            expected_result_probability=1.0,
+        )
+
+    def test_ifthenelse_else_tree_success(self):
+        """Test the ifthenelse BT plugins else branch for tree success."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_ifthenelse_else.xml"),
+            "tree_success",
+            expected_result_probability=1.0,
+        )
+
+    def test_ifthenelse_else_counter(self):
+        """Test the ifthenelse BT plugins else branch for correct number of ticks."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_ifthenelse_else.xml"),
+            "counter_else_10",
+            expected_result_probability=1.0,
+        )
+
+    def test_parallel_success(self):
+        """Test the parallel node with success threshold met."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_parallel_success.xml"),
+            "parallel_success_status_action_child_test",
+            expected_result_probability=1.0,
+        )
+
+    def test_parallel_failure(self):
+        """Test the parallel node with failure threshold met."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_parallel_failure.xml"),
+            "parallel_failure_status_action_child_test",
+            expected_result_probability=1.0,
+        )
+
+    def test_parallel_running(self):
+        """Test the parallel node with running children."""
+        self._test_with_main(
+            os.path.join("bt_test_models", "main_test_parallel_running.xml"),
+            "parallel_running_status_action_child_test",
             expected_result_probability=1.0,
         )
 

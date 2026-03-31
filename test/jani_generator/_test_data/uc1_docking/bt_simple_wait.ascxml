@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="initial"
+    version="1.0"
+    name="SimpleWait"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="waiting" expr="false" type="bool" />
+        <data id="n_waited" expr="0" type="int16" />
+        <data id="wait_duration_s" expr="0" type="float32" />
+    </datamodel>
+
+    <bt_declare_port_in key="wait_duration" type="float32" />
+    <ros_time_rate rate_hz="10" name="wait_timer" />
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <if cond="!waiting">
+                <assign location="waiting" expr="true" />
+                <assign location="n_waited" expr="0" />
+                <assign location="wait_duration_s">
+                    <expr>
+                        <bt_get_input key="wait_duration" />
+                    </expr>
+                </assign>
+                <bt_return_status status="RUNNING" />
+            <else/>
+                <if cond="n_waited * 0.1 >= wait_duration_s">
+                    <bt_return_status status="SUCCESS" />
+                <else/>
+                    <bt_return_status status="RUNNING" />
+                </if>
+            </if>
+        </bt_tick>
+        <bt_halt target="initial">
+            <assign location="waiting" expr="false" />
+            <assign location="n_waited" expr="0" />
+            <bt_return_halted />
+        </bt_halt>
+        <ros_rate_callback name="wait_timer" target="initial">
+            <if cond="waiting == true">
+                <assign location="n_waited" expr="n_waited + 1" />
+            </if>
+        </ros_rate_callback>
+    </state>
+
+</ascxml>

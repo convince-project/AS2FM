@@ -20,6 +20,15 @@ Representation of ROS Services.
 from typing import Dict, List
 
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import RosCommunicationHandler
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import (
+    generate_srv_request_event,
+    generate_srv_response_event,
+    generate_srv_server_request_event,
+    generate_srv_server_response_event,
+    get_plain_ros_param_dict,
+    get_srv_type_params,
+    sanitize_ros_interface_name,
+)
 from as2fm.scxml_converter.scxml_entries import (
     ScxmlAssign,
     ScxmlDataModel,
@@ -29,15 +38,7 @@ from as2fm.scxml_converter.scxml_entries import (
     ScxmlState,
     ScxmlTransition,
 )
-from as2fm.scxml_converter.scxml_entries.ros_utils import (
-    generate_srv_request_event,
-    generate_srv_response_event,
-    generate_srv_server_request_event,
-    generate_srv_server_response_event,
-    get_srv_type_params,
-    sanitize_ros_interface_name,
-)
-from as2fm.scxml_converter.scxml_entries.utils import PLAIN_FIELD_EVENT_PREFIX, ROS_FIELD_PREFIX
+from as2fm.scxml_converter.scxml_entries.utils import ASCXML_FIELD_PREFIX, PLAIN_FIELD_EVENT_PREFIX
 
 
 class RosServiceHandler(RosCommunicationHandler):
@@ -62,7 +63,7 @@ class RosServiceHandler(RosCommunicationHandler):
         assignments: List[ScxmlAssign] = []
         event_params: List[ScxmlParam] = []
         for field_name in req_fields:
-            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_w_pref = ASCXML_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         return ScxmlTransition.make_single_target_transition(
@@ -81,7 +82,7 @@ class RosServiceHandler(RosCommunicationHandler):
         assignments: List[ScxmlAssign] = []
         event_params: List[ScxmlParam] = []
         for field_name in res_fields:
-            field_w_pref = ROS_FIELD_PREFIX + field_name
+            field_w_pref = ASCXML_FIELD_PREFIX + field_name
             assignments.append(ScxmlAssign(field_w_pref, PLAIN_FIELD_EVENT_PREFIX + field_name))
             event_params.append(ScxmlParam(field_w_pref, expr=field_w_pref))
         return ScxmlTransition.make_single_target_transition(
@@ -106,6 +107,8 @@ class RosServiceHandler(RosCommunicationHandler):
         """
         self._assert_validity()
         req_params, res_params = get_srv_type_params(self._interface_type)
+        req_params = get_plain_ros_param_dict(req_params)
+        res_params = get_plain_ros_param_dict(res_params)
         # Hack: Using support variables in the data model to avoid having _event in send params
         req_fields_as_data = self._generate_datamodel_from_ros_fields(req_params | res_params)
         # Make sure the service name has no slashes and spaces

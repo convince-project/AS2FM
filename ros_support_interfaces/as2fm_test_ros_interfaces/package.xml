@@ -8,6 +8,8 @@
   <license>Apache License 2.0</license>
   <author email="marco.lampacrescia@de.bosch.com">Marco Lampacrescia</author>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <exec_depend>as2fm_test_srvs</exec_depend>
   <exec_depend>example_interfaces</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>

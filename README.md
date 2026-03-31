@@ -2,7 +2,7 @@
 
 ## Summary overview
 
-This package provides tools to convert the high level representation of an autonomous system (implemented using a combination of BT XML + a ROS flavoured set of SCXML (also called ROS-SCXML) files) to a formal model (i.e. JANI).
+This package provides tools to convert the high level representation of an autonomous system (implemented using RoAML, a combination of BT XML + a ROS flavoured set of SCXML (also called ASCXML) files) to a formal model (i.e. JANI) or a verifiable one (i.e. plain SCXML).
 
 ## Documentation
 

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="running"
+    version="1.0"
+    name="UpdateGoalAndCurrentPosition"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_out key="goal_x" type="int32" />
+    <bt_declare_port_out key="goal_y" type="int32" />
+    <bt_declare_port_out key="curr_x" type="int32" />
+    <bt_declare_port_out key="curr_y" type="int32" />
+    <bt_declare_port_in key="goal_topic" type="string" />
+    <bt_declare_port_in key="curr_topic" type="string" />
+
+    <datamodel>
+        <data id="is_goal_init" expr="false" type="bool" />
+        <data id="is_pose_init" expr="false" type="bool" />
+        <data id="goal_x" expr="0" type="int32" />
+        <data id="goal_y" expr="0" type="int32" />
+        <data id="curr_x" expr="0" type="int32" />
+        <data id="curr_y" expr="0" type="int32" />
+    </datamodel>
+
+    <ros_topic_subscriber name="curr_sub" type="grid_robot_interfaces/Int2D">
+        <topic>
+            <bt_get_input key="curr_topic" />
+        </topic>
+    </ros_topic_subscriber>
+
+    <ros_topic_subscriber name="goal_sub" type="grid_robot_interfaces/Int2D">
+        <topic>
+            <bt_get_input key="goal_topic" />
+        </topic>
+    </ros_topic_subscriber>
+
+    <state id="running">
+        <!-- New robot goal -->
+        <ros_topic_callback name="goal_sub" target="running">
+            <assign location="goal_x" expr="_msg.x" />
+            <assign location="goal_y" expr="_msg.y" />
+            <assign location="is_goal_init" expr="true" />
+        </ros_topic_callback>
+        <!-- New robot pose -->
+        <ros_topic_callback name="curr_sub" target="running">
+            <assign location="curr_x" expr="_msg.x" />
+            <assign location="curr_y" expr="_msg.y" />
+            <assign location="is_pose_init" expr="true" />
+        </ros_topic_callback>
+        <!-- Leaf node tick -->
+        <bt_tick target="running">
+            <if cond="is_goal_init &amp;&amp; is_pose_init">
+                <bt_set_output key="goal_x" expr="goal_x" />
+                <bt_set_output key="goal_y" expr="goal_y" />
+                <bt_set_output key="curr_x" expr="curr_x" />
+                <bt_set_output key="curr_y" expr="curr_y" />
+                <bt_return_status status="SUCCESS" />
+                <else />
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+        <bt_halt target="running">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

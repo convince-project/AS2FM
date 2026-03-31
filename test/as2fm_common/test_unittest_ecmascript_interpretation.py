@@ -19,11 +19,12 @@ import unittest
 
 import pytest
 
+from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.ecmascript_interpretation import (
     MemberAccessCheckException,
     has_array_access,
     has_member_access,
-    interpret_ecma_script_expr,
+    parse_ecmascript_expr_to_type,
 )
 
 
@@ -39,12 +40,41 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         src https://alexzhornyak.github.io/SCXML-tutorial/Doc/\
             datamodel.html#ecmascript
         """
-        self.assertEqual(interpret_ecma_script_expr("1"), 1)
-        self.assertEqual(interpret_ecma_script_expr("1.1"), 1.1)
-        self.assertEqual(interpret_ecma_script_expr("true"), True)
-        self.assertEqual(interpret_ecma_script_expr("false"), False)
-        self.assertEqual(interpret_ecma_script_expr("[1,2,3]"), [1, 2, 3])
-        self.assertEqual(interpret_ecma_script_expr("'this is a string'"), str("this is a string"))
+        # Basic literals
+        self.assertEqual(parse_ecmascript_expr_to_type("1", {}), int)
+        self.assertEqual(parse_ecmascript_expr_to_type("1.1", {}), float)
+        self.assertEqual(parse_ecmascript_expr_to_type("true", {}), bool)
+        self.assertEqual(parse_ecmascript_expr_to_type("false", {}), bool)
+        self.assertEqual(parse_ecmascript_expr_to_type("'ecma'", {}), str)
+        self.assertEqual(parse_ecmascript_expr_to_type("[1,2,3]", {}), ArrayInfo(int, 1, [None]))
+        # Identifiers
+        self.assertEqual(parse_ecmascript_expr_to_type("x", {"x": int}), int)
+        self.assertEqual(parse_ecmascript_expr_to_type("x", {"x": bool}), bool)
+        self.assertEqual(
+            parse_ecmascript_expr_to_type("x", {"x": ArrayInfo(int, 1, [None])}),
+            ArrayInfo(int, 1, [None]),
+        )
+        self.assertEqual(
+            parse_ecmascript_expr_to_type("x", {"x": ArrayInfo(float, 3, [None] * 3)}),
+            ArrayInfo(float, 3, [None] * 3),
+        )
+        # Array Access
+        self.assertEqual(
+            parse_ecmascript_expr_to_type("x[1]", {"x": ArrayInfo(float, 3, [None] * 3)}),
+            ArrayInfo(float, 2, [None] * 2),
+        )
+        self.assertEqual(
+            parse_ecmascript_expr_to_type("x[1][0]", {"x": ArrayInfo(float, 3, [None] * 3)}),
+            ArrayInfo(float, 1, [None]),
+        )
+        # Expressions
+        self.assertEqual(parse_ecmascript_expr_to_type("-x", {"x": int}), int)
+        self.assertEqual(parse_ecmascript_expr_to_type("-x", {"x": float}), float)
+        self.assertEqual(parse_ecmascript_expr_to_type("x > 1", {"x": float}), bool)
+        self.assertEqual(parse_ecmascript_expr_to_type("x != y", {"x": float, "y": float}), bool)
+        self.assertEqual(
+            parse_ecmascript_expr_to_type("x != y && y < 2.0", {"x": float, "y": float}), bool
+        )
 
     def test_ecmascript_unsupported(self):
         """
@@ -56,9 +86,9 @@ class TestEcmascriptInterpreter(unittest.TestCase):
         src https://alexzhornyak.github.io/SCXML-tutorial/Doc/\
             datamodel.html#ecmascript
         """
-        self.assertRaises(ValueError, interpret_ecma_script_expr, "null")
-        self.assertRaises(ValueError, interpret_ecma_script_expr, "undefined")
-        self.assertRaises(ValueError, interpret_ecma_script_expr, "new Date()")
+        self.assertRaises(ValueError, parse_ecmascript_expr_to_type, "null", {})
+        self.assertRaises(KeyError, parse_ecmascript_expr_to_type, "undefined", {})
+        self.assertRaises(ValueError, parse_ecmascript_expr_to_type, "new Date()", {})
 
     def test_has_array_access(self):
         self.assertTrue(has_array_access("a[0]", None))

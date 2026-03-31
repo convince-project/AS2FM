@@ -16,64 +16,31 @@
 # limitations under the License.
 
 import argparse
-import json
 import os
-import timeit
 from typing import Optional, Sequence
 
-from as2fm.jani_generator.convince_jani_helpers import convince_jani_parser
-from as2fm.jani_generator.jani_entries import JaniModel
+from as2fm.as2fm_common.logging import get_warn_msg
 from as2fm.jani_generator.scxml_helpers.top_level_interpreter import interpret_top_level_xml
 
 
-def main_convince_to_plain_jani(_args: Optional[Sequence[str]] = None) -> None:
+def roaml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     """
-    Entry point for the conversion of a CONVINCE JANI file to a plain JANI file.
+    Main function for the RoAML model (with ASCXML models) to JANI conversion.
 
-    :param args: The arguments to parse. If None, sys.argv is used.
-    :return: None
-    """
-    parser = argparse.ArgumentParser(description="Convert CONVINCE JANI to plain JANI.")
-    parser.add_argument("--convince_jani", help="The convince-jani file.", type=str, required=True)
-    parser.add_argument("--output", help="The output Plain JANI file.", type=str, required=True)
-    args = parser.parse_args(_args)
-
-    start_time = timeit.default_timer()
-    model_loaded = False
-    jani_model = JaniModel()
-    if args.convince_jani is not None:
-        assert os.path.isfile(args.convince_jani), f"File {args.convince_jani} does not exist."
-        # Check the file's extension
-        _, extension = os.path.splitext(args.convince_jani)
-        assert extension == ".jani", f"File {args.convince_jani} is not a JANI file."
-        convince_jani_parser(jani_model, args.convince_jani)
-        model_loaded = True
-    assert model_loaded, "No input file was provided. Check your input."
-    # Write the loaded model to the output file
-    with open(args.output, "w", encoding="utf-8") as output_file:
-        json.dump(jani_model.as_dict(), output_file, indent=4, ensure_ascii=False)
-    print(f"Converted jani model written to {args.output}.")
-    print(f"Conversion took {timeit.default_timer() - start_time} seconds.")
-
-
-def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
-    """
-    Main function for the SCXML to JANI conversion.
-
-    Module containing the main entry points, pulling all necessary files together.
-    convince.jani \
-    BT.xml         \
-    plugin.scxml    \
-    node1.scxml      => main_scxml_to_jani  =>  main.jani
-    node2.scxml     /
-    env.scxml      /
+    The RoAML model describes the full system, and pulls all necessary files together:
+    properties.jani \
+    BT.xml           \
+    plugin.ascxml     \
+    node1.ascxml       => roaml_to_jani  =>  main.jani
+    node2.ascxml      /
+    env.ascxml       /
 
     :param args: The arguments to parse. If None, sys.argv is used.
     :return: None
     """
     parser = argparse.ArgumentParser(description="Convert SCXML robot system models to JANI model.")
     parser.add_argument(
-        "--generated-scxml-dir",
+        "--scxml-out-dir",
         type=str,
         default="",
         help="Path to the folder containing the generated plain-SCXML files.",
@@ -81,30 +48,37 @@ def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--jani-out-file", type=str, default="", help="Path to the generated jani file."
     )
-    parser.add_argument("main_xml", type=str, help="The path to the main XML file to interpret.")
+    parser.add_argument("roaml_xml", type=str, help="The path to the RoAML XML file to interpret.")
     args = parser.parse_args(_args)
 
     # Check the main xml file provided by the user
-    main_xml_file = args.main_xml
+    main_xml_file = args.roaml_xml
     assert os.path.isfile(main_xml_file), f"File {main_xml_file} does not exist."
     assert main_xml_file.endswith(".xml"), "File {main_xml_file} is not a '.xml' file."
     # Process additional, optional parameters
-    scxml_out_dir = args.generated_scxml_dir
+    scxml_out_dir = args.scxml_out_dir
     scxml_out_dir = None if len(scxml_out_dir) == 0 else scxml_out_dir
-    jani_out_file = (
-        args.jani_out_file
-        if len(args.jani_out_file) > 0
-        else main_xml_file.removesuffix("xml") + "jani"
-    )
+    jani_out_file = args.jani_out_file
+    jani_out_file = None if len(jani_out_file) == 0 else jani_out_file
 
-    print("AS2FM - SCXML to JANI.\n")
+    # Proceed with the conversion
+    print("AS2FM - RoAML to JANI.\n")
     print(f"Loading model from {main_xml_file}.")
+    interpret_top_level_xml(main_xml_file, jani_file=jani_out_file, scxmls_dir=scxml_out_dir)
 
-    interpret_top_level_xml(main_xml_file, jani_out_file, scxml_out_dir)
+
+def main_scxml_to_jani(_args: Optional[Sequence[str]] = None) -> None:
+    """Support function for the old enry-point. Deprecated!"""
+    get_warn_msg(
+        None,
+        "The `main_scxml_to_jani` executable is deprecated. "
+        "Switch to the new `roaml_to_jani` one.",
+    )
+    roaml_to_jani(_args)
 
 
 if __name__ == "__main__":
     # for testing purposes only
     import sys
 
-    main_scxml_to_jani(sys.argv[1:])
+    roaml_to_jani(sys.argv[1:])

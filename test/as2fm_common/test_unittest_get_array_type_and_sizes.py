@@ -17,7 +17,7 @@
 
 import pytest
 
-from as2fm.as2fm_common.common import get_array_type_and_sizes
+from as2fm.as2fm_common.array_type import get_array_type_and_sizes
 
 
 def test_array_dim_base_cases():

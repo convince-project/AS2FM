@@ -1,0 +1,138 @@
+{
+    "properties": [
+        {
+            "name": "parallel_success_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1000_response__status",
+                            "right": 1,
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_failure_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1000_response__status",
+                            "right": 2,
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_running_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1000_response__status",
+                            "right": 3,
+                            "comment": "Bt 1000 is always the root, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_running_status_action_child_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1001_response__status",
+                            "right": 3,
+                            "comment": "Bt 1001 is BtTestStatusAction in main_test_parallel_running.xml, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_success_status_action_child_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1001_response__status",
+                            "right": 2,
+                            "comment": "Bt 1001 is BtTestStatusAction in main_test_parallel_success.xml, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        },
+        {
+            "name": "parallel_failure_status_action_child_test",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "=",
+                            "left": "bt_1001_response__status",
+                            "right": 2,
+                            "comment": "Bt 1001 is BtTestStatusAction in main_test_parallel_failure.xml, Values = {1: SUCCESS, 2: FAILURE, 3: RUNNING}"
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

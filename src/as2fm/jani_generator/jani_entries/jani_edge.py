@@ -23,7 +23,7 @@ from as2fm.jani_generator.jani_entries import (
     JaniExpression,
     JaniGuard,
 )
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import expand_expression
+from as2fm.jani_generator.jani_entries.jani_expression_support import expand_expression
 
 
 class JaniEdge:

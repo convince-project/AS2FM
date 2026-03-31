@@ -19,6 +19,7 @@ from typing import List, MutableSequence, Tuple
 
 import pytest
 
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_utils import ROS_INTERFACE_TO_PREFIXES
 from as2fm.scxml_converter.data_types.type_utils import get_data_type_from_string
 from as2fm.scxml_converter.data_types.xml_struct_definition import XmlStructDefinition
 from as2fm.scxml_converter.scxml_entries import ScxmlData, ScxmlDataModel
@@ -26,8 +27,8 @@ from as2fm.scxml_converter.scxml_entries.type_utils import ScxmlStructDeclaratio
 from as2fm.scxml_converter.scxml_entries.utils import (
     PLAIN_FIELD_EVENT_PREFIX,
     PLAIN_SCXML_EVENT_DATA_PREFIX,
-    CallbackType,
     convert_expression_with_object_arrays,
+    convert_expression_with_string_literals,
     get_plain_expression,
 )
 
@@ -41,7 +42,7 @@ def test_standard_good_expressions():
         ("cos(x+y+z) > 0 && sin(z - y) <= 0", "cos(x + y + z) > 0 && sin(z - y) <= 0"),
     ]
     for in_expr, gt_expr in test_expressions:
-        conv_expr = get_plain_expression(in_expr, CallbackType.STATE, None)
+        conv_expr = get_plain_expression(in_expr, [], None)
         assert conv_expr == gt_expr
 
 
@@ -55,7 +56,7 @@ def test_standard_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.STATE, None)
+            get_plain_expression(expr, [], None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -78,7 +79,7 @@ def test_topic_good_expressions():
         + f"{PLAIN_FIELD_EVENT_PREFIX}index",
     ]
     for test_expr, gt_expr in zip(test_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_TOPIC, None)
+        conv_expr = get_plain_expression(test_expr, ROS_INTERFACE_TO_PREFIXES["ros_topic"], None)
         assert conv_expr == gt_expr
 
 
@@ -92,7 +93,7 @@ def test_topic_bad_expressions():
     ]
     for expr in bad_expressions:
         with pytest.raises(AssertionError):
-            get_plain_expression(expr, CallbackType.ROS_TOPIC, None)
+            get_plain_expression(expr, ROS_INTERFACE_TO_PREFIXES["ros_topic"], None)
             print(f"Expression '{expr}' should raise.")
 
 
@@ -105,7 +106,9 @@ def test_action_goal_good_expressions():
         f"{PLAIN_FIELD_EVENT_PREFIX}x < 1",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_GOAL, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_goal"], None
+        )
         assert conv_expr == gt_expr
 
 
@@ -122,7 +125,9 @@ def test_action_feedback_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_FEEDBACK, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_feedback"], None
+        )
         assert conv_expr == gt_expr
 
 
@@ -141,7 +146,9 @@ def test_action_result_good_expressions():
         f"{PLAIN_SCXML_EVENT_DATA_PREFIX}goal_id",
     ]
     for test_expr, gt_expr in zip(ok_expressions, expected_expressions):
-        conv_expr = get_plain_expression(test_expr, CallbackType.ROS_ACTION_RESULT, None)
+        conv_expr = get_plain_expression(
+            test_expr, ROS_INTERFACE_TO_PREFIXES["ros_action_result"], None
+        )
         assert conv_expr == gt_expr
 
 
@@ -228,6 +235,11 @@ def test_convert_expression_with_object_arrays():
                 "{'points': [{'x': 5.0, 'y': 6.0}]}]",
                 "Polygons",
             ),
+            ScxmlData(
+                "polygon_array",
+                "[{'points': [{'x': 1.0, 'y': 2.0}, {'x': 3.0, 'y': 4.0}]}]",
+                "Polygon[4]",
+            ),
         ]
     )
     data_model.set_custom_data_types(custom_structs)
@@ -248,6 +260,10 @@ def test_convert_expression_with_object_arrays():
     assert (
         convert_expression_with_object_arrays("points.length", None, data_vars_structs)
         == "points__x.length"
+    )
+    assert (
+        convert_expression_with_object_arrays("points[0].x", None, data_vars_structs)
+        == "points__x[0]"
     )
     assert (
         convert_expression_with_object_arrays("polygons.length", None, data_vars_structs)
@@ -279,6 +295,37 @@ def test_convert_expression_with_object_arrays():
         )
         == "polygons__polygons__points[2][polygons__polygons__points__x[2].length]"
     )
+    # Unit test for array if structs functionality
+    pa_struct_def, pa_arr_info = data_vars_structs.get_data_type("polygon_array", None)
+    assert isinstance(pa_struct_def, XmlStructDefinition) and pa_struct_def.get_name() == "Polygon"
+    assert pa_arr_info is not None and pa_arr_info.array_max_sizes == [4]
+    pa_exp_mem = pa_struct_def.get_expanded_members(pa_arr_info)
+    assert len(pa_exp_mem) == 2
+    assert pa_exp_mem["points.x"] == "float32[4][]"
+    assert pa_exp_mem["points.y"] == "float32[4][]"
+    pa_exp_data = pa_struct_def.get_expanded_expressions(
+        data_model.get_data_entries()[5].get_expr(), pa_arr_info
+    )
+    assert pa_exp_data["points.x"] == "[[1,3]]"
+    assert pa_exp_data["points.y"] == "[[2,4]]"
+
+
+def test_convert_expression_with_string_literals():
+    """Test if the functionality works in a number of cases."""
+    test_cases = [
+        ("'as2fm'", "[97,115,50,102,109]"),
+        ("as2fm_str == 'as2fm'", "as2fm_str == [97,115,50,102,109]"),
+        ("'as2fm' == as2fm_str", "[97,115,50,102,109] == as2fm_str"),
+        ("['as', '2', 'fm']", "[[97,115],[50],[102,109]]"),
+    ]
+
+    for in_val, gt_out in test_cases:
+        out_val = convert_expression_with_string_literals(in_val)
+        # Arrays are printed on multiple lines by default: we remove them here.
+        out_val = " ".join(s.strip().rstrip() for s in out_val.splitlines())
+        # Remove extra-spaces in array brackets
+        out_val = out_val.replace("[ ", "[").replace(" ]", "]")
+        assert out_val == gt_out, f"Failed converting `{in_val}`: `{out_val}` != `{gt_out}`"
 
 
 def test_type_string_conversion():

@@ -15,12 +15,13 @@
 
 from typing import Dict, Iterable, List, Optional, Type, Union
 
+from lxml import etree as ET
 from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.common import is_comment
 from as2fm.as2fm_common.logging import get_error_msg, log_error
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
-from as2fm.scxml_converter.scxml_entries import ScxmlBase
+from as2fm.scxml_converter.scxml_entries import AscxmlConfiguration, ScxmlBase
 
 
 class XmlUtilsError(Exception):
@@ -182,3 +183,13 @@ def read_value_from_xml_arg_or_child(
                 )
             )
     return read_value
+
+
+def add_configurable_to_xml(xml_data, source: Union[str, AscxmlConfiguration], entry_name: str):
+    """Add an entry to the xml tree either as argument or a child, dependingg on its type."""
+    if isinstance(source, str):
+        xml_data.set(entry_name, source)
+    else:
+        entry_xml = ET.Element(entry_name)
+        entry_xml.append(source.as_xml())
+        xml_data.append(entry_xml)

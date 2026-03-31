@@ -1,0 +1,34 @@
+# Copyright (c) 2025 - for information on the respective copyright owner
+# see the NOTICE file
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Generic declaration ASCXML entry."""
+
+from as2fm.as2fm_common.logging import log_warning
+from as2fm.scxml_converter.scxml_entries import ScxmlBase
+
+
+class AscxmlThread(ScxmlBase):
+    """
+    Base class for thread definition in ASCXML.
+
+    Threads are often associated to framework specific functionalities, e.g. ROS 2 actions.
+    Processing them results in one or more additional SCXML state machines running alongside
+    the existing ones.
+    """
+
+    def is_plain_scxml(self, verbose: bool = False):
+        if verbose:
+            log_warning(None, f"No plain SCXML: tag {self.get_tag_name()} is never plain.")
+        return False

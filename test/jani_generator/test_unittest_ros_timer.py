@@ -53,7 +53,9 @@ def get_time_step_from_timer_automaton(automaton: JaniAutomaton) -> int:
     global_tick_edge = [
         edge for edge in automaton.get_edges() if edge.get_action() == GLOBAL_TIMER_TICK_ACTION
     ]
-    assert len(global_tick_edge) == 1, "Expected only one edge advancing the global timer"
+    assert (
+        len(global_tick_edge) == 2
+    ), f"Expected exactly two edges advancing the global timer in >{automaton.get_name()}<"
     edge_dict = global_tick_edge[0].as_dict({})
     return int(edge_dict["destinations"][0]["assignments"][0]["value"]["right"])
 
@@ -68,7 +70,7 @@ def generic_global_timer_check(timer_rates: List[float], expected_time_step: int
         timers.append(RosTimer(f"timer{i}", rate))
     ros_timer_scxml = make_global_timer_scxml(timers, max_time_ns)
     assert ros_timer_scxml is not None
-    timer_scxmls, _ = ros_timer_scxml.to_plain_scxml_and_declarations()
+    timer_scxmls = ros_timer_scxml.to_plain_scxml()
     assert len(timer_scxmls) == 1
     events_holder = EventsHolder()
     jani_automaton = convert_scxml_root_to_jani_automaton(timer_scxmls[0], events_holder, 0)

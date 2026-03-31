@@ -59,10 +59,10 @@ All of those components are summarized and collected in the `main.xml <https://g
 
     .. code-block:: xml
 
-        <mc_parameters>
+        <parameters>
             <max_time value="100" unit="s" />
             <max_array_size value="10" />
-        </mc_parameters>
+        </parameters>
 
 * Afterwards the Behavior Tree is fully specified in terms of the BT in the BT.cpp XML format and the used BT plugins in SCXML for navigating, picking, and placing. We will go into the details of the individual files later.
 
@@ -70,9 +70,9 @@ All of those components are summarized and collected in the `main.xml <https://g
 
         <behavior_tree>
             <input type="bt.cpp-xml" src="./bt_tree.xml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_navigate_action.scxml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_pick_action.scxml" />
-            <input type="bt-plugin-ros-scxml" src="./bt_place_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_navigate_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_pick_action.scxml" />
+            <input type="bt-plugin-ascxml" src="./bt_place_action.scxml" />
         </behavior_tree>
 
 * In addition, the model of the environment, also known as world, is given in SCXML. We will go into the details of the environment model later.
@@ -80,7 +80,7 @@ All of those components are summarized and collected in the `main.xml <https://g
     .. code-block:: xml
 
         <node_models>
-            <input type="ros-scxml" src="./world.scxml" />
+            <input type="node-ascxml" src="./world.scxml" />
         </node_models>
 
 * In the end the properties are specified. We will go into the details of the checked property later.
@@ -157,19 +157,19 @@ Assuming, you are in the ``examples/tutorial_fetch_and_carry`` folder:
 
 .. sybil-new-environment: first_model_checking
     :cwd: examples/tutorial_fetch_and_carry
-    :expected-files: main.jani, traces.csv
+    :expected-files: main.jani, generated_traces/*.csv
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main.xml
+    $ as2fm_roaml_to_jani main.xml --jani-out-file main.jani
 
-    AS2FM - SCXML to JANI.
+    AS2FM - RoAML to JANI.
 
     Loading model from main.xml.
-    xml_file='./world.scxml'
-    xml_file='./bt_navigate_action.scxml'
-    xml_file='./bt_pick_action.scxml'
-    xml_file='./bt_place_action.scxml'
+    xml_file='./world.ascxml'
+    xml_file='./bt_navigate_action.ascxml'
+    xml_file='./bt_pick_action.ascxml'
+    xml_file='./bt_place_action.ascxml'
     ...
 
 This produces the same model in the `JANI format <https://jani-spec.org/>`_ in the file `main.jani`.
@@ -198,6 +198,9 @@ Executing SMC Storm on this example works as follows:
         N. of times no termination:	0
         Tot. n. of tries (samples):	500
         Estimated success prob.:	1
+        Confidence score: 0.95
+        Estimated Epsilon: ...
+
         Min trace length:	...
         Max trace length:	...
     =========================================
@@ -210,7 +213,7 @@ It is also possible to log the traces generated during model checking in a csv f
 
 .. code-block:: bash
 
-    $ smc_storm --model main.jani --properties-names snack_at_table --traces-file traces.csv --max-n-traces 1 --hide-progress-bar
+    $ smc_storm --model main.jani --properties-names snack_at_table --traces-folder generated_traces --max-n-traces 1 --hide-progress-bar
 
     Welcome to SMC Storm
     Checking model: main.jani
@@ -219,7 +222,7 @@ It is also possible to log the traces generated during model checking in a csv f
 
 One sample trace can be inspected in `reference_traces_single.csv <https://github.com/convince-project/AS2FM/blob/main/examples/tutorial_fetch_and_carry/sample_solutions_and_outputs/reference_traces_single.csv>`_.
 
-A tool to inspect the changes in the variables graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d traces.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot.
+A tool to inspect the changes in the variables graphically is `PlotJuggler <https://plotjuggler.io/>`_. Just run ``ros2 run plotjuggler plotjuggler -d generated_traces/trace_name.csv`` to open the graphical interface and pull the topic you want to inspect from the topic list into the coordinate system in the main inspection area. When opening the cvs file make sure to select "use row number as x-axis". With a right click on the plot you can select "Edit curve..." and then tick "Steps (pre)" to see a step-wise plot.
 
 The visualization of the topics `world_robot_loc`, `world_robot_holding`, `world_obj_locs_at_0`, and `topic_clock_msg__ros_fields__sec` looks as follows:
 
@@ -254,7 +257,7 @@ You can then run SMC Storm again on the modified model after generating the JANI
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main_probabilistic.xml && \
+    $ as2fm_roaml_to_jani main_probabilistic.xml --jani-out-file main_probabilistic.jani && \
       smc_storm --model main_probabilistic.jani --properties-names snack_at_table --show-statistics --hide-progress-bar
 
     ...
@@ -312,7 +315,7 @@ We can again run SMC Storm on the modified model after generating the JANI model
 
 .. code-block:: bash
 
-    $ as2fm_scxml_to_jani main_probabilistic_extended_bt.xml && \
+    $ as2fm_roaml_to_jani main_probabilistic_extended_bt.xml --jani-out-file main_probabilistic_extended_bt.jani && \
       smc_storm --model main_probabilistic_extended_bt.jani --properties-names snack_at_table --show-statistics --hide-progress-bar
 
     ...

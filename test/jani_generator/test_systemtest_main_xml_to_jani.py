@@ -20,8 +20,8 @@ import os
 import pytest
 
 from as2fm.jani_generator.scxml_helpers.top_level_interpreter import (
+    RoamlMain,
     interpret_top_level_xml,
-    parse_main_xml,
 )
 
 from ..as2fm_common.test_utilities_smc_storm import run_smc_storm_with_output
@@ -75,12 +75,17 @@ def _test_with_main(
     if os.path.exists(jani_path):
         os.remove(jani_path)
     generated_scxml_path = "generated_plain_scxml" if generate_plain_scxml else None
+    plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
+
+    if generate_plain_scxml:
+        plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
 
     try:
-        interpret_top_level_xml(xml_main_path, model_jani, generated_scxml_path)
+        interpret_top_level_xml(
+            xml_main_path, jani_file=model_jani, scxmls_dir=generated_scxml_path
+        )
         if generate_plain_scxml:
-            plain_scxml_path = os.path.join(test_data_dir, "generated_plain_scxml")
-            assert os.path.exists(plain_scxml_path)
+            assert os.path.exists(plain_scxml_path), "Expected to find generated plain SCXMl files"
             generated_files = os.listdir(plain_scxml_path)
             # Ensure there is the data type comment in the generated SCXML
             assert len(generated_files) > 0, "Expected at least one gen. SCXML file."
@@ -93,7 +98,10 @@ def _test_with_main(
                     if "<send" in content:
                         assert "target=" in content
         assert os.path.exists(jani_path)
-        properties_file = os.path.join(test_data_dir, parse_main_xml(xml_main_path).properties[0])
+
+        properties_file = os.path.join(
+            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties[0]
+        )
         if not skip_properties_load_check:
             assert json_jani_properties_match(
                 properties_file, jani_path
@@ -266,6 +274,13 @@ def get_cases():
         # Test the array model with multiple dimensions.
         _default_case()
         | {
+            "_case_name": "array_of_data_structs",
+            "folder": "array_of_data_structs",
+            "property_name": "success",
+        },
+        # Test arrays of data structs.
+        _default_case()
+        | {
             "_case_name": "array_model_multi_dim",
             "folder": "array_model_multi_dim",
             "property_name": "array_check",
@@ -277,6 +292,7 @@ def get_cases():
             "folder": "probabilistic_transitions",
             "property_name": "expected_counts",
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
+            "disable_cache": True,
             "n_threads": 8,
             "trace_length_limit": 20_000,
         },
@@ -290,6 +306,7 @@ def get_cases():
             "model_xml": "main_xml_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # JSON struct definitions
         _default_case()
@@ -299,6 +316,7 @@ def get_cases():
             "model_xml": "main_json_def.xml",
             "property_name": "success",
             "disable_cache": True,
+            "n_threads": 8,
         },
         # -------------------------------------------------------------------------------------
         # String support
@@ -341,6 +359,13 @@ def get_cases():
             "expected_result_probability": 0.1,
             "result_probability_tolerance": PROB_ERROR_TOLERANCE,
             "skip_properties_load_check": True,
+        },
+        # Arrays of strings
+        _default_case()
+        | {
+            "_case_name": "array_of_strings",
+            "folder": "array_of_strings",
+            "property_name": "array_check",
         },
         # -------------------------------------------------------------------------------------
         # ROS features
@@ -457,6 +482,8 @@ def get_cases():
             "folder": "uc1_docking",
             "property_name": "charging_starts",
             "trace_length_limit": 1_000_000,
+            "n_threads": 8,
+            "disable_cache": True,
         },
         # UC1 docking BT (with a bug).
         _default_case()
@@ -468,6 +495,7 @@ def get_cases():
             "expected_result_probability": 0.0,
             "trace_length_limit": 1_000_000,
             "n_threads": 8,
+            "disable_cache": True,
         },
         # UC1 Complete Mission
         _default_case()
@@ -481,6 +509,33 @@ def get_cases():
             "n_traces_limit": 50,
             "n_threads": 8,
             "batch_size": 1,
+        },
+        # UC1 Complete Mission: property to uncover bug
+        # If the robot gets stuck while driving to the dock or docking, coverage is started again
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main.xml",
+            "property_name": "no_coverage_failures_after_mission_failed",
+            "expected_result_probability": 1.0,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 50,
+            "n_threads": 8,
+            "batch_size": 1,
+        },
+        _default_case()
+        | {
+            "_case_name": "uc1_mission",
+            "folder": "uc1_mission",
+            "model_xml": "main_bug.xml",
+            "property_name": "no_coverage_failures_after_mission_failed",
+            "expected_result_probability": 0.96,
+            "trace_length_limit": 1_000_000,
+            "n_traces_limit": 208,
+            "n_threads": 8,
+            "batch_size": 2,
+            "result_probability_tolerance": 0.3,
         },
         # UC2 Assembly recovery
         _default_case()
@@ -509,7 +564,7 @@ def get_cases():
         # UC3 generic
         _default_case()
         | {
-            "_case_name": "uc2_assembly_with_bug",
+            "_case_name": "uc3_museum_guide",
             "folder": os.path.join("uc3_museum_guide", "Main"),
             "property_name": "tree_success",
         },

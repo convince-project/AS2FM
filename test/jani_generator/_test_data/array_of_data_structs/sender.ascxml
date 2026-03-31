@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="send_current"
+    version="1.0"
+    name="sender"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="points" expr="
+        [
+            {'frame': 'world_a', 'x': -1, 'y': 2},
+            {'frame': 'world_b', 'x': 3, 'y': -4},
+        ]" type="Point2D[]" />
+        <data id="idx" expr="0" type="uint8" />
+    </datamodel>
+
+    <state id="send_current">
+        <onentry>
+            <send event="data">
+                <param name="point" expr="points[idx]" />
+                <param name="idx" expr="idx" />
+            </send>
+            <assign location="idx" expr="idx+1" />
+        </onentry>
+        <transition target="send_current" cond="idx &lt; points.length" />
+        <transition target="end" />
+    </state>
+
+    <state id="end" />
+</ascxml>

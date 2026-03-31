@@ -19,7 +19,7 @@
 import pytest
 
 from as2fm.jani_generator.jani_entries import generate_jani_expression
-from as2fm.jani_generator.jani_entries.jani_convince_expression_expansion import (
+from as2fm.jani_generator.jani_entries.jani_expression_support import (
     expand_distribution_expressions,
 )
 
