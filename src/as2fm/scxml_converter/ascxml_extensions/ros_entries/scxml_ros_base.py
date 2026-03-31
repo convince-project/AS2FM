@@ -23,7 +23,7 @@ from lxml.etree import _Element as XmlElement
 from typing_extensions import Self
 
 from as2fm.as2fm_common.common import is_comment
-from as2fm.as2fm_common.logging import get_error_msg, log_error, log_warning
+from as2fm.as2fm_common.logging import check_assertion, get_error_msg, log_error, log_warning
 from as2fm.scxml_converter.ascxml_extensions.ros_entries import RosField
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
 from as2fm.scxml_converter.scxml_entries import (
@@ -175,6 +175,18 @@ class RosDeclaration(AscxmlDeclaration):
                 self.get_xml_origin(), "ROS declaration expect constant configurable values."
             )
             self._interface_name = self._interface_name.get_configured_value()
+            # Expect this to be a JS script: have quotes at start and end
+            has_quotes_wrap = self._interface_name.startswith(
+                "'"
+            ) and self._interface_name.endswith("'")
+            check_assertion(
+                has_quotes_wrap,
+                self.get_xml_origin(),
+                f"Unexpected interface name from config {self._interface_name}: "
+                "should be wrapped by quotes.",
+            )
+            # Remove first and last character (the quotes)
+            self._interface_name = self._interface_name[1:-1]
 
     def as_plain_scxml(self, struct_declarations, ascxml_declarations, **kwargs) -> List[ScxmlBase]:
         # This is discarded in the to_plain_scxml_and_declarations method from ScxmlRoot

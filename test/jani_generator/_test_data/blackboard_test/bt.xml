@@ -2,8 +2,10 @@
     <BehaviorTree ID="blackboard_test">
         <ReactiveSequence name="bb_test">
             <!-- Store goal and robot pose in 4 blackboard variables -->
-            <Action ID="WriteBB" bb_var="{counter}" />
-            <Action ID="ReadBB" bb_var="{counter}" target="10" />
+            <WriteBB bb_var="{counter}" />
+            <ReadBB bb_var="{counter}" target="10" />
+            <!-- Testing that strings do not require quotes -->
+            <ReadBB_str bb_var="test" />
         </ReactiveSequence>
     </BehaviorTree>
 </root>

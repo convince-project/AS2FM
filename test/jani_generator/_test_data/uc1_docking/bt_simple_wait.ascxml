@@ -9,16 +9,15 @@
     <datamodel>
         <data id="waiting" expr="false" type="bool" />
         <data id="n_waited" expr="0" type="int16" />
-        <data id="wait_duration_s" expr="0" type="int16" />
+        <data id="wait_duration_s" expr="0" type="float32" />
     </datamodel>
 
-    <bt_declare_port_in key="wait_duration" type="int16" />
+    <bt_declare_port_in key="wait_duration" type="float32" />
     <ros_time_rate rate_hz="10" name="wait_timer" />
 
     <state id="initial">
         <bt_tick target="initial">
-            <!-- In a Reactive sequence, if another node fails we should reset this... -->
-            <if cond="waiting == false">  <!-- TODO: support !waiting later on-->
+            <if cond="!waiting">
                 <assign location="waiting" expr="true" />
                 <assign location="n_waited" expr="0" />
                 <assign location="wait_duration_s">
@@ -28,7 +27,7 @@
                 </assign>
                 <bt_return_status status="RUNNING" />
             <else/>
-                <if cond="n_waited >= wait_duration_s * 10">
+                <if cond="n_waited * 0.1 >= wait_duration_s">
                     <bt_return_status status="SUCCESS" />
                 <else/>
                     <bt_return_status status="RUNNING" />

@@ -20,6 +20,7 @@ from lxml.etree import _Element as XmlElement
 
 from as2fm.as2fm_common.array_type import ArrayInfo
 from as2fm.as2fm_common.ecmascript_interpretation import parse_ecmascript_expr_to_type
+from as2fm.as2fm_common.logging import check_assertion
 
 # TODO: add lower and upper bounds depending on the n. of bits used.
 # TODO: add support to uint
@@ -87,10 +88,15 @@ def convert_string_to_type(value: str, data_type: str, elem: XmlElement) -> Any:
     Convert a value to the provided data type.
     """
     expected_type = get_data_type_from_string(data_type)
+    check_assertion(isinstance(value, str), elem, f"Arg. 'value' has type {type(value)} != str")
+    if expected_type is str:
+        return value
     interpreted_type = parse_ecmascript_expr_to_type(value, {}, elem)
-    assert isinstance(
-        interpreted_type, expected_type
-    ), f"Mismatched type: {value} evaluates to {interpreted_type}, but {expected_type} is expected."
+    check_assertion(
+        interpreted_type is expected_type,
+        elem,
+        f"Mismatched type: {value} evaluates to {interpreted_type} != {expected_type} (expected).",
+    )
     return interpreted_type(value)
 
 

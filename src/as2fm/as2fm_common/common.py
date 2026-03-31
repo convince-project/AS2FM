@@ -18,28 +18,13 @@ Common functionalities used throughout the toolchain.
 """
 
 import re
-from typing import MutableSequence, Type, Union
+from typing import MutableSequence, Type, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
 
-# Set of basic types that are supported by the Jani language.
-# Basic types (from Jani docs):
-# Types
-# We cover only the most basic types at the moment.
-# In the remainder of the specification, all requirements like "y must be of type x" are to be
-# interpreted as "type x must be assignable from y's type".
-# var BasicType = schema([
-# "bool", // assignable from bool
-# "int", // numeric; assignable from int and bounded int
-# "real" // numeric; assignable from all numeric types
-# ]);
-# src https://docs.google.com/document/d/\
-#     1BDQIzPBtscxJFFlDUEPIo8ivKHgXT8_X6hz5quq7jK0/edit
-# Additionally, we support the array types from the array extension.
-ValidJaniTypes = Union[bool, int, float, MutableSequence]
-
-ValidPlainScxmlTypes = Union[bool, int, float, MutableSequence, str]
+from as2fm.as2fm_common.array_type import is_valid_array
+from as2fm.as2fm_common.types import ValidJaniTypes, ValidPlainScxmlTypes
 
 # Small number used for float comparison.
 EPSILON = 1e-3
@@ -100,3 +85,35 @@ def is_valid_variable_name(var_name: str) -> bool:
     Alternatively, a variable name can be a single character.
     """
     return re.match(r"^[a-zA-Z_][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z]$", var_name) is not None
+
+
+def get_default_expression_for_type(field_type: Type[ValidPlainScxmlTypes]) -> ValidPlainScxmlTypes:
+    """Generate a default expression for a field type."""
+    assert field_type in get_args(
+        ValidPlainScxmlTypes
+    ), f"Error: Unsupported SCXML data type {field_type}."
+    if field_type is MutableSequence:
+        return []
+    if field_type is str:
+        return ""
+    else:
+        return field_type()
+
+
+def value_to_string_expr(value: ValidPlainScxmlTypes) -> str:
+    """Takes a python object and returns it as a (SCXML compatible) string."""
+    if isinstance(value, MutableSequence):
+        assert is_valid_array(value), f"Found invalid input array {value}."
+        # Expect value to be a list, so casting to string is enough.
+        return str(value)
+    elif isinstance(value, bool):
+        return str(value).lower()
+    elif isinstance(value, (int, float)):
+        return str(value)
+    elif isinstance(value, str):
+        # Make sure to correctly escape quotes
+        value = value.replace("'", r"\'")
+        # Add quotes around the value, to make it a valid JS string
+        return f"'{value}'"
+    else:
+        raise ValueError(f"Unsupported value type {type(value)}.")

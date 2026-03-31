@@ -17,8 +17,9 @@
 
 from typing import List, MutableSequence, Optional, Tuple, Type, Union
 
-from as2fm.as2fm_common.array_type import ArrayInfo, get_default_expression_for_type, is_array_type
-from as2fm.as2fm_common.common import ValidJaniTypes
+from as2fm.as2fm_common.array_type import ArrayInfo, is_array_type
+from as2fm.as2fm_common.common import get_default_expression_for_type
+from as2fm.as2fm_common.types import ValidJaniTypes
 from as2fm.jani_generator.jani_entries import JaniExpression, JaniExpressionType, JaniVariable
 from as2fm.jani_generator.jani_entries.jani_expression_generator import array_create_operator
 
