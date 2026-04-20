@@ -26,6 +26,8 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
     is_global_timer_event,
 )
 from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import (
+    BT_BLACKBOARD_REQUEST,
+    BT_BLACKBOARD_SET_PREFIX,
     is_bt_halt_event,
     is_bt_halt_response_event,
     is_bt_tick_event,
@@ -168,6 +170,14 @@ class Event:
     def is_action_rejected_event(self):
         """Check if the event is an action rejected event."""
         return re.match(r"^action_.*_goal_rejected$", self.name) is not None
+
+    def is_bt_blackboard_request(self):
+        """Check if the event is a BT Blackboard variables request."""
+        return self.name == BT_BLACKBOARD_REQUEST
+
+    def is_bt_blackboard_setter(self):
+        """Check if the event is a BT Blackboard variable setter."""
+        return self.name.startswith(BT_BLACKBOARD_SET_PREFIX)
 
     def is_removable_bt_interface(self):
         """
