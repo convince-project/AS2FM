@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<properties>
+  <ports>
+    <ros_topic topic_name="object_loc" type="overarching_msgs/Location" event="publish">
+      <state_var id="x" field="x" type="float32" expr="100"/>
+      <state_var id="y" field="y" type="float32" expr="100"/>
+      <state_var id="parent" field="parent" type="string" expr="''"/>
+    </ros_topic>
+  </ports>
+
+  <guarantees>
+    <property id="butter_at_table" pattern="existence">
+      <event>x == 4.0 &amp;&amp; y == 2.0 &amp;&amp; parent == 'world'</event>
+      <scope type="globally"/>
+    </property>
+  </guarantees>
+
+</properties>

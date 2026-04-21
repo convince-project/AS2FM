@@ -1,0 +1,30 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="MainTree">
+        <Sequence name="main_sequence">
+            <Inverter>
+                <Repeat name="reach_and_detect_attempt" num_cycles="3">
+                    <Sequence>
+                        <GetNextLocation name="get_next_loc" location="{current_location}" />
+                        <RetryUntilSuccessful name="navigation_to_obj_attempts" num_attempts="4">
+                            <NavigateToLocation name="navigate_to_obj" location="{current_location}" />
+                        </RetryUntilSuccessful>
+                        <Inverter>
+                            <RetryUntilSuccessful name="detection_attempts" num_attempts="3">
+                                <DetectObject name="detect_obj" object_id="{object_id}" />
+                            </RetryUntilSuccessful>
+                        </Inverter>
+                    </Sequence>
+                </Repeat>
+            </Inverter>
+            <RetryUntilSuccessful name="pick_attempts" num_attempts="3">
+                <PickObject name="pick_obj" object_id="{object_id}" />
+            </RetryUntilSuccessful>
+            <RetryUntilSuccessful name="navigation_to_start_attempts" num_attempts="4">
+                <NavigateToLocation name="navigate_to_start" location="table" />
+            </RetryUntilSuccessful>
+            <RetryUntilSuccessful name="place_attempts" num_attempts="3">
+                <ROS2Action name="place_action_skill" service_name_tick="/PlaceObjectSkill/tick" service_name_halt="/PlaceObjectSkill/halt" interface="ROS2SERVICE" isMonitored="false"/>
+            </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
+</root>

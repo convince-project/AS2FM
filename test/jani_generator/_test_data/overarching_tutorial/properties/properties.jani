@@ -1,0 +1,45 @@
+{
+    "properties": [
+        {
+            "name": "butter_at_table",
+            "expression": {
+                "op": "filter",
+                "fun": "values",
+                "values": {
+                    "op": "Pmin",
+                    "exp": {
+                        "op": "F",
+                        "exp": {
+                            "op": "∧",
+                            "left": {
+                                "op": "=",
+                                "left": "topic_object_loc_msg__ros_fields__x",
+                                "right": 4.0
+                            },
+                            "right": {
+                                "op": "∧",
+                                "left": {
+                                    "op": "=",
+                                    "left": "topic_object_loc_msg__ros_fields__y",
+                                    "right": 2.0
+                                },
+                                "right": {
+                                    "op": "=",
+                                    "left": "topic_object_loc_msg__ros_fields__parent",
+                                    "right": {
+                                        "comment": "'world'",
+                                        "op": "av",
+                                        "elements": [119, 111, 114, 108, 100]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "states": {
+                    "op": "initial"
+                }
+            }
+        }
+    ]
+}

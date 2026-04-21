@@ -568,6 +568,18 @@ def get_cases():
             "folder": os.path.join("uc3_museum_guide", "Main"),
             "property_name": "tree_success",
         },
+        # overarching tutorial
+        _default_case()
+        | {
+            "_case_name": "overarching_tutorial_locations",
+            "folder": "overarching_tutorial",
+            "model_xml": "main_locations.xml",
+            "property_name": "butter_at_table",
+            "skip_properties_load_check": True,
+            "n_threads": 8,
+            "batch_size": 5,
+            "disable_cache": True,
+        },
     ]
 
 

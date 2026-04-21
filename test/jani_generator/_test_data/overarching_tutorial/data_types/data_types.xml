@@ -1,0 +1,15 @@
+<types>
+    <struct id="Coordinates">
+        <!-- Coordinates w.r.t. the parent -->
+        <member id="x" type="float32" />
+        <member id="y" type="float32" />
+    </struct>
+    <!-- Entry describing the location of an object in the world -->
+    <struct id="ObjectLocation">
+        <!-- Either world or robot, depending if that's picked up or not -->
+        <member id="parent" type="string" />
+        <!-- Coordinates w.r.t. the parent -->
+        <member id="x" type="float32" />
+        <member id="y" type="float32" />
+    </struct>
+</types>
