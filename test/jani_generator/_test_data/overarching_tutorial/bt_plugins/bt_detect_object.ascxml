@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="initial"
+    version="1.0"
+    name="DetectObject"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_action_client name="act" action_name="/detect_object" type="overarching_msgs/Detect" />
+
+    <datamodel>
+        <data id="detected_obj_id" type="int32" expr="-1" />
+    </datamodel>
+
+    <bt_declare_port_out key="object_id" type="int32" />
+
+    <state id="initial">
+        <bt_tick target="wait_result">
+            <ros_action_send_goal name="act" />
+            <!-- Let's assume this is always successful. -->
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
+        <bt_halt target="initial">
+            <assign location="detected_obj_id" expr="-1" />
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="wait_result">
+        <bt_tick target="wait_result">
+            <bt_return_status status="RUNNING" />
+        </bt_tick>
+        <bt_halt target="initial">
+            <assign location="detected_obj_id" expr="-1" />
+            <bt_return_halted />
+        </bt_halt>
+        <ros_action_handle_success_result name="act" target="result_available">
+            <assign location="detected_obj_id" expr="_wrapped_result.result.object_id" />
+        </ros_action_handle_success_result>
+        <ros_action_handle_aborted_result name="act" target="result_available">
+            <assign location="detected_obj_id" expr="-1" />
+        </ros_action_handle_aborted_result>
+    </state>
+
+    <state id="result_available">
+        <bt_tick target="initial">
+            <bt_set_output key="object_id" expr="detected_obj_id" />
+            <if cond="detected_obj_id &gt;= 0">
+                <bt_return_status status="SUCCESS" />
+                <else/>
+                <bt_return_status status="FAILURE" />
+            </if>
+        </bt_tick>
+        <bt_halt target="initial">
+            <assign location="detected_obj_id" expr="-1" />
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

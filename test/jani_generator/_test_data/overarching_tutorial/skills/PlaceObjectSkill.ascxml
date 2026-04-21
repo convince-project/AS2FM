@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml version="1.0" xmlns="http://www.w3.org/2005/07/scxml" datamodel="ecmascript" name="PlaceObjectSkill" initial="idle">
+
+    <datamodel>
+        <data id="m_result_ok" type="bool" expr="false"/>
+        <data id="SKILL_SUCCESS" type="int8" expr="0" />
+        <data id="SKILL_FAILURE" type="int8" expr="1" />
+        <data id="SKILL_RUNNING" type="int8" expr="2" />
+    </datamodel>
+
+    <ros_service_server service_name="/PlaceObjectSkill/tick" type="bt_interfaces_dummy/TickAction"/>
+    <ros_service_server service_name="/PlaceObjectSkill/halt" type="bt_interfaces_dummy/HaltAction"/>
+
+    <ros_action_client name="place_action" action_name="/place_object" type="overarching_msgs/Place" />
+
+    <state id="idle">
+        <ros_service_handle_request name="/PlaceObjectSkill/tick" target="wait_goal_response">
+            <ros_action_send_goal name="place_action"/>
+            <ros_service_send_response name="/PlaceObjectSkill/tick">
+                <field name="is_ok" expr="true"/>
+                <field name="status" expr="SKILL_RUNNING"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+
+        <ros_service_handle_request name="/PlaceObjectSkill/halt" target="idle">
+            <ros_service_send_response name="/PlaceObjectSkill/halt">
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+
+    <state id="wait_goal_response">
+        <ros_action_handle_goal_response name="place_action" accept="wait_result" reject="send_failure" />
+
+        <ros_service_handle_request name="/PlaceObjectSkill/tick" target="wait_goal_response">
+            <ros_service_send_response name="/PlaceObjectSkill/tick">
+                <field name="is_ok" expr="true"/>
+                <field name="status" expr="SKILL_RUNNING"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+
+        <ros_service_handle_request name="/PlaceObjectSkill/halt" target="idle">
+            <ros_service_send_response name="/PlaceObjectSkill/halt">
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+
+    <state id="wait_result">
+        <ros_service_handle_request name="/PlaceObjectSkill/tick" target="wait_result">
+            <ros_service_send_response name="/PlaceObjectSkill/tick">
+                <field name="is_ok" expr="true"/>
+                <field name="status" expr="SKILL_RUNNING"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+
+        <ros_service_handle_request name="/PlaceObjectSkill/halt" target="idle">
+            <ros_service_send_response name="/PlaceObjectSkill/halt">
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+      <ros_action_handle_feedback name="place_action" target="wait_result"/>
+        <ros_action_handle_success_result name="place_action" target="goal_done">
+            <assign location="m_result_ok" expr="true" />
+        </ros_action_handle_success_result>
+
+    </state>
+
+    <state id="goal_done">
+        <ros_service_handle_request name="/PlaceObjectSkill/tick" target="idle">
+            <if cond="m_result_ok">
+                <ros_service_send_response name="/PlaceObjectSkill/tick">
+                    <field name="is_ok" expr="true"/>
+                    <field name="status" expr="SKILL_SUCCESS"/>
+                </ros_service_send_response>
+            <else/>
+                <ros_service_send_response name="/PlaceObjectSkill/tick">
+                    <field name="is_ok" expr="true"/>
+                    <field name="status" expr="SKILL_FAILURE"/>
+                </ros_service_send_response>
+            </if>
+        </ros_service_handle_request>
+
+        <ros_service_handle_request name="/PlaceObjectSkill/halt" target="idle">
+            <ros_service_send_response name="/PlaceObjectSkill/halt">
+                <field name="is_ok" expr="true"/>
+            </ros_service_send_response>
+        </ros_service_handle_request>
+    </state>
+
+    <state id="send_failure">
+        <onentry>
+            <assign location="m_result_ok" expr="false" />
+        </onentry>
+        <transition target="goal_done" />
+    </state>
+
+</ascxml>

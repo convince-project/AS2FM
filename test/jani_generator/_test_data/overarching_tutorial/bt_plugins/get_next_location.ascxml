@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="initial"
+    version="1.0"
+    name="GetNextLocation"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <bt_declare_port_out key="location" type="string" />
+
+    <datamodel>
+        <data id="loc_id" type="int32" expr="0" />
+    </datamodel>
+
+    <state id="initial">
+        <bt_tick target="initial">
+            <if cond="loc_id == 0">
+                <bt_set_output key="location" expr="'fridge'" />
+            <elseif cond="loc_id == 1" />
+                <bt_set_output key="location" expr="'dining_table'" />
+            <else/>
+                <bt_set_output key="location" expr="'kitchen_table'" />
+            </if>
+            <assign location="loc_id" expr="(loc_id + 1) % 3"/>
+            <bt_return_status status="SUCCESS" />
+        </bt_tick>
+        <bt_halt target="initial">
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+</ascxml>

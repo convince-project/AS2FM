@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="init"
+    version="1.0"
+    name="world"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <ros_time_rate rate_hz="10" name="world_update_rate" />
+
+    <ros_action_server name="act_nav" action_name="/go_to_goal" type="overarching_msgs/Navigate" />
+    <ros_action_server name="act_pick" action_name="/pick_object" type="overarching_msgs/Pick" />
+    <ros_action_server name="act_place" action_name="/place_object" type="overarching_msgs/Place" />
+    <ros_action_server name="act_detect" action_name="/detect_object" type="overarching_msgs/Detect" />
+    <ros_topic_publisher name="pub_object" topic="/object_loc" type="overarching_msgs/Location" />
+    <ros_topic_publisher name="pub_robot" topic="/robot_loc" type="overarching_msgs/Location" />
+
+    <datamodel>
+        <!-- Only one object in this world, located at (4,2). -->
+        <data id="obj_loc" type="ObjectLocation" expr="{'parent': '', 'x': 0.0, 'y': 0.0}" />
+        <!-- Location ID: 0 -->
+        <data id="location_start" type="Coordinates" expr="{'x': 0.0, 'y': 0.0}" />
+        <!-- Location ID: 1 -->
+        <data id="location_table" type="Coordinates" expr="{'x': 4.0, 'y': 2.0}" />
+        <!-- Location ID: 2 -->
+        <data id="location_fridge" type="Coordinates" expr="{'x': 1.0, 'y': -2.0}" />
+        <!-- Location ID: 3 -->
+        <data id="location_dining_table" type="Coordinates" expr="{'x': -2.0, 'y': -2.0}" />
+        <!-- Location ID: 4 -->
+        <data id="location_kitchen_table" type="Coordinates" expr="{'x': -4.0, 'y': -2.0}" />
+        <!-- The initial location of the robot in the world is (0,0). -->
+        <data id="robot_loc" type="Coordinates" expr="{'x': 0, 'y': 0}" />
+        <!-- Variable referring to the index of the object held by the robot. This is -1 if it holds nothing. -->
+        <data id="robot_holding" type="bool" expr="false" />
+        <!-- Additional support variables for the action goal_id and the value of the received requests. -->
+        <data id="goal_id" type="int32" expr="0" />
+        <data id="req_obj_idx" type="int32" expr="0" />
+        <data id="req_loc" type="Coordinates" expr="{'x': 0, 'y': 0}" />
+        <data id="robot_at_target" type="bool" expr="false" />
+        <data id="robot_at_object" type="bool" expr="false" />
+    </datamodel>
+
+    <state id="init">
+        <transition>
+            <target id="idle" prob="0.3">
+                <assign location="obj_loc.x" expr="location_fridge.x" />
+                <assign location="obj_loc.y" expr="location_fridge.y" />
+                <assign location="obj_loc.parent" expr="'world'" />
+            </target>
+            <target id="idle" prob="0.2">
+                <assign location="obj_loc.x" expr="location_dining_table.x" />
+                <assign location="obj_loc.y" expr="location_dining_table.y" />
+                <assign location="obj_loc.parent" expr="'world'" />
+            </target>
+            <target id="idle" prob="0.5">
+                <assign location="obj_loc.x" expr="location_kitchen_table.x" />
+                <assign location="obj_loc.y" expr="location_kitchen_table.y" />
+                <assign location="obj_loc.parent" expr="'world'" />
+            </target>
+        </transition>
+    </state>
+
+    <state id="idle">
+        <onentry>
+            <ros_topic_publish name="pub_object">
+                <field name="parent" expr="obj_loc.parent" />
+                <field name="x" expr="obj_loc.x" />
+                <field name="y" expr="obj_loc.y" />
+            </ros_topic_publish>
+            <ros_topic_publish name="pub_robot">
+                <field name="parent" expr="'world'" />
+                <field name="x" expr="robot_loc.x" />
+                <field name="y" expr="robot_loc.y" />
+            </ros_topic_publish>
+        </onentry>
+
+        <ros_action_handle_goal name="act_nav" target="handle_nav_request">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <if cond="_goal.location_id == 'start'">
+                <assign location="req_loc" expr="location_start" />
+            <elseif cond="_goal.location_id == 'table'" />
+                <assign location="req_loc" expr="location_table" />
+            <elseif cond="_goal.location_id == 'fridge'" />
+                <assign location="req_loc" expr="location_fridge" />
+            <elseif cond="_goal.location_id == 'dining_table'" />
+                <assign location="req_loc" expr="location_dining_table" />
+            <elseif cond="_goal.location_id == 'kitchen_table'" />
+                <assign location="req_loc" expr="location_kitchen_table" />
+            <else/>
+                <assign location="req_loc.x" expr="-1000" /> <!-- Dummy x value, should never happen! -->
+            </if>
+            <ros_action_accept_goal name="act_nav" goal_id="goal_id" />
+        </ros_action_handle_goal>
+
+        <ros_action_handle_goal name="act_pick" target="handle_pick_request">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <assign location="req_obj_idx" expr="_goal.object_id" />
+            <ros_action_accept_goal name="act_pick" goal_id="goal_id" />
+        </ros_action_handle_goal>
+
+        <ros_action_handle_goal name="act_detect" target="handle_detect_request">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <ros_action_accept_goal name="act_detect" goal_id="goal_id" />
+        </ros_action_handle_goal>
+
+        <ros_action_handle_goal name="act_place" target="idle">
+            <assign location="goal_id" expr="_action.goal_id" />
+            <ros_action_accept_goal name="act_place" goal_id="goal_id" />
+            <if cond="robot_holding">
+                <assign location="obj_loc.x" expr="robot_loc.x" />
+                <assign location="obj_loc.y" expr="robot_loc.y" />
+                <assign location="obj_loc.parent" expr="'world'" />
+                <assign location="robot_holding" expr="false" />
+                <ros_action_succeed name="act_place" goal_id="goal_id" />
+            <else/>
+                <ros_action_aborted name="act_place" goal_id="goal_id" />
+            </if>
+        </ros_action_handle_goal>
+    </state>
+
+    <state id="handle_nav_request">
+        <onentry>
+            <assign location="robot_at_target" expr="req_loc.x == robot_loc.x &amp;&amp; req_loc.y == robot_loc.y" />
+        </onentry>
+        <!-- Navigation request successful if robot already in place -->
+        <transition target="idle" cond="robot_at_target">
+            <ros_action_succeed name="act_nav" goal_id="goal_id" />
+        </transition>
+        <!-- Otherwise, start to move! -->
+        <transition target="navigate_to_target">
+            <ros_action_feedback name="act_nav" goal_id="goal_id" />
+        </transition>
+    </state>
+
+    <state id="navigate_to_target">
+        <onentry>
+            <ros_topic_publish name="pub_object">
+                <field name="parent" expr="obj_loc.parent" />
+                <field name="x" expr="obj_loc.x" />
+                <field name="y" expr="obj_loc.y" />
+            </ros_topic_publish>
+            <ros_topic_publish name="pub_robot">
+                <field name="parent" expr="'world'" />
+                <field name="x" expr="robot_loc.x" />
+                <field name="y" expr="robot_loc.y" />
+            </ros_topic_publish>
+            <assign location="robot_at_target" expr="false" />
+            <if cond="req_loc.x &gt; robot_loc.x">
+                <assign location="robot_loc.x" expr="robot_loc.x + 1" />
+            <elseif cond="req_loc.x &lt; robot_loc.x" />
+                <assign location="robot_loc.x" expr="robot_loc.x - 1" />
+            <elseif cond="req_loc.y &gt; robot_loc.y" />
+                <assign location="robot_loc.y" expr="robot_loc.y + 1" />
+            <elseif cond="req_loc.y &lt; robot_loc.y" />
+                <assign location="robot_loc.y" expr="robot_loc.y - 1" />
+            <else/>
+                <assign location="robot_at_target" expr="true" />
+            </if>
+        </onentry>
+        <ros_rate_callback name="world_update_rate" cond="robot_at_target" target="idle">
+            <ros_action_succeed name="act_nav" goal_id="goal_id" />
+        </ros_rate_callback>
+        <ros_rate_callback name="world_update_rate" target="navigate_to_target">
+            <ros_action_feedback name="act_nav" goal_id="goal_id" />
+        </ros_rate_callback>
+    </state>
+
+    <state id="handle_pick_request">
+        <onentry>
+            <assign location="robot_at_object" expr="obj_loc.x == robot_loc.x &amp;&amp; obj_loc.y == robot_loc.y" />
+        </onentry>
+        <ros_rate_callback name="world_update_rate" target="idle">
+            <if cond="!robot_holding &amp;&amp; robot_at_object">
+                <!-- The robot and object location match and the robot is not holding anything: it may succeed -->
+                <assign location="robot_holding" expr="true" />
+                <assign location="obj_loc.parent" expr="'robot'" />
+                <assign location="obj_loc.x" expr="0" />
+                <assign location="obj_loc.y" expr="0" />
+                <ros_action_succeed name="act_pick" goal_id="goal_id" />
+            <else/>
+                <!-- Otherwise... FAIL!  -->
+                <ros_action_aborted name="act_pick" goal_id="goal_id" />
+            </if>
+        </ros_rate_callback>
+    </state>
+
+    <state id="handle_detect_request">
+        <onentry>
+            <assign location="robot_at_object" expr="obj_loc.x == robot_loc.x &amp;&amp; obj_loc.y == robot_loc.y" />
+        </onentry>
+        <ros_rate_callback name="world_update_rate" target="idle">
+            <if cond="robot_at_object">
+                <!-- The robot and object location match -->
+                <ros_action_succeed name="act_detect" goal_id="goal_id">
+                    <field name="object_id" expr="0" />
+                    <field name="detection.parent" expr="obj_loc.parent" />
+                    <field name="detection.x" expr="obj_loc.x" />
+                    <field name="detection.y" expr="obj_loc.y" />
+                </ros_action_succeed>
+            <else/>
+                <!-- Otherwise fail -->
+                <ros_action_aborted name="act_detect" goal_id="goal_id" />
+            </if>
+        </ros_rate_callback>
+    </state>
+
+</ascxml>

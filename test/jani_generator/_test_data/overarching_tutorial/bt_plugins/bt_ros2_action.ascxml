@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ascxml
+    initial="idle"
+    version="1.0"
+    name="ROS2Action"
+    model_src=""
+    xmlns="http://www.w3.org/2005/07/scxml">
+
+    <datamodel>
+        <data id="SKILL_SUCCESS" type="int8" expr="0" />
+        <data id="SKILL_FAILURE" type="int8" expr="1" />
+        <data id="SKILL_RUNNING" type="int8" expr="2" />
+    </datamodel>
+
+    <bt_declare_port_in key="service_name_tick" type="string" />
+    <bt_declare_port_in key="service_name_halt" type="string" />
+    <bt_declare_port_in key="interface" type="string" />
+    <bt_declare_port_in key="isMonitored" type="string" />
+
+    <ros_service_client type="bt_interfaces_dummy/TickAction" name="skill_tick" service_name="/PlaceObjectSkill/tick" />
+    <ros_service_client type="bt_interfaces_dummy/HaltAction" name="skill_halt" service_name="/PlaceObjectSkill/halt" />
+
+    <state id="idle">
+        <bt_tick target="handle_response_tick">
+            <ros_service_send_request name="skill_tick" />
+        </bt_tick>
+        <bt_halt target="idle">
+            <ros_service_send_request name="skill_halt" />
+            <bt_return_halted />
+        </bt_halt>
+    </state>
+
+    <state id="handle_response_tick">
+        <ros_service_handle_response name="skill_tick" cond="_res.status == SKILL_SUCCESS" target="idle">
+            <bt_return_status status="SUCCESS" />
+        </ros_service_handle_response>
+        <ros_service_handle_response name="skill_tick" cond="_res.status == SKILL_FAILURE" target="idle">
+            <bt_return_status status="FAILURE" />
+        </ros_service_handle_response>
+        <ros_service_handle_response name="skill_tick" cond="_res.status == SKILL_RUNNING" target="idle">
+            <bt_return_status status="RUNNING" />
+        </ros_service_handle_response>
+    </state>
+
+</ascxml>

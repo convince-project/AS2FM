@@ -17,6 +17,7 @@
 Module to process events from scxml and implement them as syncs between jani automata.
 """
 
+from dataclasses import dataclass
 from typing import Dict, List, MutableSequence, Optional, Tuple
 
 from as2fm.as2fm_common.array_type import ArrayInfo, is_array_type
@@ -36,9 +37,28 @@ from as2fm.jani_generator.ros_helpers.ros_timer import (
 )
 from as2fm.jani_generator.scxml_helpers.scxml_event import Event, EventsHolder
 from as2fm.jani_generator.scxml_helpers.scxml_expression import get_array_length_var_name
+from as2fm.scxml_converter.ascxml_extensions.bt_entries.bt_utils import BT_BLACKBOARD_MODEL
 from as2fm.scxml_converter.data_types.type_utils import MEMBER_ACCESS_SUBSTITUTION
 
-JANI_TIMER_ENABLE_ACTION = "global_timer_enable"
+JANI_TIMER_ENABLE_ACTION = "__as2fm__global_timer_enable"
+JANI_BT_BB_REQ_ENABLE_ACTION = "__as2fm__blackboard_requests_enable"
+
+
+@dataclass
+class _EventSyncContribution:
+    """Sync-related data returned from processing a single event."""
+
+    timer_enable_sync: Optional[Tuple[str, str]] = None
+    bt_bb_enable_sync: Optional[Tuple[str, str]] = None
+    event_without_receiver: Optional[str] = None
+
+
+@dataclass
+class _DetectedAutomata:
+    """Track the existence of special automata in the model."""
+
+    timer_automata = False
+    bt_blackboard_automata = False
 
 
 def _generate_event_action_names(event_obj: Event) -> Tuple[str, str]:
@@ -80,6 +100,11 @@ def _generate_event_automaton(event_obj: Event, add_timer_sync: bool) -> Optiona
             # used to enable the global timer to tick only if all other events have been processed
             event_automaton.add_edge(
                 _generate_event_edge(waiting_str, waiting_str, JANI_TIMER_ENABLE_ACTION)
+            )
+        if event_obj.is_bt_blackboard_setter():
+            # Add a self-loop in the waiting state, to enable blackboard requests.
+            event_automaton.add_edge(
+                _generate_event_edge(waiting_str, waiting_str, JANI_BT_BB_REQ_ENABLE_ACTION)
             )
     else:
         # In this case, we have only a self-loop since no receive sync is needed
@@ -148,81 +173,136 @@ def _preprocess_global_timer_automaton(timer_automaton: JaniAutomaton):
                 jani_edge.destinations[0]["assignments"] = []
 
 
-def implement_scxml_events_as_jani_syncs(
-    events_holder: EventsHolder, max_array_size: int, jani_model: JaniModel
-) -> List[str]:
+def _process_event(
+    event_obj: Event,
+    add_timer_sync: bool,
+    jani_model: JaniModel,
+    jc: JaniComposition,
+    max_array_size: int,
+    send_additional_syncs: Optional[Dict[str, str]] = None,
+) -> Optional[_EventSyncContribution]:
     """
-    Implement the scxml events as jani syncs.
+    Process an event: generate its automaton, add it to the model, and set up syncs.
 
-    :param events_holder: The holder of the events.
-    :param timers: The timers to add to the jani model.
-    :param jani_model: The jani model to add the syncs to.
-    :return: The list of events having only senders.
+    :return: Sync contribution from this event, or None if the event was skipped.
+    """
+    event_automaton = _generate_event_automaton(event_obj, add_timer_sync)
+    event_send_action, event_receive_action = _generate_event_action_names(event_obj)
+    if event_automaton is None:
+        # This action was skipped: ensure all receivers in the model are removed
+        jani_model.remove_edges_with_action(event_receive_action)
+        return None
+    automaton_name = event_automaton.get_name()
+    jani_model.add_jani_automaton(event_automaton)
+    jc.add_element(automaton_name)
+    # Generate the required syncs (for senders)
+    for sender_ev in event_obj.get_senders():
+        assert sender_ev.edge_action_name == event_send_action, (
+            "Unexpected event sender action name: "
+            f"'{sender_ev.edge_action_name}'!='{event_send_action}'"
+        )
+        senders_syncs = {
+            automaton_name: event_send_action,
+            sender_ev.automaton_name: event_send_action,
+        }
+        # Used for additional syncs to be fulfilled for the action to be taken
+        if send_additional_syncs is not None:
+            for k in senders_syncs:
+                assert k not in send_additional_syncs
+            senders_syncs.update(send_additional_syncs)
+        jc.add_sync(event_send_action, senders_syncs)
+    contribution = _EventSyncContribution()
+    if event_obj.has_receivers():
+        # Generate the required syncs (for receivers)
+        receivers_syncs: Dict[str, str] = {automaton_name: event_receive_action}
+        for receiver_ev in event_obj.get_receivers():
+            assert receiver_ev.edge_action_name == event_receive_action, (
+                "Unexpected event receiver action name: "
+                f"'{receiver_ev.edge_action_name}'!='{event_receive_action}'"
+            )
+            receivers_syncs[receiver_ev.automaton_name] = event_receive_action
+        jc.add_sync(event_receive_action, receivers_syncs)
+        # Store the syncs enablers (required for timer and BT blackboard)
+        automaton_actions = event_automaton.get_actions()
+        if JANI_TIMER_ENABLE_ACTION in automaton_actions:
+            contribution.timer_enable_sync = (automaton_name, JANI_TIMER_ENABLE_ACTION)
+        if JANI_BT_BB_REQ_ENABLE_ACTION in automaton_actions:
+            contribution.bt_bb_enable_sync = (automaton_name, JANI_BT_BB_REQ_ENABLE_ACTION)
+    else:
+        contribution.event_without_receiver = automaton_name
+    # Generate the (global) event parameters, for exchanging data across automata
+    jani_model.add_jani_variables(_generate_event_variables(event_obj, max_array_size))
+    return contribution
+
+
+def _accumulate_contribution(
+    contribution: Optional[_EventSyncContribution],
+    timer_enable_syncs: Dict[str, str],
+    bt_bb_enable_syncs: Dict[str, str],
+    events_without_receivers: List[str],
+) -> None:
+    """Merge a contribution into the shared sync accumulator dicts and list."""
+    if contribution is None:
+        return
+    if contribution.timer_enable_sync is not None:
+        timer_enable_syncs[contribution.timer_enable_sync[0]] = contribution.timer_enable_sync[1]
+    if contribution.bt_bb_enable_sync is not None:
+        bt_bb_enable_syncs[contribution.bt_bb_enable_sync[0]] = contribution.bt_bb_enable_sync[1]
+    if contribution.event_without_receiver is not None:
+        events_without_receivers.append(contribution.event_without_receiver)
+
+
+def _get_composition_from_automata(
+    jani_model: JaniModel,
+) -> Tuple[JaniComposition, _DetectedAutomata]:
+    """
+    Add existing automata to the composition and detect special automata.
+
+    :return: Tuple of (JaniComposition, _DetectedAutomata).
     """
     jc = JaniComposition()
-    events_without_receivers: List[str] = []
-    has_timer_automaton = False
-    # Determine if we have timers
+    has_automata = _DetectedAutomata()
     for automaton in jani_model.get_automata():
         automaton_name = automaton.get_name()
         if automaton_name == GLOBAL_TIMER_AUTOMATON:
-            has_timer_automaton = True
+            has_automata.timer_automata = True
             _preprocess_global_timer_automaton(automaton)
+        if automaton_name == BT_BLACKBOARD_MODEL:
+            has_automata.bt_blackboard_automata = True
         jc.add_element(automaton_name)
-    timer_enable_syncs: Dict[str, str] = {}
+    return jc, has_automata
+
+
+def _categorize_events(
+    events_holder: EventsHolder,
+) -> Tuple[List[Event], Optional[Event], List[Event]]:
+    """
+    Separate events into regular events, timer events, and the BT blackboard request event.
+
+    :return: Tuple of (regular_events, bt_bb_request_event, timer_events).
+    """
+    regular_events: List[Event] = []
     timer_events: List[Event] = []
+    bt_bb_request_event: Optional[Event] = None
     for event_obj in events_holder.get_events().values():
-        # Distinguish between timer and non-timer events
-        if event_obj.is_timer_event():
+        if event_obj.is_bt_blackboard_request():
+            assert bt_bb_request_event is None, "Unexpected error: this should be unique."
+            bt_bb_request_event = event_obj
+        elif event_obj.is_timer_event():
             timer_events.append(event_obj)
         elif event_obj.name == GLOBAL_TIMER_TICK_EVENT:
-            pass
+            pass  # Skip: handled separately via GLOBAL_TIMER_TICK_ACTION
         else:
-            event_automaton = _generate_event_automaton(event_obj, has_timer_automaton)
-            event_send_action, event_receive_action = _generate_event_action_names(event_obj)
-            if event_automaton is not None:
-                automaton_name = event_automaton.get_name()
-                jani_model.add_jani_automaton(event_automaton)
-                jc.add_element(automaton_name)
-                # Generate the required syncs (for senders)
-                for sender_ev in event_obj.get_senders():
-                    assert sender_ev.edge_action_name == event_send_action, (
-                        "Unexpected event sender action name: "
-                        f"'{sender_ev.edge_action_name}'!='{event_send_action}'"
-                    )
-                    senders_syncs = {
-                        automaton_name: event_send_action,
-                        sender_ev.automaton_name: event_send_action,
-                    }
-                    jc.add_sync(event_send_action, senders_syncs)
-                if event_obj.has_receivers():
-                    # Generate the required syncs (for receivers)
-                    receivers_syncs: Dict[str, str] = {automaton_name: event_receive_action}
-                    for receiver_ev in event_obj.get_receivers():
-                        assert receiver_ev.edge_action_name == event_receive_action, (
-                            "Unexpected event receiver action name: "
-                            f"'{receiver_ev.edge_action_name}'!='{event_receive_action}'"
-                        )
-                        receivers_syncs.update({receiver_ev.automaton_name: event_receive_action})
-                    jc.add_sync(event_receive_action, receivers_syncs)
-                    # In case need timer syncs as well, store the timer syncs in a separate dict
-                    if has_timer_automaton:
-                        timer_enable_syncs.update({automaton_name: JANI_TIMER_ENABLE_ACTION})
-                else:
-                    events_without_receivers.append(automaton_name)
-                # Generate the (global) event parameters, for exchanging data across automata
-                jani_model.add_jani_variables(_generate_event_variables(event_obj, max_array_size))
-            else:
-                # This action was skipped: ensure all receivers in the model are removed
-                jani_model.remove_edges_with_action(event_receive_action)
-    # Add syncs for global timer
-    if has_timer_automaton:
-        # Add sync action for global timer tick
-        jc.add_sync(
-            GLOBAL_TIMER_TICK_ACTION,
-            timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
-        )
-    # Add syncs for rate timers
+            regular_events.append(event_obj)
+    return regular_events, bt_bb_request_event, timer_events
+
+
+def _add_rate_timer_syncs(
+    timer_events: List[Event],
+    timer_enable_syncs: Dict[str, str],
+    jc: JaniComposition,
+) -> None:
+    """Add sync entries for rate-based timer events to the composition."""
     for timer_event in timer_events:
         timer_send_event, timer_recv_event = _generate_event_action_names(timer_event)
         n_timer_senders = len(timer_event.get_senders())
@@ -240,5 +320,53 @@ def implement_scxml_events_as_jani_syncs(
             recv_automaton_name: timer_recv_event,
         } | timer_enable_syncs
         jc.add_sync(timer_recv_event, timer_trigger_syncs)
+
+
+def implement_scxml_events_as_jani_syncs(
+    events_holder: EventsHolder, max_array_size: int, jani_model: JaniModel
+) -> List[str]:
+    """
+    Implement the scxml events as jani syncs.
+
+    :param events_holder: The holder of the events.
+    :param timers: The timers to add to the jani model.
+    :param jani_model: The jani model to add the syncs to.
+    :return: The list of events having only senders.
+    """
+    jc, automata_detections = _get_composition_from_automata(jani_model)
+    regular_events, bt_bb_request_event, timer_events = _categorize_events(events_holder)
+    timer_enable_syncs: Dict[str, str] = {}
+    bt_bb_enable_syncs: Dict[str, str] = {}
+    events_without_receivers: List[str] = []
+    for event_obj in regular_events:
+        contribution = _process_event(
+            event_obj, automata_detections.timer_automata, jani_model, jc, max_array_size
+        )
+        _accumulate_contribution(
+            contribution, timer_enable_syncs, bt_bb_enable_syncs, events_without_receivers
+        )
+    # Add syncs for global timer
+    if automata_detections.timer_automata:
+        jc.add_sync(
+            GLOBAL_TIMER_TICK_ACTION,
+            timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
+        )
+    if automata_detections.bt_blackboard_automata:
+        # Add the Blackboard request automaton, including the sync related to the setters.
+        assert (
+            bt_bb_request_event is not None
+        ), "Cannot find event for blackboard variables request."
+        contribution = _process_event(
+            bt_bb_request_event,
+            automata_detections.timer_automata,
+            jani_model,
+            jc,
+            max_array_size,
+            bt_bb_enable_syncs,
+        )
+        _accumulate_contribution(
+            contribution, timer_enable_syncs, bt_bb_enable_syncs, events_without_receivers
+        )
+    _add_rate_timer_syncs(timer_events, timer_enable_syncs, jc)
     jani_model.add_system_sync(jc)
     return events_without_receivers
