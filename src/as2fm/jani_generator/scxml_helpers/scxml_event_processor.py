@@ -53,6 +53,14 @@ class _EventSyncContribution:
     event_without_receiver: Optional[str] = None
 
 
+@dataclass
+class _DetectedAutomata:
+    """Track the existence of special automata in the model."""
+
+    timer_automata = False
+    bt_blackboard_automata = False
+
+
 def _generate_event_action_names(event_obj: Event) -> Tuple[str, str]:
     """Get the action names related to sending and receiving the event."""
     return (f"{event_obj.name}_on_send", f"{event_obj.name}_on_receive")
@@ -244,25 +252,25 @@ def _accumulate_contribution(
         events_without_receivers.append(contribution.event_without_receiver)
 
 
-def _setup_composition_with_automata(
-    jani_model: JaniModel, jc: JaniComposition
-) -> Tuple[bool, bool]:
+def _get_composition_from_automata(
+    jani_model: JaniModel,
+) -> Tuple[JaniComposition, _DetectedAutomata]:
     """
     Add existing automata to the composition and detect special automata.
 
-    :return: Tuple of (has_timer_automaton, has_bt_blackboard).
+    :return: Tuple of (JaniComposition, _DetectedAutomata).
     """
-    has_timer_automaton = False
-    has_bt_blackboard = False
+    jc = JaniComposition()
+    has_automata = _DetectedAutomata()
     for automaton in jani_model.get_automata():
         automaton_name = automaton.get_name()
         if automaton_name == GLOBAL_TIMER_AUTOMATON:
-            has_timer_automaton = True
+            has_automata.timer_automata = True
             _preprocess_global_timer_automaton(automaton)
         if automaton_name == BT_BLACKBOARD_MODEL:
-            has_bt_blackboard = True
+            has_automata.bt_blackboard_automata = True
         jc.add_element(automaton_name)
-    return has_timer_automaton, has_bt_blackboard
+    return jc, has_automata
 
 
 def _categorize_events(
@@ -325,33 +333,32 @@ def implement_scxml_events_as_jani_syncs(
     :param jani_model: The jani model to add the syncs to.
     :return: The list of events having only senders.
     """
-    jc = JaniComposition()
-    has_timer_automaton, has_bt_blackboard = _setup_composition_with_automata(jani_model, jc)
+    jc, automata_detections = _get_composition_from_automata(jani_model)
     regular_events, bt_bb_request_event, timer_events = _categorize_events(events_holder)
     timer_enable_syncs: Dict[str, str] = {}
     bt_bb_enable_syncs: Dict[str, str] = {}
     events_without_receivers: List[str] = []
     for event_obj in regular_events:
         contribution = _process_event(
-            event_obj, has_timer_automaton, jani_model, jc, max_array_size
+            event_obj, automata_detections.timer_automata, jani_model, jc, max_array_size
         )
         _accumulate_contribution(
             contribution, timer_enable_syncs, bt_bb_enable_syncs, events_without_receivers
         )
     # Add syncs for global timer
-    if has_timer_automaton:
+    if automata_detections.timer_automata:
         jc.add_sync(
             GLOBAL_TIMER_TICK_ACTION,
             timer_enable_syncs | {GLOBAL_TIMER_AUTOMATON: GLOBAL_TIMER_TICK_ACTION},
         )
-    if has_bt_blackboard:
+    if automata_detections.bt_blackboard_automata:
         # Add the Blackboard request automaton, including the sync related to the setters.
         assert (
             bt_bb_request_event is not None
         ), "Cannot find event for blackboard variables request."
         contribution = _process_event(
             bt_bb_request_event,
-            has_timer_automaton,
+            automata_detections.timer_automata,
             jani_model,
             jc,
             max_array_size,
