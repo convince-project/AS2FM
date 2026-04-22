@@ -100,7 +100,7 @@ def _test_with_main(
         assert os.path.exists(jani_path)
 
         properties_file = os.path.join(
-            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties[0]
+            test_data_dir, RoamlMain(xml_main_path).get_loaded_model().properties["jani"]
         )
         if not skip_properties_load_check:
             assert json_jani_properties_match(
@@ -217,6 +217,20 @@ def get_cases():
             "_case_name": "battery_monitor_charged",
             "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
             "property_name": "battery_charged",
+        },
+        # Expect battery is published (from xml-properties)
+        _default_case()
+        | {
+            "_case_name": "battery_published_xml",
+            "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            "property_name": "battery_always_published",
+        },
+        # Expect alarm preceding the battery being empty (from xml-properties)
+        _default_case()
+        | {
+            "_case_name": "battery_precedence_xml",
+            "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            "property_name": "battery_alarm_precedence",
         },
         # -------------------------------------------------------------------------------------
         # HL-SCXML features
