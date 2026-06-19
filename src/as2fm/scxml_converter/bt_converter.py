@@ -171,15 +171,14 @@ def bt_converter(
     available_bt_plugins = load_available_bt_plugins(bt_plugins_scxml_paths, custom_data_types)
     xml_tree: XmlElement = ET.parse(bt_xml_path, ET.XMLParser(remove_comments=True)).getroot()
     set_filepath_for_all_sub_elements(xml_tree, bt_xml_path)
-    root_children = xml_tree.getchildren()
-    assert len(root_children) == 1, f"Error: Expected one root element, found {len(root_children)}."
+    bt_roots = [c for c in xml_tree.getchildren() if c.tag == "BehaviorTree"]
     assert (
-        root_children[0].tag == "BehaviorTree"
-    ), f"Error: Expected BehaviorTree root, found {root_children[0].tag}."
-    bt_children = root_children[0].getchildren()
+        len(bt_roots) == 1
+    ), f"Error: Expected exactly one BehaviorTree element, found {len(bt_roots)}."
+    bt_children = bt_roots[0].getchildren()
     assert (
         len(bt_children) == 1
-    ), f"Error: Expected one BehaviorTree child, found {len(bt_children)}."
+    ), f"Error: Expected exactly one child in BehaviorTree, found {len(bt_children)}."
     root_child_tick_idx = 1000
     bt_name = os.path.basename(bt_xml_path).replace(".xml", "")
     bt_scxml_root = generate_bt_root_scxml(
