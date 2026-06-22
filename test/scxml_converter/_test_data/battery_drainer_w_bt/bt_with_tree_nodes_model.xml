@@ -1,0 +1,14 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="MainTree">
+        <ReactiveSequence>
+            <Inverter>
+                <BtTopicCondition name="alarm" />
+            </Inverter>
+            <BtTopicAction name="charge" />
+        </ReactiveSequence>
+    </BehaviorTree>
+    <TreeNodesModel>
+        <Condition ID="BtTopicCondition" />
+        <Action ID="BtTopicAction" />
+    </TreeNodesModel>
+</root>

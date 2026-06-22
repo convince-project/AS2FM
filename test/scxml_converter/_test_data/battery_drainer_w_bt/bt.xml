@@ -1,5 +1,5 @@
 <root BTCPP_format="4">
-    <BehaviorTree>
+    <BehaviorTree ID="MainTree">
         <ReactiveSequence>
             <Inverter>
                 <Condition ID="BtTopicCondition" name="alarm" />

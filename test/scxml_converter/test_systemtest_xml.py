@@ -148,6 +148,46 @@ def test_bt_to_scxml_battery_drainer():
     )
 
 
+def test_bt_to_scxml_with_tree_nodes_model(tmp_path):
+    """Test the conversion of the battery drainer with BT with TreeNodesModel to SCXML."""
+    src_dir = os.path.join(os.path.dirname(__file__), "_test_data", "battery_drainer_w_bt")
+    bt_xml = tmp_path / "bt.xml"
+    bt_xml.write_text(open(os.path.join(src_dir, "bt_with_tree_nodes_model.xml")).read())
+    bt_to_scxml_test(
+        "battery_drainer_w_bt",
+        str(bt_xml),
+        ["bt_topic_action.ascxml", "bt_topic_condition.ascxml"],
+        False,
+    )
+
+
+def _assert_bt_converter_raises(bt_xml_content: str, tmp_path):
+    """Write bt_xml_content to a temp file and check bt_converter raises AssertionError."""
+    bt_xml = tmp_path / "bt.xml"
+    bt_xml.write_text(bt_xml_content)
+    try:
+        bt_converter(str(bt_xml), [], 1.0, True, {})
+        assert False, "Expected AssertionError was not raised."
+    except AssertionError:
+        pass
+
+
+def test_bt_converter_no_behavior_tree(tmp_path):
+    """Test that bt_converter raises when the BT XML contains no BehaviorTree element."""
+    _assert_bt_converter_raises('<root BTCPP_format="4"/>', tmp_path)
+
+
+def test_bt_converter_multiple_behavior_trees(tmp_path):
+    """Test that bt_converter raises when the BT XML contains more than one BehaviorTree element."""
+    _assert_bt_converter_raises(
+        '<root BTCPP_format="4">'
+        "<BehaviorTree><Sequence/></BehaviorTree>"
+        "<BehaviorTree><Sequence/></BehaviorTree>"
+        "</root>",
+        tmp_path,
+    )
+
+
 def test_ros_to_plain_scxml_battery_drainer():
     """Test the conversion of the battery drainer with ROS macros to plain SCXML."""
     ros_to_plain_scxml_test(
