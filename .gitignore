@@ -6,3 +6,5 @@ build/
 
 # Sphinx
 API/
+
+examples/*/main*.jani

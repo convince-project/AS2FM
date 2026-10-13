@@ -302,9 +302,10 @@ class ScxmlTag(BaseTag):
         for child in self.children:
             if isinstance(child, StateTag):
                 transitions_set = transitions_set.union(child.get_handled_events())
+        sorted_transitions = sorted(transitions_set)
         for child in self.children:
             if isinstance(child, StateTag):
-                child.add_unhandled_transitions(transitions_set)
+                child.add_unhandled_transitions(sorted_transitions)
 
     def write_model(self):
         assert isinstance(self.element, ScxmlRoot), f"Expected ScxmlRoot, got {type(self.element)}."
@@ -361,9 +362,9 @@ class StateTag(BaseTag):
         else:
             return None
 
-    def add_unhandled_transitions(self, transitions_set: Set[str]):
+    def add_unhandled_transitions(self, transitions: List[str]):
         """Add self-loops for transitions that weren't handled yet."""
-        for event_name in transitions_set:
+        for event_name in transitions:
             if not self._generate_empty_event_transitions:
                 continue
             if event_name in self._events_no_condition or len(event_name) == 0:

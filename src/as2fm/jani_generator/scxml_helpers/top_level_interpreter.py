@@ -20,10 +20,12 @@ Module reading the top level xml file containing the whole model to check.
 import json
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
+from as2fm.as2fm_common.common import ModelTimeStep
 from as2fm.as2fm_common.logging import get_error_msg
 from as2fm.jani_generator.jani_entries import JaniModel, JaniProperty
+from as2fm.jani_generator.ros_helpers.data_to_ros_info_transformer import DataToRosInfoTransformer
 from as2fm.jani_generator.ros_helpers.ros_action_handler import RosActionHandler
 from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
     RosCommunicationHandler,
@@ -33,6 +35,9 @@ from as2fm.jani_generator.ros_helpers.ros_communication_handler import (
 )
 from as2fm.jani_generator.ros_helpers.ros_service_handler import RosServiceHandler
 from as2fm.jani_generator.ros_helpers.ros_timer import RosTimer, make_global_timer_scxml
+from as2fm.jani_generator.scxml_helpers.property_pattern_compiler import (
+    compile_patterns_to_jani_properties,
+)
 from as2fm.jani_generator.scxml_helpers.roaml_model import (
     FullModel,
     RoamlDataStructures,
@@ -49,13 +54,17 @@ from as2fm.scxml_converter.ascxml_extensions.ros_entries import (
     RosServiceClient,
     RosServiceServer,
     RosTimeRate,
+    RosTopicPublisher,
+    RosTopicSubscriber,
 )
+from as2fm.scxml_converter.ascxml_extensions.ros_entries.ros_event_info import RosEventInfo
 from as2fm.scxml_converter.bt_converter import (
     bt_converter,
     generate_blackboard_scxml,
     get_blackboard_variables_from_models,
 )
 from as2fm.scxml_converter.data_types.struct_definition import StructDefinition
+from as2fm.scxml_converter.property_converter import PropertyConverter
 from as2fm.scxml_converter.scxml_entries import (
     EventsToAutomata,
     GenericScxmlRoot,
@@ -66,7 +75,9 @@ from as2fm.scxml_converter.scxml_entries import (
 )
 
 
-def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
+def generate_plain_scxml_models_and_timers(
+    model: FullModel,
+) -> Tuple[List[ScxmlRoot], List[RosEventInfo], Optional[ModelTimeStep]]:
     """Generate all plain SCXML models loaded from the full model dictionary."""
     custom_data_types: Dict[str, StructDefinition] = {}
     for struct_format, path in model.data_declarations:
@@ -98,6 +109,10 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     all_services: Dict[str, RosCommunicationHandler] = {}
     all_actions: Dict[str, RosCommunicationHandler] = {}
     bt_blackboard_vars: Dict[str, str] = get_blackboard_variables_from_models(ros_ascxmls)
+    # Collect ROS topic/service/action declarations for RosEventInfo
+    topic_info: Dict[str, Dict] = {}
+    service_info: Dict[str, Dict] = {}
+    action_info: Dict[str, Dict] = {}
     for ascxml_entry in ros_ascxmls:
         plain_scxmls = ascxml_entry.to_plain_scxml()
         for plain_scxml in plain_scxmls:
@@ -115,24 +130,75 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
                     ascxml_declaration.get_xml_origin(), "The timer rate isn't a number."
                 )
                 all_timers.append(RosTimer(new_t_name, new_t_rate))
+            # Handle ROS Topics
+            if isinstance(ascxml_declaration, RosTopicPublisher):
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in topic_info:
+                    topic_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "publishers": [],
+                        "subscribers": [],
+                    }
+                topic_info[interface_name]["publishers"].append(ascxml_entry.get_name())
+            if isinstance(ascxml_declaration, RosTopicSubscriber):
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in topic_info:
+                    topic_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "publishers": [],
+                        "subscribers": [],
+                    }
+                topic_info[interface_name]["subscribers"].append(ascxml_entry.get_name())
             # Handle ROS Services
             if isinstance(ascxml_declaration, RosServiceServer):
                 update_ros_communication_handlers_servers(
                     ascxml_entry.get_name(), RosServiceHandler, all_services, ascxml_declaration
                 )
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in service_info:
+                    service_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "server": None,
+                        "clients": [],
+                    }
+                service_info[interface_name]["server"] = ascxml_entry.get_name()
             if isinstance(ascxml_declaration, RosServiceClient):
                 update_ros_communication_handlers_clients(
                     ascxml_entry.get_name(), RosServiceHandler, all_services, ascxml_declaration
                 )
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in service_info:
+                    service_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "server": None,
+                        "clients": [],
+                    }
+                service_info[interface_name]["clients"].append(ascxml_entry.get_name())
             # Handle ROS Actions
             if isinstance(ascxml_declaration, RosActionServer):
                 update_ros_communication_handlers_servers(
                     ascxml_entry.get_name(), RosActionHandler, all_actions, ascxml_declaration
                 )
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in action_info:
+                    action_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "server": None,
+                        "clients": [],
+                    }
+                action_info[interface_name]["server"] = ascxml_entry.get_name()
             if isinstance(ascxml_declaration, RosActionClient):
                 update_ros_communication_handlers_clients(
                     ascxml_entry.get_name(), RosActionHandler, all_actions, ascxml_declaration
                 )
+                interface_name = ascxml_declaration.get_interface_name()
+                if interface_name not in action_info:
+                    action_info[interface_name] = {
+                        "type": ascxml_declaration.get_interface_type(),
+                        "server": None,
+                        "clients": [],
+                    }
+                action_info[interface_name]["clients"].append(ascxml_entry.get_name())
         plain_scxml_models.extend(plain_scxmls)
     # Generate sync SCXML model for BT Blackboard (if needed)
     if len(bt_blackboard_vars) > 0:
@@ -141,12 +207,18 @@ def generate_plain_scxml_models_and_timers(model: FullModel) -> List[ScxmlRoot]:
     for plain_scxml in generate_plain_scxml_from_handlers(all_services | all_actions):
         plain_scxml_models.append(plain_scxml)
     assert model.max_time is not None, "Expected model.max_time to be defined here."
-    timer_scxml = make_global_timer_scxml(all_timers, model.max_time)
+    timer_scxml, model_time_step = make_global_timer_scxml(all_timers, model.max_time)
     if timer_scxml is not None:
         timer_scxml.set_custom_data_types(custom_data_types)
         plain_scxmls = timer_scxml.to_plain_scxml()
         plain_scxml_models.extend(plain_scxmls)
-    return plain_scxml_models
+    info_transformer = DataToRosInfoTransformer(
+        topic_info=topic_info,
+        service_info=service_info,
+        action_info=action_info,
+    )
+    ros_events_info = info_transformer.transform_data()
+    return plain_scxml_models, ros_events_info, model_time_step
 
 
 def export_plain_scxml_models(
@@ -245,19 +317,43 @@ def interpret_top_level_xml(
     loaded_roaml = RoamlMain(xml_path)
     model = loaded_roaml.get_loaded_model()
 
-    plain_scxml_models = generate_plain_scxml_models_and_timers(model)
+    plain_scxml_models, ros_events_info, model_time_step = generate_plain_scxml_models_and_timers(
+        model
+    )
 
+    property_converter: Optional[PropertyConverter] = None
     if scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
+        if model.properties.get("xml") is not None:
+            property_converter = PropertyConverter(
+                input_path=model.properties["xml"],
+                ros_events_info=ros_events_info,
+                model_time_step=model_time_step,
+            )
+            property_converter.export_properties(plain_scxml_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
     if jani_file is not None:
         jani_model: JaniModel = convert_multiple_scxmls_to_jani(
             plain_scxml_models, model.max_array_size
         )
-        with open(model.properties[0], "r", encoding="utf-8") as f:
-            all_properties = json.load(f)["properties"]
+
+        all_properties = []
+        jani_properties_path = model.properties.get("jani")
+        if jani_properties_path is not None:
+            with open(jani_properties_path, "r", encoding="utf-8") as f:
+                all_properties = json.load(f)["properties"]
             for property_dict in all_properties:
                 jani_model.add_jani_property(JaniProperty.from_dict(property_dict))
+
+        # Compile XML declared specification patterns into JANI properties
+        if property_converter is not None:
+            existing_property_names = {p["name"] for p in all_properties}
+            for jani_prop in compile_patterns_to_jani_properties(
+                property_converter.compiled_patterns,
+                property_converter.resolved_ports,
+                existing_property_names,
+            ):
+                jani_model.add_jani_property(jani_prop)
 
         # Preprocess the JANI file, to remove non-standard artifacts
         preprocess_jani_expressions(jani_model)
