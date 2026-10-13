@@ -26,7 +26,7 @@
         <event>alarm_active == true</event>
       </events>
       <scope type="globally"/>
-      <time_interval after="2" within="5" time_unit="s" />
+      <time_interval after="1" within="5" time_unit="s" />
     </property>
 
   </guarantees>
