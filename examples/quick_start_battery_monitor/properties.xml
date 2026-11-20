@@ -16,15 +16,15 @@
   <guarantees>
 
     <property id="battery_eventually_published" pattern="existence">
-      <event>battery_published</event>
+      <predicate>battery_published</predicate>
       <scope type="globally"/>
     </property>
 
     <property id="battery_alarm_precedence" pattern="precedence">
-      <events>
-        <event>battery_level &lt;= 30</event>
-        <event>alarm_active == true</event>
-      </events>
+      <predicates>
+        <predicate>battery_level &lt;= 30</predicate>
+        <predicate>alarm_active == true</predicate>
+      </predicates>
       <scope type="globally"/>
       <time_interval after="1" within="5" time_unit="s" />
     </property>

@@ -222,18 +222,18 @@ class PropertyConverter:
             assert property_id not in self._property_ids, "Duplicate property id"
             self._property_ids.append(property_id)
             pattern = property.attrib["pattern"]
-            events = []
+            predicate_exprs: List[str] = []
             scope = ""
             scope_events = []
             time = None
 
             for child in property:
                 tag = child.tag
-                if tag == "event":
-                    events.append(child.text)
-                if tag == "events":
-                    for event in child:
-                        events.append(event.text)
+                if tag == "predicate":
+                    predicate_exprs.append(child.text)
+                if tag == "predicates":
+                    for predicate in child:
+                        predicate_exprs.append(predicate.text)
                 if tag == "time_interval":
                     property_time_unit = child.attrib["time_unit"]
                     if child.attrib.get("time") is None:
@@ -253,7 +253,7 @@ class PropertyConverter:
                         time = self._convert_time(time, property_time_unit, self._model_time_unit)
                 if tag == "scope":
                     scope = child.attrib["type"]
-                    scope_events.append(child.attrib.get("event"))
+                    scope_events.append(child.attrib.get("predicate"))
 
             match pattern:
                 case "universality":
@@ -283,12 +283,12 @@ class PropertyConverter:
 
             match pattern:
                 case Pattern.RESPONSE:
-                    predicates = {"request": events[0], "response": events[1]}
+                    predicates = {"request": predicate_exprs[0], "response": predicate_exprs[1]}
                 case Pattern.PRECEDENCE:
-                    predicates = {"first": events[0], "second": events[1]}
+                    predicates = {"first": predicate_exprs[0], "second": predicate_exprs[1]}
                 case _:
                     # universality, absence, recurrence, existence
-                    predicates = {"event": events[0]}
+                    predicates = {"event": predicate_exprs[0]}
 
             property_pattern = PatternInfo(
                 pattern=pattern,
