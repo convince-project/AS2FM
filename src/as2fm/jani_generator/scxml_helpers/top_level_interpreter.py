@@ -322,14 +322,15 @@ def interpret_top_level_xml(
     )
 
     property_converter: Optional[PropertyConverter] = None
+    if model.properties.get("xml") is not None:
+        property_converter = PropertyConverter(
+            input_path=model.properties["xml"],
+            ros_events_info=ros_events_info,
+            model_time_step=model_time_step,
+        )
     if scxmls_dir is not None:
         plain_scxml_dir = os.path.join(model_dir, scxmls_dir)
-        if model.properties.get("xml") is not None:
-            property_converter = PropertyConverter(
-                input_path=model.properties["xml"],
-                ros_events_info=ros_events_info,
-                model_time_step=model_time_step,
-            )
+        if property_converter is not None:
             property_converter.export_properties(plain_scxml_dir)
         export_plain_scxml_models(plain_scxml_dir, plain_scxml_models)
     if jani_file is not None:

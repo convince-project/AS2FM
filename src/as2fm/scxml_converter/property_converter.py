@@ -97,12 +97,13 @@ class PropertyConverter:
         self._model_time_step: Optional[ModelTimeStep] = model_time_step
         self.resolved_ports: Dict[str, PortBinding] = {}
         self.compiled_patterns: List[Tuple[str, PatternInfo]] = []
+        self._scxml_properties: XmlElement = self._build_scxml_properties()
 
     @property
     def _model_time_unit(self) -> Optional[str]:
         return self._model_time_step.unit if self._model_time_step is not None else None
 
-    def export_properties(self, output_path: str) -> None:
+    def _build_scxml_properties(self) -> XmlElement:
         scxml_properties = ET.Element("properties")
 
         ports_node = ET.SubElement(scxml_properties, "ports")
@@ -116,13 +117,16 @@ class PropertyConverter:
             guarantees_node = ET.SubElement(scxml_properties, "guarantees")
             self._process_guarantees(guarantees_node)
 
+        return scxml_properties
+
+    def export_properties(self, output_path: str) -> None:
         if not os.path.exists(output_path):
             os.mkdir(output_path)
 
         with open(os.path.join(output_path, "properties.xml"), "wb") as f:
             f.write(
                 ET.tostring(
-                    scxml_properties,
+                    self._scxml_properties,
                     pretty_print=True,
                     xml_declaration=True,
                     encoding="UTF-8",
