@@ -239,6 +239,15 @@ def get_cases():
             "property_name": "battery_alarm_precedence",
             "skip_properties_load_check": True,
         },
+        # Expect XML->JANI properties compiled without plain SCXML
+        _default_case()
+        | {
+            "_case_name": "battery_published_xml_no_plain_scxml",
+            "folder": os.path.join(rel_examples_folder, "quick_start_battery_monitor"),
+            "property_name": "battery_eventually_published",
+            "generate_plain_scxml": False,
+            "skip_properties_load_check": True,
+        },
         # -------------------------------------------------------------------------------------
         # HL-SCXML features
         # Test that the synchronization can handle events being sent in different orders
