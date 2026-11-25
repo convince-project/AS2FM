@@ -53,9 +53,9 @@ jobs:
             - name: Install ROS support pkgs
               run: |
                 source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-                mkdir ros_interfaces_ws
-                cd ros_interfaces_ws
-                ln -s ../ros_support_interfaces src
+                mkdir $RUNNER_TEMP/ros_interfaces_ws
+                cd $RUNNER_TEMP/ros_interfaces_ws
+                ln -s $GITHUB_WORKSPACE/ros_support_interfaces src
                 rosdep update
                 rosdep install --from-paths src -y --ignore-src
                 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
@@ -64,6 +64,6 @@ jobs:
             - name: Run tests
               run: |
                 export PATH=$PATH:${{ steps.get_smc_storm.outputs.SMC_STORM_PATH }}
-                source ros_interfaces_ws/install/setup.bash
-                pytest-3 -vs .
+                source $RUNNER_TEMP/ros_interfaces_ws/install/setup.bash
+                pytest-3 -vs test docs
               shell: bash

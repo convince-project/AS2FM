@@ -23,14 +23,15 @@ dependencies = [
     # jani_generator
     "jsonschema",
     "esprima",
-    "escodegen",
+    "escodegen<2",
     # jani_visualizer
     "webcolors",
     "plantuml",
     # scxml_converter
     "typing-extensions>=4.12.2",
+    "jinja2>=3.1.2",
     # trace_visualizer
-    "pandas",
+    "pandas<3.1",
     "Pillow",
 ]
 requires-python = ">=3.10"
@@ -55,7 +56,7 @@ as2fm_trace_to_png = "as2fm.trace_visualizer.main:main_trace_to_png"
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
+    "pytest<8",
     "pytest-cov",
     "pycodestyle",
     "flake8",

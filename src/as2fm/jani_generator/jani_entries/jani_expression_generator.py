@@ -125,6 +125,10 @@ def or_operator(left, right) -> JaniExpression:
     return JaniExpression({"op": "∨", "left": left, "right": right})
 
 
+def impl_operator(left, right) -> JaniExpression:
+    return JaniExpression({"op": "⇒", "left": left, "right": right})
+
+
 # if operator
 def if_operator(condition, true_value, false_value) -> JaniExpression:
     return JaniExpression({"op": "ite", "if": condition, "then": true_value, "else": false_value})

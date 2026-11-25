@@ -10,7 +10,7 @@
 
   <guarantees>
     <property id="butter_at_table" pattern="existence">
-      <event>x == 4.0 &amp;&amp; y == 2.0 &amp;&amp; parent == 'world'</event>
+      <predicate>x == 4.0 &amp;&amp; y == 2.0 &amp;&amp; parent == 'world'</predicate>
       <scope type="globally"/>
     </property>
   </guarantees>

@@ -18,5 +18,6 @@
 
     <properties>
         <input type="jani" src="./battery_properties.jani" />
+        <input type="xml" src="./properties.xml" />
     </properties>
 </roaml>

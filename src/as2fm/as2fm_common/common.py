@@ -18,7 +18,8 @@ Common functionalities used throughout the toolchain.
 """
 
 import re
-from typing import MutableSequence, Type, get_args
+from dataclasses import dataclass
+from typing import Dict, MutableSequence, Type, Union, get_args
 
 from lxml.etree import _Comment as XmlComment
 from lxml.etree import _Element as XmlElement
@@ -28,6 +29,54 @@ from as2fm.as2fm_common.types import ValidJaniTypes, ValidPlainScxmlTypes
 
 # Small number used for float comparison.
 EPSILON = 1e-3
+
+TIME_UNITS: Dict[str, int] = {
+    "s": 1,
+    "ms": 1_000,
+    "us": 1_000_000,
+    "ns": 1_000_000_000,
+}
+
+
+def convert_time_between_units(
+    time: Union[int, float], from_unit: str, to_unit: str
+) -> Union[int, float]:
+    """
+    Convert a time value from one unit to another.
+
+    If `time` is an int, the conversion is expected to be exact (e.g. converting whole
+    periods or timestamps) and the result is returned as an int; an inexact conversion
+    raises an assertion error. If `time` is a float (e.g. a fractional time interval), the
+    scaled value is returned as-is, with no exactness requirement.
+
+    :param time: The time value to convert, expressed in `from_unit`.
+    :param from_unit: The unit `time` is expressed in.
+    :param to_unit: The unit to convert `time` to.
+    :return: The converted time value, expressed in `to_unit`.
+    """
+    assert from_unit in TIME_UNITS, f"Unit {from_unit} not supported."
+    assert to_unit in TIME_UNITS, f"Unit {to_unit} not supported."
+    if from_unit == to_unit:
+        return time
+    new_time = time * TIME_UNITS[to_unit] / TIME_UNITS[from_unit]
+    if isinstance(time, int):
+        assert int(new_time) == new_time, f"Conversion from {from_unit} to {to_unit} is not exact."
+        return int(new_time)
+    return new_time
+
+
+@dataclass(frozen=True)
+class ModelTimeStep:
+    """
+    A time type, with both the step and the unit the step is expressed in.
+    """
+
+    step: int
+    unit: str
+
+    def __post_init__(self):
+        assert self.unit in TIME_UNITS, f"Unit {self.unit} not supported."
+        assert self.step > 0, f"The model time step must be positive, got {self.step}."
 
 
 def remove_namespace(tag: str) -> str:
